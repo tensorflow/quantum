@@ -28,7 +28,7 @@ class Circuit {
   std::vector<Gate> gates;
 
   Circuit();
-  Circuit(unsigned_int num_qubits, std::vector<Gate>& gates);
+  Circuit(unsigned int num_qubits, std::vector<Gate>& gates);
 
   bool operator==(const Circuit& r) const;
   bool operator!=(const Circuit& r) const;
