@@ -25,7 +25,7 @@ Circuit::Circuit() : num_qubits(0) {}
 Circuit::Circuit(unsigned int num_qubits, std::vector<Gate>& gates)
     : num_qubits(num_qubits), gates(gates) {}
 
-Circuit::bool operator==(const Circuit& r) const {
+bool Circuit::operator==(const Circuit& r) const {
     if (this->num_qubits != r.num_qubits) {
       return false;
     }
@@ -40,6 +40,6 @@ Circuit::bool operator==(const Circuit& r) const {
     return true;
   }
 
-Circuit::bool operator!=(const Circuit& r) const { return !(*this == r); }
+bool Circuit::operator!=(const Circuit& r) const { return !(*this == r); }
 
 }  //namespace tfq
