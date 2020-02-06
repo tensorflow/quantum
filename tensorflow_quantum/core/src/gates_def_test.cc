@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#include "tensorflow_quantum/core/src/circuit.h"
+#include "tensorflow_quantum/core/src/gates_def.h"
 
 #include <cstdlib>
 
@@ -21,22 +21,6 @@ limitations under the License.
 
 namespace tfq {
 namespace {
-
-float RandomFloat() {
-  return static_cast<float>(std::rand()) / static_cast<float>(RAND_MAX);
-}
-
-void GetTestGate1q(Gate* test_gate) {
-  std::array<float, 8> matrix;
-  std::generate(matrix.begin(), matrix.begin() + 8, RandomFloat);
-  *test_gate = Gate(18, 3, matrix);
-}
-
-void GetTestGate2q(Gate* test_gate) {
-  std::array<float, 32> matrix;
-  std::generate(matrix.begin(), matrix.begin() + 32, RandomFloat);
-  *test_gate = Gate(19, 3, 4, matrix);
-}
 
 TEST(GatesDefTest, GateConstructors) {
   // Empty gate constructor
