@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package tfq.proto;
+
+// Store the sum of simpler terms.
+message PauliSum {
+  repeated PauliTerm terms = 1;
+}
+
+// Store a term which is a coefficient of some number of tensored up paulis.
+message PauliTerm {
+  float coefficient_real = 1;
+  float coefficient_imag = 2;
+  repeated PauliQubitPair paulis = 3;
+}
+
+// Store a pauli acting on a particular qubit.
+message PauliQubitPair {
+  string qubit_id = 1;
+  string pauli_type = 2;
+}
