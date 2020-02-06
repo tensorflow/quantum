@@ -24,7 +24,7 @@ namespace {
 
 TEST(GatesDefTest, GateConstructors) {
   // Empty gate constructor
-  Gate gate0q();
+  Gate gate0q;
   ASSERT_EQ(gate0q.time, 0);
   ASSERT_EQ(gate0q.num_qubits, 0);
 
