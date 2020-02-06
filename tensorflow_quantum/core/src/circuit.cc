@@ -13,27 +13,33 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#ifndef TFQ_CORE_SRC_CIRCUIT_H_
-#define TFQ_CORE_SRC_CIRCUIT_H_
+#include "tensorflow_quantum/core/src/circuit.h"
 
 #include <vector>
 
 #include "tensorflow_quantum/core/src/gates_def.h"
 
-namespace tfq {
+namespace tfq{
 
-class Circuit {
- public:
-  unsigned int num_qubits;
-  std::vector<Gate> gates;
+Circuit::Circuit() : num_qubits(0) {}
+Circuit::Circuit(unsigned int num_qubits, std::vector<Gate>& gates)
+    : num_qubits(num_qubits), gates(gates) {}
 
-  Circuit();
-  Circuit(unsigned_int num_qubits, std::vector<Gate>& gates);
+Circuit::bool operator==(const Circuit& r) const {
+    if (this->num_qubits != r.num_qubits) {
+      return false;
+    }
+    if (this->gates.size() != r.gates.size()) {
+      return false;
+    }
+    for (size_t i = 0; i < this->gates.size(); i++) {
+      if (this->gates.at(i) != r.gates.at(i)) {
+        return false;
+      }
+    }
+    return true;
+  }
 
-  bool operator==(const Circuit& r) const;
-  bool operator!=(const Circuit& r) const;
-};
+Circuit::bool operator!=(const Circuit& r) const { return !(*this == r); }
 
-}  // namespace tfq
-
-#endif  // TFQ_CORE_SRC_CIRCUIT_H_
+}  //namespace tfq
