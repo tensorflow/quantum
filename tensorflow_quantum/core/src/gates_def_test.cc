@@ -38,6 +38,39 @@ void GetTestGate2q(Gate* test_gate) {
   *test_gate = Gate(19, 3, 4, matrix);
 }
 
+TEST(GatesDefTest, GateConstructors) {
+  // Empty gate constructor
+  Gate gate0q();
+  ASSERT_EQ(gate0q.time, 0);
+  ASSERT_EQ(gate0q.num_qubits, 0);
+
+  // One-qubit gate constructor
+  const unsigned int time1q = 256;
+  const unsigned int qubits1q = 53;
+  const std::array<float, 8> matrix1q{0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7};
+  Gate gate1q(time1q, qubits1q, matrix1q);
+  ASSERT_EQ(gate1q.time, time1q);
+  ASSERT_EQ(gate1q.num_qubits, 1);
+  ASSERT_EQ(gate1q.qubits[0], qubits1q);
+  for (int i = 0; i < 8; i++) {
+    ASSERT_EQ(gate1q.matrix[i], matrix1q[i]);
+  }
+
+  // Two-qubit gate constructor
+  const unsigned int time2q = 512;
+  const unsigned int qubits2q1 = 53;
+  const unsigned int qubits2q2 = 256;
+  const std::array<float, 32> matrix2q{0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.10, 0.11, 0.12, 0.13, 0.14, 0.15, 0.16, 0.17, 0.18, 0.19, 0.20, 0.21, 0.23, 0.24, 0.25, 0.26, 0.27, 0.28, 0.29, 0.30, 0.31};
+  Gate gate2q(time2q, qubits2q1, qubits2q2, matrix2q);
+  ASSERT_EQ(gate2q.time, time2q);
+  ASSERT_EQ(gate2q.num_qubits, 2);
+  ASSERT_EQ(gate2q.qubits[0], qubits2q1);
+  ASSERT_EQ(gate2q.qubits[1], qubits2q2);
+  for (int i = 0; i < 32; i++) {
+    ASSERT_EQ(gate2q.matrix[i], matrix2q[i]);
+  }
+}
+
 TEST(CircuitTest, Gate0q) {
   Gate test_gate, true_gate;
 
