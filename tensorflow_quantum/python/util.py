@@ -192,7 +192,7 @@ def _parse_single(item):
     try:
         if b'tfq_gate_set' in item:
             # Return a circuit parsing
-            obj = cirq.api.google.v2.program_pb2.Program()
+            obj = cirq.google.api.v2.program_pb2.Program()
             obj.ParseFromString(item)
             out = serializer.deserialize_circuit(obj)
             return out

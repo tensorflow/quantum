@@ -18,7 +18,7 @@ import sympy
 import tensorflow as tf
 
 import cirq
-from cirq.api.google.v2 import program_pb2
+from cirq.google.api.v2 import program_pb2
 from absl.testing import parameterized
 from tensorflow_quantum.core.proto import pauli_sum_pb2
 from tensorflow_quantum.core.serialize import serializer
@@ -78,7 +78,7 @@ def _build_gate_proto(gate_id, arg_names, arg_vals, qubit_ids):
         args = {arg_names[i]: (program_pb2.Arg(symbol=arg_vals[i]) \
         if isinstance(arg_vals[i], str) else \
             program_pb2.Arg(
-                arg_value=cirq.api.google.v2.program_pb2.ArgValue(
+                arg_value=cirq.google.api.v2.program_pb2.ArgValue(
                     float_value=arg_vals[i]))) for i in range(len(arg_vals))},
         qubits=[program_pb2.Qubit(
             id=q_id) for q_id in qubit_ids])])

@@ -25,7 +25,7 @@ from setuptools.dist import Distribution
 
 REQUIRED_PACKAGES = [
     #'tensorflow = 2.0.0b1',
-    'cirq == 0.6.0',
+    'cirq == 0.7.0',
     'tensorflow == 2.1.0'
 ]
 

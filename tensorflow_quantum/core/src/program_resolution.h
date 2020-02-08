@@ -22,7 +22,7 @@ limitations under the License.
 #include <string>
 
 #include "absl/container/flat_hash_map.h"
-#include "cirq/api/google/v2/program.pb.h"
+#include "cirq/google/api/v2/program.pb.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
 
@@ -39,13 +39,13 @@ namespace tfq {
 // The qubits are sorted in the same way Cirq would sort them, to provide
 // consistent outputs.
 tensorflow::Status ResolveQubitIds(
-    cirq::api::google::v2::Program* program,
+    cirq::google::api::v2::Program* program,
     std::vector<tfq::proto::PauliSum>* p_sums = nullptr);
 
 // Returns the maximum number qubit in the Program. If the QubitIds were
 // resolved with the above function, this is the number of qubits in the
 // Program.
-int GetNumQubits(const cirq::api::google::v2::Program& program);
+int GetNumQubits(const cirq::google::api::v2::Program& program);
 
 // Resolves all of the symbols present in the Program. Iterates through all
 // operations in all moments, and if any Args have a symbol, replaces the one-of
@@ -55,7 +55,7 @@ int GetNumQubits(const cirq::api::google::v2::Program& program);
 // isn't used.
 tensorflow::Status ResolveSymbols(
     const absl::flat_hash_map<std::string, std::pair<int, double>>& param_map,
-    cirq::api::google::v2::Program* program);
+    cirq::google::api::v2::Program* program);
 
 }  // namespace tfq
 
