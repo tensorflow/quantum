@@ -36,8 +36,6 @@ class StateSpace {
 
   static void DeleteState(State* state);
 
-  static State NullState();
-
   uint64_t Size() const;
 
   uint64_t RawSize() const;
