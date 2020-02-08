@@ -20,7 +20,7 @@ limitations under the License.
 #include <string>
 #include <vector>
 
-#include "cirq/api/google/v2/program.pb.h"
+#include "cirq/google/api/v2/program.pb.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
 #include "tensorflow_quantum/core/src/circuit.h"
@@ -29,7 +29,7 @@ namespace tfq {
 
 // parse a serialized Cirq program into our internal representation
 tensorflow::Status CircuitFromProgram(
-    const cirq::api::google::v2::Program& program, const int num_qubits,
+    const cirq::google::api::v2::Program& program, const int num_qubits,
     Circuit* circuit);
 
 // build the circuit taking the computational basis to the measurement basis

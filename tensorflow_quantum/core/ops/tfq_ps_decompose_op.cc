@@ -16,7 +16,7 @@ limitations under the License.
 #include <cmath>
 #include <string>
 
-#include "cirq/api/google/v2/program.pb.h"
+#include "cirq/google/api/v2/program.pb.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/shape_inference.h"
 #include "tensorflow/core/framework/tensor_shape.h"
@@ -27,12 +27,12 @@ limitations under the License.
 
 namespace tfq {
 
-using ::cirq::api::google::v2::Arg;
-using ::cirq::api::google::v2::Circuit;
-using ::cirq::api::google::v2::Moment;
-using ::cirq::api::google::v2::Operation;
-using ::cirq::api::google::v2::Program;
-using ::cirq::api::google::v2::Qubit;
+using ::cirq::google::api::v2::Arg;
+using ::cirq::google::api::v2::Circuit;
+using ::cirq::google::api::v2::Moment;
+using ::cirq::google::api::v2::Operation;
+using ::cirq::google::api::v2::Program;
+using ::cirq::google::api::v2::Qubit;
 using ::tensorflow::Status;
 using ::tensorflow::Tensor;
 

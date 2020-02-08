@@ -323,7 +323,7 @@ def serialize_circuit(circuit):
         circuit: A `cirq.Circuit`.
 
     Returns:
-        A `cirq.api.google.v2.Program` proto.
+        A `cirq.google.api.v2.Program` proto.
     """
     if not isinstance(circuit, cirq.Circuit):
         raise TypeError("serialize requires cirq.Circuit objects."
@@ -385,14 +385,14 @@ def deserialize_circuit(proto):
     Note that the proto must use gates valid in the tfq_gate_set.
 
     Args:
-        proto: A `cirq.api.google.v2.Program` proto
+        proto: A `cirq.google.api.v2.Program` proto
 
     Returns:
         A `cirq.Circuit`.
     """
-    if not isinstance(proto, cirq.api.google.v2.program_pb2.Program):
+    if not isinstance(proto, cirq.google.api.v2.program_pb2.Program):
         raise TypeError("deserialize requires "
-                        "cirq.api.google.v2.program_pb2.Program object."
+                        "cirq.google.api.v2.program_pb2.Program object."
                         " Given: " + str(type(proto)))
 
     return SERIALIZER.deserialize(proto)

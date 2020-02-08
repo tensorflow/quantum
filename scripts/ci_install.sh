@@ -15,4 +15,4 @@
 # ==============================================================================
 wget https://github.com/bazelbuild/bazel/releases/download/0.26.0/bazel_0.26.0-linux-x86_64.deb
 sudo dpkg -i bazel_0.26.0-linux-x86_64.deb
-pip install --upgrade pip setuptools wheel pylint yapf cirq==0.6.0 tensorflow==2.1.0
+pip install --upgrade pip setuptools wheel pylint yapf cirq==0.7.0 tensorflow==2.1.0

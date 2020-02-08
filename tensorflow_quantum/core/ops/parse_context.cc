@@ -20,7 +20,7 @@ limitations under the License.
 #include <string>
 #include <vector>
 
-#include "cirq/api/google/v2/program.pb.h"
+#include "cirq/google/api/v2/program.pb.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/lib/core/error_codes.pb.h"
 #include "tensorflow/core/lib/core/status.h"
@@ -32,7 +32,7 @@ limitations under the License.
 namespace tfq {
 namespace {
 
-using ::cirq::api::google::v2::Program;
+using ::cirq::google::api::v2::Program;
 using ::tensorflow::OpKernelContext;
 using ::tensorflow::Status;
 using ::tensorflow::Tensor;

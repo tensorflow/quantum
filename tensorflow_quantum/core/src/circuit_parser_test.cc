@@ -21,7 +21,7 @@ limitations under the License.
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/strings/numbers.h"
-#include "cirq/api/google/v2/program.pb.h"
+#include "cirq/google/api/v2/program.pb.h"
 #include "gtest/gtest.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow_quantum/core/src/circuit.h"
@@ -31,11 +31,11 @@ limitations under the License.
 namespace tfq {
 namespace {
 
-using ::cirq::api::google::v2::Program;
+using ::cirq::google::api::v2::Program;
 
 TEST(CircuitParserTest, CircuitFromProgramInvalidSchedule) {
   Program program_proto;
-  ::cirq::api::google::v2::Circuit* circuit_proto =
+  ::cirq::google::api::v2::Circuit* circuit_proto =
       program_proto.mutable_circuit();
   circuit_proto->set_scheduling_strategy(
       circuit_proto->SCHEDULING_STRATEGY_UNSPECIFIED);
@@ -47,17 +47,17 @@ TEST(CircuitParserTest, CircuitFromProgramInvalidSchedule) {
 
 TEST(CircuitParserTest, CircuitFromProgramInvalidQubitId) {
   Program program_proto;
-  ::cirq::api::google::v2::Circuit* circuit_proto =
+  ::cirq::google::api::v2::Circuit* circuit_proto =
       program_proto.mutable_circuit();
   circuit_proto->set_scheduling_strategy(circuit_proto->MOMENT_BY_MOMENT);
-  ::cirq::api::google::v2::Moment* moments_proto = circuit_proto->add_moments();
+  ::cirq::google::api::v2::Moment* moments_proto = circuit_proto->add_moments();
 
   // Add CNOT gate with invalid qubit
-  ::cirq::api::google::v2::Operation* operations_proto =
+  ::cirq::google::api::v2::Operation* operations_proto =
       moments_proto->add_operations();
-  ::cirq::api::google::v2::Gate* gate_proto = operations_proto->mutable_gate();
+  ::cirq::google::api::v2::Gate* gate_proto = operations_proto->mutable_gate();
   gate_proto->set_id("CNOT");
-  ::cirq::api::google::v2::Qubit* qubits_proto = operations_proto->add_qubits();
+  ::cirq::google::api::v2::Qubit* qubits_proto = operations_proto->add_qubits();
   qubits_proto->set_id("0");
   qubits_proto = operations_proto->add_qubits();
   qubits_proto->set_id("0_0");
@@ -71,7 +71,7 @@ TEST(CircuitParserTest, CircuitFromProgramInvalidQubitId) {
 
 TEST(CircuitParserTest, CircuitFromProgramEmpty) {
   Program program_proto;
-  ::cirq::api::google::v2::Circuit* circuit_proto =
+  ::cirq::google::api::v2::Circuit* circuit_proto =
       program_proto.mutable_circuit();
   circuit_proto->set_scheduling_strategy(circuit_proto->MOMENT_BY_MOMENT);
 
@@ -86,12 +86,12 @@ TEST(CircuitParserTest, CircuitFromProgramEmpty) {
   // Test application of orphan gate collection identity gates
   // TODO(zaqqwerty): remove when orphan gate collection is moved to fuser
   Program program_proto_ident_odd;
-  ::cirq::api::google::v2::Circuit* circuit_proto_ident_odd =
+  ::cirq::google::api::v2::Circuit* circuit_proto_ident_odd =
       program_proto_ident_odd.mutable_circuit();
   circuit_proto_ident_odd->set_scheduling_strategy(
       circuit_proto_ident_odd->MOMENT_BY_MOMENT);
   Program program_proto_ident_even;
-  ::cirq::api::google::v2::Circuit* circuit_proto_ident_even =
+  ::cirq::google::api::v2::Circuit* circuit_proto_ident_even =
       program_proto_ident_even.mutable_circuit();
   circuit_proto_ident_even->set_scheduling_strategy(
       circuit_proto_ident_even->MOMENT_BY_MOMENT);
@@ -130,35 +130,35 @@ TEST(CircuitParserTest, CircuitFromProgramEmpty) {
 
 TEST(CircuitParserTest, CircuitFromProgramPaulis) {
   Program program_proto;
-  ::cirq::api::google::v2::Circuit* circuit_proto =
+  ::cirq::google::api::v2::Circuit* circuit_proto =
       program_proto.mutable_circuit();
   circuit_proto->set_scheduling_strategy(circuit_proto->MOMENT_BY_MOMENT);
-  ::cirq::api::google::v2::Moment* moments_proto = circuit_proto->add_moments();
+  ::cirq::google::api::v2::Moment* moments_proto = circuit_proto->add_moments();
 
   // Add X gate
-  ::cirq::api::google::v2::Operation* operations_proto =
+  ::cirq::google::api::v2::Operation* operations_proto =
       moments_proto->add_operations();
-  ::cirq::api::google::v2::Gate* gate_proto = operations_proto->mutable_gate();
+  ::cirq::google::api::v2::Gate* gate_proto = operations_proto->mutable_gate();
   gate_proto->set_id("XP");
-  ::cirq::api::google::v2::Qubit* qubits_proto = operations_proto->add_qubits();
+  ::cirq::google::api::v2::Qubit* qubits_proto = operations_proto->add_qubits();
   qubits_proto->set_id("0");
 
   // Create the required Arg protos
-  ::cirq::api::google::v2::Arg global_shift_arg;
-  ::cirq::api::google::v2::ArgValue* global_shift_arg_value =
+  ::cirq::google::api::v2::Arg global_shift_arg;
+  ::cirq::google::api::v2::ArgValue* global_shift_arg_value =
       global_shift_arg.mutable_arg_value();
   global_shift_arg_value->set_float_value(0.0);
-  ::cirq::api::google::v2::Arg exponent_arg;
-  ::cirq::api::google::v2::ArgValue* exponent_arg_value =
+  ::cirq::google::api::v2::Arg exponent_arg;
+  ::cirq::google::api::v2::ArgValue* exponent_arg_value =
       exponent_arg.mutable_arg_value();
   exponent_arg_value->set_float_value(1.0);
-  ::cirq::api::google::v2::Arg exponent_scalar_arg;
-  ::cirq::api::google::v2::ArgValue* exponent_scalar_arg_value =
+  ::cirq::google::api::v2::Arg exponent_scalar_arg;
+  ::cirq::google::api::v2::ArgValue* exponent_scalar_arg_value =
       exponent_scalar_arg.mutable_arg_value();
   exponent_scalar_arg_value->set_float_value(1.0);
 
   // Add Arg protos to the operation arg map
-  google::protobuf::Map<std::string, ::cirq::api::google::v2::Arg>* args_proto =
+  google::protobuf::Map<std::string, ::cirq::google::api::v2::Arg>* args_proto =
       operations_proto->mutable_args();
   (*args_proto)["global_shift"] = global_shift_arg;
   (*args_proto)["exponent"] = exponent_arg;

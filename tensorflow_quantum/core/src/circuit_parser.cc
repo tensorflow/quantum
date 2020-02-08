@@ -23,7 +23,7 @@ limitations under the License.
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/strings/numbers.h"
-#include "cirq/api/google/v2/program.pb.h"
+#include "cirq/google/api/v2/program.pb.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
 #include "tensorflow_quantum/core/src/circuit.h"
@@ -32,11 +32,11 @@ limitations under the License.
 namespace tfq {
 namespace {
 
-using ::cirq::api::google::v2::Arg;
-using ::cirq::api::google::v2::Moment;
-using ::cirq::api::google::v2::Operation;
-using ::cirq::api::google::v2::Program;
-using ::cirq::api::google::v2::Qubit;
+using ::cirq::google::api::v2::Arg;
+using ::cirq::google::api::v2::Moment;
+using ::cirq::google::api::v2::Operation;
+using ::cirq::google::api::v2::Program;
+using ::cirq::google::api::v2::Qubit;
 using ::tensorflow::Status;
 
 // Adds the operation as a Gate in the circuit. The index is the moment number.
@@ -71,9 +71,9 @@ Status CircuitFromProgram(const Program& program, const int num_qubits,
                           Circuit* circuit) {
   circuit->num_qubits = num_qubits;
 
-  const cirq::api::google::v2::Circuit& cirq_circuit = program.circuit();
+  const cirq::google::api::v2::Circuit& cirq_circuit = program.circuit();
   if (cirq_circuit.scheduling_strategy() !=
-      cirq::api::google::v2::Circuit::MOMENT_BY_MOMENT) {
+      cirq::google::api::v2::Circuit::MOMENT_BY_MOMENT) {
     return Status(tensorflow::error::INVALID_ARGUMENT,
                   "Circuit must be moment by moment.");
   }
@@ -132,7 +132,7 @@ Status CircuitFromPauliTerm(const tfq::proto::PauliTerm& term,
                             const int num_qubits, Circuit* circuit) {
   Program measurement_program;
   measurement_program.mutable_circuit()->set_scheduling_strategy(
-      cirq::api::google::v2::Circuit::MOMENT_BY_MOMENT);
+      cirq::google::api::v2::Circuit::MOMENT_BY_MOMENT);
   Moment* term_moment = measurement_program.mutable_circuit()->add_moments();
   for (const tfq::proto::PauliQubitPair& pair : term.paulis()) {
     Operation* new_op = term_moment->add_operations();
