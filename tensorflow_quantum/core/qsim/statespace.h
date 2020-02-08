@@ -38,8 +38,6 @@ class StateSpace {
 
   uint64_t Size() const;
 
-  uint64_t RawSize() const;
-
   static float* RawData(State* state);
   static const float* RawData(const State& state);
 
