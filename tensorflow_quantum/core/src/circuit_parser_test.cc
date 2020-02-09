@@ -78,7 +78,7 @@ TEST(CircuitParserTest, CircuitFromProgramEmpty) {
   Circuit real_circuit, test_circuit;
   // TODO(zaqqwerty): num_qubits <= 1 due to orphan gate collection method
   real_circuit.num_qubits = 0;
-  CircuitFromProgram(program_proto, 0, &test_circuit);
+  ASSERT_TRUE(CircuitFromProgram(program_proto, 0, &test_circuit).ok());
 
   ASSERT_EQ(test_circuit.num_qubits, real_circuit.num_qubits);
   ASSERT_EQ(test_circuit.gates, real_circuit.gates);
@@ -103,28 +103,30 @@ TEST(CircuitParserTest, CircuitFromProgramEmpty) {
   locations.clear();
   locations.push_back(0);
   locations.push_back(1);
-  ident_builder.Build(0, locations, arg_map, &gate_01);
+  ASSERT_TRUE(ident_builder.Build(0, locations, arg_map, &gate_01).ok());
   locations.clear();
   locations.push_back(1);
   locations.push_back(2);
-  ident_builder.Build(1, locations, arg_map, &gate_12);
+  ASSERT_TRUE(ident_builder.Build(1, locations, arg_map, &gate_12).ok());
   locations.clear();
   locations.push_back(2);
   locations.push_back(3);
-  ident_builder.Build(0, locations, arg_map, &gate_23);
+  ASSERT_TRUE(ident_builder.Build(0, locations, arg_map, &gate_23).ok());
 
   Circuit real_circuit_ident_odd, test_circuit_ident_odd;
   real_circuit_ident_odd.num_qubits = 3;
   real_circuit_ident_odd.gates.push_back(gate_01);
   real_circuit_ident_odd.gates.push_back(gate_12);
-  CircuitFromProgram(program_proto_ident_odd, 3, &test_circuit_ident_odd);
+  ASSERT_TRUE(CircuitFromProgram(program_proto_ident_odd, 3,
+                           &test_circuit_ident_odd).ok());
   ASSERT_EQ(test_circuit_ident_odd, real_circuit_ident_odd);
 
   Circuit real_circuit_ident_even, test_circuit_ident_even;
   real_circuit_ident_even.num_qubits = 4;
   real_circuit_ident_even.gates.push_back(gate_01);
   real_circuit_ident_even.gates.push_back(gate_23);
-  CircuitFromProgram(program_proto_ident_even, 4, &test_circuit_ident_even);
+  ASSERT_TRUE(CircuitFromProgram(program_proto_ident_even, 4,
+                                   &test_circuit_ident_even).ok());
   ASSERT_EQ(test_circuit_ident_even, real_circuit_ident_even);
 }
 

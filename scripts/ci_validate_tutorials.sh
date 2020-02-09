@@ -18,9 +18,9 @@
 pip install jupyter nbformat==4.4.0 nbconvert==5.6.1
 # Workaround for ipykernel - see https://github.com/ipython/ipykernel/issues/422
 pip install ipykernel==5.1.1
-# Leave the TFQuantum directory, otherwise errors may occur
+# Leave the quantum directory, otherwise errors may occur
 cd ..
-examples_output=$(python3 TFQuantum/scripts/test_tutorials.py)
+examples_output=$(python3 quantum/scripts/test_tutorials.py)
 exit_code=$?
 if [ "$exit_code" == "0" ]; then
 	exit 0;

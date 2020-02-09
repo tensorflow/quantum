@@ -107,11 +107,15 @@ Status CircuitFromProgram(const Program& program, const int num_qubits,
     std::vector<unsigned int> locations;
     absl::flat_hash_map<std::string, float> arg_map;
     Gate gate;
+    tensorflow::Status status;
     for (int w = 0; w < num_qubits - 1; w += 2) {
       locations.clear();
       locations.push_back(w);
       locations.push_back(w + 1);
-      builder.Build(i, locations, arg_map, &gate);
+      status = builder.Build(i, locations, arg_map, &gate);
+      if (!status.ok()) {
+        return status;
+      }
       circuit->gates.push_back(gate);
     }
     i++;
@@ -119,7 +123,10 @@ Status CircuitFromProgram(const Program& program, const int num_qubits,
       locations.clear();
       locations.push_back(num_qubits - 2);
       locations.push_back(num_qubits - 1);
-      builder.Build(i, locations, arg_map, &gate);
+      status = builder.Build(i, locations, arg_map, &gate);
+      if (!status.ok()) {
+        return status;
+      }
       circuit->gates.push_back(gate);
     }
   }
