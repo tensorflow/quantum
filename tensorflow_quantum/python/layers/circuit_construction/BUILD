@@ -1,5 +1,7 @@
 package(default_visibility = ["//visibility:public"])
 
+licenses(["notice"])
+
 # Export for the PIP package.
 exports_files(["__init__.py"])
 
@@ -15,6 +17,7 @@ py_library(
 py_test(
     name = "elementary_test",
     srcs = ["elementary_test.py"],
+    python_version = "PY3",
     deps = [
         ":elementary",
         "//tensorflow_quantum/python:util",

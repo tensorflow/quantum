@@ -38,6 +38,7 @@ py_library(
 py_test(
     name = "differentiator_test",
     srcs = ["differentiator_test.py"],
+    python_version = "PY3",
     deps = [
         ":differentiator",
     ],
@@ -46,6 +47,7 @@ py_test(
 py_test(
     name = "linear_combination_test",
     srcs = ["linear_combination_test.py"],
+    python_version = "PY3",
     deps = [
         ":linear_combination",
         "//tensorflow_quantum/core/ops:circuit_execution_ops",
@@ -57,6 +59,7 @@ py_test(
     name = "parameter_shift_test",
     timeout = "long",
     srcs = ["parameter_shift_test.py"],
+    python_version = "PY3",
     deps = [
         ":parameter_shift",
         "//tensorflow_quantum/core/ops:circuit_execution_ops",
@@ -68,6 +71,7 @@ py_test(
 py_test(
     name = "parameter_shift_util_test",
     srcs = ["parameter_shift_util_test.py"],
+    python_version = "PY3",
     deps = [
         ":parameter_shift_util",
         "//tensorflow_quantum/python:util",
@@ -78,6 +82,7 @@ py_test(
     name = "gradient_test",
     timeout = "eternal",
     srcs = ["gradient_test.py"],
+    python_version = "PY3",
     deps = [
         ":linear_combination",
         ":parameter_shift",
@@ -100,6 +105,7 @@ py_library(
 py_test(
     name = "stochastic_differentiator_test",
     srcs = ["stochastic_differentiator_test.py"],
+    python_version = "PY3",
     deps = [
         ":stochastic_differentiator",
         "//tensorflow_quantum/core/ops:circuit_execution_ops",
@@ -120,6 +126,7 @@ py_library(
 py_test(
     name = "stochastic_differentiator_util_test",
     srcs = ["stochastic_differentiator_util_test.py"],
+    python_version = "PY3",
     deps = [
         ":stochastic_differentiator_util",
     ],

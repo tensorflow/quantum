@@ -58,9 +58,9 @@ http_archive(
 
 http_archive(
     name = "cirq",
-    sha256 = "4f47303bcbd48ad1abffbd5f68c985ad853e339bb309a34fbbf8ba4caf241138",
-    strip_prefix = "Cirq-984a149b3714792434b0d5ecc993c400c59aeac0",
-    urls = ["https://github.com/quantumlib/Cirq/archive/984a149b3714792434b0d5ecc993c400c59aeac0.zip"],
+    sha256 = "e882a0bfbf47c75c69d70de354049d64bbec2ef0d114def7da36cf4867e7b57f",
+    strip_prefix = "Cirq-0.7.0",
+    urls = ["https://github.com/quantumlib/Cirq/archive/v0.7.0.zip"],
 )
 
 # Added for crosstool in tensorflow.

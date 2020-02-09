@@ -12,7 +12,7 @@ exports_files(["__init__.py"])
 cc_proto_library(
     name = "program_cc_proto",
     deps = [
-        "@cirq//cirq/api/google/v2:program_proto",
+        "@cirq//cirq/google/api/v2:program_proto",
     ],
 )
 
