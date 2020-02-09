@@ -20,7 +20,7 @@ limitations under the License.
 #include <vector>
 
 #include "absl/container/flat_hash_map.h"
-#include "cirq/api/google/v2/program.pb.h"
+#include "cirq/google/api/v2/program.pb.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
@@ -30,13 +30,13 @@ namespace tfq {
 // Simplest Program proto parsing
 tensorflow::Status ParsePrograms(
     tensorflow::OpKernelContext* context, const std::string& input_name,
-    std::vector<cirq::api::google::v2::Program>* programs);
+    std::vector<cirq::google::api::v2::Program>* programs);
 
 // Parses a vector of programs along with another vector of programs to append
 tensorflow::Status GetProgramsAndProgramsToAppend(
     tensorflow::OpKernelContext* context,
-    std::vector<cirq::api::google::v2::Program>* programs,
-    std::vector<cirq::api::google::v2::Program>* programs_to_append);
+    std::vector<cirq::google::api::v2::Program>* programs,
+    std::vector<cirq::google::api::v2::Program>* programs_to_append);
 
 // A parameter map is a mapping from the name of the parameter to the index in
 // the input parameter value tensor (for gradient computations) and the value
@@ -49,7 +49,7 @@ typedef absl::flat_hash_map<std::string, std::pair<int, double>> SymbolMap;
 // and correct with the original programs.
 tensorflow::Status GetProgramsAndNumQubits(
     tensorflow::OpKernelContext* context,
-    std::vector<cirq::api::google::v2::Program>* programs,
+    std::vector<cirq::google::api::v2::Program>* programs,
     std::vector<int>* num_qubits,
     std::vector<std::vector<tfq::proto::PauliSum>>* p_sums = nullptr);
 

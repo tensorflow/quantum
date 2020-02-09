@@ -1,5 +1,7 @@
 package(default_visibility = ["//visibility:public"])
 
+licenses(["notice"])
+
 # Export for the PIP package.
 exports_files(["__init__.py"])
 
@@ -47,6 +49,7 @@ py_library(
 py_test(
     name = "state_test",
     srcs = ["state_test.py"],
+    python_version = "PY3",
     deps = [
         ":state",
         "//tensorflow_quantum/python:util",
@@ -56,6 +59,7 @@ py_test(
 py_test(
     name = "expectation_test",
     srcs = ["expectation_test.py"],
+    python_version = "PY3",
     deps = [
         ":expectation",
         "//tensorflow_quantum/python:util",
@@ -67,6 +71,7 @@ py_test(
     name = "sampled_expectation_test",
     timeout = "eternal",
     srcs = ["sampled_expectation_test.py"],
+    python_version = "PY3",
     deps = [
         ":sampled_expectation",
         "//tensorflow_quantum/python:util",
@@ -77,6 +82,7 @@ py_test(
 py_test(
     name = "sample_test",
     srcs = ["sample_test.py"],
+    python_version = "PY3",
     deps = [
         ":sample",
         "//tensorflow_quantum/python:util",

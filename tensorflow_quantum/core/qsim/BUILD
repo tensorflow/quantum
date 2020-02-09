@@ -139,6 +139,7 @@ cc_library(
     hdrs = ["simulator.h"],
     deps = [
         ":statespace",
+        "@com_google_glog//:glog",
     ],
 )
 
@@ -185,6 +186,7 @@ cc_library(
     hdrs = ["statespace_avx.h"],
     deps = [
         ":statespace",
+        ":util",
     ],
 )
 

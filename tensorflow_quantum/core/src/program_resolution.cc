@@ -21,18 +21,18 @@ limitations under the License.
 #include "absl/container/flat_hash_set.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
-#include "cirq/api/google/v2/program.pb.h"
+#include "cirq/google/api/v2/program.pb.h"
 #include "tensorflow/core/lib/core/error_codes.pb.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
 
 namespace tfq {
 
-using cirq::api::google::v2::Arg;
-using cirq::api::google::v2::Moment;
-using cirq::api::google::v2::Operation;
-using cirq::api::google::v2::Program;
-using cirq::api::google::v2::Qubit;
+using cirq::google::api::v2::Arg;
+using cirq::google::api::v2::Moment;
+using cirq::google::api::v2::Operation;
+using cirq::google::api::v2::Program;
+using cirq::google::api::v2::Qubit;
 using tensorflow::Status;
 using tfq::proto::PauliQubitPair;
 using tfq::proto::PauliSum;

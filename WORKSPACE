@@ -35,6 +35,21 @@ http_archive(
     ],
 )
 
+http_archive(
+    name = "com_google_glog",
+    build_file_content = """
+licenses(['notice'])
+load(':bazel/glog.bzl', 'glog_library')
+glog_library(with_gflags=0)
+""",
+    # For security purpose, can use `sha256sum` on linux to calculate.
+    sha256 = "835888ec47ee8065b3098f3ec4373717d641954970f009833ed6d466c397409a",
+    strip_prefix = "glog-41f4bf9cbc3e8995d628b459f6a239df43c2b84a",
+    urls = [
+        "https://github.com/google/glog/archive/41f4bf9cbc3e8995d628b459f6a239df43c2b84a.tar.gz",
+    ],
+)
+
 # Use this zlib rule that depends on github since it is more reliable than zlib.net.
 http_archive(
     name = "zlib",
@@ -58,9 +73,9 @@ http_archive(
 
 http_archive(
     name = "cirq",
-    sha256 = "4f47303bcbd48ad1abffbd5f68c985ad853e339bb309a34fbbf8ba4caf241138",
-    strip_prefix = "Cirq-984a149b3714792434b0d5ecc993c400c59aeac0",
-    urls = ["https://github.com/quantumlib/Cirq/archive/984a149b3714792434b0d5ecc993c400c59aeac0.zip"],
+    sha256 = "e882a0bfbf47c75c69d70de354049d64bbec2ef0d114def7da36cf4867e7b57f",
+    strip_prefix = "Cirq-0.7.0",
+    urls = ["https://github.com/quantumlib/Cirq/archive/v0.7.0.zip"],
 )
 
 # Added for crosstool in tensorflow.

@@ -231,8 +231,8 @@ class ExponentialUtilFunctionsTest(tf.test.TestCase):
         test_conj_gates = [cirq.Rx(-np.pi / 2)(q[3]), cirq.H(q[2])]
 
         gate_list, conj_gate_list = util._many_clifford_to_many_z(test_term)
-        self.assertEquals(gate_list, test_basis_gates)
-        self.assertEquals(conj_gate_list, test_conj_gates)
+        self.assertEqual(gate_list, test_basis_gates)
+        self.assertEqual(conj_gate_list, test_conj_gates)
 
     def test_many_z_to_single_z(self):
         """Test many Z's to a single Z."""
@@ -245,8 +245,8 @@ class ExponentialUtilFunctionsTest(tf.test.TestCase):
         for gate_op in gates:
             qubits = gate_op.qubits
             gate = gate_op.gate
-            self.assertTrue(isinstance(gate, cirq.CNotPowGate))
-            self.assertTrue(qubits in benchmark_gates_indices)
+            self.assertIsInstance(gate, cirq.CNotPowGate)
+            self.assertIn(qubits, benchmark_gates_indices)
             benchmark_gates_indices.remove(qubits)
         self.assertEqual([], benchmark_gates_indices)
 
@@ -278,10 +278,10 @@ class ExponentialUtilFunctionsTest(tf.test.TestCase):
         self.assertEqual(circuit.all_qubits(), frozenset({cirq.GridQubit(0,
                                                                          0)}))
 
-        self.assertTrue(isinstance(result_gates[0], cirq.XPowGate))
-        self.assertTrue(isinstance(result_gates[1], cirq.ZPowGate))
-        self.assertTrue(isinstance(result_gates[2], cirq.XPowGate))
-        self.assertTrue(isinstance(result_gates[3], cirq.ZPowGate))
+        self.assertIsInstance(result_gates[0], cirq.XPowGate)
+        self.assertIsInstance(result_gates[1], cirq.ZPowGate)
+        self.assertIsInstance(result_gates[2], cirq.XPowGate)
+        self.assertIsInstance(result_gates[3], cirq.ZPowGate)
 
         self.assertAllClose(
             np.eye(2) * np.exp(-1j * theta), cirq.unitary(circuit))
@@ -301,13 +301,13 @@ class ExponentialUtilFunctionsTest(tf.test.TestCase):
             for gate_op in moment:
                 result_gates.append(gate_op)
 
-        self.assertTrue(isinstance(result_gates[0].gate, cirq.CNotPowGate))
-        self.assertTrue(isinstance(result_gates[1].gate, cirq.ZPowGate))
-        self.assertTrue(isinstance(result_gates[2].gate, cirq.CNotPowGate))
-        self.assertTrue(isinstance(result_gates[3].gate, cirq.XPowGate))
-        self.assertTrue(isinstance(result_gates[4].gate, cirq.ZPowGate))
-        self.assertTrue(isinstance(result_gates[5].gate, cirq.XPowGate))
-        self.assertTrue(isinstance(result_gates[6].gate, cirq.ZPowGate))
+        self.assertIsInstance(result_gates[0].gate, cirq.CNotPowGate)
+        self.assertIsInstance(result_gates[1].gate, cirq.ZPowGate)
+        self.assertIsInstance(result_gates[2].gate, cirq.CNotPowGate)
+        self.assertIsInstance(result_gates[3].gate, cirq.XPowGate)
+        self.assertIsInstance(result_gates[4].gate, cirq.ZPowGate)
+        self.assertIsInstance(result_gates[5].gate, cirq.XPowGate)
+        self.assertIsInstance(result_gates[6].gate, cirq.ZPowGate)
 
         # The exponentiation of identity should not be on q[0], but on q[1].
         for i in range(3, 7):
