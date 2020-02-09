@@ -108,7 +108,7 @@ def _batch_deserialize_helper(programs, symbol_names, symbol_values):
         program = program.numpy()
         values = values.numpy().astype(float)
 
-        circuit_proto = cirq.api.google.v2.program_pb2.Program()
+        circuit_proto = cirq.google.api.v2.program_pb2.Program()
         circuit_proto.ParseFromString(program)
 
         circuit = serializer.deserialize_circuit(circuit_proto)

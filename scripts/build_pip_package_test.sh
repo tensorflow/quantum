@@ -13,10 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-pip install tensorflow==2.1.0 cirq==0.6.0
+pip install tensorflow==2.1.0 cirq==0.7.0
 
-cd TFQuantum
-
+# cd tensorflow_quantum
 echo "Y\n" | ./configure.sh
 
 bazel build -c opt --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=0" --cxxopt="-msse2" --cxxopt="-msse3" --cxxopt="-msse4" release:build_pip_package

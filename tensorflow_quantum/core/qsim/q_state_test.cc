@@ -31,7 +31,7 @@ limitations under the License.
 #include <string>
 
 #include "absl/memory/memory.h"
-#include "cirq/api/google/v2/program.pb.h"
+#include "cirq/google/api/v2/program.pb.h"
 #include "gtest/gtest.h"
 #include "tensorflow_quantum/core/qsim/q_state.h"
 #include "tensorflow_quantum/core/qsim/simulator.h"
@@ -45,7 +45,7 @@ namespace tfq {
 namespace qsim {
 namespace {
 
-using ::cirq::api::google::v2::Program;
+using ::cirq::google::api::v2::Program;
 
 void BasicTest(QState* state) {
   const std::string text = R"(
@@ -111,7 +111,8 @@ void BasicTest(QState* state) {
   tensorflow::Status status = CircuitFromProgram(program, 3, &circuit);
   ASSERT_TRUE(status.ok());
 
-  state->Update(circuit);
+  status = state->Update(circuit);
+  ASSERT_TRUE(status.ok());
 
   for (int i = 0; i < 8; i++) {
     auto amp = state->GetAmplitude(i);
