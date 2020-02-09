@@ -382,9 +382,9 @@ class PSSymbolReplaceTest(tf.test.TestCase):
             cirq.Y(bit)**sympy.Symbol('alpha'),
             cirq.Z(bit)**sympy.Symbol('new'),
         )
-        self.assertEquals(correct_00, output[0][0][0])
-        self.assertEquals(correct_01, output[0][0][1])
-        self.assertEquals(correct_02, output[0][0][2])
+        self.assertEqual(correct_00, output[0][0][0])
+        self.assertEqual(correct_01, output[0][0][1])
+        self.assertEqual(correct_02, output[0][0][2])
 
     def test_error(self):
         """Ensure that errors happen with bad inputs."""
@@ -451,9 +451,9 @@ class PSSymbolReplaceTest(tf.test.TestCase):
             cirq.Y(bit)**(sympy.Symbol('alpha') * 3.0),
             cirq.Z(bit)**(sympy.Symbol('new') * 4.0),
         )
-        self.assertEquals(correct_00, output[0][0][0])
-        self.assertEquals(correct_01, output[0][0][1])
-        self.assertEquals(correct_02, output[0][0][2])
+        self.assertEqual(correct_00, output[0][0][0])
+        self.assertEqual(correct_01, output[0][0][1])
+        self.assertEqual(correct_02, output[0][0][2])
 
     def test_simple_pad(self):
         """Test simple padding."""
@@ -494,13 +494,13 @@ class PSSymbolReplaceTest(tf.test.TestCase):
             cirq.Y(bit)**sympy.Symbol('alpha'),
             cirq.Z(bit)**sympy.Symbol('new'),
         )
-        self.assertEquals(correct_00, output[0][0][0])
-        self.assertEquals(correct_01, output[0][0][1])
-        self.assertEquals(correct_02, output[0][0][2])
+        self.assertEqual(correct_00, output[0][0][0])
+        self.assertEqual(correct_01, output[0][0][1])
+        self.assertEqual(correct_02, output[0][0][2])
 
-        self.assertEquals(correct_00, output[2][0][0])
-        self.assertEquals(correct_01, output[2][0][1])
-        self.assertEquals(correct_02, output[2][0][2])
+        self.assertEqual(correct_00, output[2][0][0])
+        self.assertEqual(correct_01, output[2][0][1])
+        self.assertEqual(correct_02, output[2][0][2])
 
         correct_10 = cirq.Circuit(
             cirq.X(bit)**sympy.Symbol('old'),
@@ -517,23 +517,23 @@ class PSSymbolReplaceTest(tf.test.TestCase):
             cirq.Y(bit)**sympy.Symbol('beta'),
             cirq.Z(bit)**sympy.Symbol('old'),
         )
-        self.assertEquals(correct_10, output[1][1][0])
-        self.assertEquals(correct_11, output[1][1][1])
-        self.assertEquals(correct_12, output[1][1][2])
+        self.assertEqual(correct_10, output[1][1][0])
+        self.assertEqual(correct_11, output[1][1][1])
+        self.assertEqual(correct_12, output[1][1][2])
 
         correct_20 = cirq.Circuit()
         correct_21 = cirq.Circuit()
         correct_22 = cirq.Circuit()
-        self.assertEquals(correct_20, output[2][2][0])
-        self.assertEquals(correct_21, output[2][2][1])
-        self.assertEquals(correct_22, output[2][2][2])
+        self.assertEqual(correct_20, output[2][2][0])
+        self.assertEqual(correct_21, output[2][2][1])
+        self.assertEqual(correct_22, output[2][2][2])
 
         correct = cirq.Circuit()
         for i in range(3):
             for j in range(3):
                 for k in range(3):
                     if i != j and (not (i == 2 and j == 0)):
-                        self.assertEquals(correct, output[i][j][k])
+                        self.assertEqual(correct, output[i][j][k])
 
     def test_complex_pad(self):
         """Test trickier padding."""
@@ -581,15 +581,15 @@ class PSSymbolReplaceTest(tf.test.TestCase):
             cirq.Z(bit)**sympy.Symbol('alpha'),
             cirq.XX(bit, bit2)**sympy.Symbol('new'))
 
-        self.assertEquals(correct_000, output[0][0][0])
-        self.assertEquals(correct_001, output[0][0][1])
-        self.assertEquals(correct_002, output[0][0][2])
-        self.assertEquals(correct_003, output[0][0][3])
+        self.assertEqual(correct_000, output[0][0][0])
+        self.assertEqual(correct_001, output[0][0][1])
+        self.assertEqual(correct_002, output[0][0][2])
+        self.assertEqual(correct_003, output[0][0][3])
 
-        self.assertEquals(correct_000, output[2][0][0])
-        self.assertEquals(correct_001, output[2][0][1])
-        self.assertEquals(correct_002, output[2][0][2])
-        self.assertEquals(correct_003, output[2][0][3])
+        self.assertEqual(correct_000, output[2][0][0])
+        self.assertEqual(correct_001, output[2][0][1])
+        self.assertEqual(correct_002, output[2][0][2])
+        self.assertEqual(correct_003, output[2][0][3])
 
         correct_110 = cirq.Circuit(
             cirq.X(bit)**sympy.Symbol('old'),
@@ -608,10 +608,10 @@ class PSSymbolReplaceTest(tf.test.TestCase):
             cirq.XX(bit, bit2)**sympy.Symbol('alpha'))
         correct_113 = cirq.Circuit()
 
-        self.assertEquals(correct_110, output[1][1][0])
-        self.assertEquals(correct_111, output[1][1][1])
-        self.assertEquals(correct_112, output[1][1][2])
-        self.assertEquals(correct_113, output[1][1][3])
+        self.assertEqual(correct_110, output[1][1][0])
+        self.assertEqual(correct_111, output[1][1][1])
+        self.assertEqual(correct_112, output[1][1][2])
+        self.assertEqual(correct_113, output[1][1][3])
 
         correct_100 = cirq.Circuit(
             cirq.X(bit)**sympy.Symbol('beta'),
@@ -622,20 +622,20 @@ class PSSymbolReplaceTest(tf.test.TestCase):
         correct_102 = cirq.Circuit()
         correct_103 = cirq.Circuit()
 
-        self.assertEquals(correct_100, output[1][0][0])
-        self.assertEquals(correct_101, output[1][0][1])
-        self.assertEquals(correct_102, output[1][0][2])
-        self.assertEquals(correct_103, output[1][0][3])
+        self.assertEqual(correct_100, output[1][0][0])
+        self.assertEqual(correct_101, output[1][0][1])
+        self.assertEqual(correct_102, output[1][0][2])
+        self.assertEqual(correct_103, output[1][0][3])
 
         correct_220 = cirq.Circuit()
         correct_221 = cirq.Circuit()
         correct_222 = cirq.Circuit()
         correct_223 = cirq.Circuit()
 
-        self.assertEquals(correct_220, output[2][2][0])
-        self.assertEquals(correct_221, output[2][2][1])
-        self.assertEquals(correct_222, output[2][2][2])
-        self.assertEquals(correct_223, output[2][2][3])
+        self.assertEqual(correct_220, output[2][2][0])
+        self.assertEqual(correct_221, output[2][2][1])
+        self.assertEqual(correct_222, output[2][2][2])
+        self.assertEqual(correct_223, output[2][2][3])
 
         correct = cirq.Circuit()
         for i in range(3):
@@ -643,7 +643,7 @@ class PSSymbolReplaceTest(tf.test.TestCase):
                 for k in range(3):
                     if i != j and (not (i == 2 and j == 0)) \
                         and (not (i == 1 and j == 0)):
-                        self.assertEquals(correct, output[i][j][k])
+                        self.assertEqual(correct, output[i][j][k])
 
 
 class PSWeightsFromSymbolTest(tf.test.TestCase):
