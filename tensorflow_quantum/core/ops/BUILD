@@ -120,6 +120,7 @@ py_library(
 py_test(
     name = "tfq_simulate_ops_test",
     srcs = ["tfq_simulate_ops_test.py"],
+    python_version = "PY3",
     deps = [
         ":tfq_simulate_ops_py",
         "//tensorflow_quantum/python:util",
@@ -140,6 +141,7 @@ py_test(
     name = "circuit_execution_ops_test",
     timeout = "eternal",
     srcs = ["circuit_execution_ops_test.py"],
+    python_version = "PY3",
     deps = [
         ":circuit_execution_ops",
         "//tensorflow_quantum/python:util",
@@ -158,6 +160,7 @@ py_library(
 py_test(
     name = "cirq_ops_test",
     srcs = ["cirq_ops_test.py"],
+    python_version = "PY3",
     deps = [
         ":batch_util",
         ":cirq_ops",
@@ -178,6 +181,7 @@ py_test(
     name = "batch_util_test",
     timeout = "eternal",
     srcs = ["batch_util_test.py"],
+    python_version = "PY3",
     deps = [
         ":batch_util",
         "//tensorflow_quantum/python:util",
@@ -196,6 +200,7 @@ py_library(
 py_test(
     name = "tfq_ps_util_ops_test",
     srcs = ["tfq_ps_util_ops_test.py"],
+    python_version = "PY3",
     deps = [
         ":tfq_ps_util_ops_py",
         "//tensorflow_quantum/python:util",
@@ -214,6 +219,7 @@ py_library(
 py_test(
     name = "tfq_utility_ops_test",
     srcs = ["tfq_utility_ops_test.py"],
+    python_version = "PY3",
     deps = [
         ":tfq_utility_ops_py",
         "//tensorflow_quantum/core/serialize:serializer",

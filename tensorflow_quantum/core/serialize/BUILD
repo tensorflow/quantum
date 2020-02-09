@@ -16,6 +16,7 @@ py_library(
 py_test(
     name = "serializer_test",
     srcs = ["serializer_test.py"],
+    python_version = "PY3",
     deps = [
         ":serializer",
     ],

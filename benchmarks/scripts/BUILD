@@ -8,6 +8,7 @@ exports_files(["__init__.py"])
 py_test(
     name = "benchmark_clifford_circuit",
     srcs = ["benchmark_clifford_circuit.py"],
+    python_version = "PY3",
     deps = [
         "//tensorflow_quantum/core/ops:tfq_simulate_ops_py",
         "//tensorflow_quantum/core/serialize:serializer",
@@ -18,6 +19,7 @@ py_test(
 py_test(
     name = "benchmark_random_circuit",
     srcs = ["benchmark_random_circuit.py"],
+    python_version = "PY3",
     deps = [
         "//tensorflow_quantum/core/ops:tfq_simulate_ops_py",
         "//tensorflow_quantum/core/serialize:serializer",
@@ -28,6 +30,7 @@ py_test(
 py_test(
     name = "benchmark_op_gradients",
     srcs = ["benchmark_op_gradients.py"],
+    python_version = "PY3",
     deps = [
         "//tensorflow_quantum/core/ops:batch_util",
         "//tensorflow_quantum/core/ops:cirq_ops",
@@ -52,6 +55,7 @@ py_library(
 py_test(
     name = "benchmark_util_test",
     srcs = ["benchmark_util_test.py"],
+    python_version = "PY3",
     deps = [
         ":benchmark_util",
         "@local_config_tf//:test_log_pb2",
