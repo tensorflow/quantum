@@ -36,11 +36,7 @@ void StateSpace::DeleteState(State* state) {
   qsim::_aligned_free(state->release());
 }
 
-State StateSpace::NullState() { return State(nullptr, &free); }
-
 uint64_t StateSpace::Size() const { return size_ / 2; }
-
-uint64_t StateSpace::RawSize() const { return size_; }
 
 float* StateSpace::RawData(State* state) { return state->get(); }
 

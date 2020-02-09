@@ -45,22 +45,6 @@ void StateSpaceAVX::CopyState(const State& src, State* dest) const {
   }
 }
 
-void StateSpaceAVX::SetStateUniform(State* state) const {
-  uint64_t size = size_ / 2;
-
-  __m256 valu = _mm256_set1_ps(1.0f / std::sqrt(size));
-  __m256 val0 = _mm256_setzero_ps();
-
-  uint64_t size2 = size / 8;
-
-  auto data = state->get();
-
-  for (uint64_t i = 0; i < size2; ++i) {
-    _mm256_store_ps(data + 16 * i, valu);
-    _mm256_store_ps(data + 16 * i + 8, val0);
-  }
-}
-
 void StateSpaceAVX::SetStateZero(State* state) const {
   uint64_t size2 = (size_ / 2) / 8;
 

@@ -36,18 +36,6 @@ void StateSpaceSlow::CopyState(const State& src, State* dest) const {
   }
 }
 
-void StateSpaceSlow::SetStateUniform(State* state) const {
-  uint64_t size = size_ / 2;
-  auto data = RawData(state);
-  float norm = 1.0 / std::sqrt(size);
-
-  //#pragma omp parallel for num_threads(num_threads_)
-  for (uint64_t i = 0; i < size; ++i) {
-    data[2 * i + 0] = norm;
-    data[2 * i + 1] = 0;
-  }
-}
-
 void StateSpaceSlow::SetStateZero(State* state) const {
   uint64_t size = size_ / 2;
 
