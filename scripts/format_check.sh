@@ -99,6 +99,7 @@ while read -r formatting_outputs; do
         CFORMATCHECK=64
     fi
 done <<< "$formatting_outputs"
+echo "$formatting_outputs"
 if [ "$CFORMATCHECK" == "0" ]; then
     echo "C++ format checking complete!";
     exit 0;
