@@ -19,27 +19,27 @@ limitations under the License.
 
 #include "tensorflow_quantum/core/src/gates_def.h"
 
-namespace tfq{
+namespace tfq {
 
 Circuit::Circuit() : num_qubits(0) {}
 Circuit::Circuit(unsigned int num_qubits, std::vector<Gate>& gates)
     : num_qubits(num_qubits), gates(gates) {}
 
 bool Circuit::operator==(const Circuit& r) const {
-    if (this->num_qubits != r.num_qubits) {
-      return false;
-    }
-    if (this->gates.size() != r.gates.size()) {
-      return false;
-    }
-    for (size_t i = 0; i < this->gates.size(); i++) {
-      if (this->gates.at(i) != r.gates.at(i)) {
-        return false;
-      }
-    }
-    return true;
+  if (this->num_qubits != r.num_qubits) {
+    return false;
   }
+  if (this->gates.size() != r.gates.size()) {
+    return false;
+  }
+  for (size_t i = 0; i < this->gates.size(); i++) {
+    if (this->gates.at(i) != r.gates.at(i)) {
+      return false;
+    }
+  }
+  return true;
+}
 
 bool Circuit::operator!=(const Circuit& r) const { return !(*this == r); }
 
-}  //namespace tfq
+}  // namespace tfq
