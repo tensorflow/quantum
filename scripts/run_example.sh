@@ -14,6 +14,5 @@
 # limitations under the License.
 # ==============================================================================
 cd ..
-python TFQuantum/scripts/import_test.py
-cp TFQuantum/scripts/import_test.py import_test.py
+cp quantum/scripts/import_test.py import_test.py
 python import_test.py
