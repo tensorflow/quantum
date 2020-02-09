@@ -53,7 +53,7 @@
 <table class="tfo-notebook-buttons tfo-api" align="left">
 
 <td>
-  <a target="_blank" href="https://github.com/quantumlib/TFQuantum/tree/master/tensorflow_quantum/python/layers/circuit_construction/base_layer.py">
+  <a target="_blank" href="https://github.com/tensorflow/quantum/tree/master/tensorflow_quantum/python/layers/circuit_construction/base_layer.py">
     <img src="https://www.tensorflow.org/images/GitHub-Mark-32px.png" />
     View source on GitHub
   </a>
@@ -122,7 +122,7 @@ circuit inside the TF graph by prepending or appending to the input circuit.
 
 <h2 id="__init__"><code>__init__</code></h2>
 
-<a target="_blank" href="https://github.com/quantumlib/TFQuantum/tree/master/tensorflow_quantum/python/layers/circuit_construction/base_layer.py">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/quantum/tree/master/tensorflow_quantum/python/layers/circuit_construction/base_layer.py">View source</a>
 
 ``` python
 __init__(
@@ -452,7 +452,7 @@ Output tensor(s).
 
 <h3 id="build"><code>build</code></h3>
 
-<a target="_blank" href="https://github.com/quantumlib/TFQuantum/tree/master/tensorflow_quantum/python/layers/circuit_construction/base_layer.py">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/quantum/tree/master/tensorflow_quantum/python/layers/circuit_construction/base_layer.py">View source</a>
 
 ``` python
 build(input_shape)
@@ -564,7 +564,7 @@ A layer instance.
 
 <h3 id="get_circuit"><code>get_circuit</code></h3>
 
-<a target="_blank" href="https://github.com/quantumlib/TFQuantum/tree/master/tensorflow_quantum/python/layers/circuit_construction/base_layer.py">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/quantum/tree/master/tensorflow_quantum/python/layers/circuit_construction/base_layer.py">View source</a>
 
 ``` python
 get_circuit()
