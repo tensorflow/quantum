@@ -26,8 +26,8 @@ cd ..
 python3 -m pip install --upgrade pip
 python3 -m pip install tensorflow==2.1.0
 
-cp -r custom-op/third_party/toolchains TFQuantum/third_party/
-cd /TFQuantum
+cp -r custom-op/third_party/toolchains quantum/third_party/
+cd /quantum
 echo "Y\n" | ./configure.sh
 
 bazel build -c opt --crosstool_top=//third_party/toolchains/preconfig/ubuntu16.04/gcc7_manylinux2010-nvcc-cuda10.0:toolchain \
@@ -48,7 +48,7 @@ cd Python-3.7.5rc1
 make -j2 build_all
 sudo make altinstall
 
-cd /TFQuantum
+cd /quantum
 
 python3.7 -m pip install --upgrade pip setuptools
 python3.7 -m pip install tensorflow==2.1.0
@@ -67,5 +67,5 @@ bazel clean
 sed -i 's/python3.7/python3/g' configure.sh
 sed -i 's/python3.7/python3/g' release/build_pip_package.sh
 
-rm -r /TFQuantum/third_party/toolchains
+rm -r /quantum/third_party/toolchains
 exit

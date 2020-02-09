@@ -15,7 +15,7 @@
 # ==============================================================================
 # Load up an unbuntu 16.04 docker for building compatable pip packages.
 sudo docker pull tensorflow/tensorflow:custom-op-ubuntu16
-sudo docker run -it -v ${PWD}:/TFQuantum -w /TFQuantum tensorflow/tensorflow:custom-op-ubuntu16
+sudo docker run -it -v ${PWD}:/quantum -w /quantum tensorflow/tensorflow:custom-op-ubuntu16
 
 # Writing the permissions for the wheels directory inside of the docker doesn't work.
 sudo chmod -R 777 wheels

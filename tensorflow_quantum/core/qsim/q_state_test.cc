@@ -111,7 +111,8 @@ void BasicTest(QState* state) {
   tensorflow::Status status = CircuitFromProgram(program, 3, &circuit);
   ASSERT_TRUE(status.ok());
 
-  state->Update(circuit);
+  status = state->Update(circuit);
+  ASSERT_TRUE(status.ok());
 
   for (int i = 0; i < 8; i++) {
     auto amp = state->GetAmplitude(i);

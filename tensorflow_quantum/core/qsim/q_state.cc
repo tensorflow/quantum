@@ -145,7 +145,10 @@ tensorflow::Status QState::ComputeExpectation(const tfq::proto::PauliSum& p_sum,
     }
     tfq::qsim::QState transformed_state(this->num_qubits_);
     this->CopyOnto(&transformed_state);
-    transformed_state.Update(measurement_circuit);
+    status = transformed_state.Update(measurement_circuit);
+    if (!status.ok()) {
+      return status;
+    }
     *expectation_value +=
         term.coefficient_real() * this->GetRealInnerProduct(transformed_state);
   }
