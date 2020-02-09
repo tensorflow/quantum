@@ -47,7 +47,7 @@ void Simulator2SSE::ApplyGate2(const unsigned int q0, const unsigned int q1,
 }
 
 void Simulator2SSE::ApplyGate1(const float* matrix, State* state) const {
-  throw std::invalid_argument("SSE simulator doesn't support small circuits.");
+  CHECK(false) << "SSE simulator doesn't support small circuits.";
 }
 
 void Simulator2SSE::ApplyGate2HH(const unsigned int q0, const unsigned int q1,

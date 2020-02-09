@@ -17,7 +17,7 @@ limitations under the License.
 #define SIMULATOR_H_
 
 #include <memory>
-
+#include "glog/logging.h"
 #include "tensorflow_quantum/core/qsim/statespace.h"
 
 namespace tfq {
