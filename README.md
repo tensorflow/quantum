@@ -29,19 +29,19 @@ for Quantum Computing research that would not have otherwise been possible.
 
 ## Installation
 
-See the [installation instructions](https://github.com/quantumlib/TFQuantum/blob/master/docs/install.md).
+See the [installation instructions](https://github.com/tensorflow/quantum/blob/master/docs/install.md).
 
 
 ## Examples
 
 All of our examples can be found here in the form of
-[Python notebook tutorials](https://github.com/quantumlib/TFQuantum/tree/master/docs/tutorials)
+[Python notebook tutorials](https://github.com/tensorflow/quantum/tree/master/docs/tutorials)
 
 
 ## Report issues
 
 Report bugs or feature requests using the
-[TensorFlow Quantum issue tracker](https://github.com/quantumlib/TFQuantum/issues).
+[TensorFlow Quantum issue tracker](https://github.com/tensorflow/quantum/issues).
 
 In the meantime check out the [install instructions](./docs/install.md) to get
 the experimental code running!
@@ -51,5 +51,5 @@ the experimental code running!
 
 We are eager to collaborate with you! TensorFlow Quantum is still a very young codebase,
 if you have ideas for features that you would like added feel free to check out our
-[Contributor Guidelines](https://github.com/quantumlib/TFQuantum/blob/master/CONTRIBUTING.md)
+[Contributor Guidelines](https://github.com/tensorflow/quantum/blob/master/CONTRIBUTING.md)
 to get started.
