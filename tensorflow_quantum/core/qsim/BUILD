@@ -185,6 +185,7 @@ cc_library(
     hdrs = ["statespace_avx.h"],
     deps = [
         ":statespace",
+        ":util",
     ],
 )
 

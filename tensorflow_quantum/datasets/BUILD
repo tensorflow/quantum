@@ -13,6 +13,7 @@ py_library(
 py_test(
     name = "cluster_state_test",
     srcs = ["cluster_state_test.py"],
+    python_version = "PY3",
     deps = [
         ":cluster_state",
     ],
