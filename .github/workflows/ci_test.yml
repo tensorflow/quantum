@@ -14,6 +14,6 @@ jobs:
           python-version: '3.6'
           architecture: 'x64'
       - name: 'Install Format tools'
-        run: pip install --upgrade pip setuptools wheel yapf; sudo apt-get install -y clang-format
+        run: pip install --upgrade pip setuptools wheel yapf; find tensorflow_quantum/ -iname *.h -o -iname *.cc | xargs clang-format -style=google -output-replacements-xml
       - name: 'Format Check'
         run: ./scripts/format_check.sh
