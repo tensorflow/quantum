@@ -3,7 +3,7 @@ name: CI
 on: [pull_request]
 
 jobs:
-  build:
+  stage-one:
 
     runs-on: ubuntu-16.04
 
