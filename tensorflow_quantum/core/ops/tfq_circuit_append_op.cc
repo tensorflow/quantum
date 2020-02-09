@@ -26,7 +26,6 @@ limitations under the License.
 
 namespace tfq {
 
-using ::cirq::google::api::v2::Circuit;
 using ::cirq::google::api::v2::Moment;
 using ::cirq::google::api::v2::Program;
 

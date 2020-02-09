@@ -34,7 +34,6 @@ using ::cirq::google::api::v2::Program;
 using ::tensorflow::Status;
 using ::tfq::Circuit;
 using ::tfq::CircuitFromProgram;
-using ::tfq::Gate;
 using ::tfq::qsim::QState;
 
 class TfqSimulateStateOp : public tensorflow::OpKernel {

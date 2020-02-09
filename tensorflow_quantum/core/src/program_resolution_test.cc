@@ -28,7 +28,6 @@ namespace tfq {
 namespace {
 
 using cirq::google::api::v2::Program;
-using tensorflow::Status;
 
 TEST(ProgramResolutionTest, ResolveQubitIds) {
   const std::string text = R"(
