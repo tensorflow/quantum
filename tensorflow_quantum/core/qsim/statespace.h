@@ -36,11 +36,7 @@ class StateSpace {
 
   static void DeleteState(State* state);
 
-  static State NullState();
-
   uint64_t Size() const;
-
-  uint64_t RawSize() const;
 
   static float* RawData(State* state);
   static const float* RawData(const State& state);
@@ -48,7 +44,6 @@ class StateSpace {
   static bool Valid(const State& state);
 
   virtual void CopyState(const State& src, State* dest) const = 0;
-  virtual void SetStateUniform(State* state) const = 0;
   virtual void SetStateZero(State* state) const = 0;
   virtual float GetRealInnerProduct(const State& a, const State& b) const = 0;
   virtual std::complex<float> GetAmpl(const State& state,
