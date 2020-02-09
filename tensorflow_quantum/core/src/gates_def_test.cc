@@ -92,6 +92,10 @@ TEST(GatesDefTest, GateEquality) {
   ASSERT_NE(test_gate_1q, real_gate_1q);
   test_gate_1q.qubits[0] = real_gate_1q.qubits[0];
 
+  test_gate_1q.matrix[0] = real_gate_1q.matrix[0] + 1;
+  ASSERT_NE(test_gate_1q, real_gate_1q);
+  test_gate_1q.matrix[0] = real_gate_1q.matrix[0];
+
   test_gate_1q.matrix[7] = real_gate_1q.matrix[7] + 1;
   ASSERT_NE(test_gate_1q, real_gate_1q);
   test_gate_1q.matrix[7] = real_gate_1q.matrix[7];
@@ -125,6 +129,10 @@ TEST(GatesDefTest, GateEquality) {
   test_gate_2q.qubits[1] = real_gate_2q.qubits[1] + 1;
   ASSERT_NE(test_gate_2q, real_gate_2q);
   test_gate_2q.qubits[1] = real_gate_2q.qubits[1];
+
+  test_gate_2q.matrix[0] = real_gate_2q.matrix[0] + 1;
+  ASSERT_NE(test_gate_2q, real_gate_2q);
+  test_gate_2q.matrix[0] = real_gate_2q.matrix[0];
 
   test_gate_2q.matrix[31] = real_gate_2q.matrix[31] + 1;
   ASSERT_NE(test_gate_2q, real_gate_2q);
