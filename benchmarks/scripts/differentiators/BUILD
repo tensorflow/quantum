@@ -8,6 +8,7 @@ exports_files(["__init__.py"])
 py_test(
     name = "convergence_test",
     srcs = ["convergence_test.py"],
+    python_version = "PY3",
     deps = [
         "//tensorflow_quantum/core/ops:batch_util",
         "//tensorflow_quantum/core/ops:cirq_ops",

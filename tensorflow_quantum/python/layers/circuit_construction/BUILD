@@ -17,6 +17,7 @@ py_library(
 py_test(
     name = "elementary_test",
     srcs = ["elementary_test.py"],
+    python_version = "PY3",
     deps = [
         ":elementary",
         "//tensorflow_quantum/python:util",

@@ -30,6 +30,7 @@ py_library(
 py_test(
     name = "controlled_pqc_test",
     srcs = ["controlled_pqc_test.py"],
+    python_version = "PY3",
     deps = [
         ":controlled_pqc",
         "//tensorflow_quantum/python:util",
@@ -39,6 +40,7 @@ py_test(
 py_test(
     name = "pqc_test",
     srcs = ["pqc_test.py"],
+    python_version = "PY3",
     deps = [
         ":pqc",
         "//tensorflow_quantum/python:util",
