@@ -32,7 +32,6 @@ using ::cirq::google::api::v2::Circuit;
 using ::cirq::google::api::v2::Moment;
 using ::cirq::google::api::v2::Operation;
 using ::cirq::google::api::v2::Program;
-using ::cirq::google::api::v2::Qubit;
 using ::tensorflow::Status;
 using ::tensorflow::Tensor;
 
