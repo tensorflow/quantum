@@ -44,27 +44,6 @@ void StateSpaceSSE::CopyState(const State& src, State* dest) const {
   }
 }
 
-void StateSpaceSSE::SetStateUniform(State* state) const {
-  uint64_t size = size_ / 2;
-
-  __m128 valu = _mm_set1_ps(1.0f / std::sqrt(size));
-  __m128 val0 = _mm_setzero_ps();
-
-  uint64_t size2 = size / 8;
-
-  auto data = state->get();
-
-  //#pragma omp parallel for num_threads(num_threads_)
-  for (uint64_t i = 0; i < size2; ++i) {
-    //_mm256_store_ps(state.get() + 16 * i, valu);
-    _mm_store_ps(data + 16 * i, valu);
-    _mm_store_ps(data + 16 * i + 4, valu);
-    //_mm256_store_ps(state.get() + 16 * i + 8, val0);
-    _mm_store_ps(data + 16 * i + 8, val0);
-    _mm_store_ps(data + 16 * i + 12, val0);
-  }
-}
-
 void StateSpaceSSE::SetStateZero(State* state) const {
   uint64_t size2 = (size_ / 2) / 8;
 
