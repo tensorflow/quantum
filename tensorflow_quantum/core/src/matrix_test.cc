@@ -139,7 +139,7 @@ TEST(MatrixTest, Matrix4Multiply21) {
 
   // Tensor up single-qubit matrix for ordinary complex matmul.
   // the matrix below represents C \otimes Id
-  std::complex<float> c[4][4], d[4][4], f[4][4];
+  std::complex<float> c[4][4], f[4][4];
   c[0][0] = std::complex<float>(a[0], a[1]);
   c[1][1] = c[0][0];
   c[0][2] = std::complex<float>(a[2], a[3]);
@@ -175,7 +175,7 @@ TEST(MatrixTest, Matrix4Multiply20) {
 
   // Use complex matmul on transformed versions of the above.
   // the matrix below represents Id \otimes C
-  std::complex<float> c[4][4], d[4][4], f[4][4];
+  std::complex<float> c[4][4], f[4][4];
   c[0][0] = std::complex<float>(a[0], a[1]);
   c[0][1] = std::complex<float>(a[2], a[3]);
   c[1][0] = std::complex<float>(a[4], a[5]);
