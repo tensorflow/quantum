@@ -45,7 +45,7 @@ void Simulator2AVX::ApplyGate2(const unsigned int q0, const unsigned int q1,
 }
 
 void Simulator2AVX::ApplyGate1(const float* matrix, State* state) const {
-  throw std::invalid_argument("AVX simulator doesn't support small circuits.");
+  CHECK(false) << "AVX simulator doesn't support small circuits.";
 }
 
 void Simulator2AVX::ApplyGate2HH(const unsigned int q0, const unsigned int q1,

@@ -117,16 +117,18 @@ TEST(CircuitParserTest, CircuitFromProgramEmpty) {
   real_circuit_ident_odd.num_qubits = 3;
   real_circuit_ident_odd.gates.push_back(gate_01);
   real_circuit_ident_odd.gates.push_back(gate_12);
-  ASSERT_TRUE(CircuitFromProgram(program_proto_ident_odd, 3,
-                           &test_circuit_ident_odd).ok());
+  ASSERT_TRUE(
+      CircuitFromProgram(program_proto_ident_odd, 3, &test_circuit_ident_odd)
+          .ok());
   ASSERT_EQ(test_circuit_ident_odd, real_circuit_ident_odd);
 
   Circuit real_circuit_ident_even, test_circuit_ident_even;
   real_circuit_ident_even.num_qubits = 4;
   real_circuit_ident_even.gates.push_back(gate_01);
   real_circuit_ident_even.gates.push_back(gate_23);
-  ASSERT_TRUE(CircuitFromProgram(program_proto_ident_even, 4,
-                                   &test_circuit_ident_even).ok());
+  ASSERT_TRUE(
+      CircuitFromProgram(program_proto_ident_even, 4, &test_circuit_ident_even)
+          .ok());
   ASSERT_EQ(test_circuit_ident_even, real_circuit_ident_even);
 }
 
