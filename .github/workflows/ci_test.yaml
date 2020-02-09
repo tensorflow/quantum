@@ -17,3 +17,7 @@ jobs:
         run: pip install --upgrade pip setuptools wheel yapf; sudo apt-get install -y clang-format
       - name: 'Format Check'
         run: ./scripts/format_check.sh
+      - name: 'Install Lint tools'
+        run: pip install --upgrade pylint
+      - name: 'Lint Check'
+        run: ./scripts/lint_all.sh
