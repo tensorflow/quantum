@@ -14,7 +14,7 @@
 # limitations under the License.
 # ==============================================================================
 sudo docker pull quay.io/pypa/manylinux2010_x86_64
-sudo docker run -it -v ${PWD}:/TFQuantum -w /TFQuantum quay.io/pypa/manylinux2010_x86_64
+sudo docker run -it -v ${PWD}:/quantum -w /quantum quay.io/pypa/manylinux2010_x86_64
 
 cp -r wheelhouse/. wheels/
 sudo rm -r wheelhouse
