@@ -21,3 +21,22 @@ jobs:
         run: pip install --upgrade pylint
       - name: 'Lint Check'
         run: ./scripts/lint_all.sh
+
+  stage-two:
+
+    runs-on: ubuntu-16.04
+
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-python@v1
+        with:
+          python-version: '3.6'
+          architecture: 'x64'
+      - name: 'Install Bazel on CI'
+        run: ./scripts/ci_install.sh
+      - name: 'Configure CI TF'
+        run: echo "Y\n" | ./configure.sh
+      - name: 'Build Wheel Test'
+        run: ./scripts/build_pip_package_test.sh
+      - name: 'Test Wheel'
+        run: ./scripts/run_example.sh
