@@ -103,7 +103,7 @@ bool Gate::operator==(const Gate& r) const {
       return false;
     }
   }
-  if (num_qubits > 0) {
+  if (this->num_qubits > 0) {
     // real and imaginary component for each matrix site
     const unsigned int true_mat_size =
         (2 << this->num_qubits) * (1 << this->num_qubits);
