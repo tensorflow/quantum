@@ -67,6 +67,16 @@ cc_library(
     ],
 )
 
+cc_test(
+    name = "gates_def_test",
+    size = "small",
+    srcs = ["gates_def_test.cc"],
+    deps = [
+        ":gates_def",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
 cc_library(
     name = "matrix",
     hdrs = ["matrix.h"],
