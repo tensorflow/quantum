@@ -32,7 +32,6 @@ limitations under the License.
 namespace tfq {
 namespace {
 
-using ::cirq::google::api::v2::Arg;
 using ::cirq::google::api::v2::Moment;
 using ::cirq::google::api::v2::Operation;
 using ::cirq::google::api::v2::Program;
