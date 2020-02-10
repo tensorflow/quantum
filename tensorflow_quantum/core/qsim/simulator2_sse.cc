@@ -23,6 +23,7 @@ limitations under the License.
 #include <cmath>
 #include <cstdint>
 
+#include "tensorflow/core/platform/logging.h"
 #include "tensorflow_quantum/core/qsim/simulator.h"
 #include "tensorflow_quantum/core/qsim/statespace_sse.h"
 
