@@ -14,7 +14,7 @@
 <table class="tfo-notebook-buttons tfo-api" align="left">
 
 <td>
-  <a target="_blank" href="https://github.com/quantumlib/TFQuantum/tree/master/tensorflow_quantum/python/differentiators/differentiator.py">
+  <a target="_blank" href="https://github.com/tensorflow/quantum/tree/master/tensorflow_quantum/python/differentiators/differentiator.py">
     <img src="https://www.tensorflow.org/images/GitHub-Mark-32px.png" />
     View source on GitHub
   </a>
@@ -39,7 +39,7 @@ to backpropagate through a quantum circuit.
 
 <h3 id="differentiate_analytic"><code>differentiate_analytic</code></h3>
 
-<a target="_blank" href="https://github.com/quantumlib/TFQuantum/tree/master/tensorflow_quantum/python/differentiators/differentiator.py">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/quantum/tree/master/tensorflow_quantum/python/differentiators/differentiator.py">View source</a>
 
 ``` python
 differentiate_analytic(
@@ -92,7 +92,7 @@ you are differentiating through.
 
 <h3 id="differentiate_sampled"><code>differentiate_sampled</code></h3>
 
-<a target="_blank" href="https://github.com/quantumlib/TFQuantum/tree/master/tensorflow_quantum/python/differentiators/differentiator.py">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/quantum/tree/master/tensorflow_quantum/python/differentiators/differentiator.py">View source</a>
 
 ``` python
 differentiate_sampled(
@@ -149,7 +149,7 @@ you are differentiating through.
 
 <h3 id="generate_differentiable_op"><code>generate_differentiable_op</code></h3>
 
-<a target="_blank" href="https://github.com/quantumlib/TFQuantum/tree/master/tensorflow_quantum/python/differentiators/differentiator.py">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/quantum/tree/master/tensorflow_quantum/python/differentiators/differentiator.py">View source</a>
 
 ``` python
 generate_differentiable_op()
@@ -191,7 +191,7 @@ a call to this differentiators `differentiate_*` function.
 
 <h3 id="refresh"><code>refresh</code></h3>
 
-<a target="_blank" href="https://github.com/quantumlib/TFQuantum/tree/master/tensorflow_quantum/python/differentiators/differentiator.py">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/quantum/tree/master/tensorflow_quantum/python/differentiators/differentiator.py">View source</a>
 
 ``` python
 refresh()

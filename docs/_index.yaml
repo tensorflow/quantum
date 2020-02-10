@@ -63,7 +63,7 @@ landing_page:
         path: https://www.youtube.com/watch?v=16ZfkPRVf2w
     - heading: "TF Quantum on GitHub"
       image_path: /resources/images/github-card-16x9.png
-      path: https://github.com/quantumlib/TFQuantum
+      path: https://github.com/tensorflow/quantum
       buttons:
       - label: "View on GitHub"
-        path: https://github.com/quantumlib/TFQuantum
+        path: https://github.com/tensorflow/quantum

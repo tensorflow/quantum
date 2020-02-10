@@ -7,6 +7,7 @@ exports_files(["__init__.py"])
 
 cc_library(
     name = "circuit",
+    srcs = ["circuit.cc"],
     hdrs = ["circuit.h"],
     deps = [
         ":gates_def",
