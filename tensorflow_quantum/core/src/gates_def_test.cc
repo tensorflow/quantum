@@ -198,27 +198,18 @@ TEST(GatesDefTest, XPow){
   builder.Build(time, locations, arg_map, &test_gate);
   ASSERT_EQ(test_gate, real_gate);
 
-  // // RX gates are XPow gates with global shift of -0.5
-  // const float angle = 0.123456;
-  // std::array<float, 8> matrix_rot{std::cos(angle / 2.), 0, 0, -std::sin(angle / 2.), 0, -std::sin(angle / 2.), std::cos(angle / 2.), 0};
-  // Gate real_gate_rot(time, qubit, matrix_rot);
-  // absl::flat_hash_map<std::string, float> arg_map_rot;
-  // arg_map["global_shift"] = 0.0;
-  // arg_map["exponent"] = 1.0;
-  // arg_map["exponent_scalar"] = 1.0;
-  // Gate test_gate_rot;
-  // builder.Build(time, locations, arg_map_rot, &test_gate_rot);
-  // ASSERT_EQ(test_gate_rot, real_gate_rot);
-
-  // for (auto const &angle : {0.123456, 5.4321}) {
-  //   const auto gate = XPowGate().GetMatrix(angle/M_PI, -0.5);
-  //   Eigen::Matrix2cd gate_test;
-  //   gate_test << std::complex<double>(std::cos(angle / 2.), 0),
-  //       std::complex<double>(0, -std::sin(angle / 2.)),
-  //       std::complex<double>(0, -std::sin(angle / 2.)),
-  //       std::complex<double>(std::cos(angle / 2.), 0);
-  //   gate_test_func_2cd(gate, gate_test);
-  // }
+  // RX gates are XPow gates with global shift of -0.5
+  for (auto const &angle : {0.123456, 5.4321}) {
+    std::array<float, 8> matrix_rot{std::cos(angle / 2.), 0, 0, -std::sin(angle / 2.), 0, -std::sin(angle / 2.), std::cos(angle / 2.), 0};
+    Gate real_gate_rot(time, qubit, matrix_rot);
+    absl::flat_hash_map<std::string, float> arg_map_rot;
+    arg_map_rot["global_shift"] = 0.0;
+    arg_map_rot["exponent"] = 1.0;
+    arg_map_rot["exponent_scalar"] = 1.0;
+    Gate test_gate_rot;
+    builder.Build(time, locations, arg_map_rot, &test_gate_rot);
+    ASSERT_EQ(test_gate_rot, real_gate_rot);
+  }
 }
 
 TEST(GatesDefTest, YPow){
