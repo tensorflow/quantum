@@ -58,7 +58,7 @@ Status ResolveQubitIds(Program* program,
   std::sort(ids.begin(), ids.end());
 
   absl::flat_hash_map<std::string, int> id_to_index;
-  for (int i = 0; i < ids.size(); i++) {
+  for (size_t i = 0; i < ids.size(); i++) {
     id_to_index[ids[i]] = i;
   }
 
@@ -74,7 +74,7 @@ Status ResolveQubitIds(Program* program,
   }
 
   if (p_sums) {
-    for (int i = 0; i < p_sums->size(); i++) {
+    for (size_t i = 0; i < p_sums->size(); i++) {
       // Replace the PauliSum Qubit ids with the indices.
       for (PauliTerm& term : *(p_sums->at(i)).mutable_terms()) {
         for (PauliQubitPair& pair : *term.mutable_paulis()) {
