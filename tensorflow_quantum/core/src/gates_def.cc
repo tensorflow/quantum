@@ -95,17 +95,14 @@ bool operator==(const Gate& l, const Gate& r) {
   if (l.time != r.time) {
     return false;
   }
-  std::cout << "times are equal " << std::endl;
   if (l.num_qubits != r.num_qubits) {
     return false;
   }
-  std::cout << "num_qubits are equal " << std::endl;
   for (unsigned int i = 0; i < l.num_qubits; i++) {
     if (l.qubits.at(i) != r.qubits.at(i)) {
       return false;
     }
   }
-  std::cout << "qubits are equal " << std::endl;
   unsigned int true_mat_size;
   if (l.num_qubits == 0) {
     true_mat_size = 0;
@@ -114,17 +111,11 @@ bool operator==(const Gate& l, const Gate& r) {
   } else {
     true_mat_size = 32;
   }
-  std::cout << "true_mat_size " << true_mat_size << std::endl;
   for (unsigned int i = 0; i < true_mat_size; i++) {
-    if (abs(l.matrix.at(i) - r.matrix.at(i)) > 1e-6) {
-      std::cout << "* Not equal at(" << i << ") " << l.matrix.at(i) << ", " <<
-        r.matrix.at(i) << std::endl;
+    if (std::fabs(l.matrix.at(i) - r.matrix.at(i)) > 1e-6) {
       return false;
     }
-    std::cout << "+ Equal at(" << i << ") " << l.matrix.at(i) << ", " <<
-            r.matrix.at(i) << std::endl;
   }
-  std::cout << "matrices are equal" << std::endl;
   return true;
 }
 
