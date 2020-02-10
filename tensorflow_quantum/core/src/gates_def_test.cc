@@ -48,26 +48,6 @@ TEST(GatesDefTest, GateBuilder) {
   ASSERT_EQ(test_gate, Gate(time_1q, qubit_1q, matrix_1q));
 }
 
-const double ABS_TOL = 1.0e-14;
-
-void gate_test_func_2cd(Eigen::Matrix2cd gate, Eigen::Matrix2cd gate_test) {
-  for (size_t i = 0; i < 2; ++i) {
-    for (size_t j = 0; j < 2; ++j) {
-      EXPECT_NEAR(gate(i, j).real(), gate_test(i, j).real(), ABS_TOL);
-      EXPECT_NEAR(gate(i, j).imag(), gate_test(i, j).imag(), ABS_TOL);
-    }
-  }
-}
-
-void gate_test_func_4cd(Eigen::Matrix4cd gate, Eigen::Matrix4cd gate_test) {
-  for (size_t i = 0; i < 4; ++i) {
-    for (size_t j = 0; j < 4; ++j) {
-      EXPECT_NEAR(gate(i, j).real(), gate_test(i, j).real(), ABS_TOL);
-      EXPECT_NEAR(gate(i, j).imag(), gate_test(i, j).imag(), ABS_TOL);
-    }
-  }
-}
-
 // ============================================================================
 // GateBuilder implementation tests.
 // ============================================================================
@@ -91,20 +71,42 @@ TEST(GatesDefTest, XPow){
   ASSERT_EQ(test_gate, real_gate);
 }
 
-// cirq Y gate is YPowGate at exponent of 1.
 TEST(GatesDefTest, YPow){
-  const auto gate = YPowGate().GetMatrix(1, 0);
-  Eigen::Matrix2cd gate_test;
-  gate_test << 0, std::complex<double>(0, -1), std::complex<double>(0, 1), 0;
-  gate_test_func_2cd(gate, gate_test);
+  YPowGateBuilder builder;
+  const unsigned int time{3};
+  const unsigned int qubit{53};
+  std::vector<unsigned int> locations;
+  locations.push_back(qubit);
+
+  // cirq Y gate is YPowGate at exponent of 1.
+  std::array<float, 8> matrix{0, 0, 0, -1, 0, 1, 0, 0};
+  Gate real_gate(time, qubit, matrix);
+  absl::flat_hash_map<std::string, float> arg_map;
+  arg_map["global_shift"] = 0.0;
+  arg_map["exponent"] = 1.0;
+  arg_map["exponent_scalar"] = 1.0;
+  Gate test_gate;
+  builder.Build(time, locations, arg_map, &test_gate);
+  ASSERT_EQ(test_gate, real_gate);
 }
 
-// cirq Z gate is ZPowGate at exponent of 1.
 TEST(GatesDefTest, ZPow){
-  const auto gate = ZPowGate().GetMatrix(1, 0);
-  Eigen::Matrix2cd gate_test;
-  gate_test << 1, 0, 0, -1;
-  gate_test_func_2cd(gate, gate_test);
+  YPowGateBuilder builder;
+  const unsigned int time{3};
+  const unsigned int qubit{53};
+  std::vector<unsigned int> locations;
+  locations.push_back(qubit);
+
+  // cirq Z gate is ZPowGate at exponent of 1.
+  std::array<float, 8> matrix{1, 0, 0, 0, 0, 0, -1, 0};
+  Gate real_gate(time, qubit, matrix);
+  absl::flat_hash_map<std::string, float> arg_map;
+  arg_map["global_shift"] = 0.0;
+  arg_map["exponent"] = 1.0;
+  arg_map["exponent_scalar"] = 1.0;
+  Gate test_gate;
+  builder.Build(time, locations, arg_map, &test_gate);
+  ASSERT_EQ(test_gate, real_gate);
 }
 
 // cirq H gate is HPowGate at exponent of 1.
