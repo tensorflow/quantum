@@ -106,7 +106,7 @@ bool Gate::operator==(const Gate& r) const {
   if (this->num_qubits > 0) {
     // real and imaginary component for each matrix site
     const unsigned int true_mat_size =
-        2 * (2 ** this->num_qubits) * (2 ** this->num_qubits);
+        2 * (1 << this->num_qubits) * (1 << this->num_qubits);
     for (unsigned int i = 0; i < true_mat_size; i++) {
       if (abs(this->matrix[i] - r.matrix[i]) > 1e-6) {
         return false;
