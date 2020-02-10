@@ -63,11 +63,11 @@ TEST(GatesDefTest, GateEquality) {
   Gate test_gate_0q, real_gate_0q;
 
   test_gate_0q.time = real_gate_0q.time + 1;
-  ASSERT_NE(test_gate_0q, real_gate_0q);
+  ASSERT_EQ(test_gate_0q, real_gate_0q);
   test_gate_0q.time = real_gate_0q.time;
 
   test_gate_0q.num_qubits = real_gate_0q.num_qubits + 1;
-  ASSERT_NE(test_gate_0q, real_gate_0q);
+  ASSERT_EQ(test_gate_0q, real_gate_0q);
   test_gate_0q.num_qubits = real_gate_0q.num_qubits;
 
   ASSERT_EQ(test_gate_0q, real_gate_0q);
