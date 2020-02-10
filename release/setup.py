@@ -40,7 +40,8 @@ class BinaryDistribution(Distribution):
 setup(
     name='tensorflow-quantum',
     version='0.2.0',
-    description='TensorFlow Quantum is a package for quantum machine learning.',
+    description=
+    'TensorFlow Quantum is a library for hybrid quantum-classical machine learning.',
     author='Google Inc.',
     author_email='no-reply@google.com',
     # TODO (mbbrough): update this url when needed.

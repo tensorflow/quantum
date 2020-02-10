@@ -31,7 +31,7 @@ import tensorflow_quantum as tfq
 flags.DEFINE_string("output_dir", "/tmp/tfq_api", "Where to output the docs")
 
 flags.DEFINE_string("code_url_prefix",
-                    ("https://github.com/quantumlib/TFQuantum/tree/master/"
+                    ("https://github.com/tensorflow/quantum/tree/master/"
                      "tensorflow_quantum"), "The url prefix for links to code.")
 
 flags.DEFINE_bool("search_hints", True,
