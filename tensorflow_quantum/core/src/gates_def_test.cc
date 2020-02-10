@@ -41,7 +41,10 @@ TEST(GatesDefTest, GateBuilder) {
 
   ConstantGateBuilder test_builder;
   Gate test_gate;
-  ASSERT_EQ(test_builder.Build(unsigned int, std::vector<unsigned int>, absl::flast_hash_map<std::string, float>, &test_gate), tensorflow::Status::OK());
+  ASSERT_EQ(test_builder.Build(
+      unsigned int, std::vector<unsigned int>,
+      absl::flast_hash_map<std::string, float>, &test_gate),
+            tensorflow::Status::OK());
   ASSERT_EQ(test_gate, Gate(time_1q, qubit_1q, matrix_1q));
 }
 
