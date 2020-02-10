@@ -124,7 +124,7 @@ class TfqPsWeightsFromSymbolOp : public tensorflow::OpKernel {
                                               DoWork);
 
     int largest_single_symbol = 0;
-    for (int i = 0; i < n_single_symbol.size(); i++) {
+    for (size_t i = 0; i < n_single_symbol.size(); i++) {
       largest_single_symbol =
           std::max(n_single_symbol.at(i), largest_single_symbol);
     }
@@ -144,7 +144,7 @@ class TfqPsWeightsFromSymbolOp : public tensorflow::OpKernel {
     auto DoWork2 = [&](int start, int end) {
       for (int i = start; i < end; i++) {
         for (int j = 0; j < n_symbols; j++) {
-          for (int k = 0; k < output_results.at(i).at(j).size(); k++) {
+          for (size_t k = 0; k < output_results.at(i).at(j).size(); k++) {
             output_tensor(i, j, k) = output_results.at(i).at(j).at(k);
           }
           for (int k = output_results.at(i).at(j).size();
