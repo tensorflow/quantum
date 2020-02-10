@@ -52,7 +52,7 @@
 <table class="tfo-notebook-buttons tfo-api" align="left">
 
 <td>
-  <a target="_blank" href="https://github.com/quantumlib/TFQuantum/tree/master/tensorflow_quantum/python/layers/circuit_executors/sample.py">
+  <a target="_blank" href="https://github.com/tensorflow/quantum/tree/master/tensorflow_quantum/python/layers/circuit_executors/sample.py">
     <img src="https://www.tensorflow.org/images/GitHub-Mark-32px.png" />
     View source on GitHub
   </a>
@@ -193,7 +193,7 @@ The layer can be used as usual:
 
 <h2 id="__init__"><code>__init__</code></h2>
 
-<a target="_blank" href="https://github.com/quantumlib/TFQuantum/tree/master/tensorflow_quantum/python/layers/circuit_executors/sample.py">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/quantum/tree/master/tensorflow_quantum/python/layers/circuit_executors/sample.py">View source</a>
 
 ``` python
 __init__(

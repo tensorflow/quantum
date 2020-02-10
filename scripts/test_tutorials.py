@@ -20,8 +20,8 @@ import nbformat
 import nbconvert
 import tensorflow as tf
 
-# Must be run from the directory containing `TFQuantum` repo.
-NOTEBOOKS = glob.glob("TFQuantum/docs/tutorials/*.ipynb")
+# Must be run from the directory containing `quantum` repo.
+NOTEBOOKS = glob.glob("quantum/docs/tutorials/*.ipynb")
 
 
 class ExamplesTest(tf.test.TestCase, parameterized.TestCase):
