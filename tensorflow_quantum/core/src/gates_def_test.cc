@@ -146,24 +146,32 @@ TEST(GatesDefTest, GateEquality) {
   ASSERT_EQ(test_gate_2q, real_gate_2q);
 }
 
+// ============================================================================
+// GateBuilder interface tests.
+// ============================================================================
+
 TEST(GatesDefTest, GateBuilder) {
   const unsigned int time_1q = 15;
   const unsigned int qubit_1q = 53;
   const std::array<float, 8> matrix_1q{0, 1, 2, 3, 4, 5, 6, 7};
+
   class ConstantGateBuilder : public GateBuilder {
+   public:
     virtual tensorflow::Status Build(
         const unsigned int time, const std::vector<unsigned int>& locations,
         const absl::flat_hash_map<std::string, float>& args, Gate* gate) override {
-      *gate = Gate(time_1q, qubit_1q, matrix_1q);
+      const std::array<float, 8> matrix_1q_internal{0, 1, 2, 3, 4, 5, 6, 7};
+      *gate = Gate(time_1q, qubit_1q, matrix_1q_internal);
       return tensorflow::Status::OK();
     }
   };
 
   ConstantGateBuilder test_builder;
   Gate test_gate;
+  const unsigned int time_ignored = 4444;
   ASSERT_EQ(test_builder.Build(
-      unsigned int, std::vector<unsigned int>,
-      absl::flast_hash_map<std::string, float>, &test_gate),
+      time_ignored, std::vector<unsigned int>(),
+      absl::flat_hash_map<std::string, float>(), &test_gate),
             tensorflow::Status::OK());
   ASSERT_EQ(test_gate, Gate(time_1q, qubit_1q, matrix_1q));
 }
@@ -259,7 +267,7 @@ TEST(GatesDefTest, HPow){
   locations.push_back(qubit);
 
   // cirq H gate is HPowGate at exponent of 1.
-  std::array<float, 8> matrix{1/std::sqrt(2), 0, -1/std::sqrt(2), 0, 1/std::sqrt(2), 0, 1/std::sqrt(2), 0};
+  std::array<float, 8> matrix{1/std::sqrt(2), 0, 1/std::sqrt(2), 0, 1/std::sqrt(2), 0, -1/std::sqrt(2), 0};
   Gate real_gate(time, qubit, matrix);
   absl::flat_hash_map<std::string, float> arg_map;
   arg_map["global_shift"] = 0.0;
