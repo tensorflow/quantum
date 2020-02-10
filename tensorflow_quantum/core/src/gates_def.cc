@@ -103,17 +103,14 @@ bool operator==(const Gate& l, const Gate& r) {
       return false;
     }
   }
-  unsigned int true_mat_size;
-  if (l.num_qubits == 0) {
-    true_mat_size = 0;
-  } else if (l.num_qubits == 1) {
-    true_mat_size = 8;
-  } else {
-    true_mat_size = 32;
-  }
-  for (unsigned int i = 0; i < true_mat_size; i++) {
-    if (std::fabs(l.matrix.at(i) - r.matrix.at(i)) > 1e-6) {
-      return false;
+  if (num_qubits > 0) {
+    // real and imaginary component for each matrix site
+    const unsigned int true_mat_size =
+        2 * (1 << l.num_qubits) * (1 << l.num_qubits);
+    for (unsigned int i = 0; i < true_mat_size; i++) {
+      if (std::fabs(l.matrix[i] - r.matrix[i]) > 1e-6) {
+        return false;
+      }
     }
   }
   return true;
