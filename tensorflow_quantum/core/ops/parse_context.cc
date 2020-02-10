@@ -129,7 +129,7 @@ Status GetProgramsAndNumQubits(
   }
 
   num_qubits->reserve(programs->size());
-  for (int i = 0; i < programs->size(); i++) {
+  for (size_t i = 0; i < programs->size(); i++) {
     Program& program = (*programs)[i];
     Status status = Status::OK();
     if (p_sums) {

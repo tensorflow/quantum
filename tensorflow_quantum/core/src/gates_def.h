@@ -52,10 +52,10 @@ class Gate {
        const std::array<float, 32>& matrix_in);
 
   ~Gate() {}
-
-  bool operator==(const Gate& r) const;
-  bool operator!=(const Gate& r) const;
 };
+
+bool operator==(const Gate& l, const Gate& r);
+bool operator!=(const Gate& l, const Gate& r);
 
 using Matrix1q = std::array<float, 8>;
 using Matrix2q = std::array<float, 32>;
