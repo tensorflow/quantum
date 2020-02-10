@@ -91,24 +91,24 @@ Gate::Gate(const unsigned int time_in, const unsigned int q1,
   std::copy(matrix_in.begin(), matrix_in.end(), matrix.begin());
 }
 
-bool Gate::operator==(const Gate& r) const {
-  if (this->time != r.time) {
+bool operator==(const Gate& l, const Gate& r) {
+  if (l.time != r.time) {
     return false;
   }
-  if (this->num_qubits != r.num_qubits) {
+  if (l.num_qubits != r.num_qubits) {
     return false;
   }
-  for (unsigned int i = 0; i < this->num_qubits; i++) {
-    if (this->qubits[i] != r.qubits[i]) {
+  for (unsigned int i = 0; i < l.num_qubits; i++) {
+    if (l.qubits.at(i) != r.qubits.at(i)) {
       return false;
     }
   }
-  if (num_qubits > 0) {
+  if (l.num_qubits > 0) {
     // real and imaginary component for each matrix site
     const unsigned int true_mat_size =
-        (2 << this->num_qubits) * (1 << this->num_qubits);
+        2 * (1 << l.num_qubits) * (1 << l.num_qubits);
     for (unsigned int i = 0; i < true_mat_size; i++) {
-      if (abs(this->matrix[i] - r.matrix[i]) > 1e-6) {
+      if (std::fabs(l.matrix[i] - r.matrix[i]) > 1e-6) {
         return false;
       }
     }
@@ -116,7 +116,7 @@ bool Gate::operator==(const Gate& r) const {
   return true;
 }
 
-bool Gate::operator!=(const Gate& r) const { return !(*this == r); }
+bool operator!=(const Gate& l, const Gate& r) { return !(l == r); }
 
 Status InitGate(const std::string& gate_name, const unsigned int time,
                 const std::vector<unsigned int>& locations,
