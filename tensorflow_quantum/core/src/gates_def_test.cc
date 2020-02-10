@@ -72,6 +72,50 @@ void gate_test_func_4cd(Eigen::Matrix4cd gate, Eigen::Matrix4cd gate_test) {
 // GateBuilder implementation tests.
 // ============================================================================
 
+TEST(GatesDefTest, XPow){
+  XPowGateBuilder builder;
+  const unsigned int time{3};
+  const unsigned int qubit{53};
+  std::vector<unsigned int> locations;
+  locations.push_back(qubit);
+
+  // cirq X gate is XPowGate at exponent of 1.
+  std::array<float, 8> matrix{0, 0, 1, 0, 1, 0, 0, 0};
+  Gate real_gate(time, qubit, matrix);
+  absl::flat_hash_map<std::string, float> arg_map;
+  arg_map["global_shift"] = 0.0;
+  arg_map["exponent"] = 1.0;
+  arg_map["exponent_scalar"] = 1.0;
+  Gate test_gate;
+  builder.Build(time, locations, arg_map, &test_gate);
+  ASSERT_EQ(test_gate, real_gate);
+}
+
+// cirq Y gate is YPowGate at exponent of 1.
+TEST(GatesDefTest, YPow){
+  const auto gate = YPowGate().GetMatrix(1, 0);
+  Eigen::Matrix2cd gate_test;
+  gate_test << 0, std::complex<double>(0, -1), std::complex<double>(0, 1), 0;
+  gate_test_func_2cd(gate, gate_test);
+}
+
+// cirq Z gate is ZPowGate at exponent of 1.
+TEST(GatesDefTest, ZPow){
+  const auto gate = ZPowGate().GetMatrix(1, 0);
+  Eigen::Matrix2cd gate_test;
+  gate_test << 1, 0, 0, -1;
+  gate_test_func_2cd(gate, gate_test);
+}
+
+// cirq H gate is HPowGate at exponent of 1.
+TEST(GatesDefTest, HPow){
+  const auto gate = HPowGate().GetMatrix(1, 0);
+  Eigen::Matrix2cd gate_test;
+  gate_test << 1 / std::sqrt(2), 1 / std::sqrt(2), 1 / std::sqrt(2),
+      -1 / std::sqrt(2);
+  gate_test_func_2cd(gate, gate_test);
+}
+
 TEST(GatesDefTest, IdentityGate){
   Eigen::Matrix2cd gate = IdentityGate().GetMatrix();
   Eigen::Matrix2cd gate_test;
@@ -88,39 +132,6 @@ TEST(GatesDefTest, CNotGate){
     0, 0, 0, 1,
     0, 0, 1, 0;
   gate_test_func_4cd(gate, gate_test);
-}
-
-// cirq X gate is XPowGate at exponent of 1.
-TEST(GatesDefTest, X){
-  const auto gate = XPowGate().GetMatrix(1, 0);
-  Eigen::Matrix2cd gate_test;
-  gate_test << 0, 1, 1, 0;
-  gate_test_func_2cd(gate, gate_test);
-}
-
-// cirq Y gate is YPowGate at exponent of 1.
-TEST(GatesDefTest, Y){
-  const auto gate = YPowGate().GetMatrix(1, 0);
-  Eigen::Matrix2cd gate_test;
-  gate_test << 0, std::complex<double>(0, -1), std::complex<double>(0, 1), 0;
-  gate_test_func_2cd(gate, gate_test);
-}
-
-// cirq Z gate is ZPowGate at exponent of 1.
-TEST(GatesDefTest, Z){
-  const auto gate = ZPowGate().GetMatrix(1, 0);
-  Eigen::Matrix2cd gate_test;
-  gate_test << 1, 0, 0, -1;
-  gate_test_func_2cd(gate, gate_test);
-}
-
-// cirq H gate is HPowGate at exponent of 1.
-TEST(GatesDefTest, H){
-  const auto gate = HPowGate().GetMatrix(1, 0);
-  Eigen::Matrix2cd gate_test;
-  gate_test << 1 / std::sqrt(2), 1 / std::sqrt(2), 1 / std::sqrt(2),
-      -1 / std::sqrt(2);
-  gate_test_func_2cd(gate, gate_test);
 }
 
 // S gate is ZPowGate with exponent of 0.5
