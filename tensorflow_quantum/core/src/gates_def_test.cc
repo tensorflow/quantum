@@ -97,15 +97,6 @@ TEST(GatesDefTest, GateEquality) {
   test_gate_1q.matrix[0] -= 1.0;
 
   test_gate_1q.matrix[7] += 1.0;
-  for (int ttt = 0; ttt < 8; ttt++) {
-    std::cout << test_gate_1q.matrix[ttt] << ", " << std::endl;
-  } 
-  for (int ttt = 0; ttt < 8; ttt++) {
-    std::cout << real_gate_1q.matrix[ttt] << ", " << std::endl;
-  }
-  std::cout << test_gate_1q.num_qubits << ", " << std::endl;
-  std::cout << real_gate_1q.num_qubits << ", " << std::endl;
-  
   EXPECT_TRUE(test_gate_1q != real_gate_1q);
   test_gate_1q.matrix[7] -= 1.0;
 
