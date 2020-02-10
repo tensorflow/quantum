@@ -63,14 +63,14 @@ TEST(GatesDefTest, GateEquality) {
   Gate test_gate_0q, real_gate_0q;
 
   test_gate_0q.time = real_gate_0q.time + 1;
-  EXPECT_TRUE(test_gate_0q != real_gate_0q);
+  EXPECT_NE(test_gate_0q, real_gate_0q);
   test_gate_0q.time = real_gate_0q.time;
 
   test_gate_0q.num_qubits = real_gate_0q.num_qubits + 1;
-  EXPECT_TRUE(test_gate_0q != real_gate_0q);
+  EXPECT_NE(test_gate_0q, real_gate_0q);
   test_gate_0q.num_qubits = real_gate_0q.num_qubits;
 
-  EXPECT_TRUE(test_gate_0q == real_gate_0q);
+  EXPECT_EQ(test_gate_0q, real_gate_0q);
 
   // One-qubit gate
   const unsigned int time1q = 1256;
@@ -81,26 +81,26 @@ TEST(GatesDefTest, GateEquality) {
   Gate real_gate_1q(time1q, qubits1q, matrix1q);
 
   test_gate_1q.time = real_gate_1q.time + 1;
-  EXPECT_TRUE(test_gate_1q != real_gate_1q);
+  ASSERT_NE(test_gate_1q, real_gate_1q);
   test_gate_1q.time = real_gate_1q.time;
 
   test_gate_1q.num_qubits = real_gate_1q.num_qubits + 1;
-  EXPECT_TRUE(test_gate_1q != real_gate_1q);
+  ASSERT_NE(test_gate_1q, real_gate_1q);
   test_gate_1q.num_qubits = real_gate_1q.num_qubits;
 
   test_gate_1q.qubits[0] = real_gate_1q.qubits[0] + 1;
-  EXPECT_TRUE(test_gate_1q != real_gate_1q);
+  ASSERT_NE(test_gate_1q, real_gate_1q);
   test_gate_1q.qubits[0] = real_gate_1q.qubits[0];
 
-  test_gate_1q.matrix[0] += 1.0;
-  EXPECT_TRUE(test_gate_1q != real_gate_1q);
-  test_gate_1q.matrix[0] -= 1.0;
+  test_gate_1q.matrix[0] = real_gate_1q.matrix[0] + 1;
+  ASSERT_NE(test_gate_1q, real_gate_1q);
+  test_gate_1q.matrix[0] = real_gate_1q.matrix[0];
 
-  test_gate_1q.matrix[7] += 1.0;
-  EXPECT_TRUE(test_gate_1q != real_gate_1q);
-  test_gate_1q.matrix[7] -= 1.0;
+  test_gate_1q.matrix[7] = real_gate_1q.matrix[7] + 1;
+  ASSERT_NE(test_gate_1q, real_gate_1q);
+  test_gate_1q.matrix[7] = real_gate_1q.matrix[7];
 
-  EXPECT_TRUE(test_gate_1q == real_gate_1q);
+  ASSERT_EQ(test_gate_1q, real_gate_1q);
 
   // Two-qubit gate
   const unsigned int time2q = 2512;
@@ -115,30 +115,30 @@ TEST(GatesDefTest, GateEquality) {
   Gate real_gate_2q(time2q, qubits2q1, qubits2q2, matrix2q);
 
   test_gate_2q.time = real_gate_2q.time + 1;
-  EXPECT_TRUE(test_gate_2q != real_gate_2q);
+  ASSERT_NE(test_gate_2q, real_gate_2q);
   test_gate_2q.time = real_gate_2q.time;
 
   test_gate_2q.num_qubits = real_gate_2q.num_qubits + 1;
-  EXPECT_TRUE(test_gate_2q != real_gate_2q);
+  ASSERT_NE(test_gate_2q, real_gate_2q);
   test_gate_2q.num_qubits = real_gate_2q.num_qubits;
 
   test_gate_2q.qubits[0] = real_gate_2q.qubits[0] + 1;
-  EXPECT_TRUE(test_gate_2q != real_gate_2q);
+  ASSERT_NE(test_gate_2q, real_gate_2q);
   test_gate_2q.qubits[0] = real_gate_2q.qubits[0];
 
   test_gate_2q.qubits[1] = real_gate_2q.qubits[1] + 1;
-  EXPECT_TRUE(test_gate_2q != real_gate_2q);
+  ASSERT_NE(test_gate_2q, real_gate_2q);
   test_gate_2q.qubits[1] = real_gate_2q.qubits[1];
 
-  test_gate_2q.matrix[0] += 1.0;
-  EXPECT_TRUE(test_gate_2q != real_gate_2q);
-  test_gate_2q.matrix[0] -= 1.0;
+  test_gate_2q.matrix[0] = real_gate_2q.matrix[0] + 1;
+  ASSERT_NE(test_gate_2q, real_gate_2q);
+  test_gate_2q.matrix[0] = real_gate_2q.matrix[0];
 
-  test_gate_2q.matrix[31] += 1.0;
-  EXPECT_TRUE(test_gate_2q != real_gate_2q);
-  test_gate_2q.matrix[31] -= 1.0;
+  test_gate_2q.matrix[31] = real_gate_2q.matrix[31] + 1;
+  ASSERT_NE(test_gate_2q, real_gate_2q);
+  test_gate_2q.matrix[31] = real_gate_2q.matrix[31];
 
-  EXPECT_TRUE(test_gate_2q == real_gate_2q);
+  ASSERT_EQ(test_gate_2q, real_gate_2q);
 }
 
 }  // namespace
