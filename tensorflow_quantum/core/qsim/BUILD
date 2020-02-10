@@ -139,7 +139,6 @@ cc_library(
     hdrs = ["simulator.h"],
     deps = [
         ":statespace",
-        "@com_google_glog//:glog",
     ],
 )
 
@@ -150,6 +149,8 @@ cc_library(
     deps = [
         ":simulator",
         ":statespace_avx",
+        "@local_config_tf//:libtensorflow_framework",
+        "@local_config_tf//:tf_header_lib",
     ],
 )
 
@@ -160,6 +161,8 @@ cc_library(
     deps = [
         ":simulator",
         ":statespace_sse",
+        "@local_config_tf//:libtensorflow_framework",
+        "@local_config_tf//:tf_header_lib",
     ],
 )
 
