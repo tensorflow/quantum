@@ -103,7 +103,7 @@ bool operator==(const Gate& l, const Gate& r) {
       return false;
     }
   }
-  if (num_qubits > 0) {
+  if (l.num_qubits > 0) {
     // real and imaginary component for each matrix site
     const unsigned int true_mat_size =
         2 * (1 << l.num_qubits) * (1 << l.num_qubits);
