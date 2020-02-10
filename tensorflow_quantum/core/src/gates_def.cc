@@ -121,6 +121,8 @@ bool operator==(const Gate& l, const Gate& r) {
         r.matrix.at(i) << std::endl;
       return false;
     }
+    std::cout << "+ Equal at(" << i << ") " << l.matrix.at(i) << ", " <<
+            r.matrix.at(i) << std::endl;
   }
   std::cout << "matrices are equal" << std::endl;
   return true;
