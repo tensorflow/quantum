@@ -253,6 +253,28 @@ TEST(GatesDefTest, ZPow){
   Gate test_gate;
   builder.Build(time, locations, arg_map, &test_gate);
   ASSERT_EQ(test_gate, real_gate);
+
+  // S gate is ZPowGate with exponent of 0.5
+  std::array<float, 8> matrix_s{1.0, 0, 0, 0, 0, 0, 0, 1.0};
+  Gate real_gate_s(time, qubit, matrix_s);
+  absl::flat_hash_map<std::string, float> arg_map_s;
+  arg_map_s["global_shift"] = 0.0;
+  arg_map_s["exponent"] = 0.5;
+  arg_map_s["exponent_scalar"] = 1.0;
+  Gate test_gate_s;
+  builder.Build(time, locations, arg_map_s, &test_gate_s);
+  ASSERT_EQ(test_gate_s, real_gate_s);
+
+  // T gate is ZPowGate with exponent of 0.25
+  std::array<float, 8> matrix_tg{1.0, 0, 0, 0, 0, 0, 1/std::sqrt(2), 1/std::sqrt(2)};
+  Gate real_gate_tg(time, qubit, matrix_tg);
+  absl::flat_hash_map<std::string, float> arg_map_tg;
+  arg_map_tg["global_shift"] = 0.0;
+  arg_map_tg["exponent"] = 0.25;
+  arg_map_tg["exponent_scalar"] = 1.0;
+  Gate test_gate_tg;
+  builder.Build(time, locations, arg_map_tg, &test_gate_tg);
+  ASSERT_EQ(test_gate_tg, real_gate_tg);
 }
 
 TEST(GatesDefTest, HPow){
@@ -299,22 +321,6 @@ TEST(GatesDefTest, IdentityGate){
 //   gate_test_func_4cd(gate, gate_test);
 // }
 
-// // S gate is ZPowGate with exponent of 0.5
-// TEST(GatesDefTest, S){
-//   const auto gate = ZPowGate().GetMatrix(0.5, 0);
-//   Eigen::Matrix2cd gate_test;
-//   gate_test << 1, 0, 0, std::complex<double>(0, 1);
-//   gate_test_func_2cd(gate, gate_test);
-// }
-
-// // T gate is ZPowGate with exponent of 0.25
-// TEST(GatesDefTest, T){
-//   const auto gate = ZPowGate().GetMatrix(0.25, 0);
-//   Eigen::Matrix2cd gate_test;
-//   gate_test << 1, 0, 0,
-//       std::complex<double>(1 / std::sqrt(2), 1 / std::sqrt(2));
-//   gate_test_func_2cd(gate, gate_test);
-// }
 
 // // RY gates are YPow gates with global shift of -0.5
 // TEST(GatesDefTest, RY) {
