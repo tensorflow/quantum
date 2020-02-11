@@ -353,20 +353,17 @@ TEST(GatesDefTest, PhasedXPow){
   std::vector<unsigned int> locations;
   locations.push_back(qubit);
 
-  const double exponent = 3.7;
-  const double phase_exponent = 5.1;
-  const double global_shift = -2.2;
   absl::flat_hash_map<std::string, float> arg_map;
-  arg_map["global_shift"] = -2.2;
-  arg_map["exponent"] = 3.7;
+  arg_map["global_shift"] = -0.2;
+  arg_map["exponent"] = 1.7;
   arg_map["exponent_scalar"] = 1.0;
-  arg_map["phase_exponent"] = 5.1;
+  arg_map["phase_exponent"] = 1.1;
   arg_map["phase_exponent_scalar"] = 1.0;
   Gate test_gate;
   builder.Build(time, locations, arg_map, &test_gate);
 
   // Associated matrix elements for above parameters extracted using cirq
-  std::array<float, 8> matrix{0.54610418, -0.70403327, -0.42715093, -0.1537838, -0.25518051, -0.37548672, 0.54610418, -0.70403327};
+  std::array<float, 8> matrix{0.02798719, -0.89056687, -0.43596421, 0.12665931, -0.42715093, -0.1537838, 0.02798719, -0.89056687};
   Gate real_gate(time, qubit, matrix);
 
   ASSERT_EQ(test_gate, real_gate);
