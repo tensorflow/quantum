@@ -347,109 +347,30 @@ TEST(GatesDefTest, IdentityGate){
 }
 
 TEST(GatesDefTest, PhasedXPow){
-  IGateBuilder builder;
+  PhasedXPowGateBuilder builder;
   const unsigned int time{3};
   const unsigned int qubit{53};
   std::vector<unsigned int> locations;
   locations.push_back(qubit);
 
-  std::array<float, 8> matrix{1, 0, 0, 0, 0, 0, 1, 0};
-  Gate real_gate(time, qubit, matrix);
+  const double exponent = 3.7;
+  const double phase_exponent = 5.1;
+  const double global_shift = -2.2;
   absl::flat_hash_map<std::string, float> arg_map;
+  arg_map["global_shift"] = -2.2;
+  arg_map["exponent"] = 3.7;
+  arg_map["exponent_scalar"] = 1.0;
+  arg_map["phase_exponent"] = 5.1;
+  arg_map["phase_exponent_scalar"] = 1.0;
   Gate test_gate;
   builder.Build(time, locations, arg_map, &test_gate);
+
+  // Associated matrix elements for above parameters extracted using cirq
+  std::array<float, 8> matrix{0.54610418, -0.70403327, -0.42715093, -0.1537838, -0.25518051, -0.37548672, 0.54610418, -0.70403327};
+  Gate real_gate(time, qubit, matrix);
+
   ASSERT_EQ(test_gate, real_gate);
 }
-
-// TEST(GatesDefTest, CNotGate){
-//   Eigen::Matrix4cd gate = CNotGate().GetMatrix();
-//   Eigen::Matrix4cd gate_test;
-//   gate_test << 1, 0, 0, 0,
-//     0, 1, 0, 0,
-//     0, 0, 0, 1,
-//     0, 0, 1, 0;
-//   gate_test_func_4cd(gate, gate_test);
-// }
-
-// // cirq XX gate is XXPowGate at exponent of 1
-// TEST(GatesDefTest, XX){
-//   const auto gate = XXPowGate().GetMatrix(1, 0);
-//   Eigen::Matrix4cd gate_test;
-//   gate_test << 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0;
-//   gate_test_func_4cd(gate, gate_test);
-// }
-
-// // cirq YY gate is YYPowGate at exponent of 1
-// TEST(GatesDefTest, YY){
-//   const auto gate = YYPowGate().GetMatrix(1, 0);
-//   Eigen::Matrix4cd gate_test;
-//   gate_test << 0, 0, 0, -1, 0, 0, 1, 0, 0, 1, 0, 0, -1, 0, 0, 0;
-//   gate_test_func_4cd(gate, gate_test);
-// }
-
-// // cirq ZZ gate is ZZPowGate at exponent of 1
-// TEST(GatesDefTest, ZZ){
-//   const auto gate = ZZPowGate().GetMatrix(1, 0);
-//   Eigen::Matrix4cd gate_test;
-//   gate_test << 1, 0, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1;
-//   gate_test_func_4cd(gate, gate_test);
-// }
-
-// // cirq CZ gate is CZPowGate at exponent of 1
-// TEST(GatesDefTest, CZ){
-//   const auto gate_1 = CZPowGate().GetMatrix(1, 0);
-//   const auto gate_2 = CZGate().GetMatrix();
-//   Eigen::Matrix4cd gate_test;
-//   gate_test << 1, 0, 0, 0,
-//     0, 1, 0, 0,
-//     0, 0, 1, 0,
-//     0, 0, 0, -1;
-//   for (const auto gate : {gate_1, gate_2}) {
-//     gate_test_func_4cd(gate, gate_test);
-//   }
-// }
-
-// // cirq CNot gate is CNotPowGate at exponent of 1
-// TEST(GatesDefTest, CNot){
-//   const auto gate_1 = CNotPowGate().GetMatrix(1, 0);
-//   const auto gate_2 = CNotGate().GetMatrix();
-//   Eigen::Matrix4cd gate_test;
-//   gate_test << 1, 0, 0, 0,
-//     0, 1, 0, 0,
-//     0, 0, 0, 1,
-//     0, 0, 1, 0;
-//   for (const auto gate : {gate_1, gate_2}) {
-//     gate_test_func_4cd(gate, gate_test);
-//   }
-// }
-
-// // cirq Swap gate is SwapPowGate at exponent of 1
-// TEST(GatesDefTest, Swap){
-//   const auto gate_1 = SwapPowGate().GetMatrix(1, 0);
-//   const auto gate_2 = SwapGate().GetMatrix();
-//   Eigen::Matrix4cd gate_test;
-//   gate_test << 1, 0, 0, 0,
-//     0, 0, 1, 0,
-//     0, 1, 0, 0,
-//     0, 0, 0, 1;
-//   for (const auto gate : {gate_1, gate_2}) {
-//     gate_test_func_4cd(gate, gate_test);
-//   }
-// }
-
-// // cirq ISwap gate is ISwapPowGate at exponent of 1
-// TEST(GatesDefTest, ISwap){
-//   const auto gate_1 = ISwapPowGate().GetMatrix(1, 0);
-//   const auto gate_2 = ISwapGate().GetMatrix();
-//   Eigen::Matrix4cd gate_test;
-//   gate_test << 1, 0, 0, 0,
-//     0, 0, std::complex<double>(0, 1), 0,
-//     0, std::complex<double>(0, 1), 0, 0,
-//     0, 0, 0, 1;
-//   for (const auto gate : {gate_1, gate_2}) {
-//     gate_test_func_4cd(gate, gate_test);
-//   }
-// }
 
 }  // namespace
 }  // namespace tfq
