@@ -17,6 +17,7 @@ limitations under the License.
 
 #define _USE_MATH_DEFINES
 #include <array>
+#include <complex>
 #include <cstdlib>
 #include <string>
 #include <vector>
@@ -275,6 +276,23 @@ TEST(GatesDefTest, ZPow){
   Gate test_gate_tg;
   builder.Build(time, locations, arg_map_tg, &test_gate_tg);
   ASSERT_EQ(test_gate_tg, real_gate_tg);
+
+  // RZ gates are ZPow gates with global shift of -0.5
+  for (auto const &angle : {0.1234, 5.4321}) {
+    std::complex<double> m_00;
+    m_00 = std::exp(std::complex<double>(0, -1.0 * angle / 2.));
+    std::complex<double> m_11;
+    m_11 = std::exp(std::complex<double>(0, angle / 2.));
+    std::array<float, 8> matrix_rot{(float) m_00.real(), (float) m_00.imag(), 0, 0, 0, 0, (float) m_11.real(), (float) m_11.imag()};
+    Gate real_gate_rot(time, qubit, matrix_rot);
+    absl::flat_hash_map<std::string, float> arg_map_rot;
+    arg_map_rot["global_shift"] = -0.5;
+    arg_map_rot["exponent"] = angle / M_PI;
+    arg_map_rot["exponent_scalar"] = 1.0;
+    Gate test_gate_rot;
+    builder.Build(time, locations, arg_map_rot, &test_gate_rot);
+    ASSERT_EQ(test_gate_rot, real_gate_rot);
+  }
 }
 
 TEST(GatesDefTest, HPow){
@@ -340,8 +358,6 @@ TEST(GatesDefTest, IdentityGate){
 //   for (auto const &angle : {0.123456, 5.4321}) {
 //     const auto gate = ZPowGate().GetMatrix(angle/M_PI, -0.5);
 //     Eigen::Matrix2cd gate_test;
-//     gate_test << std::exp(std::complex<double>(0, -1.0 * angle / 2.)), 0, 0,
-//         std::exp(std::complex<double>(0, angle / 2.));
 //     gate_test_func_2cd(gate, gate_test);
 //   }
 // }
