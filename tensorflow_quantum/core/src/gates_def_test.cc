@@ -15,6 +15,7 @@ limitations under the License.
 
 #include "tensorflow_quantum/core/src/gates_def.h"
 
+#define _USE_MATH_DEFINES
 #include <array>
 #include <cstdlib>
 #include <string>
@@ -199,12 +200,16 @@ TEST(GatesDefTest, XPow){
   ASSERT_EQ(test_gate, real_gate);
 
   // RX gates are XPow gates with global shift of -0.5
-  for (auto const &angle : {0.123456, 5.4321}) {
-    std::array<float, 8> matrix_rot{std::cos(angle / 2.), 0, 0, -std::sin(angle / 2.), 0, -std::sin(angle / 2.), std::cos(angle / 2.), 0};
+  for (auto const &angle : {0.1234, 5.4321}) {
+    std::array<float, 8> matrix_rot{
+      (float) std::cos(angle / 2.), 0,
+      0, (float) -std::sin(angle / 2.),
+      0, (float) -std::sin(angle / 2.),
+      (float) std::cos(angle / 2.), 0};
     Gate real_gate_rot(time, qubit, matrix_rot);
     absl::flat_hash_map<std::string, float> arg_map_rot;
-    arg_map_rot["global_shift"] = 0.0;
-    arg_map_rot["exponent"] = 1.0;
+    arg_map_rot["global_shift"] = -0.5;
+    arg_map_rot["exponent"] = angle / M_PI;
     arg_map_rot["exponent_scalar"] = 1.0;
     Gate test_gate_rot;
     builder.Build(time, locations, arg_map_rot, &test_gate_rot);
