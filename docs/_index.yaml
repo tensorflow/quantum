@@ -22,12 +22,19 @@ landing_page:
     items:
     - classname: devsite-landing-row-50
       description: >
-        TensorFlow Quantum (TFQ) is a python framework for hybrid
-        quantum-classical machine learning that is primarily focused on
-        modeling quantum data. TFQ is an application framework developed to
-        allow quantum algorithms researchers and machine learning applications
-        researchers to explore computing workflows that leverage Google’s
-        quantum computing offerings, all from within TensorFlow.
+        <p>TensorFlow Quantum (TFQ) is a Python framework for hybrid
+        quantum-classical machine learning. As an application framework, TFQ
+        allows quantum algorithm researchers and ML application researchers to
+        leverage Google’s quantum computing frameworks, all from within
+        TensorFlow.</p>
+        <p/>TensorFlow Quantum focuses on modeling quantum data. It provides
+        tools to interleave quantum algorithms and logic designed in
+        <a href="https://cirq.readthedocs.io/" class="external">Cirq</a>
+        with TensorFlow. A basic understanding of quantum computing is required
+        to effectively use TensorFlow Quantum.</p>
+        <p>To get started, read the <a href="./overview">overview</a> and
+        <a href="./design">design and concepts</a> guide, then run the
+        <a href="./tutorials/hello_many_worlds">tutorials</a>.</p>
 
       code_block: |
         <pre class = "prettyprint">
@@ -56,12 +63,12 @@ landing_page:
       buttons:
       - label: "Read on the Google AI blog"
         path: https://ai.googleblog.com/2019/10/quantum-supremacy-using-programmable.html
-    - heading: "Programming a quantum computer with Cirq"
+    - heading: "Programming a quantum computer<br/>with Cirq"
       youtube_id: 16ZfkPRVf2w
       buttons:
       - label: Watch the video
         path: https://www.youtube.com/watch?v=16ZfkPRVf2w
-    - heading: "TF Quantum on GitHub"
+    - heading: "TensorFlow Quantum on GitHub"
       image_path: /resources/images/github-card-16x9.png
       path: https://github.com/tensorflow/quantum
       buttons:
