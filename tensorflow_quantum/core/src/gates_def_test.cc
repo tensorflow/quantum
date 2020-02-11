@@ -235,6 +235,23 @@ TEST(GatesDefTest, YPow){
   Gate test_gate;
   builder.Build(time, locations, arg_map, &test_gate);
   ASSERT_EQ(test_gate, real_gate);
+
+  // RY gates are YPow gates with global shift of -0.5
+  for (auto const &angle : {0.1234, 5.4321}) {
+    std::array<float, 8> matrix_rot{
+      (float) std::cos(angle / 2.), 0,
+      (float) -std::sin(angle / 2.), 0,
+      (float) std::sin(angle / 2.), 0,
+      (float) std::cos(angle / 2.), 0};
+    Gate real_gate_rot(time, qubit, matrix_rot);
+    absl::flat_hash_map<std::string, float> arg_map_rot;
+    arg_map_rot["global_shift"] = -0.5;
+    arg_map_rot["exponent"] = angle / M_PI;
+    arg_map_rot["exponent_scalar"] = 1.0;
+    Gate test_gate_rot;
+    builder.Build(time, locations, arg_map_rot, &test_gate_rot);
+    ASSERT_EQ(test_gate_rot, real_gate_rot);
+  }
 }
 
 TEST(GatesDefTest, ZPow){
@@ -329,6 +346,21 @@ TEST(GatesDefTest, IdentityGate){
   ASSERT_EQ(test_gate, real_gate);
 }
 
+TEST(GatesDefTest, PhasedXPow){
+  IGateBuilder builder;
+  const unsigned int time{3};
+  const unsigned int qubit{53};
+  std::vector<unsigned int> locations;
+  locations.push_back(qubit);
+
+  std::array<float, 8> matrix{1, 0, 0, 0, 0, 0, 1, 0};
+  Gate real_gate(time, qubit, matrix);
+  absl::flat_hash_map<std::string, float> arg_map;
+  Gate test_gate;
+  builder.Build(time, locations, arg_map, &test_gate);
+  ASSERT_EQ(test_gate, real_gate);
+}
+
 // TEST(GatesDefTest, CNotGate){
 //   Eigen::Matrix4cd gate = CNotGate().GetMatrix();
 //   Eigen::Matrix4cd gate_test;
@@ -337,29 +369,6 @@ TEST(GatesDefTest, IdentityGate){
 //     0, 0, 0, 1,
 //     0, 0, 1, 0;
 //   gate_test_func_4cd(gate, gate_test);
-// }
-
-
-// // RY gates are YPow gates with global shift of -0.5
-// TEST(GatesDefTest, RY) {
-//   for (auto const &angle : {0.123456, 5.4321}) {
-//     const auto gate = YPowGate().GetMatrix(angle/M_PI, -0.5);
-//     Eigen::Matrix2cd gate_test;
-//     gate_test << std::complex<double>(std::cos(angle / 2.), 0),
-//         std::complex<double>(-std::sin(angle / 2.), 0),
-//         std::complex<double>(std::sin(angle / 2.), 0),
-//         std::complex<double>(std::cos(angle / 2.), 0);
-//     gate_test_func_2cd(gate, gate_test);
-//   }
-// }
-
-// // RZ gates are ZPow gates with global offset of -0.5
-// TEST(GatesDefTest, RZ) {
-//   for (auto const &angle : {0.123456, 5.4321}) {
-//     const auto gate = ZPowGate().GetMatrix(angle/M_PI, -0.5);
-//     Eigen::Matrix2cd gate_test;
-//     gate_test_func_2cd(gate, gate_test);
-//   }
 // }
 
 // // cirq XX gate is XXPowGate at exponent of 1
