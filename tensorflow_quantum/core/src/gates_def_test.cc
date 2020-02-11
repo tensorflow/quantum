@@ -15,9 +15,16 @@ limitations under the License.
 
 #include "tensorflow_quantum/core/src/gates_def.h"
 
+#define _USE_MATH_DEFINES
+#include <array>
+#include <complex>
 #include <cstdlib>
+#include <string>
+#include <vector>
 
+#include "absl/container/flat_hash_map.h"
 #include "gtest/gtest.h"
+#include "tensorflow/core/lib/core/status.h"
 
 namespace tfq {
 namespace {
@@ -139,6 +146,231 @@ TEST(GatesDefTest, GateEquality) {
   test_gate_2q.matrix[31] = real_gate_2q.matrix[31];
 
   ASSERT_EQ(test_gate_2q, real_gate_2q);
+}
+
+// ============================================================================
+// GateBuilder interface tests.
+// ============================================================================
+
+TEST(GatesDefTest, GateBuilder) {
+  const unsigned int time_1q = 15;
+  const unsigned int qubit_1q = 53;
+  const std::array<float, 8> matrix_1q{0, 1, 2, 3, 4, 5, 6, 7};
+
+  class ConstantGateBuilder : public GateBuilder {
+   public:
+    virtual tensorflow::Status Build(
+        const unsigned int time, const std::vector<unsigned int>& locations,
+        const absl::flat_hash_map<std::string, float>& args,
+        Gate* gate) override {
+      const std::array<float, 8> matrix_1q_internal{0, 1, 2, 3, 4, 5, 6, 7};
+      *gate = Gate(time_1q, qubit_1q, matrix_1q_internal);
+      return tensorflow::Status::OK();
+    }
+  };
+
+  ConstantGateBuilder test_builder;
+  Gate test_gate;
+  const unsigned int time_ignored = 4444;
+  ASSERT_EQ(
+      test_builder.Build(time_ignored, std::vector<unsigned int>(),
+                         absl::flat_hash_map<std::string, float>(), &test_gate),
+      tensorflow::Status::OK());
+  ASSERT_EQ(test_gate, Gate(time_1q, qubit_1q, matrix_1q));
+}
+
+// ============================================================================
+// GateBuilder implementation tests.
+// ============================================================================
+
+TEST(GatesDefTest, XPow) {
+  XPowGateBuilder builder;
+  const unsigned int time{3};
+  const unsigned int qubit{53};
+  std::vector<unsigned int> locations;
+  locations.push_back(qubit);
+
+  // cirq X gate is XPowGate at exponent of 1.
+  std::array<float, 8> matrix{0, 0, 1, 0, 1, 0, 0, 0};
+  Gate real_gate(time, qubit, matrix);
+  absl::flat_hash_map<std::string, float> arg_map;
+  arg_map["global_shift"] = 0.0;
+  arg_map["exponent"] = 1.0;
+  arg_map["exponent_scalar"] = 1.0;
+  Gate test_gate;
+  builder.Build(time, locations, arg_map, &test_gate);
+  ASSERT_EQ(test_gate, real_gate);
+
+  // RX gates are XPow gates with global shift of -0.5
+  for (auto const& angle : {0.1234, 5.4321}) {
+    std::array<float, 8> matrix_rot{
+        (float)std::cos(angle / 2.),  0, 0,
+        (float)-std::sin(angle / 2.), 0, (float)-std::sin(angle / 2.),
+        (float)std::cos(angle / 2.),  0};
+    Gate real_gate_rot(time, qubit, matrix_rot);
+    absl::flat_hash_map<std::string, float> arg_map_rot;
+    arg_map_rot["global_shift"] = -0.5;
+    arg_map_rot["exponent"] = angle / M_PI;
+    arg_map_rot["exponent_scalar"] = 1.0;
+    Gate test_gate_rot;
+    builder.Build(time, locations, arg_map_rot, &test_gate_rot);
+    ASSERT_EQ(test_gate_rot, real_gate_rot);
+  }
+}
+
+TEST(GatesDefTest, YPow) {
+  YPowGateBuilder builder;
+  const unsigned int time{3};
+  const unsigned int qubit{53};
+  std::vector<unsigned int> locations;
+  locations.push_back(qubit);
+
+  // cirq Y gate is YPowGate at exponent of 1.
+  std::array<float, 8> matrix{0, 0, 0, -1, 0, 1, 0, 0};
+  Gate real_gate(time, qubit, matrix);
+  absl::flat_hash_map<std::string, float> arg_map;
+  arg_map["global_shift"] = 0.0;
+  arg_map["exponent"] = 1.0;
+  arg_map["exponent_scalar"] = 1.0;
+  Gate test_gate;
+  builder.Build(time, locations, arg_map, &test_gate);
+  ASSERT_EQ(test_gate, real_gate);
+
+  // RY gates are YPow gates with global shift of -0.5
+  for (auto const& angle : {0.1234, 5.4321}) {
+    std::array<float, 8> matrix_rot{
+        (float)std::cos(angle / 2.), 0, (float)-std::sin(angle / 2.), 0,
+        (float)std::sin(angle / 2.), 0, (float)std::cos(angle / 2.),  0};
+    Gate real_gate_rot(time, qubit, matrix_rot);
+    absl::flat_hash_map<std::string, float> arg_map_rot;
+    arg_map_rot["global_shift"] = -0.5;
+    arg_map_rot["exponent"] = angle / M_PI;
+    arg_map_rot["exponent_scalar"] = 1.0;
+    Gate test_gate_rot;
+    builder.Build(time, locations, arg_map_rot, &test_gate_rot);
+    ASSERT_EQ(test_gate_rot, real_gate_rot);
+  }
+}
+
+TEST(GatesDefTest, ZPow) {
+  ZPowGateBuilder builder;
+  const unsigned int time{3};
+  const unsigned int qubit{53};
+  std::vector<unsigned int> locations;
+  locations.push_back(qubit);
+
+  // cirq Z gate is ZPowGate at exponent of 1.
+  std::array<float, 8> matrix{1, 0, 0, 0, 0, 0, -1, 0};
+  Gate real_gate(time, qubit, matrix);
+  absl::flat_hash_map<std::string, float> arg_map;
+  arg_map["global_shift"] = 0.0;
+  arg_map["exponent"] = 1.0;
+  arg_map["exponent_scalar"] = 1.0;
+  Gate test_gate;
+  builder.Build(time, locations, arg_map, &test_gate);
+  ASSERT_EQ(test_gate, real_gate);
+
+  // S gate is ZPowGate with exponent of 0.5
+  std::array<float, 8> matrix_s{1.0, 0, 0, 0, 0, 0, 0, 1.0};
+  Gate real_gate_s(time, qubit, matrix_s);
+  absl::flat_hash_map<std::string, float> arg_map_s;
+  arg_map_s["global_shift"] = 0.0;
+  arg_map_s["exponent"] = 0.5;
+  arg_map_s["exponent_scalar"] = 1.0;
+  Gate test_gate_s;
+  builder.Build(time, locations, arg_map_s, &test_gate_s);
+  ASSERT_EQ(test_gate_s, real_gate_s);
+
+  // T gate is ZPowGate with exponent of 0.25
+  std::array<float, 8> matrix_tg{
+      1.0, 0, 0, 0, 0, 0, 1 / std::sqrt(2), 1 / std::sqrt(2)};
+  Gate real_gate_tg(time, qubit, matrix_tg);
+  absl::flat_hash_map<std::string, float> arg_map_tg;
+  arg_map_tg["global_shift"] = 0.0;
+  arg_map_tg["exponent"] = 0.25;
+  arg_map_tg["exponent_scalar"] = 1.0;
+  Gate test_gate_tg;
+  builder.Build(time, locations, arg_map_tg, &test_gate_tg);
+  ASSERT_EQ(test_gate_tg, real_gate_tg);
+
+  // RZ gates are ZPow gates with global shift of -0.5
+  for (auto const& angle : {0.1234, 5.4321}) {
+    std::complex<double> m_00;
+    m_00 = std::exp(std::complex<double>(0, -1.0 * angle / 2.));
+    std::complex<double> m_11;
+    m_11 = std::exp(std::complex<double>(0, angle / 2.));
+    std::array<float, 8> matrix_rot{
+        (float)m_00.real(), (float)m_00.imag(), 0, 0, 0, 0,
+        (float)m_11.real(), (float)m_11.imag()};
+    Gate real_gate_rot(time, qubit, matrix_rot);
+    absl::flat_hash_map<std::string, float> arg_map_rot;
+    arg_map_rot["global_shift"] = -0.5;
+    arg_map_rot["exponent"] = angle / M_PI;
+    arg_map_rot["exponent_scalar"] = 1.0;
+    Gate test_gate_rot;
+    builder.Build(time, locations, arg_map_rot, &test_gate_rot);
+    ASSERT_EQ(test_gate_rot, real_gate_rot);
+  }
+}
+
+TEST(GatesDefTest, HPow) {
+  HPowGateBuilder builder;
+  const unsigned int time{3};
+  const unsigned int qubit{53};
+  std::vector<unsigned int> locations;
+  locations.push_back(qubit);
+
+  // cirq H gate is HPowGate at exponent of 1.
+  std::array<float, 8> matrix{1 / std::sqrt(2), 0, 1 / std::sqrt(2),  0,
+                              1 / std::sqrt(2), 0, -1 / std::sqrt(2), 0};
+  Gate real_gate(time, qubit, matrix);
+  absl::flat_hash_map<std::string, float> arg_map;
+  arg_map["global_shift"] = 0.0;
+  arg_map["exponent"] = 1.0;
+  arg_map["exponent_scalar"] = 1.0;
+  Gate test_gate;
+  builder.Build(time, locations, arg_map, &test_gate);
+  ASSERT_EQ(test_gate, real_gate);
+}
+
+TEST(GatesDefTest, IdentityGate) {
+  IGateBuilder builder;
+  const unsigned int time{3};
+  const unsigned int qubit{53};
+  std::vector<unsigned int> locations;
+  locations.push_back(qubit);
+
+  std::array<float, 8> matrix{1, 0, 0, 0, 0, 0, 1, 0};
+  Gate real_gate(time, qubit, matrix);
+  absl::flat_hash_map<std::string, float> arg_map;
+  Gate test_gate;
+  builder.Build(time, locations, arg_map, &test_gate);
+  ASSERT_EQ(test_gate, real_gate);
+}
+
+TEST(GatesDefTest, PhasedXPow) {
+  PhasedXPowGateBuilder builder;
+  const unsigned int time{3};
+  const unsigned int qubit{53};
+  std::vector<unsigned int> locations;
+  locations.push_back(qubit);
+
+  absl::flat_hash_map<std::string, float> arg_map;
+  arg_map["global_shift"] = -0.2;
+  arg_map["exponent"] = 1.7;
+  arg_map["exponent_scalar"] = 1.0;
+  arg_map["phase_exponent"] = 1.1;
+  arg_map["phase_exponent_scalar"] = 1.0;
+  Gate test_gate;
+  builder.Build(time, locations, arg_map, &test_gate);
+
+  // Associated matrix elements for above parameters extracted using cirq
+  std::array<float, 8> matrix{0.02798719, -0.89056687, -0.43596421,
+                              0.12665931, -0.42715093, -0.1537838,
+                              0.02798719, -0.89056687};
+  Gate real_gate(time, qubit, matrix);
+
+  ASSERT_EQ(test_gate, real_gate);
 }
 
 }  // namespace
