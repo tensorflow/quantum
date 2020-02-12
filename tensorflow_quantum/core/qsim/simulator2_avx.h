@@ -39,6 +39,12 @@ class Simulator2AVX : public Simulator {
 
   void ApplyGate1(const float* matrix, State* state) const override;
 
+  std::complex<float> GetAmpl(const State& state,
+                              const uint64_t i) const override;
+
+  void SetAmpl(State* state, const uint64_t i,
+               const std::complex<float>& val) const override;
+
  private:
   void ApplyGate2HH(const unsigned int q0, const unsigned int q1,
                     const float* matrix, State* state) const;

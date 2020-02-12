@@ -46,10 +46,6 @@ class StateSpace {
   virtual void CopyState(const State& src, State* dest) const = 0;
   virtual void SetStateZero(State* state) const = 0;
   virtual float GetRealInnerProduct(const State& a, const State& b) const = 0;
-  virtual std::complex<float> GetAmpl(const State& state,
-                                      const uint64_t i) const = 0;
-  virtual void SetAmpl(State* state, const uint64_t i,
-                       const std::complex<float>& val) const = 0;
 
  protected:
   uint64_t size_;

@@ -42,12 +42,6 @@ class StateSpaceAVX : public StateSpace {
   void SetStateZero(State* state) const override;
 
   float GetRealInnerProduct(const State& a, const State& b) const override;
-
-  std::complex<float> GetAmpl(const State& state,
-                              const uint64_t i) const override;
-
-  void SetAmpl(State* state, const uint64_t i,
-               const std::complex<float>& val) const override;
 };
 
 }  // namespace qsim
