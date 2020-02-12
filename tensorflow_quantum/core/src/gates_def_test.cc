@@ -198,7 +198,9 @@ TEST(GatesDefTest, XPow) {
   arg_map["exponent"] = 1.0;
   arg_map["exponent_scalar"] = 1.0;
   Gate test_gate;
-  builder.Build(time, locations, arg_map, &test_gate);
+  ASSERT_EQ(
+      builder.Build(time, locations, arg_map, &test_gate),
+      tensorflow::Status::OK());
   ASSERT_EQ(test_gate, real_gate);
 
   // RX gates are XPow gates with global shift of -0.5
@@ -213,7 +215,9 @@ TEST(GatesDefTest, XPow) {
     arg_map_rot["exponent"] = angle / M_PI;
     arg_map_rot["exponent_scalar"] = 1.0;
     Gate test_gate_rot;
-    builder.Build(time, locations, arg_map_rot, &test_gate_rot);
+    ASSERT_EQ(
+        builder.Build(time, locations, arg_map_rot, &test_gate_rot),
+        tensorflow::Status::OK());
     ASSERT_EQ(test_gate_rot, real_gate_rot);
   }
 }
@@ -233,7 +237,9 @@ TEST(GatesDefTest, YPow) {
   arg_map["exponent"] = 1.0;
   arg_map["exponent_scalar"] = 1.0;
   Gate test_gate;
-  builder.Build(time, locations, arg_map, &test_gate);
+  ASSERT_EQ(
+      builder.Build(time, locations, arg_map, &test_gate),
+      tensorflow::Status::OK());
   ASSERT_EQ(test_gate, real_gate);
 
   // RY gates are YPow gates with global shift of -0.5
@@ -247,7 +253,9 @@ TEST(GatesDefTest, YPow) {
     arg_map_rot["exponent"] = angle / M_PI;
     arg_map_rot["exponent_scalar"] = 1.0;
     Gate test_gate_rot;
-    builder.Build(time, locations, arg_map_rot, &test_gate_rot);
+    ASSERT_EQ(
+        builder.Build(time, locations, arg_map_rot, &test_gate_rot),
+        tensorflow::Status::OK());
     ASSERT_EQ(test_gate_rot, real_gate_rot);
   }
 }
@@ -267,7 +275,9 @@ TEST(GatesDefTest, ZPow) {
   arg_map["exponent"] = 1.0;
   arg_map["exponent_scalar"] = 1.0;
   Gate test_gate;
-  builder.Build(time, locations, arg_map, &test_gate);
+  ASSERT_EQ(
+      builder.Build(time, locations, arg_map, &test_gate),
+      tensorflow::Status::OK());
   ASSERT_EQ(test_gate, real_gate);
 
   // S gate is ZPowGate with exponent of 0.5
@@ -278,7 +288,9 @@ TEST(GatesDefTest, ZPow) {
   arg_map_s["exponent"] = 0.5;
   arg_map_s["exponent_scalar"] = 1.0;
   Gate test_gate_s;
-  builder.Build(time, locations, arg_map_s, &test_gate_s);
+  ASSERT_EQ(
+      builder.Build(time, locations, arg_map_s, &test_gate_s),
+      tensorflow::Status::OK());
   ASSERT_EQ(test_gate_s, real_gate_s);
 
   // T gate is ZPowGate with exponent of 0.25
@@ -290,7 +302,9 @@ TEST(GatesDefTest, ZPow) {
   arg_map_tg["exponent"] = 0.25;
   arg_map_tg["exponent_scalar"] = 1.0;
   Gate test_gate_tg;
-  builder.Build(time, locations, arg_map_tg, &test_gate_tg);
+  ASSERT_EQ(
+      builder.Build(time, locations, arg_map_tg, &test_gate_tg),
+      tensorflow::Status::OK());
   ASSERT_EQ(test_gate_tg, real_gate_tg);
 
   // RZ gates are ZPow gates with global shift of -0.5
@@ -308,7 +322,9 @@ TEST(GatesDefTest, ZPow) {
     arg_map_rot["exponent"] = angle / M_PI;
     arg_map_rot["exponent_scalar"] = 1.0;
     Gate test_gate_rot;
-    builder.Build(time, locations, arg_map_rot, &test_gate_rot);
+    ASSERT_EQ(
+        builder.Build(time, locations, arg_map_rot, &test_gate_rot),
+        tensorflow::Status::OK());
     ASSERT_EQ(test_gate_rot, real_gate_rot);
   }
 }
@@ -329,7 +345,9 @@ TEST(GatesDefTest, HPow) {
   arg_map["exponent"] = 1.0;
   arg_map["exponent_scalar"] = 1.0;
   Gate test_gate;
-  builder.Build(time, locations, arg_map, &test_gate);
+  ASSERT_EQ(
+      builder.Build(time, locations, arg_map, &test_gate),
+      tensorflow::Status::OK());
   ASSERT_EQ(test_gate, real_gate);
 }
 
@@ -344,7 +362,9 @@ TEST(GatesDefTest, IdentityGate) {
   Gate real_gate(time, qubit, matrix);
   absl::flat_hash_map<std::string, float> arg_map;
   Gate test_gate;
-  builder.Build(time, locations, arg_map, &test_gate);
+  ASSERT_EQ(
+      builder.Build(time, locations, arg_map, &test_gate),
+      tensorflow::Status::OK());
   ASSERT_EQ(test_gate, real_gate);
 }
 
@@ -362,7 +382,9 @@ TEST(GatesDefTest, PhasedXPow) {
   arg_map["phase_exponent"] = 1.1;
   arg_map["phase_exponent_scalar"] = 1.0;
   Gate test_gate;
-  builder.Build(time, locations, arg_map, &test_gate);
+  ASSERT_EQ(
+      builder.Build(time, locations, arg_map, &test_gate),
+      tensorflow::Status::OK());
 
   // Associated matrix elements for above parameters extracted using cirq
   std::array<float, 8> matrix{0.02798719, -0.89056687, -0.43596421,
@@ -393,7 +415,9 @@ TEST(GatesDefTest, XXPow){
   arg_map["exponent"] = 1.0;
   arg_map["exponent_scalar"] = 1.0;
   Gate test_gate;
-  builder.Build(time, locations, arg_map, &test_gate);
+  ASSERT_EQ(
+      builder.Build(time, locations, arg_map, &test_gate),
+      tensorflow::Status::OK());
   ASSERT_EQ(test_gate, real_gate);
 }
 
