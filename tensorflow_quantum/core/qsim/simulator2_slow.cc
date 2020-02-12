@@ -31,7 +31,7 @@ Simulator2Slow::Simulator2Slow(const unsigned int num_qubits,
 void Simulator2Slow::ApplyGate1(const float* matrix, State* state) const {
   // Workaround function to apply single qubit gates if the
   // circuit only has one qubit.
-  auto data = StateSpace::RawData(state);
+  auto data = RawData(state);
 
   float r_0, i_0, r_1, i_1;
   r_0 = data[0] * matrix[0] - data[1] * matrix[1] + data[2] * matrix[2] -
@@ -58,7 +58,7 @@ void Simulator2Slow::ApplyGate2(const unsigned int q0, const unsigned int q1,
   uint64_t sizej = uint64_t(1) << (q1 + 1);
   uint64_t sizek = uint64_t(1) << (q0 + 1);
 
-  auto state_ = StateSpace::RawData(state);
+  auto state_ = RawData(state);
 
   for (uint64_t i = 0; i < sizei; i += 2 * sizej) {
     for (uint64_t j = 0; j < sizej; j += 2 * sizek) {

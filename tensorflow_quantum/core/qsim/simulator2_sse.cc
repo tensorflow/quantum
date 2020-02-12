@@ -145,7 +145,7 @@ void Simulator2SSE::ApplyGate2HH(const unsigned int q0, const unsigned int q1,
   uint64_t sizej = uint64_t(1) << (q1 + 1);
   uint64_t sizek = uint64_t(1) << (q0 + 1);
 
-  auto rstate = StateSpace::RawData(state);
+  auto rstate = RawData(state);
 
   for (uint64_t i = 0; i < sizei; i += 2 * sizej) {
     for (uint64_t j = 0; j < sizej; j += 2 * sizek) {
@@ -746,7 +746,7 @@ void Simulator2SSE::ApplyGate2LL(const unsigned int q0, const unsigned int q1,
   //__m256i ml1, ml2, ml3;
 
   uint64_t sizei = uint64_t(1) << (num_qubits_ + 1);
-  auto rstate = StateSpace::RawData(state);
+  auto rstate = RawData(state);
 
   switch (q) {
     case 1:
@@ -2627,7 +2627,7 @@ void Simulator2SSE::ApplyGate2HL(const unsigned int q0, const unsigned int q1,
   uint64_t sizei = uint64_t(1) << (num_qubits_ + 1);
   uint64_t sizej = uint64_t(1) << (q1 + 1);
 
-  auto rstate = StateSpace::RawData(state);
+  auto rstate = RawData(state);
 
   switch (q0) {
     case 0:
