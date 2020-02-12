@@ -104,13 +104,13 @@ void Simulator2Slow::ApplyGate2(const unsigned int q0, const unsigned int q1,
 }
 
 void Simulator2Slow::CopyState(const State& src, State* dest) const {
-  for (uint64_t i = 0; i < 2*src.Size(); ++i) {
+  for (uint64_t i = 0; i < size_; ++i) {
     dest->get()[i] = src.get()[i];
   }
 }
 
 void Simulator2Slow::SetStateZero(State* state) const {
-  uint64_t size = state->Size();
+  uint64_t size = size_ / 2;
 
   auto data = RawData(state);
 
@@ -125,7 +125,7 @@ void Simulator2Slow::SetStateZero(State* state) const {
 
 float Simulator2Slow::GetRealInnerProduct(const State& a,
                                           const State& b) const {
-  uint64_t size2 = a.Size();
+  uint64_t size2 = (size_ / 2);
   double result = 0.0;
 
   // Currently not a thread safe implementation of inner product!
