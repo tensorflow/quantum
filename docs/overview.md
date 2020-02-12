@@ -3,11 +3,11 @@
 TensorFlow Quantum (TFQ) is a Python framework for hybrid quantum-classical
 machine learning. As an application framework, TFQ allows quantum algorithm
 researchers and ML application researchers to leverage Google’s quantum
-computing services, all from within TensorFlow.
+computing frameworks, all from within TensorFlow.
 
 TensorFlow Quantum focuses on modeling quantum data. It provides tools to
 interleave quantum algorithms and logic designed in
-<a href="https://github.com/quantumlib/Cirq" class="external">Cirq</a> with
+<a href="https://cirq.readthedocs.io/" class="external">Cirq</a> with
 TensorFlow. A basic understanding of quantum computing is required to
 effectively use TensorFlow Quantum.
 
@@ -48,7 +48,7 @@ provides the following operations to developers:
   circuit maps states to a near exact level of precision.
 
 For more details about TFQ design choices and implementation, read the
-[Design and concepts guide](design.md).
+[Design and concepts](design.md) guide.
 
 ## Report issues
 
