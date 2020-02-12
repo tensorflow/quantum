@@ -15,10 +15,6 @@ cc_library(
         ":simulator2_avx",
         ":simulator2_slow",
         ":simulator2_sse",
-        ":statespace",
-        ":statespace_avx",
-        ":statespace_slow",
-        ":statespace_sse",
         "//tensorflow_quantum/core/proto:program_cc_proto",
         "//tensorflow_quantum/core/src:circuit",
         "//tensorflow_quantum/core/src:circuit_parser",
@@ -66,10 +62,6 @@ cc_library(
         ":simulator2_avx",
         ":simulator2_slow",
         ":simulator2_sse",
-        ":statespace",
-        ":statespace_avx",
-        ":statespace_slow",
-        ":statespace_sse",
         "@com_google_absl//absl/memory",
     ],
 )
@@ -96,10 +88,6 @@ cc_library(
         ":simulator2_avx",
         ":simulator2_slow",
         ":simulator2_sse",
-        ":statespace",
-        ":statespace_avx",
-        ":statespace_slow",
-        ":statespace_sse",
         "//tensorflow_quantum/core/proto:pauli_sum_cc_proto",
         "//tensorflow_quantum/core/src:circuit",
         "//tensorflow_quantum/core/src:circuit_parser",
@@ -120,10 +108,6 @@ cc_test(
         ":simulator2_avx",
         ":simulator2_slow",
         ":simulator2_sse",
-        ":statespace",
-        ":statespace_avx",
-        ":statespace_slow",
-        ":statespace_sse",
         "//tensorflow_quantum/core/proto:program_cc_proto",
         "//tensorflow_quantum/core/src:circuit",
         "//tensorflow_quantum/core/src:circuit_parser",
@@ -137,9 +121,7 @@ cc_test(
 cc_library(
     name = "simulator",
     hdrs = ["simulator.h"],
-    deps = [
-        ":statespace",
-    ],
+    deps = [],
 )
 
 cc_library(
@@ -148,7 +130,6 @@ cc_library(
     hdrs = ["simulator2_avx.h"],
     deps = [
         ":simulator",
-        ":statespace_avx",
         "@local_config_tf//:libtensorflow_framework",
         "@local_config_tf//:tf_header_lib",
     ],
@@ -160,7 +141,6 @@ cc_library(
     hdrs = ["simulator2_sse.h"],
     deps = [
         ":simulator",
-        ":statespace_sse",
         "@local_config_tf//:libtensorflow_framework",
         "@local_config_tf//:tf_header_lib",
     ],
@@ -172,42 +152,6 @@ cc_library(
     hdrs = ["simulator2_slow.h"],
     deps = [
         ":simulator",
-        ":statespace_slow",
-    ],
-)
-
-cc_library(
-    name = "statespace",
-    srcs = ["statespace.cc"],
-    hdrs = ["statespace.h"],
-    deps = [":util"],
-)
-
-cc_library(
-    name = "statespace_avx",
-    srcs = ["statespace_avx.cc"],
-    hdrs = ["statespace_avx.h"],
-    deps = [
-        ":statespace",
-        ":util",
-    ],
-)
-
-cc_library(
-    name = "statespace_sse",
-    srcs = ["statespace_sse.cc"],
-    hdrs = ["statespace_sse.h"],
-    deps = [
-        ":statespace",
-    ],
-)
-
-cc_library(
-    name = "statespace_slow",
-    srcs = ["statespace_slow.cc"],
-    hdrs = ["statespace_slow.h"],
-    deps = [
-        ":statespace",
     ],
 )
 

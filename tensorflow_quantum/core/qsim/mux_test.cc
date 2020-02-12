@@ -19,7 +19,6 @@ limitations under the License.
 
 #include "gtest/gtest.h"
 #include "tensorflow_quantum/core/qsim/simulator.h"
-#include "tensorflow_quantum/core/qsim/statespace.h"
 
 namespace tfq {
 namespace qsim {

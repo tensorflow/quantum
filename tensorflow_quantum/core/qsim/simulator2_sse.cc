@@ -25,7 +25,6 @@ limitations under the License.
 
 #include "tensorflow/core/platform/logging.h"
 #include "tensorflow_quantum/core/qsim/simulator.h"
-#include "tensorflow_quantum/core/qsim/statespace_sse.h"
 
 namespace tfq {
 namespace qsim {

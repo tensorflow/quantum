@@ -22,7 +22,6 @@ limitations under the License.
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
 #include "tensorflow_quantum/core/qsim/simulator.h"
-#include "tensorflow_quantum/core/qsim/statespace.h"
 #include "tensorflow_quantum/core/src/circuit.h"
 
 namespace tfq {

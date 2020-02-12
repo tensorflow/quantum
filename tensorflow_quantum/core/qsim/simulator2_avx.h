@@ -22,7 +22,6 @@ limitations under the License.
 #include <cstdint>
 
 #include "tensorflow_quantum/core/qsim/simulator.h"
-#include "tensorflow_quantum/core/qsim/statespace_avx.h"
 
 namespace tfq {
 namespace qsim {

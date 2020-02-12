@@ -24,8 +24,6 @@ limitations under the License.
 #include "tensorflow_quantum/core/qsim/mux.h"
 #include "tensorflow_quantum/core/qsim/simulator.h"
 #include "tensorflow_quantum/core/qsim/simulator2_slow.h"
-#include "tensorflow_quantum/core/qsim/statespace.h"
-#include "tensorflow_quantum/core/qsim/statespace_slow.h"
 #include "tensorflow_quantum/core/src/circuit.h"
 #include "tensorflow_quantum/core/src/circuit_parser.h"
 #include "tensorflow_quantum/core/src/matrix.h"

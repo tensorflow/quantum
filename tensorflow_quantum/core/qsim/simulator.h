@@ -18,8 +18,6 @@ limitations under the License.
 
 #include <memory>
 
-#include "tensorflow_quantum/core/qsim/statespace.h"
-
 namespace tfq {
 namespace qsim {
 

@@ -23,7 +23,6 @@ limitations under the License.
 #include <cstdint>
 
 #include "tensorflow_quantum/core/qsim/simulator.h"
-#include "tensorflow_quantum/core/qsim/statespace_sse.h"
 
 namespace tfq {
 namespace qsim {

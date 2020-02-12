@@ -17,10 +17,8 @@ limitations under the License.
 
 #ifdef __AVX2__
 #include "tensorflow_quantum/core/qsim/simulator2_avx.h"
-#include "tensorflow_quantum/core/qsim/statespace_avx.h"
 #elif __SSE4_1__
 #include "tensorflow_quantum/core/qsim/simulator2_sse.h"
-#include "tensorflow_quantum/core/qsim/statespace_sse.h"
 #endif
 
 #include <memory>
@@ -28,8 +26,6 @@ limitations under the License.
 #include "absl/memory/memory.h"
 #include "tensorflow_quantum/core/qsim/simulator.h"
 #include "tensorflow_quantum/core/qsim/simulator2_slow.h"
-#include "tensorflow_quantum/core/qsim/statespace.h"
-#include "tensorflow_quantum/core/qsim/statespace_slow.h"
 
 namespace tfq {
 namespace qsim {
