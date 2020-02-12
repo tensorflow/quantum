@@ -396,7 +396,7 @@ TEST(GatesDefTest, PhasedXPow) {
 }
 
 TEST(GatesDefTest, XXPow){
-  XPowGateBuilder builder;
+  XXPowGateBuilder builder;
   const unsigned int time{3};
   const unsigned int q1{53};
   const unsigned int q2{55};
@@ -421,6 +421,21 @@ TEST(GatesDefTest, XXPow){
   ASSERT_EQ(test_gate, real_gate);
 }
 
+// cirq YY gate is YYPowGate at exponent of 1
+TEST(GatesTest, YY){
+  const auto gate = YYPowGate().GetMatrix(1, 0);
+  Eigen::Matrix4cd gate_test;
+  gate_test << 0, 0, 0, -1, 0, 0, 1, 0, 0, 1, 0, 0, -1, 0, 0, 0;
+  ExpectEqualMatrices(gate, gate_test);
+}
+
+// cirq ZZ gate is ZZPowGate at exponent of 1
+TEST(GatesTest, ZZ){
+  const auto gate = ZZPowGate().GetMatrix(1, 0);
+  Eigen::Matrix4cd gate_test;
+  gate_test << 1, 0, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1;
+  ExpectEqualMatrices(gate, gate_test);
+}
 
 // TEST(GatesDefTest, CNotGate){
 //   Eigen::Matrix4cd gate = CNotGate().GetMatrix();
@@ -433,21 +448,6 @@ TEST(GatesDefTest, XXPow){
 // }
 
 
-// // cirq YY gate is YYPowGate at exponent of 1
-// TEST(GatesTest, YY){
-//   const auto gate = YYPowGate().GetMatrix(1, 0);
-//   Eigen::Matrix4cd gate_test;
-//   gate_test << 0, 0, 0, -1, 0, 0, 1, 0, 0, 1, 0, 0, -1, 0, 0, 0;
-//   ExpectEqualMatrices(gate, gate_test);
-// }
-
-// // cirq ZZ gate is ZZPowGate at exponent of 1
-// TEST(GatesTest, ZZ){
-//   const auto gate = ZZPowGate().GetMatrix(1, 0);
-//   Eigen::Matrix4cd gate_test;
-//   gate_test << 1, 0, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1;
-//   ExpectEqualMatrices(gate, gate_test);
-// }
 
 // // cirq CZ gate is CZPowGate at exponent of 1
 // TEST(GatesTest, CZ){
