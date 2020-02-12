@@ -54,8 +54,8 @@ class Simulator {
   virtual ~Simulator() {}
 
  protected:
-  float* RawData(State* state) { return state->get(); }
-  const float* RawData(const State& state) { return state.get(); }
+  float* RawData(State* state) const { return state->get(); }
+  const float* RawData(const State& state) const { return state.get(); }
   unsigned int num_qubits_;
   unsigned int num_threads_;
 };

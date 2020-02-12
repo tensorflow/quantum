@@ -52,13 +52,13 @@ void Simulator2AVX::ApplyGate1(const float* matrix, State* state) const {
 void Simulator2AVX::CopyState(const State& src, State* dest) const {
   // TODO (zaqwerty): look into whether or not this could be made faster
   //  with avx instructions.
-  for (uint64_t i = 0; i < size_; ++i) {
+  for (uint64_t i = 0; i < 2*src.Size(); ++i) {
     dest->get()[i] = src.get()[i];
   }
 }
 
 void Simulator2AVX::SetStateZero(State* state) const {
-  uint64_t size2 = (size_ / 2) / 8;
+  uint64_t size2 = state->Size() / 8;
 
   __m256 val0 = _mm256_setzero_ps();
 
@@ -73,7 +73,7 @@ void Simulator2AVX::SetStateZero(State* state) const {
 }
 
 float Simulator2AVX::GetRealInnerProduct(const State& a, const State& b) const {
-  uint64_t size2 = (size_ / 2) / 4;
+  uint64_t size2 = a.Size() / 4;
   __m256d expv = _mm256_setzero_pd();
   __m256d rs, is;
 
