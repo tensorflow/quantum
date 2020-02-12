@@ -129,3 +129,9 @@ method-rgx=[a-z_][a-z0-9_]{2,60}$
 
 # Naming hint for method names
 method-name-hint=[a-z_][a-z0-9_]{2,60}$
+
+[IMPORTS]
+# Force import order to recognize a tf as a third party library.
+known-third-party=
+    tensorflow,
+    absl, 
