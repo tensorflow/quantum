@@ -38,9 +38,6 @@ class StateSpace {
 
   uint64_t Size() const;
 
-  static float* RawData(State* state);
-  static const float* RawData(const State& state);
-
   static bool Valid(const State& state);
 
   virtual void CopyState(const State& src, State* dest) const = 0;

@@ -50,27 +50,5 @@ void StateSpaceSlow::SetStateZero(State* state) const {
   data[0] = 1;
 }
 
-float StateSpaceSlow::GetRealInnerProduct(const State& a,
-                                          const State& b) const {
-  uint64_t size2 = (size_ / 2);
-  double result = 0.0;
-
-  // Currently not a thread safe implementation of inner product!
-  for (uint64_t i = 0; i < size2; ++i) {
-    const std::complex<float> amp_a = GetAmpl(a, i);
-    const std::complex<float> amp_b = GetAmpl(b, i);
-
-    const std::complex<double> amp_a_d = std::complex<double>(
-        static_cast<double>(amp_a.real()), static_cast<double>(amp_a.imag()));
-
-    const std::complex<double> amp_b_d = std::complex<double>(
-        static_cast<double>(amp_b.real()), static_cast<double>(amp_b.imag()));
-
-    result += (std::conj(amp_a_d) * amp_b_d).real();
-  }
-
-  return static_cast<float>(result);
-}
-
 }  // namespace qsim
 }  // namespace tfq

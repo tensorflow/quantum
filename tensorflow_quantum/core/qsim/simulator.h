@@ -51,6 +51,8 @@ class Simulator {
   virtual ~Simulator() {}
 
  protected:
+  float* StateSpace::RawData(State* state) { return state->get(); }
+  const float* StateSpace::RawData(const State& state) { return state.get(); }
   unsigned int num_qubits_;
   unsigned int num_threads_;
 };
