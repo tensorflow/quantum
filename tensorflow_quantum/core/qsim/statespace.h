@@ -45,7 +45,6 @@ class StateSpace {
 
   virtual void CopyState(const State& src, State* dest) const = 0;
   virtual void SetStateZero(State* state) const = 0;
-  virtual float GetRealInnerProduct(const State& a, const State& b) const = 0;
 
  protected:
   uint64_t size_;

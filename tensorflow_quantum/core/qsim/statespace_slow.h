@@ -36,8 +36,6 @@ class StateSpaceSlow : public StateSpace {
   void CopyState(const State& src, State* dest) const override;
 
   void SetStateZero(State* state) const override;
-
-  float GetRealInnerProduct(const State& a, const State& b) const override;
 };
 
 }  // namespace qsim

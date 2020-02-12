@@ -37,6 +37,8 @@ class Simulator2Slow : public Simulator {
 
   void ApplyGate1(const float* matrix, State* state) const override;
 
+  float GetRealInnerProduct(const State& a, const State& b) const override;
+
   std::complex<float> GetAmpl(const State& state,
                               const uint64_t i) const override;
 

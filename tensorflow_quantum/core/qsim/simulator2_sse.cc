@@ -51,6 +51,53 @@ void Simulator2SSE::ApplyGate1(const float* matrix, State* state) const {
   CHECK(false) << "SSE simulator doesn't support small circuits.";
 }
 
+float Simulator2SSE::GetRealInnerProduct(const State& a, const State& b) const {
+  uint64_t size2 = (size_ / 2) / 4;
+  __m128d expv_0 = _mm_setzero_pd();
+  __m128d expv_1 = _mm_setzero_pd();
+  __m128d temp = _mm_setzero_pd();
+  __m128d rs_0, rs_1, is_0, is_1;
+
+  auto statea = RawData(a);
+  auto stateb = RawData(b);
+
+  //#pragma omp parallel for num_threads(num_threads_)
+  // Currently not a thread safe implementation of inner product!
+  for (uint64_t i = 0; i < size2; ++i) {
+    // rs = _mm256_cvtps_pd(_mm_load_ps(statea + 8 * i));
+    rs_0 = _mm_cvtps_pd(_mm_load_ps(statea + 8 * i));
+    rs_1 = _mm_cvtps_pd(_mm_load_ps(statea + 8 * i + 2));
+
+    // is = _mm256_cvtps_pd(_mm_load_ps(stateb + 8 * i));
+    is_0 = _mm_cvtps_pd(_mm_load_ps(stateb + 8 * i));
+    is_1 = _mm_cvtps_pd(_mm_load_ps(stateb + 8 * i + 2));
+
+    // expv = _mm256_fmadd_pd(rs, is, expv);
+    temp = _mm_mul_pd(rs_0, is_0);
+    expv_0 = _mm_add_pd(expv_0, temp);
+    temp = _mm_mul_pd(rs_1, is_1);
+    expv_1 = _mm_add_pd(expv_1, temp);
+
+    // rs = _mm256_cvtps_pd(_mm_load_ps(statea + 8 * i + 4));
+    rs_0 = _mm_cvtps_pd(_mm_load_ps(statea + 8 * i + 4));
+    rs_1 = _mm_cvtps_pd(_mm_load_ps(statea + 8 * i + 6));
+
+    // is = _mm256_cvtps_pd(_mm_load_ps(stateb + 8 * i + 4));
+    is_0 = _mm_cvtps_pd(_mm_load_ps(stateb + 8 * i + 4));
+    is_1 = _mm_cvtps_pd(_mm_load_ps(stateb + 8 * i + 6));
+
+    // expv = _mm256_fmadd_pd(rs, is, expv);
+    temp = _mm_mul_pd(rs_0, is_0);
+    expv_0 = _mm_add_pd(expv_0, temp);
+    temp = _mm_mul_pd(rs_1, is_1);
+    expv_1 = _mm_add_pd(expv_1, temp);
+  }
+  double buffer[4];
+  _mm_storeu_pd(buffer, expv_0);
+  _mm_storeu_pd(buffer + 2, expv_1);
+  return (float)(buffer[0] + buffer[1] + buffer[2] + buffer[3]);
+}
+
 std::complex<float> Simulator2SSE::GetAmpl(const State& state,
                                            const uint64_t i) const {
   uint64_t p = (16 * (i / 8)) + (i % 8);

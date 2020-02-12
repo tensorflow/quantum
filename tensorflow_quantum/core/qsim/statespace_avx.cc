@@ -60,28 +60,6 @@ void StateSpaceAVX::SetStateZero(State* state) const {
   state->get()[0] = 1;
 }
 
-float StateSpaceAVX::GetRealInnerProduct(const State& a, const State& b) const {
-  uint64_t size2 = (size_ / 2) / 4;
-  __m256d expv = _mm256_setzero_pd();
-  __m256d rs, is;
-
-  auto statea = RawData(a);
-  auto stateb = RawData(b);
-
-  // Currently not a thread safe implementation of inner product!
-  for (uint64_t i = 0; i < size2; ++i) {
-    rs = _mm256_cvtps_pd(_mm_load_ps(statea + 8 * i));
-    is = _mm256_cvtps_pd(_mm_load_ps(stateb + 8 * i));
-    expv = _mm256_fmadd_pd(rs, is, expv);
-    rs = _mm256_cvtps_pd(_mm_load_ps(statea + 8 * i + 4));
-    is = _mm256_cvtps_pd(_mm_load_ps(stateb + 8 * i + 4));
-    expv = _mm256_fmadd_pd(rs, is, expv);
-  }
-  double buffer[4];
-  _mm256_storeu_pd(buffer, expv);
-  return (float)(buffer[0] + buffer[1] + buffer[2] + buffer[3]);
-}
-
 }  // namespace qsim
 }  // namespace tfq
 
