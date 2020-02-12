@@ -675,7 +675,7 @@ TEST(GatesDefTest, ISwapPow){
 }
 
 TEST(GatesDefTest, I2){
-  ISwapPowGateBuilder builder;
+  I2GateBuilder builder;
   const unsigned int time{3};
   const unsigned int q1{53};
   const unsigned int q2{55};
@@ -691,9 +691,6 @@ TEST(GatesDefTest, I2){
   // clang-format on
   Gate real_gate(time, q1, q2, matrix);
   absl::flat_hash_map<std::string, float> arg_map;
-  arg_map["global_shift"] = 0.0;
-  arg_map["exponent"] = 1.0;
-  arg_map["exponent_scalar"] = 1.0;
   Gate test_gate;
   ASSERT_EQ(
       builder.Build(time, locations, arg_map, &test_gate),
@@ -713,7 +710,7 @@ TEST(GatesDefTest, I2){
 }
 
 TEST(GatesDefTest, FSim){
-  ISwapPowGateBuilder builder;
+  FSimGateBuilder builder;
   const unsigned int time{3};
   const unsigned int q1{53};
   const unsigned int q2{55};
@@ -722,26 +719,28 @@ TEST(GatesDefTest, FSim){
   locations.push_back(q2);
 
   // FSimGate has limiting forms of iSWAP and CZ, with some relative phasing.
-  constexpr std::array<std::array<float, 2>, 3> angles{{M_PI/2, 0}, {0, M_PI}, {M_PI/2, M_PI/6}};
+  const std::array<float, 2> angle_pair_1{M_PI/2, 0};
+  const std::array<float, 2> angle_pair_2{0, M_PI};
+  const std::array<float, 2> angle_pair_3{M_PI/2, M_PI/6};
+  const std::array<std::array<float, 2>, 3> angles{angle_pair_1, angle_pair_2, angle_pair_3};
 
   // clang-format off
-  constexpr std::array<std::array<float, 32>, 3> matrices{
-    {1, 0, 0, 0, 0, 0, 0, 0,
-     0, 0, 0, 0, 0, -1, 0, 0,
-     0, 0, 0, -1, 0, 0, 0, 0,
-     0, 0, 0, 0, 0, 0, 1, 0},
-    {1, 0, 0, 0, 0, 0, 0, 0,
-     0, 0, 1, 0, 0, 0, 0, 0,
-     0, 0, 0, 0, 1, 0, 0, 0,
-     0, 0, 0, 0, 0, 0, -1, 0},
-    {1, 0, 0, 0, 0, 0, 0, 0,
-     0, 0, 0, 0, 0, -1, 0, 0,
-     0, 0, 0, -1, 0, 0, 0, 0,
-     0, 0, 0, 0, 0, 0, 0, -1.0*M_PI/6}
-  };
+  const std::array<float, 32> matrix_1{1, 0, 0, 0, 0, 0, 0, 0,
+                                       0, 0, 0, 0, 0, -1, 0, 0,
+                                       0, 0, 0, -1, 0, 0, 0, 0,
+                                       0, 0, 0, 0, 0, 0, 1, 0};
+  const std::array<float, 32> matrix_2{1, 0, 0, 0, 0, 0, 0, 0,
+                                       0, 0, 1, 0, 0, 0, 0, 0,
+                                       0, 0, 0, 0, 1, 0, 0, 0,
+                                       0, 0, 0, 0, 0, 0, -1, 0};
+  const std::array<float, 32> matrix_3{1, 0, 0, 0, 0, 0, 0, 0,
+                                       0, 0, 0, 0, 0, -1, 0, 0,
+                                       0, 0, 0, -1, 0, 0, 0, 0,
+                                       0, 0, 0, 0, 0, 0, std::sqrt(3)/2, -1.0/2};
   // clang-format on
+  const std::array<std::array<float, 32>, 3> matrices{matrix_1, matrix_2, matrix_3};
 
-  for (int i = 0; i < angles.size(); i++) {
+  for (long unsigned int i = 0; i < angles.size(); i++) {
     Gate real_gate(time, q1, q2, matrices.at(i));
     absl::flat_hash_map<std::string, float> arg_map;
     arg_map["theta"] = angles.at(i).at(0);
@@ -764,6 +763,7 @@ TEST(GatesDefTest, FSim){
         builder.Build(time, locations_reverse, arg_map, &test_gate_swap),
         tensorflow::Status::OK());
     ASSERT_EQ(test_gate_swap, real_gate_swap);
+  }
 }
 
 }  // namespace
