@@ -405,10 +405,12 @@ TEST(GatesDefTest, XXPow){
   locations.push_back(q2);
 
   // cirq XX gate is XXPowGate at exponent of 1
+  // clang-format off
   std::array<float, 32> matrix{0, 0, 0, 0, 0, 0, 1, 0,
                                0, 0, 0, 0, 1, 0, 0, 0,
                                0, 0, 1, 0, 0, 0, 0, 0,
                                1, 0, 0, 0, 0, 0, 0, 0};
+  // clang-format on
   Gate real_gate(time, q1, q2, matrix);
   absl::flat_hash_map<std::string, float> arg_map;
   arg_map["global_shift"] = 0.0;
@@ -419,6 +421,16 @@ TEST(GatesDefTest, XXPow){
       builder.Build(time, locations, arg_map, &test_gate),
       tensorflow::Status::OK());
   ASSERT_EQ(test_gate, real_gate);
+
+  // Confirm correct swapped gate; swapped gate matrix is the same for XXPow.
+  Gate test_gate_swap;
+  std::vector<unsigned int> locations_reverse;
+  locations_reverse.push_back(q2);
+  locations_reverse.push_back(q1);
+  ASSERT_EQ(
+      builder.Build(time, locations_reverse, arg_map, &test_gate_swap),
+      tensorflow::Status::OK());
+  ASSERT_EQ(test_gate_swap, real_gate);
 }
 
 TEST(GatesDefTest, YYPow){
@@ -431,10 +443,12 @@ TEST(GatesDefTest, YYPow){
   locations.push_back(q2);
 
   // cirq YY gate is YYPowGate at exponent of 1
+  // clang-format off
   std::array<float, 32> matrix{0, 0, 0, 0, 0, 0, -1, 0,
                                0, 0, 0, 0, 1, 0, 0, 0,
                                0, 0, 1, 0, 0, 0, 0, 0,
                                -1, 0, 0, 0, 0, 0, 0, 0};
+  // clang-format on
   Gate real_gate(time, q1, q2, matrix);
   absl::flat_hash_map<std::string, float> arg_map;
   arg_map["global_shift"] = 0.0;
@@ -457,10 +471,12 @@ TEST(GatesTest, ZZPow){
   locations.push_back(q2);
 
   // cirq ZZ gate is ZZPowGate at exponent of 1
+  // clang-format off
   std::array<float, 32> matrix{1, 0, 0, 0, 0, 0, 0, 0,
                                0, 0, -1, 0, 0, 0, 0, 0,
                                0, 0, 0, 0, -1, 0, 0, 0,
                                0, 0, 0, 0, 0, 0, 1, 0};
+  // clang-format on
   Gate real_gate(time, q1, q2, matrix);
   absl::flat_hash_map<std::string, float> arg_map;
   arg_map["global_shift"] = 0.0;
