@@ -700,6 +700,7 @@ TEST(GatesDefTest, I2){
       tensorflow::Status::OK());
   ASSERT_EQ(test_gate, real_gate);
 
+  // Swap of identity is the same
   Gate real_gate_swap(time, q1, q2, matrix);
   Gate test_gate_swap;
   std::vector<unsigned int> locations_reverse;
@@ -711,33 +712,59 @@ TEST(GatesDefTest, I2){
   ASSERT_EQ(test_gate_swap, real_gate_swap);
 }
 
-// // FSimGate has limiting forms of iSWAP and CZ, with some relative phasing.
-// TEST(GatesTest, FSim){
-//   const auto gate_1a = FSimGate().GetMatrix(M_PI / 2., 0);
-//   Eigen::Matrix4cd gate_1b;
-//   gate_1b << 1, 0, 0, 0,
-//     0, 0, std::complex<double>(0, -1), 0,
-//     0, std::complex<double>(0, -1), 0, 0,
-//     0, 0, 0, 1;
+TEST(GatesDefTest, FSim){
+  ISwapPowGateBuilder builder;
+  const unsigned int time{3};
+  const unsigned int q1{53};
+  const unsigned int q2{55};
+  std::vector<unsigned int> locations;
+  locations.push_back(q1);
+  locations.push_back(q2);
 
-//   const auto gate_2a = FSimGate().GetMatrix(0, M_PI);
-//   const auto gate_2b = CZGate().GetMatrix();
+  // FSimGate has limiting forms of iSWAP and CZ, with some relative phasing.
+  constexpr std::array<std::array<float, 2>, 3> angles{{M_PI/2, 0}, {0, M_PI}, {M_PI/2, M_PI/6}};
 
-//   const auto gate_3a = FSimGate().GetMatrix(M_PI / 2., M_PI / 6.);
-//   Eigen::Matrix4cd gate_3b;
-//   gate_3b << 1, 0, 0, 0,
-//     0, 0, std::complex<double>(0, -1), 0,
-//     0, std::complex<double>(0, -1), 0, 0,
-//     0, 0, 0, std::exp(std::complex<double>(0, -1) * M_PI / 6.);
+  // clang-format off
+  constexpr std::array<std::array<float, 32>, 3> matrices{
+    {1, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, -1, 0, 0,
+     0, 0, 0, -1, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 1, 0},
+    {1, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 1, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 1, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, -1, 0},
+    {1, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, -1, 0, 0,
+     0, 0, 0, -1, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, -1.0*M_PI/6}
+  };
+  // clang-format on
 
-//   for (const auto pair : {
-//       std::pair<Eigen::Matrix4cd,Eigen::Matrix4cd>(gate_1a, gate_1b),
-//       std::pair<Eigen::Matrix4cd,Eigen::Matrix4cd>(gate_2a, gate_2b),
-//       std::pair<Eigen::Matrix4cd,Eigen::Matrix4cd>(gate_3a, gate_3b),
-//      }) {
-//     ExpectEqualMatrices(pair.first, pair.second);
-//   }
-// }
+  for (int i = 0; i < angles.size(); i++) {
+    Gate real_gate(time, q1, q2, matrices.at(i));
+    absl::flat_hash_map<std::string, float> arg_map;
+    arg_map["theta"] = angles.at(i).at(0);
+    arg_map["theta_scalar"] = 1.0;
+    arg_map["phi"] = angles.at(i).at(1);
+    arg_map["phi_scalar"] = 1.0;
+    Gate test_gate;
+    ASSERT_EQ(
+        builder.Build(time, locations, arg_map, &test_gate),
+        tensorflow::Status::OK());
+    ASSERT_EQ(test_gate, real_gate);
+
+    // FSim gate swap is the same
+    Gate real_gate_swap(time, q1, q2, matrices.at(i));
+    Gate test_gate_swap;
+    std::vector<unsigned int> locations_reverse;
+    locations_reverse.push_back(q2);
+    locations_reverse.push_back(q1);
+    ASSERT_EQ(
+        builder.Build(time, locations_reverse, arg_map, &test_gate_swap),
+        tensorflow::Status::OK());
+    ASSERT_EQ(test_gate_swap, real_gate_swap);
+}
 
 }  // namespace
 }  // namespace tfq
