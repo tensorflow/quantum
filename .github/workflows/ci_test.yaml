@@ -73,7 +73,7 @@ jobs:
   tutorials-test:
     name: Tutorial tests
     runs-on: ubuntu-16.04
-    # needs: [lint, format, wheel-build]
+    needs: [lint, format, wheel-build]
 
     steps:
       - uses: actions/checkout@v1
