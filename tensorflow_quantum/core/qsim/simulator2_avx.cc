@@ -49,13 +49,71 @@ void Simulator2AVX::ApplyGate1(const float* matrix, State* state) const {
   CHECK(false) << "AVX simulator doesn't support small circuits.";
 }
 
+void Simulator2AVX::CopyState(const State& src, State* dest) const {
+  // TODO (zaqwerty): look into whether or not this could be made faster
+  //  with avx instructions.
+  for (uint64_t i = 0; i < size_; ++i) {
+    dest->get()[i] = src.get()[i];
+  }
+}
+
+void Simulator2AVX::SetStateZero(State* state) const {
+  uint64_t size2 = (size_ / 2) / 8;
+
+  __m256 val0 = _mm256_setzero_ps();
+
+  auto data = state->get();
+
+  for (uint64_t i = 0; i < size2; ++i) {
+    _mm256_store_ps(data + 16 * i, val0);
+    _mm256_store_ps(data + 16 * i + 8, val0);
+  }
+
+  state->get()[0] = 1;
+}
+
+float Simulator2AVX::GetRealInnerProduct(const State& a, const State& b) const {
+  uint64_t size2 = (size_ / 2) / 4;
+  __m256d expv = _mm256_setzero_pd();
+  __m256d rs, is;
+
+  auto statea = RawData(a);
+  auto stateb = RawData(b);
+
+  // Currently not a thread safe implementation of inner product!
+  for (uint64_t i = 0; i < size2; ++i) {
+    rs = _mm256_cvtps_pd(_mm_load_ps(statea + 8 * i));
+    is = _mm256_cvtps_pd(_mm_load_ps(stateb + 8 * i));
+    expv = _mm256_fmadd_pd(rs, is, expv);
+    rs = _mm256_cvtps_pd(_mm_load_ps(statea + 8 * i + 4));
+    is = _mm256_cvtps_pd(_mm_load_ps(stateb + 8 * i + 4));
+    expv = _mm256_fmadd_pd(rs, is, expv);
+  }
+  double buffer[4];
+  _mm256_storeu_pd(buffer, expv);
+  return (float)(buffer[0] + buffer[1] + buffer[2] + buffer[3]);
+}
+
+std::complex<float> StateSpaceAVX::GetAmpl(const State& state,
+                                           const uint64_t i) const {
+  uint64_t p = (16 * (i / 8)) + (i % 8);
+  return std::complex<float>(state.get()[p], state.get()[p + 8]);
+}
+
+void StateSpaceAVX::SetAmpl(State* state, const uint64_t i,
+                            const std::complex<float>& val) const {
+  uint64_t p = (16 * (i / 8)) + (i % 8);
+  state->get()[p] = val.real();
+  state->get()[p + 8] = val.imag();
+}
+
 void Simulator2AVX::ApplyGate2HH(const unsigned int q0, const unsigned int q1,
                                  const float* matrix, State* state) const {
   uint64_t sizei = uint64_t(1) << (num_qubits_ + 1);
   uint64_t sizej = uint64_t(1) << (q1 + 1);
   uint64_t sizek = uint64_t(1) << (q0 + 1);
 
-  auto rstate = StateSpace::RawData(state);
+  auto rstate = RawData(state);
 
   for (uint64_t i = 0; i < sizei; i += 2 * sizej) {
     for (uint64_t j = 0; j < sizej; j += 2 * sizek) {
@@ -200,7 +258,7 @@ void Simulator2AVX::ApplyGate2HL(const unsigned int q0, const unsigned int q1,
   uint64_t sizei = uint64_t(1) << (num_qubits_ + 1);
   uint64_t sizej = uint64_t(1) << (q1 + 1);
 
-  auto rstate = StateSpace::RawData(state);
+  auto rstate = RawData(state);
 
   switch (q0) {
     case 0:
@@ -366,7 +424,7 @@ void Simulator2AVX::ApplyGate2LL(const unsigned int q0, const unsigned int q1,
   __m256i ml1, ml2, ml3;
 
   uint64_t sizei = uint64_t(1) << (num_qubits_ + 1);
-  auto rstate = StateSpace::RawData(state);
+  auto rstate = RawData(state);
 
   switch (q) {
     case 1:

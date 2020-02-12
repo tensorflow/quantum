@@ -30,7 +30,9 @@ class Simulator {
   using State = std::unique_ptr<float, decltype(&free)>;
 
   Simulator(const unsigned int num_qubits, const unsigned int num_threads)
-      : num_qubits_(num_qubits), num_threads_(num_threads) {}
+      : size_(2 * (uint64_t{1} << num_qubits)),
+        num_qubits_(num_qubits),
+        num_threads_(num_threads) {}
 
   // Function to apply a two qubit gate to the state on indices q0
   // and q1.
@@ -41,9 +43,22 @@ class Simulator {
   // the state.
   virtual void ApplyGate1(const float* matrix, State* state) const = 0;
 
+  virtual void CopyState(const State& src, State* dest) const = 0;
+  virtual void SetStateZero(State* state) const = 0;
+
+  virtual float GetRealInnerProduct(const State& a, const State& b) const = 0;
+
+  virtual std::complex<float> GetAmpl(const State& state,
+                                      const uint64_t i) const = 0;
+  virtual void SetAmpl(State* state, const uint64_t i,
+                       const std::complex<float>& val) const = 0;
+
   virtual ~Simulator() {}
 
  protected:
+  float* RawData(State* state) const { return state->get(); }
+  const float* RawData(const State& state) const { return state.get(); }
+  uint64_t size_;
   unsigned int num_qubits_;
   unsigned int num_threads_;
 };

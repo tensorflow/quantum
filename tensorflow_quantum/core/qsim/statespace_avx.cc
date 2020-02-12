@@ -37,64 +37,6 @@ StateSpaceAVX::StateSpaceAVX(const unsigned int num_qubits,
                              const unsigned int num_threads)
     : StateSpace(num_qubits, num_threads) {}
 
-void StateSpaceAVX::CopyState(const State& src, State* dest) const {
-  // TODO (zaqwerty): look into whether or not this could be made faster
-  //  with avx instructions.
-  for (uint64_t i = 0; i < size_; ++i) {
-    dest->get()[i] = src.get()[i];
-  }
-}
-
-void StateSpaceAVX::SetStateZero(State* state) const {
-  uint64_t size2 = (size_ / 2) / 8;
-
-  __m256 val0 = _mm256_setzero_ps();
-
-  auto data = state->get();
-
-  for (uint64_t i = 0; i < size2; ++i) {
-    _mm256_store_ps(data + 16 * i, val0);
-    _mm256_store_ps(data + 16 * i + 8, val0);
-  }
-
-  state->get()[0] = 1;
-}
-
-float StateSpaceAVX::GetRealInnerProduct(const State& a, const State& b) const {
-  uint64_t size2 = (size_ / 2) / 4;
-  __m256d expv = _mm256_setzero_pd();
-  __m256d rs, is;
-
-  auto statea = RawData(a);
-  auto stateb = RawData(b);
-
-  // Currently not a thread safe implementation of inner product!
-  for (uint64_t i = 0; i < size2; ++i) {
-    rs = _mm256_cvtps_pd(_mm_load_ps(statea + 8 * i));
-    is = _mm256_cvtps_pd(_mm_load_ps(stateb + 8 * i));
-    expv = _mm256_fmadd_pd(rs, is, expv);
-    rs = _mm256_cvtps_pd(_mm_load_ps(statea + 8 * i + 4));
-    is = _mm256_cvtps_pd(_mm_load_ps(stateb + 8 * i + 4));
-    expv = _mm256_fmadd_pd(rs, is, expv);
-  }
-  double buffer[4];
-  _mm256_storeu_pd(buffer, expv);
-  return (float)(buffer[0] + buffer[1] + buffer[2] + buffer[3]);
-}
-
-std::complex<float> StateSpaceAVX::GetAmpl(const State& state,
-                                           const uint64_t i) const {
-  uint64_t p = (16 * (i / 8)) + (i % 8);
-  return std::complex<float>(state.get()[p], state.get()[p + 8]);
-}
-
-void StateSpaceAVX::SetAmpl(State* state, const uint64_t i,
-                            const std::complex<float>& val) const {
-  uint64_t p = (16 * (i / 8)) + (i % 8);
-  state->get()[p] = val.real();
-  state->get()[p + 8] = val.imag();
-}
-
 }  // namespace qsim
 }  // namespace tfq
 
