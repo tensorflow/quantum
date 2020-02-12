@@ -103,5 +103,18 @@ void Simulator2Slow::ApplyGate2(const unsigned int q0, const unsigned int q1,
   }
 }
 
+std::complex<float> Simulator2Slow::GetAmpl(const State& state,
+                                            const uint64_t i) const {
+  auto data = RawData(state);
+  return std::complex<float>(data[2 * i], data[2 * i + 1]);
+}
+
+void Simulator2Slow::SetAmpl(State* state, const uint64_t i,
+                             const std::complex<float>& val) const {
+  auto data = RawData(state);
+  data[2 * i] = val.real();
+  data[2 * i + 1] = val.imag();
+}
+
 }  // namespace qsim
 }  // namespace tfq

@@ -111,19 +111,6 @@ float StateSpaceSSE::GetRealInnerProduct(const State& a, const State& b) const {
   return (float)(buffer[0] + buffer[1] + buffer[2] + buffer[3]);
 }
 
-std::complex<float> StateSpaceSSE::GetAmpl(const State& state,
-                                           const uint64_t i) const {
-  uint64_t p = (16 * (i / 8)) + (i % 8);
-  return std::complex<float>(state.get()[p], state.get()[p + 8]);
-}
-
-void StateSpaceSSE::SetAmpl(State* state, const uint64_t i,
-                            const std::complex<float>& val) const {
-  uint64_t p = (16 * (i / 8)) + (i % 8);
-  state->get()[p] = val.real();
-  state->get()[p + 8] = val.imag();
-}
-
 }  // namespace qsim
 }  // namespace tfq
 

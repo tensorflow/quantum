@@ -108,12 +108,12 @@ void QState::CopyOnto(QState* other) const {
 }
 
 std::complex<float> QState::GetAmplitude(const uint64_t i) const {
-  return state_space_->GetAmpl(*state_, i);
+  return simulator_->GetAmpl(*state_, i);
 }
 
 void QState::SetAmplitude(const uint64_t i,
                           const std::complex<float>& val) const {
-  state_space_->SetAmpl(state_, i, val);
+  simulator_->SetAmpl(state_, i, val);
 }
 
 float QState::GetRealInnerProduct(const QState& other) const {

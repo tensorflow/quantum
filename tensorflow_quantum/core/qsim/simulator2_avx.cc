@@ -49,6 +49,19 @@ void Simulator2AVX::ApplyGate1(const float* matrix, State* state) const {
   CHECK(false) << "AVX simulator doesn't support small circuits.";
 }
 
+std::complex<float> StateSpaceAVX::GetAmpl(const State& state,
+                                           const uint64_t i) const {
+  uint64_t p = (16 * (i / 8)) + (i % 8);
+  return std::complex<float>(state.get()[p], state.get()[p + 8]);
+}
+
+void StateSpaceAVX::SetAmpl(State* state, const uint64_t i,
+                            const std::complex<float>& val) const {
+  uint64_t p = (16 * (i / 8)) + (i % 8);
+  state->get()[p] = val.real();
+  state->get()[p + 8] = val.imag();
+}
+
 void Simulator2AVX::ApplyGate2HH(const unsigned int q0, const unsigned int q1,
                                  const float* matrix, State* state) const {
   uint64_t sizei = uint64_t(1) << (num_qubits_ + 1);

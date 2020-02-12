@@ -72,18 +72,5 @@ float StateSpaceSlow::GetRealInnerProduct(const State& a,
   return static_cast<float>(result);
 }
 
-std::complex<float> StateSpaceSlow::GetAmpl(const State& state,
-                                            const uint64_t i) const {
-  auto data = RawData(state);
-  return std::complex<float>(data[2 * i], data[2 * i + 1]);
-}
-
-void StateSpaceSlow::SetAmpl(State* state, const uint64_t i,
-                             const std::complex<float>& val) const {
-  auto data = RawData(state);
-  data[2 * i] = val.real();
-  data[2 * i + 1] = val.imag();
-}
-
 }  // namespace qsim
 }  // namespace tfq
