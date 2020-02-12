@@ -51,6 +51,34 @@ void Simulator2SSE::ApplyGate1(const float* matrix, State* state) const {
   CHECK(false) << "SSE simulator doesn't support small circuits.";
 }
 
+void StateSpaceSSE::CopyState(const State& src, State* dest) const {
+  // TODO (zaqwerty): look into whether or not this could be made faster
+  //  with sse instructions.
+  for (uint64_t i = 0; i < size_; ++i) {
+    dest->get()[i] = src.get()[i];
+  }
+}
+
+void StateSpaceSSE::SetStateZero(State* state) const {
+  uint64_t size2 = (size_ / 2) / 8;
+
+  //__m256 val0 = _mm256_setzero_ps();
+  __m128 val0 = _mm_setzero_ps();
+
+  auto data = state->get();
+
+  for (uint64_t i = 0; i < size2; ++i) {
+    //_mm256_store_ps(state.get() + 16 * i, val0);
+    //_mm256_store_ps(state.get() + 16 * i + 8, val0);
+    _mm_store_ps(data + 16 * i, val0);
+    _mm_store_ps(data + 16 * i + 4, val0);
+    _mm_store_ps(data + 16 * i + 8, val0);
+    _mm_store_ps(data + 16 * i + 12, val0);
+  }
+
+  state->get()[0] = 1;
+}
+
 float Simulator2SSE::GetRealInnerProduct(const State& a, const State& b) const {
   uint64_t size2 = (size_ / 2) / 4;
   __m128d expv_0 = _mm_setzero_pd();

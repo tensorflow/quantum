@@ -37,29 +37,6 @@ StateSpaceAVX::StateSpaceAVX(const unsigned int num_qubits,
                              const unsigned int num_threads)
     : StateSpace(num_qubits, num_threads) {}
 
-void StateSpaceAVX::CopyState(const State& src, State* dest) const {
-  // TODO (zaqwerty): look into whether or not this could be made faster
-  //  with avx instructions.
-  for (uint64_t i = 0; i < size_; ++i) {
-    dest->get()[i] = src.get()[i];
-  }
-}
-
-void StateSpaceAVX::SetStateZero(State* state) const {
-  uint64_t size2 = (size_ / 2) / 8;
-
-  __m256 val0 = _mm256_setzero_ps();
-
-  auto data = state->get();
-
-  for (uint64_t i = 0; i < size2; ++i) {
-    _mm256_store_ps(data + 16 * i, val0);
-    _mm256_store_ps(data + 16 * i + 8, val0);
-  }
-
-  state->get()[0] = 1;
-}
-
 }  // namespace qsim
 }  // namespace tfq
 

@@ -103,6 +103,26 @@ void Simulator2Slow::ApplyGate2(const unsigned int q0, const unsigned int q1,
   }
 }
 
+void StateSpaceSlow::CopyState(const State& src, State* dest) const {
+  for (uint64_t i = 0; i < size_; ++i) {
+    dest->get()[i] = src.get()[i];
+  }
+}
+
+void StateSpaceSlow::SetStateZero(State* state) const {
+  uint64_t size = size_ / 2;
+
+  auto data = RawData(state);
+
+  //#pragma omp parallel for num_threads(num_threads_)
+  for (uint64_t i = 0; i < size; ++i) {
+    data[2 * i + 0] = 0;
+    data[2 * i + 1] = 0;
+  }
+
+  data[0] = 1;
+}
+
 float Simulator2Slow::GetRealInnerProduct(const State& a,
                                           const State& b) const {
   uint64_t size2 = (size_ / 2);

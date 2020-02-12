@@ -40,9 +40,6 @@ class StateSpace {
 
   static bool Valid(const State& state);
 
-  virtual void CopyState(const State& src, State* dest) const = 0;
-  virtual void SetStateZero(State* state) const = 0;
-
  protected:
   uint64_t size_;
   unsigned int num_threads_;

@@ -32,10 +32,6 @@ class StateSpaceSlow : public StateSpace {
   using State = std::unique_ptr<float, decltype(&free)>;
 
   StateSpaceSlow(const unsigned int num_qubits, const unsigned int num_threads);
-
-  void CopyState(const State& src, State* dest) const override;
-
-  void SetStateZero(State* state) const override;
 };
 
 }  // namespace qsim
