@@ -14,15 +14,14 @@
 # ==============================================================================
 """Module to ensure all notebooks execute without error by pytesting them."""
 import glob
-import re
 
 from absl.testing import parameterized
 import nbformat
 import nbconvert
 import tensorflow as tf
 
-# Must be run from the directory containing `TFQuantum` repo.
-NOTEBOOKS = glob.glob("TFQuantum/docs/tutorials/*.ipynb")
+# Must be run from the directory containing `quantum` repo.
+NOTEBOOKS = glob.glob("quantum/docs/tutorials/*.ipynb")
 
 
 class ExamplesTest(tf.test.TestCase, parameterized.TestCase):
@@ -30,18 +29,9 @@ class ExamplesTest(tf.test.TestCase, parameterized.TestCase):
     @parameterized.parameters(NOTEBOOKS)
     def test_notebook(self, path):
         """Test that notebooks open/run correctly."""
-
-        nb = nbformat.read(path, as_version=4)
-        # Scrub any magic from the notebook before running.
-        for cell in nb.get("cells"):
-            if cell['cell_type'] == 'code':
-                src = cell['source']
-                # Comment out lines containing '!' but not '!='
-                src = re.sub(r'\!(?!=)', r'#!', src)
-                cell['source'] = src
-
-        _ = nbconvert.preprocessors.execute.executenb(nb,
-                                                      timeout=900,
+        _ = nbconvert.preprocessors.execute.executenb(nbformat.read(
+            path, as_version=4),
+                                                      timeout=600,
                                                       kernel_name="python3")
 
 

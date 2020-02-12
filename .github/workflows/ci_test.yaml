@@ -81,7 +81,5 @@ jobs:
         with:
           python-version: '3.6'
           architecture: 'x64'
-      - name: Install notebook dependencies
-        run: pip install --upgrade pip  seaborn==0.10.0
-      - name: 'Test Notebooks'
+      - name: 'Test Nptebppls'
         run: ./scripts/ci_validate_tutorials.sh
