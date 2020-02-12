@@ -21,7 +21,7 @@ import nbformat
 import nbconvert
 import tensorflow as tf
 
-# Must be run from the directory containing `TFQuantum` repo.
+# Must be run from the directory containing `quantum` repo.
 NOTEBOOKS = glob.glob("quantum/docs/tutorials/*.ipynb")
 
 
