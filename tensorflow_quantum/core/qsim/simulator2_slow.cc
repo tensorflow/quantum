@@ -31,7 +31,7 @@ Simulator2Slow::Simulator2Slow(const unsigned int num_qubits,
 void Simulator2Slow::ApplyGate1(const float* matrix, State* state) const {
   // Workaround function to apply single qubit gates if the
   // circuit only has one qubit.
-  auto data = StateSpace::RawData(state);
+  auto data = RawData(state);
 
   float r_0, i_0, r_1, i_1;
   r_0 = data[0] * matrix[0] - data[1] * matrix[1] + data[2] * matrix[2] -
@@ -58,7 +58,7 @@ void Simulator2Slow::ApplyGate2(const unsigned int q0, const unsigned int q1,
   uint64_t sizej = uint64_t(1) << (q1 + 1);
   uint64_t sizek = uint64_t(1) << (q0 + 1);
 
-  auto state_ = StateSpace::RawData(state);
+  auto state_ = RawData(state);
 
   for (uint64_t i = 0; i < sizei; i += 2 * sizej) {
     for (uint64_t j = 0; j < sizej; j += 2 * sizek) {
@@ -101,6 +101,61 @@ void Simulator2Slow::ApplyGate2(const unsigned int q0, const unsigned int q1,
       }
     }
   }
+}
+
+void Simulator2Slow::CopyState(const State& src, State* dest) const {
+  for (uint64_t i = 0; i < size_; ++i) {
+    dest->get()[i] = src.get()[i];
+  }
+}
+
+void Simulator2Slow::SetStateZero(State* state) const {
+  uint64_t size = size_ / 2;
+
+  auto data = RawData(state);
+
+  //#pragma omp parallel for num_threads(num_threads_)
+  for (uint64_t i = 0; i < size; ++i) {
+    data[2 * i + 0] = 0;
+    data[2 * i + 1] = 0;
+  }
+
+  data[0] = 1;
+}
+
+float Simulator2Slow::GetRealInnerProduct(const State& a,
+                                          const State& b) const {
+  uint64_t size2 = (size_ / 2);
+  double result = 0.0;
+
+  // Currently not a thread safe implementation of inner product!
+  for (uint64_t i = 0; i < size2; ++i) {
+    const std::complex<float> amp_a = GetAmpl(a, i);
+    const std::complex<float> amp_b = GetAmpl(b, i);
+
+    const std::complex<double> amp_a_d = std::complex<double>(
+        static_cast<double>(amp_a.real()), static_cast<double>(amp_a.imag()));
+
+    const std::complex<double> amp_b_d = std::complex<double>(
+        static_cast<double>(amp_b.real()), static_cast<double>(amp_b.imag()));
+
+    result += (std::conj(amp_a_d) * amp_b_d).real();
+  }
+
+  return static_cast<float>(result);
+}
+
+std::complex<float> Simulator2Slow::GetAmpl(const State& state,
+                                            const uint64_t i) const {
+  auto data = RawData(state);
+  return std::complex<float>(data[2 * i], data[2 * i + 1]);
+}
+
+void Simulator2Slow::SetAmpl(State* state, const uint64_t i,
+                             const std::complex<float>& val) const {
+  auto data = RawData(state);
+  data[2 * i] = val.real();
+  data[2 * i + 1] = val.imag();
 }
 
 }  // namespace qsim

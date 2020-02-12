@@ -36,6 +36,18 @@ class Simulator2Slow : public Simulator {
                   State* state) const override;
 
   void ApplyGate1(const float* matrix, State* state) const override;
+
+  void CopyState(const State& src, State* dest) const override;
+
+  void SetStateZero(State* state) const override;
+
+  float GetRealInnerProduct(const State& a, const State& b) const override;
+
+  std::complex<float> GetAmpl(const State& state,
+                              const uint64_t i) const override;
+
+  void SetAmpl(State* state, const uint64_t i,
+               const std::complex<float>& val) const override;
 };
 
 }  // namespace qsim

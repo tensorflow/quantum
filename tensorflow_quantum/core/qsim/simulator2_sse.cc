@@ -51,13 +51,101 @@ void Simulator2SSE::ApplyGate1(const float* matrix, State* state) const {
   CHECK(false) << "SSE simulator doesn't support small circuits.";
 }
 
+void Simulator2SSE::CopyState(const State& src, State* dest) const {
+  // TODO (zaqwerty): look into whether or not this could be made faster
+  //  with sse instructions.
+  for (uint64_t i = 0; i < size_; ++i) {
+    dest->get()[i] = src.get()[i];
+  }
+}
+
+void Simulator2SSE::SetStateZero(State* state) const {
+  uint64_t size2 = (size_ / 2) / 8;
+
+  //__m256 val0 = _mm256_setzero_ps();
+  __m128 val0 = _mm_setzero_ps();
+
+  auto data = state->get();
+
+  for (uint64_t i = 0; i < size2; ++i) {
+    //_mm256_store_ps(state.get() + 16 * i, val0);
+    //_mm256_store_ps(state.get() + 16 * i + 8, val0);
+    _mm_store_ps(data + 16 * i, val0);
+    _mm_store_ps(data + 16 * i + 4, val0);
+    _mm_store_ps(data + 16 * i + 8, val0);
+    _mm_store_ps(data + 16 * i + 12, val0);
+  }
+
+  state->get()[0] = 1;
+}
+
+float Simulator2SSE::GetRealInnerProduct(const State& a, const State& b) const {
+  uint64_t size2 = (size_ / 2) / 4;
+  __m128d expv_0 = _mm_setzero_pd();
+  __m128d expv_1 = _mm_setzero_pd();
+  __m128d temp = _mm_setzero_pd();
+  __m128d rs_0, rs_1, is_0, is_1;
+
+  auto statea = RawData(a);
+  auto stateb = RawData(b);
+
+  //#pragma omp parallel for num_threads(num_threads_)
+  // Currently not a thread safe implementation of inner product!
+  for (uint64_t i = 0; i < size2; ++i) {
+    // rs = _mm256_cvtps_pd(_mm_load_ps(statea + 8 * i));
+    rs_0 = _mm_cvtps_pd(_mm_load_ps(statea + 8 * i));
+    rs_1 = _mm_cvtps_pd(_mm_load_ps(statea + 8 * i + 2));
+
+    // is = _mm256_cvtps_pd(_mm_load_ps(stateb + 8 * i));
+    is_0 = _mm_cvtps_pd(_mm_load_ps(stateb + 8 * i));
+    is_1 = _mm_cvtps_pd(_mm_load_ps(stateb + 8 * i + 2));
+
+    // expv = _mm256_fmadd_pd(rs, is, expv);
+    temp = _mm_mul_pd(rs_0, is_0);
+    expv_0 = _mm_add_pd(expv_0, temp);
+    temp = _mm_mul_pd(rs_1, is_1);
+    expv_1 = _mm_add_pd(expv_1, temp);
+
+    // rs = _mm256_cvtps_pd(_mm_load_ps(statea + 8 * i + 4));
+    rs_0 = _mm_cvtps_pd(_mm_load_ps(statea + 8 * i + 4));
+    rs_1 = _mm_cvtps_pd(_mm_load_ps(statea + 8 * i + 6));
+
+    // is = _mm256_cvtps_pd(_mm_load_ps(stateb + 8 * i + 4));
+    is_0 = _mm_cvtps_pd(_mm_load_ps(stateb + 8 * i + 4));
+    is_1 = _mm_cvtps_pd(_mm_load_ps(stateb + 8 * i + 6));
+
+    // expv = _mm256_fmadd_pd(rs, is, expv);
+    temp = _mm_mul_pd(rs_0, is_0);
+    expv_0 = _mm_add_pd(expv_0, temp);
+    temp = _mm_mul_pd(rs_1, is_1);
+    expv_1 = _mm_add_pd(expv_1, temp);
+  }
+  double buffer[4];
+  _mm_storeu_pd(buffer, expv_0);
+  _mm_storeu_pd(buffer + 2, expv_1);
+  return (float)(buffer[0] + buffer[1] + buffer[2] + buffer[3]);
+}
+
+std::complex<float> Simulator2SSE::GetAmpl(const State& state,
+                                           const uint64_t i) const {
+  uint64_t p = (16 * (i / 8)) + (i % 8);
+  return std::complex<float>(state.get()[p], state.get()[p + 8]);
+}
+
+void Simulator2SSE::SetAmpl(State* state, const uint64_t i,
+                            const std::complex<float>& val) const {
+  uint64_t p = (16 * (i / 8)) + (i % 8);
+  state->get()[p] = val.real();
+  state->get()[p + 8] = val.imag();
+}
+
 void Simulator2SSE::ApplyGate2HH(const unsigned int q0, const unsigned int q1,
                                  const float* matrix, State* state) const {
   uint64_t sizei = uint64_t(1) << (num_qubits_ + 1);
   uint64_t sizej = uint64_t(1) << (q1 + 1);
   uint64_t sizek = uint64_t(1) << (q0 + 1);
 
-  auto rstate = StateSpace::RawData(state);
+  auto rstate = RawData(state);
 
   for (uint64_t i = 0; i < sizei; i += 2 * sizej) {
     for (uint64_t j = 0; j < sizej; j += 2 * sizek) {
@@ -658,7 +746,7 @@ void Simulator2SSE::ApplyGate2LL(const unsigned int q0, const unsigned int q1,
   //__m256i ml1, ml2, ml3;
 
   uint64_t sizei = uint64_t(1) << (num_qubits_ + 1);
-  auto rstate = StateSpace::RawData(state);
+  auto rstate = RawData(state);
 
   switch (q) {
     case 1:
@@ -2539,7 +2627,7 @@ void Simulator2SSE::ApplyGate2HL(const unsigned int q0, const unsigned int q1,
   uint64_t sizei = uint64_t(1) << (num_qubits_ + 1);
   uint64_t sizej = uint64_t(1) << (q1 + 1);
 
-  auto rstate = StateSpace::RawData(state);
+  auto rstate = RawData(state);
 
   switch (q0) {
     case 0:

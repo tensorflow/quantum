@@ -38,10 +38,6 @@ void StateSpace::DeleteState(State* state) {
 
 uint64_t StateSpace::Size() const { return size_ / 2; }
 
-float* StateSpace::RawData(State* state) { return state->get(); }
-
-const float* StateSpace::RawData(const State& state) { return state.get(); }
-
 bool StateSpace::Valid(const State& state) {
   // TODO: more roubust test?
   return state.get() != nullptr;
