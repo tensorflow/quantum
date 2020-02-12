@@ -49,7 +49,7 @@ void Simulator2AVX::ApplyGate1(const float* matrix, State* state) const {
   CHECK(false) << "AVX simulator doesn't support small circuits.";
 }
 
-void StateSpaceAVX::CopyState(const State& src, State* dest) const {
+void Simulator2AVX::CopyState(const State& src, State* dest) const {
   // TODO (zaqwerty): look into whether or not this could be made faster
   //  with avx instructions.
   for (uint64_t i = 0; i < size_; ++i) {
@@ -57,7 +57,7 @@ void StateSpaceAVX::CopyState(const State& src, State* dest) const {
   }
 }
 
-void StateSpaceAVX::SetStateZero(State* state) const {
+void Simulator2AVX::SetStateZero(State* state) const {
   uint64_t size2 = (size_ / 2) / 8;
 
   __m256 val0 = _mm256_setzero_ps();

@@ -103,13 +103,13 @@ void Simulator2Slow::ApplyGate2(const unsigned int q0, const unsigned int q1,
   }
 }
 
-void StateSpaceSlow::CopyState(const State& src, State* dest) const {
+void Simulator2Slow::CopyState(const State& src, State* dest) const {
   for (uint64_t i = 0; i < size_; ++i) {
     dest->get()[i] = src.get()[i];
   }
 }
 
-void StateSpaceSlow::SetStateZero(State* state) const {
+void Simulator2Slow::SetStateZero(State* state) const {
   uint64_t size = size_ / 2;
 
   auto data = RawData(state);

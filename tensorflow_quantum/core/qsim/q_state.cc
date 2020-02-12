@@ -45,7 +45,7 @@ QState::QState(const int num_qubits) : num_qubits_(num_qubits) {
   state_space_ = GetStateSpace(num_qubits, num_threads);
 
   state_ = state_space_->CreateState();
-  state_space_->SetStateZero(state_);
+  simulator_->SetStateZero(state_);
 }
 
 QState::QState(std::unique_ptr<Simulator> simulator,
@@ -54,7 +54,7 @@ QState::QState(std::unique_ptr<Simulator> simulator,
       state_space_(std::move(state_space)),
       num_qubits_(num_qubits) {
   state_ = state_space_->CreateState();
-  state_space_->SetStateZero(state_);
+  simulator_->SetStateZero(state_);
 }
 
 QState::~QState() {
@@ -104,7 +104,7 @@ tensorflow::Status QState::Update(const Circuit& circuit) {
 }
 
 void QState::CopyOnto(QState* other) const {
-  state_space_->CopyState(*state_, other->state_);
+  simulator_->CopyState(*state_, other->state_);
 }
 
 std::complex<float> QState::GetAmplitude(const uint64_t i) const {
@@ -118,7 +118,7 @@ void QState::SetAmplitude(const uint64_t i,
 
 float QState::GetRealInnerProduct(const QState& other) const {
   // TODO (zaqwerty): investigate const-ness of input arguments here.
-  return state_space_->GetRealInnerProduct(*state_, *(other.state_));
+  return simulator_->GetRealInnerProduct(*state_, *(other.state_));
 }
 
 tensorflow::Status QState::ComputeExpectation(const tfq::proto::PauliSum& p_sum,

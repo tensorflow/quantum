@@ -51,7 +51,7 @@ void Simulator2SSE::ApplyGate1(const float* matrix, State* state) const {
   CHECK(false) << "SSE simulator doesn't support small circuits.";
 }
 
-void StateSpaceSSE::CopyState(const State& src, State* dest) const {
+void Simulator2SSE::CopyState(const State& src, State* dest) const {
   // TODO (zaqwerty): look into whether or not this could be made faster
   //  with sse instructions.
   for (uint64_t i = 0; i < size_; ++i) {
@@ -59,7 +59,7 @@ void StateSpaceSSE::CopyState(const State& src, State* dest) const {
   }
 }
 
-void StateSpaceSSE::SetStateZero(State* state) const {
+void Simulator2SSE::SetStateZero(State* state) const {
   uint64_t size2 = (size_ / 2) / 8;
 
   //__m256 val0 = _mm256_setzero_ps();
