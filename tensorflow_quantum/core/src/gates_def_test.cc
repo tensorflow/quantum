@@ -421,20 +421,56 @@ TEST(GatesDefTest, XXPow){
   ASSERT_EQ(test_gate, real_gate);
 }
 
-// cirq YY gate is YYPowGate at exponent of 1
-TEST(GatesTest, YY){
-  const auto gate = YYPowGate().GetMatrix(1, 0);
-  Eigen::Matrix4cd gate_test;
-  gate_test << 0, 0, 0, -1, 0, 0, 1, 0, 0, 1, 0, 0, -1, 0, 0, 0;
-  ExpectEqualMatrices(gate, gate_test);
+TEST(GatesDefTest, YYPow){
+  YYPowGateBuilder builder;
+  const unsigned int time{3};
+  const unsigned int q1{53};
+  const unsigned int q2{55};
+  std::vector<unsigned int> locations;
+  locations.push_back(q1);
+  locations.push_back(q2);
+
+  // cirq YY gate is YYPowGate at exponent of 1
+  std::array<float, 32> matrix{0, 0, 0, 0, 0, 0, -1, 0,
+                               0, 0, 0, 0, 1, 0, 0, 0,
+                               0, 0, 1, 0, 0, 0, 0, 0,
+                               -1, 0, 0, 0, 0, 0, 0, 0};
+  Gate real_gate(time, q1, q2, matrix);
+  absl::flat_hash_map<std::string, float> arg_map;
+  arg_map["global_shift"] = 0.0;
+  arg_map["exponent"] = 1.0;
+  arg_map["exponent_scalar"] = 1.0;
+  Gate test_gate;
+  ASSERT_EQ(
+      builder.Build(time, locations, arg_map, &test_gate),
+      tensorflow::Status::OK());
+  ASSERT_EQ(test_gate, real_gate);
 }
 
-// cirq ZZ gate is ZZPowGate at exponent of 1
-TEST(GatesTest, ZZ){
-  const auto gate = ZZPowGate().GetMatrix(1, 0);
-  Eigen::Matrix4cd gate_test;
-  gate_test << 1, 0, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1;
-  ExpectEqualMatrices(gate, gate_test);
+TEST(GatesTest, ZZPow){
+  ZZPowGateBuilder builder;
+  const unsigned int time{3};
+  const unsigned int q1{53};
+  const unsigned int q2{55};
+  std::vector<unsigned int> locations;
+  locations.push_back(q1);
+  locations.push_back(q2);
+
+  // cirq ZZ gate is ZZPowGate at exponent of 1
+  std::array<float, 32> matrix{1, 0, 0, 0, 0, 0, 0, 0,
+                               0, 0, -1, 0, 0, 0, 0, 0,
+                               0, 0, 0, 0, -1, 0, 0, 0,
+                               0, 0, 0, 0, 0, 0, 1, 0};
+  Gate real_gate(time, q1, q2, matrix);
+  absl::flat_hash_map<std::string, float> arg_map;
+  arg_map["global_shift"] = 0.0;
+  arg_map["exponent"] = 1.0;
+  arg_map["exponent_scalar"] = 1.0;
+  Gate test_gate;
+  ASSERT_EQ(
+      builder.Build(time, locations, arg_map, &test_gate),
+      tensorflow::Status::OK());
+  ASSERT_EQ(test_gate, real_gate);
 }
 
 // TEST(GatesDefTest, CNotGate){
