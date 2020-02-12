@@ -596,19 +596,45 @@ TEST(GatesDefTest, CNotPow){
   ASSERT_EQ(test_gate_swap, real_gate_swap);
 }
 
-// // cirq Swap gate is SwapPowGate at exponent of 1
-// TEST(GatesTest, Swap){
-//   const auto gate_1 = SwapPowGate().GetMatrix(1, 0);
-//   const auto gate_2 = SwapGate().GetMatrix();
-//   Eigen::Matrix4cd gate_test;
-//   gate_test << 1, 0, 0, 0,
-//     0, 0, 1, 0,
-//     0, 1, 0, 0,
-//     0, 0, 0, 1;
-//   for (const auto gate : {gate_1, gate_2}) {
-//     ExpectEqualMatrices(gate, gate_test);
-//   }
-// }
+// cirq Swap gate is SwapPowGate at exponent of 1
+TEST(GatesDefTest, SwapPow){
+  SwapPowGateBuilder builder;
+  const unsigned int time{3};
+  const unsigned int q1{53};
+  const unsigned int q2{55};
+  std::vector<unsigned int> locations;
+  locations.push_back(q1);
+  locations.push_back(q2);
+
+  // Swap gate is SwapPowGate at exponent of 1
+  // clang-format off
+  std::array<float, 32> matrix{1, 0, 0, 0, 0, 0, 0, 0,
+                               0, 0, 0, 0, 1, 0, 0, 0,
+                               0, 0, 1, 0, 0, 0, 0, 0,
+                               0, 0, 0, 0, 0, 0, 1, 0};
+  // clang-format on
+  Gate real_gate(time, q1, q2, matrix);
+  absl::flat_hash_map<std::string, float> arg_map;
+  arg_map["global_shift"] = 0.0;
+  arg_map["exponent"] = 1.0;
+  arg_map["exponent_scalar"] = 1.0;
+  Gate test_gate;
+  ASSERT_EQ(
+      builder.Build(time, locations, arg_map, &test_gate),
+      tensorflow::Status::OK());
+  ASSERT_EQ(test_gate, real_gate);
+
+  // Confirm correct swapped gate; swapped gate matrix is the same for SwapPow.
+  Gate real_gate_swap(time, q1, q2, matrix);
+  Gate test_gate_swap;
+  std::vector<unsigned int> locations_reverse;
+  locations_reverse.push_back(q2);
+  locations_reverse.push_back(q1);
+  ASSERT_EQ(
+      builder.Build(time, locations_reverse, arg_map, &test_gate_swap),
+      tensorflow::Status::OK());
+  ASSERT_EQ(test_gate_swap, real_gate_swap);
+}
 
 // // cirq ISwap gate is ISwapPowGate at exponent of 1
 // TEST(GatesTest, ISwap){
