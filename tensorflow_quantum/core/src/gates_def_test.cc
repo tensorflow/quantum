@@ -373,5 +373,141 @@ TEST(GatesDefTest, PhasedXPow) {
   ASSERT_EQ(test_gate, real_gate);
 }
 
+TEST(GatesDefTest, XXPow){
+  XPowGateBuilder builder;
+  const unsigned int time{3};
+  const unsigned int q1{53};
+  const unsigned int q2{55};
+  std::vector<unsigned int> locations;
+  locations.push_back(q1);
+  locations.push_back(q2);
+
+  // cirq XX gate is XXPowGate at exponent of 1
+  std::array<float, 32> matrix{0, 0, 0, 0, 0, 0, 1, 0,
+                               0, 0, 0, 0, 1, 0, 0, 0,
+                               0, 0, 1, 0, 0, 0, 0, 0,
+                               1, 0, 0, 0, 0, 0, 0, 0};
+  Gate real_gate(time, q1, q2, matrix);
+  absl::flat_hash_map<std::string, float> arg_map;
+  arg_map["global_shift"] = 0.0;
+  arg_map["exponent"] = 1.0;
+  arg_map["exponent_scalar"] = 1.0;
+  Gate test_gate;
+  builder.Build(time, locations, arg_map, &test_gate);
+  ASSERT_EQ(test_gate, real_gate);
+}
+
+
+// TEST(GatesDefTest, CNotGate){
+//   Eigen::Matrix4cd gate = CNotGate().GetMatrix();
+//   Eigen::Matrix4cd gate_test;
+//   gate_test << 1, 0, 0, 0,
+//     0, 1, 0, 0,
+//     0, 0, 0, 1,
+//     0, 0, 1, 0;
+//   ExpectEqualMatrices(gate, gate_test);
+// }
+
+
+// // cirq YY gate is YYPowGate at exponent of 1
+// TEST(GatesTest, YY){
+//   const auto gate = YYPowGate().GetMatrix(1, 0);
+//   Eigen::Matrix4cd gate_test;
+//   gate_test << 0, 0, 0, -1, 0, 0, 1, 0, 0, 1, 0, 0, -1, 0, 0, 0;
+//   ExpectEqualMatrices(gate, gate_test);
+// }
+
+// // cirq ZZ gate is ZZPowGate at exponent of 1
+// TEST(GatesTest, ZZ){
+//   const auto gate = ZZPowGate().GetMatrix(1, 0);
+//   Eigen::Matrix4cd gate_test;
+//   gate_test << 1, 0, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1;
+//   ExpectEqualMatrices(gate, gate_test);
+// }
+
+// // cirq CZ gate is CZPowGate at exponent of 1
+// TEST(GatesTest, CZ){
+//   const auto gate_1 = CZPowGate().GetMatrix(1, 0);
+//   const auto gate_2 = CZGate().GetMatrix();
+//   Eigen::Matrix4cd gate_test;
+//   gate_test << 1, 0, 0, 0,
+//     0, 1, 0, 0,
+//     0, 0, 1, 0,
+//     0, 0, 0, -1;
+//   for (const auto gate : {gate_1, gate_2}) {
+//     ExpectEqualMatrices(gate, gate_test);
+//   }
+// }
+
+// // cirq CNot gate is CNotPowGate at exponent of 1
+// TEST(GatesTest, CNot){
+//   const auto gate_1 = CNotPowGate().GetMatrix(1, 0);
+//   const auto gate_2 = CNotGate().GetMatrix();
+//   Eigen::Matrix4cd gate_test;
+//   gate_test << 1, 0, 0, 0,
+//     0, 1, 0, 0,
+//     0, 0, 0, 1,
+//     0, 0, 1, 0;
+//   for (const auto gate : {gate_1, gate_2}) {
+//     ExpectEqualMatrices(gate, gate_test);
+//   }
+// }
+
+// // cirq Swap gate is SwapPowGate at exponent of 1
+// TEST(GatesTest, Swap){
+//   const auto gate_1 = SwapPowGate().GetMatrix(1, 0);
+//   const auto gate_2 = SwapGate().GetMatrix();
+//   Eigen::Matrix4cd gate_test;
+//   gate_test << 1, 0, 0, 0,
+//     0, 0, 1, 0,
+//     0, 1, 0, 0,
+//     0, 0, 0, 1;
+//   for (const auto gate : {gate_1, gate_2}) {
+//     ExpectEqualMatrices(gate, gate_test);
+//   }
+// }
+
+// // cirq ISwap gate is ISwapPowGate at exponent of 1
+// TEST(GatesTest, ISwap){
+//   const auto gate_1 = ISwapPowGate().GetMatrix(1, 0);
+//   const auto gate_2 = ISwapGate().GetMatrix();
+//   Eigen::Matrix4cd gate_test;
+//   gate_test << 1, 0, 0, 0,
+//     0, 0, std::complex<double>(0, 1), 0,
+//     0, std::complex<double>(0, 1), 0, 0,
+//     0, 0, 0, 1;
+//   for (const auto gate : {gate_1, gate_2}) {
+//     ExpectEqualMatrices(gate, gate_test);
+//   }
+// }
+
+// // FSimGate has limiting forms of iSWAP and CZ, with some relative phasing.
+// TEST(GatesTest, FSim){
+//   const auto gate_1a = FSimGate().GetMatrix(M_PI / 2., 0);
+//   Eigen::Matrix4cd gate_1b;
+//   gate_1b << 1, 0, 0, 0,
+//     0, 0, std::complex<double>(0, -1), 0,
+//     0, std::complex<double>(0, -1), 0, 0,
+//     0, 0, 0, 1;
+
+//   const auto gate_2a = FSimGate().GetMatrix(0, M_PI);
+//   const auto gate_2b = CZGate().GetMatrix();
+
+//   const auto gate_3a = FSimGate().GetMatrix(M_PI / 2., M_PI / 6.);
+//   Eigen::Matrix4cd gate_3b;
+//   gate_3b << 1, 0, 0, 0,
+//     0, 0, std::complex<double>(0, -1), 0,
+//     0, std::complex<double>(0, -1), 0, 0,
+//     0, 0, 0, std::exp(std::complex<double>(0, -1) * M_PI / 6.);
+
+//   for (const auto pair : {
+//       std::pair<Eigen::Matrix4cd,Eigen::Matrix4cd>(gate_1a, gate_1b),
+//       std::pair<Eigen::Matrix4cd,Eigen::Matrix4cd>(gate_2a, gate_2b),
+//       std::pair<Eigen::Matrix4cd,Eigen::Matrix4cd>(gate_3a, gate_3b),
+//      }) {
+//     ExpectEqualMatrices(pair.first, pair.second);
+//   }
+// }
+
 }  // namespace
 }  // namespace tfq
