@@ -82,6 +82,8 @@ jobs:
           python-version: '3.6'
           architecture: 'x64'
       - name: Install notebook dependencies
-        run: pip install --upgrade pip seaborn==0.10.0 absl-py
-      - name: 'Test Notebooks'
+        run: pip install --upgrade pip seaborn==0.10.0
+      - name: Build Wheel
+        run: ./scripts/build_pip_package_test.sh
+      - name: Test Notebooks
         run: ./scripts/ci_validate_tutorials.sh
