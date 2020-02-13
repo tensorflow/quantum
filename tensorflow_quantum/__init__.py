@@ -38,3 +38,5 @@ import tensorflow_quantum.datasets as datasets
 
 # Import differentiators.
 import tensorflow_quantum.python.differentiators as differentiators
+
+__version__ = "0.2.0"

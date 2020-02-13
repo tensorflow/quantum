@@ -55,8 +55,7 @@ setup(
     'TensorFlow Quantum is a library for hybrid quantum-classical machine learning.',
     author='Google Inc.',
     author_email='no-reply@google.com',
-    # TODO (mbbrough): update this url when needed.
-    #url=something.github.com?
+    url='https://github.com/tensorflow/quantum/',
     packages=find_packages(),
     install_requires=REQUIRED_PACKAGES,
     # Add in any packaged data.
