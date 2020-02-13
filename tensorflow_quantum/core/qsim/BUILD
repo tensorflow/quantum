@@ -119,6 +119,7 @@ cc_test(
 
 cc_library(
     name = "simulator",
+    srcs = ["simulator.cc"],
     hdrs = ["simulator.h"],
     deps = [],
 )
