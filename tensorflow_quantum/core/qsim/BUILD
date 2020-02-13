@@ -162,23 +162,9 @@ cc_library(
     srcs = ["state_space.cc"],
     hdrs = ["state_space.h"],
     deps = [
-        ":util",
-        "//tensorflow_quantum/core/proto:program_cc_proto",
-        "//tensorflow_quantum/core/src:circuit",
-        "@local_config_tf//:libtensorflow_framework",
-        "@local_config_tf//:tf_header_lib",
-    ],
-)
-
-cc_library(
-    name = "state_space",
-    srcs = ["state_space.cc"],
-    hdrs = ["state_space.h"],
-    deps = [
         ":fuser_basic",
         ":util",
         "//tensorflow_quantum/core/proto:pauli_sum_cc_proto",
-        "//tensorflow_quantum/core/proto:program_cc_proto",
         "//tensorflow_quantum/core/src:circuit",
         "//tensorflow_quantum/core/src:circuit_parser",
         "//tensorflow_quantum/core/src:matrix",
@@ -192,13 +178,7 @@ cc_library(
     srcs = ["state_space_slow.cc"],
     hdrs = ["state_space_slow.h"],
     deps = [
-        ":fuser_basic",
         ":state_space",
-        ":util",
-        "//tensorflow_quantum/core/proto:pauli_sum_cc_proto",
-        "//tensorflow_quantum/core/proto:program_cc_proto",
-        "//tensorflow_quantum/core/src:circuit",
-        "//tensorflow_quantum/core/src:circuit_parser",
         "//tensorflow_quantum/core/src:matrix",
         "@local_config_tf//:libtensorflow_framework",
         "@local_config_tf//:tf_header_lib",

@@ -33,7 +33,7 @@ tensorflow::Status StateSpace::Update(const Circuit& circuit) {
   tensorflow::Status status;
   // Special case for single qubit;
   // derived classes free to return an error.
-  if (this->Size() <= 2) {
+  if (this->Dimension() <= 2) {
     for (uint64_t i = 0; i < circuit.gates.size(); i++) {
       const auto& gate = circuit.gates[i];
       if (gate.num_qubits == 1) {

@@ -101,8 +101,8 @@ void StateSpaceSlow::ApplyGate1(const float* matrix) const {
   this->state_[3] = i_1;
 }
 
-std::shared_ptr<StateSpaceSlow> StateSpaceSlow::CopyState() const {
-  std::shared_ptr<StateSpaceSlow> other(this->num_qubits_, this->num_threads_);
+std::shared_ptr<StateSpace> StateSpaceSlow::CopyState() const {
+  std::shared_ptr<StateSpace> other(this->num_qubits_, this->num_threads_);
   for (uint64_t i = 0; i < size_; ++i) {
     other->get()->SetAmpl(i, this->GetAmpl(i));
   }
@@ -117,14 +117,14 @@ void StateSpaceSlow::SetStateZero() const {
   this->state_[0] = 1;
 }
 
-float StateSpaceSlow::GetRealInnerProduct(const std::shared_ptr<StateSpaceSlow> other) const {
+float StateSpaceSlow::GetRealInnerProduct(const std::shared_ptr<StateSpace> other) const {
   uint64_t size2 = this->Dimension();
   double result = 0.0;
 
   // Currently not a thread safe implementation of inner product!
   for (uint64_t i = 0; i < size2; ++i) {
     const std::complex<float> amp_a = this->GetAmpl(i);
-    const std::complex<float> amp_other = other->get()->GetAmpl(i);
+    const std::complex<float> amp_other = other->GetAmpl(i);
 
     const std::complex<double> amp_a_d = std::complex<double>(
         static_cast<double>(amp_a.real()), static_cast<double>(amp_a.imag()));
@@ -143,7 +143,7 @@ std::complex<float> StateSpaceSlow::GetAmpl(const uint64_t i) const {
 }
 
 void StateSpaceSlow::SetAmpl(const uint64_t i,
-                             const std::complex<float>& val) const {
+                             const std::complex<float>& val) {
   this->state_[2 * i] = val.real();
   this->state_[2 * i + 1] = val.imag();
 }

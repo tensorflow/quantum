@@ -19,16 +19,17 @@ limitations under the License.
 #include <complex>
 #include <memory>
 
+#include "tensorflow_quantum/core/qsim/state_space.h"
+
 namespace tfq {
 namespace qsim {
 
-class StateSpaceSlow : public StateSpace{
+class StateSpaceSlow : public StateSpace {
  public:
   StateSpaceSlow(const unsigned int num_qubits, const unsigned int num_threads);
 
-  virtual ~Simulator() {DeleteState();}
+  virtual ~StateSpaceSlow() {DeleteState();}
 
- protected:
   // Function to apply a two qubit gate to the state on indices q0 and q1.
   virtual void ApplyGate2(const unsigned int q0, const unsigned int q1,
                           const float* matrix) override;
@@ -38,14 +39,14 @@ class StateSpaceSlow : public StateSpace{
   virtual tensorflow::Status ApplyGate1(const float* matrix) override;
 
     // Return a StateSpace which is a copy of this StateSpace
-  virtual std::shared_ptr<StateSpaceSlow> Copy() const override;
+  virtual std::shared_ptr<StateSpace> Copy() const override;
 
   // Set all entries in the state to zero
   virtual void SetStateZero() override;
 
   // Get the inner product between the state in this StateSpace and
   // the state in `other`.
-  virtual float GetRealInnerProduct(const std::shared_ptr<StateSpaceSlow> other) const override;
+  virtual float GetRealInnerProduct(const std::shared_ptr<StateSpace> other) const override;
 
   // Get the amplitude at the given state index
   virtual std::complex<float> GetAmpl(const uint64_t i) const override;
