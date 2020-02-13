@@ -13,8 +13,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#ifndef STATE_SPACE_H_
-#define STATE_SPACE_H_
+#ifndef TFQ_CORE_QSIM_STATE_SPACE_H_
+#define TFQ_CORE_QSIM_STATE_SPACE_H_
 
 #include <complex>
 #include <memory>
@@ -24,36 +24,24 @@ namespace qsim {
 
 class StateSpace {
  public:
-  // TODO: clean up the abusive use of state here
-  // the virtual functions rely on it, but then overwrite it.
-  using State = std::unique_ptr<float, decltype(&free)>;
-
   StateSpace(const unsigned int num_qubits, const unsigned int num_threads)
-      : size_(2 * (uint64_t{1} << num_qubits)),
+      : state_(NULL),
+        size_(2 * (uint64_t{1} << num_qubits)),
         num_qubits_(num_qubits),
         num_threads_(num_threads) {}
 
-  // Function to apply a two qubit gate to the state on indices q0
-  // and q1.
-  virtual void ApplyGate2(const unsigned int q0, const unsigned int q1,
-                          const float* matrix) const = 0;
+  // Updates the state by applying the given circuit.
+  tensorflow::Status Update(const Circuit& circuit);
 
-  // Function to apply updates to state if there is only one qubit in
-  // the state.
-  virtual void ApplyGate1(const float* matrix) const = 0;
-
-  // Reserve the memory required to represent a state in this space
-  virtual void InitState() const = 0;
-
-  // Return true if memory for this state has already been allocated,
-  // else return false
-  static bool Valid() = 0;
+  // Computes the expectation value for a given state vector and PauliSum.
+  tensorflow::Status ComputeExpectation(const tfq::proto::PauliSum& p_sum,
+                                        float* expectation_value);
 
   // Return a StateSpace which is a copy of this StateSpace
   virtual StateSpace Copy() const = 0;
 
   // Set all entries in the state to zero
-  virtual void SetStateZero() const = 0;
+  virtual void SetStateZero() = 0;
 
   // Get the inner product between the state in this StateSpace and
   // the state in `other`.
@@ -63,8 +51,7 @@ class StateSpace {
   virtual std::complex<float> GetAmpl(const uint64_t i) const = 0;
 
   // Set the amplitude at the given state index
-  virtual void SetAmpl(const uint64_t i,
-                       const std::complex<float>& val) const = 0;
+  virtual void SetAmpl(const uint64_t i, const std::complex<float>& val) = 0;
 
   // Dimension of the complex Hilbert space represented by this StateSpace
   virtual uint64_t Size() const = 0;
@@ -72,12 +59,23 @@ class StateSpace {
   virtual ~Simulator() {}
 
  protected:
+  float* state_;
   uint64_t size_;
   unsigned int num_qubits_;
   unsigned int num_threads_;
+
+  // Function to apply a two qubit gate to the state on indices q0
+  // and q1.
+  virtual void ApplyGate2(const unsigned int q0, const unsigned int q1,
+                          const float* matrix) = 0;
+
+  // Function to apply updates to state if there is only one qubit in
+  // the state.
+  virtual tensorflow::Status ApplyGate1(const float* matrix) = 0;
+
 };
 
 }  // namespace qsim
 }  // namespace tfq
 
-#endif  // STATE_SPACE_H_
+#endif  // TFQ_CORE_QSIM_STATE_SPACE_H_
