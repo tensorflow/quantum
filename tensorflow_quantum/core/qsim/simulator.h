@@ -16,9 +16,8 @@ limitations under the License.
 #ifndef SIMULATOR_H_
 #define SIMULATOR_H_
 
+#include <complex>
 #include <memory>
-
-#include "tensorflow_quantum/core/qsim/statespace.h"
 
 namespace tfq {
 namespace qsim {
@@ -43,6 +42,10 @@ class Simulator {
   // the state.
   virtual void ApplyGate1(const float* matrix, State* state) const = 0;
 
+  State* CreateState() const;
+
+  static void DeleteState(State* state);
+
   virtual void CopyState(const State& src, State* dest) const = 0;
   virtual void SetStateZero(State* state) const = 0;
 
@@ -54,6 +57,10 @@ class Simulator {
                        const std::complex<float>& val) const = 0;
 
   virtual ~Simulator() {}
+
+  uint64_t Size() const;
+
+  static bool Valid(const State& state);
 
  protected:
   float* RawData(State* state) const { return state->get(); }

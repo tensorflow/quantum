@@ -20,15 +20,13 @@ limitations under the License.
 #include <cstdint>
 
 #include "tensorflow_quantum/core/qsim/simulator.h"
-#include "tensorflow_quantum/core/qsim/statespace_slow.h"
 
 namespace tfq {
 namespace qsim {
 
 class Simulator2Slow : public Simulator {
  public:
-  using StateSpace = StateSpaceSlow;
-  using State = StateSpace::State;
+  using State = Simulator::State;
 
   Simulator2Slow(const unsigned int num_qubits, const unsigned int num_threads);
 

@@ -13,32 +13,31 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#ifndef TFQ_CORE_QSIM_STATESPACE_AVX_H_
-#define TFQ_CORE_QSIM_STATESPACE_AVX_H_
+#include "tensorflow_quantum/core/qsim/simulator.h"
 
-#include <immintrin.h>
-#include <stdlib.h>
-
-#include <complex>
-#include <cstdint>
-#include <cstdlib>
 #include <memory>
-#include <stdexcept>
 
-#include "tensorflow_quantum/core/qsim/statespace.h"
 #include "tensorflow_quantum/core/qsim/util.h"
 
 namespace tfq {
 namespace qsim {
 
-class StateSpaceAVX : public StateSpace {
- public:
-  using State = std::unique_ptr<float, decltype(&free)>;
+using State = std::unique_ptr<float, decltype(&free)>;
 
-  StateSpaceAVX(const unsigned int num_qubits, const unsigned int num_threads);
-};
+State* Simulator::CreateState() const {
+  return new State((float*)qsim::_aligned_malloc(sizeof(float) * size_), &free);
+}
+
+void Simulator::DeleteState(State* state) {
+  qsim::_aligned_free(state->release());
+}
+
+uint64_t Simulator::Size() const { return size_ / 2; }
+
+bool Simulator::Valid(const State& state) {
+  // TODO: more roubust test?
+  return state.get() != nullptr;
+}
 
 }  // namespace qsim
 }  // namespace tfq
-
-#endif  // TFQ_CORE_QSIM_STATESPACE_AVX_H_

@@ -22,7 +22,6 @@ limitations under the License.
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
 #include "tensorflow_quantum/core/qsim/simulator.h"
-#include "tensorflow_quantum/core/qsim/statespace.h"
 #include "tensorflow_quantum/core/src/circuit.h"
 
 namespace tfq {
@@ -30,13 +29,12 @@ namespace qsim {
 
 class QState {
  public:
-  // Selects the proper Simulator and StateSpace based on the runtime
-  // environment and initializes the StateSpace.
+  // Selects the proper Simulator based on the runtime
+  // environment and initializes the associated state.
   QState(const int num_qubits);
 
-  // Creates the state with a pre-selected Simulator and StateSpace.
-  QState(std::unique_ptr<Simulator> simulator,
-         std::unique_ptr<StateSpace> state_space, const int num_qubits);
+  // Creates the state with a pre-selected Simulator.
+  QState(std::unique_ptr<Simulator> simulator, const int num_qubits);
 
   // Cleans up allocated memory.
   ~QState();
@@ -63,7 +61,6 @@ class QState {
 
  private:
   std::unique_ptr<Simulator> simulator_;
-  std::unique_ptr<StateSpace> state_space_;
 
   // TODO(pmassey): Consider moving to a unique_ptr to clean up memory.
   std::unique_ptr<float, decltype(&free)>* state_;

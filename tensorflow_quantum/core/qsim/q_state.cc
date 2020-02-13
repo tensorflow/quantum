@@ -24,8 +24,6 @@ limitations under the License.
 #include "tensorflow_quantum/core/qsim/mux.h"
 #include "tensorflow_quantum/core/qsim/simulator.h"
 #include "tensorflow_quantum/core/qsim/simulator2_slow.h"
-#include "tensorflow_quantum/core/qsim/statespace.h"
-#include "tensorflow_quantum/core/qsim/statespace_slow.h"
 #include "tensorflow_quantum/core/src/circuit.h"
 #include "tensorflow_quantum/core/src/circuit_parser.h"
 #include "tensorflow_quantum/core/src/matrix.h"
@@ -42,28 +40,24 @@ int GetAvailableThreads() { return 1; }
 QState::QState(const int num_qubits) : num_qubits_(num_qubits) {
   const int num_threads = GetAvailableThreads();
   simulator_ = GetSimulator(num_qubits, num_threads);
-  state_space_ = GetStateSpace(num_qubits, num_threads);
 
-  state_ = state_space_->CreateState();
+  state_ = simulator_->CreateState();
   simulator_->SetStateZero(state_);
 }
 
-QState::QState(std::unique_ptr<Simulator> simulator,
-               std::unique_ptr<StateSpace> state_space, const int num_qubits)
-    : simulator_(std::move(simulator)),
-      state_space_(std::move(state_space)),
-      num_qubits_(num_qubits) {
-  state_ = state_space_->CreateState();
+QState::QState(std::unique_ptr<Simulator> simulator, const int num_qubits)
+    : simulator_(std::move(simulator)), num_qubits_(num_qubits) {
+  state_ = simulator_->CreateState();
   simulator_->SetStateZero(state_);
 }
 
 QState::~QState() {
-  state_space_->DeleteState(state_);
+  simulator_->DeleteState(state_);
   delete state_;
 }
 
 tensorflow::Status QState::Update(const Circuit& circuit) {
-  if (!state_space_->Valid(*state_)) {
+  if (!simulator_->Valid(*state_)) {
     return tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
                               "Invalid space.");
   }
@@ -71,7 +65,7 @@ tensorflow::Status QState::Update(const Circuit& circuit) {
   // Delegate to single qubit workaround.
   // This delegation is only supported with the
   // slow simulator for now.
-  if (state_space_->Size() <= 2) {
+  if (simulator_->Size() <= 2) {
     for (uint64_t i = 0; i < circuit.gates.size(); i++) {
       const auto& gate = circuit.gates[i];
 
