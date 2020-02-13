@@ -14,10 +14,11 @@
 # ==============================================================================
 """Tests for the cirq simulation ops."""
 from unittest import mock
+
+import cirq
 import numpy as np
 import tensorflow as tf
 from absl.testing import parameterized
-import cirq
 
 from tensorflow_quantum.core.ops import cirq_ops
 from tensorflow_quantum.core.serialize import serializer

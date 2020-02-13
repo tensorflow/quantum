@@ -13,8 +13,8 @@
 # limitations under the License.
 # ==============================================================================
 """Some basic datasets related to cluster states."""
-import numpy as np
 import cirq
+import numpy as np
 
 
 def excited_cluster_states(qubits):

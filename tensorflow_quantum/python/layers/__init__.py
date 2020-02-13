@@ -14,17 +14,9 @@
 # ==============================================================================
 """Module definitions for tensorflow_quantum.python.layers.*"""
 # Utility layers.
-from tensorflow_quantum.python.layers.circuit_construction import (
-    AddCircuit,)
+from tensorflow_quantum.python.layers.circuit_construction import AddCircuit
 # Executor layers.
 from tensorflow_quantum.python.layers.circuit_executors import (
-    Expectation,
-    Sample,
-    State,
-    SampledExpectation,
-)
+    Expectation, Sample, SampledExpectation, State)
 # High level layers.
-from tensorflow_quantum.python.layers.high_level import (
-    ControlledPQC,
-    PQC,
-)
+from tensorflow_quantum.python.layers.high_level import PQC, ControlledPQC

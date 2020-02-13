@@ -14,27 +14,19 @@
 # ==============================================================================
 """Module functions for tensorflow_quantum.*"""
 
+# Import datasets.
+import tensorflow_quantum.datasets as datasets
+# Import differentiators.
+import tensorflow_quantum.python.differentiators as differentiators
+# Re-label python module as layers module.
+import tensorflow_quantum.python.layers as layers
+# Re-label python module as util module.
+import tensorflow_quantum.python.util as util
 # Import basic ops and op getters.
 from tensorflow_quantum.core import (append_circuit, get_expectation_op,
                                      get_sampled_expectation_op,
                                      get_sampling_op, get_state_op,
                                      padded_to_ragged)
-
-# Re-label python module as layers module.
-import tensorflow_quantum.python.layers as layers
-
 # Import utility functions for tensor operations & conversions.
-from tensorflow_quantum.python.util import (
-    # Utility functions
-    convert_to_tensor,
-    from_tensor,
-)
-
-# Re-label python module as util module.
-import tensorflow_quantum.python.util as util
-
-# Import datasets.
-import tensorflow_quantum.datasets as datasets
-
-# Import differentiators.
-import tensorflow_quantum.python.differentiators as differentiators
+from tensorflow_quantum.python.util import (  # Utility functions
+    convert_to_tensor, from_tensor)

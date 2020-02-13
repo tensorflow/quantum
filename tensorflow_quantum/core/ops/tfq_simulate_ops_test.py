@@ -13,12 +13,11 @@
 # limitations under the License.
 # ==============================================================================
 """Tests that specifically target tfq_simulate_ops."""
-import numpy as np
-from absl.testing import parameterized
-import tensorflow as tf
 import cirq
+import numpy as np
+import tensorflow as tf
+from absl.testing import parameterized
 
-from tensorflow_quantum.python import util
 from tensorflow_quantum.core.ops import tfq_simulate_ops
 from tensorflow_quantum.python import util
 

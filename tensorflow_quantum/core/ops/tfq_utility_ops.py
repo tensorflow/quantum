@@ -14,6 +14,7 @@
 # ==============================================================================
 """Expose bindings for tfq utility ops."""
 import tensorflow as tf
+
 from tensorflow_quantum.core.ops.load_module import load_module
 
 UTILITY_OP_MODULE = load_module("_tfq_utility_ops.so")

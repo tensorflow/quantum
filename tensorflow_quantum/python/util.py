@@ -13,13 +13,13 @@
 # limitations under the License.
 # ==============================================================================
 """A collection of helper functions that are useful several places in tfq."""
-import random
 import itertools
+import random
 
+import cirq
 import numpy as np
 import sympy
 import tensorflow as tf
-import cirq
 
 from tensorflow_quantum.core.proto import pauli_sum_pb2
 from tensorflow_quantum.core.serialize import serializer

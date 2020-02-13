@@ -13,14 +13,14 @@
 # limitations under the License.
 # ==============================================================================
 """Tests for the sample layer."""
+import cirq
 import numpy as np
-from absl.testing import parameterized
 import sympy
 import tensorflow as tf
-import cirq
+from absl.testing import parameterized
 
-from tensorflow_quantum.python.layers.circuit_executors import sample
 from tensorflow_quantum.python import util
+from tensorflow_quantum.python.layers.circuit_executors import sample
 
 
 class SampleTest(tf.test.TestCase, parameterized.TestCase):

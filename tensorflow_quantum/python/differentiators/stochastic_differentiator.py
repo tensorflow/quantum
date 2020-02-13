@@ -18,8 +18,10 @@ For the test of this SGDifferentiator's consistency & convergence, please see:
 """
 import tensorflow as tf
 
-from tensorflow_quantum.python.differentiators import differentiator, \
-    parameter_shift_util, stochastic_differentiator_util as sd_util
+from tensorflow_quantum.python.differentiators import (differentiator,
+                                                       parameter_shift_util)
+from tensorflow_quantum.python.differentiators import \
+    stochastic_differentiator_util as sd_util
 
 
 class SGDifferentiator(differentiator.Differentiator):

@@ -13,14 +13,14 @@
 # limitations under the License.
 # ==============================================================================
 """Tests for tensorflow_quantum.layers.circuit_executors.state."""
+import cirq
 import numpy as np
-from absl.testing import parameterized
 import sympy
 import tensorflow as tf
-import cirq
+from absl.testing import parameterized
 
-from tensorflow_quantum.python.layers.circuit_executors import state
 from tensorflow_quantum.python import util
+from tensorflow_quantum.python.layers.circuit_executors import state
 
 WF_OUTPUT = [1 / np.sqrt(2), 0, 0, 1 / np.sqrt(2)]
 DM_OUTPUT = np.outer(WF_OUTPUT, WF_OUTPUT)

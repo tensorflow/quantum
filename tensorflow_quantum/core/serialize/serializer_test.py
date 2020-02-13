@@ -13,13 +13,13 @@
 # limitations under the License.
 # ==============================================================================
 """Module to test serialization core."""
+import cirq
 import numpy as np
 import sympy
 import tensorflow as tf
-
-import cirq
-from cirq.google.api.v2 import program_pb2
 from absl.testing import parameterized
+from cirq.google.api.v2 import program_pb2
+
 from tensorflow_quantum.core.proto import pauli_sum_pb2
 from tensorflow_quantum.core.serialize import serializer
 

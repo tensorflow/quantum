@@ -13,8 +13,8 @@
 # limitations under the License.
 # ==============================================================================
 """Test the cluster state dataset."""
-import tensorflow as tf
 import cirq
+import tensorflow as tf
 
 from tensorflow_quantum.datasets import cluster_state
 

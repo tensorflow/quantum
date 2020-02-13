@@ -14,11 +14,12 @@
 # ==============================================================================
 """Module to test consistency between Cirq and TFQ circuit execution ops."""
 from unittest import mock
+
+import cirq
 import numpy as np
 import tensorflow as tf
 from absl.testing import parameterized
 from scipy import stats
-import cirq
 
 from tensorflow_quantum.core.ops import batch_util, circuit_execution_ops
 from tensorflow_quantum.python import util

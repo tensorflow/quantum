@@ -13,11 +13,11 @@
 # limitations under the License.
 # ==============================================================================
 """Basic tests for utility functions for ParameterShift"""
-import numpy as np
-from absl.testing import parameterized
-import tensorflow as tf
-import sympy
 import cirq
+import numpy as np
+import sympy
+import tensorflow as tf
+from absl.testing import parameterized
 
 from tensorflow_quantum.python import util
 from tensorflow_quantum.python.differentiators import parameter_shift_util

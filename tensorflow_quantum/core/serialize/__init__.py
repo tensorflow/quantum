@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 """Module for tfq.core.serialize.*"""
-from tensorflow_quantum.core.serialize.serializer import (serialize_circuit,
-                                                          deserialize_circuit,
-                                                          serialize_paulisum,
-                                                          deserialize_paulisum)
+from tensorflow_quantum.core.serialize.serializer import (deserialize_circuit,
+                                                          deserialize_paulisum,
+                                                          serialize_circuit,
+                                                          serialize_paulisum)
