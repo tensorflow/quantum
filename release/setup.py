@@ -21,6 +21,17 @@ from setuptools import Extension
 from setuptools import find_packages
 from setuptools import setup
 from setuptools.dist import Distribution
+from setuptools.command.install import install
+
+
+class InstallPlatlib(install):
+    """Workaround so .so files in generated wheels
+    can be seen by auditwheel."""
+
+    def finalize_options(self):
+        install.finalize_options(self)
+        if self.distribution.has_ext_modules():
+            self.install_lib = self.install_platlib
 
 
 REQUIRED_PACKAGES = [
@@ -68,4 +79,4 @@ setup(
     ],
     license='Apache 2.0',
     keywords='tensorflow machine learning quantum qml',
-)
+    cmdclass={'install': InstallPlatlib})
