@@ -19,6 +19,10 @@ limitations under the License.
 #include <complex>
 #include <memory>
 
+#include "tensorflow/core/lib/core/status.h"
+#include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
+#include "tensorflow_quantum/core/src/circuit.h"
+
 namespace tfq {
 namespace qsim {
 
@@ -37,24 +41,14 @@ class StateSpace {
   tensorflow::Status ComputeExpectation(const tfq::proto::PauliSum& p_sum,
                                         float* expectation_value);
 
-  // Return a StateSpace which is a copy of this StateSpace
-  virtual std::unique_ptr<StateSpace> Copy() const = 0;
+  // Reserve the memory associated with the state in this space
+  void CreateState();
 
-  // Set all entries in the state to zero
-  virtual void SetStateZero() = 0;
+  // Free the memory associated with the state in this space
+  void DeleteState();
 
-  // Get the inner product between the state in this StateSpace and
-  // the state in `other`.
-  virtual float GetRealInnerProduct(const StateSpace& other) const = 0;
-
-  // Get the amplitude at the given state index
-  virtual std::complex<float> GetAmpl(const uint64_t i) const = 0;
-
-  // Set the amplitude at the given state index
-  virtual void SetAmpl(const uint64_t i, const std::complex<float>& val) = 0;
-
-  // Dimension of the complex Hilbert space represented by this StateSpace
-  virtual uint64_t Size() const = 0;
+  // Returns true if memory for the state has been succesfully allocated
+  bool Valid();
 
   virtual ~Simulator() {}
 
@@ -72,6 +66,24 @@ class StateSpace {
   // Implementations are given the option to return an error.
   virtual tensorflow::Status ApplyGate1(const float* matrix) = 0;
 
+    // Return a StateSpace which is a copy of this StateSpace
+  virtual std::unique_ptr<StateSpace> Copy() const = 0;
+
+  // Set all entries in the state to zero
+  virtual void SetStateZero() = 0;
+
+  // Get the inner product between the state in this StateSpace and
+  // the state in `other`.
+  virtual float GetRealInnerProduct(const StateSpace& other) const = 0;
+
+  // Get the amplitude at the given state index
+  virtual std::complex<float> GetAmpl(const uint64_t i) const = 0;
+
+  // Set the amplitude at the given state index
+  virtual void SetAmpl(const uint64_t i, const std::complex<float>& val) = 0;
+
+  // Dimension of the complex Hilbert space represented by this StateSpace
+  virtual uint64_t Dimension() const = 0;
 };
 
 }  // namespace qsim

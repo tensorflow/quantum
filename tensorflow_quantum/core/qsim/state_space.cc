@@ -21,6 +21,7 @@ limitations under the License.
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
 #include "tensorflow_quantum/core/qsim/fuser_basic.h"
+#include "tensorflow_quantum/core/qsim/util.h"
 #include "tensorflow_quantum/core/src/circuit.h"
 #include "tensorflow_quantum/core/src/circuit_parser.h"
 #include "tensorflow_quantum/core/src/matrix.h"
@@ -98,6 +99,21 @@ tensorflow::Status StateSpace::ComputeExpectation(const tfq::proto::PauliSum& p_
   }
   return tensorflow::Status::OK();
 }
+
+void StateSpace::CreateState() {
+  state_ = (float*)qsim::_aligned_malloc(sizeof(float) * size_);
+}
+
+void StateSpace::DeleteState() {
+  qsim::_aligned_free(state_);
+}
+
+bool StateSpace::Valid() const {
+  // TODO: more roubust test?
+  return state_ != nullptr;
+}
+
+uint64_t StateSpace::Dimension() const { return size_ / 2; }
 
 }  // namespace qsim
 }  // namespace tfq
