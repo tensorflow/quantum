@@ -101,14 +101,6 @@ void StateSpaceSlow::ApplyGate1(const float* matrix) const {
   this->state_[3] = i_1;
 }
 
-std::shared_ptr<StateSpace> StateSpaceSlow::CopyState() const {
-  std::shared_ptr<StateSpace> other(this->num_qubits_, this->num_threads_);
-  for (uint64_t i = 0; i < size_; ++i) {
-    other->get()->SetAmpl(i, this->GetAmpl(i));
-  }
-  return other;
-}
-
 void StateSpaceSlow::SetStateZero() const {
   //#pragma omp parallel for num_threads(num_threads_)
   for (uint64_t i = 0; i < size_; ++i) {

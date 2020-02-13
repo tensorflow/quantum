@@ -50,6 +50,9 @@ class StateSpace {
   // Returns true if memory for the state has been succesfully allocated
   bool Valid() const;
 
+  // Load a copy of this StateSpace into `other`
+  tensorflow::Status Copy(StateSpace* other) const;
+
   // Dimension of the complex Hilbert space represented by this StateSpace
   uint64_t Dimension() const;
 
@@ -63,15 +66,11 @@ class StateSpace {
   // Implementations are given the option to return an error.
   virtual tensorflow::Status ApplyGate1(const float* matrix) = 0;
 
-  // Return a StateSpace which is a copy of this StateSpace
-  virtual std::unique_ptr<StateSpace> Copy() const = 0;
-
   // Set all entries in the state to zero
   virtual void SetStateZero() = 0;
 
-  // Get the inner product between the state in this StateSpace and
-  // the state in `other`.
-  virtual float GetRealInnerProduct(const std::shared_ptr<StateSpace> other) const = 0;
+  // Get the inner product between this state and the state in `other`
+  virtual float GetRealInnerProduct(const StateSpace* other) const = 0;
 
   // Get the amplitude at the given state index
   virtual std::complex<float> GetAmpl(const uint64_t i) const = 0;

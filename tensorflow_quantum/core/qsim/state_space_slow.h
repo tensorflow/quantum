@@ -38,15 +38,11 @@ class StateSpaceSlow : public StateSpace {
   // Implementations are given the option to return an error.
   virtual tensorflow::Status ApplyGate1(const float* matrix) override;
 
-    // Return a StateSpace which is a copy of this StateSpace
-  virtual std::shared_ptr<StateSpace> Copy() const override;
-
   // Set all entries in the state to zero
   virtual void SetStateZero() override;
 
-  // Get the inner product between the state in this StateSpace and
-  // the state in `other`.
-  virtual float GetRealInnerProduct(const std::shared_ptr<StateSpace> other) const override;
+    // Get the inner product between this state and the state in `other`
+  virtual float GetRealInnerProduct(const StateSpace* other) const override;
 
   // Get the amplitude at the given state index
   virtual std::complex<float> GetAmpl(const uint64_t i) const override;

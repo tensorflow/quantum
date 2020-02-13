@@ -113,6 +113,28 @@ bool StateSpace::Valid() const {
   return state_ != nullptr;
 }
 
+tensorflow::Status StateSpace::CopyState(Statespace* other) const {
+  if (other == NULL) {
+    return tensorflow::Status(
+        tensorflow::error::INVALID_ARGUMENT,
+        "No StateSpace provided.");
+  }
+  if (other->Dimension() != this->Dimension()) {
+    return tensorflow::Status(
+        tensorflow::error::INVALID_ARGUMENT,
+        "StateSpace dimensions do not match.");
+  }
+  if (!other->Valid()) {
+    return tensorflow::Status(
+        tensorflow::error::INVALID_ARGUMENT,
+        "The given StateSpace is not valid.");
+  }
+  for (uint64_t i = 0; i < size_; ++i) {
+    other->SetAmpl(i, this->GetAmpl(i));
+  }
+  return tensorflow::Status::OK();
+}
+
 uint64_t StateSpace::Dimension() const { return size_ / 2; }
 
 }  // namespace qsim
