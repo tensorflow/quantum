@@ -38,7 +38,7 @@ class StateSpace {
                                         float* expectation_value);
 
   // Return a StateSpace which is a copy of this StateSpace
-  virtual StateSpace Copy() const = 0;
+  virtual std::unique_ptr<StateSpace> Copy() const = 0;
 
   // Set all entries in the state to zero
   virtual void SetStateZero() = 0;
@@ -64,13 +64,12 @@ class StateSpace {
   unsigned int num_qubits_;
   unsigned int num_threads_;
 
-  // Function to apply a two qubit gate to the state on indices q0
-  // and q1.
+  // Function to apply a two qubit gate to the state on indices q0 and q1.
   virtual void ApplyGate2(const unsigned int q0, const unsigned int q1,
                           const float* matrix) = 0;
 
-  // Function to apply updates to state if there is only one qubit in
-  // the state.
+  // Function to apply a one-qubit gate if there is only one qubit in the state.
+  // Implementations are given the option to return an error.
   virtual tensorflow::Status ApplyGate1(const float* matrix) = 0;
 
 };

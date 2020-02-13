@@ -88,9 +88,8 @@ tensorflow::Status StateSpace::ComputeExpectation(const tfq::proto::PauliSum& p_
     if (!status.ok()) {
       return status;
     }
-    tfq::qsim::QState transformed_state(this->num_qubits_);
-    this->CopyOnto(&transformed_state);
-    status = transformed_state.Update(measurement_circuit);
+    std::unique_ptr<StateSpace> transformed_state = this->Copy();
+    status = transformed_state->Update(measurement_circuit);
     if (!status.ok()) {
       return status;
     }
