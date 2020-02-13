@@ -15,16 +15,17 @@
 """Testing for gradient calculation consistency in TFQ."""
 import copy
 
-import cirq
 import numpy as np
 import sympy
 import tensorflow as tf
 from absl.testing import parameterized
 
-from tensorflow_quantum.core.ops import batch_util, circuit_execution_ops
+import cirq
 from tensorflow_quantum.python import util
-from tensorflow_quantum.python.differentiators import (
-    linear_combination, parameter_shift, stochastic_differentiator)
+from tensorflow_quantum.python.differentiators import linear_combination
+from tensorflow_quantum.python.differentiators import parameter_shift
+from tensorflow_quantum.python.differentiators import stochastic_differentiator
+from tensorflow_quantum.core.ops import circuit_execution_ops, batch_util
 
 DIFFS = [
     linear_combination.ForwardDifference(grid_spacing=0.0001),

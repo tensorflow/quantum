@@ -16,15 +16,15 @@
 ."""
 import numbers
 
-import cirq
 import numpy as np
 import sympy
 import tensorflow as tf
 
+import cirq
 from tensorflow_quantum.core.ops import circuit_execution_ops
-from tensorflow_quantum.python import util
 from tensorflow_quantum.python.differentiators import differentiator as diff
 from tensorflow_quantum.python.differentiators import parameter_shift
+from tensorflow_quantum.python import util
 
 
 class SampledExpectation(tf.keras.layers.Layer):

@@ -13,10 +13,11 @@
 # limitations under the License.
 # ==============================================================================
 """Imports to tensorflow_quantum.core.* level."""
-# Special case for append op which we didn't name well.
 # Import getters for constructing ops.
 from tensorflow_quantum.core.ops import (get_expectation_op,
                                          get_sampled_expectation_op,
-                                         get_sampling_op, get_state_op,
-                                         padded_to_ragged)
-from tensorflow_quantum.core.ops import tfq_append_circuit as append_circuit
+                                         get_sampling_op, get_state_op)
+# Special case for append op which we didn't name well.
+from tensorflow_quantum.core.ops import padded_to_ragged
+from tensorflow_quantum.core.ops import \
+    tfq_append_circuit as append_circuit

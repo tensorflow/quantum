@@ -16,10 +16,10 @@
 # TODO(pmassey / anyone): determine if this should be kept as globals.
 import numbers
 
-import cirq
-import cirq.google.api.v2 as v2
 import sympy
 
+import cirq
+import cirq.google.api.v2 as v2
 from tensorflow_quantum.core.proto import pauli_sum_pb2
 
 

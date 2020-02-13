@@ -16,9 +16,9 @@
 import functools
 import numbers
 
-import cirq
 import numpy as np
 import tensorflow as tf
+import cirq
 
 from tensorflow_quantum.core.ops import batch_util
 from tensorflow_quantum.core.proto import pauli_sum_pb2

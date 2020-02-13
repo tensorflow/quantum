@@ -15,11 +15,8 @@
 """Module for tfq.python.layers.circuit_executors.*"""
 
 # pylint: disable=line-too-long
-from tensorflow_quantum.python.layers.circuit_executors.expectation import \
-    Expectation
+from tensorflow_quantum.python.layers.circuit_executors.expectation import Expectation
 from tensorflow_quantum.python.layers.circuit_executors.sample import Sample
-from tensorflow_quantum.python.layers.circuit_executors.sampled_expectation import \
-    SampledExpectation
 from tensorflow_quantum.python.layers.circuit_executors.state import State
-
+from tensorflow_quantum.python.layers.circuit_executors.sampled_expectation import SampledExpectation
 # pylint: enable=line-too-long

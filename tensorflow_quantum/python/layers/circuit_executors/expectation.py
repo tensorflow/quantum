@@ -13,15 +13,15 @@
 # limitations under the License.
 # ==============================================================================
 """A tf.keras.layer that ingests programs and outputs expectation values."""
-import cirq
 import numpy as np
 import sympy
 import tensorflow as tf
 
+import cirq
 from tensorflow_quantum.core.ops import circuit_execution_ops
-from tensorflow_quantum.python import util
-from tensorflow_quantum.python.differentiators import differentiator as diff
 from tensorflow_quantum.python.differentiators import linear_combination
+from tensorflow_quantum.python.differentiators import differentiator as diff
+from tensorflow_quantum.python import util
 
 
 class Expectation(tf.keras.layers.Layer):

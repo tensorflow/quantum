@@ -13,9 +13,9 @@
 # limitations under the License.
 # ==============================================================================
 """Elementary layers, such as the AddCircuit layer."""
-import cirq
 import numpy as np
 import tensorflow as tf
+import cirq
 
 from tensorflow_quantum.core.ops import tfq_utility_ops
 from tensorflow_quantum.python import util

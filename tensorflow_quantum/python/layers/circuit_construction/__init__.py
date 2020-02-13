@@ -15,7 +15,5 @@
 """Module for tfq.python.layers.circuit_construction.*"""
 
 # pylint: disable=line-too-long
-from tensorflow_quantum.python.layers.circuit_construction.elementary import \
-    AddCircuit
-
+from tensorflow_quantum.python.layers.circuit_construction.elementary import AddCircuit
 # pylint: enable=line-too-long

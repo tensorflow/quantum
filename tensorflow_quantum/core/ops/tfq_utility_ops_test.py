@@ -13,10 +13,10 @@
 # limitations under the License.
 # ==============================================================================
 """Tests for tfq utility ops."""
-import cirq
 import numpy as np
 import tensorflow as tf
 from absl.testing import parameterized
+import cirq
 
 from tensorflow_quantum.core.ops import tfq_utility_ops
 from tensorflow_quantum.core.serialize import serializer

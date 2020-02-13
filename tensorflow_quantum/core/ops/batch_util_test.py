@@ -13,11 +13,11 @@
 # limitations under the License.
 # ==============================================================================
 """Test parallel Cirq simulations."""
-import cirq
 import numpy as np
 import tensorflow as tf
 from absl.testing import parameterized
 from scipy import stats
+import cirq
 
 from tensorflow_quantum.core.ops import batch_util
 from tensorflow_quantum.python import util

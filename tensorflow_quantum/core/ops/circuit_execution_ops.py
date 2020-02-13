@@ -16,7 +16,6 @@
 import enum
 
 import cirq
-
 from tensorflow_quantum.core.ops import (cirq_ops, tfq_simulate_ops,
                                          tfq_utility_ops)
 

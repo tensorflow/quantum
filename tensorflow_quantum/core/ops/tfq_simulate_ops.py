@@ -14,7 +14,6 @@
 # ==============================================================================
 """Module to register python op gradient."""
 import tensorflow as tf
-
 from tensorflow_quantum.core.ops.load_module import load_module
 
 SIM_OP_MODULE = load_module("_tfq_simulate_ops.so")

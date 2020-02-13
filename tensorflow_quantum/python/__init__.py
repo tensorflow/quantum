@@ -13,5 +13,8 @@
 # limitations under the License.
 # ==============================================================================
 """Module definitions for tensorflow_quantum.python.util.*"""
-from tensorflow_quantum.python.util import (exponential,  # Utility functions.
-                                            get_supported_gates)
+from tensorflow_quantum.python.util import (
+    # Utility functions.
+    get_supported_gates,
+    exponential,
+)

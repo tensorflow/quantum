@@ -14,11 +14,17 @@
 # ==============================================================================
 """Module functions for tfq.differentiators.*"""
 
-from tensorflow_quantum.python.differentiators.differentiator import \
-    Differentiator
 from tensorflow_quantum.python.differentiators.linear_combination import (
-    CentralDifference, ForwardDifference, LinearCombination)
-from tensorflow_quantum.python.differentiators.parameter_shift import \
-    ParameterShift
-from tensorflow_quantum.python.differentiators.stochastic_differentiator import \
-    SGDifferentiator
+    ForwardDifference,
+    CentralDifference,
+    LinearCombination,
+)
+
+from tensorflow_quantum.python.differentiators.parameter_shift import (
+    ParameterShift,)
+
+from tensorflow_quantum.python.differentiators.stochastic_differentiator \
+    import (SGDifferentiator,)
+
+from tensorflow_quantum.python.differentiators.differentiator import (
+    Differentiator,)

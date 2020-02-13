@@ -14,16 +14,16 @@
 # ==============================================================================
 """Basic tests for utility functions for SGDifferentiator"""
 
-import cirq
 import numpy as np
-import sympy
 import tensorflow as tf
 from absl.testing import parameterized
+import sympy
+import cirq
 
 from tensorflow_quantum.python import util
-from tensorflow_quantum.python.differentiators import parameter_shift_util
 from tensorflow_quantum.python.differentiators import \
     stochastic_differentiator_util as sd_util
+from tensorflow_quantum.python.differentiators import parameter_shift_util
 
 
 def _example_circuit_helper(n_qubits, n_programs):

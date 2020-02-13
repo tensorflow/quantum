@@ -14,7 +14,6 @@
 # ==============================================================================
 """Tests for the differentiator abstract class."""
 import tensorflow as tf
-
 from tensorflow_quantum.python.differentiators import differentiator
 
 

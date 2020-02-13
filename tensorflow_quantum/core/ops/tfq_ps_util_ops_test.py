@@ -13,10 +13,10 @@
 # limitations under the License.
 # ==============================================================================
 """Test for ParameterShift specific C++ ops."""
-import cirq
 import numpy as np
-import sympy
 import tensorflow as tf
+import sympy
+import cirq
 
 from tensorflow_quantum.core.ops import tfq_ps_util_ops
 from tensorflow_quantum.python import util

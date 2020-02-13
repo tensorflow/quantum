@@ -15,8 +15,8 @@
 """Compute analytic gradients by using general parameter-shift rule. """
 import tensorflow as tf
 
-from tensorflow_quantum.python.differentiators import (differentiator,
-                                                       parameter_shift_util)
+from tensorflow_quantum.python.differentiators import differentiator
+from tensorflow_quantum.python.differentiators import parameter_shift_util
 
 
 class ParameterShift(differentiator.Differentiator):

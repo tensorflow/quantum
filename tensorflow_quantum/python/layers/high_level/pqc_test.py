@@ -13,14 +13,14 @@
 # limitations under the License.
 # ==============================================================================
 """Test module for tfq.python.layers.high_level.pqc layer."""
-import cirq
 import numpy as np
-import sympy
 import tensorflow as tf
 from absl.testing import parameterized
+import cirq
+import sympy
 
-from tensorflow_quantum.python import util
 from tensorflow_quantum.python.layers.high_level import pqc
+from tensorflow_quantum.python import util
 
 
 class PQCTest(tf.test.TestCase, parameterized.TestCase):

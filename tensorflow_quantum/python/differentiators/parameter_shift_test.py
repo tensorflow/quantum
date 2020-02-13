@@ -13,15 +13,15 @@
 # limitations under the License.
 # ==============================================================================
 """Basic tests for the ParameterShift differentiator"""
-import cirq
 import numpy as np
-import sympy
-import tensorflow as tf
 from absl.testing import parameterized
+import tensorflow as tf
+import sympy
+import cirq
 
-from tensorflow_quantum.core.ops import circuit_execution_ops
 from tensorflow_quantum.python import util
 from tensorflow_quantum.python.differentiators import parameter_shift
+from tensorflow_quantum.core.ops import circuit_execution_ops
 
 
 def _simple_op_inputs():

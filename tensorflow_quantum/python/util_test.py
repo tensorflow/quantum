@@ -13,12 +13,12 @@
 # limitations under the License.
 # ==============================================================================
 """Tests for TFQ utilities."""
-import cirq
 import numpy as np
-import sympy
 import tensorflow as tf
 from absl.testing import parameterized
+import sympy
 
+import cirq
 from tensorflow_quantum.core.serialize import serializer
 from tensorflow_quantum.python import util
 

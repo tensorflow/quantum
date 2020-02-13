@@ -13,14 +13,14 @@
 # limitations under the License.
 # ==============================================================================
 """Tests for tensorflow_quantum.layers.circuit_executors.expectation."""
-import cirq
 import numpy as np
 import sympy
 import tensorflow as tf
 
-from tensorflow_quantum.python import util
-from tensorflow_quantum.python.differentiators import linear_combination
+import cirq
 from tensorflow_quantum.python.layers.circuit_executors import expectation
+from tensorflow_quantum.python.differentiators import linear_combination
+from tensorflow_quantum.python import util
 
 
 def _gen_single_bit_rotation_problem(bit, symbols):

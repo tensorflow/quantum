@@ -13,9 +13,9 @@
 # limitations under the License.
 # ==============================================================================
 """Tests for the elementary layers."""
+import tensorflow as tf
 import cirq
 import sympy
-import tensorflow as tf
 
 from tensorflow_quantum.python import util
 from tensorflow_quantum.python.layers.circuit_construction import elementary

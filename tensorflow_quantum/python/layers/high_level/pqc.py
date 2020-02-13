@@ -14,15 +14,14 @@
 # ==============================================================================
 """Module for tfq.python.layers.high_level.pqc layer."""
 import numbers
-
-import cirq
 import numpy as np
 import tensorflow as tf
 
-from tensorflow_quantum.python import util
+import cirq
+from tensorflow_quantum.python.layers.circuit_executors import \
+    expectation, sampled_expectation
 from tensorflow_quantum.python.layers.circuit_construction import elementary
-from tensorflow_quantum.python.layers.circuit_executors import (
-    expectation, sampled_expectation)
+from tensorflow_quantum.python import util
 
 
 class PQC(tf.keras.layers.Layer):
