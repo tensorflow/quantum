@@ -72,7 +72,6 @@ cc_test(
     deps = [
         ":mux",
         ":simulator",
-        ":statespace",
         "@com_google_googletest//:gtest_main",
     ],
 )

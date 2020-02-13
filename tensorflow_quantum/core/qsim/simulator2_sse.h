@@ -29,8 +29,7 @@ namespace qsim {
 
 class Simulator2SSE : public Simulator {
  public:
-  using StateSpace = StateSpaceSSE;
-  using State = StateSpace::State;
+  using State = Simulator::State;
 
   Simulator2SSE(const unsigned int num_qubits, const unsigned int num_threads);
 

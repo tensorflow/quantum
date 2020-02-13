@@ -16,6 +16,7 @@ limitations under the License.
 #ifndef SIMULATOR_H_
 #define SIMULATOR_H_
 
+#include <complex>
 #include <memory>
 
 namespace tfq {

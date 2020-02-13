@@ -30,21 +30,6 @@ limitations under the License.
 namespace tfq {
 namespace qsim {
 
-std::unique_ptr<StateSpace> GetStateSpace(const int num_qubits,
-                                          const int num_threads) {
-  if (num_qubits <= 3) {
-    return absl::make_unique<StateSpaceSlow>(num_qubits, num_threads);
-  }
-
-#ifdef __AVX2__
-  return absl::make_unique<StateSpaceAVX>(num_qubits, num_threads);
-#elif __SSE4_1__
-  return absl::make_unique<StateSpaceSSE>(num_qubits, num_threads);
-#else
-  return absl::make_unique<StateSpaceSlow>(num_qubits, num_threads);
-#endif
-}
-
 std::unique_ptr<Simulator> GetSimulator(const int num_qubits,
                                         const int num_threads) {
   if (num_qubits <= 3) {
