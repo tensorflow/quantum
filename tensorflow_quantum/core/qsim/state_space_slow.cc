@@ -109,7 +109,7 @@ void StateSpaceSlow::SetStateZero() const {
   this->state_[0] = 1;
 }
 
-float StateSpaceSlow::GetRealInnerProduct(const std::shared_ptr<StateSpace> other) const {
+float StateSpaceSlow::GetRealInnerProduct(const StateSpace* other) const {
   uint64_t size2 = this->Dimension();
   double result = 0.0;
 
