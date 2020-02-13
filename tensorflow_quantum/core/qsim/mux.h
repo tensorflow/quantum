@@ -19,13 +19,9 @@ limitations under the License.
 #include <memory>
 
 #include "tensorflow_quantum/core/qsim/simulator.h"
-#include "tensorflow_quantum/core/qsim/statespace.h"
 
 namespace tfq {
 namespace qsim {
-
-std::unique_ptr<StateSpace> GetStateSpace(const int num_qubits,
-                                          const int num_threads);
 
 std::unique_ptr<Simulator> GetSimulator(const int num_qubits,
                                         const int num_threads);

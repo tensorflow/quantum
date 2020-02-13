@@ -22,15 +22,13 @@ limitations under the License.
 #include <cstdint>
 
 #include "tensorflow_quantum/core/qsim/simulator.h"
-#include "tensorflow_quantum/core/qsim/statespace_avx.h"
 
 namespace tfq {
 namespace qsim {
 
 class Simulator2AVX : public Simulator {
  public:
-  using StateSpace = StateSpaceAVX;
-  using State = StateSpace::State;
+  using State = Simulator::State;
 
   Simulator2AVX(const unsigned int num_qubits, const unsigned int num_threads);
 
