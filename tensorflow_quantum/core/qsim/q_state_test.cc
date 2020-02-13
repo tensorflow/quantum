@@ -17,12 +17,10 @@ limitations under the License.
 
 #ifdef __AVX2__
 #include "tensorflow_quantum/core/qsim/simulator2_avx.h"
-#include "tensorflow_quantum/core/qsim/statespace_avx.h"
 #endif
 
 #if __SSE4_1__
 #include "tensorflow_quantum/core/qsim/simulator2_sse.h"
-#include "tensorflow_quantum/core/qsim/statespace_sse.h"
 #endif
 
 #include <google/protobuf/text_format.h>
@@ -36,8 +34,6 @@ limitations under the License.
 #include "tensorflow_quantum/core/qsim/q_state.h"
 #include "tensorflow_quantum/core/qsim/simulator.h"
 #include "tensorflow_quantum/core/qsim/simulator2_slow.h"
-#include "tensorflow_quantum/core/qsim/statespace.h"
-#include "tensorflow_quantum/core/qsim/statespace_slow.h"
 #include "tensorflow_quantum/core/src/circuit.h"
 #include "tensorflow_quantum/core/src/circuit_parser.h"
 
@@ -129,9 +125,7 @@ TEST(QStateTest, BasicSlow) {
   const int num_qubits = 3;
   std::unique_ptr<Simulator> simulator =
       absl::make_unique<Simulator2Slow>(num_qubits, 1);
-  std::unique_ptr<StateSpace> state_space =
-      absl::make_unique<StateSpaceSlow>(num_qubits, 1);
-  QState state(std::move(simulator), std::move(state_space), num_qubits);
+  QState state(std::move(simulator), num_qubits);
   BasicTest(&state);
 }
 
@@ -140,9 +134,7 @@ TEST(QStateTest, BasicAVX) {
   const int num_qubits = 3;
   std::unique_ptr<Simulator> simulator =
       absl::make_unique<Simulator2AVX>(num_qubits, 1);
-  std::unique_ptr<StateSpace> state_space =
-      absl::make_unique<StateSpaceAVX>(num_qubits, 1);
-  QState state(std::move(simulator), std::move(state_space), num_qubits);
+  QState state(std::move(simulator), num_qubits);
   BasicTest(&state);
 }
 #endif
@@ -152,9 +144,7 @@ TEST(QStateTest, BasicSSE) {
   const int num_qubits = 3;
   std::unique_ptr<Simulator> simulator =
       absl::make_unique<Simulator2SSE>(num_qubits, 1);
-  std::unique_ptr<StateSpace> state_space =
-      absl::make_unique<StateSpaceSSE>(num_qubits, 1);
-  QState state(std::move(simulator), std::move(state_space), num_qubits);
+  QState state(std::move(simulator), num_qubits);
   BasicTest(&state);
 }
 #endif

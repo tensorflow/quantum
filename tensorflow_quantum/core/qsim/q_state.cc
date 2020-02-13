@@ -45,6 +45,12 @@ QState::QState(const int num_qubits) : num_qubits_(num_qubits) {
   simulator_->SetStateZero(state_);
 }
 
+QState::QState(std::unique_ptr<Simulator> simulator, const int num_qubits)
+    : simulator_(std::move(simulator)), num_qubits_(num_qubits) {
+  state_ = simulator_->CreateState();
+  simulator_->SetStateZero(state_);
+}
+
 QState::~QState() {
   simulator_->DeleteState(state_);
   delete state_;

@@ -29,9 +29,12 @@ namespace qsim {
 
 class QState {
  public:
-  // Selects the proper Simulator and StateSpace based on the runtime
-  // environment and initializes the StateSpace.
+  // Selects the proper Simulator based on the runtime
+  // environment and initializes the associated state.
   QState(const int num_qubits);
+
+  // Creates the state with a pre-selected Simulator.
+  QState(std::unique_ptr<Simulator> simulator, const int num_qubits);
 
   // Cleans up allocated memory.
   ~QState();
