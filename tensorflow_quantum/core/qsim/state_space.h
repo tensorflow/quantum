@@ -48,7 +48,10 @@ class StateSpace {
   void DeleteState();
 
   // Returns true if memory for the state has been succesfully allocated
-  bool Valid();
+  bool Valid() const;
+
+  // Dimension of the complex Hilbert space represented by this StateSpace
+  uint64_t Dimension() const;
 
   virtual ~Simulator() {}
 
@@ -74,16 +77,13 @@ class StateSpace {
 
   // Get the inner product between the state in this StateSpace and
   // the state in `other`.
-  virtual float GetRealInnerProduct(const StateSpace& other) const = 0;
+  virtual float GetRealInnerProduct(const std::shared_ptr<StateSpace> other) const = 0;
 
   // Get the amplitude at the given state index
   virtual std::complex<float> GetAmpl(const uint64_t i) const = 0;
 
   // Set the amplitude at the given state index
   virtual void SetAmpl(const uint64_t i, const std::complex<float>& val) = 0;
-
-  // Dimension of the complex Hilbert space represented by this StateSpace
-  virtual uint64_t Dimension() const = 0;
 };
 
 }  // namespace qsim
