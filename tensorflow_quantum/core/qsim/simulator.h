@@ -41,6 +41,10 @@ class Simulator {
   // the state.
   virtual void ApplyGate1(const float* matrix, State* state) const = 0;
 
+  State* CreateState() const;
+
+  static void DeleteState(State* state);
+
   virtual void CopyState(const State& src, State* dest) const = 0;
   virtual void SetStateZero(State* state) const = 0;
 

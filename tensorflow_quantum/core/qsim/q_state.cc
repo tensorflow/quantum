@@ -40,28 +40,18 @@ int GetAvailableThreads() { return 1; }
 QState::QState(const int num_qubits) : num_qubits_(num_qubits) {
   const int num_threads = GetAvailableThreads();
   simulator_ = GetSimulator(num_qubits, num_threads);
-  state_space_ = GetStateSpace(num_qubits, num_threads);
 
-  state_ = state_space_->CreateState();
-  simulator_->SetStateZero(state_);
-}
-
-QState::QState(std::unique_ptr<Simulator> simulator,
-               std::unique_ptr<StateSpace> state_space, const int num_qubits)
-    : simulator_(std::move(simulator)),
-      state_space_(std::move(state_space)),
-      num_qubits_(num_qubits) {
-  state_ = state_space_->CreateState();
+  state_ = simulator_->CreateState();
   simulator_->SetStateZero(state_);
 }
 
 QState::~QState() {
-  state_space_->DeleteState(state_);
+  simulator_->DeleteState(state_);
   delete state_;
 }
 
 tensorflow::Status QState::Update(const Circuit& circuit) {
-  if (!state_space_->Valid(*state_)) {
+  if (!simulator_->Valid(*state_)) {
     return tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
                               "Invalid space.");
   }
