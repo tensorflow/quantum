@@ -32,9 +32,9 @@ void Simulator::DeleteState(State* state) {
   qsim::_aligned_free(state->release());
 }
 
-uint64_t StateSpace::Size() const { return size_ / 2; }
+uint64_t Simulator::Size() const { return size_ / 2; }
 
-bool StateSpace::Valid(const State& state) {
+bool Simulator::Valid(const State& state) {
   // TODO: more roubust test?
   return state.get() != nullptr;
 }
