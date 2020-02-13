@@ -33,10 +33,6 @@ class QState {
   // environment and initializes the StateSpace.
   QState(const int num_qubits);
 
-  // Creates the state with a pre-selected Simulator and StateSpace.
-  QState(std::unique_ptr<Simulator> simulator,
-         std::unique_ptr<StateSpace> state_space, const int num_qubits);
-
   // Cleans up allocated memory.
   ~QState();
 
@@ -62,7 +58,6 @@ class QState {
 
  private:
   std::unique_ptr<Simulator> simulator_;
-  std::unique_ptr<StateSpace> state_space_;
 
   // TODO(pmassey): Consider moving to a unique_ptr to clean up memory.
   std::unique_ptr<float, decltype(&free)>* state_;

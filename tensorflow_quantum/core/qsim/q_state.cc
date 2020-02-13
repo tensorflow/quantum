@@ -59,7 +59,7 @@ tensorflow::Status QState::Update(const Circuit& circuit) {
   // Delegate to single qubit workaround.
   // This delegation is only supported with the
   // slow simulator for now.
-  if (state_space_->Size() <= 2) {
+  if (simulator_->Size() <= 2) {
     for (uint64_t i = 0; i < circuit.gates.size(); i++) {
       const auto& gate = circuit.gates[i];
 

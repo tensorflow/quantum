@@ -57,6 +57,10 @@ class Simulator {
 
   virtual ~Simulator() {}
 
+  uint64_t Size() const;
+
+  static bool Valid(const State& state);
+
  protected:
   float* RawData(State* state) const { return state->get(); }
   const float* RawData(const State& state) const { return state.get(); }
