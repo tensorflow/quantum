@@ -26,12 +26,14 @@ namespace tfq {
 namespace qsim {
 
 StateSpaceSlow::StateSpaceSlow(const unsigned int num_qubits,
-                               const unsigned int num_threads)  {
+                               const unsigned int num_threads)
+    : StateSpace(num_qubits, num_threads)
+{
   CreateState();
 }
 
 void StateSpaceSlow::ApplyGate2(const unsigned int q0, const unsigned int q1,
-                                const float* m) const {
+                                const float* m) {
   // Assume q0 < q1.
   uint64_t sizei = uint64_t(1) << (this->num_qubits_ + 1);
   uint64_t sizej = uint64_t(1) << (q1 + 1);
@@ -80,7 +82,7 @@ void StateSpaceSlow::ApplyGate2(const unsigned int q0, const unsigned int q1,
   }
 }
 
-void StateSpaceSlow::ApplyGate1(const float* matrix) const {
+tensorflow::Status StateSpaceSlow::ApplyGate1(const float* matrix) {
   // Workaround function to apply single qubit gates if the
   // circuit only has one qubit.
 
@@ -99,9 +101,11 @@ void StateSpaceSlow::ApplyGate1(const float* matrix) const {
   this->state_[1] = i_0;
   this->state_[2] = r_1;
   this->state_[3] = i_1;
+
+  return tensorflow::Status::OK();
 }
 
-void StateSpaceSlow::SetStateZero() const {
+void StateSpaceSlow::SetStateZero() {
   //#pragma omp parallel for num_threads(num_threads_)
   for (uint64_t i = 0; i < size_; ++i) {
     this->state_[i] = 0;
