@@ -28,7 +28,11 @@ class StateSpaceSlow : public StateSpace {
  public:
   StateSpaceSlow(const unsigned int num_qubits, const unsigned int num_threads);
 
-  virtual ~StateSpaceSlow() {DeleteState();}
+  virtual ~StateSpaceSlow() {}
+
+  // Return a pointer to a copy of this StateSpace.
+  // NOTE: user is responsible for deleting the returned copy.
+  virtual StateSpace* Copy() const override;
 
   // Function to apply a two qubit gate to the state on indices q0 and q1.
   virtual void ApplyGate2(const unsigned int q0, const unsigned int q1,

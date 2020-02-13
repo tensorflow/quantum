@@ -50,13 +50,14 @@ class StateSpace {
   // Returns true if memory for the state has been succesfully allocated
   bool Valid() const;
 
-  // Load a copy of this StateSpace into `other`
-  tensorflow::Status Copy(StateSpace* other) const;
-
   // Dimension of the complex Hilbert space represented by this StateSpace
   uint64_t Dimension() const;
 
-  virtual ~StateSpace() {}
+  virtual ~StateSpace() {DeleteState();}
+
+  // Return a pointer to a copy of this StateSpace.
+  // NOTE: user is responsible for deleting the returned copy.
+  virtual StateSpace* Copy() const = 0;
 
   // Function to apply a two qubit gate to the state on indices q0 and q1.
   virtual void ApplyGate2(const unsigned int q0, const unsigned int q1,

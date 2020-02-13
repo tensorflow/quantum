@@ -32,6 +32,14 @@ StateSpaceSlow::StateSpaceSlow(const unsigned int num_qubits,
   CreateState();
 }
 
+StateSpace* Copy() const {
+  StateSpace* state_copy = new StateSpaceSlow(this->num_qubits, this->num_threads);
+  for (uint64_t i = 0; i < this->Dimension(); ++i) {
+    state_copy->SetAmpl(i, this->GetAmpl(i));
+  }
+  return state_copy;
+}
+
 void StateSpaceSlow::ApplyGate2(const unsigned int q0, const unsigned int q1,
                                 const float* m) {
   // Assume q0 < q1.
