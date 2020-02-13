@@ -1,6 +1,6 @@
 Instructions to create and intsall TensorFlow Quantum as a PIP package:
 
-First open a docker with ubuntu 16.04 and the devtoolset7 toolchain.
+First create a Docker container with Ubuntu 16.04 and the devtoolset7 toolchain.
 ```
 ./release/open_ubuntu_docker.sh
 ```
