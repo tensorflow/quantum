@@ -32,11 +32,11 @@ echo "Y\n" | ./configure.sh
 
 bazel build -c opt --crosstool_top=//third_party/toolchains/preconfig/ubuntu16.04/gcc7_manylinux2010-nvcc-cuda10.0:toolchain \
  --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=0" --cxxopt="-msse2" --cxxopt="-msse3" --cxxopt="-msse4" release:build_pip_package
-bazel-bin/release/build_pip_package /tmp/tfquantum/
+bazel-bin/release/build_pip_package /tmp/tensorflow_quantum/
 
 mkdir wheels
 
-cp /tmp/tfquantum/tfquantum-0.2.0-cp36-cp36m-linux_x86_64.whl wheels/tfquantum-0.2.0-cp36-cp36m-linux_x86_64.whl
+cp /tmp/tensorflow_quantum/tensorflow_quantum-0.2.0-cp36-cp36m-linux_x86_64.whl wheels/tensorflow_quantum-0.2.0-cp36-cp36m-linux_x86_64.whl
 bazel clean
 
 # Now build the 3.7 wheel.
@@ -59,9 +59,9 @@ echo "Y\n" | ./configure.sh
 
 bazel build -c opt --crosstool_top=//third_party/toolchains/preconfig/ubuntu16.04/gcc7_manylinux2010-nvcc-cuda10.0:toolchain \
  --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=0" --cxxopt="-msse2" --cxxopt="-msse3" --cxxopt="-msse4" release:build_pip_package
-bazel-bin/release/build_pip_package /tmp/tfquantum/
+bazel-bin/release/build_pip_package /tmp/tensorflow_quantum/
 
-cp /tmp/tfquantum/tfquantum-0.2.0-cp37-cp37m-linux_x86_64.whl wheels/tfquantum-0.2.0-cp37-cp37m-linux_x86_64.whl
+cp /tmp/tensorflow_quantum/tensorflow_quantum-0.2.0-cp37-cp37m-linux_x86_64.whl wheels/tensorflow_quantum-0.2.0-cp37-cp37m-linux_x86_64.whl
 bazel clean
 
 sed -i 's/python3.7/python3/g' configure.sh

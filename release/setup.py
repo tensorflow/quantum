@@ -22,6 +22,15 @@ from setuptools import find_packages
 from setuptools import setup
 from setuptools.dist import Distribution
 
+# Added so that *.so files are not placed in the purelib folder
+# This would cause problems with auditwheel repairs otherwise.
+from setuptools.command.install import install
+class InstallPlatlib(install):
+    def finalize_options(self):
+        install.finalize_options(self)
+        if self.distribution.has_ext_modules():
+            self.install_lib = self.install_platlib
+
 
 REQUIRED_PACKAGES = [
     #'tensorflow = 2.0.0b1',
@@ -68,4 +77,5 @@ setup(
     ],
     license='Apache 2.0',
     keywords='tensorflow machine learning quantum qml',
+    cmdclass={'install': InstallPlatlib}
 )
