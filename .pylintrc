@@ -134,4 +134,5 @@ method-name-hint=[a-z_][a-z0-9_]{2,60}$
 # Force import order to recognize a tf as a third party library.
 known-third-party=
     tensorflow,
-    absl, 
+    absl,
+    cirq,
