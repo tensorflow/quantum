@@ -17,8 +17,12 @@ limitations under the License.
 
 #include <memory>
 
+#include "tensorflow_quantum/core/qsim/util.h"
+
 namespace tfq {
 namespace qsim {
+
+using State = std::unique_ptr<float, decltype(&free)>;
 
 State* Simulator::CreateState() const {
   return new State((float*)qsim::_aligned_malloc(sizeof(float) * size_), &free);

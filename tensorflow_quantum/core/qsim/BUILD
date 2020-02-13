@@ -121,7 +121,9 @@ cc_library(
     name = "simulator",
     srcs = ["simulator.cc"],
     hdrs = ["simulator.h"],
-    deps = [],
+    deps = [
+        ":util",
+    ],
 )
 
 cc_library(
