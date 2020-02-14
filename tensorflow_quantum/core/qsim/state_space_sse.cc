@@ -33,9 +33,7 @@ StateSpaceSSE::StateSpaceSSE(const unsigned int num_qubits,
                              const unsigned int num_threads)
     : StateSpace(num_qubits, num_threads, 2) {}
 
-StateSpaceSSE::~StateSpaceSSE(){
-    this->DeleteState();
-}
+StateSpaceSSE::~StateSpaceSSE() { this->DeleteState(); }
 
 void StateSpaceSSE::CreateState() {
   state_ =

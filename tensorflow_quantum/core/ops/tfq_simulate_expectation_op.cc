@@ -37,8 +37,8 @@ namespace tfq {
 using ::cirq::google::api::v2::Program;
 using ::tensorflow::Status;
 using ::tfq::proto::PauliSum;
-using ::tfq::qsim::StateSpace;
 using ::tfq::qsim::GetSimulator;
+using ::tfq::qsim::StateSpace;
 
 class TfqSimulateExpectationOp : public tensorflow::OpKernel {
  public:
@@ -82,7 +82,8 @@ class TfqSimulateExpectationOp : public tensorflow::OpKernel {
       int old_batch_index = -2;
       int cur_batch_index = -1;
       int cur_op_index;
-      std::unique_ptr<StateSpace> test_state = std::unique_ptr<StateSpace>(GetSimulator(1, 1));
+      std::unique_ptr<StateSpace> test_state =
+          std::unique_ptr<StateSpace>(GetSimulator(1, 1));
       for (int i = start; i < end; i++) {
         cur_batch_index = i / output_dim_op_size;
         cur_op_index = i % output_dim_op_size;

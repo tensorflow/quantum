@@ -105,9 +105,7 @@ bool StateSpace::Valid() const {
   return state_ != nullptr;
 }
 
-int StateSpace::GetType() const {
-  return type_;
-}
+int StateSpace::GetType() const { return type_; }
 
 float* StateSpace::GetRawState() const { return state_; };
 

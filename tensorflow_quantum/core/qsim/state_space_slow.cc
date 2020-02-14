@@ -29,9 +29,7 @@ StateSpaceSlow::StateSpaceSlow(const unsigned int num_qubits,
                                const unsigned int num_threads)
     : StateSpace(num_qubits, num_threads, 1) {}
 
-StateSpaceSlow::~StateSpaceSlow(){
-  this->DeleteState();
-}
+StateSpaceSlow::~StateSpaceSlow() { this->DeleteState(); }
 
 void StateSpaceSlow::CreateState() {
   state_ = (float*)malloc(sizeof(float) * 2 * this->GetDimension());

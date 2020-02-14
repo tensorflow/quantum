@@ -29,15 +29,14 @@ limitations under the License.
 #include "tensorflow_quantum/core/src/circuit_parser.h"
 #include "tensorflow_quantum/core/src/program_resolution.h"
 
-
 namespace tfq {
 
 using ::cirq::google::api::v2::Program;
 using ::tensorflow::Status;
 using ::tfq::Circuit;
 using ::tfq::CircuitFromProgram;
-using ::tfq::qsim::StateSpace;
 using ::tfq::qsim::GetSimulator;
+using ::tfq::qsim::StateSpace;
 
 class TfqSimulateStateOp : public tensorflow::OpKernel {
  public:
@@ -86,7 +85,8 @@ class TfqSimulateStateOp : public tensorflow::OpKernel {
         // QSim work below
         Circuit circuit;
         OP_REQUIRES_OK(context, CircuitFromProgram(program, num, &circuit));
-        std::unique_ptr<StateSpace> state = std::unique_ptr<StateSpace>(GetSimulator(num, 1));
+        std::unique_ptr<StateSpace> state =
+            std::unique_ptr<StateSpace>(GetSimulator(num, 1));
         state.get()->CreateState();
         state.get()->SetStateZero();
         OP_REQUIRES_OK(context, state.get()->Update(circuit));

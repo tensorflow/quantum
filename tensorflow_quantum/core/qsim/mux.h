@@ -23,8 +23,7 @@ limitations under the License.
 namespace tfq {
 namespace qsim {
 
-StateSpace* GetSimulator(const int num_qubits,
-                                        const int num_threads);
+StateSpace* GetSimulator(const int num_qubits, const int num_threads);
 
 }  // namespace qsim
 }  // namespace tfq

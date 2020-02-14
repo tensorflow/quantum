@@ -32,9 +32,7 @@ StateSpaceAVX::StateSpaceAVX(const unsigned int num_qubits,
                              const unsigned int num_threads)
     : StateSpace(num_qubits, num_threads, 0) {}
 
-StateSpaceAVX::~StateSpaceAVX(){
-  this->DeleteState();
-}
+StateSpaceAVX::~StateSpaceAVX() { this->DeleteState(); }
 
 void StateSpaceAVX::CreateState() {
   state_ =
