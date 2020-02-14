@@ -101,13 +101,6 @@ tensorflow::Status StateSpace::ComputeExpectation(
   return tensorflow::Status::OK();
 }
 
-void StateSpace::CreateState() {
-  state_ =
-      (float*)qsim::_aligned_malloc(sizeof(float) * 2 * this->GetDimension());
-}
-
-void StateSpace::DeleteState() { qsim::_aligned_free(state_); }
-
 bool StateSpace::Valid() const {
   // TODO: more roubust test?
   return state_ != nullptr;

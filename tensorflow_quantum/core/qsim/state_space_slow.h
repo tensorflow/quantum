@@ -28,7 +28,13 @@ class StateSpaceSlow : public StateSpace {
  public:
   StateSpaceSlow(const unsigned int num_qubits, const unsigned int num_threads);
 
-  virtual ~StateSpaceSlow() {}
+  virtual ~StateSpaceSlow();
+
+  // Reserve the memory associated with the state in this space
+  virtual void CreateState() override;
+
+  // Free the memory associated with the state in this space
+  virtual void DeleteState() override;
 
   // Return a pointer to a copy of this StateSpace.
   // NOTE: user is responsible for deleting the returned copy.

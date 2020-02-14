@@ -41,12 +41,6 @@ class StateSpace {
   tensorflow::Status ComputeExpectation(const tfq::proto::PauliSum& p_sum,
                                         float* expectation_value);
 
-  // Reserve the memory associated with the state in this space
-  void CreateState();
-
-  // Free the memory associated with the state in this space
-  void DeleteState();
-
   // Returns true if memory for the state has been succesfully allocated
   bool Valid() const;
 
@@ -59,7 +53,13 @@ class StateSpace {
   // Number of threads that can be used by this StateSpace
   unsigned int GetNumThreads() const;
 
-  virtual ~StateSpace() { DeleteState(); }
+  virtual ~StateSpace() {}
+
+  // Reserve the memory associated with the state in this space
+  virtual void CreateState() = 0;
+
+  // Free the memory associated with the state in this space
+  virtual void DeleteState() = 0;
 
   // Return a pointer to a copy of this StateSpace.
   // NOTE: user is responsible for deleting the returned copy.

@@ -31,6 +31,13 @@ StateSpaceSlow::StateSpaceSlow(const unsigned int num_qubits,
   CreateState();
 }
 
+void StateSpace::CreateState() {
+  state_ =
+      (float*)qsim::_aligned_malloc(sizeof(float) * 2 * this->GetDimension());
+}
+
+void StateSpace::DeleteState() { qsim::_aligned_free(state_); }
+
 StateSpace* StateSpaceSlow::Copy() const {
   StateSpace* state_copy =
       new StateSpaceSlow(this->GetNumQubits(), this->GetNumThreads());
