@@ -111,9 +111,9 @@ float* StateSpace::GetRawState() const { return state_; };
 
 uint64_t StateSpace::GetDimension() const { return size_ / 2; }
 
-unsigned int StateSpace::GetNumQubits() const { return num_qubits_; }
+uint64_t StateSpace::GetNumQubits() const { return num_qubits_; }
 
-unsigned int StateSpace::GetNumThreads() const { return num_threads_; }
+uint64_t StateSpace::GetNumThreads() const { return num_threads_; }
 
 }  // namespace qsim
 }  // namespace tfq

@@ -57,10 +57,10 @@ class StateSpace {
   uint64_t GetDimension() const;
 
   // Number of qubits this StateSpace operates on
-  unsigned int GetNumQubits() const;
+  uint64_t GetNumQubits() const;
 
   // Number of threads that can be used by this StateSpace
-  unsigned int GetNumThreads() const;
+  uint64_t GetNumThreads() const;
 
   virtual ~StateSpace() {}
 
@@ -97,8 +97,8 @@ class StateSpace {
  protected:
   float* state_;
   uint64_t size_;
-  unsigned int num_qubits_;
-  unsigned int num_threads_;
+  uint64_t num_qubits_;
+  uint64_t num_threads_;
   int type_;
 };
 
