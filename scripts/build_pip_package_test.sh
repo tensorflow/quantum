@@ -19,6 +19,6 @@ pip install tensorflow==2.1.0 cirq==0.7.0
 echo "Y\n" | ./configure.sh
 
 bazel build -c opt --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=0" --cxxopt="-msse2" --cxxopt="-msse3" --cxxopt="-msse4" release:build_pip_package
-rm /tmp/tfquantum/* || echo ok
-bazel-bin/release/build_pip_package /tmp/tfquantum/
-pip install -U /tmp/tfquantum/*.whl
+rm /tmp/tensorflow_quantum/* || echo ok
+bazel-bin/release/build_pip_package /tmp/tensorflow_quantum/
+pip install -U /tmp/tensorflow_quantum/*.whl

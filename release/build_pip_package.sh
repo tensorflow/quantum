@@ -33,7 +33,7 @@ function main() {
 
   echo $(date) : "=== Using tmpdir: ${TMPDIR}"
 
-  echo "=== Copy TFQuantum files"
+  echo "=== Copy TFQ files"
 
   # Copy over files necessary to run setup.py
   cp ${EXPORT_DIR}/release/setup.py "${TMPDIR}"
