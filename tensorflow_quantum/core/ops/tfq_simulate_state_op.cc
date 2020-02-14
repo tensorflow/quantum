@@ -87,12 +87,12 @@ class TfqSimulateStateOp : public tensorflow::OpKernel {
         OP_REQUIRES_OK(context, CircuitFromProgram(program, num, &circuit));
         std::unique_ptr<StateSpace> state =
             std::unique_ptr<StateSpace>(GetSimulator(num, 1));
-        state.get()->CreateState();
-        state.get()->SetStateZero();
-        OP_REQUIRES_OK(context, state.get()->Update(circuit));
-        uint64_t state_size = (uint64_t(1) << num);
+        state->CreateState();
+        state->SetStateZero();
+        OP_REQUIRES_OK(context, state->Update(circuit));
+        uint64_t state_size = state->GetDimension();
         for (uint64_t j = 0; j < state_size; j++) {
-          output_tensor(i, j) = state.get()->GetAmpl(j);
+          output_tensor(i, j) = state->GetAmpl(j);
         }
         for (uint64_t j = state_size; j < (uint64_t(1) << max_num_qubits);
              j++) {
