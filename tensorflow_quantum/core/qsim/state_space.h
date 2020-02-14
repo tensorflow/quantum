@@ -28,11 +28,13 @@ namespace qsim {
 
 class StateSpace {
  public:
-  StateSpace(const unsigned int num_qubits, const unsigned int num_threads)
+  StateSpace(const unsigned int num_qubits, const unsigned int num_threads,
+             const int sim_type)
       : state_(NULL),
         size_(2 * (uint64_t{1} << num_qubits)),
         num_qubits_(num_qubits),
-        num_threads_(num_threads) {}
+        num_threads_(num_threads),
+        type_(sim_type) {}
 
   // Updates the state by applying the given circuit.
   tensorflow::Status Update(const Circuit& circuit);
@@ -46,6 +48,9 @@ class StateSpace {
 
   // Pointer to the raw state managed by this StateSpace
   float* GetRawState() const;
+
+  // Get the simulator type.
+  int GetType() const;
 
   // Dimension of the complex Hilbert space represented by this StateSpace
   uint64_t GetDimension() const;
@@ -93,6 +98,7 @@ class StateSpace {
   uint64_t size_;
   unsigned int num_qubits_;
   unsigned int num_threads_;
+  int type_;
 };
 
 }  // namespace qsim

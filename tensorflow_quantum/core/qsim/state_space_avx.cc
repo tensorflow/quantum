@@ -30,20 +30,23 @@ namespace qsim {
 
 StateSpaceAVX::StateSpaceAVX(const unsigned int num_qubits,
                              const unsigned int num_threads)
-    : StateSpace(num_qubits, num_threads) {
-  CreateState();
+    : StateSpace(num_qubits, num_threads, 0) {}
+
+StateSpaceAVX::~StateSpaceAVX(){
+  this->DeleteState();
 }
 
-void StateSpace::CreateState() {
+void StateSpaceAVX::CreateState() {
   state_ =
       (float*)qsim::_aligned_malloc(sizeof(float) * 2 * this->GetDimension());
 }
 
-void StateSpace::DeleteState() { qsim::_aligned_free(state_); }
+void StateSpaceAVX::DeleteState() { qsim::_aligned_free(state_); }
 
 StateSpace* StateSpaceAVX::Copy() const {
   StateSpace* state_copy =
       new StateSpaceAVX(this->GetNumQubits(), this->GetNumThreads());
+  state_copy->CreateState();
   for (uint64_t i = 0; i < this->GetDimension(); ++i) {
     state_copy->SetAmpl(i, this->GetAmpl(i));
   }
@@ -51,7 +54,7 @@ StateSpace* StateSpaceAVX::Copy() const {
 }
 
 void StateSpaceAVX::ApplyGate2(const unsigned int q0, const unsigned int q1,
-                               const float* m) {
+                               const float* matrix) {
   // Assume q0 < q1.
   if (q0 > 2) {
     ApplyGate2HH(q0, q1, matrix);

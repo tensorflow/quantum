@@ -27,19 +27,22 @@ namespace qsim {
 
 StateSpaceSlow::StateSpaceSlow(const unsigned int num_qubits,
                                const unsigned int num_threads)
-    : StateSpace(num_qubits, num_threads) {
-  CreateState();
+    : StateSpace(num_qubits, num_threads, 1) {}
+
+StateSpaceSlow::~StateSpaceSlow(){
+  this->DeleteState();
 }
 
-void StateSpace::CreateState() {
+void StateSpaceSlow::CreateState() {
   state_ = (float*)malloc(sizeof(float) * 2 * this->GetDimension());
 }
 
-void StateSpace::DeleteState() { free(state_); }
+void StateSpaceSlow::DeleteState() { free(state_); }
 
 StateSpace* StateSpaceSlow::Copy() const {
   StateSpace* state_copy =
       new StateSpaceSlow(this->GetNumQubits(), this->GetNumThreads());
+  state_copy->CreateState();
   for (uint64_t i = 0; i < this->GetDimension(); ++i) {
     state_copy->SetAmpl(i, this->GetAmpl(i));
   }

@@ -18,12 +18,12 @@ limitations under the License.
 
 #include <memory>
 
-#include "tensorflow_quantum/core/qsim/simulator.h"
+#include "tensorflow_quantum/core/qsim/state_space.h"
 
 namespace tfq {
 namespace qsim {
 
-std::unique_ptr<Simulator> GetSimulator(const int num_qubits,
+StateSpace* GetSimulator(const int num_qubits,
                                         const int num_threads);
 
 }  // namespace qsim

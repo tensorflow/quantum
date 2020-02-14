@@ -24,9 +24,11 @@ limitations under the License.
 #include "tensorflow/core/lib/core/threadpool.h"
 #include "tensorflow_quantum/core/ops/parse_context.h"
 #include "tensorflow_quantum/core/ops/tfq_simulate_utils.h"
-#include "tensorflow_quantum/core/qsim/q_state.h"
+#include "tensorflow_quantum/core/qsim/mux.h"
+#include "tensorflow_quantum/core/qsim/state_space.h"
 #include "tensorflow_quantum/core/src/circuit_parser.h"
 #include "tensorflow_quantum/core/src/program_resolution.h"
+
 
 namespace tfq {
 
@@ -34,7 +36,8 @@ using ::cirq::google::api::v2::Program;
 using ::tensorflow::Status;
 using ::tfq::Circuit;
 using ::tfq::CircuitFromProgram;
-using ::tfq::qsim::QState;
+using ::tfq::qsim::StateSpace;
+using ::tfq::qsim::GetSimulator;
 
 class TfqSimulateStateOp : public tensorflow::OpKernel {
  public:
@@ -83,11 +86,13 @@ class TfqSimulateStateOp : public tensorflow::OpKernel {
         // QSim work below
         Circuit circuit;
         OP_REQUIRES_OK(context, CircuitFromProgram(program, num, &circuit));
-        QState state(num);
-        OP_REQUIRES_OK(context, state.Update(circuit));
+        std::unique_ptr<StateSpace> state = std::unique_ptr<StateSpace>(GetSimulator(num, 1));
+        state.get()->CreateState();
+        state.get()->SetStateZero();
+        OP_REQUIRES_OK(context, state.get()->Update(circuit));
         uint64_t state_size = (uint64_t(1) << num);
         for (uint64_t j = 0; j < state_size; j++) {
-          output_tensor(i, j) = state.GetAmplitude(j);
+          output_tensor(i, j) = state.get()->GetAmpl(j);
         }
         for (uint64_t j = state_size; j < (uint64_t(1) << max_num_qubits);
              j++) {

@@ -31,20 +31,23 @@ namespace qsim {
 
 StateSpaceSSE::StateSpaceSSE(const unsigned int num_qubits,
                              const unsigned int num_threads)
-    : StateSpace(num_qubits, num_threads) {
-  CreateState();
+    : StateSpace(num_qubits, num_threads, 2) {}
+
+StateSpaceSSE::~StateSpaceSSE(){
+    this->DeleteState();
 }
 
-void StateSpace::CreateState() {
+void StateSpaceSSE::CreateState() {
   state_ =
       (float*)qsim::_aligned_malloc(sizeof(float) * 2 * this->GetDimension());
 }
 
-void StateSpace::DeleteState() { qsim::_aligned_free(state_); }
+void StateSpaceSSE::DeleteState() { qsim::_aligned_free(state_); }
 
 StateSpace* StateSpaceSSE::Copy() const {
   StateSpace* state_copy =
       new StateSpaceSSE(this->GetNumQubits(), this->GetNumThreads());
+  state_copy->CreateState();
   for (uint64_t i = 0; i < this->GetDimension(); ++i) {
     state_copy->SetAmpl(i, this->GetAmpl(i));
   }
