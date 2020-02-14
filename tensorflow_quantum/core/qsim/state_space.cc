@@ -105,6 +105,8 @@ bool StateSpace::Valid() const {
   return state_ != nullptr;
 }
 
+float* GetRawState() const { return state_; };
+
 uint64_t StateSpace::GetDimension() const { return size_ / 2; }
 
 unsigned int StateSpace::GetNumQubits() const { return num_qubits_; }

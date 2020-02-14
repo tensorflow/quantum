@@ -55,11 +55,11 @@ void StateSpaceSSE::ApplyGate2(const unsigned int q0, const unsigned int q1,
                                 const float* m) {
   // Assume q0 < q1.
   if (q0 > 2) {
-    ApplyGate2HH(q0, q1, matrix);
+    ApplyGate2HH(q0, q1, m);
   } else if (q1 > 2) {
-    ApplyGate2HL(q0, q1, matrix);
+    ApplyGate2HL(q0, q1, m);
   } else {
-    ApplyGate2LL(q0, q1, matrix);
+    ApplyGate2LL(q0, q1, m);
   }
 }
 
@@ -75,7 +75,7 @@ void StateSpaceSSE::SetStateZero() {
   //__m256 val0 = _mm256_setzero_ps();
   __m128 val0 = _mm_setzero_ps();
 
-  auto data = this->state_;
+  auto data = this->GetRawState();
 
   for (uint64_t i = 0; i < size2; ++i) {
     //_mm256_store_ps(state.get() + 16 * i, val0);
@@ -96,8 +96,8 @@ float StateSpaceSSE::GetRealInnerProduct(const StateSpace* other) const {
   __m128d temp = _mm_setzero_pd();
   __m128d rs_0, rs_1, is_0, is_1;
 
-  auto statea = this->state_;
-  auto stateb = other->state_;
+  auto statea = this->GetRawState();
+  auto stateb = other->GetRawState();
 
   //#pragma omp parallel for num_threads(num_threads_)
   // Currently not a thread safe implementation of inner product!
@@ -138,14 +138,14 @@ float StateSpaceSSE::GetRealInnerProduct(const StateSpace* other) const {
 
 std::complex<float> StateSpaceSSE::GetAmpl(const uint64_t i) const {
   uint64_t p = (16 * (i / 8)) + (i % 8);
-  return std::complex<float>(this->state_[p], this->state_[p + 8]);
+  return std::complex<float>(this->GetRawState()[p], this->GetRawState()[p + 8]);
 }
 
 void StateSpaceSSE::SetAmpl(const uint64_t i,
                             const std::complex<float>& val) {
   uint64_t p = (16 * (i / 8)) + (i % 8);
-  this->state_[p] = val.real();
-  this->state_[p + 8] = val.imag();
+  this->GetRawState()[p] = val.real();
+  this->GetRawState()[p + 8] = val.imag();
 }
 
 void StateSpaceSSE::ApplyGate2HH(const unsigned int q0, const unsigned int q1,
@@ -154,7 +154,7 @@ void StateSpaceSSE::ApplyGate2HH(const unsigned int q0, const unsigned int q1,
   uint64_t sizej = uint64_t(1) << (q1 + 1);
   uint64_t sizek = uint64_t(1) << (q0 + 1);
 
-  auto rstate = this->state_;
+  auto rstate = this->GetRawState();
 
   for (uint64_t i = 0; i < sizei; i += 2 * sizej) {
     for (uint64_t j = 0; j < sizej; j += 2 * sizek) {
@@ -755,7 +755,7 @@ void StateSpaceSSE::ApplyGate2LL(const unsigned int q0, const unsigned int q1,
   //__m256i ml1, ml2, ml3;
 
   uint64_t sizei = uint64_t(1) << (this->GetNumQubits() + 1);
-  auto rstate = this->state_;
+  auto rstate = this->GetRawState();
 
   switch (q) {
     case 1:
@@ -2636,7 +2636,7 @@ void StateSpaceSSE::ApplyGate2HL(const unsigned int q0, const unsigned int q1,
   uint64_t sizei = uint64_t(1) << (this->GetNumQubits() + 1);
   uint64_t sizej = uint64_t(1) << (q1 + 1);
 
-  auto rstate = this->state_;
+  auto rstate = this->GetRawState();
 
   switch (q0) {
     case 0:

@@ -44,6 +44,9 @@ class StateSpace {
   // Returns true if memory for the state has been succesfully allocated
   bool Valid() const;
 
+  // Pointer to the raw state managed by this StateSpace
+  float* GetRawState() const;
+
   // Dimension of the complex Hilbert space represented by this StateSpace
   uint64_t GetDimension() const;
 

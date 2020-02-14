@@ -197,6 +197,18 @@ cc_library(
 )
 
 cc_library(
+    name = "state_space_sse",
+    srcs = ["state_space_sse.cc"],
+    hdrs = ["state_space_sse.h"],
+    deps = [
+        ":state_space",
+        ":util",
+        "@local_config_tf//:libtensorflow_framework",
+        "@local_config_tf//:tf_header_lib",
+    ],
+)
+
+cc_library(
     name = "util",
     srcs = ["util.cc"],
     hdrs = ["util.h"],

@@ -72,7 +72,7 @@ void StateSpaceAVX::SetStateZero() {
   uint64_t size2 = this->GetDimension() / 8;
   __m256 val0 = _mm256_setzero_ps();
 
-  auto data = this->state_;
+  auto data = this->GetRawState();
 
   for (uint64_t i = 0; i < size2; ++i) {
     _mm256_store_ps(data + 16 * i, val0);
@@ -86,8 +86,8 @@ float StateSpaceAVX::GetRealInnerProduct(const StateSpace* other) const {
   __m256d expv = _mm256_setzero_pd();
   __m256d rs, is;
 
-  auto statea = this->state_;
-  auto stateb = other->state_;
+  auto statea = this->GetRawState();
+  auto stateb = other->GetRawState();
 
   // Currently not a thread safe implementation of inner product!
   for (uint64_t i = 0; i < size2; ++i) {
@@ -105,14 +105,14 @@ float StateSpaceAVX::GetRealInnerProduct(const StateSpace* other) const {
 
 std::complex<float> StateSpaceAVX::GetAmpl(const uint64_t i) const {
   uint64_t p = (16 * (i / 8)) + (i % 8);
-  return std::complex<float>(this->state_[p], this->state_[p + 8]);
+  return std::complex<float>(this->GetRawState()[p], this->GetRawState()[p + 8]);
 }
 
 void StateSpaceAVX::SetAmpl(const uint64_t i,
                             const std::complex<float>& val) {
   uint64_t p = (16 * (i / 8)) + (i % 8);
-  this->state_[p] = val.real();
-  this->state_[p + 8] = val.imag();
+  this->GetRawState()[p] = val.real();
+  this->GetRawState()[p + 8] = val.imag();
 }
 
 void StateSpaceAVX::ApplyGate2HH(const unsigned int q0, const unsigned int q1,
@@ -121,7 +121,7 @@ void StateSpaceAVX::ApplyGate2HH(const unsigned int q0, const unsigned int q1,
   uint64_t sizej = uint64_t(1) << (q1 + 1);
   uint64_t sizek = uint64_t(1) << (q0 + 1);
 
-  auto rstate = this->state_;
+  auto rstate = this->GetRawState();
 
   for (uint64_t i = 0; i < sizei; i += 2 * sizej) {
     for (uint64_t j = 0; j < sizej; j += 2 * sizek) {
@@ -266,7 +266,7 @@ void StateSpaceAVX::ApplyGate2HL(const unsigned int q0, const unsigned int q1,
   uint64_t sizei = uint64_t(1) << (this->GetNumQubits() + 1);
   uint64_t sizej = uint64_t(1) << (q1 + 1);
 
-  auto rstate = this->state_;
+  auto rstate = this->GetRawState();
 
   switch (q0) {
     case 0:
@@ -432,7 +432,7 @@ void StateSpaceAVX::ApplyGate2LL(const unsigned int q0, const unsigned int q1,
   __m256i ml1, ml2, ml3;
 
   uint64_t sizei = uint64_t(1) << (this->GetNumQubits() + 1);
-  auto rstate = this->state_;
+  auto rstate = this->GetRawState();
 
   switch (q) {
     case 1:
