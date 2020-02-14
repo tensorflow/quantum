@@ -62,6 +62,16 @@ class StateSpaceAVX : public StateSpace {
   // Set the amplitude at the given state index
   virtual void SetAmpl(const uint64_t i,
                        const std::complex<float>& val) override;
+
+ private:
+  void ApplyGate2HH(const unsigned int q0, const unsigned int q1,
+                    const float* matrix);
+
+  void ApplyGate2HL(const unsigned int q0, const unsigned int q1,
+                    const float* matrix);
+
+  void ApplyGate2LL(const unsigned int q0, const unsigned int q1,
+                    const float* matrix);
 };
 
 }  // namespace qsim
