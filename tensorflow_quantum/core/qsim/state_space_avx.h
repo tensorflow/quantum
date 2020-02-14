@@ -16,6 +16,8 @@ limitations under the License.
 #ifndef TFQ_CORE_QSIM_STATE_SPACE_AVX_H_
 #define TFQ_CORE_QSIM_STATE_SPACE_AVX_H_
 
+#include <immintrin.h>
+
 #include <complex>
 #include <memory>
 

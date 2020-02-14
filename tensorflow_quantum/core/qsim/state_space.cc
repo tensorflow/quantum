@@ -21,7 +21,6 @@ limitations under the License.
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
 #include "tensorflow_quantum/core/qsim/fuser_basic.h"
-#include "tensorflow_quantum/core/qsim/util.h"
 #include "tensorflow_quantum/core/src/circuit.h"
 #include "tensorflow_quantum/core/src/circuit_parser.h"
 #include "tensorflow_quantum/core/src/matrix.h"

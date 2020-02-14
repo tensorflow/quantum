@@ -163,7 +163,6 @@ cc_library(
     hdrs = ["state_space.h"],
     deps = [
         ":fuser_basic",
-        ":util",
         "//tensorflow_quantum/core/proto:pauli_sum_cc_proto",
         "//tensorflow_quantum/core/src:circuit",
         "//tensorflow_quantum/core/src:circuit_parser",
@@ -180,6 +179,18 @@ cc_library(
     deps = [
         ":state_space",
         "//tensorflow_quantum/core/src:matrix",
+        "@local_config_tf//:libtensorflow_framework",
+        "@local_config_tf//:tf_header_lib",
+    ],
+)
+
+cc_library(
+    name = "state_space_avx",
+    srcs = ["state_space_avx.cc"],
+    hdrs = ["state_space_avx.h"],
+    deps = [
+        ":state_space",
+        ":util",
         "@local_config_tf//:libtensorflow_framework",
         "@local_config_tf//:tf_header_lib",
     ],

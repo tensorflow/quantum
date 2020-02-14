@@ -13,13 +13,17 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#include "tensorflow_quantum/core/qsim/state_space_slow.h"
+#ifdef __AVX2__
+
+#include "tensorflow_quantum/core/qsim/state_space_avx.h"
+
+#include <immintrin.h>
 
 #include <cmath>
 #include <cstdint>
 
 #include "tensorflow/core/lib/core/status.h"
-#include "tensorflow_quantum/core/src/matrix.h"
+#include "tensorflow_quantum/core/qsim/util.h"
 
 namespace tfq {
 namespace qsim {
