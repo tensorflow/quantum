@@ -31,20 +31,22 @@ namespace qsim {
 
 StateSpaceSSE::StateSpaceSSE(const unsigned int num_qubits,
                              const unsigned int num_threads)
-    : StateSpace(num_qubits, num_threads, 2) {}
+    : StateSpace(num_qubits, num_threads) {}
 
 StateSpaceSSE::~StateSpaceSSE() { DeleteState(); }
 
+state_space_type StateSpaceSSE::GetType() const {
+  return state_space_type::sse;
+}
+
 void StateSpaceSSE::CreateState() {
-  state_ =
-      (float*)qsim::_aligned_malloc(sizeof(float) * 2 * GetDimension());
+  state_ = (float*)qsim::_aligned_malloc(sizeof(float) * 2 * GetDimension());
 }
 
 void StateSpaceSSE::DeleteState() { qsim::_aligned_free(state_); }
 
 StateSpace* StateSpaceSSE::Copy() const {
-  StateSpace* state_copy =
-      new StateSpaceSSE(GetNumQubits(), GetNumThreads());
+  StateSpace* state_copy = new StateSpaceSSE(GetNumQubits(), GetNumThreads());
   state_copy->CreateState();
   for (uint64_t i = 0; i < GetDimension(); ++i) {
     state_copy->SetAmpl(i, GetAmpl(i));
@@ -138,8 +140,7 @@ float StateSpaceSSE::GetRealInnerProduct(const StateSpace* other) const {
 
 std::complex<float> StateSpaceSSE::GetAmpl(const uint64_t i) const {
   uint64_t p = (16 * (i / 8)) + (i % 8);
-  return std::complex<float>(GetRawState()[p],
-                             GetRawState()[p + 8]);
+  return std::complex<float>(GetRawState()[p], GetRawState()[p + 8]);
 }
 
 void StateSpaceSSE::SetAmpl(const uint64_t i, const std::complex<float>& val) {

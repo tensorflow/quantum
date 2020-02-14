@@ -26,16 +26,17 @@ limitations under the License.
 namespace tfq {
 namespace qsim {
 
+// Contains the allowed StateSpace labels
+enum state_space_type { avx, slow, sse };
+
 // Handles simulations of pure states (wavefunctions), not density matrices
 class StateSpace {
  public:
-  StateSpace(const unsigned int num_qubits, const unsigned int num_threads,
-             const int sim_type)
+  StateSpace(const unsigned int num_qubits, const unsigned int num_threads)
       : state_(NULL),
         size_(2 * (uint64_t{1} << num_qubits)),
         num_qubits_(num_qubits),
-        num_threads_(num_threads),
-        type_(sim_type) {}
+        num_threads_(num_threads) {}
 
   // Updates the state by applying the given circuit.
   tensorflow::Status Update(const Circuit& circuit);
@@ -50,9 +51,6 @@ class StateSpace {
   // Pointer to the raw state managed by this StateSpace
   float* GetRawState() const;
 
-  // Get the simulator type.
-  int GetType() const;
-
   // Dimension of the complex Hilbert space represented by this StateSpace
   uint64_t GetDimension() const;
 
@@ -63,6 +61,9 @@ class StateSpace {
   uint64_t GetNumThreads() const;
 
   virtual ~StateSpace() {}
+
+  // Get the simulator type.
+  virtual state_space_type GetType() const = 0;
 
   // Reserve the memory associated with the state in this space
   virtual void CreateState() = 0;
@@ -99,7 +100,6 @@ class StateSpace {
   uint64_t size_;
   uint64_t num_qubits_;
   uint64_t num_threads_;
-  int type_;
 };
 
 }  // namespace qsim

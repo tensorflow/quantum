@@ -27,9 +27,13 @@ namespace qsim {
 
 StateSpaceSlow::StateSpaceSlow(const unsigned int num_qubits,
                                const unsigned int num_threads)
-    : StateSpace(num_qubits, num_threads, 1) {}
+    : StateSpace(num_qubits, num_threads) {}
 
 StateSpaceSlow::~StateSpaceSlow() { DeleteState(); }
+
+state_space_type StateSpaceSlow::GetType() const {
+  return state_space_type::slow;
+}
 
 void StateSpaceSlow::CreateState() {
   state_ = (float*)malloc(sizeof(float) * 2 * GetDimension());
@@ -38,8 +42,7 @@ void StateSpaceSlow::CreateState() {
 void StateSpaceSlow::DeleteState() { free(state_); }
 
 StateSpace* StateSpaceSlow::Copy() const {
-  StateSpace* state_copy =
-      new StateSpaceSlow(GetNumQubits(), GetNumThreads());
+  StateSpace* state_copy = new StateSpaceSlow(GetNumQubits(), GetNumThreads());
   state_copy->CreateState();
   for (uint64_t i = 0; i < GetDimension(); ++i) {
     state_copy->SetAmpl(i, GetAmpl(i));
@@ -157,8 +160,7 @@ float StateSpaceSlow::GetRealInnerProduct(const StateSpace* other) const {
 }
 
 std::complex<float> StateSpaceSlow::GetAmpl(const uint64_t i) const {
-  return std::complex<float>(GetRawState()[2 * i],
-                             GetRawState()[2 * i + 1]);
+  return std::complex<float>(GetRawState()[2 * i], GetRawState()[2 * i + 1]);
 }
 
 void StateSpaceSlow::SetAmpl(const uint64_t i, const std::complex<float>& val) {

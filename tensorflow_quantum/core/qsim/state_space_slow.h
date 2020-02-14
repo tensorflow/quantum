@@ -30,6 +30,8 @@ class StateSpaceSlow : public StateSpace {
 
   virtual ~StateSpaceSlow();
 
+  state_space_type GetType() const override;
+
   // Reserve the memory associated with the state in this space
   virtual void CreateState() override;
 

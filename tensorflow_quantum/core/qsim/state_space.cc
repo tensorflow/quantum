@@ -83,8 +83,7 @@ tensorflow::Status StateSpace::ComputeExpectation(
     // TODO (zaqqwerty): profile whether creating a copy, evolving the copy
     // and then deleting the copy is better OR evolving the referencing
     // computing the number and then un-evolving the reference is faster.
-    status =
-        CircuitFromPauliTerm(term, num_qubits_, &measurement_circuit);
+    status = CircuitFromPauliTerm(term, num_qubits_, &measurement_circuit);
     if (!status.ok()) {
       return status;
     }
@@ -104,8 +103,6 @@ bool StateSpace::Valid() const {
   // TODO: more roubust test?
   return state_ != nullptr;
 }
-
-int StateSpace::GetType() const { return type_; }
 
 float* StateSpace::GetRawState() const { return state_; };
 

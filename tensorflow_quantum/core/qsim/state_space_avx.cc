@@ -30,20 +30,22 @@ namespace qsim {
 
 StateSpaceAVX::StateSpaceAVX(const unsigned int num_qubits,
                              const unsigned int num_threads)
-    : StateSpace(num_qubits, num_threads, 0) {}
+    : StateSpace(num_qubits, num_threads) {}
 
 StateSpaceAVX::~StateSpaceAVX() { DeleteState(); }
 
+state_space_type StateSpaceAVX::GetType() const {
+  return state_space_type::avx;
+}
+
 void StateSpaceAVX::CreateState() {
-  state_ =
-      (float*)qsim::_aligned_malloc(sizeof(float) * 2 * GetDimension());
+  state_ = (float*)qsim::_aligned_malloc(sizeof(float) * 2 * GetDimension());
 }
 
 void StateSpaceAVX::DeleteState() { qsim::_aligned_free(state_); }
 
 StateSpace* StateSpaceAVX::Copy() const {
-  StateSpace* state_copy =
-      new StateSpaceAVX(GetNumQubits(), GetNumThreads());
+  StateSpace* state_copy = new StateSpaceAVX(GetNumQubits(), GetNumThreads());
   state_copy->CreateState();
   for (uint64_t i = 0; i < GetDimension(); ++i) {
     state_copy->SetAmpl(i, GetAmpl(i));
@@ -105,8 +107,7 @@ float StateSpaceAVX::GetRealInnerProduct(const StateSpace* other) const {
 
 std::complex<float> StateSpaceAVX::GetAmpl(const uint64_t i) const {
   uint64_t p = (16 * (i / 8)) + (i % 8);
-  return std::complex<float>(GetRawState()[p],
-                             GetRawState()[p + 8]);
+  return std::complex<float>(GetRawState()[p], GetRawState()[p + 8]);
 }
 
 void StateSpaceAVX::SetAmpl(const uint64_t i, const std::complex<float>& val) {

@@ -32,6 +32,8 @@ class StateSpaceAVX : public StateSpace {
 
   virtual ~StateSpaceAVX();
 
+  state_space_type GetType() const override;
+
   // Reserve the memory associated with the state in this space
   virtual void CreateState() override;
 

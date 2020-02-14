@@ -33,6 +33,8 @@ class StateSpaceSSE : public StateSpace {
 
   virtual ~StateSpaceSSE();
 
+  virtual state_space_type GetType() const override;
+
   // Reserve the memory associated with the state in this space
   virtual void CreateState() override;
 
