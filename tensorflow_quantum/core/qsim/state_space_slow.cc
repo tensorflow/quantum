@@ -17,6 +17,7 @@ limitations under the License.
 
 #include <cmath>
 #include <cstdint>
+#include <memory>
 
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow_quantum/core/src/matrix.h"
@@ -31,11 +32,10 @@ StateSpaceSlow::StateSpaceSlow(const unsigned int num_qubits,
 }
 
 void StateSpace::CreateState() {
-  state_ =
-      (float*)qsim::_aligned_malloc(sizeof(float) * 2 * this->GetDimension());
+  state_ = (float*)malloc(sizeof(float) * 2 * this->GetDimension());
 }
 
-void StateSpace::DeleteState() { qsim::_aligned_free(state_); }
+void StateSpace::DeleteState() { free(state_); }
 
 StateSpace* StateSpaceSlow::Copy() const {
   StateSpace* state_copy =
