@@ -67,8 +67,8 @@ tensorflow::Status StateSpace::Update(const Circuit& circuit) {
   return tensorflow::Status::OK();
 }
 
-tensorflow::Status StateSpace::ComputeExpectation(const tfq::proto::PauliSum& p_sum,
-                                                  float* expectation_value) {
+tensorflow::Status StateSpace::ComputeExpectation(
+    const tfq::proto::PauliSum& p_sum, float* expectation_value) {
   // apply the  gates of the pauliterms to a new copy of the wavefunction
   // and add up expectation value term by term.
   for (const tfq::proto::PauliTerm& term : p_sum.terms()) {
@@ -102,12 +102,11 @@ tensorflow::Status StateSpace::ComputeExpectation(const tfq::proto::PauliSum& p_
 }
 
 void StateSpace::CreateState() {
-  state_ = (float*)qsim::_aligned_malloc(sizeof(float) * 2 * this->GetDimension());
+  state_ =
+      (float*)qsim::_aligned_malloc(sizeof(float) * 2 * this->GetDimension());
 }
 
-void StateSpace::DeleteState() {
-  qsim::_aligned_free(state_);
-}
+void StateSpace::DeleteState() { qsim::_aligned_free(state_); }
 
 bool StateSpace::Valid() const {
   // TODO: more roubust test?

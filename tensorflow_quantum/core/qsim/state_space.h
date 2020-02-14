@@ -59,7 +59,7 @@ class StateSpace {
   // Number of threads that can be used by this StateSpace
   unsigned int GetNumThreads() const;
 
-  virtual ~StateSpace() {DeleteState();}
+  virtual ~StateSpace() { DeleteState(); }
 
   // Return a pointer to a copy of this StateSpace.
   // NOTE: user is responsible for deleting the returned copy.

@@ -45,14 +45,15 @@ class StateSpaceSlow : public StateSpace {
   // Set all entries in the state to zero
   virtual void SetStateZero() override;
 
-    // Get the inner product between this state and the state in `other`
+  // Get the inner product between this state and the state in `other`
   virtual float GetRealInnerProduct(const StateSpace* other) const override;
 
   // Get the amplitude at the given state index
   virtual std::complex<float> GetAmpl(const uint64_t i) const override;
 
   // Set the amplitude at the given state index
-  virtual void SetAmpl(const uint64_t i, const std::complex<float>& val) override;
+  virtual void SetAmpl(const uint64_t i,
+                       const std::complex<float>& val) override;
 };
 
 }  // namespace qsim
