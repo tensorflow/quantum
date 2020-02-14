@@ -29,7 +29,7 @@ namespace tfq {
 namespace qsim {
 
 StateSpaceAVX::StateSpaceAVX(const unsigned int num_qubits,
-                               const unsigned int num_threads)
+                             const unsigned int num_threads)
     : StateSpace(num_qubits, num_threads) {
   CreateState();
 }
@@ -51,7 +51,7 @@ StateSpace* StateSpaceAVX::Copy() const {
 }
 
 void StateSpaceAVX::ApplyGate2(const unsigned int q0, const unsigned int q1,
-                                const float* m) {
+                               const float* m) {
   // Assume q0 < q1.
   if (q0 > 2) {
     ApplyGate2HH(q0, q1, matrix);
@@ -63,9 +63,8 @@ void StateSpaceAVX::ApplyGate2(const unsigned int q0, const unsigned int q1,
 }
 
 tensorflow::Status StateSpaceAVX::ApplyGate1(const float* matrix) {
-  return tensorflow::Status(
-      tensorflow::error::INVALID_ARGUMENT,
-      "AVX simulator doesn't support small circuits.");
+  return tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
+                            "AVX simulator doesn't support small circuits.");
 }
 
 void StateSpaceAVX::SetStateZero() {
@@ -105,11 +104,11 @@ float StateSpaceAVX::GetRealInnerProduct(const StateSpace* other) const {
 
 std::complex<float> StateSpaceAVX::GetAmpl(const uint64_t i) const {
   uint64_t p = (16 * (i / 8)) + (i % 8);
-  return std::complex<float>(this->GetRawState()[p], this->GetRawState()[p + 8]);
+  return std::complex<float>(this->GetRawState()[p],
+                             this->GetRawState()[p + 8]);
 }
 
-void StateSpaceAVX::SetAmpl(const uint64_t i,
-                            const std::complex<float>& val) {
+void StateSpaceAVX::SetAmpl(const uint64_t i, const std::complex<float>& val) {
   uint64_t p = (16 * (i / 8)) + (i % 8);
   this->GetRawState()[p] = val.real();
   this->GetRawState()[p + 8] = val.imag();

@@ -105,7 +105,7 @@ bool StateSpace::Valid() const {
   return state_ != nullptr;
 }
 
-float* GetRawState() const { return state_; };
+float* StateSpace::GetRawState() const { return state_; };
 
 uint64_t StateSpace::GetDimension() const { return size_ / 2; }
 

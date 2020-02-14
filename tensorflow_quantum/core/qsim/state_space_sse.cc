@@ -30,7 +30,7 @@ namespace tfq {
 namespace qsim {
 
 StateSpaceSSE::StateSpaceSSE(const unsigned int num_qubits,
-                               const unsigned int num_threads)
+                             const unsigned int num_threads)
     : StateSpace(num_qubits, num_threads) {
   CreateState();
 }
@@ -52,7 +52,7 @@ StateSpace* StateSpaceSSE::Copy() const {
 }
 
 void StateSpaceSSE::ApplyGate2(const unsigned int q0, const unsigned int q1,
-                                const float* m) {
+                               const float* m) {
   // Assume q0 < q1.
   if (q0 > 2) {
     ApplyGate2HH(q0, q1, m);
@@ -64,9 +64,8 @@ void StateSpaceSSE::ApplyGate2(const unsigned int q0, const unsigned int q1,
 }
 
 tensorflow::Status StateSpaceSSE::ApplyGate1(const float* matrix) {
-  return tensorflow::Status(
-      tensorflow::error::INVALID_ARGUMENT,
-      "SSE simulator doesn't support small circuits.");
+  return tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
+                            "SSE simulator doesn't support small circuits.");
 }
 
 void StateSpaceSSE::SetStateZero() {
@@ -138,11 +137,11 @@ float StateSpaceSSE::GetRealInnerProduct(const StateSpace* other) const {
 
 std::complex<float> StateSpaceSSE::GetAmpl(const uint64_t i) const {
   uint64_t p = (16 * (i / 8)) + (i % 8);
-  return std::complex<float>(this->GetRawState()[p], this->GetRawState()[p + 8]);
+  return std::complex<float>(this->GetRawState()[p],
+                             this->GetRawState()[p + 8]);
 }
 
-void StateSpaceSSE::SetAmpl(const uint64_t i,
-                            const std::complex<float>& val) {
+void StateSpaceSSE::SetAmpl(const uint64_t i, const std::complex<float>& val) {
   uint64_t p = (16 * (i / 8)) + (i % 8);
   this->GetRawState()[p] = val.real();
   this->GetRawState()[p + 8] = val.imag();
@@ -748,7 +747,7 @@ void StateSpaceSSE::ApplyGate2HH(const unsigned int q0, const unsigned int q1,
 
 void StateSpaceSSE::ApplyGate2LL(const unsigned int q0, const unsigned int q1,
                                  const float* matrix) {
-    const unsigned int q = q0 + q1;
+  const unsigned int q = q0 + q1;
 
   //__m256 mb1, mb2, mb3;
   __m128 mb1, mb2, mb3;
