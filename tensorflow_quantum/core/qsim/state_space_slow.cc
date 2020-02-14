@@ -32,9 +32,9 @@ StateSpaceSlow::StateSpaceSlow(const unsigned int num_qubits,
   CreateState();
 }
 
-StateSpace* Copy() const {
-  StateSpace* state_copy = new StateSpaceSlow(this->num_qubits, this->num_threads);
-  for (uint64_t i = 0; i < this->Dimension(); ++i) {
+StateSpace* StateSpaceSlow::Copy() const {
+  StateSpace* state_copy = new StateSpaceSlow(this->GetNumQubits(), this->GetNumThreads());
+  for (uint64_t i = 0; i < this->GetDimension(); ++i) {
     state_copy->SetAmpl(i, this->GetAmpl(i));
   }
   return state_copy;
@@ -122,7 +122,7 @@ void StateSpaceSlow::SetStateZero() {
 }
 
 float StateSpaceSlow::GetRealInnerProduct(const StateSpace* other) const {
-  uint64_t size2 = this->Dimension();
+  uint64_t size2 = this->GetDimension();
   double result = 0.0;
 
   // Currently not a thread safe implementation of inner product!

@@ -33,7 +33,7 @@ tensorflow::Status StateSpace::Update(const Circuit& circuit) {
   tensorflow::Status status;
   // Special case for single qubit;
   // derived classes free to return an error.
-  if (this->Dimension() <= 2) {
+  if (this->GetDimension() <= 2) {
     for (uint64_t i = 0; i < circuit.gates.size(); i++) {
       const auto& gate = circuit.gates[i];
       if (gate.num_qubits == 1) {
@@ -102,7 +102,7 @@ tensorflow::Status StateSpace::ComputeExpectation(const tfq::proto::PauliSum& p_
 }
 
 void StateSpace::CreateState() {
-  state_ = (float*)qsim::_aligned_malloc(sizeof(float) * size_);
+  state_ = (float*)qsim::_aligned_malloc(sizeof(float) * 2 * this->GetDimension());
 }
 
 void StateSpace::DeleteState() {
@@ -114,7 +114,11 @@ bool StateSpace::Valid() const {
   return state_ != nullptr;
 }
 
-uint64_t StateSpace::Dimension() const { return size_ / 2; }
+uint64_t StateSpace::GetDimension() const { return size_ / 2; }
+
+unsigned int StateSpace::GetNumQubits() const { return num_qubits_; }
+
+unsigned int StateSpace::GetNumThreads() const { return num_threads_; }
 
 }  // namespace qsim
 }  // namespace tfq

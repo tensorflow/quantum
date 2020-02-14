@@ -51,7 +51,13 @@ class StateSpace {
   bool Valid() const;
 
   // Dimension of the complex Hilbert space represented by this StateSpace
-  uint64_t Dimension() const;
+  uint64_t GetDimension() const;
+
+  // Number of qubits this StateSpace operates on
+  unsigned int GetNumQubits() const;
+
+  // Number of threads that can be used by this StateSpace
+  unsigned int GetNumThreads() const;
 
   virtual ~StateSpace() {DeleteState();}
 
