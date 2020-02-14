@@ -35,7 +35,7 @@ using ::cirq::google::api::v2::Program;
 using ::tensorflow::Status;
 using ::tfq::Circuit;
 using ::tfq::CircuitFromProgram;
-using ::tfq::qsim::GetSimulator;
+using ::tfq::qsim::GetStateSpace;
 using ::tfq::qsim::StateSpace;
 
 class TfqSimulateStateOp : public tensorflow::OpKernel {
@@ -86,7 +86,7 @@ class TfqSimulateStateOp : public tensorflow::OpKernel {
         Circuit circuit;
         OP_REQUIRES_OK(context, CircuitFromProgram(program, num, &circuit));
         std::unique_ptr<StateSpace> state =
-            std::unique_ptr<StateSpace>(GetSimulator(num, 1));
+            std::unique_ptr<StateSpace>(GetStateSpace(num, 1));
         state->CreateState();
         state->SetStateZero();
         OP_REQUIRES_OK(context, state->Update(circuit));
