@@ -32,21 +32,21 @@ StateSpaceAVX::StateSpaceAVX(const unsigned int num_qubits,
                              const unsigned int num_threads)
     : StateSpace(num_qubits, num_threads, 0) {}
 
-StateSpaceAVX::~StateSpaceAVX() { this->DeleteState(); }
+StateSpaceAVX::~StateSpaceAVX() { DeleteState(); }
 
 void StateSpaceAVX::CreateState() {
   state_ =
-      (float*)qsim::_aligned_malloc(sizeof(float) * 2 * this->GetDimension());
+      (float*)qsim::_aligned_malloc(sizeof(float) * 2 * GetDimension());
 }
 
 void StateSpaceAVX::DeleteState() { qsim::_aligned_free(state_); }
 
 StateSpace* StateSpaceAVX::Copy() const {
   StateSpace* state_copy =
-      new StateSpaceAVX(this->GetNumQubits(), this->GetNumThreads());
+      new StateSpaceAVX(GetNumQubits(), GetNumThreads());
   state_copy->CreateState();
-  for (uint64_t i = 0; i < this->GetDimension(); ++i) {
-    state_copy->SetAmpl(i, this->GetAmpl(i));
+  for (uint64_t i = 0; i < GetDimension(); ++i) {
+    state_copy->SetAmpl(i, GetAmpl(i));
   }
   return state_copy;
 }
@@ -69,10 +69,10 @@ tensorflow::Status StateSpaceAVX::ApplyGate1(const float* matrix) {
 }
 
 void StateSpaceAVX::SetStateZero() {
-  uint64_t size2 = this->GetDimension() / 8;
+  uint64_t size2 = GetDimension() / 8;
   __m256 val0 = _mm256_setzero_ps();
 
-  auto data = this->GetRawState();
+  auto data = GetRawState();
 
   for (uint64_t i = 0; i < size2; ++i) {
     _mm256_store_ps(data + 16 * i, val0);
@@ -82,11 +82,11 @@ void StateSpaceAVX::SetStateZero() {
 }
 
 float StateSpaceAVX::GetRealInnerProduct(const StateSpace* other) const {
-  uint64_t size2 = this->GetDimension() / 4;
+  uint64_t size2 = GetDimension() / 4;
   __m256d expv = _mm256_setzero_pd();
   __m256d rs, is;
 
-  auto statea = this->GetRawState();
+  auto statea = GetRawState();
   auto stateb = other->GetRawState();
 
   // Currently not a thread safe implementation of inner product!
@@ -105,23 +105,23 @@ float StateSpaceAVX::GetRealInnerProduct(const StateSpace* other) const {
 
 std::complex<float> StateSpaceAVX::GetAmpl(const uint64_t i) const {
   uint64_t p = (16 * (i / 8)) + (i % 8);
-  return std::complex<float>(this->GetRawState()[p],
-                             this->GetRawState()[p + 8]);
+  return std::complex<float>(GetRawState()[p],
+                             GetRawState()[p + 8]);
 }
 
 void StateSpaceAVX::SetAmpl(const uint64_t i, const std::complex<float>& val) {
   uint64_t p = (16 * (i / 8)) + (i % 8);
-  this->GetRawState()[p] = val.real();
-  this->GetRawState()[p + 8] = val.imag();
+  GetRawState()[p] = val.real();
+  GetRawState()[p + 8] = val.imag();
 }
 
 void StateSpaceAVX::ApplyGate2HH(const unsigned int q0, const unsigned int q1,
                                  const float* matrix) {
-  uint64_t sizei = uint64_t(1) << (this->GetNumQubits() + 1);
+  uint64_t sizei = uint64_t(1) << (GetNumQubits() + 1);
   uint64_t sizej = uint64_t(1) << (q1 + 1);
   uint64_t sizek = uint64_t(1) << (q0 + 1);
 
-  auto rstate = this->GetRawState();
+  auto rstate = GetRawState();
 
   for (uint64_t i = 0; i < sizei; i += 2 * sizej) {
     for (uint64_t j = 0; j < sizej; j += 2 * sizek) {
@@ -263,10 +263,10 @@ void StateSpaceAVX::ApplyGate2HL(const unsigned int q0, const unsigned int q1,
   __m256 mb;
   __m256i ml;
 
-  uint64_t sizei = uint64_t(1) << (this->GetNumQubits() + 1);
+  uint64_t sizei = uint64_t(1) << (GetNumQubits() + 1);
   uint64_t sizej = uint64_t(1) << (q1 + 1);
 
-  auto rstate = this->GetRawState();
+  auto rstate = GetRawState();
 
   switch (q0) {
     case 0:
@@ -431,8 +431,8 @@ void StateSpaceAVX::ApplyGate2LL(const unsigned int q0, const unsigned int q1,
   __m256 mb1, mb2, mb3;
   __m256i ml1, ml2, ml3;
 
-  uint64_t sizei = uint64_t(1) << (this->GetNumQubits() + 1);
-  auto rstate = this->GetRawState();
+  uint64_t sizei = uint64_t(1) << (GetNumQubits() + 1);
+  auto rstate = GetRawState();
 
   switch (q) {
     case 1:

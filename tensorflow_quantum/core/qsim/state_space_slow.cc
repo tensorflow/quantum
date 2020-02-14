@@ -29,20 +29,20 @@ StateSpaceSlow::StateSpaceSlow(const unsigned int num_qubits,
                                const unsigned int num_threads)
     : StateSpace(num_qubits, num_threads, 1) {}
 
-StateSpaceSlow::~StateSpaceSlow() { this->DeleteState(); }
+StateSpaceSlow::~StateSpaceSlow() { DeleteState(); }
 
 void StateSpaceSlow::CreateState() {
-  state_ = (float*)malloc(sizeof(float) * 2 * this->GetDimension());
+  state_ = (float*)malloc(sizeof(float) * 2 * GetDimension());
 }
 
 void StateSpaceSlow::DeleteState() { free(state_); }
 
 StateSpace* StateSpaceSlow::Copy() const {
   StateSpace* state_copy =
-      new StateSpaceSlow(this->GetNumQubits(), this->GetNumThreads());
+      new StateSpaceSlow(GetNumQubits(), GetNumThreads());
   state_copy->CreateState();
-  for (uint64_t i = 0; i < this->GetDimension(); ++i) {
-    state_copy->SetAmpl(i, this->GetAmpl(i));
+  for (uint64_t i = 0; i < GetDimension(); ++i) {
+    state_copy->SetAmpl(i, GetAmpl(i));
   }
   return state_copy;
 }
@@ -50,11 +50,11 @@ StateSpace* StateSpaceSlow::Copy() const {
 void StateSpaceSlow::ApplyGate2(const unsigned int q0, const unsigned int q1,
                                 const float* m) {
   // Assume q0 < q1.
-  uint64_t sizei = uint64_t(1) << (this->GetNumQubits() + 1);
+  uint64_t sizei = uint64_t(1) << (GetNumQubits() + 1);
   uint64_t sizej = uint64_t(1) << (q1 + 1);
   uint64_t sizek = uint64_t(1) << (q0 + 1);
 
-  auto data = this->GetRawState();
+  auto data = GetRawState();
 
   for (uint64_t i = 0; i < sizei; i += 2 * sizej) {
     for (uint64_t j = 0; j < sizej; j += 2 * sizek) {
@@ -105,7 +105,7 @@ tensorflow::Status StateSpaceSlow::ApplyGate1(const float* matrix) {
 
   float r_0, i_0, r_1, i_1;
 
-  auto data = this->GetRawState();
+  auto data = GetRawState();
 
   r_0 = data[0] * matrix[0] - data[1] * matrix[1] + data[2] * matrix[2] -
         data[3] * matrix[3];
@@ -127,7 +127,7 @@ tensorflow::Status StateSpaceSlow::ApplyGate1(const float* matrix) {
 
 void StateSpaceSlow::SetStateZero() {
   //#pragma omp parallel for num_threads(num_threads_)
-  auto data = this->GetRawState();
+  auto data = GetRawState();
   for (uint64_t i = 0; i < size_; ++i) {
     data[i] = 0;
   }
@@ -135,12 +135,12 @@ void StateSpaceSlow::SetStateZero() {
 }
 
 float StateSpaceSlow::GetRealInnerProduct(const StateSpace* other) const {
-  uint64_t size2 = this->GetDimension();
+  uint64_t size2 = GetDimension();
   double result = 0.0;
 
   // Currently not a thread safe implementation of inner product!
   for (uint64_t i = 0; i < size2; ++i) {
-    const std::complex<float> amp_a = this->GetAmpl(i);
+    const std::complex<float> amp_a = GetAmpl(i);
     const std::complex<float> amp_other = other->GetAmpl(i);
 
     const std::complex<double> amp_a_d = std::complex<double>(
@@ -157,13 +157,13 @@ float StateSpaceSlow::GetRealInnerProduct(const StateSpace* other) const {
 }
 
 std::complex<float> StateSpaceSlow::GetAmpl(const uint64_t i) const {
-  return std::complex<float>(this->GetRawState()[2 * i],
-                             this->GetRawState()[2 * i + 1]);
+  return std::complex<float>(GetRawState()[2 * i],
+                             GetRawState()[2 * i + 1]);
 }
 
 void StateSpaceSlow::SetAmpl(const uint64_t i, const std::complex<float>& val) {
-  this->GetRawState()[2 * i] = val.real();
-  this->GetRawState()[2 * i + 1] = val.imag();
+  GetRawState()[2 * i] = val.real();
+  GetRawState()[2 * i + 1] = val.imag();
 }
 
 }  // namespace qsim

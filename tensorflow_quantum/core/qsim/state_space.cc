@@ -32,13 +32,13 @@ tensorflow::Status StateSpace::Update(const Circuit& circuit) {
   tensorflow::Status status;
   // Special case for single qubit;
   // derived classes free to return an error.
-  if (this->GetDimension() <= 2) {
+  if (GetDimension() <= 2) {
     for (uint64_t i = 0; i < circuit.gates.size(); i++) {
       const auto& gate = circuit.gates[i];
       if (gate.num_qubits == 1) {
         float matrix[8];
         Matrix2Set(gate.matrix, matrix);
-        status = this->ApplyGate1(matrix);
+        status = ApplyGate1(matrix);
         if (!status.ok()) {
           return status;
         }
@@ -60,7 +60,7 @@ tensorflow::Status StateSpace::Update(const Circuit& circuit) {
   for (const GateFused& gate : fused_gates) {
     float matrix[32];
     CalcMatrix4(gate.qubits[0], gate.qubits[1], gate.gates, matrix);
-    this->ApplyGate2(gate.qubits[0], gate.qubits[1], matrix);
+    ApplyGate2(gate.qubits[0], gate.qubits[1], matrix);
   }
 
   return tensorflow::Status::OK();
@@ -84,14 +84,14 @@ tensorflow::Status StateSpace::ComputeExpectation(
     // and then deleting the copy is better OR evolving the referencing
     // computing the number and then un-evolving the reference is faster.
     status =
-        CircuitFromPauliTerm(term, this->num_qubits_, &measurement_circuit);
+        CircuitFromPauliTerm(term, num_qubits_, &measurement_circuit);
     if (!status.ok()) {
       return status;
     }
-    StateSpace* transformed_state = this->Copy();
+    StateSpace* transformed_state = Copy();
     status = transformed_state->Update(measurement_circuit);
     *expectation_value +=
-        term.coefficient_real() * this->GetRealInnerProduct(transformed_state);
+        term.coefficient_real() * GetRealInnerProduct(transformed_state);
     delete transformed_state;
     if (!status.ok()) {
       return status;
