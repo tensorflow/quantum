@@ -26,6 +26,7 @@ limitations under the License.
 namespace tfq {
 namespace qsim {
 
+// Handles simulations of pure states (wavefunctions), not density matrices
 class StateSpace {
  public:
   StateSpace(const unsigned int num_qubits, const unsigned int num_threads,
