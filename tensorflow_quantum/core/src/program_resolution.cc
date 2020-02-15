@@ -38,7 +38,7 @@ using tfq::proto::PauliQubitPair;
 using tfq::proto::PauliSum;
 using tfq::proto::PauliTerm;
 
-Status ResolveQubitIds(Program* program,
+Status ResolveQubitIds(Program* program, unsigned int* num_qubits,
                        std::vector<PauliSum>* p_sums /*=nullptr*/) {
   if (program->circuit().moments().empty()) {
     // (#679) Just ignore empty program.
@@ -52,6 +52,10 @@ Status ResolveQubitIds(Program* program,
         id_set.insert(qubit.id());
       }
     }
+  }
+
+  if (num_qubits) {
+    *num_qubits = id_set.size();
   }
 
   std::vector<std::string> ids(id_set.begin(), id_set.end());
@@ -93,18 +97,6 @@ Status ResolveQubitIds(Program* program,
   }
 
   return Status::OK();
-}
-
-int GetNumQubits(const Program& program) {
-  absl::flat_hash_set<std::string> id_set;
-  for (const Moment& moment : program.circuit().moments()) {
-    for (const Operation& operation : moment.operations()) {
-      for (const Qubit& qubit : operation.qubits()) {
-        id_set.insert(qubit.id());
-      }
-    }
-  }
-  return id_set.size();
 }
 
 Status ResolveSymbols(

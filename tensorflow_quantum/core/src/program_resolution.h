@@ -38,14 +38,11 @@ namespace tfq {
 //
 // The qubits are sorted in the same way Cirq would sort them, to provide
 // consistent outputs.
+//
+// The number of qubits in the program is recorded in `num_qubits` if not null.
 tensorflow::Status ResolveQubitIds(
-    cirq::google::api::v2::Program* program,
+    cirq::google::api::v2::Program* program, unsigned int* num_qubits,
     std::vector<tfq::proto::PauliSum>* p_sums = nullptr);
-
-// Returns the maximum number qubit in the Program. If the QubitIds were
-// resolved with the above function, this is the number of qubits in the
-// Program.
-int GetNumQubits(const cirq::google::api::v2::Program& program);
 
 // Resolves all of the symbols present in the Program. Iterates through all
 // operations in all moments, and if any Args have a symbol, replaces the one-of
