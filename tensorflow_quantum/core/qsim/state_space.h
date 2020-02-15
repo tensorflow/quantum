@@ -99,7 +99,7 @@ class StateSpace {
   // Set the amplitude at the given state index
   virtual void SetAmpl(const uint64_t i, const std::complex<float>& val) = 0;
 
- protected:
+ private:
   float* state_;
   uint64_t size_;
   uint64_t num_qubits_;
