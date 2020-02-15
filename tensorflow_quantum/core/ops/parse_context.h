@@ -41,7 +41,7 @@ tensorflow::Status GetProgramsAndProgramsToAppend(
 // A parameter map is a mapping from the name of the parameter to the index in
 // the input parameter value tensor (for gradient computations) and the value
 // of the parameter (for forward computation).
-typedef absl::flat_hash_map<std::string, std::pair<int, double>> SymbolMap;
+typedef absl::flat_hash_map<std::string, std::pair<int, float>> SymbolMap;
 
 // Parses Cirq Program protos out of the 'circuit_specs' input Tensor. Also
 // resolves the QubitIds inside of the Program. Optionally will resolve the

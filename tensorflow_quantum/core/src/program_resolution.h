@@ -54,7 +54,7 @@ int GetNumQubits(const cirq::google::api::v2::Program& program);
 // TODO(pmassey): Consider returning an error if a value in the parameter map
 // isn't used.
 tensorflow::Status ResolveSymbols(
-    const absl::flat_hash_map<std::string, std::pair<int, double>>& param_map,
+    const absl::flat_hash_map<std::string, std::pair<int, float>>& param_map,
     cirq::google::api::v2::Program* program);
 
 }  // namespace tfq
