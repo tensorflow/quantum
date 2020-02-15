@@ -94,7 +94,7 @@ TEST(ProgramResolutionTest, ResolveSymbols) {
   Program program;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(text, &program));
 
-  const absl::flat_hash_map<std::string, std::pair<int, double>> param_map = {
+  const absl::flat_hash_map<std::string, std::pair<int, float>> param_map = {
       {"v1", {0, 1.0}}};
 
   EXPECT_TRUE(ResolveSymbols(param_map, &program).ok());

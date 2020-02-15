@@ -108,7 +108,7 @@ int GetNumQubits(const Program& program) {
 }
 
 Status ResolveSymbols(
-    const absl::flat_hash_map<std::string, std::pair<int, double>>& param_map,
+    const absl::flat_hash_map<std::string, std::pair<int, float>>& param_map,
     Program* program) {
   for (Moment& moment : *program->mutable_circuit()->mutable_moments()) {
     for (Operation& operation : *moment.mutable_operations()) {
