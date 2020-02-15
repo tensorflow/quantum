@@ -39,7 +39,7 @@ StateSpaceType StateSpaceSSE::GetType() const { return StateSpaceType::SSE; }
 
 void StateSpaceSSE::CreateState() {
   SetRawState(
-      (float*)qsim::_aligned_malloc(sizeof(float) * 2 * GetDimension()));
+      (float*)qsim::_aligned_malloc(sizeof(float) * GetNumEntries()));
 }
 
 void StateSpaceSSE::DeleteState() { qsim::_aligned_free(GetRawState()); }
