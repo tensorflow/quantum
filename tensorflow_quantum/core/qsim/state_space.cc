@@ -106,6 +106,10 @@ bool StateSpace::Valid() const {
 
 float* StateSpace::GetRawState() const { return state_; };
 
+void StateSpace::SetRawState(float* state_update) { state_ = state_update; }
+
+uint64_t StateSpace::GetNumEntries() const { return size_; }
+
 uint64_t StateSpace::GetDimension() const { return size_ / 2; }
 
 uint64_t StateSpace::GetNumQubits() const { return num_qubits_; }

@@ -36,10 +36,10 @@ StateSpaceType StateSpaceSlow::GetType() const {
 }
 
 void StateSpaceSlow::CreateState() {
-  state_ = (float*)malloc(sizeof(float) * 2 * GetDimension());
+  SetRawState((float*)malloc(sizeof(float) * GetNumEntries()));
 }
 
-void StateSpaceSlow::DeleteState() { free(state_); }
+void StateSpaceSlow::DeleteState() { free(GetRawState()); }
 
 StateSpace* StateSpaceSlow::Clone() const {
   StateSpace* state_copy = new StateSpaceSlow(GetNumQubits(), GetNumThreads());
@@ -49,7 +49,7 @@ StateSpace* StateSpaceSlow::Clone() const {
 void StateSpaceSlow::CopyFrom(const StateSpace& other) const {
   auto state = GetRawState();
   auto other_state = other.GetRawState();
-  for (uint64_t i = 0; i < size_; i++) {
+  for (uint64_t i = 0; i < GetNumEntries(); i++) {
     state[i] = other_state[i];
   }
 }
@@ -135,7 +135,7 @@ tensorflow::Status StateSpaceSlow::ApplyGate1(const float* matrix) {
 void StateSpaceSlow::SetStateZero() {
   //#pragma omp parallel for num_threads(num_threads_)
   auto data = GetRawState();
-  for (uint64_t i = 0; i < size_; ++i) {
+  for (uint64_t i = 0; i < GetNumEntries(); ++i) {
     data[i] = 0;
   }
   data[0] = 1;

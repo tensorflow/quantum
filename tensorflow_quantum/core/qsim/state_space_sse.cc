@@ -40,10 +40,10 @@ StateSpaceType StateSpaceSSE::GetType() const {
 }
 
 void StateSpaceSSE::CreateState() {
-  state_ = (float*)qsim::_aligned_malloc(sizeof(float) * 2 * GetDimension());
+  SetRawState((float*)qsim::_aligned_malloc(sizeof(float) * 2 * GetDimension()));
 }
 
-void StateSpaceSSE::DeleteState() { qsim::_aligned_free(state_); }
+void StateSpaceSSE::DeleteState() { qsim::_aligned_free(GetRawState()); }
 
 StateSpace* StateSpaceSSE::Clone() const {
   StateSpaceSSE* state_copy =

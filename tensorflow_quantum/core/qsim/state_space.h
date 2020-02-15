@@ -51,8 +51,14 @@ class StateSpace {
   // Pointer to the raw state managed by this StateSpace
   float* GetRawState() const;
 
+  // Replace the pointer in this object with a new one
+  void SetRawState(float* state_update);
+
   // Dimension of the complex Hilbert space represented by this StateSpace
   uint64_t GetDimension() const;
+
+  // Get the number of entries used in the internal representation of the state
+  uint64_t GetNumEntries() const;
 
   // Number of qubits this StateSpace operates on
   uint64_t GetNumQubits() const;
