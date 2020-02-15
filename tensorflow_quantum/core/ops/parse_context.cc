@@ -222,7 +222,7 @@ Status GetSymbolMaps(OpKernelContext* context, std::vector<SymbolMap>* maps) {
     SymbolMap map;
     for (int j = 0; j < symbol_values.dimension(1); j++) {
       const std::string& name = symbol_names(j);
-      const double value = (double)symbol_values(i, j);
+      const float value = symbol_values(i, j);
       map[name] = {j, value};
     }
 
