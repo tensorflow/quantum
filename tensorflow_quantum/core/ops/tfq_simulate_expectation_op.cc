@@ -106,13 +106,13 @@ class TfqSimulateExpectationOp : public tensorflow::OpKernel {
               context, CircuitFromProgram(program, num_qubits[cur_batch_index],
                                           &circuit));
           test_state.reset(GetStateSpace(num_qubits[cur_batch_index], 1));
-          test_state.get()->CreateState();
-          test_state.get()->SetStateZero();
-          OP_REQUIRES_OK(context, test_state.get()->Update(circuit));
+          test_state->CreateState();
+          test_state->SetStateZero();
+          OP_REQUIRES_OK(context, test_state->Update(circuit));
         }
 
         float expectation = 0.0;
-        OP_REQUIRES_OK(context, test_state.get()->ComputeExpectation(
+        OP_REQUIRES_OK(context, test_state->ComputeExpectation(
                                     pauli_sums[cur_batch_index][cur_op_index],
                                     &expectation));
 

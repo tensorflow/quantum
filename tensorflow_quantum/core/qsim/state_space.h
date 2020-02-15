@@ -71,9 +71,13 @@ class StateSpace {
   // Free the memory associated with the state in this space
   virtual void DeleteState() = 0;
 
-  // Return a pointer to a copy of this StateSpace.
+  // Return a pointer to a clone of this StateSpace that is unitialized.
   // NOTE: user is responsible for deleting the returned copy.
-  virtual StateSpace* Copy() const = 0;
+  virtual StateSpace* Clone() const = 0;
+
+  // Copy the contents of others state into this state. Will not
+  // check if state has been initialized.
+  virtual void CopyFrom(const StateSpace& other) const = 0;
 
   // Function to apply a two qubit gate to the state on indices q0 and q1.
   virtual void ApplyGate2(const unsigned int q0, const unsigned int q1,
@@ -87,7 +91,7 @@ class StateSpace {
   virtual void SetStateZero() = 0;
 
   // Get the inner product between this state and the state in `other`
-  virtual float GetRealInnerProduct(const StateSpace* other) const = 0;
+  virtual float GetRealInnerProduct(const StateSpace& other) const = 0;
 
   // Get the amplitude at the given state index
   virtual std::complex<float> GetAmpl(const uint64_t i) const = 0;

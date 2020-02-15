@@ -41,13 +41,17 @@ void StateSpaceSlow::CreateState() {
 
 void StateSpaceSlow::DeleteState() { free(state_); }
 
-StateSpace* StateSpaceSlow::Copy() const {
+StateSpace* StateSpaceSlow::Clone() const {
   StateSpace* state_copy = new StateSpaceSlow(GetNumQubits(), GetNumThreads());
-  state_copy->CreateState();
-  for (uint64_t i = 0; i < GetDimension(); ++i) {
-    state_copy->SetAmpl(i, GetAmpl(i));
-  }
   return state_copy;
+}
+
+void StateSpaceSlow::CopyFrom(const StateSpace& other) const {
+  auto state = GetRawState();
+  auto other_state = other.GetRawState();
+  for (uint64_t i = 0; i < size_; i++) {
+    state[i] = other_state[i];
+  }
 }
 
 void StateSpaceSlow::ApplyGate2(const unsigned int q0, const unsigned int q1,
@@ -137,14 +141,14 @@ void StateSpaceSlow::SetStateZero() {
   data[0] = 1;
 }
 
-float StateSpaceSlow::GetRealInnerProduct(const StateSpace* other) const {
+float StateSpaceSlow::GetRealInnerProduct(const StateSpace& other) const {
   uint64_t size2 = GetDimension();
   double result = 0.0;
 
   // Currently not a thread safe implementation of inner product!
   for (uint64_t i = 0; i < size2; ++i) {
     const std::complex<float> amp_a = GetAmpl(i);
-    const std::complex<float> amp_other = other->GetAmpl(i);
+    const std::complex<float> amp_other = other.GetAmpl(i);
 
     const std::complex<double> amp_a_d = std::complex<double>(
         static_cast<double>(amp_a.real()), static_cast<double>(amp_a.imag()));

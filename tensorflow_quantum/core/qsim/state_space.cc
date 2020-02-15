@@ -70,6 +70,10 @@ tensorflow::Status StateSpace::ComputeExpectation(
     const tfq::proto::PauliSum& p_sum, float* expectation_value) {
   // apply the  gates of the pauliterms to a new copy of the wavefunction
   // and add up expectation value term by term.
+  tensorflow::Status status = tensorflow::Status::OK();
+  std::unique_ptr<StateSpace> transformed_state =
+      std::unique_ptr<StateSpace>(Clone());
+  transformed_state->CreateState();
   for (const tfq::proto::PauliTerm& term : p_sum.terms()) {
     // catch identity terms
     if (term.paulis_size() == 0) {
@@ -78,25 +82,21 @@ tensorflow::Status StateSpace::ComputeExpectation(
       continue;
     }
 
-    tensorflow::Status status;
     Circuit measurement_circuit;
-    // TODO (zaqqwerty): profile whether creating a copy, evolving the copy
-    // and then deleting the copy is better OR evolving the referencing
-    // computing the number and then un-evolving the reference is faster.
+
     status = CircuitFromPauliTerm(term, num_qubits_, &measurement_circuit);
     if (!status.ok()) {
       return status;
     }
-    StateSpace* transformed_state = Copy();
+    transformed_state->CopyFrom(*this);
     status = transformed_state->Update(measurement_circuit);
-    *expectation_value +=
-        term.coefficient_real() * GetRealInnerProduct(transformed_state);
-    delete transformed_state;
     if (!status.ok()) {
       return status;
     }
+    *expectation_value +=
+        term.coefficient_real() * GetRealInnerProduct(*transformed_state);
   }
-  return tensorflow::Status::OK();
+  return status;
 }
 
 bool StateSpace::Valid() const {

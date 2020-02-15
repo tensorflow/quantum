@@ -44,13 +44,25 @@ void StateSpaceAVX::CreateState() {
 
 void StateSpaceAVX::DeleteState() { qsim::_aligned_free(state_); }
 
-StateSpace* StateSpaceAVX::Copy() const {
-  StateSpace* state_copy = new StateSpaceAVX(GetNumQubits(), GetNumThreads());
-  state_copy->CreateState();
-  for (uint64_t i = 0; i < GetDimension(); ++i) {
-    state_copy->SetAmpl(i, GetAmpl(i));
-  }
+StateSpace* StateSpaceAVX::Clone() const {
+  StateSpaceAVX* state_copy =
+      new StateSpaceAVX(GetNumQubits(), GetNumThreads());
   return state_copy;
+}
+
+void StateSpaceAVX::CopyFrom(const StateSpace& other) const {
+  auto data = GetRawState();
+  auto copy_data = other.GetRawState();
+
+  uint64_t size2 = GetDimension() / 8;
+  __m256 tmp1, tmp2;
+  for (uint64_t i = 0; i < size2; ++i) {
+    tmp1 = _mm256_load_ps(copy_data + 16 * i);
+    tmp2 = _mm256_load_ps(copy_data + 16 * i + 8);
+
+    _mm256_store_ps(data + 16 * i, tmp1);
+    _mm256_store_ps(data + 16 * i + 8, tmp2);
+  }
 }
 
 void StateSpaceAVX::ApplyGate2(const unsigned int q0, const unsigned int q1,
@@ -83,13 +95,13 @@ void StateSpaceAVX::SetStateZero() {
   data[0] = 1;
 }
 
-float StateSpaceAVX::GetRealInnerProduct(const StateSpace* other) const {
+float StateSpaceAVX::GetRealInnerProduct(const StateSpace& other) const {
   uint64_t size2 = GetDimension() / 4;
   __m256d expv = _mm256_setzero_pd();
   __m256d rs, is;
 
   auto statea = GetRawState();
-  auto stateb = other->GetRawState();
+  auto stateb = other.GetRawState();
 
   // Currently not a thread safe implementation of inner product!
   for (uint64_t i = 0; i < size2; ++i) {

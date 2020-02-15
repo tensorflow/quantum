@@ -45,13 +45,29 @@ void StateSpaceSSE::CreateState() {
 
 void StateSpaceSSE::DeleteState() { qsim::_aligned_free(state_); }
 
-StateSpace* StateSpaceSSE::Copy() const {
-  StateSpace* state_copy = new StateSpaceSSE(GetNumQubits(), GetNumThreads());
-  state_copy->CreateState();
-  for (uint64_t i = 0; i < GetDimension(); ++i) {
-    state_copy->SetAmpl(i, GetAmpl(i));
-  }
+StateSpace* StateSpaceSSE::Clone() const {
+  StateSpaceSSE* state_copy =
+      new StateSpaceSSE(GetNumQubits(), GetNumThreads());
   return state_copy;
+}
+
+void StateSpaceSSE::CopyFrom(const StateSpace& other) const {
+  auto data = GetRawState();
+  auto copy_data = other.GetRawState();
+
+  uint64_t size2 = GetDimension() / 8;
+  __m128 tmp1, tmp2, tmp3, tmp4;
+  for (uint64_t i = 0; i < size2; ++i) {
+    tmp1 = _mm_load_ps(copy_data + 16 * i);
+    tmp2 = _mm_load_ps(copy_data + 16 * i + 4);
+    tmp3 = _mm_load_ps(copy_data + 16 * i + 8);
+    tmp4 = _mm_load_ps(copy_data + 16 * i + 12);
+
+    _mm_store_ps(data + 16 * i, tmp1);
+    _mm_store_ps(data + 16 * i + 4, tmp2);
+    _mm_store_ps(data + 16 * i + 8, tmp3);
+    _mm_store_ps(data + 16 * i + 12, tmp4);
+  }
 }
 
 void StateSpaceSSE::ApplyGate2(const unsigned int q0, const unsigned int q1,
@@ -91,7 +107,7 @@ void StateSpaceSSE::SetStateZero() {
   data[0] = 1;
 }
 
-float StateSpaceSSE::GetRealInnerProduct(const StateSpace* other) const {
+float StateSpaceSSE::GetRealInnerProduct(const StateSpace& other) const {
   uint64_t size2 = GetDimension() / 4;
   __m128d expv_0 = _mm_setzero_pd();
   __m128d expv_1 = _mm_setzero_pd();
@@ -99,7 +115,7 @@ float StateSpaceSSE::GetRealInnerProduct(const StateSpace* other) const {
   __m128d rs_0, rs_1, is_0, is_1;
 
   auto statea = GetRawState();
-  auto stateb = other->GetRawState();
+  auto stateb = other.GetRawState();
 
   //#pragma omp parallel for num_threads(num_threads_)
   // Currently not a thread safe implementation of inner product!

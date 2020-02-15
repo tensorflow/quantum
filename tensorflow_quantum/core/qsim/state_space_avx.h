@@ -42,7 +42,11 @@ class StateSpaceAVX : public StateSpace {
 
   // Return a pointer to a copy of this StateSpace.
   // NOTE: user is responsible for deleting the returned copy.
-  virtual StateSpace* Copy() const override;
+  virtual StateSpace* Clone() const override;
+
+  // Copy the state information from another statespace.
+  // Assumes the state has been initialized/created.
+  virtual void CopyFrom(const StateSpace& other) const override;
 
   // Function to apply a two qubit gate to the state on indices q0 and q1.
   virtual void ApplyGate2(const unsigned int q0, const unsigned int q1,
@@ -56,7 +60,7 @@ class StateSpaceAVX : public StateSpace {
   virtual void SetStateZero() override;
 
   // Get the inner product between this state and the state in `other`
-  virtual float GetRealInnerProduct(const StateSpace* other) const override;
+  virtual float GetRealInnerProduct(const StateSpace& other) const override;
 
   // Get the amplitude at the given state index
   virtual std::complex<float> GetAmpl(const uint64_t i) const override;
