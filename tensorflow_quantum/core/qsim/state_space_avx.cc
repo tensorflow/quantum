@@ -37,8 +37,7 @@ StateSpaceAVX::~StateSpaceAVX() { DeleteState(); }
 StateSpaceType StateSpaceAVX::GetType() const { return StateSpaceType::AVX; }
 
 void StateSpaceAVX::CreateState() {
-  SetRawState(
-      (float*)qsim::_aligned_malloc(sizeof(float) * GetNumEntries()));
+  SetRawState((float*)qsim::_aligned_malloc(sizeof(float) * GetNumEntries()));
 }
 
 void StateSpaceAVX::DeleteState() { qsim::_aligned_free(GetRawState()); }
