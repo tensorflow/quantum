@@ -34,12 +34,11 @@ StateSpaceAVX::StateSpaceAVX(const uint64_t num_qubits,
 
 StateSpaceAVX::~StateSpaceAVX() { DeleteState(); }
 
-StateSpaceType StateSpaceAVX::GetType() const {
-  return StateSpaceType::AVX;
-}
+StateSpaceType StateSpaceAVX::GetType() const { return StateSpaceType::AVX; }
 
 void StateSpaceAVX::CreateState() {
-  SetRawState((float*)qsim::_aligned_malloc(sizeof(float) * 2 * GetDimension()));
+  SetRawState(
+      (float*)qsim::_aligned_malloc(sizeof(float) * 2 * GetDimension()));
 }
 
 void StateSpaceAVX::DeleteState() { qsim::_aligned_free(GetRawState()); }

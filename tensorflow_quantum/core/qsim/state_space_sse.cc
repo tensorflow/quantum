@@ -35,12 +35,11 @@ StateSpaceSSE::StateSpaceSSE(const uint64_t num_qubits,
 
 StateSpaceSSE::~StateSpaceSSE() { DeleteState(); }
 
-StateSpaceType StateSpaceSSE::GetType() const {
-  return StateSpaceType::SSE;
-}
+StateSpaceType StateSpaceSSE::GetType() const { return StateSpaceType::SSE; }
 
 void StateSpaceSSE::CreateState() {
-  SetRawState((float*)qsim::_aligned_malloc(sizeof(float) * 2 * GetDimension()));
+  SetRawState(
+      (float*)qsim::_aligned_malloc(sizeof(float) * 2 * GetDimension()));
 }
 
 void StateSpaceSSE::DeleteState() { qsim::_aligned_free(GetRawState()); }

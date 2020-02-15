@@ -30,7 +30,8 @@ limitations under the License.
 namespace tfq {
 namespace qsim {
 
-StateSpace* GetStateSpace(const uint64_t num_qubits, const uint64_t num_threads) {
+StateSpace* GetStateSpace(const uint64_t num_qubits,
+                          const uint64_t num_threads) {
   if (num_qubits <= 3) {
     return new StateSpaceSlow(num_qubits, num_threads);
   }

@@ -31,9 +31,7 @@ StateSpaceSlow::StateSpaceSlow(const uint64_t num_qubits,
 
 StateSpaceSlow::~StateSpaceSlow() { DeleteState(); }
 
-StateSpaceType StateSpaceSlow::GetType() const {
-  return StateSpaceType::SLOW;
-}
+StateSpaceType StateSpaceSlow::GetType() const { return StateSpaceType::SLOW; }
 
 void StateSpaceSlow::CreateState() {
   SetRawState((float*)malloc(sizeof(float) * GetNumEntries()));
