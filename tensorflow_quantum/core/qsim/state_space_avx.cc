@@ -28,14 +28,14 @@ limitations under the License.
 namespace tfq {
 namespace qsim {
 
-StateSpaceAVX::StateSpaceAVX(const unsigned int num_qubits,
-                             const unsigned int num_threads)
+StateSpaceAVX::StateSpaceAVX(const uint64_t num_qubits,
+                             const uint64_t num_threads)
     : StateSpace(num_qubits, num_threads) {}
 
 StateSpaceAVX::~StateSpaceAVX() { DeleteState(); }
 
-state_space_type StateSpaceAVX::GetType() const {
-  return state_space_type::avx;
+StateSpaceType StateSpaceAVX::GetType() const {
+  return StateSpaceType::AVX;
 }
 
 void StateSpaceAVX::CreateState() {

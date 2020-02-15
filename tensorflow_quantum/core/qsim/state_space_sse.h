@@ -29,11 +29,11 @@ namespace qsim {
 
 class StateSpaceSSE : public StateSpace {
  public:
-  StateSpaceSSE(const unsigned int num_qubits, const unsigned int num_threads);
+  StateSpaceSSE(const uint64_t num_qubits, const uint64_t num_threads);
 
   virtual ~StateSpaceSSE();
 
-  virtual state_space_type GetType() const override;
+  virtual StateSpaceType GetType() const override;
 
   // Reserve the memory associated with the state in this space
   virtual void CreateState() override;

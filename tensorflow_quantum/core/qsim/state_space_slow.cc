@@ -25,14 +25,14 @@ limitations under the License.
 namespace tfq {
 namespace qsim {
 
-StateSpaceSlow::StateSpaceSlow(const unsigned int num_qubits,
-                               const unsigned int num_threads)
+StateSpaceSlow::StateSpaceSlow(const uint64_t num_qubits,
+                               const uint64_t num_threads)
     : StateSpace(num_qubits, num_threads) {}
 
 StateSpaceSlow::~StateSpaceSlow() { DeleteState(); }
 
-state_space_type StateSpaceSlow::GetType() const {
-  return state_space_type::slow;
+StateSpaceType StateSpaceSlow::GetType() const {
+  return StateSpaceType::SLOW;
 }
 
 void StateSpaceSlow::CreateState() {
