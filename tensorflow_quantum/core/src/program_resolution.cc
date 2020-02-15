@@ -42,6 +42,10 @@ Status ResolveQubitIds(Program* program, unsigned int* num_qubits,
                        std::vector<PauliSum>* p_sums /*=nullptr*/) {
   if (program->circuit().moments().empty()) {
     // (#679) Just ignore empty program.
+    // Number of qubits in empty programs is zero.
+    if (num_qubits) {
+      *num_qubits = 0;
+    }
     return Status::OK();
   }
 

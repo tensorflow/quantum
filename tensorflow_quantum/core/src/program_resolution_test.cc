@@ -65,13 +65,17 @@ TEST(ProgramResolutionTest, ResolveQubitIds) {
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(text_empty,
                                                             &empty_program));
 
-  EXPECT_TRUE(ResolveQubitIds(&program).ok());
-  EXPECT_TRUE(ResolveQubitIds(&empty_program).ok());
+  unsigned int num_qubits, num_qubits_empty;
+  EXPECT_TRUE(ResolveQubitIds(&program, &num_qubits).ok());
+  EXPECT_TRUE(ResolveQubitIds(&empty_program, &num_qubits_empty).ok());
 
   EXPECT_EQ(program.circuit().moments(0).operations(0).qubits(0).id(), "0");
   EXPECT_EQ(program.circuit().moments(0).operations(0).qubits(1).id(), "2");
   EXPECT_EQ(program.circuit().moments(1).operations(0).qubits(0).id(), "0");
   EXPECT_EQ(program.circuit().moments(1).operations(0).qubits(1).id(), "1");
+
+  EXPECT_EQ(num_qubits, 3);
+  EXPECT_EQ(num_qubits_empty, 0);
 }
 
 TEST(ProgramResolutionTest, ResolveSymbols) {
