@@ -42,6 +42,13 @@ void Advance(const std::vector<const Gate*>& qubit_wire,
 
 }  // namespace
 
+GateFused::GateFused(const unsigned int time, const unsigned int q0,
+                     const unsigned int q1, const Gate* pmaster)
+    : time(time), pmaster(pmaster) {
+  qubits[0] = q0;
+  qubits[1] = q1;
+}
+
 bool operator==(const GateFused& l, const GateFused& r) {
   if (l.time != r.time) {
     return false;
@@ -116,7 +123,7 @@ Status FuseGates(const Circuit& circuit, std::vector<GateFused>* fused) {
     // This two-qubit gate has already been absorbed into a different anchor.
     if (gates_lat[q0][last[q0]]->time > pgate->time) continue;
 
-    GateFused gate_f = {pgate->time, 2, {q0, q1}, pgate};
+    GateFused gate_f(pgate->time, q0, q1, pgate);
     do {
       // Collect all available single-qubit gates before the anchor.
       Advance(gates_lat[q0], &gate_f.gates, &last[q0]);

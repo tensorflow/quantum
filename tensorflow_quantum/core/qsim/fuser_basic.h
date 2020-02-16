@@ -27,10 +27,14 @@ namespace qsim {
 class GateFused {
  public:
   unsigned int time;
-  unsigned int num_qubits;
   std::array<unsigned int, 2> qubits;
   const Gate* pmaster;
   std::vector<const Gate*> gates;
+
+  GateFused(const unsigned int time, const unsigned int q0,
+            const unsigned int q1, const Gate* pmaster);
+
+  ~GateFused() {}
 };
 
 bool operator==(const GateFused& l, const GateFused& r);
