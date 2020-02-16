@@ -55,6 +55,17 @@ TEST(ProgramResolutionTest, ResolveQubitIds) {
     }
   )";
 
+  const std::string text_p_sum_0 = R"(
+    terms {
+      coefficient_real: 1.0
+      coefficient_imag: 0.0
+      paulis {
+        qubit_id: "0_0"
+        pauli_type: "Z"
+      }
+    }
+  )";
+
   const std::string text_alphabet = R"(
     circuit {
       moments {
@@ -84,6 +95,11 @@ TEST(ProgramResolutionTest, ResolveQubitIds) {
       circuit {
       }
     )";
+
+  std::vector<tfq::proto::PauliSum> p_sums, p_sums_alphabet;
+  tfq::proto::PauliSum p_sum_0;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(text_p_sum_0, &p_sum_0));
+  p_sums.push_back(p_sum_0);
 
   Program program, empty_program, alphabet_program;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(text, &program));
