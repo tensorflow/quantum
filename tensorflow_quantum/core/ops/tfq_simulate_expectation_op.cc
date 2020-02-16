@@ -26,7 +26,8 @@ limitations under the License.
 #include "tensorflow_quantum/core/ops/parse_context.h"
 #include "tensorflow_quantum/core/ops/tfq_simulate_utils.h"
 #include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
-#include "tensorflow_quantum/core/qsim/q_state.h"
+#include "tensorflow_quantum/core/qsim/mux.h"
+#include "tensorflow_quantum/core/qsim/state_space.h"
 #include "tensorflow_quantum/core/src/circuit.h"
 #include "tensorflow_quantum/core/src/circuit_parser.h"
 #include "tensorflow_quantum/core/src/program_resolution.h"
@@ -36,7 +37,8 @@ namespace tfq {
 using ::cirq::google::api::v2::Program;
 using ::tensorflow::Status;
 using ::tfq::proto::PauliSum;
-using ::tfq::qsim::QState;
+using ::tfq::qsim::GetStateSpace;
+using ::tfq::qsim::StateSpace;
 
 class TfqSimulateExpectationOp : public tensorflow::OpKernel {
  public:
@@ -80,7 +82,8 @@ class TfqSimulateExpectationOp : public tensorflow::OpKernel {
       int old_batch_index = -2;
       int cur_batch_index = -1;
       int cur_op_index;
-      std::unique_ptr<QState> test_state(new QState(1));
+      std::unique_ptr<StateSpace> test_state =
+          std::unique_ptr<StateSpace>(GetStateSpace(1, 1));
       for (int i = start; i < end; i++) {
         cur_batch_index = i / output_dim_op_size;
         cur_op_index = i % output_dim_op_size;
@@ -98,19 +101,14 @@ class TfqSimulateExpectationOp : public tensorflow::OpKernel {
           OP_REQUIRES_OK(context,
                          ResolveSymbols(maps[cur_batch_index], &program));
 
-          // QSim work to be swapped in for the above once working.
           Circuit circuit;
           OP_REQUIRES_OK(
               context, CircuitFromProgram(program, num_qubits[cur_batch_index],
                                           &circuit));
-          test_state.reset(new QState(num_qubits[cur_batch_index]));
+          test_state.reset(GetStateSpace(num_qubits[cur_batch_index], 1));
+          test_state->CreateState();
+          test_state->SetStateZero();
           OP_REQUIRES_OK(context, test_state->Update(circuit));
-
-          // Test area
-          // QState other_test_state(num_qubits[cur_batch_index]);
-          // test_state->CopyOnto(other_test_state);
-          // std::complex<float> dummy =
-          // test_state->GetRealInnerProduct(other_test_state);
         }
 
         float expectation = 0.0;
@@ -121,7 +119,6 @@ class TfqSimulateExpectationOp : public tensorflow::OpKernel {
         output_tensor(cur_batch_index, cur_op_index) = expectation;
         old_batch_index = cur_batch_index;
       }
-      test_state.release();
     };
 
     const int block_size =

@@ -132,17 +132,16 @@ Status GetProgramsAndNumQubits(
   for (size_t i = 0; i < programs->size(); i++) {
     Program& program = (*programs)[i];
     Status status = Status::OK();
+    unsigned int this_num_qubits;
     if (p_sums) {
-      status = ResolveQubitIds(&program, &(p_sums->at(i)));
+      status = ResolveQubitIds(&program, &this_num_qubits, &(p_sums->at(i)));
     } else {
-      status = ResolveQubitIds(&program);
+      status = ResolveQubitIds(&program, &this_num_qubits);
     }
-
     if (!status.ok()) {
       return status;
     }
-
-    num_qubits->push_back(GetNumQubits(program));
+    num_qubits->push_back(this_num_qubits);
   }
 
   return Status::OK();
@@ -222,7 +221,7 @@ Status GetSymbolMaps(OpKernelContext* context, std::vector<SymbolMap>* maps) {
     SymbolMap map;
     for (int j = 0; j < symbol_values.dimension(1); j++) {
       const std::string& name = symbol_names(j);
-      const double value = (double)symbol_values(i, j);
+      const float value = symbol_values(i, j);
       map[name] = {j, value};
     }
 

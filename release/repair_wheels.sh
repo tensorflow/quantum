@@ -13,11 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-echo "y" | /opt/python/cp37-cp37m/bin/python -m pip uninstall auditwheel
-/opt/python/cp37-cp37m/bin/python -m pip install auditwheel==1.5.0
-/opt/python/cp37-cp37m/bin/python -m auditwheel -v repair --plat manylinux1_x86_64 wheels/tfquantum-0.2.0-cp37-cp37m-linux_x86_64.whl 
- 
-echo "y" | /opt/python/cp36-cp36m/bin/python -m pip uninstall auditwheel
-/opt/python/cp36-cp36m/bin/python -m pip install auditwheel==1.5.0
-/opt/python/cp36-cp36m/bin/python -m auditwheel -v repair --plat manylinux1_x86_64 wheels/tfquantum-0.2.0-cp36-cp36m-linux_x86_64.whl
+
+# We use an aliase of auditwheel to allow for whitelisting of tensorflow.so.2
+# files by auditwheel.
+for f in wheels/*.whl; do
+    sudo docker run -i --rm -v $PWD:/v -w /v \
+    	--net=host quay.io/pypa/manylinux2010_x86_64 bash \
+    	-x -e /v/third_party/tf/auditwheel repair --plat \
+    	manylinux2010_x86_64 $f
+done
+
+cp -r wheelhouse/. wheels/
+sudo rm -r wheelhouse
 

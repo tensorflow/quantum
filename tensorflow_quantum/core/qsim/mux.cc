@@ -16,51 +16,32 @@ limitations under the License.
 #include "tensorflow_quantum/core/qsim/mux.h"
 
 #ifdef __AVX2__
-#include "tensorflow_quantum/core/qsim/simulator2_avx.h"
-#include "tensorflow_quantum/core/qsim/statespace_avx.h"
+#include "tensorflow_quantum/core/qsim/state_space_avx.h"
 #elif __SSE4_1__
-#include "tensorflow_quantum/core/qsim/simulator2_sse.h"
-#include "tensorflow_quantum/core/qsim/statespace_sse.h"
+#include "tensorflow_quantum/core/qsim/state_space_sse.h"
 #endif
 
 #include <memory>
 
 #include "absl/memory/memory.h"
-#include "tensorflow_quantum/core/qsim/simulator.h"
-#include "tensorflow_quantum/core/qsim/simulator2_slow.h"
-#include "tensorflow_quantum/core/qsim/statespace.h"
-#include "tensorflow_quantum/core/qsim/statespace_slow.h"
+#include "tensorflow_quantum/core/qsim/state_space.h"
+#include "tensorflow_quantum/core/qsim/state_space_slow.h"
 
 namespace tfq {
 namespace qsim {
 
-std::unique_ptr<StateSpace> GetStateSpace(const int num_qubits,
-                                          const int num_threads) {
+StateSpace* GetStateSpace(const uint64_t num_qubits,
+                          const uint64_t num_threads) {
   if (num_qubits <= 3) {
-    return absl::make_unique<StateSpaceSlow>(num_qubits, num_threads);
+    return new StateSpaceSlow(num_qubits, num_threads);
   }
 
 #ifdef __AVX2__
-  return absl::make_unique<StateSpaceAVX>(num_qubits, num_threads);
+  return new StateSpaceAVX(num_qubits, num_threads);
 #elif __SSE4_1__
-  return absl::make_unique<StateSpaceSSE>(num_qubits, num_threads);
+  return new StateSpaceSSE(num_qubits, num_threads);
 #else
-  return absl::make_unique<StateSpaceSlow>(num_qubits, num_threads);
-#endif
-}
-
-std::unique_ptr<Simulator> GetSimulator(const int num_qubits,
-                                        const int num_threads) {
-  if (num_qubits <= 3) {
-    return absl::make_unique<Simulator2Slow>(num_qubits, num_threads);
-  }
-
-#ifdef __AVX2__
-  return absl::make_unique<Simulator2AVX>(num_qubits, num_threads);
-#elif __SSE4_1__
-  return absl::make_unique<Simulator2SSE>(num_qubits, num_threads);
-#else
-  return absl::make_unique<Simulator2Slow>(num_qubits, num_threads);
+  return new StateSpaceSlow(num_qubits, num_threads);
 #endif
 }
 

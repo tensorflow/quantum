@@ -22,6 +22,9 @@ import cirq
 import cirq.google.api.v2 as v2
 from tensorflow_quantum.core.proto import pauli_sum_pb2
 
+# Needed to allow autograph to crawl AST without erroring.
+_CONSTANT_TRUE = lambda x: True
+
 
 def _parse_mul(expr):
     """Returns the lhs and rhs of a sympy.Mul. This is written
@@ -119,7 +122,8 @@ def _eigen_gate_serializer(gate_type, serialized_id):
     ]
     return cirq.google.GateOpSerializer(gate_type=gate_type,
                                         serialized_gate_id=serialized_id,
-                                        args=args)
+                                        args=args,
+                                        can_serialize_predicate=_CONSTANT_TRUE)
 
 
 def _eigen_gate_deserializer(gate_type, serialized_id):
@@ -173,7 +177,8 @@ def _fsim_gate_serializer():
     ]
     return cirq.google.GateOpSerializer(gate_type=cirq.FSimGate,
                                         serialized_gate_id="FSIM",
-                                        args=args)
+                                        args=args,
+                                        can_serialize_predicate=_CONSTANT_TRUE)
 
 
 def _fsim_gate_deserializer():
@@ -226,7 +231,8 @@ def _phased_eigen_gate_serializer(gate_type, serialized_id):
     ]
     return cirq.google.GateOpSerializer(gate_type=gate_type,
                                         serialized_gate_id=serialized_id,
-                                        args=args)
+                                        args=args,
+                                        can_serialize_predicate=_CONSTANT_TRUE)
 
 
 def _phased_eigen_gate_deserializer(gate_type, serialized_id):
