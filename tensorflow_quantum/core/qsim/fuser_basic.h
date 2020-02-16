@@ -35,6 +35,8 @@ class GateFused {
             const unsigned int q1, const Gate* pmaster);
 
   ~GateFused() {}
+
+  void AddGate(const Gate* gate);
 };
 
 bool operator==(const GateFused& l, const GateFused& r);

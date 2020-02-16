@@ -29,11 +29,6 @@ using ::tensorflow::Status;
 
 TEST(FuserBasicTest, GateFused) {
   Status status;
-  GateFused test_fused, real_fused;
-  test_fused.time = real_fused.time = 42;
-  test_fused.num_qubits = real_fused.num_qubits = 2;
-  test_fused.qubits[0] = real_fused.qubits[0] = 0;
-  test_fused.qubits[1] = real_fused.qubits[1] = 1;
 
   std::vector<unsigned int> locations;
   XPowGateBuilder x_pow_builder;
@@ -44,10 +39,7 @@ TEST(FuserBasicTest, GateFused) {
   arg_map["exponent_scalar"] = 1.0;
   locations.push_back(0);
   status = x_pow_builder.Build(0, locations, arg_map, &gate_x);
-
   ASSERT_EQ(status, Status::OK());
-  test_fused.gates.push_back(&gate_x);
-  real_fused.gates.push_back(&gate_x);
   locations.clear();
 
   CNotPowGateBuilder cnot_pow_builder;
@@ -58,18 +50,18 @@ TEST(FuserBasicTest, GateFused) {
   locations.push_back(0);
   locations.push_back(1);
   status = cnot_pow_builder.Build(1, locations, arg_map_cnot, &gate_cnot);
-
   ASSERT_EQ(status, Status::OK());
-  test_fused.gates.push_back(&gate_cnot);
-  real_fused.gates.push_back(&gate_cnot);
   locations.clear();
 
-  test_fused.pmaster = &gate_cnot;
-  real_fused.pmaster = &gate_cnot;
+  GateFused test_fused(42, 0, 1, &gate_cnot);
+  GateFused real_fused(42, 0, 1, &gate_cnot);
+  test_fused.AddGate(&gate_x);
+  real_fused.AddGate(&gate_x);
+  test_fused.AddGate(&gate_cnot);
+  real_fused.AddGate(&gate_cnot);
 
   // confirm objects are actually equal
   ASSERT_EQ(test_fused.time, real_fused.time);
-  ASSERT_EQ(test_fused.num_qubits, real_fused.num_qubits);
   ASSERT_EQ(test_fused.qubits[0], real_fused.qubits[0]);
   ASSERT_EQ(test_fused.qubits[1], real_fused.qubits[1]);
   ASSERT_EQ(test_fused.pmaster, real_fused.pmaster);
@@ -80,10 +72,6 @@ TEST(FuserBasicTest, GateFused) {
   test_fused.time = real_fused.time + 1;
   ASSERT_NE(test_fused, real_fused);
   test_fused.time = real_fused.time;
-
-  test_fused.num_qubits = real_fused.num_qubits + 1;
-  ASSERT_NE(test_fused, real_fused);
-  test_fused.num_qubits = real_fused.num_qubits;
 
   test_fused.qubits[0] = real_fused.qubits[0] + 1;
   ASSERT_NE(test_fused, real_fused);
@@ -116,12 +104,8 @@ TEST(FuserBasicTest, FuseGatesMulti) {
   // q1 -- Y -- Z -- |CNOT| -- H -- |I|
   // This should all be gathered into one GateFused.
   Status status;
-  GateFused real_fused;
   std::vector<GateFused> test_fused_vec;
   Circuit test_circuit;
-  real_fused.num_qubits = 2;
-  real_fused.qubits[0] = 0;
-  real_fused.qubits[1] = 1;
   test_circuit.num_qubits = 2;
   test_circuit.gates.reserve(7);
 
@@ -142,44 +126,44 @@ TEST(FuserBasicTest, FuseGatesMulti) {
   arg_map_2q["exponent"] = 1.0;
   arg_map_2q["exponent_scalar"] = 1.0;
 
-  locations.push_back(0);
-  status = x_pow_builder.Build(0, locations, arg_map_1q, &gate_x);
-  ASSERT_EQ(status, Status::OK());
-  test_circuit.gates.push_back(gate_x);
-  real_fused.gates.push_back(&test_circuit.gates.back());
-  locations.clear();
-
-  locations.push_back(1);
-  status = y_pow_builder.Build(0, locations, arg_map_1q, &gate_y);
-  ASSERT_EQ(status, Status::OK());
-  test_circuit.gates.push_back(gate_y);
-  real_fused.gates.push_back(&test_circuit.gates.back());
-  locations.clear();
-
-  locations.push_back(1);
-  status = z_pow_builder.Build(1, locations, arg_map_1q, &gate_z);
-  ASSERT_EQ(status, Status::OK());
-  test_circuit.gates.push_back(gate_z);
-  real_fused.gates.push_back(&test_circuit.gates.back());
-  locations.clear();
-
   unsigned int pmaster_time = 2;
   locations.push_back(0);
   locations.push_back(1);
   status =
       cnot_pow_builder.Build(pmaster_time, locations, arg_map_2q, &gate_cnot);
   ASSERT_EQ(status, Status::OK());
-  test_circuit.gates.push_back(gate_cnot);
-  real_fused.pmaster = &test_circuit.gates.back();
-  real_fused.gates.push_back(&test_circuit.gates.back());
-  real_fused.time = pmaster_time;
   locations.clear();
+  GateFused real_fused(pmaster_time, 0, 1, &gate_cnot);
+
+  locations.push_back(0);
+  status = x_pow_builder.Build(0, locations, arg_map_1q, &gate_x);
+  ASSERT_EQ(status, Status::OK());
+  test_circuit.gates.push_back(gate_x);
+  real_fused.AddGate(&test_circuit.gates.back());
+  locations.clear();
+
+  locations.push_back(1);
+  status = y_pow_builder.Build(0, locations, arg_map_1q, &gate_y);
+  ASSERT_EQ(status, Status::OK());
+  test_circuit.gates.push_back(gate_y);
+  real_fused.AddGate(&test_circuit.gates.back());
+  locations.clear();
+
+  locations.push_back(1);
+  status = z_pow_builder.Build(1, locations, arg_map_1q, &gate_z);
+  ASSERT_EQ(status, Status::OK());
+  test_circuit.gates.push_back(gate_z);
+  real_fused.AddGate(&test_circuit.gates.back());
+  locations.clear();
+
+  test_circuit.gates.push_back(gate_cnot);
+  real_fused.AddGate(&test_circuit.gates.back());
 
   locations.push_back(0);
   status = h_pow_builder.Build(3, locations, arg_map_1q, &gate_h);
   ASSERT_EQ(status, Status::OK());
   test_circuit.gates.push_back(gate_h);
-  real_fused.gates.push_back(&test_circuit.gates.back());
+  real_fused.AddGate(&test_circuit.gates.back());
   locations.clear();
 
   locations.push_back(0);
@@ -187,7 +171,7 @@ TEST(FuserBasicTest, FuseGatesMulti) {
   status = i2_builder.Build(4, locations, empty_map, &gate_ident);
   ASSERT_EQ(status, Status::OK());
   test_circuit.gates.push_back(gate_ident);
-  real_fused.gates.push_back(&test_circuit.gates.back());
+  real_fused.AddGate(&test_circuit.gates.back());
   locations.clear();
 
   ASSERT_EQ(FuseGates(test_circuit, &test_fused_vec), Status::OK());
@@ -208,14 +192,8 @@ TEST(FuserBasicTest, FuseGatesDisjoint) {
   // the t = 2 CNOT should fuse the X gates and I(q0, q1);
   // and the final I(q1, q2) should be alone.
   Status status;
-  GateFused real_fused_1, real_fused_2, real_fused_3;
   std::vector<GateFused> test_fused_vec;
   Circuit test_circuit;
-  real_fused_1.num_qubits = real_fused_2.num_qubits = real_fused_3.num_qubits =
-      2;
-  real_fused_2.qubits[0] = 0;
-  real_fused_1.qubits[0] = real_fused_2.qubits[1] = real_fused_3.qubits[0] = 1;
-  real_fused_1.qubits[1] = real_fused_3.qubits[1] = 2;
   test_circuit.num_qubits = 3;
   test_circuit.gates.reserve(10);
 
@@ -244,31 +222,30 @@ TEST(FuserBasicTest, FuseGatesDisjoint) {
   status = cnot_pow_builder.Build(pmaster_time_1, locations, arg_map_2q,
                                   &gate_cnot_1);
   ASSERT_EQ(status, Status::OK());
-  test_circuit.gates.push_back(gate_cnot_1);
-  real_fused_1.pmaster = &test_circuit.gates.back();
-  real_fused_1.gates.push_back(&test_circuit.gates.back());
-  real_fused_1.time = pmaster_time_1;
   locations.clear();
+  test_circuit.gates.push_back(gate_cnot_1);
+  GateFused real_fused_1(pmaster_time_1, 1, 2, &gate_cnot_1);
+  real_fused_1.AddGate(&test_circuit.gates.back());
 
   locations.push_back(1);
   status = y_pow_builder.Build(1, locations, arg_map_1q, &gate_y);
   ASSERT_EQ(status, Status::OK());
   test_circuit.gates.push_back(gate_y);
-  real_fused_1.gates.push_back(&test_circuit.gates.back());
+  real_fused_1.AddGate(&test_circuit.gates.back());
   locations.clear();
 
   locations.push_back(2);
   status = z_pow_builder.Build(1, locations, arg_map_1q, &gate_z);
   ASSERT_EQ(status, Status::OK());
   test_circuit.gates.push_back(gate_z);
-  real_fused_1.gates.push_back(&test_circuit.gates.back());
+  real_fused_1.AddGate(&test_circuit.gates.back());
   locations.clear();
 
   locations.push_back(2);
   status = h_pow_builder.Build(2, locations, arg_map_1q, &gate_h);
   ASSERT_EQ(status, Status::OK());
   test_circuit.gates.push_back(gate_h);
-  real_fused_1.gates.push_back(&test_circuit.gates.back());
+  real_fused_1.AddGate(&test_circuit.gates.back());
   locations.clear();
 
   // Second fused gate
@@ -276,7 +253,6 @@ TEST(FuserBasicTest, FuseGatesDisjoint) {
   status = x_pow_builder.Build(0, locations, arg_map_1q, &gate_x_1);
   ASSERT_EQ(status, Status::OK());
   test_circuit.gates.push_back(gate_x_1);
-  real_fused_2.gates.push_back(&test_circuit.gates.back());
   locations.clear();
 
   unsigned int pmaster_time_2 = 2;
@@ -285,17 +261,17 @@ TEST(FuserBasicTest, FuseGatesDisjoint) {
   status = cnot_pow_builder.Build(pmaster_time_2, locations, arg_map_2q,
                                   &gate_cnot_2);
   ASSERT_EQ(status, Status::OK());
+  GateFused real_fused_2(pmaster_time_2, 0, 1, &gate_cnot_2);
+  real_fused_2.AddGate(&test_circuit.gates.back());
   test_circuit.gates.push_back(gate_cnot_2);
-  real_fused_2.pmaster = &test_circuit.gates.back();
-  real_fused_2.gates.push_back(&test_circuit.gates.back());
-  real_fused_2.time = pmaster_time_2;
+  real_fused_2.AddGate(&test_circuit.gates.back());
   locations.clear();
 
   locations.push_back(1);
   status = x_pow_builder.Build(3, locations, arg_map_1q, &gate_x_2);
   ASSERT_EQ(status, Status::OK());
   test_circuit.gates.push_back(gate_x_2);
-  real_fused_2.gates.push_back(&test_circuit.gates.back());
+  real_fused_2.AddGate(&test_circuit.gates.back());
   locations.clear();
 
   locations.push_back(0);
@@ -303,7 +279,7 @@ TEST(FuserBasicTest, FuseGatesDisjoint) {
   status = i2_builder.Build(4, locations, empty_map, &gate_ident_1);
   ASSERT_EQ(status, Status::OK());
   test_circuit.gates.push_back(gate_ident_1);
-  real_fused_2.gates.push_back(&test_circuit.gates.back());
+  real_fused_2.AddGate(&test_circuit.gates.back());
   locations.clear();
 
   // Third fused gate
@@ -314,8 +290,9 @@ TEST(FuserBasicTest, FuseGatesDisjoint) {
       i2_builder.Build(pmaster_time_3, locations, empty_map, &gate_ident_2);
   ASSERT_EQ(status, Status::OK());
   test_circuit.gates.push_back(gate_ident_2);
+  GateFused real_fused_3(pmaster_time_3, 1, 2, &gate_ident_2);
   real_fused_3.pmaster = &test_circuit.gates.back();
-  real_fused_3.gates.push_back(&test_circuit.gates.back());
+  real_fused_3.AddGate(&test_circuit.gates.back());
   real_fused_3.time = pmaster_time_3;
   locations.clear();
 

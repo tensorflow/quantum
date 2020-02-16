@@ -49,14 +49,15 @@ GateFused::GateFused(const unsigned int time, const unsigned int q0,
   qubits[1] = q1;
 }
 
+void GateFused::AddGate(const Gate* gate) {
+  gates.push_back(gate);
+}
+
 bool operator==(const GateFused& l, const GateFused& r) {
   if (l.time != r.time) {
     return false;
   }
-  if (l.num_qubits != r.num_qubits) {
-    return false;
-  }
-  for (unsigned int i = 0; i < l.num_qubits; i++) {
+  for (unsigned int i = 0; i < 2; i++) {
     if (l.qubits[i] != r.qubits[i]) {
       return false;
     }
