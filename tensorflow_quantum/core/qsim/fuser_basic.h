@@ -49,6 +49,7 @@ class GateFused {
   const Gate* GetPMaster() const;
   void SetPMaster(const Gate* pmaster);
 
+ private:
   unsigned int time_;
   std::array<unsigned int, 2> qubits_;
   const Gate* pmaster_;
