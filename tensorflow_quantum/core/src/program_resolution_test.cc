@@ -29,6 +29,61 @@ namespace {
 
 using cirq::google::api::v2::Program;
 
+
+TEST(ProgramResolutionTest, ResolveQubitIdsInvalidArg) {
+  const std::string text = R"(
+    circuit {
+      moments {
+        operations {
+          qubits {
+            id: "0_0"
+          }
+          qubits {
+            id: "1_0"
+          }
+        }
+      }
+    }
+  )";
+
+  const std::string text_good_p_sum = R"(
+    terms {
+      coefficient_real: 1.0
+      coefficient_imag: 0.0
+      paulis {
+        qubit_id: "0_0"
+        pauli_type: "Z"
+      }
+    }
+  )";
+
+  const std::string text_bad_p_sum = R"(
+    terms {
+      coefficient_real: 1.0
+      coefficient_imag: 0.0
+      paulis {
+        qubit_id: "0_1"
+        pauli_type: "X"
+      }
+    }
+  )";
+
+  std::vector<tfq::proto::PauliSum> p_sums;
+  tfq::proto::PauliSum p_sum_good, p_sum_bad;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(text_good_p_sum, &p_sum_good));
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(text_bad_p_sum, &p_sum_bad));
+  p_sums.push_back(p_sum_good);
+  p_sums.push_back(p_sum_bad);
+
+  Program program;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(text, &program));
+
+  unsigned int num_qubits;
+  EXPECT_EQ(ResolveQubitIds(&program, &num_qubits, &p_sums), tensorflow::Status(
+                tensorflow::error::INVALID_ARGUMENT,
+                "Found a Pauli sum operating on qubits not found in circuit."));
+}
+
 TEST(ProgramResolutionTest, ResolveQubitIds) {
   const std::string text = R"(
     circuit {
@@ -172,6 +227,34 @@ TEST(ProgramResolutionTest, ResolveQubitIds) {
   EXPECT_EQ(num_qubits, 3);
   EXPECT_EQ(num_qubits_empty, 0);
   EXPECT_EQ(num_qubits_alphabet, 4);
+}
+
+TEST(ProgramResolutionTest, ResolveSymbolsInvalidArg) {
+  const std::string text = R"(
+    circuit {
+      scheduling_strategy: MOMENT_BY_MOMENT
+      moments {
+        operations {
+          args {
+            key: "exponent"
+            value {
+              symbol: "junk"
+            }
+          }
+        }
+      }
+    }
+  )";
+
+  Program program;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(text, &program));
+
+  const absl::flat_hash_map<std::string, std::pair<int, float>> param_map = {
+    {"v1", {0, 1.0}}};
+
+  EXPECT_EQ(ResolveSymbols(param_map, &program), tensorflow::Status(
+      tensorflow::error::INVALID_ARGUMENT,
+      "Could not find symbol in parameter map: junk"));
 }
 
 TEST(ProgramResolutionTest, ResolveSymbols) {
