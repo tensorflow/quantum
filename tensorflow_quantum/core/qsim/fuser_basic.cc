@@ -32,11 +32,11 @@ using ::tensorflow::Status;
 // until reaching the end of the wire or a multi-qubit gate.
 // Starts the search at `current_timeslice`.
 void Advance(const std::vector<const Gate*>& qubit_wire,
-             std::vector<const Gate*>* fused_gates,
+             GateFused* gate,
              unsigned int* current_timeslice) {
   while (*current_timeslice < qubit_wire.size() &&
          qubit_wire[*current_timeslice]->num_qubits == 1) {
-    fused_gates->push_back(qubit_wire[(*current_timeslice)++]);
+    gate->AddGate(qubit_wire[(*current_timeslice)++]);
   }
 }
 
@@ -44,32 +44,73 @@ void Advance(const std::vector<const Gate*>& qubit_wire,
 
 GateFused::GateFused(const unsigned int time, const unsigned int q0,
                      const unsigned int q1, const Gate* pmaster)
-    : time(time), pmaster(pmaster) {
-  qubits[0] = q0;
-  qubits[1] = q1;
+    : time_(time), pmaster_(pmaster) {
+  qubits_[0] = q0;
+  qubits_[1] = q1;
 }
 
 void GateFused::AddGate(const Gate* gate) {
-  gates.push_back(gate);
+  gates_.push_back(gate);
+}
+
+std::vector<const Gate*> GateFused::GetAllGates() const {
+  return gates_;
+}
+
+unsigned int GateFused::GetNumGates() const {
+  return gates_.size();
+}
+
+const Gate* GateFused::GetGate(unsigned int gate_index) const {
+  return gates_.at(gate_index);
+}
+
+unsigned int GateFused::GetTime() const {
+  return time_;
+}
+void GateFused::SetTime(unsigned int time) {
+  time_ = time;
+}
+
+unsigned int GateFused::GetQubit0() const {
+  return qubits_[0];
+}
+void GateFused::SetQubit0(unsigned int q0) {
+  qubits_[0] = q0;
+}
+
+unsigned int GateFused::GetQubit1() const {
+  return qubits_[1];
+}
+void GateFused::SetQubit1(unsigned int q1) {
+  qubits_[1] = q1;
+}
+
+const Gate* GateFused::GetPMaster() const {
+  return pmaster_;
+}
+void GateFused::SetPMaster(const Gate* pmaster) {
+  pmaster_ = pmaster;
 }
 
 bool operator==(const GateFused& l, const GateFused& r) {
-  if (l.time != r.time) {
+  if (l.GetTime() != r.GetTime()) {
     return false;
   }
-  for (unsigned int i = 0; i < 2; i++) {
-    if (l.qubits[i] != r.qubits[i]) {
-      return false;
-    }
-  }
-  if (*l.pmaster != *r.pmaster) {
+  if (l.GetQubit0() != r.GetQubit0()) {
     return false;
   }
-  if (l.gates.size() != r.gates.size()) {
+  if (l.GetQubit1() != r.GetQubit1()) {
     return false;
   }
-  for (size_t i = 0; i < l.gates.size(); i++) {
-    if (*l.gates.at(i) != *r.gates.at(i)) {
+  if (*l.GetPMaster() != *r.GetPMaster()) {
+    return false;
+  }
+  if (l.GetNumGates() != r.GetNumGates()) {
+    return false;
+  }
+  for (size_t i = 0; i < l.GetNumGates(); i++) {
+    if (*l.GetGate(i) != *r.GetGate(i)) {
       return false;
     }
   }
