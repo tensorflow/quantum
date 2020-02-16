@@ -31,36 +31,10 @@ class GateFused {
   std::array<unsigned int, 2> qubits;
   const Gate* pmaster;
   std::vector<const Gate*> gates;
-
-  // provided to ease fuser testing
-  bool operator==(const GateFused& r) const {
-    if (this->time != r.time) {
-      return false;
-    }
-    if (this->num_qubits != r.num_qubits) {
-      return false;
-    }
-    for (unsigned int i = 0; i < this->num_qubits; i++) {
-      if (this->qubits[i] != r.qubits[i]) {
-        return false;
-      }
-    }
-    if (*this->pmaster != *r.pmaster) {
-      return false;
-    }
-    if (this->gates.size() != r.gates.size()) {
-      return false;
-    }
-    for (size_t i = 0; i < this->gates.size(); i++) {
-      if (*this->gates.at(i) != *r.gates.at(i)) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  bool operator!=(const GateFused& r) const { return !(*this == r); }
 };
+
+bool operator==(const GateFused& l, const GateFused& r);
+bool operator!=(const GateFused& l, const GateFused& r);
 
 tensorflow::Status FuseGates(const Circuit& circuit,
                              std::vector<GateFused>* fused);

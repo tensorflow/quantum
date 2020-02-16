@@ -42,6 +42,34 @@ void Advance(const std::vector<const Gate*>& qubit_wire,
 
 }  // namespace
 
+bool operator==(const GateFused& l, const GateFused& r) {
+  if (l.time != r.time) {
+    return false;
+  }
+  if (l.num_qubits != r.num_qubits) {
+    return false;
+  }
+  for (unsigned int i = 0; i < l.num_qubits; i++) {
+    if (l.qubits[i] != r.qubits[i]) {
+      return false;
+    }
+  }
+  if (*l.pmaster != *r.pmaster) {
+    return false;
+  }
+  if (l.gates.size() != r.gates.size()) {
+    return false;
+  }
+  for (size_t i = 0; i < l.gates.size(); i++) {
+    if (*l.gates.at(i) != *r.gates.at(i)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool operator!=(const GateFused& l, const GateFused& r) { return !(l == r); }
+
 Status FuseGates(const Circuit& circuit, std::vector<GateFused>* fused) {
   // Holds only the two-qubit gates in the circuit, in correct time order;
   // these are later used as anchors for single qubit gate fusing.
