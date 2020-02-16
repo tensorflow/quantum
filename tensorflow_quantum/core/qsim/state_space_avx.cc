@@ -15,69 +15,91 @@ limitations under the License.
 
 #ifdef __AVX2__
 
-#include "tensorflow_quantum/core/qsim/simulator2_avx.h"
+#include "tensorflow_quantum/core/qsim/state_space_avx.h"
 
 #include <immintrin.h>
 
 #include <cmath>
 #include <cstdint>
 
-#include "tensorflow/core/platform/logging.h"
-#include "tensorflow_quantum/core/qsim/simulator.h"
+#include "tensorflow/core/lib/core/status.h"
+#include "tensorflow_quantum/core/qsim/util.h"
 
 namespace tfq {
 namespace qsim {
 
-Simulator2AVX::Simulator2AVX(const unsigned int num_qubits,
-                             const unsigned int num_threads)
-    : Simulator(num_qubits, num_threads) {}
+StateSpaceAVX::StateSpaceAVX(const uint64_t num_qubits,
+                             const uint64_t num_threads)
+    : StateSpace(num_qubits, num_threads) {}
 
-void Simulator2AVX::ApplyGate2(const unsigned int q0, const unsigned int q1,
-                               const float* matrix, State* state) const {
+StateSpaceAVX::~StateSpaceAVX() { DeleteState(); }
+
+StateSpaceType StateSpaceAVX::GetType() const { return StateSpaceType::AVX; }
+
+void StateSpaceAVX::CreateState() {
+  SetRawState((float*)qsim::_aligned_malloc(sizeof(float) * GetNumEntries()));
+}
+
+void StateSpaceAVX::DeleteState() { qsim::_aligned_free(GetRawState()); }
+
+StateSpace* StateSpaceAVX::Clone() const {
+  StateSpaceAVX* state_copy =
+      new StateSpaceAVX(GetNumQubits(), GetNumThreads());
+  return state_copy;
+}
+
+void StateSpaceAVX::CopyFrom(const StateSpace& other) const {
+  auto data = GetRawState();
+  auto copy_data = other.GetRawState();
+
+  uint64_t size2 = GetDimension() / 8;
+  __m256 tmp1, tmp2;
+  for (uint64_t i = 0; i < size2; ++i) {
+    tmp1 = _mm256_load_ps(copy_data + 16 * i);
+    tmp2 = _mm256_load_ps(copy_data + 16 * i + 8);
+
+    _mm256_store_ps(data + 16 * i, tmp1);
+    _mm256_store_ps(data + 16 * i + 8, tmp2);
+  }
+}
+
+void StateSpaceAVX::ApplyGate2(const unsigned int q0, const unsigned int q1,
+                               const float* matrix) {
   // Assume q0 < q1.
   if (q0 > 2) {
-    ApplyGate2HH(q0, q1, matrix, state);
+    ApplyGate2HH(q0, q1, matrix);
   } else if (q1 > 2) {
-    ApplyGate2HL(q0, q1, matrix, state);
+    ApplyGate2HL(q0, q1, matrix);
   } else {
-    ApplyGate2LL(q0, q1, matrix, state);
+    ApplyGate2LL(q0, q1, matrix);
   }
 }
 
-void Simulator2AVX::ApplyGate1(const float* matrix, State* state) const {
-  CHECK(false) << "AVX simulator doesn't support small circuits.";
+tensorflow::Status StateSpaceAVX::ApplyGate1(const float* matrix) {
+  return tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
+                            "AVX simulator doesn't support small circuits.");
 }
 
-void Simulator2AVX::CopyState(const State& src, State* dest) const {
-  // TODO (zaqwerty): look into whether or not this could be made faster
-  //  with avx instructions.
-  for (uint64_t i = 0; i < size_; ++i) {
-    dest->get()[i] = src.get()[i];
-  }
-}
-
-void Simulator2AVX::SetStateZero(State* state) const {
-  uint64_t size2 = (size_ / 2) / 8;
-
+void StateSpaceAVX::SetStateZero() {
+  uint64_t size2 = GetDimension() / 8;
   __m256 val0 = _mm256_setzero_ps();
 
-  auto data = state->get();
+  auto data = GetRawState();
 
   for (uint64_t i = 0; i < size2; ++i) {
     _mm256_store_ps(data + 16 * i, val0);
     _mm256_store_ps(data + 16 * i + 8, val0);
   }
-
-  state->get()[0] = 1;
+  data[0] = 1;
 }
 
-float Simulator2AVX::GetRealInnerProduct(const State& a, const State& b) const {
-  uint64_t size2 = (size_ / 2) / 4;
+float StateSpaceAVX::GetRealInnerProduct(const StateSpace& other) const {
+  uint64_t size2 = GetDimension() / 4;
   __m256d expv = _mm256_setzero_pd();
   __m256d rs, is;
 
-  auto statea = RawData(a);
-  auto stateb = RawData(b);
+  auto statea = GetRawState();
+  auto stateb = other.GetRawState();
 
   // Currently not a thread safe implementation of inner product!
   for (uint64_t i = 0; i < size2; ++i) {
@@ -93,26 +115,24 @@ float Simulator2AVX::GetRealInnerProduct(const State& a, const State& b) const {
   return (float)(buffer[0] + buffer[1] + buffer[2] + buffer[3]);
 }
 
-std::complex<float> StateSpaceAVX::GetAmpl(const State& state,
-                                           const uint64_t i) const {
+std::complex<float> StateSpaceAVX::GetAmpl(const uint64_t i) const {
   uint64_t p = (16 * (i / 8)) + (i % 8);
-  return std::complex<float>(state.get()[p], state.get()[p + 8]);
+  return std::complex<float>(GetRawState()[p], GetRawState()[p + 8]);
 }
 
-void StateSpaceAVX::SetAmpl(State* state, const uint64_t i,
-                            const std::complex<float>& val) const {
+void StateSpaceAVX::SetAmpl(const uint64_t i, const std::complex<float>& val) {
   uint64_t p = (16 * (i / 8)) + (i % 8);
-  state->get()[p] = val.real();
-  state->get()[p + 8] = val.imag();
+  GetRawState()[p] = val.real();
+  GetRawState()[p + 8] = val.imag();
 }
 
-void Simulator2AVX::ApplyGate2HH(const unsigned int q0, const unsigned int q1,
-                                 const float* matrix, State* state) const {
-  uint64_t sizei = uint64_t(1) << (num_qubits_ + 1);
+void StateSpaceAVX::ApplyGate2HH(const unsigned int q0, const unsigned int q1,
+                                 const float* matrix) {
+  uint64_t sizei = uint64_t(1) << (GetNumQubits() + 1);
   uint64_t sizej = uint64_t(1) << (q1 + 1);
   uint64_t sizek = uint64_t(1) << (q0 + 1);
 
-  auto rstate = RawData(state);
+  auto rstate = GetRawState();
 
   for (uint64_t i = 0; i < sizei; i += 2 * sizej) {
     for (uint64_t j = 0; j < sizej; j += 2 * sizek) {
@@ -249,15 +269,15 @@ void Simulator2AVX::ApplyGate2HH(const unsigned int q0, const unsigned int q1,
   }
 }
 
-void Simulator2AVX::ApplyGate2HL(const unsigned int q0, const unsigned int q1,
-                                 const float* matrix, State* state) const {
+void StateSpaceAVX::ApplyGate2HL(const unsigned int q0, const unsigned int q1,
+                                 const float* matrix) {
   __m256 mb;
   __m256i ml;
 
-  uint64_t sizei = uint64_t(1) << (num_qubits_ + 1);
+  uint64_t sizei = uint64_t(1) << (GetNumQubits() + 1);
   uint64_t sizej = uint64_t(1) << (q1 + 1);
 
-  auto rstate = RawData(state);
+  auto rstate = GetRawState();
 
   switch (q0) {
     case 0:
@@ -415,15 +435,15 @@ void Simulator2AVX::ApplyGate2HL(const unsigned int q0, const unsigned int q1,
   }
 }
 
-void Simulator2AVX::ApplyGate2LL(const unsigned int q0, const unsigned int q1,
-                                 const float* matrix, State* state) const {
+void StateSpaceAVX::ApplyGate2LL(const unsigned int q0, const unsigned int q1,
+                                 const float* matrix) {
   const unsigned int q = q0 + q1;
 
   __m256 mb1, mb2, mb3;
   __m256i ml1, ml2, ml3;
 
-  uint64_t sizei = uint64_t(1) << (num_qubits_ + 1);
-  auto rstate = RawData(state);
+  uint64_t sizei = uint64_t(1) << (GetNumQubits() + 1);
+  auto rstate = GetRawState();
 
   switch (q) {
     case 1:
