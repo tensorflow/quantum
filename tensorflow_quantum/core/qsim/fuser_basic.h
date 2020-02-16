@@ -35,6 +35,7 @@ class GateFused {
   std::vector<const Gate*> GetAllGates() const;
   unsigned int GetNumGates() const;
   const Gate* GetGate(unsigned int gate_index) const;
+  void SetGate(unsigned int gate_index, const Gate* gate);
 
   unsigned int GetTime() const;
   void SetTime(unsigned int time);

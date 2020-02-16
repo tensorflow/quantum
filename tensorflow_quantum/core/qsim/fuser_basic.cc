@@ -31,8 +31,7 @@ using ::tensorflow::Status;
 // Appends to `fused_gates` all single-qubit gates on the current `qubit_wire`,
 // until reaching the end of the wire or a multi-qubit gate.
 // Starts the search at `current_timeslice`.
-void Advance(const std::vector<const Gate*>& qubit_wire,
-             GateFused* gate,
+void Advance(const std::vector<const Gate*>& qubit_wire, GateFused* gate,
              unsigned int* current_timeslice) {
   while (*current_timeslice < qubit_wire.size() &&
          qubit_wire[*current_timeslice]->num_qubits == 1) {
@@ -63,6 +62,10 @@ unsigned int GateFused::GetNumGates() const {
 
 const Gate* GateFused::GetGate(unsigned int gate_index) const {
   return gates_.at(gate_index);
+}
+
+void GateFused::SetGate(unsigned int gate_index, const Gate* gate) {
+  gates_.at(gate_index) = gate;
 }
 
 unsigned int GateFused::GetTime() const {
@@ -168,8 +171,8 @@ Status FuseGates(const Circuit& circuit, std::vector<GateFused>* fused) {
     GateFused gate_f(pgate->time, q0, q1, pgate);
     do {
       // Collect all available single-qubit gates before the anchor.
-      Advance(gates_lat[q0], &gate_f.gates, &last[q0]);
-      Advance(gates_lat[q1], &gate_f.gates, &last[q1]);
+      Advance(gates_lat[q0], &gate_f, &last[q0]);
+      Advance(gates_lat[q1], &gate_f, &last[q1]);
 
       // Initial fuse should end at the anchor which initiated the fuse.
       if (gates_lat[q0][last[q0]] != gates_lat[q1][last[q1]]) {
@@ -178,13 +181,13 @@ Status FuseGates(const Circuit& circuit, std::vector<GateFused>* fused) {
       }
 
       // Collect the anchor.
-      gate_f.gates.push_back(gates_lat[q0][last[q0]]);
+      gate_f.AddGate(gates_lat[q0][last[q0]]);
 
       // Collect all available single-qubit gates after the anchor.
       last[q0]++;
       last[q1]++;
-      Advance(gates_lat[q0], &gate_f.gates, &last[q0]);
-      Advance(gates_lat[q1], &gate_f.gates, &last[q1]);
+      Advance(gates_lat[q0], &gate_f, &last[q0]);
+      Advance(gates_lat[q1], &gate_f, &last[q1]);
 
     } while (
         // There are still gates available on both wires
