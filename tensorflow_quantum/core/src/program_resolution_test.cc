@@ -29,7 +29,6 @@ namespace {
 
 using cirq::google::api::v2::Program;
 
-
 TEST(ProgramResolutionTest, ResolveQubitIdsInvalidArg) {
   const std::string text = R"(
     circuit {
@@ -70,8 +69,10 @@ TEST(ProgramResolutionTest, ResolveQubitIdsInvalidArg) {
 
   std::vector<tfq::proto::PauliSum> p_sums;
   tfq::proto::PauliSum p_sum_good, p_sum_bad;
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(text_good_p_sum, &p_sum_good));
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(text_bad_p_sum, &p_sum_bad));
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(text_good_p_sum,
+                                                            &p_sum_good));
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(text_bad_p_sum,
+                                                            &p_sum_bad));
   p_sums.push_back(p_sum_good);
   p_sums.push_back(p_sum_bad);
 
@@ -79,7 +80,8 @@ TEST(ProgramResolutionTest, ResolveQubitIdsInvalidArg) {
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(text, &program));
 
   unsigned int num_qubits;
-  EXPECT_EQ(ResolveQubitIds(&program, &num_qubits, &p_sums), tensorflow::Status(
+  EXPECT_EQ(ResolveQubitIds(&program, &num_qubits, &p_sums),
+            tensorflow::Status(
                 tensorflow::error::INVALID_ARGUMENT,
                 "Found a Pauli sum operating on qubits not found in circuit."));
 }
@@ -186,13 +188,17 @@ TEST(ProgramResolutionTest, ResolveQubitIds) {
 
   std::vector<tfq::proto::PauliSum> p_sums, p_sums_alphabet;
   tfq::proto::PauliSum p_sum_0, p_sum_1;
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(text_p_sum_0, &p_sum_0));
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(text_p_sum_1, &p_sum_1));
+  ASSERT_TRUE(
+      google::protobuf::TextFormat::ParseFromString(text_p_sum_0, &p_sum_0));
+  ASSERT_TRUE(
+      google::protobuf::TextFormat::ParseFromString(text_p_sum_1, &p_sum_1));
   p_sums.push_back(p_sum_0);
   p_sums.push_back(p_sum_1);
   tfq::proto::PauliSum alphabet_p_sum_0, alphabet_p_sum_1;
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(text_alphabet_p_sum_0, &alphabet_p_sum_0));
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(text_alphabet_p_sum_1, &alphabet_p_sum_1));
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      text_alphabet_p_sum_0, &alphabet_p_sum_0));
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      text_alphabet_p_sum_1, &alphabet_p_sum_1));
   p_sums_alphabet.push_back(alphabet_p_sum_0);
   p_sums_alphabet.push_back(alphabet_p_sum_1);
 
@@ -206,17 +212,23 @@ TEST(ProgramResolutionTest, ResolveQubitIds) {
   unsigned int num_qubits, num_qubits_empty, num_qubits_alphabet;
   EXPECT_TRUE(ResolveQubitIds(&program, &num_qubits, &p_sums).ok());
   EXPECT_TRUE(ResolveQubitIds(&empty_program, &num_qubits_empty).ok());
-  EXPECT_TRUE(ResolveQubitIds(&alphabet_program, &num_qubits_alphabet, &p_sums_alphabet).ok());
+  EXPECT_TRUE(
+      ResolveQubitIds(&alphabet_program, &num_qubits_alphabet, &p_sums_alphabet)
+          .ok());
 
   EXPECT_EQ(program.circuit().moments(0).operations(0).qubits(0).id(), "0");
   EXPECT_EQ(program.circuit().moments(0).operations(0).qubits(1).id(), "2");
   EXPECT_EQ(program.circuit().moments(1).operations(0).qubits(0).id(), "0");
   EXPECT_EQ(program.circuit().moments(1).operations(0).qubits(1).id(), "1");
 
-  EXPECT_EQ(alphabet_program.circuit().moments(0).operations(0).qubits(0).id(), "1");
-  EXPECT_EQ(alphabet_program.circuit().moments(0).operations(0).qubits(1).id(), "2");
-  EXPECT_EQ(alphabet_program.circuit().moments(1).operations(0).qubits(0).id(), "3");
-  EXPECT_EQ(alphabet_program.circuit().moments(1).operations(0).qubits(1).id(), "0");
+  EXPECT_EQ(alphabet_program.circuit().moments(0).operations(0).qubits(0).id(),
+            "1");
+  EXPECT_EQ(alphabet_program.circuit().moments(0).operations(0).qubits(1).id(),
+            "2");
+  EXPECT_EQ(alphabet_program.circuit().moments(1).operations(0).qubits(0).id(),
+            "3");
+  EXPECT_EQ(alphabet_program.circuit().moments(1).operations(0).qubits(1).id(),
+            "0");
 
   EXPECT_EQ(p_sums.at(0).terms(0).paulis(0).qubit_id(), "0");
   EXPECT_EQ(p_sums.at(1).terms(0).paulis(0).qubit_id(), "2");
@@ -250,11 +262,11 @@ TEST(ProgramResolutionTest, ResolveSymbolsInvalidArg) {
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(text, &program));
 
   const absl::flat_hash_map<std::string, std::pair<int, float>> param_map = {
-    {"v1", {0, 1.0}}};
+      {"v1", {0, 1.0}}};
 
-  EXPECT_EQ(ResolveSymbols(param_map, &program), tensorflow::Status(
-      tensorflow::error::INVALID_ARGUMENT,
-      "Could not find symbol in parameter map: junk"));
+  EXPECT_EQ(ResolveSymbols(param_map, &program),
+            tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
+                               "Could not find symbol in parameter map: junk"));
 }
 
 TEST(ProgramResolutionTest, ResolveSymbols) {
