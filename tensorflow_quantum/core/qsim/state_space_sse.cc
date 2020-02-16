@@ -15,7 +15,7 @@ limitations under the License.
 
 #ifdef __SSE4_1__
 
-#include "tensorflow_quantum/core/qsim/simulator2_sse.h"
+#include "tensorflow_quantum/core/qsim/state_space_sse.h"
 
 #include <immintrin.h>
 #include <smmintrin.h>
@@ -23,48 +23,75 @@ limitations under the License.
 #include <cmath>
 #include <cstdint>
 
-#include "tensorflow/core/platform/logging.h"
-#include "tensorflow_quantum/core/qsim/simulator.h"
+#include "tensorflow/core/lib/core/status.h"
+#include "tensorflow_quantum/core/qsim/util.h"
 
 namespace tfq {
 namespace qsim {
 
-Simulator2SSE::Simulator2SSE(const unsigned int num_qubits,
-                             const unsigned int num_threads)
-    : Simulator(num_qubits, num_threads) {}
+StateSpaceSSE::StateSpaceSSE(const uint64_t num_qubits,
+                             const uint64_t num_threads)
+    : StateSpace(num_qubits, num_threads) {}
 
-void Simulator2SSE::ApplyGate2(const unsigned int q0, const unsigned int q1,
-                               const float* matrix, State* state) const {
+StateSpaceSSE::~StateSpaceSSE() { DeleteState(); }
+
+StateSpaceType StateSpaceSSE::GetType() const { return StateSpaceType::SSE; }
+
+void StateSpaceSSE::CreateState() {
+  SetRawState((float*)qsim::_aligned_malloc(sizeof(float) * GetNumEntries()));
+}
+
+void StateSpaceSSE::DeleteState() { qsim::_aligned_free(GetRawState()); }
+
+StateSpace* StateSpaceSSE::Clone() const {
+  StateSpaceSSE* state_copy =
+      new StateSpaceSSE(GetNumQubits(), GetNumThreads());
+  return state_copy;
+}
+
+void StateSpaceSSE::CopyFrom(const StateSpace& other) const {
+  auto data = GetRawState();
+  auto copy_data = other.GetRawState();
+
+  uint64_t size2 = GetDimension() / 8;
+  __m128 tmp1, tmp2, tmp3, tmp4;
+  for (uint64_t i = 0; i < size2; ++i) {
+    tmp1 = _mm_load_ps(copy_data + 16 * i);
+    tmp2 = _mm_load_ps(copy_data + 16 * i + 4);
+    tmp3 = _mm_load_ps(copy_data + 16 * i + 8);
+    tmp4 = _mm_load_ps(copy_data + 16 * i + 12);
+
+    _mm_store_ps(data + 16 * i, tmp1);
+    _mm_store_ps(data + 16 * i + 4, tmp2);
+    _mm_store_ps(data + 16 * i + 8, tmp3);
+    _mm_store_ps(data + 16 * i + 12, tmp4);
+  }
+}
+
+void StateSpaceSSE::ApplyGate2(const unsigned int q0, const unsigned int q1,
+                               const float* m) {
   // Assume q0 < q1.
-
   if (q0 > 2) {
-    ApplyGate2HH(q0, q1, matrix, state);
+    ApplyGate2HH(q0, q1, m);
   } else if (q1 > 2) {
-    ApplyGate2HL(q0, q1, matrix, state);
+    ApplyGate2HL(q0, q1, m);
   } else {
-    ApplyGate2LL(q0, q1, matrix, state);
+    ApplyGate2LL(q0, q1, m);
   }
 }
 
-void Simulator2SSE::ApplyGate1(const float* matrix, State* state) const {
-  CHECK(false) << "SSE simulator doesn't support small circuits.";
+tensorflow::Status StateSpaceSSE::ApplyGate1(const float* matrix) {
+  return tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
+                            "SSE simulator doesn't support small circuits.");
 }
 
-void Simulator2SSE::CopyState(const State& src, State* dest) const {
-  // TODO (zaqwerty): look into whether or not this could be made faster
-  //  with sse instructions.
-  for (uint64_t i = 0; i < size_; ++i) {
-    dest->get()[i] = src.get()[i];
-  }
-}
-
-void Simulator2SSE::SetStateZero(State* state) const {
-  uint64_t size2 = (size_ / 2) / 8;
+void StateSpaceSSE::SetStateZero() {
+  uint64_t size2 = GetDimension() / 8;
 
   //__m256 val0 = _mm256_setzero_ps();
   __m128 val0 = _mm_setzero_ps();
 
-  auto data = state->get();
+  auto data = GetRawState();
 
   for (uint64_t i = 0; i < size2; ++i) {
     //_mm256_store_ps(state.get() + 16 * i, val0);
@@ -75,18 +102,18 @@ void Simulator2SSE::SetStateZero(State* state) const {
     _mm_store_ps(data + 16 * i + 12, val0);
   }
 
-  state->get()[0] = 1;
+  data[0] = 1;
 }
 
-float Simulator2SSE::GetRealInnerProduct(const State& a, const State& b) const {
-  uint64_t size2 = (size_ / 2) / 4;
+float StateSpaceSSE::GetRealInnerProduct(const StateSpace& other) const {
+  uint64_t size2 = GetDimension() / 4;
   __m128d expv_0 = _mm_setzero_pd();
   __m128d expv_1 = _mm_setzero_pd();
   __m128d temp = _mm_setzero_pd();
   __m128d rs_0, rs_1, is_0, is_1;
 
-  auto statea = RawData(a);
-  auto stateb = RawData(b);
+  auto statea = GetRawState();
+  auto stateb = other.GetRawState();
 
   //#pragma omp parallel for num_threads(num_threads_)
   // Currently not a thread safe implementation of inner product!
@@ -125,26 +152,24 @@ float Simulator2SSE::GetRealInnerProduct(const State& a, const State& b) const {
   return (float)(buffer[0] + buffer[1] + buffer[2] + buffer[3]);
 }
 
-std::complex<float> Simulator2SSE::GetAmpl(const State& state,
-                                           const uint64_t i) const {
+std::complex<float> StateSpaceSSE::GetAmpl(const uint64_t i) const {
   uint64_t p = (16 * (i / 8)) + (i % 8);
-  return std::complex<float>(state.get()[p], state.get()[p + 8]);
+  return std::complex<float>(GetRawState()[p], GetRawState()[p + 8]);
 }
 
-void Simulator2SSE::SetAmpl(State* state, const uint64_t i,
-                            const std::complex<float>& val) const {
+void StateSpaceSSE::SetAmpl(const uint64_t i, const std::complex<float>& val) {
   uint64_t p = (16 * (i / 8)) + (i % 8);
-  state->get()[p] = val.real();
-  state->get()[p + 8] = val.imag();
+  GetRawState()[p] = val.real();
+  GetRawState()[p + 8] = val.imag();
 }
 
-void Simulator2SSE::ApplyGate2HH(const unsigned int q0, const unsigned int q1,
-                                 const float* matrix, State* state) const {
-  uint64_t sizei = uint64_t(1) << (num_qubits_ + 1);
+void StateSpaceSSE::ApplyGate2HH(const unsigned int q0, const unsigned int q1,
+                                 const float* matrix) {
+  uint64_t sizei = uint64_t(1) << (GetNumQubits() + 1);
   uint64_t sizej = uint64_t(1) << (q1 + 1);
   uint64_t sizek = uint64_t(1) << (q0 + 1);
 
-  auto rstate = RawData(state);
+  auto rstate = GetRawState();
 
   for (uint64_t i = 0; i < sizei; i += 2 * sizej) {
     for (uint64_t j = 0; j < sizej; j += 2 * sizek) {
@@ -736,16 +761,16 @@ void Simulator2SSE::ApplyGate2HH(const unsigned int q0, const unsigned int q1,
   }
 }
 
-void Simulator2SSE::ApplyGate2LL(const unsigned int q0, const unsigned int q1,
-                                 const float* matrix, State* state) const {
+void StateSpaceSSE::ApplyGate2LL(const unsigned int q0, const unsigned int q1,
+                                 const float* matrix) {
   const unsigned int q = q0 + q1;
 
   //__m256 mb1, mb2, mb3;
   __m128 mb1, mb2, mb3;
   //__m256i ml1, ml2, ml3;
 
-  uint64_t sizei = uint64_t(1) << (num_qubits_ + 1);
-  auto rstate = RawData(state);
+  uint64_t sizei = uint64_t(1) << (GetNumQubits() + 1);
+  auto rstate = GetRawState();
 
   switch (q) {
     case 1:
@@ -2619,14 +2644,14 @@ void Simulator2SSE::ApplyGate2LL(const unsigned int q0, const unsigned int q1,
   }
 }
 
-void Simulator2SSE::ApplyGate2HL(const unsigned int q0, const unsigned int q1,
-                                 const float* matrix, State* state) const {
+void StateSpaceSSE::ApplyGate2HL(const unsigned int q0, const unsigned int q1,
+                                 const float* matrix) {
   __m128 mb;
 
-  uint64_t sizei = uint64_t(1) << (num_qubits_ + 1);
+  uint64_t sizei = uint64_t(1) << (GetNumQubits() + 1);
   uint64_t sizej = uint64_t(1) << (q1 + 1);
 
-  auto rstate = RawData(state);
+  auto rstate = GetRawState();
 
   switch (q0) {
     case 0:

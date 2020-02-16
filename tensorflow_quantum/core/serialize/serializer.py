@@ -22,7 +22,6 @@ import cirq
 import cirq.google.api.v2 as v2
 from tensorflow_quantum.core.proto import pauli_sum_pb2
 
-
 # Needed to allow autograph to crawl AST without erroring.
 _CONSTANT_TRUE = lambda x: True
 
