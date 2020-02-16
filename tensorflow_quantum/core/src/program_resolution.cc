@@ -43,9 +43,7 @@ Status ResolveQubitIds(Program* program, unsigned int* num_qubits,
   if (program->circuit().moments().empty()) {
     // (#679) Just ignore empty program.
     // Number of qubits in empty programs is zero.
-    if (num_qubits) {
-      *num_qubits = 0;
-    }
+    *num_qubits = 0;
     return Status::OK();
   }
 
@@ -57,10 +55,7 @@ Status ResolveQubitIds(Program* program, unsigned int* num_qubits,
       }
     }
   }
-
-  if (num_qubits) {
-    *num_qubits = id_set.size();
-  }
+  *num_qubits = id_set.size();
 
   std::vector<std::string> ids(id_set.begin(), id_set.end());
   std::sort(ids.begin(), ids.end());
