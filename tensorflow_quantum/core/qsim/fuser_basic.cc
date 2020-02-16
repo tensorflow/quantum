@@ -48,17 +48,11 @@ GateFused::GateFused(const unsigned int time, const unsigned int q0,
   qubits_[1] = q1;
 }
 
-void GateFused::AddGate(const Gate* gate) {
-  gates_.push_back(gate);
-}
+void GateFused::AddGate(const Gate* gate) { gates_.push_back(gate); }
 
-std::vector<const Gate*> GateFused::GetAllGates() const {
-  return gates_;
-}
+std::vector<const Gate*> GateFused::GetAllGates() const { return gates_; }
 
-unsigned int GateFused::GetNumGates() const {
-  return gates_.size();
-}
+unsigned int GateFused::GetNumGates() const { return gates_.size(); }
 
 const Gate* GateFused::GetGate(unsigned int gate_index) const {
   return gates_.at(gate_index);
@@ -68,33 +62,17 @@ void GateFused::SetGate(unsigned int gate_index, const Gate* gate) {
   gates_.at(gate_index) = gate;
 }
 
-unsigned int GateFused::GetTime() const {
-  return time_;
-}
-void GateFused::SetTime(unsigned int time) {
-  time_ = time;
-}
+unsigned int GateFused::GetTime() const { return time_; }
+void GateFused::SetTime(unsigned int time) { time_ = time; }
 
-unsigned int GateFused::GetQubit0() const {
-  return qubits_[0];
-}
-void GateFused::SetQubit0(unsigned int q0) {
-  qubits_[0] = q0;
-}
+unsigned int GateFused::GetQubit0() const { return qubits_[0]; }
+void GateFused::SetQubit0(unsigned int q0) { qubits_[0] = q0; }
 
-unsigned int GateFused::GetQubit1() const {
-  return qubits_[1];
-}
-void GateFused::SetQubit1(unsigned int q1) {
-  qubits_[1] = q1;
-}
+unsigned int GateFused::GetQubit1() const { return qubits_[1]; }
+void GateFused::SetQubit1(unsigned int q1) { qubits_[1] = q1; }
 
-const Gate* GateFused::GetPMaster() const {
-  return pmaster_;
-}
-void GateFused::SetPMaster(const Gate* pmaster) {
-  pmaster_ = pmaster;
-}
+const Gate* GateFused::GetPMaster() const { return pmaster_; }
+void GateFused::SetPMaster(const Gate* pmaster) { pmaster_ = pmaster; }
 
 bool operator==(const GateFused& l, const GateFused& r) {
   if (l.GetTime() != r.GetTime()) {
