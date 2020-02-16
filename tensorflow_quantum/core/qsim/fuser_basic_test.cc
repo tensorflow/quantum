@@ -85,13 +85,13 @@ TEST(FuserBasicTest, GateFused) {
   ASSERT_NE(test_fused, real_fused);
   test_fused.SetPMaster(&gate_cnot);
 
-  test_fused.gates[0] = &gate_cnot;
+  test_fused.SetGate(0, &gate_cnot);
   ASSERT_NE(test_fused, real_fused);
-  test_fused.gates[0] = &gate_x;
+  test_fused.SetGate(0, &gate_x);
 
-  test_fused.gates[1] = &gate_x;
+  test_fused.SetGate(1, &gate_x);
   ASSERT_NE(test_fused, real_fused);
-  test_fused.gates[1] = &gate_cnot;
+  test_fused.SetGate(1, &gate_cnot);
 
   ASSERT_EQ(test_fused, real_fused);
 }
@@ -291,9 +291,7 @@ TEST(FuserBasicTest, FuseGatesDisjoint) {
   ASSERT_EQ(status, Status::OK());
   test_circuit.gates.push_back(gate_ident_2);
   GateFused real_fused_3(pmaster_time_3, 1, 2, &gate_ident_2);
-  real_fused_3.pmaster = &test_circuit.gates.back();
   real_fused_3.AddGate(&test_circuit.gates.back());
-  real_fused_3.time = pmaster_time_3;
   locations.clear();
 
   // Check fused gate equality
