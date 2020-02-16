@@ -30,7 +30,7 @@ namespace tfq {
 
 // Renames the ids of Qubits to be ordered from 0 to n, where n is the number
 // of qubits. if p_sum is provided, we will also resolve ordering based on how
-// We resolved program. All qubit types are supported, as long as the qubit ids
+// we resolved program. All qubit types are supported, as long as the qubit ids
 // are strings; all ids are extracted and lexicographically ordered, then simply
 // replaced with their location in that ordering.
 //

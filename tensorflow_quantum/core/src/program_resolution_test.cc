@@ -66,6 +66,17 @@ TEST(ProgramResolutionTest, ResolveQubitIds) {
     }
   )";
 
+  const std::string text_p_sum_1 = R"(
+    terms {
+      coefficient_real: 1.0
+      coefficient_imag: 0.0
+      paulis {
+        qubit_id: "1_0"
+        pauli_type: "X"
+      }
+    }
+  )";
+
   const std::string text_alphabet = R"(
     circuit {
       moments {
@@ -91,15 +102,44 @@ TEST(ProgramResolutionTest, ResolveQubitIds) {
     }
   )";
 
-  const std::string text_empty = R"(
-      circuit {
+  const std::string text_alphabet_p_sum_0 = R"(
+    terms {
+      coefficient_real: 1.0
+      coefficient_imag: 0.0
+      paulis {
+        qubit_id: "D"
+        pauli_type: "Z"
       }
-    )";
+    }
+  )";
+
+  const std::string text_alphabet_p_sum_1 = R"(
+    terms {
+      coefficient_real: 1.0
+      coefficient_imag: 0.0
+      paulis {
+        qubit_id: "C"
+        pauli_type: "X"
+      }
+    }
+  )";
+
+  const std::string text_empty = R"(
+    circuit {
+    }
+  )";
 
   std::vector<tfq::proto::PauliSum> p_sums, p_sums_alphabet;
-  tfq::proto::PauliSum p_sum_0;
+  tfq::proto::PauliSum p_sum_0, p_sum_1;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(text_p_sum_0, &p_sum_0));
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(text_p_sum_1, &p_sum_1));
   p_sums.push_back(p_sum_0);
+  p_sums.push_back(p_sum_1);
+  tfq::proto::PauliSum alphabet_p_sum_0, alphabet_p_sum_1;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(text_alphabet_p_sum_0, &alphabet_p_sum_0));
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(text_alphabet_p_sum_1, &alphabet_p_sum_1));
+  p_sums_alphabet.push_back(alphabet_p_sum_0);
+  p_sums_alphabet.push_back(alphabet_p_sum_1);
 
   Program program, empty_program, alphabet_program;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(text, &program));
@@ -109,9 +149,9 @@ TEST(ProgramResolutionTest, ResolveQubitIds) {
                                                             &alphabet_program));
 
   unsigned int num_qubits, num_qubits_empty, num_qubits_alphabet;
-  EXPECT_TRUE(ResolveQubitIds(&program, &num_qubits).ok());
+  EXPECT_TRUE(ResolveQubitIds(&program, &num_qubits, &p_sums).ok());
   EXPECT_TRUE(ResolveQubitIds(&empty_program, &num_qubits_empty).ok());
-  EXPECT_TRUE(ResolveQubitIds(&alphabet_program, &num_qubits_alphabet).ok());
+  EXPECT_TRUE(ResolveQubitIds(&alphabet_program, &num_qubits_alphabet, &p_sums_alphabet).ok());
 
   EXPECT_EQ(program.circuit().moments(0).operations(0).qubits(0).id(), "0");
   EXPECT_EQ(program.circuit().moments(0).operations(0).qubits(1).id(), "2");
@@ -122,6 +162,12 @@ TEST(ProgramResolutionTest, ResolveQubitIds) {
   EXPECT_EQ(alphabet_program.circuit().moments(0).operations(0).qubits(1).id(), "2");
   EXPECT_EQ(alphabet_program.circuit().moments(1).operations(0).qubits(0).id(), "3");
   EXPECT_EQ(alphabet_program.circuit().moments(1).operations(0).qubits(1).id(), "0");
+
+  EXPECT_EQ(p_sums.at(0).terms(0).paulis(0).qubit_id(), "0");
+  EXPECT_EQ(p_sums.at(1).terms(0).paulis(0).qubit_id(), "2");
+
+  EXPECT_EQ(p_sums_alphabet.at(0).terms(0).paulis(0).qubit_id(), "2");
+  EXPECT_EQ(p_sums_alphabet.at(1).terms(0).paulis(0).qubit_id(), "1");
 
   EXPECT_EQ(num_qubits, 3);
   EXPECT_EQ(num_qubits_empty, 0);
