@@ -34,7 +34,7 @@ namespace tfq {
 // are strings; all ids are extracted and lexicographically ordered, then simply
 // replaced with their location in that ordering.
 //
-// The number of qubits in the program is recorded in `num_qubits` if not null.
+// The number of qubits in the program is recorded in `num_qubits`.
 tensorflow::Status ResolveQubitIds(
     cirq::google::api::v2::Program* program, unsigned int* num_qubits,
     std::vector<tfq::proto::PauliSum>* p_sums = nullptr);
