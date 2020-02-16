@@ -286,8 +286,7 @@ TEST(FuserBasicTest, FuseGatesDisjoint) {
   unsigned int anchor_time_3 = 5;
   locations.push_back(1);
   locations.push_back(2);
-  status =
-      i2_builder.Build(anchor_time_3, locations, empty_map, &gate_ident_2);
+  status = i2_builder.Build(anchor_time_3, locations, empty_map, &gate_ident_2);
   ASSERT_EQ(status, Status::OK());
   test_circuit.gates.push_back(gate_ident_2);
   GateFused real_fused_3(anchor_time_3, 1, 2, &gate_ident_2);
