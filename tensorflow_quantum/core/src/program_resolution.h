@@ -30,14 +30,9 @@ namespace tfq {
 
 // Renames the ids of Qubits to be ordered from 0 to n, where n is the number
 // of qubits. if p_sum is provided, we will also resolve ordering based on how
-// We resolved program. Currently support Programs with Qubits id'd by Cirq via
-//
-// - GridQubits: ids like 0_0
-// TODO(pmassey): Support more kinds of inputs, and remove the assumption that
-// input qubits are GridQubits.
-//
-// The qubits are sorted in the same way Cirq would sort them, to provide
-// consistent outputs.
+// We resolved program. All qubit types are supported, as long as the qubit ids
+// are strings; all ids are extracted and lexicographically ordered, then simply
+// replaced with their location in that ordering.
 //
 // The number of qubits in the program is recorded in `num_qubits` if not null.
 tensorflow::Status ResolveQubitIds(

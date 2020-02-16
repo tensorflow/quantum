@@ -55,27 +55,61 @@ TEST(ProgramResolutionTest, ResolveQubitIds) {
     }
   )";
 
+  const std::string text_alphabet = R"(
+    circuit {
+      moments {
+        operations {
+          qubits {
+            id: "C"
+          }
+          qubits {
+            id: "D"
+          }
+        }
+      }
+      moments {
+        operations {
+          qubits {
+            id: "X"
+          }
+          qubits {
+            id: "A"
+          }
+        }
+      }
+    }
+  )";
+
   const std::string text_empty = R"(
       circuit {
       }
     )";
 
-  Program program, empty_program;
+  Program program, empty_program, alphabet_program;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(text, &program));
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(text_empty,
                                                             &empty_program));
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(text_alphabet,
+                                                            &alphabet_program));
 
-  unsigned int num_qubits, num_qubits_empty;
+  unsigned int num_qubits, num_qubits_empty, num_qubits_alphabet;
   EXPECT_TRUE(ResolveQubitIds(&program, &num_qubits).ok());
   EXPECT_TRUE(ResolveQubitIds(&empty_program, &num_qubits_empty).ok());
+  EXPECT_TRUE(ResolveQubitIds(&alphabet_program, &num_qubits_alphabet).ok());
 
   EXPECT_EQ(program.circuit().moments(0).operations(0).qubits(0).id(), "0");
   EXPECT_EQ(program.circuit().moments(0).operations(0).qubits(1).id(), "2");
   EXPECT_EQ(program.circuit().moments(1).operations(0).qubits(0).id(), "0");
   EXPECT_EQ(program.circuit().moments(1).operations(0).qubits(1).id(), "1");
 
+  EXPECT_EQ(program_alphabet.circuit().moments(0).operations(0).qubits(0).id(), "1");
+  EXPECT_EQ(program_alphabet.circuit().moments(0).operations(0).qubits(1).id(), "2");
+  EXPECT_EQ(program_alphabet.circuit().moments(1).operations(0).qubits(0).id(), "3");
+  EXPECT_EQ(program_alphabet.circuit().moments(1).operations(0).qubits(1).id(), "0");
+
   EXPECT_EQ(num_qubits, 3);
   EXPECT_EQ(num_qubits_empty, 0);
+  EXPECT_EQ(num_qubits_alphabet, 4);
 }
 
 TEST(ProgramResolutionTest, ResolveSymbols) {
