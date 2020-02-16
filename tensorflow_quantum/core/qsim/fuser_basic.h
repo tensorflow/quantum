@@ -27,7 +27,7 @@ namespace qsim {
 class GateFused {
  public:
   GateFused(const unsigned int time, const unsigned int q0,
-            const unsigned int q1, const Gate* pmaster);
+            const unsigned int q1, const Gate* anchor);
 
   ~GateFused() {}
 
@@ -46,13 +46,13 @@ class GateFused {
   unsigned int GetQubit1() const;
   void SetQubit1(unsigned int q1);
 
-  const Gate* GetPMaster() const;
-  void SetPMaster(const Gate* pmaster);
+  const Gate* GetAnchor() const;
+  void SetAnchor(const Gate* anchor);
 
  private:
   unsigned int time_;
   std::array<unsigned int, 2> qubits_;
-  const Gate* pmaster_;
+  const Gate* anchor_;
   std::vector<const Gate*> gates_;
 };
 

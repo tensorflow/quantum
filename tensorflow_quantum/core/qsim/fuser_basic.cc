@@ -42,8 +42,8 @@ void Advance(const std::vector<const Gate*>& qubit_wire, GateFused* gate,
 }  // namespace
 
 GateFused::GateFused(const unsigned int time, const unsigned int q0,
-                     const unsigned int q1, const Gate* pmaster)
-    : time_(time), pmaster_(pmaster) {
+                     const unsigned int q1, const Gate* anchor)
+    : time_(time), anchor_(anchor) {
   qubits_[0] = q0;
   qubits_[1] = q1;
 }
@@ -71,8 +71,8 @@ void GateFused::SetQubit0(unsigned int q0) { qubits_[0] = q0; }
 unsigned int GateFused::GetQubit1() const { return qubits_[1]; }
 void GateFused::SetQubit1(unsigned int q1) { qubits_[1] = q1; }
 
-const Gate* GateFused::GetPMaster() const { return pmaster_; }
-void GateFused::SetPMaster(const Gate* pmaster) { pmaster_ = pmaster; }
+const Gate* GateFused::GetAnchor() const { return anchor_; }
+void GateFused::SetAnchor(const Gate* anchor) { anchor_ = anchor; }
 
 bool operator==(const GateFused& l, const GateFused& r) {
   if (l.GetTime() != r.GetTime()) {
@@ -84,7 +84,7 @@ bool operator==(const GateFused& l, const GateFused& r) {
   if (l.GetQubit1() != r.GetQubit1()) {
     return false;
   }
-  if (*l.GetPMaster() != *r.GetPMaster()) {
+  if (*l.GetAnchor() != *r.GetAnchor()) {
     return false;
   }
   if (l.GetNumGates() != r.GetNumGates()) {
