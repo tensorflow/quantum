@@ -65,10 +65,9 @@ def _read_dir(repository_ctx, src_dir):
         A string of all files inside the given dir.
     """
     if _is_windows(repository_ctx):
-        print(src_dir)
+        # TODO(jaeyoo) : Remove the following hard-coded lines
+        src_dir = "C:/Python36/lib/site-packages/tensorflow_core/include"  # hard-coded
         src_dir = src_dir.replace("/", "\\")
-        print(src_dir)
-        src_dir = "C:\\Python36\\lib\\site-packages\\tensorflow_core\\include"
         find_result = _execute(
             repository_ctx,
             ["cmd.exe", "/c", "dir", src_dir, "/b", "/s", "/a-d"],
@@ -78,7 +77,7 @@ def _read_dir(repository_ctx, src_dir):
         # src_files will be used in genrule.outs where the paths must
         # use forward slashes.
         result = find_result.stdout.replace("\\", "/")
-        print(result)
+        result = result.replace(src_dir, "").splitlines()  # hard-coded
     else:
         find_result = _execute(
             repository_ctx,
