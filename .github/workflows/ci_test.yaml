@@ -51,7 +51,7 @@ jobs:
       - name: Test Wheel
         run: ./scripts/run_example.sh
 
-  bazel-test:
+  bazel-tests:
     name: Library tests
     runs-on: ubuntu-16.04
     needs: [lint, format]
