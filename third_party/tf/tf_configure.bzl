@@ -167,6 +167,7 @@ def _symlink_genrule_for_dir(
 
 def _tf_pip_impl(repository_ctx):
     tf_header_dir = repository_ctx.os.environ[_TF_HEADER_DIR]
+    print(tf_header_dir)
     tf_header_rule = _symlink_genrule_for_dir(
         repository_ctx,
         tf_header_dir,
