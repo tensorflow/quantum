@@ -145,10 +145,6 @@ def _symlink_genrule_for_dir(
         # Create a list with the src_dir stripped to use for outputs.
         dest_files = files.replace(src_dir, "").splitlines()
         src_files = files.splitlines()
-        print(src_files)
-        print("=*"*40)
-        print(dest_files)
-        print("=*"*40)
     command = []
     outs = []
     for i in range(len(dest_files)):
@@ -170,7 +166,6 @@ def _symlink_genrule_for_dir(
 
 def _tf_pip_impl(repository_ctx):
     tf_header_dir = repository_ctx.os.environ[_TF_HEADER_DIR]
-    print(tf_header_dir)
     tf_header_rule = _symlink_genrule_for_dir(
         repository_ctx,
         tf_header_dir,
