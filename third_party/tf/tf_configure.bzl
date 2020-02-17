@@ -68,7 +68,7 @@ def _read_dir(repository_ctx, src_dir):
         print(src_dir)
         src_dir = src_dir.replace("/", "\\")
         print(src_dir)
-        src_dir = "C:\\Python36\\lib\\site-packages\\tensorflow_core\\include"
+        src_dir = "/c/Python36/lib/site-packages/tensorflow_core/include"
         find_result = _execute(
             repository_ctx,
             ["cmd.exe", "/c", "dir", src_dir, "/b", "/s", "/a-d"],
@@ -78,6 +78,7 @@ def _read_dir(repository_ctx, src_dir):
         # src_files will be used in genrule.outs where the paths must
         # use forward slashes.
         result = find_result.stdout.replace("\\", "/")
+        print(result)
     else:
         find_result = _execute(
             repository_ctx,
