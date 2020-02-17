@@ -34,13 +34,14 @@ StateSpaceSlow::~StateSpaceSlow() { DeleteState(); }
 StateSpaceType StateSpaceSlow::GetType() const { return StateSpaceType::SLOW; }
 
 void StateSpaceSlow::CreateState() {
-  SetRawState((float*)malloc(sizeof(float) * GetNumEntries()));
+  state_ = (float*)malloc(sizeof(float) * GetNumEntries());
 }
 
-void StateSpaceSlow::DeleteState() { free(GetRawState()); }
+void StateSpaceSlow::DeleteState() { free(state_); }
 
 StateSpace* StateSpaceSlow::Clone() const {
-  StateSpace* state_copy = new StateSpaceSlow(GetNumQubits(), GetNumThreads());
+  StateSpaceSlow* state_copy =
+      new StateSpaceSlow(GetNumQubits(), GetNumThreads());
   return state_copy;
 }
 

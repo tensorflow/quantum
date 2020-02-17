@@ -51,9 +51,6 @@ class StateSpace {
   // Pointer to the raw state managed by this StateSpace
   float* GetRawState() const;
 
-  // Replace the pointer in this object with a new one
-  void SetRawState(float* state_update);
-
   // Dimension of the complex Hilbert space represented by this StateSpace
   uint64_t GetDimension() const;
 
@@ -105,7 +102,7 @@ class StateSpace {
   // Set the amplitude at the given state index
   virtual void SetAmpl(const uint64_t i, const std::complex<float>& val) = 0;
 
- private:
+ protected:
   float* state_;
   uint64_t size_;
   uint64_t num_qubits_;
