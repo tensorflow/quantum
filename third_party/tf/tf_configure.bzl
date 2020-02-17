@@ -65,6 +65,7 @@ def _read_dir(repository_ctx, src_dir):
         A string of all files inside the given dir.
     """
     if _is_windows(repository_ctx):
+        print(src_dir)
         src_dir = src_dir.replace("/", "\\")
         print(src_dir)
         find_result = _execute(
