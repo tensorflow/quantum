@@ -66,6 +66,7 @@ def _read_dir(repository_ctx, src_dir):
     """
     if _is_windows(repository_ctx):
         src_dir = src_dir.replace("/", "\\")
+        print(src_dir)
         find_result = _execute(
             repository_ctx,
             ["cmd.exe", "/c", "dir", src_dir, "/b", "/s", "/a-d"],
