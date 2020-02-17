@@ -54,9 +54,6 @@ class StateSpace {
   // Dimension of the complex Hilbert space represented by this StateSpace
   uint64_t GetDimension() const;
 
-  // Get the number of entries used in the internal representation of the state
-  uint64_t GetNumEntries() const;
-
   // Number of qubits this StateSpace operates on
   uint64_t GetNumQubits() const;
 
