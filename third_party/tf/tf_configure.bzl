@@ -65,8 +65,6 @@ def _read_dir(repository_ctx, src_dir):
         A string of all files inside the given dir.
     """
     if _is_windows(repository_ctx):
-        # TODO(jaeyoo) : Remove the following hard-coded lines
-        src_dir = "C:/Python36/lib/site-packages/tensorflow_core/include"  # hard-coded
         src_dir = src_dir.replace("/", "\\")
         find_result = _execute(
             repository_ctx,
@@ -77,7 +75,6 @@ def _read_dir(repository_ctx, src_dir):
         # src_files will be used in genrule.outs where the paths must
         # use forward slashes.
         result = find_result.stdout.replace("\\", "/")
-        result = result.replace(src_dir, "")  # hard-coded
     else:
         find_result = _execute(
             repository_ctx,
@@ -140,11 +137,18 @@ def _symlink_genrule_for_dir(
     if src_dir != None:
         src_dir = _norm_path(src_dir)
         dest_dir = _norm_path(dest_dir)
+        if _is_windows(repository_ctx):
+            # TODO(jaeyoo) : Remove the following hard-coded lines
+            src_dir = "C:/Python36/lib/site-packages/tensorflow_core/include"  # hard-coded
         files = "\n".join(sorted(_read_dir(repository_ctx, src_dir).splitlines()))
 
         # Create a list with the src_dir stripped to use for outputs.
         dest_files = files.replace(src_dir, "").splitlines()
         src_files = files.splitlines()
+        print(src_files)
+        print("=*"*40)
+        print(dest_files)
+        print("=*"*40)
     command = []
     outs = []
     for i in range(len(dest_files)):
