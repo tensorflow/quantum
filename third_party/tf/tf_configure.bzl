@@ -68,7 +68,7 @@ def _read_dir(repository_ctx, src_dir):
         print(src_dir)
         src_dir = src_dir.replace("/", "\\")
         print(src_dir)
-        src_dir = "/c/Python36/lib/site-packages/tensorflow_core/include"
+        src_dir = "C:\\Python36\\lib\\site-packages\\tensorflow_core\\include"
         find_result = _execute(
             repository_ctx,
             ["cmd.exe", "/c", "dir", src_dir, "/b", "/s", "/a-d"],
