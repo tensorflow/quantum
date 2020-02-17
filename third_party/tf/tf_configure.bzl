@@ -77,7 +77,7 @@ def _read_dir(repository_ctx, src_dir):
         # src_files will be used in genrule.outs where the paths must
         # use forward slashes.
         result = find_result.stdout.replace("\\", "/")
-        result = result.replace(src_dir, "").splitlines()  # hard-coded
+        result = result.replace(src_dir, "")  # hard-coded
     else:
         find_result = _execute(
             repository_ctx,
