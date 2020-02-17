@@ -137,6 +137,9 @@ def _symlink_genrule_for_dir(
     if src_dir != None:
         src_dir = _norm_path(src_dir)
         dest_dir = _norm_path(dest_dir)
+        if _is_windows(repository_ctx):
+            # TODO(jaeyoo) : Remove the following hard-coded lines
+            src_dir = "C:/Python36/lib/site-packages/tensorflow_core/include"  # hard-coded
         files = "\n".join(sorted(_read_dir(repository_ctx, src_dir).splitlines()))
 
         # Create a list with the src_dir stripped to use for outputs.
