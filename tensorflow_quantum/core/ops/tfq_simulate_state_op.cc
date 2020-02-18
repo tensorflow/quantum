@@ -77,6 +77,9 @@ class TfqSimulateStateOp : public tensorflow::OpKernel {
     auto output_tensor = output->matrix<std::complex<float>>();
 
     auto DoWork = [&](int start, int end) {
+      std::unique_ptr<StateSpace> state =
+          std::unique_ptr<StateSpace>(GetStateSpace(1, 1));
+      int old_num_qubits = -1;
       for (int i = start; i < end; i++) {
         Program program = programs[i];
         const int num = num_qubits[i];
@@ -85,9 +88,16 @@ class TfqSimulateStateOp : public tensorflow::OpKernel {
         // QSim work below
         Circuit circuit;
         OP_REQUIRES_OK(context, CircuitFromProgram(program, num, &circuit));
-        std::unique_ptr<StateSpace> state =
-            std::unique_ptr<StateSpace>(GetStateSpace(num, 1));
-        state->CreateState();
+
+        // TODO(mbbrough): Update this allocation hack so that a StateSpace
+        //  object can grow it's memory dynamically to larger and larger size
+        //  without ever having to call free (until the very end). This is
+        //  tricky to implement because right now certain statespaces can't
+        //  simulate all states and we use StateSpaceSlow for smaller circuits.
+        if (num != old_num_qubits) {
+          state.reset(GetStateSpace(num, 1));
+          state->CreateState();
+        }
         state->SetStateZero();
         OP_REQUIRES_OK(context, state->Update(circuit));
         uint64_t state_size = state->GetDimension();
@@ -98,6 +108,7 @@ class TfqSimulateStateOp : public tensorflow::OpKernel {
              j++) {
           output_tensor(i, j) = std::complex<float>(-2, 0);
         }
+        old_num_qubits = num;
       }
     };
 

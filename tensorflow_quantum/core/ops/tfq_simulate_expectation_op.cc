@@ -105,8 +105,16 @@ class TfqSimulateExpectationOp : public tensorflow::OpKernel {
           OP_REQUIRES_OK(
               context, CircuitFromProgram(program, num_qubits[cur_batch_index],
                                           &circuit));
-          test_state.reset(GetStateSpace(num_qubits[cur_batch_index], 1));
-          test_state->CreateState();
+
+          // TODO(mbbrough): Update this allocation hack so that a StateSpace
+          //  object can grow it's memory dynamically to larger and larger size
+          //  without ever having to call free (until very end). This is tricky
+          //  to implement because right now certain statespaces can't simulate
+          //  all states and we use StateSpaceSlow for smaller circuits.
+          if (num_qubits[cur_batch_index] != num_qubits[old_batch_index]) {
+            test_state.reset(GetStateSpace(num_qubits[cur_batch_index], 1));
+            test_state->CreateState();
+          }
           test_state->SetStateZero();
           OP_REQUIRES_OK(context, test_state->Update(circuit));
         }
