@@ -28,7 +28,7 @@ jobs:
           python-version: '3.6'
           architecture: 'x64'
       - name: Install Format tools
-        run: pip install --upgrade pip setuptools; pip install -r requirements.txt; sudo aptitude install libllvm6.0; sudo aptitude install -y clang-format-6.0
+        run: pip install --upgrade pip setuptools; pip install -r requirements.txt; sudo apt-get install -y aptitude; sudo aptitude install -y libllvm6.0; sudo aptitude install -y clang-format-6.0
       - name: Format Check
         run: ./scripts/format_check.sh
 
