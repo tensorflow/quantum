@@ -54,6 +54,7 @@ The following steps are tested for Ubuntu-like systems.
 <!-- common_typos_disable -->
 <pre class="devsite-click-to-copy">
   <code class="devsite-terminal">sudo apt update</code>
+  <code class="devsite-terminal">sudo apt-get install libllvm6.0</code>
   <code class="devsite-terminal">sudo apt-get install clang-format-6.0</code>
   <code class="devsite-terminal">sudo apt-get install pkg-config zip g++ zlib1g-dev unzip python3</code>
   <code class="devsite-terminal">sudo apt install python3 python3-dev python3-venv python3-pip</code>
