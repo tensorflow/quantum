@@ -68,6 +68,7 @@ GateBuilder* GateNameMapper(const std::string& gate_name) {
   if (gate_name == "ISP") {return new ISwapPowGateBuilder();}
   if (gate_name == "PXP") {return new PhasedXPowGateBuilder();}
   if (gate_name == "FSIM") {return new FSimGateBuilder();}
+  if (gate_name == "PISP") {return new PhasedISwapPowGateBuilder();}
   // clang-format on
   return NULL;
 }
@@ -232,6 +233,41 @@ Status TwoQubitGateBuilder::Build(
   } else {
     *gate = Gate(time, locations[1], locations[0],
                  GetSwappedMatrix(exponent, global_shift));
+  }
+  return Status::OK();
+}
+
+Status TwoQubitPhasedGateBuilder::Build(
+    const unsigned int time, const std::vector<unsigned int>& locations,
+    const absl::flat_hash_map<std::string, float>& args, Gate* gate) {
+  if (locations.size() != 2) {
+    return Status(tensorflow::error::INVALID_ARGUMENT,
+                  "Only two qubit locations should be provided.");
+  }
+  float exponent;
+  float global_shift;
+  float phase_exponent;
+  const auto itr_exponent = args.find("exponent");
+  const auto itr_phase_exponent = args.find("phase_exponent");
+  const auto itr_global_shift = args.find("global_shift");
+  // Workaround to support scalar multiplication of symbols. See serialize.py.
+  const auto itr_exponent_scalar = args.find("exponent_scalar");
+  const auto itr_phase_exponent_scalar = args.find("phase_exponent_scalar");
+  if (itr_exponent == args.end() || itr_global_shift == args.end() ||
+      itr_exponent_scalar == args.end()) {
+    return Status(tensorflow::error::INVALID_ARGUMENT,
+                  "Eigen gates require exponent and global_shift args.");
+  }
+  exponent = itr_exponent->second * itr_exponent_scalar->second;
+  phase_exponent =
+      itr_phase_exponent->second * itr_phase_exponent_scalar->second;
+  global_shift = itr_global_shift->second;
+  if (locations[0] < locations[1]) {
+    *gate = Gate(time, locations[0], locations[1],
+                 GetMatrix(exponent, phase_exponent, global_shift));
+  } else {
+    *gate = Gate(time, locations[1], locations[0],
+                 GetSwappedMatrix(exponent, phase_exponent, global_shift));
   }
   return Status::OK();
 }
@@ -474,6 +510,46 @@ Matrix2q ISwapPowGateBuilder::GetMatrix(const float exponent,
 Matrix2q ISwapPowGateBuilder::GetSwappedMatrix(const float exponent,
                                                const float global_shift) {
   return GetMatrix(exponent, global_shift);
+}
+
+Matrix2q PhasedISwapPowGateBuilder::GetMatrix(const float exponent,
+                                              const float phase_exponent,
+                                              const float global_shift) {
+  const std::complex<float> g = global_phase(exponent, global_shift);
+  const std::complex<float> wp = global_phase(exponent, 0.5);
+  const std::complex<float> wm = global_phase(exponent, -0.5);
+  const std::complex<float> plus = 0.5f * g * (wp + wm);
+  const std::complex<float> minus = 0.5f * g * (wp - wm);
+  const std::complex<float> f = global_phase(phase_exponent, 2.0);
+  const std::complex<float> f_star = std::conj(f);
+  const std::complex<float> ur = minus * f;
+  const std::complex<float> bl = minus * f_star;
+
+  return {
+      {g.real(),  g.imag(),    0,           0,           0,         0, 0, 0, 0,
+       0,         plus.real(), plus.imag(), ur.real(),   ur.imag(), 0, 0, 0, 0,
+       bl.real(), bl.imag(),   plus.real(), plus.imag(), 0,         0, 0, 0, 0,
+       0,         0,           0,           g.real(),    g.imag()}};
+}
+
+Matrix2q PhasedISwapPowGateBuilder::GetSwappedMatrix(const float exponent,
+                                                     const float phase_exponent,
+                                                     const float global_shift) {
+  const std::complex<float> g = global_phase(exponent, global_shift);
+  const std::complex<float> wp = global_phase(exponent, 0.5);
+  const std::complex<float> wm = global_phase(exponent, -0.5);
+  const std::complex<float> plus = 0.5f * g * (wp + wm);
+  const std::complex<float> minus = 0.5f * g * (wp - wm);
+  const std::complex<float> f = global_phase(phase_exponent, 2.0);
+  const std::complex<float> f_star = std::conj(f);
+  const std::complex<float> ur = minus * f;
+  const std::complex<float> bl = minus * f_star;
+
+  return {
+      {g.real(),  g.imag(),    0,           0,           0,         0, 0, 0, 0,
+       0,         plus.real(), plus.imag(), bl.real(),   bl.imag(), 0, 0, 0, 0,
+       ur.real(), ur.imag(),   plus.real(), plus.imag(), 0,         0, 0, 0, 0,
+       0,         0,           0,           g.real(),    g.imag()}};
 }
 
 Matrix2q I2GateBuilder::GetMatrix() {

@@ -251,9 +251,13 @@ def _phased_eigen_gate_deserializer(gate_type, serialized_id):
             else exponent * exponent_scalar
         phase_exponent = phase_exponent if phase_exponent_scalar == 1.0 \
             else phase_exponent * phase_exponent_scalar
-        return gate_type(exponent=exponent,
-                         global_shift=global_shift,
-                         phase_exponent=phase_exponent)
+        if global_shift != 0:
+            # needed in case this specific phasedeigengate doesn't
+            # have a global_phase in constructor.
+            return gate_type(exponent=exponent,
+                             global_shift=global_shift,
+                             phase_exponent=phase_exponent)
+        return gate_type(exponent=exponent, phase_exponent=phase_exponent)
 
     args = [
         cirq.google.DeserializingArg(serialized_name="phase_exponent",
@@ -289,6 +293,7 @@ EIGEN_GATES_DICT = {
 
 PHASED_EIGEN_GATES_DICT = {
     cirq.PhasedXPowGate: "PXP",
+    cirq.PhasedISwapPowGate: "PISP",
 }
 
 SERIALIZERS = [
