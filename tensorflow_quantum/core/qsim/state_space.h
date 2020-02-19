@@ -42,7 +42,11 @@ class StateSpace {
   tensorflow::Status Update(const Circuit& circuit);
 
   // Computes the expectation value for a given state vector and PauliSum.
+  // Uses scratch StateSpace for evolving pauli terms forward and computing
+  // inner products. Assums that scratch has memory allocated, but does not
+  // require scratch to initialize values.
   tensorflow::Status ComputeExpectation(const tfq::proto::PauliSum& p_sum,
+                                        StateSpace* scratch,
                                         float* expectation_value);
 
   // Returns true if memory for the state has been succesfully allocated
