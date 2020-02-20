@@ -24,7 +24,6 @@ from tensorflow_quantum.core.serialize import serializer
 from tensorflow_quantum.python import util
 
 MOMENT_DEPTH = 25
-CLOSE_TOL = 5e-6
 
 WF_SIM = cirq.sim.sparse_simulator.Simulator()
 DM_SIM = cirq.sim.density_matrix_simulator.DensityMatrixSimulator()
@@ -312,7 +311,7 @@ class CirqSimulateStateTest(tf.test.TestCase, parameterized.TestCase):
                 # TODO
                 raise RuntimeError('Simulator returned unknown type of result.')
 
-        self.assertAllClose(tfq_results, manual_padded_results, atol=CLOSE_TOL)
+        self.assertAllClose(tfq_results, manual_padded_results)
 
     def test_state_empty_circuit(self):
         """Test empty circuits"""
@@ -414,7 +413,7 @@ class CirqSamplesTest(tf.test.TestCase, parameterized.TestCase):
                     *cirq.X.on_each(*cirq.GridQubit.rect(1, n_qubits))))
         results = op(util.convert_to_tensor(circuits), [], [[]] * len(circuits),
                      [n_samples]).numpy()
-        self.assertAllClose(expected_outputs, results, atol=CLOSE_TOL)
+        self.assertAllClose(expected_outputs, results)
 
     def test_sample_empty_circuit(self):
         """Test empty circuits"""

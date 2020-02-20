@@ -75,7 +75,6 @@ def random_circuit_resolver_batch(qubits, batch_size, n_moments=15, p=0.9):
     return_resolvers = []
     for _ in range(batch_size):
         return_circuits.append(
-            # random_circuit randomizes qubit order
             cirq.testing.random_circuit(qubits, n_moments, p,
                                         get_supported_gates()))
         return_resolvers.append(cirq.ParamResolver({}))

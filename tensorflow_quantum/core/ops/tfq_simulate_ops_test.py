@@ -22,8 +22,6 @@ from tensorflow_quantum.python import util
 from tensorflow_quantum.core.ops import tfq_simulate_ops
 from tensorflow_quantum.python import util
 
-CLOSE_TOL = 5e-6
-
 class SimulateExpectationTest(tf.test.TestCase):
     """Tests tfq_simulate_expectation."""
 
@@ -305,7 +303,7 @@ class SimulateStateTest(tf.test.TestCase, parameterized.TestCase):
             blank_state[:wf.shape[0]] = wf
             manual_padded_results.append(blank_state)
 
-        self.assertAllClose(tfq_results, manual_padded_results, atol=CLOSE_TOL)
+        self.assertAllClose(tfq_results, manual_padded_results)
 
 
 class SimulateSamplesTest(tf.test.TestCase, parameterized.TestCase):
