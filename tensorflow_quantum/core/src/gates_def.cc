@@ -232,14 +232,8 @@ Status TwoQubitGateBuilder::Build(
   }
   exponent = itr_exponent->second * itr_exponent_scalar->second;
   global_shift = itr_global_shift->second;
-  if (locations[0] < locations[1]) {
-    *gate = Gate(time, locations[0], locations[1],
-                 GetMatrix(exponent, global_shift));
-  } else {
-    *gate = Gate(time, locations[1], locations[0],
-                 GetMatrix(exponent, global_shift));
-    gate->ConjugateBySwap();
-  }
+  *gate = Gate(time, locations[0], locations[1],
+               GetMatrix(exponent, global_shift));
   return Status::OK();
 }
 
@@ -270,14 +264,8 @@ Status TwoQubitPhasedGateBuilder::Build(
   phase_exponent =
       itr_phase_exponent->second * itr_phase_exponent_scalar->second;
   global_shift = itr_global_shift->second;
-  if (locations[0] < locations[1]) {
-    *gate = Gate(time, locations[0], locations[1],
-                 GetMatrix(exponent, phase_exponent, global_shift));
-  } else {
-    *gate = Gate(time, locations[1], locations[0],
-                 GetMatrix(exponent, phase_exponent, global_shift));
-    gate->ConjugateBySwap();
-  }
+  *gate = Gate(time, locations[0], locations[1],
+               GetMatrix(exponent, phase_exponent, global_shift));
   return Status::OK();
 }
 
@@ -293,14 +281,7 @@ Status TwoQubitConstantGateBuilder::Build(
                   "Constant gates take no arguments, " +
                       std::to_string(args.size()) + " were given.");
   }
-
-  if (locations[0] < locations[1]) {
-    *gate = Gate(time, locations[0], locations[1], GetMatrix());
-  } else {
-    *gate = Gate(time, locations[1], locations[0], GetMatrix());
-    gate->ConjugateBySwap();
-  }
-
+  *gate = Gate(time, locations[0], locations[1], GetMatrix());
   return Status::OK();
 }
 
@@ -528,13 +509,7 @@ Status FSimGateBuilder::Build(
   }
   theta = itr_theta->second * itr_theta_scalar->second;
   phi = itr_phi->second * itr_phi_scalar->second;
-
-  if (locations[0] < locations[1]) {
-    *gate = Gate(time, locations[0], locations[1], GetMatrix(theta, phi));
-  } else {
-    *gate = Gate(time, locations[1], locations[0], GetMatrix(theta, phi));
-    gate->ConjugateBySwap();
-  }
+  *gate = Gate(time, locations[0], locations[1], GetMatrix(theta, phi));
   return Status::OK();
 }
 

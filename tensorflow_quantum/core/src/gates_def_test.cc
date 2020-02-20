@@ -63,6 +63,21 @@ TEST(GatesDefTest, GateConstructors) {
   for (int i = 0; i < 32; i++) {
     EXPECT_EQ(gate2q.matrix[i], matrix2q[i]);
   }
+
+  // Confirm swapping in constructor
+  const std::array<float, 32> matrix_original{
+    0,  0.5, 1, 1.5, 2, 2.5, 3, 3.5,
+    4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5,
+    8, 8.5, 9, 9.5, 10, 10.5, 11, 11.5,
+    12, 12.5, 13, 13.5, 14, 14.5, 15, 15.5};
+  const std::array<float, 32> matrix_swapped{
+    0,  0.5, 2, 2.5, 1, 1.5, 3, 3.5,
+    8, 8.5, 10, 10.5, 9, 9.5, 11, 11.5,
+    4, 4.5, 6, 6.5, 5, 5.5, 7, 7.5,
+    12, 12.5, 14, 14.5, 13, 13.5, 15, 15.5};
+  Gate gate_original(0, 1, 2, matrix_original);
+  Gate gate_swapped(0, 2, 1, matrix_swapped);
+  EXPECT_EQ(gate_original, gate_swapped);
 }
 
 TEST(GatesDefTest, GateEquality) {
