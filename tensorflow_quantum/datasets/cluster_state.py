@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""Some basic datasets related to cluster states."""
+"""Toy dataset showing boilerplate code for a cluster state example."""
 import numpy as np
 import cirq
 
@@ -25,6 +25,9 @@ def excited_cluster_states(qubits):
     it to the return dataset. Finally a cluster state circuit on `qubits` that
     doesn't contain any `cirq.X` gates with a label of -1 will be added to the
     returned dataset.
+
+    Note: This is a toy dataset who's source code can serve as guidance for
+    the community to contribute new datasets to TensorFlow Quantum.
 
 
     >>> circuits, labels = tfq.datasets.excited_cluster_states(
