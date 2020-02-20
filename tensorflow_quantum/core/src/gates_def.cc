@@ -22,6 +22,7 @@ limitations under the License.
 
 #include "absl/container/flat_hash_map.h"
 #include "tensorflow/core/lib/core/status.h"
+#include "tensorflow_quantum/core/src/matrix.h"
 
 namespace tfq {
 namespace {
@@ -90,6 +91,10 @@ Gate::Gate(const unsigned int time_in, const unsigned int q1,
   qubits[0] = q1;
   qubits[1] = q2;
   std::copy(matrix_in.begin(), matrix_in.end(), matrix.begin());
+  if (q1 < q2) {
+    std::swap(qubits[0], qubits[1]);
+    Matrix4Permute(matrix)
+  }
 }
 
 bool operator==(const Gate& l, const Gate& r) {
