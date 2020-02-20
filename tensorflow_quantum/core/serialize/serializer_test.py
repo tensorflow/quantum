@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 """Module to test serialization core."""
+import copy
 import numpy as np
 import sympy
 import tensorflow as tf
@@ -611,6 +612,8 @@ class SerializerTest(tf.test.TestCase, parameterized.TestCase):
         simple_circuit = cirq.Circuit(cirq.H(q0), cirq.measure(q0), cirq.H(q1),
                                       cirq.Z(q1), cirq.measure(q1))
 
+        simple_circuit_before_call = copy.deepcopy(simple_circuit)
+
         expected_circuit = cirq.Circuit(cirq.Moment([cirq.H(q0),
                                                      cirq.H(q1)]),
                                         cirq.Moment([cirq.Z(q1)]),
@@ -619,8 +622,12 @@ class SerializerTest(tf.test.TestCase, parameterized.TestCase):
         self.assertEqual(serializer.serialize_circuit(simple_circuit),
                          serializer.serialize_circuit(expected_circuit))
 
+        # Check that serialization didn't modify existing circuit.
+        self.assertEqual(simple_circuit, simple_circuit_before_call)
+
         invalid_circuit = cirq.Circuit(cirq.H(q0), cirq.measure(q0),
                                        cirq.measure(q0))
+
         with self.assertRaisesRegex(ValueError, expected_regex="non-terminal"):
             serializer.serialize_circuit(invalid_circuit)
 
