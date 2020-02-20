@@ -112,12 +112,12 @@ tensorflow::Status Gate::ConjugateBySwap() {
 }
 
 void Gate::SwapIndices(unsigned int i, unsigned int j) {
-  float temp(matrix.at(2*i));
-  matrix.at(2*i) = matrix.at(2*j);
-  matrix.at(2*j) = temp;
-  temp = matrix.at(2*i + 1);
-  matrix.at(2*i + 1) = matrix.at(2*j + 1);
-  matrix.at(2*j + 1) = temp;
+  float temp(matrix.at(2 * i));
+  matrix.at(2 * i) = matrix.at(2 * j);
+  matrix.at(2 * j) = temp;
+  temp = matrix.at(2 * i + 1);
+  matrix.at(2 * i + 1) = matrix.at(2 * j + 1);
+  matrix.at(2 * j + 1) = temp;
 }
 
 bool operator==(const Gate& l, const Gate& r) {
@@ -555,8 +555,7 @@ Status FSimGateBuilder::Build(
   if (locations[0] < locations[1]) {
     *gate = Gate(time, locations[0], locations[1], GetMatrix(theta, phi));
   } else {
-    *gate =
-        Gate(time, locations[1], locations[0], GetMatrix(theta, phi));
+    *gate = Gate(time, locations[1], locations[0], GetMatrix(theta, phi));
     gate->ConjugateBySwap();
   }
   return Status::OK();

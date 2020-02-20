@@ -70,9 +70,10 @@ TEST(GatesDefTest, GateConjugateBySwapInvalid) {
   const unsigned int q1 = 53;
   const std::array<float, 8> matrix{0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7};
   Gate gate(time, q1, matrix);
-  EXPECT_EQ(gate.ConjugateBySwap(), tensorflow::Status(
-      tensorflow::error::INVALID_ARGUMENT,
-      "Swap conjugation can only be performed on two-qubit gates."));
+  EXPECT_EQ(gate.ConjugateBySwap(),
+            tensorflow::Status(
+                tensorflow::error::INVALID_ARGUMENT,
+                "Swap conjugation can only be performed on two-qubit gates."));
 }
 
 TEST(GatesDefTest, GateConjugateBySwap) {
