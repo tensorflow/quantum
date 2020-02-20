@@ -26,8 +26,8 @@ def excited_cluster_states(qubits):
     doesn't contain any `cirq.X` gates with a label of -1 will be added to the
     returned dataset.
 
-    Note: This is a toy dataset who's source code can serve as guidance for
-    the community to contribute new datasets to TensorFlow Quantum.
+    Note: This is a toy dataset that can serve as guidance for the community
+    to contribute new datasets to TensorFlow Quantum.
 
 
     >>> circuits, labels = tfq.datasets.excited_cluster_states(

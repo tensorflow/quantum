@@ -12,6 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""Future location for more interesting quantum datasets."""
+"""Experimental location for interesting quantum datasets."""
 # Import to the tensorflow_quantum.datasets.* level."""
 from tensorflow_quantum.datasets.cluster_state import excited_cluster_states
