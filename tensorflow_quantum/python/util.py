@@ -24,44 +24,25 @@ import cirq
 from tensorflow_quantum.core.proto import pauli_sum_pb2
 from tensorflow_quantum.core.serialize import serializer
 
-def _r_angle():
-    return 2*np.pi*random.random()
 
-def _r_exponent():
-    return random.uniform(-2.5, 2.5)
-
-def get_supported_gates(num_iters=1):
-    """A helper to get the gates supported by tfq.
-
-    Args:
-        num_iters: `int` which controls the number of times to add gates from
-            the allowed gate set.  The first iteration adds one of each gate,
-            where each parameterizable gate has a random parameter value added.
-            Subsequent iterations add new copies of all non-constant gates, with
-            newly randomized parameters.
-
-    Returns:
-        gate_arity_mapping_dict: Python `dict` mapping gates to the number of
-            qubits to which the gate can be appllied
-    """
+def get_supported_gates():
+    """A helper to get the gates supported by tfq."""
     supported_gates = serializer.SERIALIZER.supported_gate_types()
     gate_arity_mapping_dict = dict()
-    for _ in range(num_iters):
-        for gate in supported_gates:
-            if gate in serializer.EIGEN_GATES_DICT:
-                g = gate(exponent=_r_exponent(), global_shift=_r_exponent())
-                g_num_qubits = g.num_qubits()
-            elif gate is cirq.FSimGate:
-                g_num_qubits = 2
-                g = gate(theta=_r_angle(), phi=_r_angle())
-            elif gate in serializer.PHASED_EIGEN_GATES_DICT:
-                g = gate(phase_exponent=_r_exponent())
-                g_num_qubits = g.num_qubits()
-            else:
-                raise NotImplementedError(
-                    "There is a gate type not accounted for: "
-                    "{}".format(type(gate)))
-            gate_arity_mapping_dict[g] = g_num_qubits
+    for gate in supported_gates:
+        if gate is cirq.IdentityGate:
+            g_num_qubits = 1
+            g = gate(num_qubits=1)
+        elif gate is cirq.FSimGate:
+            g_num_qubits = 2
+            g = gate(theta=0.123, phi=0.456)
+        elif gate in serializer.PHASED_EIGEN_GATES_DICT:
+            g = gate(phase_exponent=0.123)
+            g_num_qubits = g.num_qubits()
+        else:
+            g = gate()
+            g_num_qubits = gate().num_qubits()
+        gate_arity_mapping_dict[g] = g_num_qubits
     return gate_arity_mapping_dict
 
 
