@@ -22,6 +22,7 @@ from tensorflow_quantum.python import util
 from tensorflow_quantum.core.ops import tfq_simulate_ops
 from tensorflow_quantum.python import util
 
+
 class SimulateExpectationTest(tf.test.TestCase):
     """Tests tfq_simulate_expectation."""
 
