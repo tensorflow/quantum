@@ -254,9 +254,11 @@ Status TwoQubitPhasedGateBuilder::Build(
   const auto itr_exponent_scalar = args.find("exponent_scalar");
   const auto itr_phase_exponent_scalar = args.find("phase_exponent_scalar");
   if (itr_exponent == args.end() || itr_global_shift == args.end() ||
-      itr_exponent_scalar == args.end()) {
+      itr_exponent_scalar == args.end() ||
+      itr_phase_exponent_scalar == args.end()) {
     return Status(tensorflow::error::INVALID_ARGUMENT,
-                  "Eigen gates require exponent and global_shift args.");
+                  "Phased Eigen gates require exponent, phase_exponent "
+                  "and global_shift args.");
   }
   exponent = itr_exponent->second * itr_exponent_scalar->second;
   phase_exponent =
@@ -525,11 +527,12 @@ Matrix2q PhasedISwapPowGateBuilder::GetMatrix(const float exponent,
   const std::complex<float> ur = minus * f;
   const std::complex<float> bl = minus * f_star;
 
-  return {
-      {g.real(),  g.imag(),    0,           0,           0,         0, 0, 0, 0,
-       0,         plus.real(), plus.imag(), ur.real(),   ur.imag(), 0, 0, 0, 0,
-       bl.real(), bl.imag(),   plus.real(), plus.imag(), 0,         0, 0, 0, 0,
-       0,         0,           0,           g.real(),    g.imag()}};
+  // clang-format off
+  return {{g.real(), g.imag(), 0, 0, 0, 0, 0, 0,
+           0, 0, plus.real(), plus.imag(), ur.real(), ur.imag(), 0, 0,
+           0, 0, bl.real(), bl.imag(), plus.real(), plus.imag(), 0, 0,
+           0, 0, 0, 0, 0, 0, g.real(), g.imag()}};
+  // clang-format on
 }
 
 Matrix2q PhasedISwapPowGateBuilder::GetSwappedMatrix(const float exponent,
@@ -545,11 +548,12 @@ Matrix2q PhasedISwapPowGateBuilder::GetSwappedMatrix(const float exponent,
   const std::complex<float> ur = minus * f;
   const std::complex<float> bl = minus * f_star;
 
-  return {
-      {g.real(),  g.imag(),    0,           0,           0,         0, 0, 0, 0,
-       0,         plus.real(), plus.imag(), bl.real(),   bl.imag(), 0, 0, 0, 0,
-       ur.real(), ur.imag(),   plus.real(), plus.imag(), 0,         0, 0, 0, 0,
-       0,         0,           0,           g.real(),    g.imag()}};
+  // clang-format off
+  return {{g.real(), g.imag(), 0, 0, 0, 0, 0, 0,
+           0, 0, plus.real(), plus.imag(), bl.real(), bl.imag(), 0, 0,
+           0, 0, ur.real(), ur.imag(), plus.real(), plus.imag(), 0, 0,
+           0, 0, 0, 0, 0, 0, g.real(), g.imag()}};
+  // clang-format on
 }
 
 Matrix2q I2GateBuilder::GetMatrix() {

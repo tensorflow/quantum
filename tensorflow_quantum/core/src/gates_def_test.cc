@@ -672,6 +672,7 @@ TEST(GatesDefTest, PhasedISwapPow) {
   arg_map["exponent"] = 1.0;
   arg_map["exponent_scalar"] = 1.0;
   arg_map["phase_exponent"] = 0.0;
+  arg_map["phase_exponent_scalar"] = 1.0;
   Gate test_gate;
   ASSERT_EQ(builder.Build(time, locations, arg_map, &test_gate),
             tensorflow::Status::OK());
