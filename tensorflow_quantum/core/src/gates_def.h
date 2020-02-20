@@ -125,6 +125,20 @@ class TwoQubitGateBuilder : public GateBuilder {
                                     const float global_shift) = 0;
 };
 
+class TwoQubitPhasedGateBuilder : public GateBuilder {
+ public:
+  virtual tensorflow::Status Build(
+      const unsigned int time, const std::vector<unsigned int>& locations,
+      const absl::flat_hash_map<std::string, float>& args, Gate* gate) override;
+
+  virtual Matrix2q GetMatrix(const float exponent, const float phase_exponent,
+                             const float global_shift) = 0;
+
+  virtual Matrix2q GetSwappedMatrix(const float exponent,
+                                    const float phase_exponent,
+                                    const float global_shift) = 0;
+};
+
 class TwoQubitConstantGateBuilder : public GateBuilder {
  public:
   virtual tensorflow::Status Build(
@@ -224,6 +238,14 @@ class ISwapPowGateBuilder : public TwoQubitGateBuilder {
   Matrix2q GetMatrix(const float exponent, const float global_shift) override;
 
   Matrix2q GetSwappedMatrix(const float exponent,
+                            const float global_shift) override;
+};
+
+class PhasedISwapPowGateBuilder : public TwoQubitPhasedGateBuilder {
+ public:
+  Matrix2q GetMatrix(const float exponent, const float phase_exponent,
+                     const float global_shift) override;
+  Matrix2q GetSwappedMatrix(const float exponent, const float phase_exponent,
                             const float global_shift) override;
 };
 
