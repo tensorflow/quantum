@@ -19,6 +19,8 @@ limitations under the License.
 #include <iostream>
 #include <vector>
 
+#include "tensorflow_quantum/core/src/gates_def.h"
+
 namespace tfq {
 
 // Routines for 2x2 complex matrices.
@@ -194,7 +196,7 @@ inline void Matrix4Multiply(const Array1& u, Array2& mat) {
 }
 
 // Calculate 4x4 fused gate matrix.
-template <typename Gate, typename Array2>
+template <typename Array2>
 inline void CalcMatrix4(unsigned q0, unsigned q1,
                         const std::vector<Gate*>& gates, Array2& mat) {
   Matrix4SetId(mat);

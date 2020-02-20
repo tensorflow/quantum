@@ -22,6 +22,7 @@ limitations under the License.
 #include <vector>
 
 #include "gtest/gtest.h"
+#include "tensorflow_quantum/core/src/gates_def.h"
 
 namespace tfq {
 
@@ -242,8 +243,32 @@ TEST(MatrixTest, Calc4Matrix) {
   // | 1  0  0  0 |
   // | 0  0 -1  0 |
   // | 0  0  0 -1 |
+  const Matrix1q x_mat{0, 0, 1, 0, 1, 0, 0, 0};
+  const Matrix1q z_mat{1, 0, 0, 0, 0, 0, -1, 0};
+  // clang-format off
+  const Matrix2q cnot_mat{1, 0, 0, 0, 0, 0, 0, 0,
+                          0, 0, 1, 0, 0, 0, 0, 0,
+                          0, 0, 0, 0, 0, 0, 1, 0,
+                          0, 0, 0, 0, 1, 0, 0, 0};
+  const Matrix2q expected_mat{0, 0, 1, 0, 0, 0, 0, 0,
+                              1, 0, 0, 0, 0, 0, 0, 0,
+                              0, 0, 0, 0, -1, 0, 0, 0,
+                              0, 0, 0, 0, 0, 0, -1, 0};
+  // clang-format on
+  Gate x_gate(0, 0, x_mat);
+  Gate z_gate(1, 1, z_mat);
+  Gate cnot_gate(2, 0, 1, cnot_mat);
 
+  std::vector<Gate*> gates;
+  gates.push_back(&x_gate);
+  gates.push_back(&z_gate);
+  gates.push_back(&cnot_gate);
 
+  Matrix2q test_mat;
+  CalcMatrix4(0, 1, gates, test_mat);
+  for (int i = 0; i < 32; i++) {
+    EXPECT_EQ(test_mat[i], expected_mat[i]);
+  }
 }
 
 TEST(MatrixTest, Matrix4Permute) {
