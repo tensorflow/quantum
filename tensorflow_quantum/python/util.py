@@ -37,7 +37,7 @@ def get_supported_gates(num_iters=1):
         num_iters: `int` which controls the number of times to add gates from
             the allowed gate set.  The first iteration adds one of each gate,
             where each parameterizable gate has a random parameter value added.
-            Subsequent iterations add new copies of all non-constant gates with
+            Subsequent iterations add new copies of all non-constant gates, with
             newly randomized parameters.
 
     Returns:
