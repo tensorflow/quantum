@@ -65,6 +65,38 @@ TEST(GatesDefTest, GateConstructors) {
   }
 }
 
+TEST(GatesDefTest, GateConjugateBySwapInvalid) {
+  const unsigned int time = 256;
+  const unsigned int q1 = 53;
+  const std::array<float, 8> matrix{0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7};
+  Gate gate(time, q1, matrix);
+  EXPECT_EQ(gate.ConjugateBySwap(), tensorflow::Status(
+      tensorflow::error::INVALID_ARGUMENT,
+      "Swap conjugation can only be performed on two-qubit gates."));
+}
+
+TEST(GatesDefTest, GateConjugateBySwap) {
+  const unsigned int time = 512;
+  const unsigned int q1 = 53;
+  const unsigned int q2 = 256;
+  // clang-format off
+  const std::array<float, 32> matrix{
+    0,  0.5, 1, 1.5, 2, 2.5, 3, 3.5,
+    4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5,
+    8, 8.5, 9, 9.5, 10, 10.5, 11, 11.5,
+    12, 12.5, 13, 13.5, 14, 14.5, 15, 15.5};
+  const std::array<float, 32> matrix_swapped{
+    0,  0.5, 2, 2.5, 1, 1.5, 3, 3.5,
+    8, 8.5, 10, 10.5, 9, 9.5, 11, 11.5,
+    4, 4.5, 6, 6.5, 5, 5.5, 7, 7.5,
+    12, 12.5, 14, 14.5, 13, 13.5, 15, 15.5};
+  // clang-format on
+  Gate gate(time, q1, q2, matrix);
+  Gate gate_swapped(time, q1, q2, matrix_swapped);
+  EXPECT_EQ(gate.ConjugateBySwap(), tensorflow::Status::OK());
+  EXPECT_EQ(gate, gate_swapped);
+}
+
 TEST(GatesDefTest, GateEquality) {
   // Empty gate
   Gate test_gate_0q, real_gate_0q;

@@ -97,6 +97,10 @@ tensorflow::Status Gate::ConjugateBySwap() {
   //  | 4  5  6  7  |      | 8  10 9  11 |
   //  | 8  9  10 11 | ---> | 4  6  5  7  |
   //  | 12 13 14 15 |      | 12 14 13 15 |
+  if (num_qubits != 2) {
+    return Status(tensorflow::error::INVALID_ARGUMENT,
+                  "Swap conjugation can only be performed on two-qubit gates.");
+  }
   SwapIndices(1, 2);
   SwapIndices(4, 8);
   SwapIndices(7, 11);
