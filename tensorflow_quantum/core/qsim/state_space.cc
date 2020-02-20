@@ -67,13 +67,11 @@ tensorflow::Status StateSpace::Update(const Circuit& circuit) {
 }
 
 tensorflow::Status StateSpace::ComputeExpectation(
-    const tfq::proto::PauliSum& p_sum, float* expectation_value) {
-  // apply the  gates of the pauliterms to a new copy of the wavefunction
+    const tfq::proto::PauliSum& p_sum, StateSpace* scratch,
+    float* expectation_value) {
+  // apply the  gates of the pauliterms to a copy of the wavefunction
   // and add up expectation value term by term.
   tensorflow::Status status = tensorflow::Status::OK();
-  std::unique_ptr<StateSpace> transformed_state =
-      std::unique_ptr<StateSpace>(Clone());
-  transformed_state->CreateState();
   for (const tfq::proto::PauliTerm& term : p_sum.terms()) {
     // catch identity terms
     if (term.paulis_size() == 0) {
@@ -88,13 +86,13 @@ tensorflow::Status StateSpace::ComputeExpectation(
     if (!status.ok()) {
       return status;
     }
-    transformed_state->CopyFrom(*this);
-    status = transformed_state->Update(measurement_circuit);
+    scratch->CopyFrom(*this);
+    status = scratch->Update(measurement_circuit);
     if (!status.ok()) {
       return status;
     }
     *expectation_value +=
-        term.coefficient_real() * GetRealInnerProduct(*transformed_state);
+        term.coefficient_real() * GetRealInnerProduct(*scratch);
   }
   return status;
 }
