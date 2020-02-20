@@ -91,6 +91,8 @@ Gate::Gate(const unsigned int time_in, const unsigned int q1,
   qubits[0] = q1;
   qubits[1] = q2;
   std::copy(matrix_in.begin(), matrix_in.end(), matrix.begin());
+  // The simulators expect qubits to be in ascending order.
+  // To correct for this we swap the qubits, then permute the matrix accordingly
   if (q2 < q1) {
     std::swap(qubits[0], qubits[1]);
     Matrix4Permute(matrix);
