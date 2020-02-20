@@ -22,10 +22,7 @@ _PARAMETER_IMPURITY_NAME = '_param_shift'
 
 
 @tf.function
-def parse_programs(programs,
-                   symbol_names,
-                   symbol_values,
-                   n_symbols,
+def parse_programs(programs, symbol_names, symbol_values, n_symbols,
                    n_shifts=2):
     """Helper function to get parameter-shifted programs after parsing programs.
 
