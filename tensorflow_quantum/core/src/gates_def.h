@@ -51,7 +51,15 @@ class Gate {
   Gate(const unsigned int time_in, const unsigned int q1, const unsigned int q2,
        const std::array<float, 32>& matrix_in);
 
+  // Conjugate the gate matrix by Swap. This simulates changing the qubit order.
+  // If num_qubits != 2, returns an error.
+  tensorflow::Status ConjugateBySwap();
+
   ~Gate() {}
+
+ private:
+  // Swaps entry at matrix array location i with the entry at matrix location j
+  void SwapIndices(unsigned int i, unsigned int j);
 };
 
 bool operator==(const Gate& l, const Gate& r);

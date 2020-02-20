@@ -91,6 +91,30 @@ Gate::Gate(const unsigned int time_in, const unsigned int q1,
   std::copy(matrix_in.begin(), matrix_in.end(), matrix.begin());
 }
 
+tensorflow::Status Gate::ConjugateBySwap() {
+  // Conjugation by swap gate:
+  //  | 0  1  2  3  |      | 0  2  1  3  |
+  //  | 4  5  6  7  |      | 8  10 9  11 |
+  //  | 8  9  10 11 | ---> | 4  6  5  7  |
+  //  | 12 13 14 15 |      | 12 14 13 15 |
+  SwapIndices(1, 2);
+  SwapIndices(4, 8);
+  SwapIndices(7, 11);
+  SwapIndices(13, 14);
+  SwapIndices(5, 10);
+  SwapIndices(6, 9);
+  return Status::OK();
+}
+
+void Gate::SwapIndices(unsigned int i, unsigned int j) {
+  float temp(matrix.at(2*i));
+  matrix.at(2*i) = matrix.at(2*j);
+  matrix.at(2*j) = temp;
+  temp = matrix.at(2*i + 1);
+  matrix.at(2*i + 1) = matrix.at(2*j + 1);
+  matrix.at(2*j + 1) = temp;
+}
+
 bool operator==(const Gate& l, const Gate& r) {
   if (l.time != r.time) {
     return false;
