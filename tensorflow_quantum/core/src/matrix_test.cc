@@ -233,6 +233,19 @@ TEST(MatrixTest, Matrix4Multiply) {
   }
 }
 
+TEST(MatrixTest, Calc4Matrix) {
+  // Build a test circuit that goes through all three mul types:
+  // q0 -- X --   -- |CNOT|
+  // q1 --   -- Z -- |CNOT|
+  // Associated matrix:
+  // | 0  1  0  0 |
+  // | 1  0  0  0 |
+  // | 0  0 -1  0 |
+  // | 0  0  0 -1 |
+
+
+}
+
 TEST(MatrixTest, Matrix4Permute) {
   // Conjugation by swap gate:
   //  | 0  1  2  3  |      | 0  2  1  3  |
