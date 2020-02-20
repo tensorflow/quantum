@@ -14,8 +14,8 @@
 # ==============================================================================
 """A basic serializer used to serialize/deserialize Cirq circuits for tfq."""
 # TODO(pmassey / anyone): determine if this should be kept as globals.
+import copy
 import numbers
-
 import sympy
 
 import cirq
@@ -320,7 +320,7 @@ SERIALIZER = cirq.google.SerializableGateSet(gate_set_name="tfq_gate_set",
                                              deserializers=DESERIALIZERS)
 
 
-def serialize_circuit(circuit):
+def serialize_circuit(circuit_inp):
     """Returns a `cirq.Program` proto representing the `cirq.Circuit`.
 
     Note that the circuit must use gates valid in the tfq_gate_set.
@@ -330,12 +330,15 @@ def serialize_circuit(circuit):
     we use the `cirq.Program` proto, we only support `cirq.GridQubit` instances
     during serialization of circuits.
 
+    Note: once serialized terminal measurements are removed.
+
     Args:
-        circuit: A `cirq.Circuit`.
+        circuit_inp: A `cirq.Circuit`.
 
     Returns:
         A `cirq.google.api.v2.Program` proto.
     """
+    circuit = copy.deepcopy(circuit_inp)
     if not isinstance(circuit, cirq.Circuit):
         raise TypeError("serialize requires cirq.Circuit objects."
                         " Given: " + str(type(circuit)))
