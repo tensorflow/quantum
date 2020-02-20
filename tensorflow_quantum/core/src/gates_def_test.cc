@@ -426,16 +426,6 @@ TEST(GatesDefTest, XXPow) {
   ASSERT_EQ(builder.Build(time, locations, arg_map, &test_gate),
             tensorflow::Status::OK());
   ASSERT_EQ(test_gate, real_gate);
-
-  // Confirm correct swapped gate; swapped gate matrix is the same for XXPow.
-  Gate real_gate_swap(time, q1, q2, matrix);
-  Gate test_gate_swap;
-  std::vector<unsigned int> locations_reverse;
-  locations_reverse.push_back(q2);
-  locations_reverse.push_back(q1);
-  ASSERT_EQ(builder.Build(time, locations_reverse, arg_map, &test_gate_swap),
-            tensorflow::Status::OK());
-  ASSERT_EQ(test_gate_swap, real_gate_swap);
 }
 
 TEST(GatesDefTest, YYPow) {
@@ -463,16 +453,6 @@ TEST(GatesDefTest, YYPow) {
   ASSERT_EQ(builder.Build(time, locations, arg_map, &test_gate),
             tensorflow::Status::OK());
   ASSERT_EQ(test_gate, real_gate);
-
-  // Confirm correct swapped gate; swapped gate matrix is the same for YYPow.
-  Gate real_gate_swap(time, q1, q2, matrix);
-  Gate test_gate_swap;
-  std::vector<unsigned int> locations_reverse;
-  locations_reverse.push_back(q2);
-  locations_reverse.push_back(q1);
-  ASSERT_EQ(builder.Build(time, locations_reverse, arg_map, &test_gate_swap),
-            tensorflow::Status::OK());
-  ASSERT_EQ(test_gate_swap, real_gate_swap);
 }
 
 TEST(GatesTest, ZZPow) {
@@ -500,16 +480,6 @@ TEST(GatesTest, ZZPow) {
   ASSERT_EQ(builder.Build(time, locations, arg_map, &test_gate),
             tensorflow::Status::OK());
   ASSERT_EQ(test_gate, real_gate);
-
-  // Confirm correct swapped gate; swapped gate matrix is the same for ZZPow.
-  Gate real_gate_swap(time, q1, q2, matrix);
-  Gate test_gate_swap;
-  std::vector<unsigned int> locations_reverse;
-  locations_reverse.push_back(q2);
-  locations_reverse.push_back(q1);
-  ASSERT_EQ(builder.Build(time, locations_reverse, arg_map, &test_gate_swap),
-            tensorflow::Status::OK());
-  ASSERT_EQ(test_gate_swap, real_gate_swap);
 }
 
 TEST(GatesDefTest, CZPow) {
@@ -537,16 +507,6 @@ TEST(GatesDefTest, CZPow) {
   ASSERT_EQ(builder.Build(time, locations, arg_map, &test_gate),
             tensorflow::Status::OK());
   ASSERT_EQ(test_gate, real_gate);
-
-  // Confirm correct swapped gate; swapped gate matrix is the same for CZPow.
-  Gate real_gate_swap(time, q1, q2, matrix);
-  Gate test_gate_swap;
-  std::vector<unsigned int> locations_reverse;
-  locations_reverse.push_back(q2);
-  locations_reverse.push_back(q1);
-  ASSERT_EQ(builder.Build(time, locations_reverse, arg_map, &test_gate_swap),
-            tensorflow::Status::OK());
-  ASSERT_EQ(test_gate_swap, real_gate_swap);
 }
 
 TEST(GatesDefTest, CNotPow) {
@@ -574,22 +534,6 @@ TEST(GatesDefTest, CNotPow) {
   ASSERT_EQ(builder.Build(time, locations, arg_map, &test_gate),
             tensorflow::Status::OK());
   ASSERT_EQ(test_gate, real_gate);
-
-  // Confirm correct swapped gate.
-  // clang-format off
-  std::array<float, 32> matrix_swap{1, 0, 0, 0, 0, 0, 0, 0,
-                                    0, 0, 0, 0, 0, 0, 1, 0,
-                                    0, 0, 0, 0, 1, 0, 0, 0,
-                                    0, 0, 1, 0, 0, 0, 0, 0};
-  // clang-format on
-  Gate real_gate_swap(time, q1, q2, matrix_swap);
-  Gate test_gate_swap;
-  std::vector<unsigned int> locations_reverse;
-  locations_reverse.push_back(q2);
-  locations_reverse.push_back(q1);
-  ASSERT_EQ(builder.Build(time, locations_reverse, arg_map, &test_gate_swap),
-            tensorflow::Status::OK());
-  ASSERT_EQ(test_gate_swap, real_gate_swap);
 }
 
 TEST(GatesDefTest, SwapPow) {
@@ -617,16 +561,6 @@ TEST(GatesDefTest, SwapPow) {
   ASSERT_EQ(builder.Build(time, locations, arg_map, &test_gate),
             tensorflow::Status::OK());
   ASSERT_EQ(test_gate, real_gate);
-
-  // Confirm correct swapped gate; swapped gate matrix is the same for SwapPow.
-  Gate real_gate_swap(time, q1, q2, matrix);
-  Gate test_gate_swap;
-  std::vector<unsigned int> locations_reverse;
-  locations_reverse.push_back(q2);
-  locations_reverse.push_back(q1);
-  ASSERT_EQ(builder.Build(time, locations_reverse, arg_map, &test_gate_swap),
-            tensorflow::Status::OK());
-  ASSERT_EQ(test_gate_swap, real_gate_swap);
 }
 
 TEST(GatesDefTest, ISwapPow) {
@@ -654,16 +588,6 @@ TEST(GatesDefTest, ISwapPow) {
   ASSERT_EQ(builder.Build(time, locations, arg_map, &test_gate),
             tensorflow::Status::OK());
   ASSERT_EQ(test_gate, real_gate);
-
-  // Confirm correct swapped gate; swapped gate matrix is the same for SwapPow.
-  Gate real_gate_swap(time, q1, q2, matrix);
-  Gate test_gate_swap;
-  std::vector<unsigned int> locations_reverse;
-  locations_reverse.push_back(q2);
-  locations_reverse.push_back(q1);
-  ASSERT_EQ(builder.Build(time, locations_reverse, arg_map, &test_gate_swap),
-            tensorflow::Status::OK());
-  ASSERT_EQ(test_gate_swap, real_gate_swap);
 }
 
 TEST(GatesDefTest, PhasedISwapPow) {
@@ -694,16 +618,6 @@ TEST(GatesDefTest, PhasedISwapPow) {
   ASSERT_EQ(builder.Build(time, locations, arg_map, &test_gate),
             tensorflow::Status::OK());
   ASSERT_EQ(test_gate, real_gate);
-
-  // Confirm correct swapped gate; swapped gate matrix is the same for SwapPow.
-  Gate real_gate_swap(time, q1, q2, matrix);
-  Gate test_gate_swap;
-  std::vector<unsigned int> locations_reverse;
-  locations_reverse.push_back(q2);
-  locations_reverse.push_back(q1);
-  ASSERT_EQ(builder.Build(time, locations_reverse, arg_map, &test_gate_swap),
-            tensorflow::Status::OK());
-  ASSERT_EQ(test_gate_swap, real_gate_swap);
 }
 
 TEST(GatesDefTest, I2) {
@@ -727,16 +641,6 @@ TEST(GatesDefTest, I2) {
   ASSERT_EQ(builder.Build(time, locations, arg_map, &test_gate),
             tensorflow::Status::OK());
   ASSERT_EQ(test_gate, real_gate);
-
-  // Swap of identity is the same
-  Gate real_gate_swap(time, q1, q2, matrix);
-  Gate test_gate_swap;
-  std::vector<unsigned int> locations_reverse;
-  locations_reverse.push_back(q2);
-  locations_reverse.push_back(q1);
-  ASSERT_EQ(builder.Build(time, locations_reverse, arg_map, &test_gate_swap),
-            tensorflow::Status::OK());
-  ASSERT_EQ(test_gate_swap, real_gate_swap);
 }
 
 TEST(GatesDefTest, FSim) {
@@ -783,16 +687,6 @@ TEST(GatesDefTest, FSim) {
     ASSERT_EQ(builder.Build(time, locations, arg_map, &test_gate),
               tensorflow::Status::OK());
     ASSERT_EQ(test_gate, real_gate);
-
-    // FSim gate swap is the same
-    Gate real_gate_swap(time, q1, q2, matrices.at(i));
-    Gate test_gate_swap;
-    std::vector<unsigned int> locations_reverse;
-    locations_reverse.push_back(q2);
-    locations_reverse.push_back(q1);
-    ASSERT_EQ(builder.Build(time, locations_reverse, arg_map, &test_gate_swap),
-              tensorflow::Status::OK());
-    ASSERT_EQ(test_gate_swap, real_gate_swap);
   }
 }
 
