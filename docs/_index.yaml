@@ -38,7 +38,7 @@ landing_page:
 
       code_block: |
         <pre class = "prettyprint">
-        # A simple hybrid quantum-classical model.
+        # A hybrid quantum-classical model.
         model = tf.keras.Sequential([
             # Quantum circuit data comes in inside of tensors.
             tf.keras.Input(shape=(), dtype=tf.dtypes.string),
