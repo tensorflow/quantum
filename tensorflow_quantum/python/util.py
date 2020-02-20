@@ -35,9 +35,9 @@ def get_supported_gates():
             g = gate(num_qubits=1)
         elif gate is cirq.FSimGate:
             g_num_qubits = 2
-            g = gate(theta=1, phi=1)
+            g = gate(theta=0.123, phi=0.456)
         elif gate in serializer.PHASED_EIGEN_GATES_DICT:
-            g = gate(phase_exponent=1.0)
+            g = gate(phase_exponent=0.123)
             g_num_qubits = g.num_qubits()
         else:
             g = gate()
