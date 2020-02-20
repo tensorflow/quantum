@@ -232,8 +232,8 @@ Status TwoQubitGateBuilder::Build(
   }
   exponent = itr_exponent->second * itr_exponent_scalar->second;
   global_shift = itr_global_shift->second;
-  *gate = Gate(time, locations[0], locations[1],
-               GetMatrix(exponent, global_shift));
+  *gate =
+      Gate(time, locations[0], locations[1], GetMatrix(exponent, global_shift));
   return Status::OK();
 }
 
