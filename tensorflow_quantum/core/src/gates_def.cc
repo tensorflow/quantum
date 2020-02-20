@@ -260,7 +260,8 @@ Status TwoQubitGateBuilder::Build(
                  GetMatrix(exponent, global_shift));
   } else {
     *gate = Gate(time, locations[1], locations[0],
-                 GetSwappedMatrix(exponent, global_shift));
+                 GetMatrix(exponent, global_shift));
+    gate->ConjugateBySwap();
   }
   return Status::OK();
 }
@@ -297,7 +298,8 @@ Status TwoQubitPhasedGateBuilder::Build(
                  GetMatrix(exponent, phase_exponent, global_shift));
   } else {
     *gate = Gate(time, locations[1], locations[0],
-                 GetSwappedMatrix(exponent, phase_exponent, global_shift));
+                 GetMatrix(exponent, phase_exponent, global_shift));
+    gate->ConjugateBySwap();
   }
   return Status::OK();
 }
@@ -318,7 +320,8 @@ Status TwoQubitConstantGateBuilder::Build(
   if (locations[0] < locations[1]) {
     *gate = Gate(time, locations[0], locations[1], GetMatrix());
   } else {
-    *gate = Gate(time, locations[1], locations[0], GetSwappedMatrix());
+    *gate = Gate(time, locations[1], locations[0], GetMatrix());
+    gate->ConjugateBySwap();
   }
 
   return Status::OK();
@@ -407,11 +410,6 @@ Matrix2q XXPowGateBuilder::GetMatrix(const float exponent,
   // clang-format on
 }
 
-Matrix2q XXPowGateBuilder::GetSwappedMatrix(const float exponent,
-                                            const float global_shift) {
-  return GetMatrix(exponent, global_shift);
-}
-
 Matrix2q YYPowGateBuilder::GetMatrix(const float exponent,
                                      const float global_shift) {
   const std::complex<float> g = global_phase(exponent, global_shift);
@@ -428,11 +426,6 @@ Matrix2q YYPowGateBuilder::GetMatrix(const float exponent,
   // clang-format on
 }
 
-Matrix2q YYPowGateBuilder::GetSwappedMatrix(const float exponent,
-                                            const float global_shift) {
-  return GetMatrix(exponent, global_shift);
-}
-
 Matrix2q ZZPowGateBuilder::GetMatrix(const float exponent,
                                      const float global_shift) {
   const std::complex<float> g = global_phase(exponent, global_shift);
@@ -445,11 +438,6 @@ Matrix2q ZZPowGateBuilder::GetMatrix(const float exponent,
            0, 0, 0, 0, gw.real(), gw.imag(), 0, 0,
            0, 0, 0, 0, 0, 0, g.real(), g.imag()}};
   // clang-format on
-}
-
-Matrix2q ZZPowGateBuilder::GetSwappedMatrix(const float exponent,
-                                            const float global_shift) {
-  return GetMatrix(exponent, global_shift);
 }
 
 Matrix2q CZPowGateBuilder::GetMatrix(const float exponent,
@@ -466,11 +454,6 @@ Matrix2q CZPowGateBuilder::GetMatrix(const float exponent,
   // clang-format on
 }
 
-Matrix2q CZPowGateBuilder::GetSwappedMatrix(const float exponent,
-                                            const float global_shift) {
-  return GetMatrix(exponent, global_shift);
-}
-
 Matrix2q CNotPowGateBuilder::GetMatrix(const float exponent,
                                        const float global_shift) {
   const std::complex<float> g = global_phase(exponent, global_shift);
@@ -483,21 +466,6 @@ Matrix2q CNotPowGateBuilder::GetMatrix(const float exponent,
            0, 0, g.real(), g.imag(), 0, 0, 0, 0,
            0, 0, 0, 0, plus.real(), plus.imag(), minus.real(), minus.imag(),
            0, 0, 0, 0, minus.real(), minus.imag(), plus.real(), plus.imag()}};
-  // clang-format on
-}
-
-Matrix2q CNotPowGateBuilder::GetSwappedMatrix(const float exponent,
-                                              const float global_shift) {
-  const std::complex<float> g = global_phase(exponent, global_shift);
-  const std::complex<float> w = global_phase(exponent, 1);
-  const std::complex<float> plus = 0.5f * g * (1.0f + w);
-  const std::complex<float> minus = 0.5f * g * (1.0f - w);
-
-  // clang-format off
-  return {{g.real(), g.imag(), 0, 0, 0, 0, 0, 0,
-           0, 0, plus.real(), plus.imag(), 0, 0, minus.real(), minus.imag(),
-           0, 0, 0, 0, g.real(), g.imag(), 0, 0,
-           0, 0, minus.real(), minus.imag(), 0, 0, plus.real(), plus.imag()}};
   // clang-format on
 }
 
@@ -516,11 +484,6 @@ Matrix2q SwapPowGateBuilder::GetMatrix(const float exponent,
   // clang-format on
 }
 
-Matrix2q SwapPowGateBuilder::GetSwappedMatrix(const float exponent,
-                                              const float global_shift) {
-  return GetMatrix(exponent, global_shift);
-}
-
 Matrix2q ISwapPowGateBuilder::GetMatrix(const float exponent,
                                         const float global_shift) {
   const std::complex<float> g = global_phase(exponent, global_shift);
@@ -535,11 +498,6 @@ Matrix2q ISwapPowGateBuilder::GetMatrix(const float exponent,
            0, 0, minus.real(), minus.imag(), plus.real(), plus.imag(), 0, 0,
            0, 0, 0, 0, 0, 0, g.real(), g.imag()}};
   // clang-format on
-}
-
-Matrix2q ISwapPowGateBuilder::GetSwappedMatrix(const float exponent,
-                                               const float global_shift) {
-  return GetMatrix(exponent, global_shift);
 }
 
 Matrix2q PhasedISwapPowGateBuilder::GetMatrix(const float exponent,
@@ -563,27 +521,6 @@ Matrix2q PhasedISwapPowGateBuilder::GetMatrix(const float exponent,
   // clang-format on
 }
 
-Matrix2q PhasedISwapPowGateBuilder::GetSwappedMatrix(const float exponent,
-                                                     const float phase_exponent,
-                                                     const float global_shift) {
-  const std::complex<float> g = global_phase(exponent, global_shift);
-  const std::complex<float> wp = global_phase(exponent, 0.5);
-  const std::complex<float> wm = global_phase(exponent, -0.5);
-  const std::complex<float> plus = 0.5f * g * (wp + wm);
-  const std::complex<float> minus = 0.5f * g * (wp - wm);
-  const std::complex<float> f = global_phase(phase_exponent, 2.0);
-  const std::complex<float> f_star = std::conj(f);
-  const std::complex<float> ur = minus * f;
-  const std::complex<float> bl = minus * f_star;
-
-  // clang-format off
-  return {{g.real(), g.imag(), 0, 0, 0, 0, 0, 0,
-           0, 0, plus.real(), plus.imag(), bl.real(), bl.imag(), 0, 0,
-           0, 0, ur.real(), ur.imag(), plus.real(), plus.imag(), 0, 0,
-           0, 0, 0, 0, 0, 0, g.real(), g.imag()}};
-  // clang-format on
-}
-
 Matrix2q I2GateBuilder::GetMatrix() {
   // clang-format off
   static constexpr Matrix2q matrix = {{1, 0, 0, 0, 0, 0, 0, 0,
@@ -593,8 +530,6 @@ Matrix2q I2GateBuilder::GetMatrix() {
   // clang-format on
   return matrix;
 }
-
-Matrix2q I2GateBuilder::GetSwappedMatrix() { return GetMatrix(); }
 
 Status FSimGateBuilder::Build(
     const unsigned int time, const std::vector<unsigned int>& locations,
@@ -621,7 +556,8 @@ Status FSimGateBuilder::Build(
     *gate = Gate(time, locations[0], locations[1], GetMatrix(theta, phi));
   } else {
     *gate =
-        Gate(time, locations[1], locations[0], GetSwappedMatrix(theta, phi));
+        Gate(time, locations[1], locations[0], GetMatrix(theta, phi));
+    gate->ConjugateBySwap();
   }
   return Status::OK();
 }
@@ -637,10 +573,6 @@ Matrix2q FSimGateBuilder::GetMatrix(const float theta, const float phi) {
           0, 0, b.real(), b.imag(), a.real(), a.imag(), 0, 0,
           0, 0, 0, 0, 0, 0, c.real(), c.imag()}};
   // clang-format on
-}
-
-Matrix2q FSimGateBuilder::GetSwappedMatrix(const float theta, const float phi) {
-  return GetMatrix(theta, phi);
 }
 
 }  // namespace tfq
