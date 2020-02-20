@@ -62,7 +62,7 @@ fi
 
 # Get the _test version of changed python files.
 needed_changes=0
-changed_files=$(git diff --name-only ${rev} -- | grep -E "\.py$|\.ipynb$" | grep -v "_pb2\.py$")
+changed_files=$(git diff --name-only ${rev} -- | grep "\.py$" | grep -v "_pb2\.py$")
 esc=$(printf '\033')
 for changed_file in ${changed_files}; do
     # Extract changed line ranges from diff output.
