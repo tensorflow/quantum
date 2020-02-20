@@ -54,6 +54,7 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
     """Test that utility functions work."""
 
     def test_get_supported_gates(self):
+        """Confirm one of every gate is returned."""
         mapping_1 = util.get_supported_gates()
         self.assertEqual(len(mapping_1.keys()),
                          len(serializer.SERIALIZER.supported_gate_types()))
