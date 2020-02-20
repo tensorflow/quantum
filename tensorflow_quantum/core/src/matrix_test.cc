@@ -252,7 +252,9 @@ TEST(MatrixTest, Matrix4Permute) {
     12, 12.5, 14, 14.5, 13, 13.5, 15, 15.5};
   // clang-format on
   Matrix4Permute(matrix);
-  EXPECT_EQ(matrix, matrix_swapped);
+  for (int i = 0; i < 32; i++) {
+    EXPECT_EQ(matrix[i], matrix_swapped[i]);
+  }
 }
 
 }  // namespace
