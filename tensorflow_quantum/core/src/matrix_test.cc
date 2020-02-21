@@ -22,6 +22,7 @@ limitations under the License.
 #include <vector>
 
 #include "gtest/gtest.h"
+#include "tensorflow_quantum/core/src/gates_def.h"
 
 namespace tfq {
 
@@ -230,6 +231,67 @@ TEST(MatrixTest, Matrix4Multiply) {
       EXPECT_NEAR(real(f[i][j]), b[8 * i + 2 * j], 1E-6);
       EXPECT_NEAR(imag(f[i][j]), b[8 * i + 2 * j + 1], 1E-6);
     }
+  }
+}
+
+TEST(MatrixTest, Calc4Matrix) {
+  // Build a test circuit that goes through all three mul types:
+  // q0 -- X --   -- |CNOT|
+  // q1 --   -- Z -- |CNOT|
+  // Associated matrix:
+  // | 0  1  0  0 |
+  // | 1  0  0  0 |
+  // | 0  0 -1  0 |
+  // | 0  0  0 -1 |
+  const Matrix1q x_mat{0, 0, 1, 0, 1, 0, 0, 0};
+  const Matrix1q z_mat{1, 0, 0, 0, 0, 0, -1, 0};
+  // clang-format off
+  const Matrix2q cnot_mat{1, 0, 0, 0, 0, 0, 0, 0,
+                          0, 0, 1, 0, 0, 0, 0, 0,
+                          0, 0, 0, 0, 0, 0, 1, 0,
+                          0, 0, 0, 0, 1, 0, 0, 0};
+  const Matrix2q expected_mat{0, 0, 1, 0, 0, 0, 0, 0,
+                              1, 0, 0, 0, 0, 0, 0, 0,
+                              0, 0, 0, 0, -1, 0, 0, 0,
+                              0, 0, 0, 0, 0, 0, -1, 0};
+  // clang-format on
+  Gate x_gate(0, 0, x_mat);
+  Gate z_gate(1, 1, z_mat);
+  Gate cnot_gate(2, 0, 1, cnot_mat);
+
+  std::vector<Gate*> gates;
+  gates.push_back(&x_gate);
+  gates.push_back(&z_gate);
+  gates.push_back(&cnot_gate);
+
+  Matrix2q test_mat;
+  CalcMatrix4(0, 1, gates, test_mat);
+  for (int i = 0; i < 32; i++) {
+    EXPECT_EQ(test_mat[i], expected_mat[i]);
+  }
+}
+
+TEST(MatrixTest, Matrix4Permute) {
+  // Conjugation by swap gate:
+  //  | 0  1  2  3  |      | 0  2  1  3  |
+  //  | 4  5  6  7  |      | 8  10 9  11 |
+  //  | 8  9  10 11 | ---> | 4  6  5  7  |
+  //  | 12 13 14 15 |      | 12 14 13 15 |
+  // clang-format off
+  std::array<float, 32> matrix{
+    0,  0.5, 1, 1.5, 2, 2.5, 3, 3.5,
+    4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5,
+    8, 8.5, 9, 9.5, 10, 10.5, 11, 11.5,
+    12, 12.5, 13, 13.5, 14, 14.5, 15, 15.5};
+  const std::array<float, 32> matrix_swapped{
+    0,  0.5, 2, 2.5, 1, 1.5, 3, 3.5,
+    8, 8.5, 10, 10.5, 9, 9.5, 11, 11.5,
+    4, 4.5, 6, 6.5, 5, 5.5, 7, 7.5,
+    12, 12.5, 14, 14.5, 13, 13.5, 15, 15.5};
+  // clang-format on
+  Matrix4Permute(matrix);
+  for (int i = 0; i < 32; i++) {
+    EXPECT_EQ(matrix[i], matrix_swapped[i]);
   }
 }
 
