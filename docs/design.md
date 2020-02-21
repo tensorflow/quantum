@@ -163,13 +163,13 @@ sampling or state vector calculation, use `tf.custom_gradient`.
 ### Datasets
 
 As the field of quantum computing grows, more and more quantum data and model
-combinations will arise. The `tfq.datasets` module is used as the data source
-for quantum machine learning tasks. It ensures structured comparisons for the
-model and performance.
+combinations will arise, making structured comparison more difficult. The
+`tfq.datasets` module is used as the data source for quantum machine learning
+tasks. It ensures structured comparisons for the model and performance.
 
-`tfq.datasets` enables research that is more transparent and reproducible. Using
-this module makes it easier find standardized quantum data sources for problems
-related to quantum control, fermionic simulation, classification near phase
-transitions, quantum sensing, and more. This module will be kept up-to-date with
-datasets used by the community, with the intention that it will become the
-standard.
+It is hoped that with large community contributions, the `tfq.datasets` module
+will grow to enable research that is more transparent and reproducible.
+Carefully curated problems in: quantum control, fermionic simulation,
+classification near phase transitions, quantum sensing, etc are all great
+candidates for addition to `tfq.datasets`. To propose a new dataset open
+a <a href="https://github.com/tensorflow/quantum/issues">GitHub issue</a>.
