@@ -272,13 +272,13 @@ class TfqPsDecomposeOp : public tensorflow::OpKernel {
     switch (target_exponent.arg_case()) {
       case Arg::ArgCase::kSymbol:
         new_op_map["exponent_scalar"].mutable_arg_value()->set_float_value(
-            sign * target_exponent_scalar / M_PI);
+            sign * target_exponent_scalar / 3.14159265359);
         new_op_map["exponent"].set_symbol(target_exponent.symbol());
         break;
       case Arg::ArgCase::kArgValue:
         new_op_map["exponent_scalar"].mutable_arg_value()->set_float_value(1.0);
         new_op_map["exponent"].mutable_arg_value()->set_float_value(
-            sign * target_exponent.arg_value().float_value() / M_PI);
+            sign * target_exponent.arg_value().float_value() / 3.14159265359);
         break;
       case Arg::ArgCase::kFunc:
         // TODO(jaeyoo) : support this if prepared.
