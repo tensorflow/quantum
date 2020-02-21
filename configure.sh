@@ -23,6 +23,11 @@ function write_action_env_to_bazelrc() {
   write_to_bazelrc "build --action_env $1=\"$2\""
 }
 
+function write_linkopt_dir_to_bazelrc() {
+  write_to_bazelrc "build --linkopt -Wl,-rpath,$1" >> .bazelrc
+}
+
+
 function is_linux() {
   [[ "${PLATFORM}" == "linux" ]]
 }
@@ -150,6 +155,10 @@ write_action_env_to_bazelrc "TF_HEADER_DIR" ${HEADER_DIR}
 write_action_env_to_bazelrc "TF_SHARED_LIBRARY_DIR" ${SHARED_LIBRARY_DIR}
 write_action_env_to_bazelrc "TF_SHARED_LIBRARY_NAME" ${SHARED_LIBRARY_NAME}
 write_action_env_to_bazelrc "TF_NEED_CUDA" ${TF_NEED_CUDA}
+
+if ! is_windows; then
+  write_linkopt_dir_to_bazelrc ${SHARED_LIBRARY_DIR}
+fi
 
 # TODO(yifeif): do not hardcode path
 if [[ "$TF_NEED_CUDA" == "1" ]]; then

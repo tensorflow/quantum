@@ -121,7 +121,7 @@ def _batch_deserialize_helper(programs, symbol_names, symbol_values):
 
 
 def _get_cirq_analytical_expectation(
-        simulator=cirq.sim.sparse_simulator.Simulator()):
+    simulator=cirq.sim.sparse_simulator.Simulator()):
     """Get a `callable` that is a TensorFlow op that outputs expectation values.
 
     Generate a TensorFlow `tf.py_function` op that when called on `tf.Tensor`s
@@ -232,7 +232,7 @@ def _get_cirq_analytical_expectation(
 
 
 def _get_cirq_sampled_expectation(
-        simulator=cirq.sim.sparse_simulator.Simulator()):
+    simulator=cirq.sim.sparse_simulator.Simulator()):
     """Get a `callable` that is a TensorFlow op that outputs sampled expectation
     values.
 
