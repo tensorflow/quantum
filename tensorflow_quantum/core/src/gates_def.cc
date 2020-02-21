@@ -45,7 +45,7 @@ static const std::complex<float> PRE_11_MINUS =
     std::complex<float>(1 / DENOM_MINUS, 0);
 
 static constexpr std::complex<float> I_UNIT = std::complex<float>(0, 1);
-static constexpr float pi = static_cast<float>(M_PI);
+static constexpr float pi = static_cast<float>(3.14159265359);
 inline std::complex<float> global_phase(const float exponent,
                                         const float global_shift) {
   return std::exp(I_UNIT * pi * global_shift * exponent);
