@@ -71,7 +71,7 @@ class TfqPsWeightsFromSymbolOp : public tensorflow::OpKernel {
     for (int i = 0; i < n_symbols; i++) {
       symbols_map[symbols(i)] = i;
     }
-    std::vector<std::string> ignore_list = {"ISP", "PXP", "FSIM"};
+    std::vector<std::string> ignore_list = {"ISP", "PXP", "FSIM", "PISP"};
     absl::flat_hash_set<std::string> ignored_symbol_set(ignore_list.begin(),
                                                         ignore_list.end());
 
@@ -144,7 +144,7 @@ class TfqPsWeightsFromSymbolOp : public tensorflow::OpKernel {
     auto DoWork2 = [&](int start, int end) {
       for (int i = start; i < end; i++) {
         for (int j = 0; j < n_symbols; j++) {
-          for (size_t k = 0; k < output_results.at(i).at(j).size(); k++) {
+          for (int k = 0; k < output_results.at(i).at(j).size(); k++) {
             output_tensor(i, j, k) = output_results.at(i).at(j).at(k);
           }
           for (int k = output_results.at(i).at(j).size();

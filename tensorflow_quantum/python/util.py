@@ -35,9 +35,9 @@ def get_supported_gates():
             g = gate(num_qubits=1)
         elif gate is cirq.FSimGate:
             g_num_qubits = 2
-            g = gate(theta=1, phi=1)
+            g = gate(theta=0.123, phi=0.456)
         elif gate in serializer.PHASED_EIGEN_GATES_DICT:
-            g = gate(phase_exponent=1.0)
+            g = gate(phase_exponent=0.123)
             g_num_qubits = g.num_qubits()
         else:
             g = gate()
@@ -121,6 +121,8 @@ def random_pauli_sums(qubits, max_sum_length, n_sums):
     return sums
 
 
+# There are no native convertible ops inside of this function.
+@tf.autograph.experimental.do_not_convert
 def convert_to_tensor(items_to_convert):
     """Convert lists of tfq supported primitives to tensor representations.
 

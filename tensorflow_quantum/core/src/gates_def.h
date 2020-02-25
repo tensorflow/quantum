@@ -120,9 +120,16 @@ class TwoQubitGateBuilder : public GateBuilder {
 
   virtual Matrix2q GetMatrix(const float exponent,
                              const float global_shift) = 0;
+};
 
-  virtual Matrix2q GetSwappedMatrix(const float exponent,
-                                    const float global_shift) = 0;
+class TwoQubitPhasedGateBuilder : public GateBuilder {
+ public:
+  virtual tensorflow::Status Build(
+      const unsigned int time, const std::vector<unsigned int>& locations,
+      const absl::flat_hash_map<std::string, float>& args, Gate* gate) override;
+
+  virtual Matrix2q GetMatrix(const float exponent, const float phase_exponent,
+                             const float global_shift) = 0;
 };
 
 class TwoQubitConstantGateBuilder : public GateBuilder {
@@ -132,8 +139,6 @@ class TwoQubitConstantGateBuilder : public GateBuilder {
       const absl::flat_hash_map<std::string, float>& args, Gate* gate) override;
 
   virtual Matrix2q GetMatrix() = 0;
-
-  virtual Matrix2q GetSwappedMatrix() = 0;
 };
 
 // ============================================================================
@@ -174,63 +179,47 @@ class PhasedXPowGateBuilder : public OneQubitPhasedGateBuilder {
 class XXPowGateBuilder : public TwoQubitGateBuilder {
  public:
   Matrix2q GetMatrix(const float exponent, const float global_shift) override;
-
-  Matrix2q GetSwappedMatrix(const float exponent,
-                            const float global_shift) override;
 };
 
 class YYPowGateBuilder : public TwoQubitGateBuilder {
  public:
   Matrix2q GetMatrix(const float exponent, const float global_shift) override;
-
-  Matrix2q GetSwappedMatrix(const float exponent,
-                            const float global_shift) override;
 };
 
 class ZZPowGateBuilder : public TwoQubitGateBuilder {
  public:
   Matrix2q GetMatrix(const float exponent, const float global_shift) override;
-
-  Matrix2q GetSwappedMatrix(const float exponent,
-                            const float global_shift) override;
 };
 
 class CZPowGateBuilder : public TwoQubitGateBuilder {
  public:
   Matrix2q GetMatrix(const float exponent, const float global_shift) override;
-
-  Matrix2q GetSwappedMatrix(const float exponent,
-                            const float global_shift) override;
 };
 
 class CNotPowGateBuilder : public TwoQubitGateBuilder {
  public:
   Matrix2q GetMatrix(const float exponent, const float global_shift) override;
-
-  Matrix2q GetSwappedMatrix(const float exponent,
-                            const float global_shift) override;
 };
 
 class SwapPowGateBuilder : public TwoQubitGateBuilder {
  public:
   Matrix2q GetMatrix(const float exponent, const float global_shift) override;
-
-  Matrix2q GetSwappedMatrix(const float exponent,
-                            const float global_shift) override;
 };
 
 class ISwapPowGateBuilder : public TwoQubitGateBuilder {
  public:
   Matrix2q GetMatrix(const float exponent, const float global_shift) override;
+};
 
-  Matrix2q GetSwappedMatrix(const float exponent,
-                            const float global_shift) override;
+class PhasedISwapPowGateBuilder : public TwoQubitPhasedGateBuilder {
+ public:
+  Matrix2q GetMatrix(const float exponent, const float phase_exponent,
+                     const float global_shift) override;
 };
 
 class I2GateBuilder : public TwoQubitConstantGateBuilder {
  public:
   Matrix2q GetMatrix() override;
-  Matrix2q GetSwappedMatrix() override;
 };
 
 class FSimGateBuilder : public GateBuilder {
@@ -240,7 +229,6 @@ class FSimGateBuilder : public GateBuilder {
       const absl::flat_hash_map<std::string, float>& args, Gate* gate) override;
 
   Matrix2q GetMatrix(const float theta, const float phi);
-  Matrix2q GetSwappedMatrix(const float theta, const float phi);
 };
 
 }  // namespace tfq

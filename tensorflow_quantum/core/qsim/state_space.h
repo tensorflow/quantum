@@ -42,7 +42,11 @@ class StateSpace {
   tensorflow::Status Update(const Circuit& circuit);
 
   // Computes the expectation value for a given state vector and PauliSum.
+  // Uses scratch StateSpace for evolving pauli terms forward and computing
+  // inner products. Assums that scratch has memory allocated, but does not
+  // require scratch to initialize values.
   tensorflow::Status ComputeExpectation(const tfq::proto::PauliSum& p_sum,
+                                        StateSpace* scratch,
                                         float* expectation_value);
 
   // Returns true if memory for the state has been succesfully allocated
@@ -51,14 +55,8 @@ class StateSpace {
   // Pointer to the raw state managed by this StateSpace
   float* GetRawState() const;
 
-  // Replace the pointer in this object with a new one
-  void SetRawState(float* state_update);
-
   // Dimension of the complex Hilbert space represented by this StateSpace
   uint64_t GetDimension() const;
-
-  // Get the number of entries used in the internal representation of the state
-  uint64_t GetNumEntries() const;
 
   // Number of qubits this StateSpace operates on
   uint64_t GetNumQubits() const;
@@ -105,7 +103,7 @@ class StateSpace {
   // Set the amplitude at the given state index
   virtual void SetAmpl(const uint64_t i, const std::complex<float>& val) = 0;
 
- private:
+ protected:
   float* state_;
   uint64_t size_;
   uint64_t num_qubits_;

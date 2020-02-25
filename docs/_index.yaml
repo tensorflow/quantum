@@ -38,20 +38,17 @@ landing_page:
 
       code_block: |
         <pre class = "prettyprint">
-        # A clasical model that feeds into a quantum circuit.
+        # A hybrid quantum-classical model.
         model = tf.keras.Sequential([
-            # Data input.
-            tf.keras.layers.Input(dtype=tf.dtypes.float32, shape=(1,), 
-                                  name='command_input'),
+            # Quantum circuit data comes in inside of tensors.
+            tf.keras.Input(shape=(), dtype=tf.dtypes.string),
 
-            # Small fully connected layers.
-            tf.keras.layers.Dense(10),
-            tf.keras.layers.Dense(3),
+            # Parametrized Quantum Circuit (PQC) provides output
+            # data from the input circuits run on a quantum computer.
+            tfq.layers.PQC(my_circuit, [cirq.Z(q1), cirq.X(q0)]),
 
-            # Compute a quantum expectation value.
-            tfq.layers.Expectation(feed_in_params=control_params,
-                                   circuit=circuit, 
-                                   operators_to_measure=[pauli_z])
+            # Output data from quantum computer passed through model.
+            tf.keras.layers.Dense(50)
         ])
         </pre>
 

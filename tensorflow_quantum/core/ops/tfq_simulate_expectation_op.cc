@@ -84,6 +84,8 @@ class TfqSimulateExpectationOp : public tensorflow::OpKernel {
       int cur_op_index;
       std::unique_ptr<StateSpace> test_state =
           std::unique_ptr<StateSpace>(GetStateSpace(1, 1));
+      std::unique_ptr<StateSpace> scratch_state =
+          std::unique_ptr<StateSpace>(GetStateSpace(1, 1));
       for (int i = start; i < end; i++) {
         cur_batch_index = i / output_dim_op_size;
         cur_op_index = i % output_dim_op_size;
@@ -98,15 +100,28 @@ class TfqSimulateExpectationOp : public tensorflow::OpKernel {
           // We've run into a new wavefunction we must compute.
           // Only compute a new wavefunction when we have to.
           Program program = programs[cur_batch_index];
+          const int num = num_qubits[cur_batch_index];
           OP_REQUIRES_OK(context,
                          ResolveSymbols(maps[cur_batch_index], &program));
 
           Circuit circuit;
-          OP_REQUIRES_OK(
-              context, CircuitFromProgram(program, num_qubits[cur_batch_index],
-                                          &circuit));
-          test_state.reset(GetStateSpace(num_qubits[cur_batch_index], 1));
-          test_state->CreateState();
+          OP_REQUIRES_OK(context, CircuitFromProgram(program, num, &circuit));
+
+          // TODO(mbbrough): Update this allocation hack so that a StateSpace
+          //  object can grow it's memory dynamically to larger and larger size
+          //  without ever having to call free (until very end). This is tricky
+          //  to implement because right now certain statespaces can't simulate
+          //  all states and we use StateSpaceSlow for smaller circuits.
+          if (num != num_qubits[old_batch_index]) {
+            test_state.reset(GetStateSpace(num, 1));
+            test_state->CreateState();
+
+            // Also re-allocate scratch state for expectation calculations.
+            scratch_state.reset(GetStateSpace(num, 1));
+            scratch_state->CreateState();
+          }
+          // no need to update scratch_state since ComputeExpectation
+          // will take care of things for us.
           test_state->SetStateZero();
           OP_REQUIRES_OK(context, test_state->Update(circuit));
         }
@@ -114,7 +129,7 @@ class TfqSimulateExpectationOp : public tensorflow::OpKernel {
         float expectation = 0.0;
         OP_REQUIRES_OK(context, test_state->ComputeExpectation(
                                     pauli_sums[cur_batch_index][cur_op_index],
-                                    &expectation));
+                                    scratch_state.get(), &expectation));
 
         output_tensor(cur_batch_index, cur_op_index) = expectation;
         old_batch_index = cur_batch_index;

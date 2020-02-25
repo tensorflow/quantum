@@ -37,10 +37,10 @@ StateSpaceAVX::~StateSpaceAVX() { DeleteState(); }
 StateSpaceType StateSpaceAVX::GetType() const { return StateSpaceType::AVX; }
 
 void StateSpaceAVX::CreateState() {
-  SetRawState((float*)qsim::_aligned_malloc(sizeof(float) * GetNumEntries()));
+  state_ = (float*)qsim::_aligned_malloc(sizeof(float) * size_);
 }
 
-void StateSpaceAVX::DeleteState() { qsim::_aligned_free(GetRawState()); }
+void StateSpaceAVX::DeleteState() { qsim::_aligned_free(state_); }
 
 StateSpace* StateSpaceAVX::Clone() const {
   StateSpaceAVX* state_copy =
