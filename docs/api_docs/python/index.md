@@ -17,7 +17,6 @@
 *  <a href="./tfq/get_sampled_expectation_op.md"><code>tfq.get_sampled_expectation_op</code></a>
 *  <a href="./tfq/get_sampling_op.md"><code>tfq.get_sampling_op</code></a>
 *  <a href="./tfq/get_state_op.md"><code>tfq.get_state_op</code></a>
-*  <a href="./tfq/get_supported_gates.md"><code>tfq.get_supported_gates</code></a>
 *  <a href="./tfq/layers.md"><code>tfq.layers</code></a>
 *  <a href="./tfq/layers/AddCircuit.md"><code>tfq.layers.AddCircuit</code></a>
 *  <a href="./tfq/layers/ControlledPQC.md"><code>tfq.layers.ControlledPQC</code></a>
@@ -27,3 +26,7 @@
 *  <a href="./tfq/layers/SampledExpectation.md"><code>tfq.layers.SampledExpectation</code></a>
 *  <a href="./tfq/layers/State.md"><code>tfq.layers.State</code></a>
 *  <a href="./tfq/padded_to_ragged.md"><code>tfq.padded_to_ragged</code></a>
+*  <a href="./tfq/util.md"><code>tfq.util</code></a>
+*  <a href="./tfq/util/exponential.md"><code>tfq.util.exponential</code></a>
+*  <a href="./tfq/util/get_circuit_symbols.md"><code>tfq.util.get_circuit_symbols</code></a>
+*  <a href="./tfq/util/get_supported_gates.md"><code>tfq.util.get_supported_gates</code></a>

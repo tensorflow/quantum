@@ -23,11 +23,18 @@
 
 
 
-## Class `SGDifferentiator`
-
 Stochastic generator based differentiator class.
 
 Inherits From: [`Differentiator`](../../tfq/differentiators/Differentiator.md)
+
+```python
+tfq.differentiators.SGDifferentiator(
+    stochastic_coordinate=True, stochastic_generator=True, stochastic_cost=True,
+    uniform_sampling=False
+)
+```
+
+
 
 <!-- Placeholder for "Used in" -->
 SGDifferentiator allows you to get the sampled gradient value from three
@@ -81,48 +88,15 @@ of the following two papers:
 <tf.Tensor: shape=(1, 1), dtype=float32, numpy=[[-1.1839752]]>
 ```
 
-<h2 id="__init__"><code>__init__</code></h2>
-
-<a target="_blank" href="https://github.com/tensorflow/quantum/tree/master/tensorflow_quantum/python/differentiators/stochastic_differentiator.py">View source</a>
-
-``` python
-__init__(
-    stochastic_coordinate=True,
-    stochastic_generator=True,
-    stochastic_cost=True,
-    uniform_sampling=False
-)
-```
-
-Instantiate this differentiator.
-Create a SGDifferentiator.
-Args:
-    stochastic_coordinate: Python `bool` to determine if
-        sampling on coordinate is performed or not. Default to True.
-    stochastic_generator: Python `bool` to determine if
-        sampling on generator is performed or not. Default to True.
-    stochastic_cost: Python `bool` to determine if sampling on
-        cost Hamiltonian is performed or not. Default to True.
-    uniform_sampling: Python `bool` to determine the
-        probabilistic distributions on the sampling targets.
-        Default to False.
-
-
-
 ## Methods
 
 <h3 id="differentiate_analytic"><code>differentiate_analytic</code></h3>
 
 <a target="_blank" href="https://github.com/tensorflow/quantum/tree/master/tensorflow_quantum/python/differentiators/stochastic_differentiator.py">View source</a>
 
-``` python
+```python
 differentiate_analytic(
-    programs,
-    symbol_names,
-    symbol_values,
-    pauli_sums,
-    forward_pass_vals,
-    grad
+    programs, symbol_names, symbol_values, pauli_sums, forward_pass_vals, grad
 )
 ```
 
@@ -163,15 +137,10 @@ Returns:
 
 <a target="_blank" href="https://github.com/tensorflow/quantum/tree/master/tensorflow_quantum/python/differentiators/stochastic_differentiator.py">View source</a>
 
-``` python
+```python
 differentiate_sampled(
-    programs,
-    symbol_names,
-    symbol_values,
-    pauli_sums,
-    num_samples,
-    forward_pass_vals,
-    grad
+    programs, symbol_names, symbol_values, pauli_sums, num_samples,
+    forward_pass_vals, grad
 )
 ```
 
@@ -215,7 +184,7 @@ Returns:
 
 <a target="_blank" href="https://github.com/tensorflow/quantum/tree/master/tensorflow_quantum/python/differentiators/differentiator.py">View source</a>
 
-``` python
+```python
 generate_differentiable_op()
 ```
 
@@ -257,7 +226,7 @@ a call to this differentiators `differentiate_*` function.
 
 <a target="_blank" href="https://github.com/tensorflow/quantum/tree/master/tensorflow_quantum/python/differentiators/differentiator.py">View source</a>
 
-``` python
+```python
 refresh()
 ```
 

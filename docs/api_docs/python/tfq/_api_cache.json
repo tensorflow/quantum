@@ -365,6 +365,7 @@
   },
   "is_fragment": {
     "tfq": false,
+    "tfq.__version__": true,
     "tfq.convert_to_tensor": false,
     "tfq.datasets": false,
     "tfq.datasets.excited_cluster_states": false,
@@ -452,7 +453,6 @@
     "tfq.get_sampled_expectation_op": false,
     "tfq.get_sampling_op": false,
     "tfq.get_state_op": false,
-    "tfq.get_supported_gates": false,
     "tfq.layers": false,
     "tfq.layers.AddCircuit": false,
     "tfq.layers.AddCircuit.__call__": true,
@@ -846,7 +846,11 @@
     "tfq.layers.State.variables": true,
     "tfq.layers.State.weights": true,
     "tfq.layers.State.with_name_scope": true,
-    "tfq.padded_to_ragged": false
+    "tfq.padded_to_ragged": false,
+    "tfq.util": false,
+    "tfq.util.exponential": false,
+    "tfq.util.get_circuit_symbols": false,
+    "tfq.util.get_supported_gates": false
   },
   "py_module_names": [
     "tfq"
