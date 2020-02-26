@@ -104,7 +104,5 @@ if [ "$CFORMATCHECK" == "0" ]; then
     exit 0;
 else
     echo "C++ format checking failed, please run the formatting script before proceeding."
-    formatting_outputs=$(find tensorflow_quantum/ -iname *.h -o -iname *.cc | xargs clang-format -style=google);
-    echo $formatting_outputs
     exit 64;
 fi
