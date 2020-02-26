@@ -36,11 +36,7 @@ class InstallPlatlib(install):
             self.install_lib = self.install_platlib
 
 
-REQUIRED_PACKAGES = [
-    #'tensorflow = 2.0.0b1',
-    'cirq == 0.7.0',
-    'tensorflow == 2.1.0'
-]
+REQUIRED_PACKAGES = ['cirq >= 0.7.0', 'tensorflow >= 2.1.0']
 
 
 class BinaryDistribution(Distribution):
@@ -48,6 +44,7 @@ class BinaryDistribution(Distribution):
 
     def has_ext_modules(self):
         return True
+
 
 if 'nightly' in sys.argv:
     nightly = True
@@ -84,6 +81,7 @@ setup(
         'Intended Audience :: Science/Research',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
         'Topic :: Scientific/Engineering',
         'Topic :: Scientific/Engineering :: Artificial Intelligence',
         'Topic :: Scientific/Engineering :: Mathematics',
