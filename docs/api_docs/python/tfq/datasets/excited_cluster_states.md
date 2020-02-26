@@ -20,8 +20,10 @@
 
 Return a tuple of potentially excited cluster states and their labels.
 
-``` python
-tfq.datasets.excited_cluster_states(qubits)
+```python
+tfq.datasets.excited_cluster_states(
+    qubits
+)
 ```
 
 

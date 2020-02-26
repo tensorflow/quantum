@@ -5,6 +5,7 @@
 
 # Module: tfq
 
+<!-- Insert buttons and diff -->
 
 <table class="tfo-notebook-buttons tfo-api" align="left">
 
@@ -29,21 +30,21 @@ Module functions for tensorflow_quantum.*
 
 [`layers`](./tfq/layers.md) module: Module definitions for tensorflow_quantum.python.layers.*
 
+[`util`](./tfq/util.md) module: A collection of helper functions that are useful several places in tfq.
+
 ## Functions
 
-[`convert_to_tensor(...)`](./tfq/convert_to_tensor.md): Convert lists of tfq supported primitives to tensor representations.
+[`convert_to_tensor(...)`](./tfq/util/convert_to_tensor.md): Convert lists of tfq supported primitives to tensor representations.
 
-[`from_tensor(...)`](./tfq/from_tensor.md): Convert a tensor of tfq primitives back to Python objects.
+[`from_tensor(...)`](./tfq/util/from_tensor.md): Convert a tensor of tfq primitives back to Python objects.
 
-[`get_expectation_op(...)`](./tfq/get_expectation_op.md): Get a Tensorflow op that will calculate batches of expectation values.
+[`get_expectation_op(...)`](./tfq/get_expectation_op.md): Get a TensorFlow op that will calculate batches of expectation values.
 
 [`get_sampled_expectation_op(...)`](./tfq/get_sampled_expectation_op.md): Get a TensorFlow op that will calculate sampled expectation values.
 
 [`get_sampling_op(...)`](./tfq/get_sampling_op.md): Get a Tensorflow op that produces samples from given quantum circuits.
 
-[`get_state_op(...)`](./tfq/get_state_op.md): Get a tensorflow op that produces states from given quantum circuits.
-
-[`get_supported_gates(...)`](./tfq/get_supported_gates.md): A helper to get the gates supported by tfq.
+[`get_state_op(...)`](./tfq/get_state_op.md): Get a TensorFlow op that produces states from given quantum circuits.
 
 [`padded_to_ragged(...)`](./tfq/padded_to_ragged.md): Utility `tf.function` that converts a padded tensor to ragged.
 

@@ -1,26 +1,8 @@
-# Copyright 2020 The TensorFlow Authors. All Rights Reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-# ==============================================================================
 toc:
 - title: tfq
   section:
   - title: Overview
     path: /quantum/api_docs/python/tfq
-  - title: convert_to_tensor
-    path: /quantum/api_docs/python/tfq/convert_to_tensor
-  - title: from_tensor
-    path: /quantum/api_docs/python/tfq/from_tensor
   - title: get_expectation_op
     path: /quantum/api_docs/python/tfq/get_expectation_op
   - title: get_sampled_expectation_op
@@ -29,8 +11,6 @@ toc:
     path: /quantum/api_docs/python/tfq/get_sampling_op
   - title: get_state_op
     path: /quantum/api_docs/python/tfq/get_state_op
-  - title: get_supported_gates
-    path: /quantum/api_docs/python/tfq/get_supported_gates
   - title: padded_to_ragged
     path: /quantum/api_docs/python/tfq/padded_to_ragged
 - title: tfq.datasets
@@ -73,3 +53,31 @@ toc:
     path: /quantum/api_docs/python/tfq/layers/SampledExpectation
   - title: State
     path: /quantum/api_docs/python/tfq/layers/State
+- title: tfq.util
+  section:
+  - title: Overview
+    path: /quantum/api_docs/python/tfq/util
+  - title: check_commutability
+    path: /quantum/api_docs/python/tfq/util/check_commutability
+  - title: convert_to_tensor
+    path: /quantum/api_docs/python/tfq/util/convert_to_tensor
+  - title: exponential
+    path: /quantum/api_docs/python/tfq/util/exponential
+  - title: exp_identity
+    path: /quantum/api_docs/python/tfq/util/exp_identity
+  - title: from_tensor
+    path: /quantum/api_docs/python/tfq/util/from_tensor
+  - title: get_circuit_symbols
+    path: /quantum/api_docs/python/tfq/util/get_circuit_symbols
+  - title: get_supported_gates
+    path: /quantum/api_docs/python/tfq/util/get_supported_gates
+  - title: kwargs_cartesian_product
+    path: /quantum/api_docs/python/tfq/util/kwargs_cartesian_product
+  - title: random_circuit_resolver_batch
+    path: /quantum/api_docs/python/tfq/util/random_circuit_resolver_batch
+  - title: random_pauli_sums
+    path: /quantum/api_docs/python/tfq/util/random_pauli_sums
+  - title: random_symbol_circuit
+    path: /quantum/api_docs/python/tfq/util/random_symbol_circuit
+  - title: random_symbol_circuit_resolver_batch
+    path: /quantum/api_docs/python/tfq/util/random_symbol_circuit_resolver_batch

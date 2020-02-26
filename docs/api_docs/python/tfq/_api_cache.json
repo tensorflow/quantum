@@ -1,5 +1,6 @@
 {
   "duplicate_of": {
+    "tfq.convert_to_tensor": "tfq.util.convert_to_tensor",
     "tfq.differentiators.CentralDifference.differentiate_analytic": "tfq.differentiators.LinearCombination.differentiate_analytic",
     "tfq.differentiators.CentralDifference.differentiate_sampled": "tfq.differentiators.LinearCombination.differentiate_sampled",
     "tfq.differentiators.CentralDifference.generate_differentiable_op": "tfq.differentiators.Differentiator.generate_differentiable_op",
@@ -50,6 +51,7 @@
     "tfq.differentiators.SGDifferentiator.__new__": "tfq.differentiators.CentralDifference.__new__",
     "tfq.differentiators.SGDifferentiator.generate_differentiable_op": "tfq.differentiators.Differentiator.generate_differentiable_op",
     "tfq.differentiators.SGDifferentiator.refresh": "tfq.differentiators.Differentiator.refresh",
+    "tfq.from_tensor": "tfq.util.from_tensor",
     "tfq.layers.AddCircuit.__eq__": "tfq.differentiators.CentralDifference.__eq__",
     "tfq.layers.AddCircuit.__ge__": "tfq.differentiators.CentralDifference.__ge__",
     "tfq.layers.AddCircuit.__gt__": "tfq.differentiators.CentralDifference.__gt__",
@@ -452,7 +454,6 @@
     "tfq.get_sampled_expectation_op": false,
     "tfq.get_sampling_op": false,
     "tfq.get_state_op": false,
-    "tfq.get_supported_gates": false,
     "tfq.layers": false,
     "tfq.layers.AddCircuit": false,
     "tfq.layers.AddCircuit.__call__": true,
@@ -846,7 +847,20 @@
     "tfq.layers.State.variables": true,
     "tfq.layers.State.weights": true,
     "tfq.layers.State.with_name_scope": true,
-    "tfq.padded_to_ragged": false
+    "tfq.padded_to_ragged": false,
+    "tfq.util": false,
+    "tfq.util.check_commutability": false,
+    "tfq.util.convert_to_tensor": false,
+    "tfq.util.exp_identity": false,
+    "tfq.util.exponential": false,
+    "tfq.util.from_tensor": false,
+    "tfq.util.get_circuit_symbols": false,
+    "tfq.util.get_supported_gates": false,
+    "tfq.util.kwargs_cartesian_product": false,
+    "tfq.util.random_circuit_resolver_batch": false,
+    "tfq.util.random_pauli_sums": false,
+    "tfq.util.random_symbol_circuit": false,
+    "tfq.util.random_symbol_circuit_resolver_batch": false
   },
   "py_module_names": [
     "tfq"
