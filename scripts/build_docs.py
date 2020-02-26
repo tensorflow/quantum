@@ -67,7 +67,9 @@ def main(unused_argv):
                 "stochastic_differentiator", "parameter_shift_util",
                 "stochastic_differentiator_util"
             ],
-            "tfq.datasets": ["cluster_state"]
+            "tfq.datasets": ["cluster_state"],
+            "tfq.util": ["from_tensor", "convert_to_tensor",
+                        "exp_identity", "check_commutability", "kwargs_cartesian_product", "random_circuit_resolver_batch", "random_pauli_sums", "random_symbol_circuit", "random_symbol_circuit_resolver_batch"]
         })
 
     doc_generator.build(output_dir=FLAGS.output_dir)

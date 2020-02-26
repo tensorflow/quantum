@@ -20,8 +20,10 @@
 
 Get a TensorFlow op that will calculate sampled expectation values.
 
-``` python
-tfq.get_sampled_expectation_op(backend=None)
+```python
+tfq.get_sampled_expectation_op(
+    backend=None
+)
 ```
 
 
