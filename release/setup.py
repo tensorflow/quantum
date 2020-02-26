@@ -50,7 +50,6 @@ if 'nightly' in sys.argv:
     nightly = True
     sys.argv.remove('nightly')
 else:
-    # Build a nightly package by default.
     nightly = False
 
 if nightly:
