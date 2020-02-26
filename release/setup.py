@@ -59,9 +59,9 @@ class BinaryDistribution(Distribution):
         return True
 
 
-if 'nightly' in sys.argv:
+if '--nightly' in sys.argv:
     nightly = True
-    sys.argv.remove('nightly')
+    sys.argv.remove('--nightly')
 else:
     nightly = False
 
