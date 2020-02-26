@@ -121,6 +121,8 @@ def random_pauli_sums(qubits, max_sum_length, n_sums):
     return sums
 
 
+# There are no native convertible ops inside of this function.
+@tf.autograph.experimental.do_not_convert
 def convert_to_tensor(items_to_convert):
     """Convert lists of tfq supported primitives to tensor representations.
 
