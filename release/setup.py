@@ -17,6 +17,8 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import sys
+
 from setuptools import Extension
 from setuptools import find_packages
 from setuptools import setup
@@ -47,9 +49,20 @@ class BinaryDistribution(Distribution):
     def has_ext_modules(self):
         return True
 
+if '--nightly' in sys.argv:
+  nightly = True
+  sys.argv.remove('--nightly')
+else:
+  # Build a nightly package by default.
+  nightly = False
+
+if nightly:
+  project_name = 'tfq-nightly'
+else:
+  project_name = 'tensorflow-quantum'
 
 setup(
-    name='tensorflow-quantum',
+    name=project_name,
     version='0.2.0',
     description=
     'TensorFlow Quantum is a library for hybrid quantum-classical machine learning.',
