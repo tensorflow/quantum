@@ -68,7 +68,7 @@ setup(
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
         'Intended Audience :: Education',
-        'Intended Audience :: Science/Research'
+        'Intended Audience :: Science/Research',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.6',
         'Topic :: Scientific/Engineering',
