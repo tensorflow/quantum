@@ -50,16 +50,16 @@ class BinaryDistribution(Distribution):
         return True
 
 if 'nightly' in sys.argv:
-  nightly = True
-  sys.argv.remove('nightly')
+    nightly = True
+    sys.argv.remove('nightly')
 else:
-  # Build a nightly package by default.
-  nightly = False
+    # Build a nightly package by default.
+    nightly = False
 
 if nightly:
-  project_name = 'tfq-nightly'
+    project_name = 'tfq-nightly'
 else:
-  project_name = 'tensorflow-quantum'
+    project_name = 'tensorflow-quantum'
 
 setup(
     name=project_name,
