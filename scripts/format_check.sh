@@ -93,6 +93,7 @@ fi
 
 echo "Checking C++ formatting...";
 formatting_outputs=$(find tensorflow_quantum/ -iname *.h -o -iname *.cc | xargs clang-format -style=google -output-replacements-xml);
+echo "$formatting_outputs"
 CFORMATCHECK=0
 while read -r formatting_outputs; do
     if [ "$formatting_outputs" != "<?xml version='1.0'?>" ] && [ "$formatting_outputs" != "<replacements xml:space='preserve' incomplete_format='false'>" ] && [ "$formatting_outputs" != "</replacements>" ] && [ "$formatting_outputs" != "<replacement offset='4290' length='9'> </replacement>" ]; then
