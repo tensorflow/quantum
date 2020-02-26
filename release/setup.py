@@ -19,6 +19,7 @@ from __future__ import print_function
 
 import sys
 
+from datetime import date
 from setuptools import Extension
 from setuptools import find_packages
 from setuptools import setup
@@ -37,6 +38,7 @@ class InstallPlatlib(install):
 
 
 REQUIRED_PACKAGES = ['cirq >= 0.7.0', 'tensorflow >= 2.1.0']
+CUR_VERSION = '0.2.0'
 
 
 class BinaryDistribution(Distribution):
@@ -46,20 +48,21 @@ class BinaryDistribution(Distribution):
         return True
 
 
+nightly = False
 if '--nightly' in sys.argv:
     nightly = True
     sys.argv.remove('--nightly')
-else:
-    nightly = False
 
+project_name = 'tensorflow-quantum'
+build_version = CUR_VERSION
 if nightly:
     project_name = 'tfq-nightly'
-else:
-    project_name = 'tensorflow-quantum'
+    build_version = CUR_VERSION + '.dev' + str(datetime.date.today()).replace(
+        '-', '')
 
 setup(
     name=project_name,
-    version='0.2.0',
+    version=build_version,
     description=
     'TensorFlow Quantum is a library for hybrid quantum-classical machine learning.',
     author='Google Inc.',
