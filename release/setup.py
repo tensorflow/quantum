@@ -12,7 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""Setup for pip package."""
+"""TensorFlow Quantum adds qauntum computing primitives to TensorFlow.
+
+TensorFlow Quantum is an open source library for high performance batch
+quantum computation on quantum simulators and quantum computers. The goal
+of TensorFlow Quantum is to help researchers develop a deeper understanding
+of quantum data and quantum systems via hybrid models.
+
+TensorFlow Quantum was created in an ongoing collaboration between the
+University of Waterloo and the Quantum AI team at Google along with help from
+many other contributors within Google.
+"""
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -24,6 +34,9 @@ from setuptools import find_packages
 from setuptools import setup
 from setuptools.dist import Distribution
 from setuptools.command.install import install
+
+
+DOCLINES = __doc__.split('\n')
 
 
 class InstallPlatlib(install):
@@ -62,6 +75,7 @@ setup(
     version='0.2.0',
     description=
     'TensorFlow Quantum is a library for hybrid quantum-classical machine learning.',
+    long_description='\n'.join(DOCLINES[2:]),
     author='Google Inc.',
     author_email='no-reply@google.com',
     url='https://github.com/tensorflow/quantum/',
