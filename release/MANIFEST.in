@@ -1,1 +1,1 @@
-recursive-include tensorflow_quantum/ *.so
+recursive-include tensorflow_quantum *.so
