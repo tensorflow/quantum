@@ -49,9 +49,9 @@ class BinaryDistribution(Distribution):
     def has_ext_modules(self):
         return True
 
-if '--nightly' in sys.argv:
+if 'nightly' in sys.argv:
   nightly = True
-  sys.argv.remove('--nightly')
+  sys.argv.remove('nightly')
 else:
   # Build a nightly package by default.
   nightly = False
