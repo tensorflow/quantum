@@ -22,11 +22,7 @@
 
 
 
-## Class `Differentiator`
-
 Interface that defines how to specify gradients for a quantum circuit.
-
-
 
 <!-- Placeholder for "Used in" -->
 
@@ -41,14 +37,9 @@ to backpropagate through a quantum circuit.
 
 <a target="_blank" href="https://github.com/tensorflow/quantum/tree/master/tensorflow_quantum/python/differentiators/differentiator.py">View source</a>
 
-``` python
+```python
 differentiate_analytic(
-    programs,
-    symbol_names,
-    symbol_values,
-    pauli_sums,
-    forward_pass_vals,
-    grad
+    programs, symbol_names, symbol_values, pauli_sums, forward_pass_vals, grad
 )
 ```
 
@@ -94,15 +85,10 @@ you are differentiating through.
 
 <a target="_blank" href="https://github.com/tensorflow/quantum/tree/master/tensorflow_quantum/python/differentiators/differentiator.py">View source</a>
 
-``` python
+```python
 differentiate_sampled(
-    programs,
-    symbol_names,
-    symbol_values,
-    pauli_sums,
-    num_samples,
-    forward_pass_vals,
-    grad
+    programs, symbol_names, symbol_values, pauli_sums, num_samples,
+    forward_pass_vals, grad
 )
 ```
 
@@ -151,7 +137,7 @@ you are differentiating through.
 
 <a target="_blank" href="https://github.com/tensorflow/quantum/tree/master/tensorflow_quantum/python/differentiators/differentiator.py">View source</a>
 
-``` python
+```python
 generate_differentiable_op()
 ```
 
@@ -193,7 +179,7 @@ a call to this differentiators `differentiate_*` function.
 
 <a target="_blank" href="https://github.com/tensorflow/quantum/tree/master/tensorflow_quantum/python/differentiators/differentiator.py">View source</a>
 
-``` python
+```python
 refresh()
 ```
 

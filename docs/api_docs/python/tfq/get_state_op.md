@@ -18,10 +18,12 @@
 
 
 
-Get a tensorflow op that produces states from given quantum circuits.
+Get a TensorFlow op that produces states from given quantum circuits.
 
-``` python
-tfq.get_state_op(backend=None)
+```python
+tfq.get_state_op(
+    backend=None
+)
 ```
 
 
