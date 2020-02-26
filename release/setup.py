@@ -17,6 +17,8 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import sys
+
 from setuptools import Extension
 from setuptools import find_packages
 from setuptools import setup
@@ -34,11 +36,7 @@ class InstallPlatlib(install):
             self.install_lib = self.install_platlib
 
 
-REQUIRED_PACKAGES = [
-    #'tensorflow = 2.0.0b1',
-    'cirq == 0.7.0',
-    'tensorflow == 2.1.0'
-]
+REQUIRED_PACKAGES = ['cirq >= 0.7.0', 'tensorflow >= 2.1.0']
 
 
 class BinaryDistribution(Distribution):
@@ -48,8 +46,19 @@ class BinaryDistribution(Distribution):
         return True
 
 
+if 'nightly' in sys.argv:
+    nightly = True
+    sys.argv.remove('nightly')
+else:
+    nightly = False
+
+if nightly:
+    project_name = 'tfq-nightly'
+else:
+    project_name = 'tensorflow-quantum'
+
 setup(
-    name='tensorflow-quantum',
+    name=project_name,
     version='0.2.0',
     description=
     'TensorFlow Quantum is a library for hybrid quantum-classical machine learning.',
@@ -68,9 +77,10 @@ setup(
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
         'Intended Audience :: Education',
-        'Intended Audience :: Science/Research'
+        'Intended Audience :: Science/Research',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
         'Topic :: Scientific/Engineering',
         'Topic :: Scientific/Engineering :: Artificial Intelligence',
         'Topic :: Scientific/Engineering :: Mathematics',
