@@ -186,9 +186,6 @@ class Expectation(tf.keras.layers.Layer):
     ...     epochs=100)
 
 
-    For an example featuring this layer, please check out `Quantum sensing`
-    in our dev website http://www.tensorflow.org/quantum/tutorials.
-
     Lastly `symbol_values`, `operators` and circuit `inputs` can all be fed
     Python `list` objects. In addition to this they can also be fed `tf.Tensor`
     inputs, meaning that you can input all of these things from other Tensor
