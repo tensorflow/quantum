@@ -126,14 +126,13 @@ TEST(FuserBasicTest, FuseGatesMulti) {
   arg_map_2q["exponent"] = 1.0;
   arg_map_2q["exponent_scalar"] = 1.0;
 
-  unsigned int anchor_time = 2;
+  unsigned int anchor_t = 2;
   locations.push_back(0);
   locations.push_back(1);
-  status =
-      cnot_pow_builder.Build(anchor_time, locations, arg_map_2q, &gate_cnot);
+  status = cnot_pow_builder.Build(anchor_t, locations, arg_map_2q, &gate_cnot);
   ASSERT_EQ(status, Status::OK());
   locations.clear();
-  GateFused real_fused(anchor_time, 0, 1, &gate_cnot);
+  GateFused real_fused(anchor_t, 0, 1, &gate_cnot);
 
   locations.push_back(0);
   status = x_pow_builder.Build(0, locations, arg_map_1q, &gate_x);
