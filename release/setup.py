@@ -34,10 +34,7 @@ class InstallPlatlib(install):
             self.install_lib = self.install_platlib
 
 
-REQUIRED_PACKAGES = [
-    'cirq >= 0.7.0',
-    'tensorflow >= 2.1.0'
-]
+REQUIRED_PACKAGES = ['cirq >= 0.7.0', 'tensorflow >= 2.1.0']
 
 
 class BinaryDistribution(Distribution):
