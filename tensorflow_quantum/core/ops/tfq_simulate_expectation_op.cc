@@ -81,6 +81,7 @@ class TfqSimulateExpectationOp : public tensorflow::OpKernel {
     auto DoWork = [&](int start, int end) {
       int old_batch_index = -2;
       int cur_batch_index = -1;
+      int old_num_qubits = -2;
       int cur_op_index;
       std::unique_ptr<StateSpace> test_state =
           std::unique_ptr<StateSpace>(GetStateSpace(1, 1));
@@ -112,7 +113,7 @@ class TfqSimulateExpectationOp : public tensorflow::OpKernel {
           //  without ever having to call free (until very end). This is tricky
           //  to implement because right now certain statespaces can't simulate
           //  all states and we use StateSpaceSlow for smaller circuits.
-          if (num != num_qubits[old_batch_index]) {
+          if (num != old_num_qubits) {
             test_state.reset(GetStateSpace(num, 1));
             test_state->CreateState();
 
@@ -124,6 +125,7 @@ class TfqSimulateExpectationOp : public tensorflow::OpKernel {
           // will take care of things for us.
           test_state->SetStateZero();
           OP_REQUIRES_OK(context, test_state->Update(circuit));
+          old_num_qubits = num;
         }
 
         float expectation = 0.0;
