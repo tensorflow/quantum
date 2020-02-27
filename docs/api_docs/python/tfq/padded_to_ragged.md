@@ -20,8 +20,10 @@
 
 Utility `tf.function` that converts a padded tensor to ragged.
 
-``` python
-tfq.padded_to_ragged(masked_state)
+```python
+tfq.padded_to_ragged(
+    masked_state
+)
 ```
 
 

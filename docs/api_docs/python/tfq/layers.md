@@ -5,6 +5,7 @@
 
 # Module: tfq.layers
 
+<!-- Insert buttons and diff -->
 
 <table class="tfo-notebook-buttons tfo-api" align="left">
 

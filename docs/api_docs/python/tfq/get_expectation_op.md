@@ -18,10 +18,12 @@
 
 
 
-Get a Tensorflow op that will calculate batches of expectation values.
+Get a TensorFlow op that will calculate batches of expectation values.
 
-``` python
-tfq.get_expectation_op(backend=None)
+```python
+tfq.get_expectation_op(
+    backend=None
+)
 ```
 
 
@@ -71,7 +73,7 @@ example of how to make my_op from the above code block differentiable:
 #### Args:
 
 
-* <b>`backend`</b>: Optional python `object` that specifies what backend this op
+* <b>`backend`</b>: Optional Python `object` that specifies what backend this op
 should use when evaluating circuits. Can be any
 `cirq.SimulatesFinalState`. If not provided the default C++ analytical
 expectation calculation op is returned.

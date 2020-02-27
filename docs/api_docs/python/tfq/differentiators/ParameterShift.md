@@ -22,8 +22,6 @@
 
 
 
-## Class `ParameterShift`
-
 Calculate the general version of parameter-shift rule based gradients.
 
 Inherits From: [`Differentiator`](../../tfq/differentiators/Differentiator.md)
@@ -35,8 +33,8 @@ This ParameterShift is the gradient estimator of the following paper:
 [arXiv:1905.13311](https://arxiv.org/abs/1905.13311), Gavin E. Crooks.
 
 This ParameterShift is used for any programs with parameterized gates.
-It internally decompose any programs into array of gates with at most
-two distinct eigenvalues by using `cirq.decompose`.
+It internally decomposes any programs into array of gates with at most
+two distinct eigenvalues.
 
 ```
 >>> non_diff_op = tfq.get_expectation_op()
@@ -69,14 +67,9 @@ tf.Tensor([[-1.1839752]], shape=(1, 1), dtype=float32)
 
 <a target="_blank" href="https://github.com/tensorflow/quantum/tree/master/tensorflow_quantum/python/differentiators/parameter_shift.py">View source</a>
 
-``` python
+```python
 differentiate_analytic(
-    programs,
-    symbol_names,
-    symbol_values,
-    pauli_sums,
-    forward_pass_vals,
-    grad
+    programs, symbol_names, symbol_values, pauli_sums, forward_pass_vals, grad
 )
 ```
 
@@ -93,7 +86,7 @@ The gradient calculations follows the following steps:
 
 **CAUTION**
 Analytic gradient measurements based on this ParameterShift generally
-run at least K(=2) times SLOW than the original circuit.
+run at least K(=2) times SLOWER than the original circuit.
 On top of it, since all parameters of gates are shifted individually,
 the time complexity is linear in the number of parameterized gates L.
 So, you will see O(KL) slower time & space complexity than the original
@@ -133,15 +126,10 @@ the shape of [batch_size, n_symbols].
 
 <a target="_blank" href="https://github.com/tensorflow/quantum/tree/master/tensorflow_quantum/python/differentiators/parameter_shift.py">View source</a>
 
-``` python
+```python
 differentiate_sampled(
-    programs,
-    symbol_names,
-    symbol_values,
-    pauli_sums,
-    num_samples,
-    forward_pass_vals,
-    grad
+    programs, symbol_names, symbol_values, pauli_sums, num_samples,
+    forward_pass_vals, grad
 )
 ```
 
@@ -201,7 +189,7 @@ the shape of [batch_size, n_symbols].
 
 <a target="_blank" href="https://github.com/tensorflow/quantum/tree/master/tensorflow_quantum/python/differentiators/differentiator.py">View source</a>
 
-``` python
+```python
 generate_differentiable_op()
 ```
 
@@ -243,7 +231,7 @@ a call to this differentiators `differentiate_*` function.
 
 <a target="_blank" href="https://github.com/tensorflow/quantum/tree/master/tensorflow_quantum/python/differentiators/differentiator.py">View source</a>
 
-``` python
+```python
 refresh()
 ```
 
