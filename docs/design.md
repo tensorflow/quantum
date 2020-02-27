@@ -6,8 +6,8 @@ circuits—to the TensorFlow ecosystem. Models and operations built with
 TensorFlow use these primitives to create powerful quantum-classical hybrid
 systems.
 
-Using TFQ, researchers construct a TensorFlow graph using a quantum dataset, a
-quantum model, and classical control parameters. These are all represented as
+Using TFQ, researchers can construct a TensorFlow graph using a quantum dataset,
+a quantum model, and classical control parameters. These are all represented as
 tensors in a single computational graph. The outcome of quantum
 measurements—leading to classical probabilistic events—is obtained by TensorFlow
 ops. Training is done with the standard

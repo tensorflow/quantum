@@ -26,9 +26,8 @@ and machine learning.
 
 ## Quantum machine learning
 
-Quantum computing problems relevant to machine learning include qubit
-calibration and modeling quantum systems. *Quantum machine learning* (QML) is
-built on two concepts: *quantum data* and *hybrid quantum-classical models*.
+*Quantum machine learning* (QML) is built on two concepts: *quantum data* and
+*hybrid quantum-classical models*.
 
 ### Quantum data
 

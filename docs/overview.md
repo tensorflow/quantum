@@ -45,49 +45,6 @@ Read more about the TensorFlow Quantum implementation in the
 [design guide](design.md).
 
 
-## Usage
-
-To provide some intuition for using quantum data, consider a supervised
-classification of quantum states using a quantum neural network. Just like
-classical ML, a challenge of quantum ML is to classify "noisy data". To
-build and train such a model, the researcher can do the following:
-
-1. *Prepare a quantum dataset* —Quantum data is loaded as tensors (a
-   multi-dimensional array of numbers), which becomes an edge within
-   TensorFlow’s computational graph. Each quantum data tensor is specified as a
-   quantum circuit written in Cirq that generates quantum data on the fly. This
-   avoids the need for quantum memory which has not yet been manufactured.
-2. *Evaluate a quantum neural network model* —The researcher prototypes a
-   quantum neural network using Cirq that they will embed inside of a TensorFlow
-   compute graph. Parameterized quantum models can be selected from several
-   broad categories based on the structure of the quantum data. The goal of the
-   model is to perform quantum processing in order to extract information hidden
-   in a typically entangled state. In other words, the quantum model
-   disentangles the input quantum data, leaving the hidden information encoded
-   in classical correlations—making it accessible to local measurements and
-   classical post-processing.
-3. *Sample or average* —Measurement of quantum states extracts classical
-   information in the form of samples from a classical random variable. The
-   distribution of values from this random variable generally depends on the
-   quantum state itself and on the measured observable. As many variational
-   algorithms depend on mean values of measurements, also known as expectation
-   values, TFQ provides methods for averaging over several runs involving steps
-   (1) and (2).
-4. *Evaluate a classical neural networks model* —Once classical information is
-   extracted, it is in a format ready for further classical post-processing.
-   Since the extracted information may still be encoded in classical
-   correlations between measured expectations, classical deep neural networks
-   can be applied to distill such correlations.
-5. *Evaluate cost function* —A cost is calculated using the results of classical
-   post-processing. This could be based on how accurate the model performs the
-   classification task if the quantum data was labeled, or other criteria if the
-   task is unsupervised.
-6. *Evaluate gradients and update parameters* —After evaluating the cost
-   function, the free parameters in the pipeline are updated in a direction
-   expected to decrease the cost. This is most commonly performed using gradient
-   descent.
-
-
 ## Report issues
 
 Report bugs or feature requests using the
