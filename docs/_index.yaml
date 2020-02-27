@@ -22,19 +22,26 @@ landing_page:
     items:
     - classname: devsite-landing-row-50
       description: >
-        <p>TensorFlow Quantum (TFQ) is a Python framework for hybrid
-        quantum-classical machine learning. As an application framework, TFQ
-        allows quantum algorithm researchers and ML application researchers to
-        leverage Google’s quantum computing frameworks, all from within
-        TensorFlow.</p>
-        <p/>TensorFlow Quantum focuses on modeling quantum data. It provides
-        tools to interleave quantum algorithms and logic designed in
-        <a href="https://cirq.readthedocs.io/" class="external">Cirq</a>
-        with TensorFlow. A basic understanding of quantum computing is required
-        to effectively use TensorFlow Quantum.</p>
-        <p>To get started, read the <a href="./overview">overview</a> and
-        <a href="./design">design and concepts</a> guide, then run the
-        <a href="./tutorials/hello_many_worlds">tutorials</a>.</p>
+        <p>
+        TensorFlow Quantum (TFQ) is a
+        <a href='./concepts'>quantum machine learning</a> library for rapid
+        prototyping of hybrid quantum-classical ML models. Research in
+        quantum algorithms and applications can leverage Google’s quantum
+        computing frameworks, all from within TensorFlow.
+        </p>
+        <p>
+        TensorFlow Quantum focuses on <em>quantum data</em> and building
+        <em>hybrid quantum-classical models</em>. It integrates quantum computing
+        algorithms and logic designed in
+        <a href="https://github.com/quantumlib/Cirq" class="external">Cirq</a>,
+        and provides
+        quantum computing primitives compatible with existing TensorFlow APIs,
+        along with high-performance quantum circuit simulators.
+        </p>
+        <p>
+        Start with the <a href="./overview">overview</a>, then run the
+        <a href="./tutorials/hello_many_worlds">notebook tutorials</a>.
+        </p>
 
       code_block: |
         <pre class = "prettyprint">
