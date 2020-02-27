@@ -31,9 +31,9 @@ upper_tabs:
         path: /quantum/overview
       - title: "Install"
         path: /quantum/install
-      - title: "Quantum ML concepts"
+      - title: "Quantum machine learning"
         path: /quantum/concepts
-      - title: "Software design"
+      - title: "TensorFlow Quantum design"
         path: /quantum/design
       - heading: Tutorials
       - title: "Hello, many worlds"
