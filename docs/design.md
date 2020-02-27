@@ -1,12 +1,33 @@
 # TensorFlow Quantum design
 
-TensorFlow Quantum is designed for the problems of NISQ-era quantum machine
-learning. Integration with [TensorFlow](https://www.tensorflow.org/overview) and
-[Keras](https://www.tensorflow.org/guide/keras/overview) is seamless and
-performant. And the `tfq.datasets` module allows researchers to experiment and
-converse about new and interesting quantum datasets.
+TensorFlow Quantum (TFQ) is designed for the problems of NISQ-era quantum
+machine learning. It brings quantum computing primitives—like building quantum
+circuits—to the TensorFlow ecosystem. Models and operations built with
+TensorFlow use these primitives to create powerful quantum-classical hybrid
+systems.
 
-## Primitives
+Using TFQ, researchers construct a TensorFlow graph using a quantum dataset, a
+quantum model, and classical control parameters. These are all represented as
+tensors in a single computational graph. The outcome of quantum
+measurements—leading to classical probabilistic events—is obtained by TensorFlow
+ops. Training is done with the standard
+[Keras](https://www.tensorflow.org/guide/keras/overview) API. The `tfq.datasets`
+module allows researchers to experiment with new and interesting quantum
+datasets.
+
+
+## Cirq
+
+<a href="https://github.com/quantumlib/Cirq" class="external">Cirq</a> is a
+quantum programming framework from Google. It provides all of the basic
+operations—such as qubits, gates, circuits, and measurement—to create, modify
+and invoke quantum circuits on a quantum computer, or a simulated quantum
+computer. TensorFlow Quantum uses these Cirq primitives to extend TensorFlow for
+batch computation, model building, and gradient computation. To be effective
+with TensorFlow Quantum, it’s a good idea to be effective with Cirq.
+
+
+## TensorFlow Quantum primitives
 
 TensorFlow Quantum implements the components needed to integrate TensorFlow with
 quantum computing hardware. To that end, TFQ introduces two datatype primitives:
@@ -20,10 +41,7 @@ quantum computing hardware. To that end, TFQ introduces two datatype primitives:
   operators defined in Cirq (`cirq.PauliSum`). Like circuits, create batches of
   operators of varying size.
 
-With these primitives, TFQ can build the functionality to merge quantum
-computing with TensorFlow.
-
-## Fundamental ops
+### Fundamental ops
 
 Using the quantum circuit primitives within a `tf.Tensor`, TensorFlow Quantum
 implements ops that process these circuits and produce meaningful outputs.
@@ -51,14 +69,16 @@ challenges:
 
 For performance reasons, Eigen (the C++ library used in many TensorFlow ops) is
 not well suited for quantum circuit simulation. Instead, the circuit simulators
-used in the quantum supremacy experiment were used as verifiers and extended for
-the foundation of TFQ ops (all written with AVX2 and SSE instructions). Ops with
-identical functional signatures were created that use a physical quantum
-computer. Switching between a simulated and physical quantum computer is as easy
-as changing a single line of code. These ops are located in the
-`circuit_execution_ops.py` in `tensorflow_quantum/core/ops/`.
+used in the
+<a href="https://ai.googleblog.com/2019/10/quantum-supremacy-using-programmable.html" class="external">quantum supremacy experiment</a>
+are used as verifiers and extended as the foundation of TFQ ops (all written
+with AVX2 and SSE instructions). Ops with identical functional signatures were
+created that use a physical quantum computer. Switching between a simulated and
+physical quantum computer is as easy as changing a single line of code. These
+ops are located in the
+<a href="https://github.com/tensorflow/quantum/blob/master/tensorflow_quantum/core/ops/circuit_execution_ops.py" class="external"><code>circuit_execution_ops.py</code></a>.
 
-## Layers
+### Layers
 
 TensorFlow Quantum layers expose sampling, expectation, and state calculation to
 developers using the `tf.keras.layers.Layer` interface. It's convenient to
@@ -67,7 +87,7 @@ operations. Additionally, you can create a layer with a high degree of
 complexity supporting batch circuit, batch control parameter value, and perform
 batch readout operations. See `tfq.layers.Sample` for an example.
 
-## Differentiators
+### Differentiators
 
 Unlike many TensorFlow operations, observables in quantum circuits do not have
 formulas for gradients that are relatively easy to calculate. This is because a
@@ -89,9 +109,9 @@ To implement a custom differentiator, inherit from the
 `tfq.differentiators.Differentiator` class. To define a gradient operation for
 sampling or state vector calculation, use `tf.custom_gradient`.
 
-## Datasets
+### Datasets
 
-As the field of quantum computing grows, more and more quantum data and model
+As the field of quantum computing grows, more quantum data and model
 combinations will arise, making structured comparison more difficult. The
 `tfq.datasets` module is used as the data source for quantum machine learning
 tasks. It ensures structured comparisons for the model and performance.
