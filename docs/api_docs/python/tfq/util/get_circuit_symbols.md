@@ -1,9 +1,9 @@
 <div itemscope itemtype="http://developers.google.com/ReferenceObject">
-<meta itemprop="name" content="tfq.get_supported_gates" />
+<meta itemprop="name" content="tfq.util.get_circuit_symbols" />
 <meta itemprop="path" content="Stable" />
 </div>
 
-# tfq.get_supported_gates
+# tfq.util.get_circuit_symbols
 
 <!-- Insert buttons and diff -->
 
@@ -18,12 +18,25 @@
 
 
 
-A helper to get the gates supported by tfq.
+Returns a list of the sympy.Symbols that are present in `circuit`.
 
-``` python
-tfq.get_supported_gates()
+```python
+tfq.util.get_circuit_symbols(
+    circuit
+)
 ```
 
 
 
 <!-- Placeholder for "Used in" -->
+
+
+#### Args:
+
+
+* <b>`circuit`</b>: A `cirq.Circuit` object.
+
+
+#### Returns:
+
+Python `list` containing the symbols found in the circuit.

@@ -20,8 +20,10 @@
 
 Return a tuple of potentially excited cluster states and their labels.
 
-``` python
-tfq.datasets.excited_cluster_states(qubits)
+```python
+tfq.datasets.excited_cluster_states(
+    qubits
+)
 ```
 
 
@@ -33,6 +35,9 @@ on `qubits`, apply a `cirq.X` on that qubit along with a label of 1 and add
 it to the return dataset. Finally a cluster state circuit on `qubits` that
 doesn't contain any `cirq.X` gates with a label of -1 will be added to the
 returned dataset.
+
+Note: This is a toy dataset that can serve as guidance for the community
+to contribute new datasets to TensorFlow Quantum.
 
 
 ```

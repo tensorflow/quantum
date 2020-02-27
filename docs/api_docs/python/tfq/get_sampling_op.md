@@ -20,8 +20,10 @@
 
 Get a Tensorflow op that produces samples from given quantum circuits.
 
-``` python
-tfq.get_sampling_op(backend=None)
+```python
+tfq.get_sampling_op(
+    backend=None
+)
 ```
 
 

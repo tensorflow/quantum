@@ -20,8 +20,10 @@
 
 Convert a tensor of tfq primitives back to Python objects.
 
-``` python
-tfq.from_tensor(tensor_to_convert)
+```python
+tfq.from_tensor(
+    tensor_to_convert
+)
 ```
 
 

@@ -5,6 +5,7 @@
 
 # Module: tfq.datasets
 
+<!-- Insert buttons and diff -->
 
 <table class="tfo-notebook-buttons tfo-api" align="left">
 
@@ -17,7 +18,7 @@
 
 
 
-Interesting quantum datasets.
+Experimental location for interesting quantum datasets.
 
 
 
