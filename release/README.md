@@ -1,4 +1,4 @@
-Alternate method to create and intsall TensorFlow Quantum as a PIP package:
+Alternate method to create and install TensorFlow Quantum as a PIP package:
 
 First create a Docker container with Ubuntu 16.04 and the devtoolset7 toolchain.
 ```
