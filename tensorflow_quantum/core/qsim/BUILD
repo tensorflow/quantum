@@ -50,8 +50,8 @@ cc_library(
     hdrs = ["mux.h"],
     deps = [
         ":state_space",
-        ":state_space_slow",
         ":state_space_avx",
+        ":state_space_slow",
         ":state_space_sse",
         "@com_google_absl//absl/memory",
     ],
