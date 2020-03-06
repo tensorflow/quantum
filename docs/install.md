@@ -44,6 +44,13 @@ Install the latest stable release of TensorFlow Quantum:
 
 Success: TensorFlow Quantum is now installed.
 
+Install the latest nightly version of TensorFlow Quantum:
+
+<!-- common_typos_disable -->
+<pre class="devsite-click-to-copy">
+  <code class="devsite-terminal">pip3 install -U tfq-nightly</code>
+</pre>
+<!-- common_typos_enable -->
 
 ## Build from source
 
