@@ -1,4 +1,6 @@
-# TensorFlow Quantum
+![TensorFlow Quantum](./docs/images/logo/tf_quantum_circle.jpg)
+
+---
 
 TensorFlow Quantum (TFQ) is a python framework for hybrid
 quantum-classical machine learning that is primarily focused on
