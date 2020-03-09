@@ -55,3 +55,11 @@ We are eager to collaborate with you! TensorFlow Quantum is still a very young c
 if you have ideas for features that you would like added feel free to check out our
 [Contributor Guidelines](https://github.com/tensorflow/quantum/blob/master/CONTRIBUTING.md)
 to get started.
+
+
+## References
+
+If you use TensorFlow Quantum in your research, please cite:
+
+TensorFlow Quantum: A Software Framework for Quantum Machine Learning
+[arXiv:2003.02989, 2020](https://arxiv.org/abs/2003.02989).
