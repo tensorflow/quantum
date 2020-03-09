@@ -20,6 +20,7 @@ EXPORT_DIR="bazel-bin/release/build_pip_package.runfiles/__main__"
 
 function main() {
   DEST=${1}
+  EXTRA_FLAGS=${2}
 
   if [[ -z ${DEST} ]]; then
     echo "No destination directory provided."
@@ -33,7 +34,7 @@ function main() {
 
   echo $(date) : "=== Using tmpdir: ${TMPDIR}"
 
-  echo "=== Copy TFQuantum files"
+  echo "=== Copy TFQ files"
 
   # Copy over files necessary to run setup.py
   cp ${EXPORT_DIR}/release/setup.py "${TMPDIR}"
@@ -47,7 +48,7 @@ function main() {
   pushd ${TMPDIR}
   echo $(date) : "=== Building wheel"
 
-  python3 setup.py bdist_wheel > /dev/null
+  python3 setup.py bdist_wheel ${EXTRA_FLAGS} > /dev/null
 
   cp dist/*.whl "${DEST}"
   popd

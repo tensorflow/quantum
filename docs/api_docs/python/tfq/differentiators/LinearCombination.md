@@ -15,7 +15,7 @@
 <table class="tfo-notebook-buttons tfo-api" align="left">
 
 <td>
-  <a target="_blank" href="https://github.com/quantumlib/TFQuantum/tree/master/tensorflow_quantum/python/differentiators/linear_combination.py">
+  <a target="_blank" href="https://github.com/tensorflow/quantum/tree/master/tensorflow_quantum/python/differentiators/linear_combination.py">
     <img src="https://www.tensorflow.org/images/GitHub-Mark-32px.png" />
     View source on GitHub
   </a>
@@ -23,11 +23,17 @@
 
 
 
-## Class `LinearCombination`
-
 Differentiate a circuit with respect to its inputs by
 
 Inherits From: [`Differentiator`](../../tfq/differentiators/Differentiator.md)
+
+```python
+tfq.differentiators.LinearCombination(
+    weights, perturbations
+)
+```
+
+
 
 <!-- Placeholder for "Used in" -->
 linearly combining values obtained by evaluating the op using parameter
@@ -68,22 +74,6 @@ tf.Tensor([[5.089467]], shape=(1, 1), dtype=float32)
 
 ```
 
-<h2 id="__init__"><code>__init__</code></h2>
-
-<a target="_blank" href="https://github.com/quantumlib/TFQuantum/tree/master/tensorflow_quantum/python/differentiators/linear_combination.py">View source</a>
-
-``` python
-__init__(
-    weights,
-    perturbations
-)
-```
-
-Instantiate this differentiator.
-
-Create a LinearComobinationDifferentiator. Pass in weights and
-perturbations as described below.
-
 #### Args:
 
 
@@ -93,22 +83,15 @@ perturbations as described below.
 * <b>`perturbations`</b>: Python `list` of real numbers representing
     perturbation values.
 
-
-
 ## Methods
 
 <h3 id="differentiate_analytic"><code>differentiate_analytic</code></h3>
 
-<a target="_blank" href="https://github.com/quantumlib/TFQuantum/tree/master/tensorflow_quantum/python/differentiators/linear_combination.py">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/quantum/tree/master/tensorflow_quantum/python/differentiators/linear_combination.py">View source</a>
 
-``` python
+```python
 differentiate_analytic(
-    programs,
-    symbol_names,
-    symbol_values,
-    pauli_sums,
-    forward_pass_vals,
-    grad
+    programs, symbol_names, symbol_values, pauli_sums, forward_pass_vals, grad
 )
 ```
 
@@ -117,17 +100,12 @@ differentiate_analytic(
 
 <h3 id="differentiate_sampled"><code>differentiate_sampled</code></h3>
 
-<a target="_blank" href="https://github.com/quantumlib/TFQuantum/tree/master/tensorflow_quantum/python/differentiators/linear_combination.py">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/quantum/tree/master/tensorflow_quantum/python/differentiators/linear_combination.py">View source</a>
 
-``` python
+```python
 differentiate_sampled(
-    programs,
-    symbol_names,
-    symbol_values,
-    pauli_sums,
-    num_samples,
-    forward_pass_vals,
-    grad
+    programs, symbol_names, symbol_values, pauli_sums, num_samples,
+    forward_pass_vals, grad
 )
 ```
 
@@ -136,9 +114,9 @@ differentiate_sampled(
 
 <h3 id="generate_differentiable_op"><code>generate_differentiable_op</code></h3>
 
-<a target="_blank" href="https://github.com/quantumlib/TFQuantum/tree/master/tensorflow_quantum/python/differentiators/differentiator.py">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/quantum/tree/master/tensorflow_quantum/python/differentiators/differentiator.py">View source</a>
 
-``` python
+```python
 generate_differentiable_op()
 ```
 
@@ -178,9 +156,9 @@ a call to this differentiators `differentiate_*` function.
 
 <h3 id="refresh"><code>refresh</code></h3>
 
-<a target="_blank" href="https://github.com/quantumlib/TFQuantum/tree/master/tensorflow_quantum/python/differentiators/differentiator.py">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/quantum/tree/master/tensorflow_quantum/python/differentiators/differentiator.py">View source</a>
 
-``` python
+```python
 refresh()
 ```
 

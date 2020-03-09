@@ -38,10 +38,12 @@ using tfq::proto::PauliQubitPair;
 using tfq::proto::PauliSum;
 using tfq::proto::PauliTerm;
 
-Status ResolveQubitIds(Program* program,
+Status ResolveQubitIds(Program* program, unsigned int* num_qubits,
                        std::vector<PauliSum>* p_sums /*=nullptr*/) {
   if (program->circuit().moments().empty()) {
     // (#679) Just ignore empty program.
+    // Number of qubits in empty programs is zero.
+    *num_qubits = 0;
     return Status::OK();
   }
 
@@ -53,12 +55,13 @@ Status ResolveQubitIds(Program* program,
       }
     }
   }
+  *num_qubits = id_set.size();
 
   std::vector<std::string> ids(id_set.begin(), id_set.end());
   std::sort(ids.begin(), ids.end());
 
   absl::flat_hash_map<std::string, int> id_to_index;
-  for (int i = 0; i < ids.size(); i++) {
+  for (size_t i = 0; i < ids.size(); i++) {
     id_to_index[ids[i]] = i;
   }
 
@@ -74,7 +77,7 @@ Status ResolveQubitIds(Program* program,
   }
 
   if (p_sums) {
-    for (int i = 0; i < p_sums->size(); i++) {
+    for (size_t i = 0; i < p_sums->size(); i++) {
       // Replace the PauliSum Qubit ids with the indices.
       for (PauliTerm& term : *(p_sums->at(i)).mutable_terms()) {
         for (PauliQubitPair& pair : *term.mutable_paulis()) {
@@ -95,20 +98,8 @@ Status ResolveQubitIds(Program* program,
   return Status::OK();
 }
 
-int GetNumQubits(const Program& program) {
-  absl::flat_hash_set<std::string> id_set;
-  for (const Moment& moment : program.circuit().moments()) {
-    for (const Operation& operation : moment.operations()) {
-      for (const Qubit& qubit : operation.qubits()) {
-        id_set.insert(qubit.id());
-      }
-    }
-  }
-  return id_set.size();
-}
-
 Status ResolveSymbols(
-    const absl::flat_hash_map<std::string, std::pair<int, double>>& param_map,
+    const absl::flat_hash_map<std::string, std::pair<int, float>>& param_map,
     Program* program) {
   for (Moment& moment : *program->mutable_circuit()->mutable_moments()) {
     for (Operation& operation : *moment.mutable_operations()) {

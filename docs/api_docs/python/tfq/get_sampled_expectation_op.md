@@ -10,7 +10,7 @@
 <table class="tfo-notebook-buttons tfo-api" align="left">
 
 <td>
-  <a target="_blank" href="https://github.com/quantumlib/TFQuantum/tree/master/tensorflow_quantum/core/ops/circuit_execution_ops.py">
+  <a target="_blank" href="https://github.com/tensorflow/quantum/tree/master/tensorflow_quantum/core/ops/circuit_execution_ops.py">
     <img src="https://www.tensorflow.org/images/GitHub-Mark-32px.png" />
     View source on GitHub
   </a>
@@ -20,8 +20,10 @@
 
 Get a TensorFlow op that will calculate sampled expectation values.
 
-``` python
-tfq.get_sampled_expectation_op(backend=None)
+```python
+tfq.get_sampled_expectation_op(
+    backend=None
+)
 ```
 
 

@@ -55,7 +55,7 @@ class TfqPsDecomposeOp : public tensorflow::OpKernel {
                                 0, context->input(0).shape(), &output));
     auto output_tensor = output->flat<std::string>();
 
-    const int max_buffer_moments = 2;
+    const int max_buffer_moments = 3;
 
     auto DoWork = [&](int start, int end) {
       for (int i = start; i < end; i++) {
@@ -71,7 +71,30 @@ class TfqPsDecomposeOp : public tensorflow::OpKernel {
           for (int k = 0; k < cur_moment.operations().size(); k++) {
             Operation cur_op = cur_moment.operations().at(k);
             auto &cur_op_map = *cur_op.mutable_args();
-            if (cur_op.gate().id() == "ISP") {
+            if (cur_op.gate().id() == "PISP") {
+              auto exponent = cur_op_map.at("exponent");
+              auto phase_exponent = cur_op_map.at("phase_exponent");
+              if (exponent.arg_case() == Arg::ArgCase::kSymbol ||
+                  phase_exponent.arg_case() == Arg::ArgCase::kSymbol) {
+                // Decompose cirq.PhasedISwapPowGate only if it is
+                // parameterized.
+                num_extra_moments = 3;
+                Operation new_op;
+
+                new_op = getOpForPISP(cur_op, 0, 0);
+                cur_moment.mutable_operations()->at(k) = new_op;
+                new_op = getOpForPISP(cur_op, 1, 1);
+                *cur_moment.add_operations() = new_op;
+                new_op = getOpForISP(cur_op, "XXP", exponent.symbol());
+                *temp_moment_list[0].add_operations() = new_op;
+                new_op = getOpForISP(cur_op, "YYP", exponent.symbol());
+                *temp_moment_list[1].add_operations() = new_op;
+                new_op = getOpForPISP(cur_op, 1, 0);
+                *temp_moment_list[2].add_operations() = new_op;
+                new_op = getOpForPISP(cur_op, 0, 1);
+                *temp_moment_list[2].add_operations() = new_op;
+              }
+            } else if (cur_op.gate().id() == "ISP") {
               auto exponent = cur_op_map.at("exponent");
               if (exponent.arg_case() == Arg::ArgCase::kSymbol) {
                 // Decompose cirq.ISwapPowGate only if it is parameterized.
@@ -134,7 +157,8 @@ class TfqPsDecomposeOp : public tensorflow::OpKernel {
   }
 
  private:
-  // Helper functions for decompositions of ISwapPowGate, PhasedX
+  // Helper functions for decompositions of ISwapPowGate, PhasedX, FSIM,
+  //  PhasedISwapPow.
   Operation getOpForISP(Operation &cur_op, std::string id, std::string symbol) {
     // Step 1. parse the current op.
     auto &cur_op_map = *cur_op.mutable_args();
@@ -192,6 +216,42 @@ class TfqPsDecomposeOp : public tensorflow::OpKernel {
     return new_op;
   }
 
+  Operation getOpForPISP(Operation &cur_op, bool sign_flip, bool use_target) {
+    // Step 1. parse the current op.
+    auto &cur_op_map = *cur_op.mutable_args();
+    auto &cur_op_qubits = cur_op.qubits();
+    auto target_exponent = cur_op_map["phase_exponent"];
+    float target_exponent_scalar =
+        cur_op_map["phase_exponent_scalar"].arg_value().float_value();
+    float sign = (sign_flip) ? -1.0 : 1.0;
+    // Step 2. create a new op.
+    Operation new_op;
+    new_op.mutable_gate()->set_id("ZP");
+    // Step 3. add global_shift, exponent_scalar, exponent.
+    auto &new_op_map = *new_op.mutable_args();
+    new_op_map["global_shift"].mutable_arg_value()->set_float_value(0.0);
+    switch (target_exponent.arg_case()) {
+      case Arg::ArgCase::kSymbol:
+        new_op_map["exponent_scalar"].mutable_arg_value()->set_float_value(
+            sign * target_exponent_scalar);
+        new_op_map["exponent"].set_symbol(target_exponent.symbol());
+        break;
+      case Arg::ArgCase::kArgValue:
+        new_op_map["exponent_scalar"].mutable_arg_value()->set_float_value(1.0);
+        new_op_map["exponent"].mutable_arg_value()->set_float_value(
+            sign * target_exponent.arg_value().float_value());
+        break;
+      case Arg::ArgCase::kFunc:
+        // TODO(jaeyoo) : support this if prepared.
+        break;
+      default:
+        break;
+    }
+    *new_op.mutable_qubits() = {cur_op_qubits.begin() + use_target,
+                                cur_op_qubits.end() - !use_target};
+    return new_op;
+  }
+
   Operation getOpForFSIM(Operation &cur_op, std::string id, std::string key,
                          bool use_global_shift = false) {
     // Step 1. parse the current op.
@@ -212,13 +272,13 @@ class TfqPsDecomposeOp : public tensorflow::OpKernel {
     switch (target_exponent.arg_case()) {
       case Arg::ArgCase::kSymbol:
         new_op_map["exponent_scalar"].mutable_arg_value()->set_float_value(
-            sign * target_exponent_scalar / M_PI);
+            sign * target_exponent_scalar / 3.14159265359);
         new_op_map["exponent"].set_symbol(target_exponent.symbol());
         break;
       case Arg::ArgCase::kArgValue:
         new_op_map["exponent_scalar"].mutable_arg_value()->set_float_value(1.0);
         new_op_map["exponent"].mutable_arg_value()->set_float_value(
-            sign * target_exponent.arg_value().float_value() / M_PI);
+            sign * target_exponent.arg_value().float_value() / 3.14159265359);
         break;
       case Arg::ArgCase::kFunc:
         // TODO(jaeyoo) : support this if prepared.

@@ -71,7 +71,7 @@ class TfqPsWeightsFromSymbolOp : public tensorflow::OpKernel {
     for (int i = 0; i < n_symbols; i++) {
       symbols_map[symbols(i)] = i;
     }
-    std::vector<std::string> ignore_list = {"ISP", "PXP", "FSIM"};
+    std::vector<std::string> ignore_list = {"ISP", "PXP", "FSIM", "PISP"};
     absl::flat_hash_set<std::string> ignored_symbol_set(ignore_list.begin(),
                                                         ignore_list.end());
 
@@ -124,7 +124,7 @@ class TfqPsWeightsFromSymbolOp : public tensorflow::OpKernel {
                                               DoWork);
 
     int largest_single_symbol = 0;
-    for (int i = 0; i < n_single_symbol.size(); i++) {
+    for (size_t i = 0; i < n_single_symbol.size(); i++) {
       largest_single_symbol =
           std::max(n_single_symbol.at(i), largest_single_symbol);
     }

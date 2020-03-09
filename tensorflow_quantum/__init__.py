@@ -38,3 +38,13 @@ import tensorflow_quantum.datasets as datasets
 
 # Import differentiators.
 import tensorflow_quantum.python.differentiators as differentiators
+
+# Python adds these symbols for resolution of above imports to
+# work. We get rid of them so that we don't have two paths to
+# things. For example: tfq.layers and tfq.python.layers
+# pylint: disable=undefined-variable
+del python
+del core
+# pylint: enable=undefined-variable
+
+__version__ = '0.3.0'

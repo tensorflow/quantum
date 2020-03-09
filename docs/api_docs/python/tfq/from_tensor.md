@@ -10,7 +10,7 @@
 <table class="tfo-notebook-buttons tfo-api" align="left">
 
 <td>
-  <a target="_blank" href="https://github.com/quantumlib/TFQuantum/tree/master/tensorflow_quantum/python/util.py">
+  <a target="_blank" href="https://github.com/tensorflow/quantum/tree/master/tensorflow_quantum/python/util.py">
     <img src="https://www.tensorflow.org/images/GitHub-Mark-32px.png" />
     View source on GitHub
   </a>
@@ -20,8 +20,10 @@
 
 Convert a tensor of tfq primitives back to Python objects.
 
-``` python
-tfq.from_tensor(tensor_to_convert)
+```python
+tfq.from_tensor(
+    tensor_to_convert
+)
 ```
 
 

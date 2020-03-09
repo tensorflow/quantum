@@ -14,13 +14,16 @@
 # ==============================================================================
 """A basic serializer used to serialize/deserialize Cirq circuits for tfq."""
 # TODO(pmassey / anyone): determine if this should be kept as globals.
+import copy
 import numbers
-
 import sympy
 
 import cirq
 import cirq.google.api.v2 as v2
 from tensorflow_quantum.core.proto import pauli_sum_pb2
+
+# Needed to allow autograph to crawl AST without erroring.
+_CONSTANT_TRUE = lambda x: True
 
 
 def _parse_mul(expr):
@@ -119,7 +122,8 @@ def _eigen_gate_serializer(gate_type, serialized_id):
     ]
     return cirq.google.GateOpSerializer(gate_type=gate_type,
                                         serialized_gate_id=serialized_id,
-                                        args=args)
+                                        args=args,
+                                        can_serialize_predicate=_CONSTANT_TRUE)
 
 
 def _eigen_gate_deserializer(gate_type, serialized_id):
@@ -173,7 +177,8 @@ def _fsim_gate_serializer():
     ]
     return cirq.google.GateOpSerializer(gate_type=cirq.FSimGate,
                                         serialized_gate_id="FSIM",
-                                        args=args)
+                                        args=args,
+                                        can_serialize_predicate=_CONSTANT_TRUE)
 
 
 def _fsim_gate_deserializer():
@@ -226,7 +231,8 @@ def _phased_eigen_gate_serializer(gate_type, serialized_id):
     ]
     return cirq.google.GateOpSerializer(gate_type=gate_type,
                                         serialized_gate_id=serialized_id,
-                                        args=args)
+                                        args=args,
+                                        can_serialize_predicate=_CONSTANT_TRUE)
 
 
 def _phased_eigen_gate_deserializer(gate_type, serialized_id):
@@ -245,9 +251,13 @@ def _phased_eigen_gate_deserializer(gate_type, serialized_id):
             else exponent * exponent_scalar
         phase_exponent = phase_exponent if phase_exponent_scalar == 1.0 \
             else phase_exponent * phase_exponent_scalar
-        return gate_type(exponent=exponent,
-                         global_shift=global_shift,
-                         phase_exponent=phase_exponent)
+        if global_shift != 0:
+            # needed in case this specific phasedeigengate doesn't
+            # have a global_phase in constructor.
+            return gate_type(exponent=exponent,
+                             global_shift=global_shift,
+                             phase_exponent=phase_exponent)
+        return gate_type(exponent=exponent, phase_exponent=phase_exponent)
 
     args = [
         cirq.google.DeserializingArg(serialized_name="phase_exponent",
@@ -283,6 +293,7 @@ EIGEN_GATES_DICT = {
 
 PHASED_EIGEN_GATES_DICT = {
     cirq.PhasedXPowGate: "PXP",
+    cirq.PhasedISwapPowGate: "PISP",
 }
 
 SERIALIZERS = [
@@ -309,7 +320,7 @@ SERIALIZER = cirq.google.SerializableGateSet(gate_set_name="tfq_gate_set",
                                              deserializers=DESERIALIZERS)
 
 
-def serialize_circuit(circuit):
+def serialize_circuit(circuit_inp):
     """Returns a `cirq.Program` proto representing the `cirq.Circuit`.
 
     Note that the circuit must use gates valid in the tfq_gate_set.
@@ -319,12 +330,15 @@ def serialize_circuit(circuit):
     we use the `cirq.Program` proto, we only support `cirq.GridQubit` instances
     during serialization of circuits.
 
+    Note: once serialized terminal measurements are removed.
+
     Args:
-        circuit: A `cirq.Circuit`.
+        circuit_inp: A `cirq.Circuit`.
 
     Returns:
         A `cirq.google.api.v2.Program` proto.
     """
+    circuit = copy.deepcopy(circuit_inp)
     if not isinstance(circuit, cirq.Circuit):
         raise TypeError("serialize requires cirq.Circuit objects."
                         " Given: " + str(type(circuit)))

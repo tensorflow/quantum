@@ -31,7 +31,9 @@ upper_tabs:
         path: /quantum/overview
       - title: "Install"
         path: /quantum/install
-      - title: "Design and concepts"
+      - title: "Quantum machine learning"
+        path: /quantum/concepts
+      - title: "TensorFlow Quantum design"
         path: /quantum/design
       - heading: Tutorials
       - title: "Hello, many worlds"
@@ -44,8 +46,6 @@ upper_tabs:
         path: /quantum/tutorials/barren_plateaus
       - title: "Quantum CNN"
         path: /quantum/tutorials/qcnn
-      - title: "Quantum sensing"
-        path: /quantum/tutorials/sensing
 
     - name: API
       skip_translation: true

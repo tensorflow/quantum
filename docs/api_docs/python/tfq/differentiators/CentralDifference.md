@@ -15,7 +15,7 @@
 <table class="tfo-notebook-buttons tfo-api" align="left">
 
 <td>
-  <a target="_blank" href="https://github.com/quantumlib/TFQuantum/tree/master/tensorflow_quantum/python/differentiators/linear_combination.py">
+  <a target="_blank" href="https://github.com/tensorflow/quantum/tree/master/tensorflow_quantum/python/differentiators/linear_combination.py">
     <img src="https://www.tensorflow.org/images/GitHub-Mark-32px.png" />
     View source on GitHub
   </a>
@@ -23,11 +23,17 @@
 
 
 
-## Class `CentralDifference`
-
 Differentiates a circuit using Central Differencing.
 
 Inherits From: [`LinearCombination`](../../tfq/differentiators/LinearCombination.md)
+
+```python
+tfq.differentiators.CentralDifference(
+    error_order=2, grid_spacing=0.001
+)
+```
+
+
 
 <!-- Placeholder for "Used in" -->
 
@@ -64,22 +70,6 @@ tf.Tensor([[-1.1837807]], shape=(1, 1), dtype=float32)
 
 ```
 
-<h2 id="__init__"><code>__init__</code></h2>
-
-<a target="_blank" href="https://github.com/quantumlib/TFQuantum/tree/master/tensorflow_quantum/python/differentiators/linear_combination.py">View source</a>
-
-``` python
-__init__(
-    error_order=2,
-    grid_spacing=0.001
-)
-```
-
-Instantiate a CentralDifference.
-
-Create a CentralDifference differentaitor, passing along an error order
-and grid spacing to be used to contstruct differentiator coeffecients.
-
 #### Args:
 
 
@@ -90,22 +80,15 @@ and grid spacing to be used to contstruct differentiator coeffecients.
 * <b>`grid_spacing`</b>: A positive `float` specifying how large of a
     grid to use in calculating this finite difference.
 
-
-
 ## Methods
 
 <h3 id="differentiate_analytic"><code>differentiate_analytic</code></h3>
 
-<a target="_blank" href="https://github.com/quantumlib/TFQuantum/tree/master/tensorflow_quantum/python/differentiators/linear_combination.py">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/quantum/tree/master/tensorflow_quantum/python/differentiators/linear_combination.py">View source</a>
 
-``` python
+```python
 differentiate_analytic(
-    programs,
-    symbol_names,
-    symbol_values,
-    pauli_sums,
-    forward_pass_vals,
-    grad
+    programs, symbol_names, symbol_values, pauli_sums, forward_pass_vals, grad
 )
 ```
 
@@ -114,17 +97,12 @@ differentiate_analytic(
 
 <h3 id="differentiate_sampled"><code>differentiate_sampled</code></h3>
 
-<a target="_blank" href="https://github.com/quantumlib/TFQuantum/tree/master/tensorflow_quantum/python/differentiators/linear_combination.py">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/quantum/tree/master/tensorflow_quantum/python/differentiators/linear_combination.py">View source</a>
 
-``` python
+```python
 differentiate_sampled(
-    programs,
-    symbol_names,
-    symbol_values,
-    pauli_sums,
-    num_samples,
-    forward_pass_vals,
-    grad
+    programs, symbol_names, symbol_values, pauli_sums, num_samples,
+    forward_pass_vals, grad
 )
 ```
 
@@ -133,9 +111,9 @@ differentiate_sampled(
 
 <h3 id="generate_differentiable_op"><code>generate_differentiable_op</code></h3>
 
-<a target="_blank" href="https://github.com/quantumlib/TFQuantum/tree/master/tensorflow_quantum/python/differentiators/differentiator.py">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/quantum/tree/master/tensorflow_quantum/python/differentiators/differentiator.py">View source</a>
 
-``` python
+```python
 generate_differentiable_op()
 ```
 
@@ -175,9 +153,9 @@ a call to this differentiators `differentiate_*` function.
 
 <h3 id="refresh"><code>refresh</code></h3>
 
-<a target="_blank" href="https://github.com/quantumlib/TFQuantum/tree/master/tensorflow_quantum/python/differentiators/differentiator.py">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/quantum/tree/master/tensorflow_quantum/python/differentiators/differentiator.py">View source</a>
 
-``` python
+```python
 refresh()
 ```
 

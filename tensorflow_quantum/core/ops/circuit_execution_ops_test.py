@@ -149,9 +149,11 @@ class ExecutionOpsConsistentyTest(tf.test.TestCase, parameterized.TestCase):
                 c += cirq.Circuit(cirq.Y(qubit)**0.125)
 
             if gate_ref[gate] == 2:
-                c += cirq.Circuit(gate(qubits[1], qubits[3]))
+                op_qubits = np.random.choice(qubits, size=2, replace=False)
+                c += cirq.Circuit(gate(*op_qubits))
             elif gate_ref[gate] == 1:
-                c += cirq.Circuit(gate(qubits[2]))
+                op_qubits = np.random.choice(qubits, size=1, replace=False)
+                c += cirq.Circuit(gate(*op_qubits))
             else:
                 raise ValueError(
                     "Unable to test supported gates across all ops."
@@ -351,7 +353,7 @@ class ExecutionOpsConsistentyTest(tf.test.TestCase, parameterized.TestCase):
 
         pauli_sums = util.random_pauli_sums(qubits, max_paulisum_length,
                                             BATCH_SIZE)
-        num_samples = [[100]] * BATCH_SIZE
+        num_samples = [[1000]] * BATCH_SIZE
 
         op_expectations = op(
             util.convert_to_tensor(circuit_batch), symbol_names,
@@ -393,7 +395,7 @@ class ExecutionOpsConsistentyTest(tf.test.TestCase, parameterized.TestCase):
 
         pauli_sums = util.random_pauli_sums(qubits, max_paulisum_length,
                                             BATCH_SIZE)
-        num_samples = [[100]] * BATCH_SIZE
+        num_samples = [[1000]] * BATCH_SIZE
 
         op_expectations = op(
             util.convert_to_tensor(circuit_batch), symbol_names,

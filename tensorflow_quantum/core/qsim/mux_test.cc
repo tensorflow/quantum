@@ -18,21 +18,16 @@ limitations under the License.
 #include <memory>
 
 #include "gtest/gtest.h"
-#include "tensorflow_quantum/core/qsim/simulator.h"
-#include "tensorflow_quantum/core/qsim/statespace.h"
+#include "tensorflow_quantum/core/qsim/state_space.h"
 
 namespace tfq {
 namespace qsim {
 namespace {
 
 TEST(MuxTest, GetStateSpace) {
-  auto statespace = GetStateSpace(1, 1);
-  EXPECT_FALSE(statespace == nullptr);
-}
-
-TEST(MuxTest, GetSimulator) {
-  auto simulator = GetSimulator(1, 1);
+  auto simulator = GetStateSpace(1, 1);
   EXPECT_FALSE(simulator == nullptr);
+  delete simulator;
 }
 
 }  // namespace

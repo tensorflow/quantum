@@ -29,8 +29,6 @@ toc:
     path: /quantum/api_docs/python/tfq/get_sampling_op
   - title: get_state_op
     path: /quantum/api_docs/python/tfq/get_state_op
-  - title: get_supported_gates
-    path: /quantum/api_docs/python/tfq/get_supported_gates
   - title: padded_to_ragged
     path: /quantum/api_docs/python/tfq/padded_to_ragged
 - title: tfq.datasets
@@ -73,3 +71,13 @@ toc:
     path: /quantum/api_docs/python/tfq/layers/SampledExpectation
   - title: State
     path: /quantum/api_docs/python/tfq/layers/State
+- title: tfq.util
+  section:
+  - title: Overview
+    path: /quantum/api_docs/python/tfq/util
+  - title: exponential
+    path: /quantum/api_docs/python/tfq/util/exponential
+  - title: get_circuit_symbols
+    path: /quantum/api_docs/python/tfq/util/get_circuit_symbols
+  - title: get_supported_gates
+    path: /quantum/api_docs/python/tfq/util/get_supported_gates

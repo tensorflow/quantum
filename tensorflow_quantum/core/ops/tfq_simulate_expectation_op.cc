@@ -26,7 +26,8 @@ limitations under the License.
 #include "tensorflow_quantum/core/ops/parse_context.h"
 #include "tensorflow_quantum/core/ops/tfq_simulate_utils.h"
 #include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
-#include "tensorflow_quantum/core/qsim/q_state.h"
+#include "tensorflow_quantum/core/qsim/mux.h"
+#include "tensorflow_quantum/core/qsim/state_space.h"
 #include "tensorflow_quantum/core/src/circuit.h"
 #include "tensorflow_quantum/core/src/circuit_parser.h"
 #include "tensorflow_quantum/core/src/program_resolution.h"
@@ -36,7 +37,8 @@ namespace tfq {
 using ::cirq::google::api::v2::Program;
 using ::tensorflow::Status;
 using ::tfq::proto::PauliSum;
-using ::tfq::qsim::QState;
+using ::tfq::qsim::GetStateSpace;
+using ::tfq::qsim::StateSpace;
 
 class TfqSimulateExpectationOp : public tensorflow::OpKernel {
  public:
@@ -79,8 +81,12 @@ class TfqSimulateExpectationOp : public tensorflow::OpKernel {
     auto DoWork = [&](int start, int end) {
       int old_batch_index = -2;
       int cur_batch_index = -1;
+      int old_num_qubits = -2;
       int cur_op_index;
-      std::unique_ptr<QState> test_state(new QState(1));
+      std::unique_ptr<StateSpace> test_state =
+          std::unique_ptr<StateSpace>(GetStateSpace(1, 1));
+      std::unique_ptr<StateSpace> scratch_state =
+          std::unique_ptr<StateSpace>(GetStateSpace(1, 1));
       for (int i = start; i < end; i++) {
         cur_batch_index = i / output_dim_op_size;
         cur_op_index = i % output_dim_op_size;
@@ -95,33 +101,41 @@ class TfqSimulateExpectationOp : public tensorflow::OpKernel {
           // We've run into a new wavefunction we must compute.
           // Only compute a new wavefunction when we have to.
           Program program = programs[cur_batch_index];
+          const int num = num_qubits[cur_batch_index];
           OP_REQUIRES_OK(context,
                          ResolveSymbols(maps[cur_batch_index], &program));
 
-          // QSim work to be swapped in for the above once working.
           Circuit circuit;
-          OP_REQUIRES_OK(
-              context, CircuitFromProgram(program, num_qubits[cur_batch_index],
-                                          &circuit));
-          test_state.reset(new QState(num_qubits[cur_batch_index]));
-          OP_REQUIRES_OK(context, test_state->Update(circuit));
+          OP_REQUIRES_OK(context, CircuitFromProgram(program, num, &circuit));
 
-          // Test area
-          // QState other_test_state(num_qubits[cur_batch_index]);
-          // test_state->CopyOnto(other_test_state);
-          // std::complex<float> dummy =
-          // test_state->GetRealInnerProduct(other_test_state);
+          // TODO(mbbrough): Update this allocation hack so that a StateSpace
+          //  object can grow it's memory dynamically to larger and larger size
+          //  without ever having to call free (until very end). This is tricky
+          //  to implement because right now certain statespaces can't simulate
+          //  all states and we use StateSpaceSlow for smaller circuits.
+          if (num != old_num_qubits) {
+            test_state.reset(GetStateSpace(num, 1));
+            test_state->CreateState();
+
+            // Also re-allocate scratch state for expectation calculations.
+            scratch_state.reset(GetStateSpace(num, 1));
+            scratch_state->CreateState();
+          }
+          // no need to update scratch_state since ComputeExpectation
+          // will take care of things for us.
+          test_state->SetStateZero();
+          OP_REQUIRES_OK(context, test_state->Update(circuit));
+          old_num_qubits = num;
         }
 
         float expectation = 0.0;
         OP_REQUIRES_OK(context, test_state->ComputeExpectation(
                                     pauli_sums[cur_batch_index][cur_op_index],
-                                    &expectation));
+                                    scratch_state.get(), &expectation));
 
         output_tensor(cur_batch_index, cur_op_index) = expectation;
         old_batch_index = cur_batch_index;
       }
-      test_state.release();
     };
 
     const int block_size =

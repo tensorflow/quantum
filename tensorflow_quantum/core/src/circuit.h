@@ -16,7 +16,6 @@ limitations under the License.
 #ifndef TFQ_CORE_SRC_CIRCUIT_H_
 #define TFQ_CORE_SRC_CIRCUIT_H_
 
-#include <array>
 #include <vector>
 
 #include "tensorflow_quantum/core/src/gates_def.h"
@@ -28,23 +27,11 @@ class Circuit {
   unsigned int num_qubits;
   std::vector<Gate> gates;
 
-  // provided to ease serialization testing
-  bool operator==(const Circuit& r) const {
-    if (this->num_qubits != r.num_qubits) {
-      return false;
-    }
-    if (this->gates.size() != r.gates.size()) {
-      return false;
-    }
-    for (size_t i = 0; i < this->gates.size(); i++) {
-      if (this->gates.at(i) != r.gates.at(i)) {
-        return false;
-      }
-    }
-    return true;
-  }
+  Circuit();
+  Circuit(unsigned int num_qubits, std::vector<Gate>& gates);
 
-  bool operator!=(const Circuit& r) const { return !(*this == r); }
+  bool operator==(const Circuit& r) const;
+  bool operator!=(const Circuit& r) const;
 };
 
 }  // namespace tfq

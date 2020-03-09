@@ -53,6 +53,12 @@ def _items_to_tensorize():
 class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
     """Test that utility functions work."""
 
+    def test_get_supported_gates(self):
+        """Confirm one of every gate is returned."""
+        mapping_1 = util.get_supported_gates()
+        self.assertEqual(len(mapping_1.keys()),
+                         len(serializer.SERIALIZER.supported_gate_types()))
+
     @parameterized.parameters(_items_to_tensorize())
     def test_convert_to_tensor(self, item):
         """Test that the convert_to_tensor function works correctly by manually

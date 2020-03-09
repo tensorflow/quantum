@@ -58,7 +58,7 @@ class TfqPsSymbolReplaceOp : public tensorflow::OpKernel {
             "symbols must be rank 1. Got rank ", symbols_tensor->dims(), ".")));
 
     const auto symbols = symbols_tensor->vec<std::string>();
-    const int n_symbols = symbols.size();
+    const size_t n_symbols = symbols.size();
 
     // Parse the replacement string here.
     const Tensor *replacement_symbols_tensor;
