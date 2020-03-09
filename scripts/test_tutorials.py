@@ -27,7 +27,8 @@ NOTEBOOKS = glob.glob("quantum/docs/tutorials/*.ipynb")
 
 class ExamplesTest(tf.test.TestCase, parameterized.TestCase):
 
-    @parameterized.parameters(NOTEBOOKS)
+    # TODO(mbbrough): re-enable mnist test once it is a little 
+    @parameterized.parameters(filter(lambda x: 'mnist' not in x, NOTEBOOKS))
     def test_notebook(self, path):
         """Test that notebooks open/run correctly."""
 
