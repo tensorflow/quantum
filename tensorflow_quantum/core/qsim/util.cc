@@ -55,17 +55,17 @@ void sample_state(const StateSpace& space, const int m,
   tensorflow::random::SimplePhilox gen(&philox);
 
   double cdf_so_far = 0.0;
-  std::vector<double> random_vals(m, 0.0);
+  std::vector<float> random_vals(m, 0.0);
   samples->reserve(m);
   for (int i = 0; i < m; i++) {
-    random_vals[i] = gen.RandDouble();
+    random_vals[i] = gen.RandFloat();
   }
   std::sort(random_vals.begin(), random_vals.end());
 
   int j = 0;
   for (uint64_t i = 0; i < space.GetDimension(); i++) {
-    std::complex<float> f_amp = space.GetAmpl(i);
-    std::complex<double> d_amp = std::complex<double>(
+    const std::complex<float> f_amp = space.GetAmpl(i);
+    const std::complex<double> d_amp = std::complex<double>(
         static_cast<double>(f_amp.real()), static_cast<double>(f_amp.imag()));
     cdf_so_far += std::norm(d_amp);
     while (random_vals[j] < cdf_so_far && j < m) {
