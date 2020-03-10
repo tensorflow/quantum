@@ -36,7 +36,8 @@ landing_page:
         <a href="https://github.com/quantumlib/Cirq" class="external">Cirq</a>,
         and provides
         quantum computing primitives compatible with existing TensorFlow APIs,
-        along with high-performance quantum circuit simulators.
+        along with high-performance quantum circuit simulators. Read more in the
+        <a href="https://arxiv.org/abs/2003.02989" class="external">TensorFlow Quantum white paper</a>.
         </p>
         <p>
         Start with the <a href="./overview">overview</a>, then run the
@@ -61,17 +62,23 @@ landing_page:
 
   - classname: devsite-landing-row-cards
     items:
-    - heading: "Quantum supremacy using a programmable superconducting processor"
-      image_path: /resources/images/tf-logo-card-16x9.png
-      path: https://ai.googleblog.com/2019/10/quantum-supremacy-using-programmable.html
+    - heading: "Announcing<br>TensorFlow Quantum"
+      image_path: /resources/images/google-research-card-16x9.png
+      path: https://ai.googleblog.com/2020/03/announcing-tensorflow-quantum-open.html
       buttons:
       - label: "Read on the Google AI blog"
-        path: https://ai.googleblog.com/2019/10/quantum-supremacy-using-programmable.html
-    - heading: "Programming a quantum computer<br/>with Cirq"
+        path: https://ai.googleblog.com/2020/03/announcing-tensorflow-quantum-open.html
+    - heading: "Programming a quantum computer with Cirq"
       youtube_id: 16ZfkPRVf2w
       buttons:
       - label: Watch the video
         path: https://www.youtube.com/watch?v=16ZfkPRVf2w
+    - heading: "Quantum supremacy using a programmable superconducting processor"
+      image_path: /resources/images/google-research-card-16x9.png
+      path: https://ai.googleblog.com/2019/10/quantum-supremacy-using-programmable.html
+      buttons:
+      - label: "Read on the Google AI blog"
+        path: https://ai.googleblog.com/2019/10/quantum-supremacy-using-programmable.html
     - heading: "TensorFlow Quantum on GitHub"
       image_path: /resources/images/github-card-16x9.png
       path: https://github.com/tensorflow/quantum
