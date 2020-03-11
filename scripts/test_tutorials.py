@@ -38,6 +38,8 @@ class ExamplesTest(tf.test.TestCase, parameterized.TestCase):
                 src = cell['source']
                 # Comment out lines containing '!' but not '!='
                 src = re.sub(r'\!(?!=)', r'#!', src)
+                # For mnist.ipynb to reduce runtime in test.
+                src = re.sub('NUM_EXAMPLES ?= ?.*', 'NUM_EXAMPLES = 10', src)
                 cell['source'] = src
 
         _ = nbconvert.preprocessors.execute.executenb(nb,
