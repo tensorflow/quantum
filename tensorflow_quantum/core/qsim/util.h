@@ -17,9 +17,6 @@ limitations under the License.
 #define TFQ_CORE_QSIM_UTIL_H_
 
 #include <cstddef>
-#include <vector>
-
-#include "tensorflow_quantum/core/qsim/state_space.h"
 
 namespace tfq {
 namespace qsim {
@@ -29,12 +26,6 @@ void* _aligned_malloc(size_t size);
 
 // Workaround for std::alligned_alloc not working on C++11.
 void _aligned_free(void* ptr);
-
-// Function to draw m samples from a StateSpace Object in
-// O(2 ** num_qubits + m * log(m)) time.
-// Samples are stored as bit encoded integers.
-void sample_state(const StateSpace& space, const int m,
-                  std::vector<uint64_t>* samples);
 
 }  // namespace qsim
 }  // namespace tfq

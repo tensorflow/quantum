@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#include "tensorflow_quantum/core/qsim/util.h"
+#include "tensorflow_quantum/core/qsim/state_space.h"
 
 #include <cmath>
 #include <complex>
@@ -21,35 +21,34 @@ limitations under the License.
 
 #include "gtest/gtest.h"
 #include "tensorflow_quantum/core/qsim/mux.h"
-#include "tensorflow_quantum/core/qsim/state_space.h"
 
 namespace tfq {
 namespace qsim {
 namespace {
 
-TEST(UtilTest, OneSample) {
+TEST(StatSpaceTest, SampleOneSample) {
   auto equal = std::unique_ptr<StateSpace>(GetStateSpace(1, 1));
   equal->CreateState();
   equal->SetAmpl(0, std::complex<float>(1.0, 0.));
   equal->SetAmpl(1, std::complex<float>(0.0, 0.));
 
   std::vector<uint64_t> samples;
-  sample_state(*equal.get(), 1, &samples);
+  equal->SampleState(1, &samples);
   ASSERT_EQ(samples.size(), 1);
 }
 
-TEST(UtilTest, ZeroSamples) {
+TEST(StateSpaceTest, SampleZeroSamples) {
   auto equal = std::unique_ptr<StateSpace>(GetStateSpace(1, 1));
   equal->CreateState();
   equal->SetAmpl(0, std::complex<float>(1.0, 0.));
   equal->SetAmpl(1, std::complex<float>(0.0, 0.));
 
   std::vector<uint64_t> samples;
-  sample_state(*equal.get(), 0, &samples);
+  equal->SampleState(0, &samples);
   ASSERT_EQ(samples.size(), 0);
 }
 
-TEST(UtilTest, SampleEqual) {
+TEST(StateSpaceTest, SampleEqual) {
   auto equal = std::unique_ptr<StateSpace>(GetStateSpace(1, 1));
   equal->CreateState();
   equal->SetAmpl(0, std::complex<float>(0.707, 0.));
@@ -57,7 +56,7 @@ TEST(UtilTest, SampleEqual) {
 
   std::vector<uint64_t> samples;
   const int m = 100000;
-  sample_state(*equal.get(), m, &samples);
+  equal->SampleState(m, &samples);
 
   float num_ones = 0.0;
   for (int i = 0; i < m; i++) {
@@ -69,7 +68,7 @@ TEST(UtilTest, SampleEqual) {
   EXPECT_NEAR(num_ones / static_cast<float>(m), 0.5, 1E-2);
 }
 
-TEST(UtilTest, SampleSkew) {
+TEST(StateSpaceTest, SampleSkew) {
   auto skew = std::unique_ptr<StateSpace>(GetStateSpace(1, 1));
   skew->CreateState();
 
@@ -82,7 +81,7 @@ TEST(UtilTest, SampleSkew) {
 
     std::vector<uint64_t> samples;
     const int m = 100000;
-    sample_state(*skew.get(), m, &samples);
+    skew->SampleState(m, &samples);
     float num_z = 0.0;
     for (int i = 0; i < m; i++) {
       if (samples[i] == 0) {
@@ -94,7 +93,7 @@ TEST(UtilTest, SampleSkew) {
   }
 }
 
-TEST(UtilTest, ComplexDist) {
+TEST(StateSpaceTest, SampleComplexDist) {
   auto state = std::unique_ptr<StateSpace>(GetStateSpace(3, 1));
   state->CreateState();
 
@@ -105,7 +104,7 @@ TEST(UtilTest, ComplexDist) {
 
   std::vector<uint64_t> samples;
   const int m = 100000;
-  sample_state(*state.get(), m, &samples);
+  state->SampleState(m, &samples);
 
   std::vector<float> measure_probs = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
   for (int i = 0; i < m; i++) {
