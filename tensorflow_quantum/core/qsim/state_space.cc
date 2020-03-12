@@ -15,10 +15,13 @@ limitations under the License.
 
 #include "tensorflow_quantum/core/qsim/state_space.h"
 
+#include <bitset>
 #include <complex>
 #include <memory>
 
+#include "absl/strings/numbers.h"
 #include "tensorflow/core/lib/core/status.h"
+#include "tensorflow/core/lib/random/simple_philox.h"
 #include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
 #include "tensorflow_quantum/core/qsim/fuser_basic.h"
 #include "tensorflow_quantum/core/src/circuit.h"
@@ -95,6 +98,48 @@ tensorflow::Status StateSpace::ComputeExpectation(
         term.coefficient_real() * GetRealInnerProduct(*scratch);
   }
   return status;
+}
+
+void StateSpace::SampleState(const int m, std::vector<uint64_t>* samples) {
+  // An alternate would be to use:
+  // tensorflow/core/lib/random/distribution_sampler.h which would have a
+  // runtime of:
+  // O(2 ** num_qubits + m) and additional mem O(2 ** num_qubits + m)
+  // This method has (which is good because memory is expensive to get):
+  // O(2 ** num_qubits + m * log(m)) and additional mem O(m)
+  // Note: random samples in samples will appear in order.
+  if (m == 0) {
+    return;
+  }
+  tensorflow::random::PhiloxRandom philox(std::rand());
+  tensorflow::random::SimplePhilox gen(&philox);
+
+  double cdf_so_far = 0.0;
+  std::vector<float> random_vals(m, 0.0);
+  samples->reserve(m);
+  for (int i = 0; i < m; i++) {
+    random_vals[i] = gen.RandFloat();
+  }
+  std::sort(random_vals.begin(), random_vals.end());
+
+  int j = 0;
+  for (uint64_t i = 0; i < GetDimension(); i++) {
+    const std::complex<float> f_amp = GetAmpl(i);
+    const std::complex<double> d_amp = std::complex<double>(
+        static_cast<double>(f_amp.real()), static_cast<double>(f_amp.imag()));
+    cdf_so_far += std::norm(d_amp);
+    while (random_vals[j] < cdf_so_far && j < m) {
+      samples->push_back(i);
+      j++;
+    }
+  }
+
+  // Safety measure in case of state norm underflow.
+  // Likely to not have huge impact.
+  while (j < m) {
+    samples->push_back(samples->at(samples->size() - 1));
+    j++;
+  }
 }
 
 bool StateSpace::Valid() const {

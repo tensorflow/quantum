@@ -49,6 +49,11 @@ class StateSpace {
                                         StateSpace* scratch,
                                         float* expectation_value);
 
+  // Function to draw m samples from a StateSpace Object in
+  // O(2 ** num_qubits + m * log(m)) time.
+  // Samples are stored as bit encoded integers.
+  void SampleState(const int m, std::vector<uint64_t>* samples);
+
   // Returns true if memory for the state has been succesfully allocated
   bool Valid() const;
 
