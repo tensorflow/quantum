@@ -20,6 +20,7 @@ cc_binary(
     copts = select({
         ":windows": [
             "/D__CLANG_SUPPORT_DYN_ANNOTATION__",
+            "/D_USE_MATH_DEFINES",
             "/DEIGEN_MPL2_ONLY",
             "/DEIGEN_MAX_ALIGN_BYTES=64",
             "/DEIGEN_HAS_TYPE_TRAITS=0",
@@ -74,6 +75,7 @@ cc_binary(
     copts = select({
         ":windows": [
             "/D__CLANG_SUPPORT_DYN_ANNOTATION__",
+            "/D_USE_MATH_DEFINES",
             "/DEIGEN_MPL2_ONLY",
             "/DEIGEN_MAX_ALIGN_BYTES=64",
             "/DEIGEN_HAS_TYPE_TRAITS=0",
@@ -134,6 +136,7 @@ cc_binary(
     copts = select({
         ":windows": [
             "/D__CLANG_SUPPORT_DYN_ANNOTATION__",
+            "/D_USE_MATH_DEFINES",
             "/DEIGEN_MPL2_ONLY",
             "/DEIGEN_MAX_ALIGN_BYTES=64",
             "/DEIGEN_HAS_TYPE_TRAITS=0",
