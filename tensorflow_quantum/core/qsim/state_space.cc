@@ -15,11 +15,9 @@ limitations under the License.
 
 #include "tensorflow_quantum/core/qsim/state_space.h"
 
-#include <bitset>
 #include <complex>
 #include <memory>
 
-#include "absl/strings/numbers.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow/core/lib/random/simple_philox.h"
 #include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
