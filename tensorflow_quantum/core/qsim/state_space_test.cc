@@ -116,6 +116,13 @@ TEST(StateSpaceTest, SampleStateComplexDist) {
   ASSERT_EQ(samples.size(), m);
 }
 
+  TEST(StateSpaceTest, Valid) {
+  auto state = std::unique_ptr<StateSpace>(GetStateSpace(3, 1));
+  ASSERT_FALSE(state->Valid());
+  state->CreateState();
+  ASSERT_TRUE(state->Valid());
+}
+
 }  // namespace
 }  // namespace qsim
 }  // namespace tfq
