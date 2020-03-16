@@ -116,11 +116,23 @@ TEST(StateSpaceTest, SampleStateComplexDist) {
   ASSERT_EQ(samples.size(), m);
 }
 
-  TEST(StateSpaceTest, Valid) {
-  auto state = std::unique_ptr<StateSpace>(GetStateSpace(3, 1));
+TEST(StateSpaceTest, Initialization) {
+  uint64_t num_qubits = 4;
+  uint64_t num_threads = 1;
+  auto state =
+    std::unique_ptr<StateSpace>(GetStateSpace(num_qubits, num_threads));
   ASSERT_FALSE(state->Valid());
+  ASSERT_EQ(state->GetRawState(), NULL);
+  ASSERT_EQ(state->GetDimension(), num_qubits << 3);
+  ASSERT_EQ(state->GetNumQubits(), num_qubits);
+  ASSERT_EQ(state->GetNumThreads(), num_threads);
+
   state->CreateState();
   ASSERT_TRUE(state->Valid());
+  ASSERT_NE(state->GetRawState(), NULL);
+  ASSERT_EQ(state->GetDimension(), num_qubits << 3);
+  ASSERT_EQ(state->GetNumQubits(), num_qubits);
+  ASSERT_EQ(state->GetNumThreads(), num_threads);
 }
 
 }  // namespace
