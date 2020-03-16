@@ -45,6 +45,9 @@ All of our examples can be found here in the form of
 Report bugs or feature requests using the
 [TensorFlow Quantum issue tracker](https://github.com/tensorflow/quantum/issues).
 
+We also have a [Stack Overflow tag](https://stackoverflow.com/questions/tagged/tensorflow-quantum)
+for more general TFQ related discussions.
+
 In the meantime check out the [install instructions](./docs/install.md) to get
 the experimental code running!
 
