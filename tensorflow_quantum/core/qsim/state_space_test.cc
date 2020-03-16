@@ -26,7 +26,7 @@ namespace tfq {
 namespace qsim {
 namespace {
 
-TEST(StatSpaceTest, SampleOneSample) {
+TEST(StateSpaceTest, SampleStateOneSample) {
   auto equal = std::unique_ptr<StateSpace>(GetStateSpace(1, 1));
   equal->CreateState();
   equal->SetAmpl(0, std::complex<float>(1.0, 0.));
@@ -37,7 +37,7 @@ TEST(StatSpaceTest, SampleOneSample) {
   ASSERT_EQ(samples.size(), 1);
 }
 
-TEST(StateSpaceTest, SampleZeroSamples) {
+TEST(StateSpaceTest, SampleStateZeroSamples) {
   auto equal = std::unique_ptr<StateSpace>(GetStateSpace(1, 1));
   equal->CreateState();
   equal->SetAmpl(0, std::complex<float>(1.0, 0.));
@@ -48,7 +48,7 @@ TEST(StateSpaceTest, SampleZeroSamples) {
   ASSERT_EQ(samples.size(), 0);
 }
 
-TEST(StateSpaceTest, SampleEqual) {
+TEST(StateSpaceTest, SampleStateEqual) {
   auto equal = std::unique_ptr<StateSpace>(GetStateSpace(1, 1));
   equal->CreateState();
   equal->SetAmpl(0, std::complex<float>(0.707, 0.));
@@ -68,7 +68,7 @@ TEST(StateSpaceTest, SampleEqual) {
   EXPECT_NEAR(num_ones / static_cast<float>(m), 0.5, 1E-2);
 }
 
-TEST(StateSpaceTest, SampleSkew) {
+TEST(StateSpaceTest, SampleStateSkew) {
   auto skew = std::unique_ptr<StateSpace>(GetStateSpace(1, 1));
   skew->CreateState();
 
@@ -93,7 +93,7 @@ TEST(StateSpaceTest, SampleSkew) {
   }
 }
 
-TEST(StateSpaceTest, SampleComplexDist) {
+TEST(StateSpaceTest, SampleStateComplexDist) {
   auto state = std::unique_ptr<StateSpace>(GetStateSpace(3, 1));
   state->CreateState();
 
