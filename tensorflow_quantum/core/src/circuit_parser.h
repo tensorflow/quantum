@@ -32,9 +32,14 @@ tensorflow::Status CircuitFromProgram(
     const cirq::google::api::v2::Program& program, const int num_qubits,
     Circuit* circuit);
 
-// build the circuit taking the computational basis to the measurement basis
+// build the circuit representing the pauli operations.
 tensorflow::Status CircuitFromPauliTerm(const tfq::proto::PauliTerm& term,
                                         const int num_qubits, Circuit* circuit);
+
+// build the circuit taking pauliterms to z basis.
+tensorflow::Status ZBasisCircuitFromPauliTerm(const tfq::proto::PauliTerm& term,
+                                              const int num_qubits,
+                                              Circuit* circuit);
 
 }  // namespace tfq
 
