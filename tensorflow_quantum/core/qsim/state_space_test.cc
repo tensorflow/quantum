@@ -22,6 +22,7 @@ limitations under the License.
 #include "gtest/gtest.h"
 #include "tensorflow_quantum/core/qsim/mux.h"
 
+
 namespace tfq {
 namespace qsim {
 namespace {
@@ -135,6 +136,7 @@ TEST(StateSpaceTest, Initialization) {
   ASSERT_EQ(state->GetNumThreads(), num_threads);
 }
 
+  
 }  // namespace
 }  // namespace qsim
 }  // namespace tfq
