@@ -238,5 +238,154 @@ TEST(CircuitParserTest, CircuitFromPauliTermPauli) {
   ASSERT_EQ(test_circuit, real_circuit);
 }
 
+TEST(CircuitParserTest, ZBasisFromPauliTermX) {
+  tfq::proto::PauliTerm pauli_proto;
+  // The created circuit should not depend on the coefficient
+  pauli_proto.set_coefficient_real(3.14);
+  tfq::proto::PauliQubitPair* pair_proto = pauli_proto.add_paulis();
+  pair_proto->set_qubit_id("0");
+  pair_proto->set_pauli_type("X");
+
+  // Build the corresponding correct circuit
+  Circuit real_circuit;
+  YPowGateBuilder builder;
+  Gate gate_y;
+  ::tensorflow::Status status;
+
+  real_circuit.num_qubits = 1;
+  absl::flat_hash_map<std::string, float> arg_map;
+  arg_map["global_shift"] = 0.0;
+  arg_map["exponent"] = -0.5;
+  arg_map["exponent_scalar"] = 1.0;
+  status = builder.Build(0, {0}, arg_map, &gate_y);
+  ASSERT_EQ(status, tensorflow::Status::OK());
+  real_circuit.gates.push_back(gate_y);
+
+  // Check conversion
+  Circuit test_circuit;
+  status = ZBasisCircuitFromPauliTerm(pauli_proto, 1, &test_circuit);
+  ASSERT_EQ(status, tensorflow::Status::OK());
+  ASSERT_EQ(test_circuit, real_circuit);
+}
+
+TEST(CircuitParserTest, ZBasisFromPauliTermY) {
+  tfq::proto::PauliTerm pauli_proto;
+  // The created circuit should not depend on the coefficient
+  pauli_proto.set_coefficient_real(3.14);
+  tfq::proto::PauliQubitPair* pair_proto = pauli_proto.add_paulis();
+  pair_proto->set_qubit_id("0");
+  pair_proto->set_pauli_type("Y");
+
+  // Build the corresponding correct circuit
+  Circuit real_circuit;
+  XPowGateBuilder builder;
+  Gate gate_x;
+  ::tensorflow::Status status;
+
+  real_circuit.num_qubits = 1;
+  absl::flat_hash_map<std::string, float> arg_map;
+  arg_map["global_shift"] = 0.0;
+  arg_map["exponent"] = 0.5;
+  arg_map["exponent_scalar"] = 1.0;
+  status = builder.Build(0, {0}, arg_map, &gate_x);
+  ASSERT_EQ(status, tensorflow::Status::OK());
+  real_circuit.gates.push_back(gate_x);
+
+  // Check conversion
+  Circuit test_circuit;
+  status = ZBasisCircuitFromPauliTerm(pauli_proto, 1, &test_circuit);
+  ASSERT_EQ(status, tensorflow::Status::OK());
+  ASSERT_EQ(test_circuit, real_circuit);
+}
+
+TEST(CircuitParserTest, ZBasisFromPauliTermZ) {
+  tfq::proto::PauliTerm pauli_proto;
+  // The created circuit should not depend on the coefficient
+  pauli_proto.set_coefficient_real(3.14);
+  tfq::proto::PauliQubitPair* pair_proto = pauli_proto.add_paulis();
+  pair_proto->set_qubit_id("0");
+  pair_proto->set_pauli_type("Z");
+
+  // Build the corresponding correct circuit
+  Circuit empty_circuit;
+  empty_circuit.num_qubits = 1;
+  ::tensorflow::Status status;
+
+  // Check conversion
+  Circuit test_circuit;
+  status = ZBasisCircuitFromPauliTerm(pauli_proto, 1, &test_circuit);
+  ASSERT_EQ(status, tensorflow::Status::OK());
+  ASSERT_EQ(test_circuit, empty_circuit);
+}
+
+TEST(CircuitParserTest, ZBasisFromPauliTermMulti) {
+  tfq::proto::PauliTerm pauli_proto;
+  // The created circuit should not depend on the coefficient
+  pauli_proto.set_coefficient_real(3.14);
+  tfq::proto::PauliQubitPair* pair_proto = pauli_proto.add_paulis();
+  pair_proto->set_qubit_id("0");
+  pair_proto->set_pauli_type("X");
+  pair_proto = pauli_proto.add_paulis();
+  pair_proto->set_qubit_id("1");
+  pair_proto->set_pauli_type("Z");
+  pair_proto = pauli_proto.add_paulis();
+  pair_proto->set_qubit_id("2");
+  pair_proto->set_pauli_type("X");
+  pair_proto = pauli_proto.add_paulis();
+  pair_proto->set_qubit_id("3");
+  pair_proto->set_pauli_type("Y");
+
+  // Build the corresponding correct circuit
+  Circuit real_circuit;
+  XPowGateBuilder x_builder;
+  YPowGateBuilder y_builder;
+  I2GateBuilder i_builder;
+  Gate gate;
+  ::tensorflow::Status status;
+
+  real_circuit.num_qubits = 4;
+
+  // X -> Y**-0.5
+  absl::flat_hash_map<std::string, float> arg_map;
+  arg_map["global_shift"] = 0.0;
+  arg_map["exponent"] = -0.5;
+  arg_map["exponent_scalar"] = 1.0;
+  status = y_builder.Build(0, {3}, arg_map, &gate);
+  ASSERT_EQ(status, tensorflow::Status::OK());
+  real_circuit.gates.push_back(gate);
+
+  // Z -> nothing
+
+  // X -> Y**-0.5
+  arg_map["global_shift"] = 0.0;
+  arg_map["exponent"] = -0.5;
+  arg_map["exponent_scalar"] = 1.0;
+  status = y_builder.Build(0, {1}, arg_map, &gate);
+  ASSERT_EQ(status, tensorflow::Status::OK());
+  real_circuit.gates.push_back(gate);
+
+  // Y -> X^0.5
+  arg_map["global_shift"] = 0.0;
+  arg_map["exponent"] = 0.5;
+  arg_map["exponent_scalar"] = 1.0;
+  status = x_builder.Build(0, {0}, arg_map, &gate);
+  ASSERT_EQ(status, tensorflow::Status::OK());
+  real_circuit.gates.push_back(gate);
+
+  // Identity padding for orphan gates added here.
+  status = i_builder.Build(1, {0, 1}, {}, &gate);
+  ASSERT_EQ(status, tensorflow::Status::OK());
+  real_circuit.gates.push_back(gate);
+  status = i_builder.Build(1, {2, 3}, {}, &gate);
+  ASSERT_EQ(status, tensorflow::Status::OK());
+  real_circuit.gates.push_back(gate);
+
+  // Check conversion
+  Circuit test_circuit;
+  status = ZBasisCircuitFromPauliTerm(pauli_proto, 4, &test_circuit);
+  ASSERT_EQ(status, tensorflow::Status::OK());
+  ASSERT_EQ(test_circuit, real_circuit);
+}
+
 }  // namespace
 }  // namespace tfq
