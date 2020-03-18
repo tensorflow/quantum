@@ -17,6 +17,7 @@ import numbers
 import numpy as np
 import tensorflow as tf
 import cirq
+import sympy
 
 from tensorflow_quantum.python.layers.circuit_executors import \
     expectation, sampled_expectation
@@ -160,8 +161,10 @@ class ControlledPQC(tf.keras.layers.Layer):
             raise TypeError("model_circuit must be a cirq.Circuit object."
                             " Given: ".format(model_circuit))
 
-        self._symbols = tf.constant(
-            list(sorted(util.get_circuit_symbols(model_circuit))))
+        self._symbols_list = list(
+            sorted(util.get_circuit_symbols(model_circuit)))
+        self._symbols = tf.constant([str(x) for x in self._symbols_list])
+
         self._circuit = util.convert_to_tensor([model_circuit])
 
         if len(self._symbols) == 0:
@@ -228,6 +231,15 @@ class ControlledPQC(tf.keras.layers.Layer):
                 backend=backend, differentiator=differentiator)
 
         self._append_layer = elementary.AddCircuit()
+
+    @property
+    def symbols(self):
+        """The symbols that are managed by this layer (in-order).
+
+        Note: `symbols[i]` indicates what symbol name the managed variables in
+            this layer map to.
+        """
+        return [sympy.Symbol(x) for x in self._symbols_list]
 
     def call(self, inputs):
         """Keras call function."""

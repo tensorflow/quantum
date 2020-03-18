@@ -18,6 +18,7 @@ import numpy as np
 import tensorflow as tf
 
 import cirq
+import sympy
 from tensorflow_quantum.python.layers.circuit_executors import \
     expectation, sampled_expectation
 from tensorflow_quantum.python.layers.circuit_construction import elementary
@@ -180,8 +181,11 @@ class PQC(tf.keras.layers.Layer):
         if not isinstance(model_circuit, cirq.Circuit):
             raise TypeError("model_circuit must be a cirq.Circuit object."
                             " Given: {}".format(model_circuit))
-        self._symbols = tf.constant(
-            list(sorted(util.get_circuit_symbols(model_circuit))))
+
+        self._symbols_list = list(
+            sorted(util.get_circuit_symbols(model_circuit)))
+        self._symbols = tf.constant([str(x) for x in self._symbols_list])
+
         self._model_circuit = util.convert_to_tensor([model_circuit])
         if len(self._symbols) == 0:
             raise ValueError("model_circuit has no sympy.Symbols. Please "
@@ -256,6 +260,15 @@ class PQC(tf.keras.layers.Layer):
                                           constraint=self.constraint,
                                           dtype=tf.float32,
                                           trainable=True)
+
+    @property
+    def symbols(self):
+        """The symbols that are managed by this layer (in-order).
+
+        Note: `symbols[i]` indicates what symbol name the managed variables in
+            this layer map to.
+        """
+        return [sympy.Symbol(x) for x in self._symbols_list]
 
     def build(self, input_shape):
         """Keras build function."""
