@@ -382,7 +382,7 @@ class SampledExpectation(tf.keras.layers.Layer):
             if self._w is None:
                 # don't re-add variable.
                 self._w = self.add_weight(name='circuit_learnable_parameters',
-                                          shape=[len(symbol_names)],
+                                          shape=symbol_names.shape,
                                           initializer=initializer)
 
             symbol_values = tf.tile(tf.expand_dims(self._w, axis=0),
