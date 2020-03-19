@@ -81,6 +81,16 @@ cc_library(
     ],
 )
 
+cc_test(
+    name = "state_space_test",
+    srcs = ["state_space_test.cc"],
+    deps = [
+        ":mux",
+        ":state_space",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
 cc_library(
     name = "state_space_slow",
     srcs = ["state_space_slow.cc"],
