@@ -136,7 +136,6 @@ TEST(StateSpaceTest, Initialization) {
   ASSERT_EQ(state->GetNumThreads(), num_threads);
 }
 
-  
 }  // namespace
 }  // namespace qsim
 }  // namespace tfq
