@@ -128,7 +128,7 @@ TEST(StateSpaceTest, SampleStateComplexDist) {
 
 TEST(StateSpaceTest, Initialization) {
   uint64_t num_qubits = 4;
-  uint64_t num_threads = 1;
+  uint64_t num_threads = 5;
   auto state =
     std::unique_ptr<StateSpace>(GetStateSpace(num_qubits, num_threads));
   ASSERT_FALSE(state->Valid());
@@ -145,6 +145,22 @@ TEST(StateSpaceTest, Initialization) {
   ASSERT_EQ(state->GetNumThreads(), num_threads);
 
   ASSERT_EQ(state->GetType(), STATE_SPACE_TYPE);
+
+  
+}
+
+TEST(StateSpaceTest, CloneTest) {
+  uint64_t num_qubits = 4;
+  uint64_t num_threads = 1;
+  auto state =
+    std::unique_ptr<StateSpace>(GetStateSpace(num_qubits, num_threads));
+  //  auto state_copy = state->Clone();
+
+  // ASSERT_EQ(state->GetDimension(), state_copy->GetDimensions());
+  // ASSERT_EQ(state->GetNumQubits(), state_copy->GetNumQubits());
+  // ASSERT_EQ(state->GetNumThreads(), state_copy->GetNumThreads());
+
+  //  delete state_copy;
 }
 
 }  // namespace

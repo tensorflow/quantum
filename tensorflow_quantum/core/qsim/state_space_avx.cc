@@ -32,7 +32,7 @@ StateSpaceAVX::StateSpaceAVX(const uint64_t num_qubits,
                              const uint64_t num_threads)
     : StateSpace(num_qubits, num_threads) {}
 
-StateSpaceAVX::~StateSpaceAVX() { DeleteState(); }
+  StateSpaceAVX::~StateSpaceAVX() { DeleteState(); }
 
 StateSpaceType StateSpaceAVX::GetType() const { return StateSpaceType::AVX; }
 
@@ -40,7 +40,12 @@ void StateSpaceAVX::CreateState() {
   state_ = (float*)qsim::_aligned_malloc(sizeof(float) * size_);
 }
 
-void StateSpaceAVX::DeleteState() { qsim::_aligned_free(state_); }
+void StateSpaceAVX::DeleteState() {
+  if (GetRawState() != NULL) {
+    qsim::_aligned_free(state_);
+    state_ = NULL;
+  }
+}
 
 StateSpace* StateSpaceAVX::Clone() const {
   StateSpaceAVX* state_copy =
