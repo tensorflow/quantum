@@ -150,17 +150,16 @@ TEST(StateSpaceTest, Initialization) {
 }
 
 TEST(StateSpaceTest, CloneTest) {
-  uint64_t num_qubits = 4;
-  uint64_t num_threads = 1;
+  uint64_t num_qubits = 5;
+  uint64_t num_threads = 3;
   auto state =
     std::unique_ptr<StateSpace>(GetStateSpace(num_qubits, num_threads));
-  //  auto state_copy = state->Clone();
+  auto state_clone =
+    std::unique_ptr<StateSpace>(state->Clone());
 
-  // ASSERT_EQ(state->GetDimension(), state_copy->GetDimensions());
-  // ASSERT_EQ(state->GetNumQubits(), state_copy->GetNumQubits());
-  // ASSERT_EQ(state->GetNumThreads(), state_copy->GetNumThreads());
-
-  //  delete state_copy;
+  ASSERT_EQ(state->GetDimension(), state_clone->GetDimension());
+  ASSERT_EQ(state->GetNumQubits(), state_clone->GetNumQubits());
+  ASSERT_EQ(state->GetNumThreads(), state_clone->GetNumThreads());
 }
 
 }  // namespace
