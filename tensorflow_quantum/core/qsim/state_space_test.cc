@@ -23,6 +23,15 @@ limitations under the License.
 #include "tensorflow_quantum/core/qsim/mux.h"
 
 
+#ifdef __AVX2__
+tfq::qsim::StateSpaceType STATE_SPACE_TYPE = tfq::qsim::StateSpaceType::AVX;
+#elif __SSE4_1__
+tfq::qsim::StateSpaceType STATE_SPACE_TYPE = tfq::qsim::StateSpaceType::SSE;
+#else
+tfq::qsim::StateSpaceType STATE_SPACE_TYPE = tfq::qsim::StateSpaceType::SLOW;
+#endif
+
+
 namespace tfq {
 namespace qsim {
 namespace {
@@ -134,6 +143,8 @@ TEST(StateSpaceTest, Initialization) {
   ASSERT_EQ(state->GetDimension(), 1 << num_qubits);
   ASSERT_EQ(state->GetNumQubits(), num_qubits);
   ASSERT_EQ(state->GetNumThreads(), num_threads);
+
+  ASSERT_EQ(state->GetType(), STATE_SPACE_TYPE);
 }
 
 }  // namespace
