@@ -71,7 +71,7 @@ Status ParsePrograms(OpKernelContext* context, const std::string& input_name,
         absl::StrCat("programs must be rank 1. Got rank ", input->dims(), "."));
   }
 
-  const auto program_strings = input->vec<std::string>();
+  const auto program_strings = input->vec<tensorflow::tstring>();
   const int num_programs = program_strings.dimension(0);
   programs->assign(num_programs, Program());
 
@@ -161,7 +161,7 @@ Status GetPauliSums(OpKernelContext* context,
                                input->dims(), "."));
   }
 
-  const auto sum_specs = input->matrix<std::string>();
+  const auto sum_specs = input->matrix<tensorflow::tstring>();
   p_sums->reserve(sum_specs.dimension(0));
   for (int i = 0; i < sum_specs.dimension(0); i++) {
     std::vector<PauliSum> sub_ops;
@@ -208,7 +208,7 @@ Status GetSymbolMaps(OpKernelContext* context, std::vector<SymbolMap>* maps) {
                                input_values->dims(), "."));
   }
 
-  const auto symbol_names = input_names->vec<std::string>();
+  const auto symbol_names = input_names->vec<tensorflow::tstring>();
   const auto symbol_values = input_values->matrix<float>();
 
   if (symbol_names.dimension(0) != symbol_values.dimension(1)) {
