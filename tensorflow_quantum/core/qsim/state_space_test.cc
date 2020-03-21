@@ -189,6 +189,27 @@ TEST(StateSpaceTest, Amplitudes) {
   ASSERT_EQ(state->GetAmpl(3), std::complex<float>(0, 0));
 }
 
+TEST(StateSpaceTest, CopyFromGetRealInnerProduct) {
+  auto state =
+    std::unique_ptr<StateSpace>(GetStateSpace(12, 1));
+  state->CreateState();
+  for (uint64_t i = 0; i < state->GetDimension(); i++) {
+    state->SetAmpl(i, std::complex<float>(i, i));
+  }
+
+  auto state_clone =
+    std::unique_ptr<StateSpace>(state->Clone());
+  state_clone->CreateState();
+  state_clone->CopyFrom(*state);
+
+  for (uint64_t i = 0; i < state->GetDimension(); i++) {
+    ASSERT_EQ(state->GetAmpl(i), state_clone->GetAmpl(i));
+  }
+}
+
+TEST(StateSpaceTest, ApplyGate) {
+}
+  
 }  // namespace
 }  // namespace qsim
 }  // namespace tfq
