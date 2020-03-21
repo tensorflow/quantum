@@ -205,8 +205,17 @@ TEST(StateSpaceTest, CopyFromGetRealInnerProduct) {
   for (uint64_t i = 0; i < state->GetDimension(); i++) {
     ASSERT_EQ(state->GetAmpl(i), state_clone->GetAmpl(i));
   }
+
+  double real_inner_product = 0.0;
+  for (uint64_t i = 0; i < state->GetDimension(); i++) {
+    real_inner_product += 2*i*i;
+  }
+
+  EXPECT_NEAR(state->GetRealInnerProduct(*state_clone),
+	      real_inner_product, 1E-2);
 }
 
+  
 TEST(StateSpaceTest, ApplyGate) {
 }
   
