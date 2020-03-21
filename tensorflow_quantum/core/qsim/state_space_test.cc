@@ -127,13 +127,18 @@ TEST(StateSpaceTest, ApplyGate1) {
   switch (state->GetType()) {
     case StateSpaceType::AVX:
       ASSERT_EQ(
+          state->ApplyGate1(matrix),
           tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
                              "AVX simulator doesn't support small circuits."));
+      break;
+    case StateSpaceType::SLOW:
+      break;
+    case StateSpaceType::SSE:
       break;
   }
 }
 
-TEST(StateSpaceTest, ApplyGate1) {
+TEST(StateSpaceTest, ApplyGate2) {
   auto state = std::unique_ptr<StateSpace>(GetStateSpace(5, 1));
   state->CreateState();
 }
