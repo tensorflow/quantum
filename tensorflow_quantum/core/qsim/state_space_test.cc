@@ -20,8 +20,8 @@ limitations under the License.
 #include <memory>
 
 #include "gtest/gtest.h"
+#include "tensorflow/core/lib/core/status.h"
 #include "tensorflow_quantum/core/qsim/mux.h"
-
 
 #ifdef __AVX2__
 tfq::qsim::StateSpaceType STATE_SPACE_TYPE = tfq::qsim::StateSpaceType::AVX;
@@ -31,7 +31,6 @@ tfq::qsim::StateSpaceType STATE_SPACE_TYPE = tfq::qsim::StateSpaceType::SSE;
 tfq::qsim::StateSpaceType STATE_SPACE_TYPE = tfq::qsim::StateSpaceType::SLOW;
 #endif
 
-
 namespace tfq {
 namespace qsim {
 namespace {
@@ -40,7 +39,7 @@ TEST(StateSpaceTest, Initialization) {
   uint64_t num_qubits = 4;
   uint64_t num_threads = 5;
   auto state =
-    std::unique_ptr<StateSpace>(GetStateSpace(num_qubits, num_threads));
+      std::unique_ptr<StateSpace>(GetStateSpace(num_qubits, num_threads));
   ASSERT_FALSE(state->Valid());
   ASSERT_FALSE(state->GetRawState());
   ASSERT_EQ(state->GetDimension(), 1 << num_qubits);
@@ -62,10 +61,8 @@ TEST(StateSpaceTest, Initialization) {
 }
 
 TEST(StateSpaceTest, CloneTest) {
-  auto state =
-    std::unique_ptr<StateSpace>(GetStateSpace(5, 3));
-  auto state_clone =
-    std::unique_ptr<StateSpace>(state->Clone());
+  auto state = std::unique_ptr<StateSpace>(GetStateSpace(5, 3));
+  auto state_clone = std::unique_ptr<StateSpace>(state->Clone());
 
   ASSERT_EQ(state->GetDimension(), state_clone->GetDimension());
   ASSERT_EQ(state->GetNumQubits(), state_clone->GetNumQubits());
@@ -73,8 +70,7 @@ TEST(StateSpaceTest, CloneTest) {
 }
 
 TEST(StateSpaceTest, Amplitudes) {
-  auto state =
-    std::unique_ptr<StateSpace>(GetStateSpace(2, 1));
+  auto state = std::unique_ptr<StateSpace>(GetStateSpace(2, 1));
   state->CreateState();
 
   std::complex<float> ampl_00(0.1, 0.5);
@@ -100,15 +96,13 @@ TEST(StateSpaceTest, Amplitudes) {
 }
 
 TEST(StateSpaceTest, CopyFromGetRealInnerProduct) {
-  auto state =
-    std::unique_ptr<StateSpace>(GetStateSpace(12, 1));
+  auto state = std::unique_ptr<StateSpace>(GetStateSpace(12, 1));
   state->CreateState();
   for (uint64_t i = 0; i < state->GetDimension(); i++) {
     state->SetAmpl(i, std::complex<float>(i, i));
   }
 
-  auto state_clone =
-    std::unique_ptr<StateSpace>(state->Clone());
+  auto state_clone = std::unique_ptr<StateSpace>(state->Clone());
   state_clone->CreateState();
   state_clone->CopyFrom(*state);
 
@@ -118,14 +112,30 @@ TEST(StateSpaceTest, CopyFromGetRealInnerProduct) {
 
   double real_inner_product = 0.0;
   for (uint64_t i = 0; i < state->GetDimension(); i++) {
-    real_inner_product += 2*i*i;
+    real_inner_product += 2 * i * i;
   }
 
-  EXPECT_NEAR(state->GetRealInnerProduct(*state_clone),
-	      real_inner_product, 1E-2);
+  EXPECT_NEAR(state->GetRealInnerProduct(*state_clone), real_inner_product,
+              1E-2);
 }
-  
-TEST(StateSpaceTest, ApplyGate) {
+
+TEST(StateSpaceTest, ApplyGate1) {
+  auto state = std::unique_ptr<StateSpace>(GetStateSpace(5, 1));
+  state->CreateState();
+  const float matrix[] = {1.0 / std::sqrt(2), 0.0, 1.0 / std::sqrt(2), 0.0,
+                          1.0 / std::sqrt(2), 0.0, 1.0 / std::sqrt(2), 0.0};
+  switch (state->GetType()) {
+    case StateSpaceType::AVX:
+      ASSERT_EQ(
+          tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
+                             "AVX simulator doesn't support small circuits."));
+      break;
+  }
+}
+
+TEST(StateSpaceTest, ApplyGate1) {
+  auto state = std::unique_ptr<StateSpace>(GetStateSpace(5, 1));
+  state->CreateState();
 }
 
 TEST(StateSpaceTest, SampleStateOneSample) {
@@ -217,7 +227,7 @@ TEST(StateSpaceTest, SampleStateComplexDist) {
   }
   ASSERT_EQ(samples.size(), m);
 }
-  
+
 }  // namespace
 }  // namespace qsim
 }  // namespace tfq

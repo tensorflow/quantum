@@ -32,7 +32,7 @@ StateSpaceAVX::StateSpaceAVX(const uint64_t num_qubits,
                              const uint64_t num_threads)
     : StateSpace(num_qubits, num_threads) {}
 
-  StateSpaceAVX::~StateSpaceAVX() { DeleteState(); }
+StateSpaceAVX::~StateSpaceAVX() { DeleteState(); }
 
 StateSpaceType StateSpaceAVX::GetType() const { return StateSpaceType::AVX; }
 
