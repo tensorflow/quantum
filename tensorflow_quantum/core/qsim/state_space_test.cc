@@ -144,7 +144,11 @@ TEST(StateSpaceTest, Initialization) {
   ASSERT_EQ(state->GetNumQubits(), num_qubits);
   ASSERT_EQ(state->GetNumThreads(), num_threads);
 
-  ASSERT_EQ(state->GetType(), STATE_SPACE_TYPE);  
+  ASSERT_EQ(state->GetType(), STATE_SPACE_TYPE);
+
+  state->DeleteState();
+  ASSERT_FALSE(state->Valid());
+  ASSERT_FALSE(state->GetRawState());
 }
 
 TEST(StateSpaceTest, CloneTest) {
@@ -179,12 +183,12 @@ TEST(StateSpaceTest, Amplitudes) {
   ASSERT_EQ(state->GetAmpl(3), ampl_11);
 
   state->SetStateZero();
-  ASSERT_EQ(state->GetAmpl(0), 0);
-  ASSERT_EQ(state->GetAmpl(1), 0);
-  ASSERT_EQ(state->GetAmpl(2), 0);
-  ASSERT_EQ(state->GetAmpl(3), 0);
+  ASSERT_EQ(state->GetAmpl(0), std::complex<float>(1, 0));
+  ASSERT_EQ(state->GetAmpl(1), std::complex<float>(0, 0));
+  ASSERT_EQ(state->GetAmpl(2), std::complex<float>(0, 0));
+  ASSERT_EQ(state->GetAmpl(3), std::complex<float>(0, 0));
 }
-  
+
 }  // namespace
 }  // namespace qsim
 }  // namespace tfq
