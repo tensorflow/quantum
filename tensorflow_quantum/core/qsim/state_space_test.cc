@@ -123,8 +123,10 @@ TEST(StateSpaceTest, ApplyGate1) {
   auto state = std::unique_ptr<StateSpace>(GetStateSpace(5, 1));
   state->CreateState();
   const float matrix[] = {1.0 / std::sqrt(2), 0.0, 1.0 / std::sqrt(2), 0.0,
-                          1.0 / std::sqrt(2), 0.0, 1.0 / std::sqrt(2), 0.0};
+                          1.0 / std::sqrt(2), 0.0, -1.0 / std::sqrt(2), 0.0};
   state->SetStateZero();
+  state->SetAmpl(0, std::complex<float>(0.0, 0.0));
+  state->SetAmpl(1, std::complex<float>(1.0, 0.0));
   switch (state->GetType()) {
     case StateSpaceType::AVX:
       ASSERT_EQ(
@@ -135,7 +137,7 @@ TEST(StateSpaceTest, ApplyGate1) {
     case StateSpaceType::SLOW:
       state->ApplyGate1(matrix);
       ASSERT_EQ(state->GetAmpl(0), std::complex<float>(1/std::sqrt(2), 0.0));
-      ASSERT_EQ(state->GetAmpl(1), std::complex<float>(1/std::sqrt(2), 0.0));
+      ASSERT_EQ(state->GetAmpl(1), std::complex<float>(-1/std::sqrt(2), 0.0));
       break;
     case StateSpaceType::SSE:
       ASSERT_EQ(
@@ -147,8 +149,25 @@ TEST(StateSpaceTest, ApplyGate1) {
 }
 
 TEST(StateSpaceTest, ApplyGate2) {
-  auto state = std::unique_ptr<StateSpace>(GetStateSpace(5, 1));
+  auto state = std::unique_ptr<StateSpace>(GetStateSpace(6, 1));
   state->CreateState();
+  const float matrix_ih[] = {1.0 / std::sqrt(2), 0.0, 1.0 / std::sqrt(2), 0.0, 0.0, 0.0, 0.0, 0.0,
+                             1.0 / std::sqrt(2), 0.0, -1.0 / std::sqrt(2), 0.0, 0.0, 0.0, 0.0, 0.0,
+                             0.0, 0.0, 0.0, 0.0, 1.0 / std::sqrt(2), 0.0, 1.0 / std::sqrt(2), 0.0,
+                             0.0, 0.0, 0.0, 0.0, 1.0 / std::sqrt(2), 0.0, -1.0 / std::sqrt(2), 0.0};
+  const float matrix_cnot[] = {1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                               0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                               0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0,
+                               0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0};
+  state->SetStateZero();
+  state->SetAmpl(0, std::complex<float>(0.0, 0.0));
+  state->SetAmpl(8, std::complex<float>(1.0, 0.0));
+  state->ApplyGate2(3, 4, matrix_ih);
+  ASSERT_EQ(state->GetAmpl(8), std::complex<float>(1/std::sqrt(2), 0.0));
+  ASSERT_EQ(state->GetAmpl(9), std::complex<float>(1/std::sqrt(2), 0.0));
+  // state->ApplyGate2(3, 4, matrix_cnot);
+  // ASSERT_EQ(state->GetAmpl(8), std::complex<float>(1/std::sqrt(2), 0.0));
+  // ASSERT_EQ(state->GetAmpl(11), std::complex<float>(1/std::sqrt(2), 0.0));
 }
 
 TEST(StateSpaceTest, SampleStateOneSample) {
