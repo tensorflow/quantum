@@ -124,6 +124,7 @@ TEST(StateSpaceTest, ApplyGate1) {
   state->CreateState();
   const float matrix[] = {1.0 / std::sqrt(2), 0.0, 1.0 / std::sqrt(2), 0.0,
                           1.0 / std::sqrt(2), 0.0, 1.0 / std::sqrt(2), 0.0};
+  state->SetStateZero();
   switch (state->GetType()) {
     case StateSpaceType::AVX:
       ASSERT_EQ(
@@ -132,8 +133,15 @@ TEST(StateSpaceTest, ApplyGate1) {
                              "AVX simulator doesn't support small circuits."));
       break;
     case StateSpaceType::SLOW:
+      state->ApplyGate1(matrix);
+      ASSERT_EQ(state->GetAmpl(0), std::complex<float>(1/std::sqrt(2), 0.0));
+      ASSERT_EQ(state->GetAmpl(1), std::complex<float>(1/std::sqrt(2), 0.0));
       break;
     case StateSpaceType::SSE:
+      ASSERT_EQ(
+          state->ApplyGate1(matrix),
+          tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
+                             "SSE simulator doesn't support small circuits."));
       break;
   }
 }
