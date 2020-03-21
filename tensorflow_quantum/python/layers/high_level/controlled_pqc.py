@@ -167,7 +167,7 @@ class ControlledPQC(tf.keras.layers.Layer):
 
         self._circuit = util.convert_to_tensor([model_circuit])
 
-        if len(self._symbols) == 0:
+        if len(self._symbols_list) == 0:
             raise ValueError("model_circuit has no sympy.Symbols. Please "
                              "provide a circuit that contains symbols so "
                              "that their values can be trained.")

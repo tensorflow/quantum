@@ -52,13 +52,13 @@ class TfqPsWeightsFromSymbolOp : public tensorflow::OpKernel {
 
     // Parse the input string here.
     const Tensor *symbols_tensor;
-    context->input("symbols", &symbols_tensor);
+    OP_REQUIRES_OK(context, context->input("symbols", &symbols_tensor));
     OP_REQUIRES(
         context, symbols_tensor->dims() == 1,
         tensorflow::errors::InvalidArgument(absl::StrCat(
             "symbols must be rank 1. Got rank ", symbols_tensor->dims(), ".")));
 
-    const auto symbols = symbols_tensor->vec<std::string>();
+    const auto symbols = symbols_tensor->vec<tensorflow::tstring>();
     const int n_symbols = symbols.size();
 
     // (i,j,k) = the kth scalar value found for symbols(j) in programs(i).
@@ -175,6 +175,12 @@ REGISTER_OP("TfqPsWeightsFromSymbols")
 
       tensorflow::shape_inference::ShapeHandle symbols_shape;
       TF_RETURN_IF_ERROR(c->WithRank(c->input(1), 1, &symbols_shape));
+
+      c->set_output(
+          0, c->MakeShape(
+                 {c->Dim(programs_shape, 0),
+                  tensorflow::shape_inference::InferenceContext::kUnknownDim,
+                  tensorflow::shape_inference::InferenceContext::kUnknownDim}));
 
       return tensorflow::Status::OK();
     });
