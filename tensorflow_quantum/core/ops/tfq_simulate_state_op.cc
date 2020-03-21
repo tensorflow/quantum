@@ -138,14 +138,10 @@ REGISTER_OP("TfqSimulateState")
       tensorflow::shape_inference::ShapeHandle symbol_values_shape;
       TF_RETURN_IF_ERROR(c->WithRank(c->input(2), 2, &symbol_values_shape));
 
-      // TODO(pmassey): Which output dimension size matters? Does this allocate
-      // any memory or gives hints to the graph building? I apparently just set
-      // this as rows in the previous run and that seemed to work.
-      tensorflow::shape_inference::DimensionHandle output_rows =
-          c->Dim(symbol_values_shape, 0);
-      tensorflow::shape_inference::DimensionHandle output_cols =
-          c->Dim(symbol_values_shape, 1);
-      c->set_output(0, c->Matrix(output_rows, output_cols));
+      c->set_output(
+          0, c->MakeShape(
+                 {c->Dim(programs_shape, 0),
+                  tensorflow::shape_inference::InferenceContext::kUnknownDim}));
 
       return tensorflow::Status::OK();
     });
