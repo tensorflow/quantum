@@ -168,15 +168,21 @@ TEST(StateSpaceTest, Amplitudes) {
   std::complex<float> ampl_10(0.3, 0.7);
   std::complex<float> ampl_11(0.4, 0.8);
 
-  state->SetAmpl(0, ampl_11);
-  state->SetAmpl(1, ampl_10);
-  state->SetAmpl(2, ampl_01);
-  state->SetAmpl(3, ampl_00);
+  state->SetAmpl(0, ampl_00);
+  state->SetAmpl(1, ampl_01);
+  state->SetAmpl(2, ampl_10);
+  state->SetAmpl(3, ampl_11);
 
-  ASSERT_EQ(state->GetAmpl(0), ampl_11);
-  ASSERT_EQ(state->GetAmpl(1), ampl_10);
-  ASSERT_EQ(state->GetAmpl(2), ampl_01);
-  ASSERT_EQ(state->GetAmpl(3), ampl_00);    
+  ASSERT_EQ(state->GetAmpl(0), ampl_00);
+  ASSERT_EQ(state->GetAmpl(1), ampl_01);
+  ASSERT_EQ(state->GetAmpl(2), ampl_10);
+  ASSERT_EQ(state->GetAmpl(3), ampl_11);
+
+  state->SetStateZero();
+  ASSERT_EQ(state->GetAmpl(0), 0);
+  ASSERT_EQ(state->GetAmpl(1), 0);
+  ASSERT_EQ(state->GetAmpl(2), 0);
+  ASSERT_EQ(state->GetAmpl(3), 0);
 }
   
 }  // namespace
