@@ -144,16 +144,12 @@ TEST(StateSpaceTest, Initialization) {
   ASSERT_EQ(state->GetNumQubits(), num_qubits);
   ASSERT_EQ(state->GetNumThreads(), num_threads);
 
-  ASSERT_EQ(state->GetType(), STATE_SPACE_TYPE);
-
-  
+  ASSERT_EQ(state->GetType(), STATE_SPACE_TYPE);  
 }
 
 TEST(StateSpaceTest, CloneTest) {
-  uint64_t num_qubits = 5;
-  uint64_t num_threads = 3;
   auto state =
-    std::unique_ptr<StateSpace>(GetStateSpace(num_qubits, num_threads));
+    std::unique_ptr<StateSpace>(GetStateSpace(5, 3));
   auto state_clone =
     std::unique_ptr<StateSpace>(state->Clone());
 
@@ -162,6 +158,27 @@ TEST(StateSpaceTest, CloneTest) {
   ASSERT_EQ(state->GetNumThreads(), state_clone->GetNumThreads());
 }
 
+TEST(StateSpaceTest, Amplitudes) {
+  auto state =
+    std::unique_ptr<StateSpace>(GetStateSpace(2, 1));
+  state->CreateState();
+
+  std::complex<float> ampl_00(0.1, 0.5);
+  std::complex<float> ampl_01(0.2, 0.6);
+  std::complex<float> ampl_10(0.3, 0.7);
+  std::complex<float> ampl_11(0.4, 0.8);
+
+  state->SetAmpl(0, ampl_11);
+  state->SetAmpl(1, ampl_10);
+  state->SetAmpl(2, ampl_01);
+  state->SetAmpl(3, ampl_00);
+
+  ASSERT_EQ(state->GetAmpl(0), ampl_11);
+  ASSERT_EQ(state->GetAmpl(1), ampl_10);
+  ASSERT_EQ(state->GetAmpl(2), ampl_01);
+  ASSERT_EQ(state->GetAmpl(3), ampl_00);    
+}
+  
 }  // namespace
 }  // namespace qsim
 }  // namespace tfq
