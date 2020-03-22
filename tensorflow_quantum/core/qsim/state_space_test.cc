@@ -270,7 +270,7 @@ TEST(StateSpaceTest, ComputeExpectation) {
   state->SetAmpl((1 << q0), std::complex<float>(1., 0.));
   ASSERT_EQ(state->ComputeExpectation(p_sum_zz, scratch, &expectation_value_zz), tensorflow::Status::OK());
   ASSERT_EQ(state->ComputeExpectation(p_sum_xx, scratch, &expectation_value_xx), tensorflow::Status::OK());
-  EXPECT_NEAR(expectation_value_zz, -1.0*zz_coeff, 1E-5) << state->GetAmpl((1 << q0));
+  EXPECT_NEAR(expectation_value_zz, -1.0*zz_coeff, 1E-5);
   EXPECT_NEAR(expectation_value_xx, 0.0, 1E-5);
   // |...0...1...>
   state->SetStateZero();
@@ -290,9 +290,59 @@ TEST(StateSpaceTest, ComputeExpectation) {
   state->SetAmpl((1 << q0) + (1 << q1), std::complex<float>(1., 0.));
   ASSERT_EQ(state->ComputeExpectation(p_sum_zz, scratch, &expectation_value_zz), tensorflow::Status::OK());
   ASSERT_EQ(state->ComputeExpectation(p_sum_xx, scratch, &expectation_value_xx), tensorflow::Status::OK());
-  EXPECT_NEAR(expectation_value_zz, 1.0*zz_coeff, 1E-5);
+  EXPECT_NEAR(expectation_value_zz, zz_coeff, 1E-5);
   EXPECT_NEAR(expectation_value_xx, 0.0, 1E-5);
-  
+
+  // Check expectation values on phase flips
+  // |...+...+...>
+  state->SetStateZero();
+  expectation_value_zz = 0;
+  expectation_value_xx = 0;
+  state->SetAmpl(0, std::complex<float>(0.5, 0.));
+  state->SetAmpl((1 << q0), std::complex<float>(0.5, 0.));
+  state->SetAmpl((1 << q1), std::complex<float>(0.5, 0.));
+  state->SetAmpl((1 << q0) + (1 << q1), std::complex<float>(0.5, 0.));
+  ASSERT_EQ(state->ComputeExpectation(p_sum_zz, scratch, &expectation_value_zz), tensorflow::Status::OK());
+  ASSERT_EQ(state->ComputeExpectation(p_sum_xx, scratch, &expectation_value_xx), tensorflow::Status::OK());
+  EXPECT_NEAR(expectation_value_zz, 0.0, 1E-5);
+  EXPECT_NEAR(expectation_value_xx, xx_coeff, 1E-5);
+  // |...-...+...>
+  state->SetStateZero();
+  expectation_value_zz = 0;
+  expectation_value_xx = 0;
+  state->SetAmpl(0, std::complex<float>(0.5, 0.));
+  state->SetAmpl((1 << q0), std::complex<float>(-0.5, 0.));
+  state->SetAmpl((1 << q1), std::complex<float>(0.5, 0.));
+  state->SetAmpl((1 << q0) + (1 << q1), std::complex<float>(-0.5, 0.));
+  ASSERT_EQ(state->ComputeExpectation(p_sum_zz, scratch, &expectation_value_zz), tensorflow::Status::OK());
+  ASSERT_EQ(state->ComputeExpectation(p_sum_xx, scratch, &expectation_value_xx), tensorflow::Status::OK());
+  EXPECT_NEAR(expectation_value_zz, 0.0, 1E-5);
+  EXPECT_NEAR(expectation_value_xx, -1.0*xx_coeff, 1E-5);
+  // |...+...-...>
+  state->SetStateZero();
+  expectation_value_zz = 0;
+  expectation_value_xx = 0;
+  state->SetAmpl(0, std::complex<float>(0.5, 0.));
+  state->SetAmpl((1 << q0), std::complex<float>(0.5, 0.));
+  state->SetAmpl((1 << q1), std::complex<float>(-0.5, 0.));
+  state->SetAmpl((1 << q0) + (1 << q1), std::complex<float>(-0.5, 0.));
+  ASSERT_EQ(state->ComputeExpectation(p_sum_zz, scratch, &expectation_value_zz), tensorflow::Status::OK());
+  ASSERT_EQ(state->ComputeExpectation(p_sum_xx, scratch, &expectation_value_xx), tensorflow::Status::OK());
+  EXPECT_NEAR(expectation_value_zz, 0.0, 1E-5);
+  EXPECT_NEAR(expectation_value_xx, -1.0*xx_coeff, 1E-5);
+  // |...-...-...>
+  state->SetStateZero();
+  expectation_value_zz = 0;
+  expectation_value_xx = 0;
+  state->SetAmpl(0, std::complex<float>(0.5, 0.));
+  state->SetAmpl((1 << q0), std::complex<float>(-0.5, 0.));
+  state->SetAmpl((1 << q1), std::complex<float>(-0.5, 0.));
+  state->SetAmpl((1 << q0) + (1 << q1), std::complex<float>(0.5, 0.));
+  ASSERT_EQ(state->ComputeExpectation(p_sum_zz, scratch, &expectation_value_zz), tensorflow::Status::OK());
+  ASSERT_EQ(state->ComputeExpectation(p_sum_xx, scratch, &expectation_value_xx), tensorflow::Status::OK());
+  EXPECT_NEAR(expectation_value_zz, 0.0, 1E-5);
+  EXPECT_NEAR(expectation_value_xx, xx_coeff, 1E-5);
+
   delete scratch;
 }
 
