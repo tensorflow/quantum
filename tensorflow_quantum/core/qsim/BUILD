@@ -87,6 +87,8 @@ cc_test(
     deps = [
         ":mux",
         ":state_space",
+        "//tensorflow_quantum/core/proto:pauli_sum_cc_proto",
+        "//tensorflow_quantum/core/src:circuit",
         "@com_google_googletest//:gtest_main",
     ],
 )
