@@ -18,6 +18,7 @@ limitations under the License.
 #include <cmath>
 #include <complex>
 #include <memory>
+#include <string>
 
 #include "gtest/gtest.h"
 #include "tensorflow/core/lib/core/status.h"
@@ -218,8 +219,53 @@ TEST(StateSpaceTest, Update) {
 }
 
 TEST(StateSpaceTest, ComputeExpectation) {
+  const uint64_t num_qubits(9);
+  const uint64_t q0(3);
+  const uint64_t q1(7);
+  auto state = std::unique_ptr<StateSpace>(GetStateSpace(num_qubits, 1));
+  auto scratch = GetStateSpace(num_qubits, 1);
+  state->CreateState();
+  scratch->CreateState();
 
+  float zz_coeff(5.95);
+  float xx_coeff(-3.4);
+  tfq::proto::PauliSum p_sum_zz, p_sum_xx;
 
+  // Initialize ZZ
+  tfq::proto::PauliTerm* p_term_scratch_zz = p_sum_zz.add_terms();
+  p_term_scratch_zz->set_coefficient_real(zz_coeff);
+  tfq::proto::PauliQubitPair* pair_proto_zz = p_term_scratch_zz->add_paulis();
+  pair_proto_zz->set_qubit_id(std::to_string(q0));
+  pair_proto_zz->set_pauli_type("Z");
+  pair_proto_zz = p_term_scratch_zz->add_paulis();
+  pair_proto_zz->set_qubit_id(std::to_string(q1));
+  pair_proto_zz->set_pauli_type("Z");
+  
+  // Initialize XX
+  tfq::proto::PauliTerm* p_term_scratch_xx = p_sum_xx.add_terms();
+  p_term_scratch_xx->set_coefficient_real(xx_coeff);
+  tfq::proto::PauliQubitPair* pair_proto_xx = p_term_scratch_xx->add_paulis();
+  pair_proto_xx->set_qubit_id(std::to_string(q0));
+  pair_proto_xx->set_pauli_type("X");
+  pair_proto_xx = p_term_scratch_xx->add_paulis();
+  pair_proto_xx->set_qubit_id(std::to_string(q1));
+  pair_proto_xx->set_pauli_type("X");
+  
+  // Check expectation values on vacuum
+  state->SetStateZero();
+  float expectation_value_zz(0);
+  float expectation_value_xx(0);
+  ASSERT_EQ(state->ComputeExpectation(p_sum_zz, scratch, &expectation_value_zz), tensorflow::Status::OK());
+  ASSERT_EQ(state->ComputeExpectation(p_sum_xx, scratch, &expectation_value_xx), tensorflow::Status::OK());
+  EXPECT_NEAR(expectation_value_zz, zz_coeff, 1E-5);
+  EXPECT_NEAR(expectation_value_xx, 0.0, 1E-5);
+
+  // Check expectation values on bit flips
+  // state->SetStateZero();
+  // expectation_value_zz = 0;
+  // expectation_value_xx = 0;
+
+  delete scratch;
 }
 
 TEST(StateSpaceTest, SampleStateOneSample) {
