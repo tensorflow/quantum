@@ -180,7 +180,7 @@ TEST(StateSpaceTest, Update) {
   auto state_small = std::unique_ptr<StateSpace>(GetStateSpace(1, 1));
   state_small->CreateState();
   state_small->SetStateZero();
-  state_small->Update(circuit_small);
+  ASSERT_EQ(state_small->Update(circuit_small), tensorflow::Status::OK());
   EXPECT_NEAR(state_small->GetAmpl(0).real(), 1.0/std::sqrt(2), 1E-5);
   EXPECT_NEAR(state_small->GetAmpl(0).imag(), 0.0, 1E-5);
   EXPECT_NEAR(state_small->GetAmpl(1).real(), 1.0/std::sqrt(2), 1E-5);
@@ -205,7 +205,7 @@ TEST(StateSpaceTest, Update) {
   auto state = std::unique_ptr<StateSpace>(GetStateSpace(num_qubits, 1));
   state->CreateState();
   state->SetStateZero();
-  state->Update(circuit);
+  ASSERT_EQ(state->Update(circuit), tensorflow::Status::OK());
   for (uint64_t i = 0; i < state_small->GetDimension(); i++) {
     if (i == 0 || i == 1 << q0 || i == 1 << q1 || i == (1 << q0) + (1 << q1)) {
       EXPECT_NEAR(state->GetAmpl(i).real(), 0.5, 1E-5);
@@ -215,6 +215,11 @@ TEST(StateSpaceTest, Update) {
       EXPECT_NEAR(state->GetAmpl(i).imag(), 0.0, 1E-5);
     }
   }
+}
+
+TEST(StateSpaceTest, ComputeExpectation) {
+
+
 }
 
 TEST(StateSpaceTest, SampleStateOneSample) {
