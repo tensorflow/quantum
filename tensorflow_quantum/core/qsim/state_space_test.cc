@@ -192,7 +192,7 @@ TEST(StateSpaceTest, Update) {
   const uint64_t q0(2);
   const uint64_t q1(5);
   Gate gate_0(0, q0, matrix_h);
-  Gate gate_5(1, q1, matrix_h);
+  Gate gate_1(1, q1, matrix_h);
   const std::array<float, 32> matrix_i = {1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
                                           0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0,
                                           1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0,
@@ -200,7 +200,7 @@ TEST(StateSpaceTest, Update) {
   Gate gate_i(2, q0, q1, matrix_i);
   std::vector<Gate> gates;
   gates.push_back(gate_0);
-  gates.push_back(gate_5);
+  gates.push_back(gate_1);
   gates.push_back(gate_i);
   const Circuit circuit(num_qubits, gates);
   auto state = std::unique_ptr<StateSpace>(GetStateSpace(num_qubits, 1));
@@ -235,20 +235,21 @@ TEST(StateSpaceTest, ComputeExpectation) {
   tfq::proto::PauliTerm* p_term_scratch_zz = p_sum_zz.add_terms();
   p_term_scratch_zz->set_coefficient_real(zz_coeff);
   tfq::proto::PauliQubitPair* pair_proto_zz = p_term_scratch_zz->add_paulis();
-  pair_proto_zz->set_qubit_id(std::to_string(q0));
+  // NOTE: qubit endianess is opposite that of raw gates
+  pair_proto_zz->set_qubit_id(std::to_string(num_qubits - q0 - 1));
   pair_proto_zz->set_pauli_type("Z");
   pair_proto_zz = p_term_scratch_zz->add_paulis();
-  pair_proto_zz->set_qubit_id(std::to_string(q1));
+  pair_proto_zz->set_qubit_id(std::to_string(num_qubits - q1 - 1));
   pair_proto_zz->set_pauli_type("Z");
   
   // Initialize XX
   tfq::proto::PauliTerm* p_term_scratch_xx = p_sum_xx.add_terms();
   p_term_scratch_xx->set_coefficient_real(xx_coeff);
   tfq::proto::PauliQubitPair* pair_proto_xx = p_term_scratch_xx->add_paulis();
-  pair_proto_xx->set_qubit_id(std::to_string(q0));
+  pair_proto_xx->set_qubit_id(std::to_string(num_qubits - q0 - 1));
   pair_proto_xx->set_pauli_type("X");
   pair_proto_xx = p_term_scratch_xx->add_paulis();
-  pair_proto_xx->set_qubit_id(std::to_string(q1));
+  pair_proto_xx->set_qubit_id(std::to_string(num_qubits - q1 - 1));
   pair_proto_xx->set_pauli_type("X");
   
   // Check expectation values on vacuum
@@ -261,10 +262,37 @@ TEST(StateSpaceTest, ComputeExpectation) {
   EXPECT_NEAR(expectation_value_xx, 0.0, 1E-5);
 
   // Check expectation values on bit flips
-  // state->SetStateZero();
-  // expectation_value_zz = 0;
-  // expectation_value_xx = 0;
-
+  // |...1...0...>
+  state->SetStateZero();
+  expectation_value_zz = 0;
+  expectation_value_xx = 0;
+  state->SetAmpl(0, std::complex<float>(0., 0.));
+  state->SetAmpl((1 << q0), std::complex<float>(1., 0.));
+  ASSERT_EQ(state->ComputeExpectation(p_sum_zz, scratch, &expectation_value_zz), tensorflow::Status::OK());
+  ASSERT_EQ(state->ComputeExpectation(p_sum_xx, scratch, &expectation_value_xx), tensorflow::Status::OK());
+  EXPECT_NEAR(expectation_value_zz, -1.0*zz_coeff, 1E-5) << state->GetAmpl((1 << q0));
+  EXPECT_NEAR(expectation_value_xx, 0.0, 1E-5);
+  // |...0...1...>
+  state->SetStateZero();
+  expectation_value_zz = 0;
+  expectation_value_xx = 0;
+  state->SetAmpl(0, std::complex<float>(0., 0.));
+  state->SetAmpl((1 << q1), std::complex<float>(1., 0.));
+  ASSERT_EQ(state->ComputeExpectation(p_sum_zz, scratch, &expectation_value_zz), tensorflow::Status::OK());
+  ASSERT_EQ(state->ComputeExpectation(p_sum_xx, scratch, &expectation_value_xx), tensorflow::Status::OK());
+  EXPECT_NEAR(expectation_value_zz, -1.0*zz_coeff, 1E-5);
+  EXPECT_NEAR(expectation_value_xx, 0.0, 1E-5);
+  // |...1...1...>
+  state->SetStateZero();
+  expectation_value_zz = 0;
+  expectation_value_xx = 0;
+  state->SetAmpl(0, std::complex<float>(0., 0.));
+  state->SetAmpl((1 << q0) + (1 << q1), std::complex<float>(1., 0.));
+  ASSERT_EQ(state->ComputeExpectation(p_sum_zz, scratch, &expectation_value_zz), tensorflow::Status::OK());
+  ASSERT_EQ(state->ComputeExpectation(p_sum_xx, scratch, &expectation_value_xx), tensorflow::Status::OK());
+  EXPECT_NEAR(expectation_value_zz, 1.0*zz_coeff, 1E-5);
+  EXPECT_NEAR(expectation_value_xx, 0.0, 1E-5);
+  
   delete scratch;
 }
 
