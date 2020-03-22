@@ -21,7 +21,9 @@ limitations under the License.
 
 #include "gtest/gtest.h"
 #include "tensorflow/core/lib/core/status.h"
+#include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
 #include "tensorflow_quantum/core/qsim/mux.h"
+#include "tensorflow_quantum/core/src/circuit.h"
 
 #ifdef __AVX2__
 tfq::qsim::StateSpaceType STATE_SPACE_TYPE = tfq::qsim::StateSpaceType::AVX;
@@ -151,23 +153,21 @@ TEST(StateSpaceTest, ApplyGate1) {
 TEST(StateSpaceTest, ApplyGate2) {
   auto state = std::unique_ptr<StateSpace>(GetStateSpace(6, 1));
   state->CreateState();
-  const float matrix_ih[] = {1.0 / std::sqrt(2), 0.0, 1.0 / std::sqrt(2), 0.0, 0.0, 0.0, 0.0, 0.0,
-                             1.0 / std::sqrt(2), 0.0, -1.0 / std::sqrt(2), 0.0, 0.0, 0.0, 0.0, 0.0,
-                             0.0, 0.0, 0.0, 0.0, 1.0 / std::sqrt(2), 0.0, 1.0 / std::sqrt(2), 0.0,
-                             0.0, 0.0, 0.0, 0.0, 1.0 / std::sqrt(2), 0.0, -1.0 / std::sqrt(2), 0.0};
+  const float matrix_hi[] = {1.0 / std::sqrt(2), 0.0, 0.0, 0.0, 1.0 / std::sqrt(2), 0.0, 0.0, 0.0,
+                             0.0, 0.0, 1.0 / std::sqrt(2), 0.0, 0.0, 0.0, 1.0 / std::sqrt(2), 0.0,
+                             1.0 / std::sqrt(2), 0.0, 0.0, 0.0, -1.0 / std::sqrt(2), 0.0, 0.0, 0.0,
+                             0.0, 0.0, 1.0 / std::sqrt(2), 0.0, 0.0, 0.0, -1.0 / std::sqrt(2), 0.0};
   const float matrix_cnot[] = {1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
                                0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0,
                                0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0,
                                0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0};
   state->SetStateZero();
-  state->SetAmpl(0, std::complex<float>(0.0, 0.0));
-  state->SetAmpl(8, std::complex<float>(1.0, 0.0));
-  state->ApplyGate2(3, 4, matrix_ih);
+  state->ApplyGate2(0, 3, matrix_hi);
+  ASSERT_EQ(state->GetAmpl(0), std::complex<float>(1/std::sqrt(2), 0.0));
   ASSERT_EQ(state->GetAmpl(8), std::complex<float>(1/std::sqrt(2), 0.0));
+  state->ApplyGate2(0, 3, matrix_cnot);
+  ASSERT_EQ(state->GetAmpl(0), std::complex<float>(1/std::sqrt(2), 0.0));
   ASSERT_EQ(state->GetAmpl(9), std::complex<float>(1/std::sqrt(2), 0.0));
-  // state->ApplyGate2(3, 4, matrix_cnot);
-  // ASSERT_EQ(state->GetAmpl(8), std::complex<float>(1/std::sqrt(2), 0.0));
-  // ASSERT_EQ(state->GetAmpl(11), std::complex<float>(1/std::sqrt(2), 0.0));
 }
 
 TEST(StateSpaceTest, SampleStateOneSample) {
