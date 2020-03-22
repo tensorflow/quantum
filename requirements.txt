@@ -4,3 +4,4 @@ nbformat==4.4.0
 pylint==2.4.4
 yapf==0.28.0
 tensorflow==2.1.0
+pathos==0.2.5

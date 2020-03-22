@@ -53,7 +53,7 @@ class TfqPsDecomposeOp : public tensorflow::OpKernel {
     tensorflow::Tensor *output = nullptr;
     OP_REQUIRES_OK(context, context->allocate_output(
                                 0, context->input(0).shape(), &output));
-    auto output_tensor = output->flat<std::string>();
+    auto output_tensor = output->flat<tensorflow::tstring>();
 
     const int max_buffer_moments = 3;
 
@@ -61,6 +61,7 @@ class TfqPsDecomposeOp : public tensorflow::OpKernel {
       for (int i = start; i < end; i++) {
         Program cur_program = programs.at(i);
         Program new_program;
+        std::string temp;
         new_program.mutable_language()->set_gate_set("tfq_gate_set");
         new_program.mutable_circuit()->set_scheduling_strategy(
             Circuit::MOMENT_BY_MOMENT);
@@ -145,7 +146,8 @@ class TfqPsDecomposeOp : public tensorflow::OpKernel {
             }
           }
         }
-        new_program.SerializeToString(&output_tensor(i));
+        new_program.SerializeToString(&temp);
+        output_tensor(i) = temp;
       }
     };
 

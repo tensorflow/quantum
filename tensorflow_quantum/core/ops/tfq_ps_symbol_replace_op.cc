@@ -51,25 +51,26 @@ class TfqPsSymbolReplaceOp : public tensorflow::OpKernel {
 
     // Parse the input string here.
     const Tensor *symbols_tensor;
-    context->input("symbols", &symbols_tensor);
+    OP_REQUIRES_OK(context, context->input("symbols", &symbols_tensor));
     OP_REQUIRES(
         context, symbols_tensor->dims() == 1,
         tensorflow::errors::InvalidArgument(absl::StrCat(
             "symbols must be rank 1. Got rank ", symbols_tensor->dims(), ".")));
 
-    const auto symbols = symbols_tensor->vec<std::string>();
+    const auto symbols = symbols_tensor->vec<tensorflow::tstring>();
     const size_t n_symbols = symbols.size();
 
     // Parse the replacement string here.
     const Tensor *replacement_symbols_tensor;
-    context->input("replacement_symbols", &replacement_symbols_tensor);
+    OP_REQUIRES_OK(context, context->input("replacement_symbols",
+                                           &replacement_symbols_tensor));
     OP_REQUIRES(context, replacement_symbols_tensor->dims() == 1,
                 tensorflow::errors::InvalidArgument(absl::StrCat(
                     "replacement_symbols must be rank 1. Got rank ",
                     replacement_symbols_tensor->dims(), ".")));
 
     const auto replacement_symbols =
-        replacement_symbols_tensor->vec<std::string>();
+        replacement_symbols_tensor->vec<tensorflow::tstring>();
 
     OP_REQUIRES(context, symbols.size() == replacement_symbols.size(),
                 tensorflow::errors::InvalidArgument(absl::StrCat(
@@ -86,6 +87,7 @@ class TfqPsSymbolReplaceOp : public tensorflow::OpKernel {
         int sidx = i % n_symbols;
         int pidx = i / n_symbols;
         std::string symbol_to_replace = symbols(sidx);
+        std::string temp_symbol_holder;
         Program cur_program = programs.at(pidx);
         for (int j = 0; j < cur_program.circuit().moments().size(); j++) {
           Moment cur_moment = cur_program.circuit().moments().at(j);
@@ -98,6 +100,10 @@ class TfqPsSymbolReplaceOp : public tensorflow::OpKernel {
               if (arg.symbol() == symbol_to_replace) {
                 // Copy the proto, modify the symbol and append to output.
                 Program temp(cur_program);
+
+                // temp_symbol_holder is needed to avoid call ambiguity for
+                // set_symbol below.
+                temp_symbol_holder = replacement_symbols(sidx);
                 temp.mutable_circuit()
                     ->mutable_moments()
                     ->at(j)
@@ -105,7 +111,7 @@ class TfqPsSymbolReplaceOp : public tensorflow::OpKernel {
                     ->at(k)
                     .mutable_args()
                     ->at(key)
-                    .set_symbol(replacement_symbols(sidx));
+                    .set_symbol(temp_symbol_holder);
 
                 std::string res;
                 temp.SerializeToString(&res);
@@ -147,7 +153,7 @@ class TfqPsSymbolReplaceOp : public tensorflow::OpKernel {
     output_shape.AddDim(biggest_pad);
     OP_REQUIRES_OK(context, context->allocate_output(0, output_shape, &output));
 
-    auto output_tensor = output->tensor<std::string, 3>();
+    auto output_tensor = output->tensor<tensorflow::tstring, 3>();
 
     // TODO: investigate whether or not it is worth this parallelization at the
     // end.
@@ -193,6 +199,12 @@ REGISTER_OP("TfqPsSymbolReplace")
       tensorflow::shape_inference::ShapeHandle replacement_symbols_shape;
       TF_RETURN_IF_ERROR(
           c->WithRank(c->input(2), 1, &replacement_symbols_shape));
+
+      c->set_output(
+          0, c->MakeShape(
+                 {c->Dim(programs_shape, 0),
+                  tensorflow::shape_inference::InferenceContext::kUnknownDim,
+                  tensorflow::shape_inference::InferenceContext::kUnknownDim}));
 
       return tensorflow::Status::OK();
     });
