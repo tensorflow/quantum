@@ -124,7 +124,7 @@ TEST(StateSpaceTest, CopyFromGetRealInnerProduct) {
 TEST(StateSpaceTest, ApplyGate1) {
   auto state = std::unique_ptr<StateSpace>(GetStateSpace(5, 1));
   state->CreateState();
-  const float matrix[] = {1.0 / std::sqrt(2), 0.0, 1.0 / std::sqrt(2), 0.0,
+  const float matrix_h[] = {1.0 / std::sqrt(2), 0.0, 1.0 / std::sqrt(2), 0.0,
                           1.0 / std::sqrt(2), 0.0, -1.0 / std::sqrt(2), 0.0};
   state->SetStateZero();
   state->SetAmpl(0, std::complex<float>(0.0, 0.0));
@@ -132,18 +132,18 @@ TEST(StateSpaceTest, ApplyGate1) {
   switch (state->GetType()) {
     case StateSpaceType::AVX:
       ASSERT_EQ(
-          state->ApplyGate1(matrix),
+          state->ApplyGate1(matrix_h),
           tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
                              "AVX simulator doesn't support small circuits."));
       break;
     case StateSpaceType::SLOW:
-      state->ApplyGate1(matrix);
+      state->ApplyGate1(matrix_h);
       ASSERT_EQ(state->GetAmpl(0), std::complex<float>(1/std::sqrt(2), 0.0));
       ASSERT_EQ(state->GetAmpl(1), std::complex<float>(-1/std::sqrt(2), 0.0));
       break;
     case StateSpaceType::SSE:
       ASSERT_EQ(
-          state->ApplyGate1(matrix),
+          state->ApplyGate1(matrix_h),
           tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
                              "SSE simulator doesn't support small circuits."));
       break;
@@ -168,6 +168,33 @@ TEST(StateSpaceTest, ApplyGate2) {
   state->ApplyGate2(0, 3, matrix_cnot);
   ASSERT_EQ(state->GetAmpl(0), std::complex<float>(1/std::sqrt(2), 0.0));
   ASSERT_EQ(state->GetAmpl(9), std::complex<float>(1/std::sqrt(2), 0.0));
+}
+
+TEST(StateSpaceTest, Update) {
+  const std::array<float, 8> matrix_h = {1.0 / std::sqrt(2), 0.0, 1.0 / std::sqrt(2), 0.0,
+                                       1.0 / std::sqrt(2), 0.0, -1.0 / std::sqrt(2), 0.0};
+  Gate gate_small(0, 0, matrix_h);
+  std::vector<Gate> gates_small;
+  gates_small.push_back(gate_small);
+  const Circuit circuit_small(1, gates_small);
+  auto state_small = std::unique_ptr<StateSpace>(GetStateSpace(1, 1));
+  state_small->CreateState();
+  state_small->SetStateZero();
+  state_small->Update(circuit_small);
+  ASSERT_EQ(state_small->GetAmpl(0), std::complex<float>(1/std::sqrt(2), 0.0));
+  ASSERT_EQ(state_small->GetAmpl(1), std::complex<float>(1/std::sqrt(2), 0.0));
+  // const uint64_t num_qubits(7);
+  // std::vector<Gate> gates;
+  // gates.push_back(gate_0);
+  // gates.push_back(gate_1);
+  // const Circuit this_circuit(num_qubits, gates);
+  // for (uint64_t i = 0; i < state_small->GetDimension(); i++) {
+  //   if (i == 0 || i == 1) {
+  //     ASSERT_EQ(state->GetAmpl(i), std::complex<float>(0.5, 0.0));
+  //   } else {
+  //     ASSERT_EQ(state->GetAmpl(i), std::complex<float>(0.0, 0.0));
+  //   }
+  // }
 }
 
 TEST(StateSpaceTest, SampleStateOneSample) {
