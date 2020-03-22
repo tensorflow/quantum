@@ -172,7 +172,7 @@ TEST(StateSpaceTest, ApplyGate2) {
 
 TEST(StateSpaceTest, Update) {
   const std::array<float, 8> matrix_h = {1.0 / std::sqrt(2), 0.0, 1.0 / std::sqrt(2), 0.0,
-                                       1.0 / std::sqrt(2), 0.0, -1.0 / std::sqrt(2), 0.0};
+                                         1.0 / std::sqrt(2), 0.0, -1.0 / std::sqrt(2), 0.0};
   Gate gate_small(0, 0, matrix_h);
   std::vector<Gate> gates_small;
   gates_small.push_back(gate_small);
@@ -181,20 +181,40 @@ TEST(StateSpaceTest, Update) {
   state_small->CreateState();
   state_small->SetStateZero();
   state_small->Update(circuit_small);
-  ASSERT_EQ(state_small->GetAmpl(0), std::complex<float>(1/std::sqrt(2), 0.0));
-  ASSERT_EQ(state_small->GetAmpl(1), std::complex<float>(1/std::sqrt(2), 0.0));
-  // const uint64_t num_qubits(7);
-  // std::vector<Gate> gates;
-  // gates.push_back(gate_0);
-  // gates.push_back(gate_1);
-  // const Circuit this_circuit(num_qubits, gates);
-  // for (uint64_t i = 0; i < state_small->GetDimension(); i++) {
-  //   if (i == 0 || i == 1) {
-  //     ASSERT_EQ(state->GetAmpl(i), std::complex<float>(0.5, 0.0));
-  //   } else {
-  //     ASSERT_EQ(state->GetAmpl(i), std::complex<float>(0.0, 0.0));
-  //   }
-  // }
+  EXPECT_NEAR(state_small->GetAmpl(0).real(), 1.0/std::sqrt(2), 1E-5);
+  EXPECT_NEAR(state_small->GetAmpl(0).imag(), 0.0, 1E-5);
+  EXPECT_NEAR(state_small->GetAmpl(1).real(), 1.0/std::sqrt(2), 1E-5);
+  EXPECT_NEAR(state_small->GetAmpl(1).imag(), 0.0, 1E-5);
+
+  // TODO(zaqqwerty): Remove identity gates once fuser is updated (#171)
+  const uint64_t num_qubits(7);
+  const uint64_t q0(0);
+  const uint64_t q1(5);
+  Gate gate_0(0, q0, matrix_h);
+  Gate gate_5(1, q1, matrix_h);
+  const std::array<float, 32> matrix_i = {1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                                          0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                                          1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0,
+                                          1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0};
+  Gate gate_i(2, q0, q1, matrix_i);
+  std::vector<Gate> gates;
+  gates.push_back(gate_0);
+  gates.push_back(gate_5);
+  gates.push_back(gate_i);
+  const Circuit circuit(num_qubits, gates);
+  auto state = std::unique_ptr<StateSpace>(GetStateSpace(num_qubits, 1));
+  state->CreateState();
+  state->SetStateZero();
+  state->Update(circuit);
+  for (uint64_t i = 0; i < state_small->GetDimension(); i++) {
+    if (i == 0 || i == 1 << q0 || i == 1 << q1 || i == (1 << q0) + (1 << q1)) {
+      EXPECT_NEAR(state->GetAmpl(i).real(), 0.5, 1E-5);
+      EXPECT_NEAR(state->GetAmpl(i).imag(), 0.0, 1E-5);
+    } else {
+      EXPECT_NEAR(state->GetAmpl(i).real(), 0.0, 1E-5);
+      EXPECT_NEAR(state->GetAmpl(i).imag(), 0.0, 1E-5);
+    }
+  }
 }
 
 TEST(StateSpaceTest, SampleStateOneSample) {
