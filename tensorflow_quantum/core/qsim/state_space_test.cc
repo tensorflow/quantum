@@ -125,8 +125,8 @@ TEST(StateSpaceTest, CopyFromGetRealInnerProduct) {
 TEST(StateSpaceTest, ApplyGate1) {
   auto state = std::unique_ptr<StateSpace>(GetStateSpace(5, 1));
   state->CreateState();
-  const float matrix_h[] = {1.0 / std::sqrt(2), 0.0, 1.0 / std::sqrt(2), 0.0,
-                          1.0 / std::sqrt(2), 0.0, -1.0 / std::sqrt(2), 0.0};
+  const float matrix_h[] = {1.0 / std::sqrt(2), 0.0, 1.0 / std::sqrt(2),  0.0,
+                            1.0 / std::sqrt(2), 0.0, -1.0 / std::sqrt(2), 0.0};
   state->SetStateZero();
   state->SetAmpl(0, std::complex<float>(0.0, 0.0));
   state->SetAmpl(1, std::complex<float>(1.0, 0.0));
@@ -139,8 +139,8 @@ TEST(StateSpaceTest, ApplyGate1) {
       break;
     case StateSpaceType::SLOW:
       state->ApplyGate1(matrix_h);
-      ASSERT_EQ(state->GetAmpl(0), std::complex<float>(1/std::sqrt(2), 0.0));
-      ASSERT_EQ(state->GetAmpl(1), std::complex<float>(-1/std::sqrt(2), 0.0));
+      ASSERT_EQ(state->GetAmpl(0), std::complex<float>(1 / std::sqrt(2), 0.0));
+      ASSERT_EQ(state->GetAmpl(1), std::complex<float>(-1 / std::sqrt(2), 0.0));
       break;
     case StateSpaceType::SSE:
       ASSERT_EQ(
@@ -154,26 +154,55 @@ TEST(StateSpaceTest, ApplyGate1) {
 TEST(StateSpaceTest, ApplyGate2) {
   auto state = std::unique_ptr<StateSpace>(GetStateSpace(6, 1));
   state->CreateState();
-  const float matrix_hi[] = {1.0 / std::sqrt(2), 0.0, 0.0, 0.0, 1.0 / std::sqrt(2), 0.0, 0.0, 0.0,
-                             0.0, 0.0, 1.0 / std::sqrt(2), 0.0, 0.0, 0.0, 1.0 / std::sqrt(2), 0.0,
-                             1.0 / std::sqrt(2), 0.0, 0.0, 0.0, -1.0 / std::sqrt(2), 0.0, 0.0, 0.0,
-                             0.0, 0.0, 1.0 / std::sqrt(2), 0.0, 0.0, 0.0, -1.0 / std::sqrt(2), 0.0};
+  const float matrix_hi[] = {1.0 / std::sqrt(2),
+                             0.0,
+                             0.0,
+                             0.0,
+                             1.0 / std::sqrt(2),
+                             0.0,
+                             0.0,
+                             0.0,
+                             0.0,
+                             0.0,
+                             1.0 / std::sqrt(2),
+                             0.0,
+                             0.0,
+                             0.0,
+                             1.0 / std::sqrt(2),
+                             0.0,
+                             1.0 / std::sqrt(2),
+                             0.0,
+                             0.0,
+                             0.0,
+                             -1.0 / std::sqrt(2),
+                             0.0,
+                             0.0,
+                             0.0,
+                             0.0,
+                             0.0,
+                             1.0 / std::sqrt(2),
+                             0.0,
+                             0.0,
+                             0.0,
+                             -1.0 / std::sqrt(2),
+                             0.0};
   const float matrix_cnot[] = {1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
                                0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0,
                                0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0,
                                0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0};
   state->SetStateZero();
   state->ApplyGate2(0, 3, matrix_hi);
-  ASSERT_EQ(state->GetAmpl(0), std::complex<float>(1/std::sqrt(2), 0.0));
-  ASSERT_EQ(state->GetAmpl(8), std::complex<float>(1/std::sqrt(2), 0.0));
+  ASSERT_EQ(state->GetAmpl(0), std::complex<float>(1 / std::sqrt(2), 0.0));
+  ASSERT_EQ(state->GetAmpl(8), std::complex<float>(1 / std::sqrt(2), 0.0));
   state->ApplyGate2(0, 3, matrix_cnot);
-  ASSERT_EQ(state->GetAmpl(0), std::complex<float>(1/std::sqrt(2), 0.0));
-  ASSERT_EQ(state->GetAmpl(9), std::complex<float>(1/std::sqrt(2), 0.0));
+  ASSERT_EQ(state->GetAmpl(0), std::complex<float>(1 / std::sqrt(2), 0.0));
+  ASSERT_EQ(state->GetAmpl(9), std::complex<float>(1 / std::sqrt(2), 0.0));
 }
 
 TEST(StateSpaceTest, Update) {
-  const std::array<float, 8> matrix_h = {1.0 / std::sqrt(2), 0.0, 1.0 / std::sqrt(2), 0.0,
-                                         1.0 / std::sqrt(2), 0.0, -1.0 / std::sqrt(2), 0.0};
+  const std::array<float, 8> matrix_h = {
+      1.0 / std::sqrt(2), 0.0, 1.0 / std::sqrt(2),  0.0,
+      1.0 / std::sqrt(2), 0.0, -1.0 / std::sqrt(2), 0.0};
   Gate gate_small(0, 0, matrix_h);
   std::vector<Gate> gates_small;
   gates_small.push_back(gate_small);
@@ -182,9 +211,9 @@ TEST(StateSpaceTest, Update) {
   state_small->CreateState();
   state_small->SetStateZero();
   ASSERT_EQ(state_small->Update(circuit_small), tensorflow::Status::OK());
-  EXPECT_NEAR(state_small->GetAmpl(0).real(), 1.0/std::sqrt(2), 1E-5);
+  EXPECT_NEAR(state_small->GetAmpl(0).real(), 1.0 / std::sqrt(2), 1E-5);
   EXPECT_NEAR(state_small->GetAmpl(0).imag(), 0.0, 1E-5);
-  EXPECT_NEAR(state_small->GetAmpl(1).real(), 1.0/std::sqrt(2), 1E-5);
+  EXPECT_NEAR(state_small->GetAmpl(1).real(), 1.0 / std::sqrt(2), 1E-5);
   EXPECT_NEAR(state_small->GetAmpl(1).imag(), 0.0, 1E-5);
 
   // TODO(zaqqwerty): Remove identity gates once fuser is updated (#171)
@@ -193,10 +222,10 @@ TEST(StateSpaceTest, Update) {
   const uint64_t q1(5);
   Gate gate_0(0, q0, matrix_h);
   Gate gate_1(1, q1, matrix_h);
-  const std::array<float, 32> matrix_i = {1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-                                          0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-                                          1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0,
-                                          1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0};
+  const std::array<float, 32> matrix_i = {
+      1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0,
+      0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0,
+      0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0};
   Gate gate_i(2, q0, q1, matrix_i);
   std::vector<Gate> gates;
   gates.push_back(gate_0);
@@ -241,7 +270,7 @@ TEST(StateSpaceTest, ComputeExpectation) {
   pair_proto_zz = p_term_scratch_zz->add_paulis();
   pair_proto_zz->set_qubit_id(std::to_string(num_qubits - q1 - 1));
   pair_proto_zz->set_pauli_type("Z");
-  
+
   // Initialize XX
   tfq::proto::PauliTerm* p_term_scratch_xx = p_sum_xx.add_terms();
   p_term_scratch_xx->set_coefficient_real(xx_coeff);
@@ -251,13 +280,15 @@ TEST(StateSpaceTest, ComputeExpectation) {
   pair_proto_xx = p_term_scratch_xx->add_paulis();
   pair_proto_xx->set_qubit_id(std::to_string(num_qubits - q1 - 1));
   pair_proto_xx->set_pauli_type("X");
-  
+
   // Check expectation values on vacuum
   state->SetStateZero();
   float expectation_value_zz(0);
   float expectation_value_xx(0);
-  ASSERT_EQ(state->ComputeExpectation(p_sum_zz, scratch, &expectation_value_zz), tensorflow::Status::OK());
-  ASSERT_EQ(state->ComputeExpectation(p_sum_xx, scratch, &expectation_value_xx), tensorflow::Status::OK());
+  ASSERT_EQ(state->ComputeExpectation(p_sum_zz, scratch, &expectation_value_zz),
+            tensorflow::Status::OK());
+  ASSERT_EQ(state->ComputeExpectation(p_sum_xx, scratch, &expectation_value_xx),
+            tensorflow::Status::OK());
   EXPECT_NEAR(expectation_value_zz, zz_coeff, 1E-5);
   EXPECT_NEAR(expectation_value_xx, 0.0, 1E-5);
 
@@ -268,9 +299,11 @@ TEST(StateSpaceTest, ComputeExpectation) {
   expectation_value_xx = 0;
   state->SetAmpl(0, std::complex<float>(0., 0.));
   state->SetAmpl((1 << q0), std::complex<float>(1., 0.));
-  ASSERT_EQ(state->ComputeExpectation(p_sum_zz, scratch, &expectation_value_zz), tensorflow::Status::OK());
-  ASSERT_EQ(state->ComputeExpectation(p_sum_xx, scratch, &expectation_value_xx), tensorflow::Status::OK());
-  EXPECT_NEAR(expectation_value_zz, -1.0*zz_coeff, 1E-5);
+  ASSERT_EQ(state->ComputeExpectation(p_sum_zz, scratch, &expectation_value_zz),
+            tensorflow::Status::OK());
+  ASSERT_EQ(state->ComputeExpectation(p_sum_xx, scratch, &expectation_value_xx),
+            tensorflow::Status::OK());
+  EXPECT_NEAR(expectation_value_zz, -1.0 * zz_coeff, 1E-5);
   EXPECT_NEAR(expectation_value_xx, 0.0, 1E-5);
   // |...0...1...>
   state->SetStateZero();
@@ -278,9 +311,11 @@ TEST(StateSpaceTest, ComputeExpectation) {
   expectation_value_xx = 0;
   state->SetAmpl(0, std::complex<float>(0., 0.));
   state->SetAmpl((1 << q1), std::complex<float>(1., 0.));
-  ASSERT_EQ(state->ComputeExpectation(p_sum_zz, scratch, &expectation_value_zz), tensorflow::Status::OK());
-  ASSERT_EQ(state->ComputeExpectation(p_sum_xx, scratch, &expectation_value_xx), tensorflow::Status::OK());
-  EXPECT_NEAR(expectation_value_zz, -1.0*zz_coeff, 1E-5);
+  ASSERT_EQ(state->ComputeExpectation(p_sum_zz, scratch, &expectation_value_zz),
+            tensorflow::Status::OK());
+  ASSERT_EQ(state->ComputeExpectation(p_sum_xx, scratch, &expectation_value_xx),
+            tensorflow::Status::OK());
+  EXPECT_NEAR(expectation_value_zz, -1.0 * zz_coeff, 1E-5);
   EXPECT_NEAR(expectation_value_xx, 0.0, 1E-5);
   // |...1...1...>
   state->SetStateZero();
@@ -288,8 +323,10 @@ TEST(StateSpaceTest, ComputeExpectation) {
   expectation_value_xx = 0;
   state->SetAmpl(0, std::complex<float>(0., 0.));
   state->SetAmpl((1 << q0) + (1 << q1), std::complex<float>(1., 0.));
-  ASSERT_EQ(state->ComputeExpectation(p_sum_zz, scratch, &expectation_value_zz), tensorflow::Status::OK());
-  ASSERT_EQ(state->ComputeExpectation(p_sum_xx, scratch, &expectation_value_xx), tensorflow::Status::OK());
+  ASSERT_EQ(state->ComputeExpectation(p_sum_zz, scratch, &expectation_value_zz),
+            tensorflow::Status::OK());
+  ASSERT_EQ(state->ComputeExpectation(p_sum_xx, scratch, &expectation_value_xx),
+            tensorflow::Status::OK());
   EXPECT_NEAR(expectation_value_zz, zz_coeff, 1E-5);
   EXPECT_NEAR(expectation_value_xx, 0.0, 1E-5);
 
@@ -302,8 +339,10 @@ TEST(StateSpaceTest, ComputeExpectation) {
   state->SetAmpl((1 << q0), std::complex<float>(0.5, 0.));
   state->SetAmpl((1 << q1), std::complex<float>(0.5, 0.));
   state->SetAmpl((1 << q0) + (1 << q1), std::complex<float>(0.5, 0.));
-  ASSERT_EQ(state->ComputeExpectation(p_sum_zz, scratch, &expectation_value_zz), tensorflow::Status::OK());
-  ASSERT_EQ(state->ComputeExpectation(p_sum_xx, scratch, &expectation_value_xx), tensorflow::Status::OK());
+  ASSERT_EQ(state->ComputeExpectation(p_sum_zz, scratch, &expectation_value_zz),
+            tensorflow::Status::OK());
+  ASSERT_EQ(state->ComputeExpectation(p_sum_xx, scratch, &expectation_value_xx),
+            tensorflow::Status::OK());
   EXPECT_NEAR(expectation_value_zz, 0.0, 1E-5);
   EXPECT_NEAR(expectation_value_xx, xx_coeff, 1E-5);
   // |...-...+...>
@@ -314,10 +353,12 @@ TEST(StateSpaceTest, ComputeExpectation) {
   state->SetAmpl((1 << q0), std::complex<float>(-0.5, 0.));
   state->SetAmpl((1 << q1), std::complex<float>(0.5, 0.));
   state->SetAmpl((1 << q0) + (1 << q1), std::complex<float>(-0.5, 0.));
-  ASSERT_EQ(state->ComputeExpectation(p_sum_zz, scratch, &expectation_value_zz), tensorflow::Status::OK());
-  ASSERT_EQ(state->ComputeExpectation(p_sum_xx, scratch, &expectation_value_xx), tensorflow::Status::OK());
+  ASSERT_EQ(state->ComputeExpectation(p_sum_zz, scratch, &expectation_value_zz),
+            tensorflow::Status::OK());
+  ASSERT_EQ(state->ComputeExpectation(p_sum_xx, scratch, &expectation_value_xx),
+            tensorflow::Status::OK());
   EXPECT_NEAR(expectation_value_zz, 0.0, 1E-5);
-  EXPECT_NEAR(expectation_value_xx, -1.0*xx_coeff, 1E-5);
+  EXPECT_NEAR(expectation_value_xx, -1.0 * xx_coeff, 1E-5);
   // |...+...-...>
   state->SetStateZero();
   expectation_value_zz = 0;
@@ -326,10 +367,12 @@ TEST(StateSpaceTest, ComputeExpectation) {
   state->SetAmpl((1 << q0), std::complex<float>(0.5, 0.));
   state->SetAmpl((1 << q1), std::complex<float>(-0.5, 0.));
   state->SetAmpl((1 << q0) + (1 << q1), std::complex<float>(-0.5, 0.));
-  ASSERT_EQ(state->ComputeExpectation(p_sum_zz, scratch, &expectation_value_zz), tensorflow::Status::OK());
-  ASSERT_EQ(state->ComputeExpectation(p_sum_xx, scratch, &expectation_value_xx), tensorflow::Status::OK());
+  ASSERT_EQ(state->ComputeExpectation(p_sum_zz, scratch, &expectation_value_zz),
+            tensorflow::Status::OK());
+  ASSERT_EQ(state->ComputeExpectation(p_sum_xx, scratch, &expectation_value_xx),
+            tensorflow::Status::OK());
   EXPECT_NEAR(expectation_value_zz, 0.0, 1E-5);
-  EXPECT_NEAR(expectation_value_xx, -1.0*xx_coeff, 1E-5);
+  EXPECT_NEAR(expectation_value_xx, -1.0 * xx_coeff, 1E-5);
   // |...-...-...>
   state->SetStateZero();
   expectation_value_zz = 0;
@@ -338,8 +381,10 @@ TEST(StateSpaceTest, ComputeExpectation) {
   state->SetAmpl((1 << q0), std::complex<float>(-0.5, 0.));
   state->SetAmpl((1 << q1), std::complex<float>(-0.5, 0.));
   state->SetAmpl((1 << q0) + (1 << q1), std::complex<float>(0.5, 0.));
-  ASSERT_EQ(state->ComputeExpectation(p_sum_zz, scratch, &expectation_value_zz), tensorflow::Status::OK());
-  ASSERT_EQ(state->ComputeExpectation(p_sum_xx, scratch, &expectation_value_xx), tensorflow::Status::OK());
+  ASSERT_EQ(state->ComputeExpectation(p_sum_zz, scratch, &expectation_value_zz),
+            tensorflow::Status::OK());
+  ASSERT_EQ(state->ComputeExpectation(p_sum_xx, scratch, &expectation_value_xx),
+            tensorflow::Status::OK());
   EXPECT_NEAR(expectation_value_zz, 0.0, 1E-5);
   EXPECT_NEAR(expectation_value_xx, xx_coeff, 1E-5);
 
