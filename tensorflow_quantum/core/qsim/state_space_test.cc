@@ -188,7 +188,7 @@ TEST(StateSpaceTest, Update) {
 
   // TODO(zaqqwerty): Remove identity gates once fuser is updated (#171)
   const uint64_t num_qubits(7);
-  const uint64_t q0(0);
+  const uint64_t q0(2);
   const uint64_t q1(5);
   Gate gate_0(0, q0, matrix_h);
   Gate gate_5(1, q1, matrix_h);
