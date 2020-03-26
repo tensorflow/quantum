@@ -56,7 +56,7 @@ class StateSpaceAVX : public StateSpace {
   // Implementations are given the option to return an error.
   virtual tensorflow::Status ApplyGate1(const float* matrix) override;
 
-  // Set all entries in the state to zero
+  // Set state to the all zero |000...0> state
   virtual void SetStateZero() override;
 
   // Get the inner product between this state and the state in `other`
