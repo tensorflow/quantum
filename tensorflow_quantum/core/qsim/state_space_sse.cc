@@ -41,7 +41,12 @@ void StateSpaceSSE::CreateState() {
   state_ = (float*)qsim::_aligned_malloc(sizeof(float) * size_);
 }
 
-void StateSpaceSSE::DeleteState() { qsim::_aligned_free(state_); }
+void StateSpaceSSE::DeleteState() {
+  if (GetRawState() != NULL) {
+    qsim::_aligned_free(state_);
+    state_ = NULL;
+  }
+}
 
 StateSpace* StateSpaceSSE::Clone() const {
   StateSpaceSSE* state_copy =

@@ -37,7 +37,12 @@ void StateSpaceSlow::CreateState() {
   state_ = (float*)malloc(sizeof(float) * size_);
 }
 
-void StateSpaceSlow::DeleteState() { free(state_); }
+void StateSpaceSlow::DeleteState() {
+  if (GetRawState() != NULL) {
+    free(state_);
+    state_ = NULL;
+  }
+}
 
 StateSpace* StateSpaceSlow::Clone() const {
   StateSpaceSlow* state_copy =
