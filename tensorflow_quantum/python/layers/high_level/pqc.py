@@ -131,17 +131,17 @@ class PQC(tf.keras.layers.Layer):
     """
 
     def __init__(
-            self,
-            model_circuit,
-            operators,
-            *,
-            repetitions=None,
-            backend=None,
-            differentiator=None,
-            initializer=tf.keras.initializers.RandomUniform(0, 2 * np.pi),
-            regularizer=None,
-            constraint=None,
-            **kwargs,
+        self,
+        model_circuit,
+        operators,
+        *,
+        repetitions=None,
+        backend=None,
+        differentiator=None,
+        initializer=tf.keras.initializers.RandomUniform(0, 2 * np.pi),
+        regularizer=None,
+        constraint=None,
+        **kwargs,
     ):
         """Instantiate this layer.
 
@@ -269,6 +269,15 @@ class PQC(tf.keras.layers.Layer):
             this layer map to.
         """
         return [sympy.Symbol(x) for x in self._symbols_list]
+
+    def symbol_values(self):
+        """Returns a Python `dict` containing symbol name, value pairs.
+
+        Returns:
+            Python `dict` with `str` keys and `float` values representing
+                the current symbol values.
+        """
+        return dict(zip(self.symbols, self.get_weights()[0]))
 
     def build(self, input_shape):
         """Keras build function."""
