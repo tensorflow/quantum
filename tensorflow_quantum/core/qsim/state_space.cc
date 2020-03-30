@@ -120,22 +120,31 @@ void StateSpace::SampleState(const int m, std::vector<uint64_t>* samples) {
   }
   std::sort(random_vals.begin(), random_vals.end());
 
+  uint64_t highest_prob_index = 0;
+  double highest_prob = 0.0;
   int j = 0;
   for (uint64_t i = 0; i < GetDimension(); i++) {
     const std::complex<float> f_amp = GetAmpl(i);
     const std::complex<double> d_amp = std::complex<double>(
         static_cast<double>(f_amp.real()), static_cast<double>(f_amp.imag()));
-    cdf_so_far += std::norm(d_amp);
-    while (random_vals[j] < cdf_so_far && j < m) {
+    const double norm = std::norm(d_amp);
+    if (norm > highest_prob) {
+      highest_prob = norm;
+      highest_prob_index = i;
+    }
+    cdf_so_far += norm;
+    while (j < m && random_vals[j] < cdf_so_far) {
       samples->push_back(i);
       j++;
     }
   }
 
   // Safety measure in case of state norm underflow.
-  // Likely to not have huge impact.
+  // Add in a few more samples of the most likely bitstring.
+  // Likely to not have huge impact. On depth 8 random circuit
+  // on 30 qubits with 10M samples this is roughly 30 stray samples.
   while (j < m) {
-    samples->push_back(samples->at(samples->size() - 1));
+    samples->push_back(highest_prob_index);
     j++;
   }
 }
