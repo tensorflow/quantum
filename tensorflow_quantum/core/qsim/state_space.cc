@@ -133,7 +133,7 @@ void StateSpace::SampleState(const int m, std::vector<uint64_t>* samples) {
       highest_prob_index = i;
     }
     cdf_so_far += norm;
-    while (random_vals[j] < cdf_so_far && j < m) {
+    while (j < m && random_vals[j] < cdf_so_far) {
       samples->push_back(i);
       j++;
     }
