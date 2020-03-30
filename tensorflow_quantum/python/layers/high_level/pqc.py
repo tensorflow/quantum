@@ -270,6 +270,15 @@ class PQC(tf.keras.layers.Layer):
         """
         return [sympy.Symbol(x) for x in self._symbols_list]
 
+    def symbol_values(self):
+        """Returns a Python `dict` containing symbol name, value pairs.
+
+        Returns:
+            Python `dict` with `str` keys and `float` values representing
+                the current symbol values.
+        """
+        return dict(zip(self.symbols, self.get_weights()[0]))
+
     def build(self, input_shape):
         """Keras build function."""
         super().build(input_shape)
