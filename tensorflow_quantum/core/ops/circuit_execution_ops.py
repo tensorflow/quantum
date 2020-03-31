@@ -25,6 +25,7 @@ class TFQWavefunctionSimulator(enum.Enum):
     expectation = tfq_simulate_ops.tfq_simulate_expectation
     samples = tfq_simulate_ops.tfq_simulate_samples
     state = tfq_simulate_ops.tfq_simulate_state
+    sampled_expectation = tfq_simulate_ops.tfq_simulate_sampled_expectation
 
 
 def get_expectation_op(backend=None):
@@ -290,8 +291,9 @@ def get_sampled_expectation_op(backend=None):
     ... )
 
     Args:
-        backend: Python `object` that specifies what backend this op should use
-            when evaluating circuits. It only accepts `cirq.Sampler`.
+        backend: Optional Python `object` that specifies what backend this op
+            should use when evaluating circuits. Can be any `cirq.Sampler`. If
+            not provided the default C++ sampled expectation op is returned.
 
     Returns:
         A `callable` with the following signature:
@@ -325,10 +327,7 @@ def get_sampled_expectation_op(backend=None):
     """
     # TODO (mbbrough): investigate how the above docstring renders.
     if backend is None:
-        # TODO(zaqqwerty, jaeyoo): Remove comment once sampled_expectation
-        # is implemented, and update docstring
-        # return TFQWavefunctionSimulator.sampled_expectation
-        return cirq_ops._get_cirq_sampled_expectation(cirq.sim.Simulator())
+        return TFQWavefunctionSimulator.sampled_expectation
 
     if isinstance(backend, cirq.Sampler):
         return cirq_ops._get_cirq_sampled_expectation(backend)
