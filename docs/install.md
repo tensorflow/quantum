@@ -29,6 +29,7 @@ dependencies):
   <code class="devsite-terminal">pip3 install --upgrade pip</code>
   <code class="devsite-terminal">pip3 install tensorflow==2.1.0</code>
   <code class="devsite-terminal">pip3 install cirq==0.7.0</code>
+  <code class="devsite-terminal">pip3 install pathos==0.2.5</code>
 </pre>
 <!-- common_typos_enable -->
 
