@@ -431,49 +431,7 @@ class SimulateSamplesTest(tf.test.TestCase, parameterized.TestCase):
         results = op(util.convert_to_tensor(circuits), [], [[]] * len(circuits),
                      [n_samples]).numpy()
         self.assertAllClose(expected_outputs, results)
-
-
-class InputTypesTest(tf.test.TestCase, parameterized.TestCase):
-    """Tests that different inputs types work for all of the ops. """
-
-    @parameterized.parameters([
-        {
-            'symbol_type': tf.float32
-        },
-        {
-            'symbol_type': tf.float64
-        },
-        {
-            'symbol_type': tf.int32
-        },
-        {
-            'symbol_type': tf.int64
-        },
-        {
-            'symbol_type': tf.complex64
-        },
-    ])
-    def test_symbol_values_type(self, symbol_type):
-        """Tests all three ops for the different types. """
-        qubit = cirq.GridQubit(0, 0)
-        circuits = util.convert_to_tensor([cirq.Circuit(cirq.H(qubit))])
-        symbol_names = ['symbol']
-        symbol_values = tf.convert_to_tensor([[1]], dtype=symbol_type)
-        pauli_sums = util.random_pauli_sums([qubit], 3, 1)
-        pauli_sums = util.convert_to_tensor([[x] for x in pauli_sums])
-
-        result = tfq_simulate_ops.tfq_simulate_state(circuits, symbol_names,
-                                                     symbol_values)
-        self.assertDTypeEqual(result, np.complex64)
-
-        result = tfq_simulate_ops.tfq_simulate_expectation(
-            circuits, symbol_names, symbol_values, pauli_sums)
-        self.assertDTypeEqual(result, np.float32)
-
-        result = tfq_simulate_ops.tfq_simulate_samples(circuits, symbol_names,
-                                                       symbol_values, [100])
-        self.assertDTypeEqual(result, np.int8)
-
+        
 
 class SimulateSampledExpectationTest(tf.test.TestCase):
     """Tests tfq_simulate_expectation."""
@@ -663,6 +621,52 @@ class SimulateSampledExpectationTest(tf.test.TestCase):
             util.convert_to_tensor([[x] for x in pauli_sums]),
             [num_samples])
         self.assertDTypeEqual(res, np.float32)
+
+
+class InputTypesTest(tf.test.TestCase, parameterized.TestCase):
+    """Tests that different inputs types work for all of the ops. """
+
+    @parameterized.parameters([
+        {
+            'symbol_type': tf.float32
+        },
+        {
+            'symbol_type': tf.float64
+        },
+        {
+            'symbol_type': tf.int32
+        },
+        {
+            'symbol_type': tf.int64
+        },
+        {
+            'symbol_type': tf.complex64
+        },
+    ])
+    def test_symbol_values_type(self, symbol_type):
+        """Tests all three ops for the different types. """
+        qubit = cirq.GridQubit(0, 0)
+        circuits = util.convert_to_tensor([cirq.Circuit(cirq.H(qubit))])
+        symbol_names = ['symbol']
+        symbol_values = tf.convert_to_tensor([[1]], dtype=symbol_type)
+        pauli_sums = util.random_pauli_sums([qubit], 3, 1)
+        pauli_sums = util.convert_to_tensor([[x] for x in pauli_sums])
+
+        result = tfq_simulate_ops.tfq_simulate_state(circuits, symbol_names,
+                                                     symbol_values)
+        self.assertDTypeEqual(result, np.complex64)
+
+        result = tfq_simulate_ops.tfq_simulate_expectation(
+            circuits, symbol_names, symbol_values, pauli_sums)
+        self.assertDTypeEqual(result, np.float32)
+
+        result = tfq_simulate_ops.tfq_simulate_samples(circuits, symbol_names,
+                                                       symbol_values, [100])
+        self.assertDTypeEqual(result, np.int8)
+
+        result = tfq_simulate_ops.tfq_simulate_sampled_expectation(
+            circuits, symbol_names, symbol_values, pauli_sums), [100]
+        self.assertDTypeEqual(result, np.float32)
 
         
 if __name__ == "__main__":
