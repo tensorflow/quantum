@@ -76,16 +76,12 @@ http_archive(
 
 http_archive(
     name = "org_tensorflow",
-    sha256 = "e82f3b94d863e223881678406faa5071b895e1ff928ba18578d2adbbc6b42a4c",
-    strip_prefix = "tensorflow-2.1.0",
+    # sha256 = "e82f3b94d863e223881678406faa5071b895e1ff928ba18578d2adbbc6b42a4c",
+    strip_prefix = "tensorflow-2.2.0-rc2",
     urls = [
-        "https://github.com/tensorflow/tensorflow/archive/v2.1.0.zip",
+        "https://github.com/tensorflow/tensorflow/archive/v2.2.0-rc2.zip",
     ],
 )
-
-load("@org_tensorflow//tensorflow:workspace.bzl", "tf_workspace")
-
-tf_workspace(tf_repo_name = "@org_tensorflow")
 
 load("//third_party/tf:tf_configure.bzl", "tf_configure")
 

@@ -15,7 +15,7 @@ There are a few ways to set up your environment to use TensorFlow Quantum (TFQ):
 ### Requirements
 
 * pip 19.0 or later (requires `manylinux2010` support)
-* [TensorFlow >= 2.1](https://www.tensorflow.org/install/pip)
+* [TensorFlow >= 2.2.0rc2](https://www.tensorflow.org/install/pip)
 * [Cirq 0.7](https://cirq.readthedocs.io/en/stable/install.html)
 
 See the [TensorFlow install guide](https://www.tensorflow.org/install/pip) to
@@ -27,7 +27,7 @@ dependencies):
 <!-- common_typos_disable -->
 <pre class="devsite-click-to-copy">
   <code class="devsite-terminal">pip3 install --upgrade pip</code>
-  <code class="devsite-terminal">pip3 install tensorflow==2.1.0</code>
+  <code class="devsite-terminal">pip3 install tensorflow==2.2.0rc2</code>
   <code class="devsite-terminal">pip3 install cirq==0.7.0</code>
 </pre>
 <!-- common_typos_enable -->
@@ -83,7 +83,7 @@ See the TensorFlow
 guide to install the <a href="https://bazel.build/" class="external">Bazel</a>
 build system.
 
-To ensure compatibility with TensorFlow, `bazel` version 0.26.1 or lower is
+To ensure compatibility with TensorFlow, `bazel` version 2.0.0 is
 required. To remove any existing version of Bazel:
 
 <!-- common_typos_disable -->
@@ -92,12 +92,12 @@ required. To remove any existing version of Bazel:
 </pre>
 <!-- common_typos_enable -->
 
-Then install Bazel version 0.26.0:
+Then install Bazel version 2.0.0:
 
 <!-- common_typos_disable -->
 <pre class="devsite-click-to-copy">
-  <code class="devsite-terminal">wget https://github.com/bazelbuild/bazel/releases/download/0.26.0/bazel_0.26.0-linux-x86_64.deb</code>
-  <code class="devsite-terminal">sudo dpkg -i bazel_0.26.0-linux-x86_64.deb</code>
+  <code class="devsite-terminal">wget https://github.com/bazelbuild/bazel/releases/download/2.0.0/bazel_2.0.0-linux-x86_64.deb</code>
+  <code class="devsite-terminal">sudo dpkg -i bazel_2.0.0-linux-x86_64.deb</code>
 </pre>
 <!-- common_typos_enable -->
 
@@ -105,7 +105,7 @@ Then install Bazel version 0.26.0:
 ### 4. Build TensorFlow from source
 
 Read the TensorFlow [build from source](https://www.tensorflow.org/install/source)
-guide for details. TensorFlow Quantum is compatible with TensorFlow version&nbsp;2.1.
+guide for details. TensorFlow Quantum is compatible with TensorFlow version&nbsp;2.2.0rc2.
 
 Download the
 <a href="https://github.com/tensorflow/tensorflow" class="external">TensorFlow source code</a>:
@@ -114,7 +114,7 @@ Download the
 <pre class="devsite-click-to-copy">
   <code class="devsite-terminal">git clone https://github.com/tensorflow/tensorflow.git</code>
   <code class="devsite-terminal">cd tensorflow</code>
-  <code class="devsite-terminal">git checkout v2.1.0</code>
+  <code class="devsite-terminal">git checkout r2.2.0</code>
 </pre>
 
 Install the TensorFlow dependencies:
