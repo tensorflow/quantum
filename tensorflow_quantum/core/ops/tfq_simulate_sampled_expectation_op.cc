@@ -78,6 +78,17 @@ class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
                     programs.size(), " circuits and ", pauli_sums.size(),
                     " paulisums.")));
 
+    std::vector<uint64_t> parsed_num_samples;
+    OP_REQUIRES_OK(GetNumSamples(context, &parsed_num_samples));
+
+    // TODO(zaqqwerty): Eventually we want ability to specify num_samples per op
+    OP_REQUIRES(context, parsed_num_samples.size() == 1,
+                tensorflow::errors::InvalidArgument(
+                    "Only one value of num_samples can be specified."));
+    OP_REQUIRES(context, parsed_num_samples.at(0) == 0,
+                tensorflow::errors::InvalidArgument(
+                    "num_samples cannot contain zero."));
+    
     auto DoWork = [&](int start, int end) {
       int old_batch_index = -2;
       int cur_batch_index = -1;

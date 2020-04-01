@@ -77,7 +77,7 @@ tensorflow::Status GetGradients(tensorflow::OpKernelContext* context,
 
 // Parses the number of samples from the 'num_samples' input tensor.
 tensorflow::Status GetNumSamples(tensorflow::OpKernelContext* context,
-                                 std::vector<std::vector<uint64_t>>* parsed_num_samples);
+                                 std::vector<uint64_t>* parsed_num_samples);
 
 }  // namespace tfq
 

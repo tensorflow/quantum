@@ -507,7 +507,7 @@ class SimulateSampledExpectationTest(tf.test.TestCase):
                 symbol_values_array,
                 util.convert_to_tensor([[[x]] for x in pauli_sums]),
                 [num_samples])
-            
+
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError, 'num_samples must be rank 1'):
             # num_samples tensor has the wrong shape.
             tfq_simulate_ops.tfq_simulate_sampled_expectation(
@@ -523,6 +523,22 @@ class SimulateSampledExpectationTest(tf.test.TestCase):
                 symbol_values_array,
                 util.convert_to_tensor([[x] for x in pauli_sums]),
                 num_samples)
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError, 'Only one value of num_samples can be specified.'):
+            # num_samples tensor has the wrong shape.
+            tfq_simulate_ops.tfq_simulate_sampled_expectation(
+                util.convert_to_tensor(circuit_batch), symbol_names,
+                symbol_values_array,
+                util.convert_to_tensor([[x] for x in pauli_sums]),
+                [num_samples, num_samples])
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError, 'num_samples cannot contain zero.'):
+            # num_samples tensor has the wrong shape.
+            tfq_simulate_ops.tfq_simulate_sampled_expectation(
+                util.convert_to_tensor(circuit_batch), symbol_names,
+                symbol_values_array,
+                util.convert_to_tensor([[x] for x in pauli_sums]),
+                [0])
             
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'Unparseable proto'):
@@ -613,6 +629,13 @@ class SimulateSampledExpectationTest(tf.test.TestCase):
                 util.convert_to_tensor([cirq.Circuit()]), symbol_names,
                 symbol_values_array.astype(np.float64),
                 util.convert_to_tensor([[x] for x in pauli_sums]),
+                [num_samples])
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError, 'Only one value of num_samples can be specified.'):
+            tfq_simulate_ops.tfq_simulate_sampled_expectation(
+                util.convert_to_tensor(circuit_batch), symbol_names,
+                symbol_values_array,
+                util.convert_to_tensor([[x] for x in pauli_sums]), [],
                 [num_samples])
 
         res = tfq_simulate_ops.tfq_simulate_sampled_expectation(
