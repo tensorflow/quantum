@@ -33,5 +33,20 @@ void* _aligned_malloc(size_t size) {
 
 void _aligned_free(void* ptr) { free(*(reinterpret_cast<void**>(ptr) - 1)); }
 
+int ComputeParity(const absl::flat_hash_set<unsigned int>& parity_set, const uint64_t sample) {
+  int parity(1);
+  unsigned int location = 0;
+  while (sample > 0) {
+    if (sample % 2 == 1) {
+      if (parity_set.find(location) != parity_set.end()) {
+        parity *= -1;
+      }
+    }
+    location++;
+    sample %= 2;
+  }
+  return parity;
+}
+
 }  // namespace qsim
 }  // namespace tfq

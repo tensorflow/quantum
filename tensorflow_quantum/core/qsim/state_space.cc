@@ -18,6 +18,7 @@ limitations under the License.
 #include <complex>
 #include <memory>
 
+#include "absl/container/flat_hash_set.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow/core/lib/random/simple_philox.h"
 #include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
@@ -164,9 +165,9 @@ tensorflow::Status ComputeSampledExpectation(const tfq::proto::PauliSum& p_sum,
       continue;
     }
 
+    // Take state to measurement basis and sample it
     Circuit measurement_circuit;
-
-    status = CircuitFromPauliTerm(term, num_qubits_, &measurement_circuit);
+    status = ZBasisCircuitFromPauliTerm(term, num_qubits_, &measurement_circuit);
     if (!status.ok()) {
       return status;
     }
@@ -175,8 +176,26 @@ tensorflow::Status ComputeSampledExpectation(const tfq::proto::PauliSum& p_sum,
     if (!status.ok()) {
       return status;
     }
-    *expectation_value +=
-        term.coefficient_real() * GetRealInnerProduct(*scratch);
+    std::vector<uint64_t> samples;
+    void StateSpace::SampleState(m, &samples);
+
+    // Find qubits on which to measure parity
+    absl::flat_hash_set<unsigned int> parity_set;
+    for (tfq::proto::PauliQubitPair& pair : term.mutable_paulis()) {
+      unsigned int location;
+      if (!absl::SimpleAtoi(pair.qubit_id(), &location)) {
+        return Status(tensorflow::error::INVALID_ARGUMENT,
+                      "Could not parse Pauli term qubit id: " + pair.ShortDebugString());
+      }
+      parity_set.insert(location);
+    }
+    
+    for (int i = 0; i < m; i++) {
+      
+      
+      *expectation_value +=
+          term.coefficient_real() * (*scratch);
+    }
   }
   return status;
 }

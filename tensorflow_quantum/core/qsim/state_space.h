@@ -19,6 +19,7 @@ limitations under the License.
 #include <complex>
 #include <memory>
 
+#include "absl/container/flat_hash_set.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
 #include "tensorflow_quantum/core/src/circuit.h"
@@ -62,7 +63,7 @@ class StateSpace {
                                                StateSpace* scratch,
                                                float* expectation_value,
                                                const int m);
-  
+
   // Returns true if memory for the state has been succesfully allocated
   bool Valid() const;
 
