@@ -149,6 +149,38 @@ void StateSpace::SampleState(const int m, std::vector<uint64_t>* samples) {
   }
 }
 
+tensorflow::Status ComputeSampledExpectation(const tfq::proto::PauliSum& p_sum,
+                                             StateSpace* scratch,
+                                             float* expectation_value,
+                                             const int m) {
+  // apply the  gates of the pauliterms to a copy of the wavefunction
+  // and add up expectation value term by term.
+  tensorflow::Status status = tensorflow::Status::OK();
+  for (const tfq::proto::PauliTerm& term : p_sum.terms()) {
+    // catch identity terms
+    if (term.paulis_size() == 0) {
+      *expectation_value += term.coefficient_real();
+      // TODO(zaqqwerty): error somewhere if identities have any imaginary part
+      continue;
+    }
+
+    Circuit measurement_circuit;
+
+    status = CircuitFromPauliTerm(term, num_qubits_, &measurement_circuit);
+    if (!status.ok()) {
+      return status;
+    }
+    scratch->CopyFrom(*this);
+    status = scratch->Update(measurement_circuit);
+    if (!status.ok()) {
+      return status;
+    }
+    *expectation_value +=
+        term.coefficient_real() * GetRealInnerProduct(*scratch);
+  }
+  return status;
+}
+
 bool StateSpace::Valid() const {
   // TODO: more roubust test?
   return state_ != nullptr;
