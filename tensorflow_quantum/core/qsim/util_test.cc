@@ -69,8 +69,23 @@ TEST(Util, ComputeParity) {
   ASSERT_EQ(ComputeParity(parity_12, sample_012), -1);
   ASSERT_EQ(ComputeParity(parity_012, sample_012), 1);
   
-  // Check a parity for a ten qubit state
-  
+  // Check some parities for a six qubit state
+  // |011010> <--> 26
+  uint64_t sample_six(26);
+  absl::flat_hash_set<unsigned int> parity_012345({0, 1, 2, 3, 4, 5});
+  absl::flat_hash_set<unsigned int> parity_134({1, 3, 4});
+  absl::flat_hash_set<unsigned int> parity_025({0, 2, 5});
+  ASSERT_EQ(ComputeParity(parity_, sample_six), 1);
+  ASSERT_EQ(ComputeParity(parity_0, sample_six), 1);
+  ASSERT_EQ(ComputeParity(parity_1, sample_six), -1);
+  ASSERT_EQ(ComputeParity(parity_01, sample_six), -1);
+  ASSERT_EQ(ComputeParity(parity_2, sample_six), 1);
+  ASSERT_EQ(ComputeParity(parity_02, sample_six), 1);
+  ASSERT_EQ(ComputeParity(parity_12, sample_six), -1);
+  ASSERT_EQ(ComputeParity(parity_012, sample_six), -1);
+  ASSERT_EQ(ComputeParity(parity_012345, sample_six), -1);
+  ASSERT_EQ(ComputeParity(parity_134, sample_six), -1);
+  ASSERT_EQ(ComputeParity(parity_025, sample_six), 1);
 }
 
 }  // namespace
