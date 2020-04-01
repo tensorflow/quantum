@@ -40,17 +40,17 @@ using ::tfq::proto::PauliSum;
 using ::tfq::qsim::GetStateSpace;
 using ::tfq::qsim::StateSpace;
 
-class TfqSimulateExpectationOp : public tensorflow::OpKernel {
+class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
  public:
-  explicit TfqSimulateExpectationOp(tensorflow::OpKernelConstruction *context)
+  explicit TfqSimulateSampledExpectationOp(tensorflow::OpKernelConstruction *context)
       : OpKernel(context) {}
 
   void Compute(tensorflow::OpKernelContext *context) override {
     // TODO (mbbrough): add more dimension checks for other inputs here.
     const int num_inputs = context->num_inputs();
-    OP_REQUIRES(context, num_inputs == 4,
+    OP_REQUIRES(context, num_inputs == 5,
                 tensorflow::errors::InvalidArgument(absl::StrCat(
-                    "Expected 4 inputs, got ", num_inputs, " inputs.")));
+                    "Expected 5 inputs, got ", num_inputs, " inputs.")));
 
     // Create the output Tensor.
     const int output_dim_batch_size = context->input(0).dim_size(0);
