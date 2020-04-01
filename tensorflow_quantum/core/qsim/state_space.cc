@@ -165,7 +165,7 @@ tensorflow::Status ComputeSampledExpectation(const tfq::proto::PauliSum& p_sum,
       continue;
     }
 
-    // Take state to measurement basis and sample it
+    // Transform state into the measurement basis and sample it
     Circuit measurement_circuit;
     status = ZBasisCircuitFromPauliTerm(term, num_qubits_, &measurement_circuit);
     if (!status.ok()) {
@@ -176,8 +176,8 @@ tensorflow::Status ComputeSampledExpectation(const tfq::proto::PauliSum& p_sum,
     if (!status.ok()) {
       return status;
     }
-    std::vector<uint64_t> samples;
-    void StateSpace::SampleState(m, &samples);
+    std::vector<uint64_t> state_samples;
+    void StateSpace::SampleState(m, &state_samples);
 
     // Find qubits on which to measure parity
     absl::flat_hash_set<unsigned int> parity_set;
@@ -189,13 +189,14 @@ tensorflow::Status ComputeSampledExpectation(const tfq::proto::PauliSum& p_sum,
       }
       parity_set.insert(location);
     }
-    
-    for (int i = 0; i < m; i++) {
-      
-      
-      *expectation_value +=
-          term.coefficient_real() * (*scratch);
+
+    // Compute the expectation value over the samples
+    int parity_total(0);
+    for (const uint64_t& sample : state_samples) {
+      parity_total += ComputeParity(parity_set, sample);
     }
+    *expectation_value +=
+        term.coefficient_real() * parity_total / m;
   }
   return status;
 }
