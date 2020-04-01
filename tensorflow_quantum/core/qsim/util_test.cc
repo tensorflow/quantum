@@ -22,16 +22,55 @@ namespace qsim {
 namespace {
 
 TEST(Util, ComputeParity) {
-  // Check parities for |11> <--> 3
-  uint64_t sample_01 = 3;
+  // Check all parities for all two qubit states
+  uint64_t sample_01;
   absl::flat_hash_set<unsigned int> parity_();
   absl::flat_hash_set<unsigned int> parity_0({0});
   absl::flat_hash_set<unsigned int> parity_1({1});
   absl::flat_hash_set<unsigned int> parity_01({0, 1});
+  // |00> <--> 0
+  sample_01 = 0;
+  ASSERT_EQ(ComputeParity(parity_, sample_01), 1);
+  ASSERT_EQ(ComputeParity(parity_0, sample_01), 1);
+  ASSERT_EQ(ComputeParity(parity_1, sample_01), 1);
+  ASSERT_EQ(ComputeParity(parity_01, sample_01), 1);
+  // |01> <--> 1
+  sample_01 = 1;
+  ASSERT_EQ(ComputeParity(parity_, sample_01), 1);
+  ASSERT_EQ(ComputeParity(parity_0, sample_01), -1);
+  ASSERT_EQ(ComputeParity(parity_1, sample_01), 1);
+  ASSERT_EQ(ComputeParity(parity_01, sample_01), -1);
+  // |10> <--> 2
+  sample_01 = 2;
+  ASSERT_EQ(ComputeParity(parity_, sample_01), 1);
+  ASSERT_EQ(ComputeParity(parity_0, sample_01), 1);
+  ASSERT_EQ(ComputeParity(parity_1, sample_01), -1);
+  ASSERT_EQ(ComputeParity(parity_01, sample_01), -1);
+  // |11> <--> 3
+  sample_01 = 3;
   ASSERT_EQ(ComputeParity(parity_, sample_01), 1);
   ASSERT_EQ(ComputeParity(parity_0, sample_01), -1);
   ASSERT_EQ(ComputeParity(parity_1, sample_01), -1);
   ASSERT_EQ(ComputeParity(parity_01, sample_01), 1);
+
+  // Check all parities for a three qubit state
+  // |101> <--> 5
+  uint64_t sample_012(5);
+  absl::flat_hash_set<unsigned int> parity_2();
+  absl::flat_hash_set<unsigned int> parity_02({0, 2});
+  absl::flat_hash_set<unsigned int> parity_12({1, 2});
+  absl::flat_hash_set<unsigned int> parity_012({0, 1, 2});
+  ASSERT_EQ(ComputeParity(parity_, sample_012), 1);
+  ASSERT_EQ(ComputeParity(parity_0, sample_012), -1);
+  ASSERT_EQ(ComputeParity(parity_1, sample_012), 1);
+  ASSERT_EQ(ComputeParity(parity_01, sample_012), -1);
+  ASSERT_EQ(ComputeParity(parity_2, sample_012), -1);
+  ASSERT_EQ(ComputeParity(parity_02, sample_012), 1);
+  ASSERT_EQ(ComputeParity(parity_12, sample_012), -1);
+  ASSERT_EQ(ComputeParity(parity_012, sample_012), 1);
+  
+  // Check a parity for a ten qubit state
+  
 }
 
 }  // namespace
