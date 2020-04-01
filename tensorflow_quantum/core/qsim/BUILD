@@ -72,6 +72,7 @@ cc_library(
     hdrs = ["state_space.h"],
     deps = [
         ":fuser_basic",
+        ":util",
         "//tensorflow_quantum/core/proto:pauli_sum_cc_proto",
         "//tensorflow_quantum/core/src:circuit",
         "//tensorflow_quantum/core/src:circuit_parser",
@@ -134,5 +135,7 @@ cc_library(
     name = "util",
     srcs = ["util.cc"],
     hdrs = ["util.h"],
-    deps = [],
+    deps = [
+        "@com_google_absl//absl/container:flat_hash_set",
+    ],
 )

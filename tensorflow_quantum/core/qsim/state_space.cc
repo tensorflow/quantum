@@ -23,6 +23,7 @@ limitations under the License.
 #include "tensorflow/core/lib/random/simple_philox.h"
 #include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
 #include "tensorflow_quantum/core/qsim/fuser_basic.h"
+#include "tensorflow_quantum/core/qsim/util.h"
 #include "tensorflow_quantum/core/src/circuit.h"
 #include "tensorflow_quantum/core/src/circuit_parser.h"
 #include "tensorflow_quantum/core/src/matrix.h"
@@ -150,10 +151,11 @@ void StateSpace::SampleState(const int m, std::vector<uint64_t>* samples) {
   }
 }
 
-tensorflow::Status ComputeSampledExpectation(const tfq::proto::PauliSum& p_sum,
-                                             StateSpace* scratch,
-                                             float* expectation_value,
-                                             const int m) {
+tensorflow::Status StateSpace::ComputeSampledExpectation(
+    const tfq::proto::PauliSum& p_sum,
+    StateSpace* scratch,
+    float* expectation_value,
+    const int m) {
   // apply the  gates of the pauliterms to a copy of the wavefunction
   // and add up expectation value term by term.
   tensorflow::Status status = tensorflow::Status::OK();
@@ -177,15 +179,15 @@ tensorflow::Status ComputeSampledExpectation(const tfq::proto::PauliSum& p_sum,
       return status;
     }
     std::vector<uint64_t> state_samples;
-    void StateSpace::SampleState(m, &state_samples);
+    scratch->SampleState(m, &state_samples);
 
     // Find qubits on which to measure parity
     absl::flat_hash_set<unsigned int> parity_set;
-    for (tfq::proto::PauliQubitPair& pair : term.mutable_paulis()) {
+    for (const tfq::proto::PauliQubitPair& pair : term.paulis()) {
       unsigned int location;
       if (!absl::SimpleAtoi(pair.qubit_id(), &location)) {
-        return Status(tensorflow::error::INVALID_ARGUMENT,
-                      "Could not parse Pauli term qubit id: " + pair.ShortDebugString());
+        return tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
+                                  "Could not parse Pauli term qubit id: " + pair.ShortDebugString());
       }
       parity_set.insert(location);
     }
