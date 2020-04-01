@@ -21,6 +21,19 @@ namespace tfq {
 namespace qsim {
 namespace {
 
+TEST(Util, ComputeParity) {
+  // Check parities for |11> <--> 3
+  uint64_t sample_01 = 3;
+  absl::flat_hash_set<unsigned int> parity_();
+  absl::flat_hash_set<unsigned int> parity_0({0});
+  absl::flat_hash_set<unsigned int> parity_1({1});
+  absl::flat_hash_set<unsigned int> parity_01({0, 1});
+  ASSERT_EQ(ComputeParity(parity_, sample_01), 1);
+  ASSERT_EQ(ComputeParity(parity_0, sample_01), -1);
+  ASSERT_EQ(ComputeParity(parity_1, sample_01), -1);
+  ASSERT_EQ(ComputeParity(parity_01, sample_01), 1);
+}
+
 }  // namespace
 }  // namespace qsim
 }  // namespace tfq
