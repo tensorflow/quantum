@@ -16,6 +16,7 @@ limitations under the License.
 #ifndef TFQ_CORE_QSIM_UTIL_H_
 #define TFQ_CORE_QSIM_UTIL_H_
 
+#include <bitset>
 #include <cstddef>
 #include <cstdint>
 #include <vector>

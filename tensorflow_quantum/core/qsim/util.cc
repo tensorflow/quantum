@@ -16,10 +16,7 @@ limitations under the License.
 #include "tensorflow_quantum/core/qsim/util.h"
 
 #include <cstddef>
-#include <cstdint>
 #include <cstdlib>
-#include <vector>
-#include <bitset>
 
 namespace tfq {
 namespace qsim {
