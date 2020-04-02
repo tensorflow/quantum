@@ -35,7 +35,8 @@ void* _aligned_malloc(size_t size) {
 
 void _aligned_free(void* ptr) { free(*(reinterpret_cast<void**>(ptr) - 1)); }
 
-int ComputeParity(const absl::flat_hash_set<unsigned int>& parity_set, const uint64_t sample) {
+int ComputeParity(const absl::flat_hash_set<unsigned int>& parity_set,
+                  const uint64_t sample) {
   uint64_t sample_copy(sample);
   int parity(1);
   unsigned int location = 0;

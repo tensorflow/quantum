@@ -31,7 +31,8 @@ void _aligned_free(void* ptr);
 
 // Given a set of qubit indices and an integer state sample, return the parity
 // of that set of indices.  Uses the little-endian convention of qsim.
-int ComputeParity(const absl::flat_hash_set<unsigned int>& parity_set, const uint64_t sample);
+int ComputeParity(const absl::flat_hash_set<unsigned int>& parity_set,
+                  const uint64_t sample);
 
 }  // namespace qsim
 }  // namespace tfq
