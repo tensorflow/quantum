@@ -18,7 +18,6 @@ limitations under the License.
 
 #include <bitset>
 #include <cstddef>
-#include <cstdint>
 #include <vector>
 
 namespace tfq {
