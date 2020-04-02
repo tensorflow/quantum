@@ -46,7 +46,7 @@ int ComputeParity(const absl::flat_hash_set<unsigned int>& parity_set, const uin
       }
     }
     location++;
-    sample_copy %= 2;
+    sample_copy /= 2;
   }
   return parity;
 }

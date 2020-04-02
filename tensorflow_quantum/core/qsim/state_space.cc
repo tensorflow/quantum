@@ -189,6 +189,9 @@ tensorflow::Status StateSpace::ComputeSampledExpectation(
         return tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
                                   "Could not parse Pauli term qubit id: " + pair.ShortDebugString());
       }
+      // Cirq order swapped relative to qsim
+      // TODO(zaqqwerty): figure our a way to have all the swaps
+      //                  contained in only one location
       parity_set.insert(location);
     }
 
@@ -198,7 +201,7 @@ tensorflow::Status StateSpace::ComputeSampledExpectation(
       parity_total += ComputeParity(parity_set, sample);
     }
     *expectation_value +=
-        term.coefficient_real() * parity_total / m;
+        static_cast<double>(parity_total) * term.coefficient_real() / static_cast<double>(m);
   }
   return status;
 }
