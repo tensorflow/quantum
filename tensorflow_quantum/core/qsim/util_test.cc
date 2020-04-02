@@ -80,7 +80,7 @@ TEST(Util, ComputeParity) {
   ASSERT_EQ(ComputeParity(parity_02, sample_012), -1);
   ASSERT_EQ(ComputeParity(parity_12, sample_012), -1);
   ASSERT_EQ(ComputeParity(parity_012, sample_012), -1);
-  
+
   // Check some parities for a six qubit state
   // |011000> <--> 24
   uint64_t sample_six(24);
