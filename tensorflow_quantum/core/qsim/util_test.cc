@@ -15,6 +15,8 @@ limitations under the License.
 
 #include "tensorflow_quantum/core/qsim/util.h"
 
+#include <vector>
+
 #include "gtest/gtest.h"
 
 namespace tfq {
@@ -24,10 +26,10 @@ namespace {
 TEST(Util, ComputeParity) {
   // Check all parities for all two qubit states
   uint64_t sample_01;
-  absl::flat_hash_set<unsigned int> parity_();
-  absl::flat_hash_set<unsigned int> parity_0({0});
-  absl::flat_hash_set<unsigned int> parity_1({1});
-  absl::flat_hash_set<unsigned int> parity_01({0, 1});
+  const std::vector<unsigned int> parity_;
+  const std::vector<unsigned int> parity_0 = {0};
+  const std::vector<unsigned int> parity_1 = {1};
+  const std::vector<unsigned int> parity_01 = {0, 1};
   // |00> <--> 0
   sample_01 = 0;
   ASSERT_EQ(ComputeParity(parity_, sample_01), 1);
@@ -56,10 +58,10 @@ TEST(Util, ComputeParity) {
   // Check all parities for a three qubit state
   // |101> <--> 5
   uint64_t sample_012(5);
-  absl::flat_hash_set<unsigned int> parity_2();
-  absl::flat_hash_set<unsigned int> parity_02({0, 2});
-  absl::flat_hash_set<unsigned int> parity_12({1, 2});
-  absl::flat_hash_set<unsigned int> parity_012({0, 1, 2});
+  const std::vector<unsigned int> parity_2 = {2};
+  const std::vector<unsigned int> parity_02({0, 2});
+  const std::vector<unsigned int> parity_12({1, 2});
+  const std::vector<unsigned int> parity_012({0, 1, 2});
   ASSERT_EQ(ComputeParity(parity_, sample_012), 1);
   ASSERT_EQ(ComputeParity(parity_0, sample_012), -1);
   ASSERT_EQ(ComputeParity(parity_1, sample_012), 1);
@@ -72,9 +74,9 @@ TEST(Util, ComputeParity) {
   // Check some parities for a six qubit state
   // |010000> <--> 26
   uint64_t sample_six(26);
-  absl::flat_hash_set<unsigned int> parity_012345({0, 1, 2, 3, 4, 5});
-  absl::flat_hash_set<unsigned int> parity_134({1, 3, 4});
-  absl::flat_hash_set<unsigned int> parity_025({0, 2, 5});
+  const std::vector<unsigned int> parity_012345({0, 1, 2, 3, 4, 5});
+  const std::vector<unsigned int> parity_134({1, 3, 4});
+  const std::vector<unsigned int> parity_025({0, 2, 5});
   ASSERT_EQ(ComputeParity(parity_, sample_six), 1);
   ASSERT_EQ(ComputeParity(parity_0, sample_six), 1);
   ASSERT_EQ(ComputeParity(parity_1, sample_six), 1);

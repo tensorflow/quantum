@@ -31,8 +31,15 @@ void _aligned_free(void* ptr);
 
 // Given a set of qubit indices and an integer state sample, return the parity
 // of that set of indices.  Uses the little-endian convention of qsim.
-int ComputeParity(const std::vector<unsigned int>& measured_bits,
-                  const uint64_t sample);
+inline int ComputeParity(const std::vector<unsigned int>& measured_bits,
+                         const uint64_t sample) {
+  uint64_t mask = 0;
+  for(unsigned int i = 0; i < measured_bits.size(); i++){
+    mask |= uint64_t(1) << uint64_t(measured_bits[i]);
+  }
+  int count = std::bitset<64>(sample & mask).count() & 1;
+  return count ? -1 : 1;
+}
 
 }  // namespace qsim
 }  // namespace tfq
