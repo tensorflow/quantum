@@ -17,8 +17,8 @@ limitations under the License.
 #define TFQ_CORE_QSIM_UTIL_H_
 
 #include <cstddef>
-
-#include "absl/container/flat_hash_set.h"
+#include <cstdint>
+#include <vector>
 
 namespace tfq {
 namespace qsim {
@@ -31,7 +31,7 @@ void _aligned_free(void* ptr);
 
 // Given a set of qubit indices and an integer state sample, return the parity
 // of that set of indices.  Uses the little-endian convention of qsim.
-int ComputeParity(const absl::flat_hash_set<unsigned int>& parity_set,
+int ComputeParity(const std::vector<unsigned int>& measured_bits,
                   const uint64_t sample);
 
 }  // namespace qsim

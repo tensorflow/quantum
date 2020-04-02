@@ -16,9 +16,10 @@ limitations under the License.
 #include "tensorflow_quantum/core/qsim/util.h"
 
 #include <cstddef>
+#include <cstdint>
 #include <cstdlib>
-
-#include "absl/container/flat_hash_set.h"
+#include <vector>
+#include <bitset>
 
 namespace tfq {
 namespace qsim {
@@ -35,31 +36,14 @@ void* _aligned_malloc(size_t size) {
 
 void _aligned_free(void* ptr) { free(*(reinterpret_cast<void**>(ptr) - 1)); }
 
-inline int ComputeParity(const std::vector<unsigned int>& measured_bits, const uint64_t bitstring) {
+inline int ComputeParity(const std::vector<unsigned int>& measured_bits, const uint64_t sample) {
   uint64_t mask = 0;
-  for(int i = 0; i < measured_bits.size(); i++){
+  for(unsigned int i = 0; i < measured_bits.size(); i++){
     mask |= uint64_t(1) << uint64_t(measured_bits[i]);
   }
-  int count = std::bitset<64>(bitstring & mask).count() & 1;
+  int count = std::bitset<64>(sample & mask).count() & 1;
   return count ? -1 : 1;
 }
-
-// int ComputeParity(const absl::flat_hash_set<unsigned int>& parity_set,
-//                   const uint64_t sample) {
-//   uint64_t sample_copy(sample);
-//   int parity(1);
-//   unsigned int location = 0;
-//   while (sample_copy > 0) {
-//     if (sample_copy % 2 == 1) {
-//       if (parity_set.find(location) != parity_set.end()) {
-//         parity *= -1;
-//       }
-//     }
-//     location++;
-//     sample_copy /= 2;
-//   }
-//   return parity;
-// }
 
 }  // namespace qsim
 }  // namespace tfq
