@@ -151,10 +151,8 @@ void StateSpace::SampleState(const int m, std::vector<uint64_t>* samples) {
 }
 
 tensorflow::Status StateSpace::ComputeSampledExpectation(
-    const tfq::proto::PauliSum& p_sum,
-    StateSpace* scratch,
-    float* expectation_value,
-    const int m) {
+    const tfq::proto::PauliSum& p_sum, StateSpace* scratch,
+    float* expectation_value, const int m) {
   // apply the  gates of the pauliterms to a copy of the wavefunction
   // and add up expectation value term by term.
   tensorflow::Status status = tensorflow::Status::OK();
@@ -168,7 +166,8 @@ tensorflow::Status StateSpace::ComputeSampledExpectation(
 
     // Transform state into the measurement basis and sample it
     Circuit measurement_circuit;
-    status = ZBasisCircuitFromPauliTerm(term, num_qubits_, &measurement_circuit);
+    status =
+        ZBasisCircuitFromPauliTerm(term, num_qubits_, &measurement_circuit);
     if (!status.ok()) {
       return status;
     }
@@ -185,8 +184,9 @@ tensorflow::Status StateSpace::ComputeSampledExpectation(
     for (const tfq::proto::PauliQubitPair& pair : term.paulis()) {
       unsigned int location;
       if (!absl::SimpleAtoi(pair.qubit_id(), &location)) {
-        return tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
-                                  "Could not parse Pauli term qubit id: " + pair.ShortDebugString());
+        return tensorflow::Status(
+            tensorflow::error::INVALID_ARGUMENT,
+            "Could not parse Pauli term qubit id: " + pair.ShortDebugString());
       }
       parity_bits.push_back(location);
     }
@@ -196,8 +196,8 @@ tensorflow::Status StateSpace::ComputeSampledExpectation(
     for (const uint64_t& sample : state_samples) {
       parity_total += ComputeParity(parity_bits, sample);
     }
-    *expectation_value +=
-        static_cast<double>(parity_total) * term.coefficient_real() / static_cast<double>(m);
+    *expectation_value += static_cast<double>(parity_total) *
+                          term.coefficient_real() / static_cast<double>(m);
   }
   return status;
 }
