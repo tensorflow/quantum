@@ -139,3 +139,12 @@ cc_library(
         "@com_google_absl//absl/container:flat_hash_set",
     ],
 )
+
+cc_test(
+    name = "util_test",
+    srcs = ["util_test.cc"],
+    deps = [
+        ":util",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
