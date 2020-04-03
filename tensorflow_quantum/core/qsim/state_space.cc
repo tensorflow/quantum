@@ -181,7 +181,7 @@ tensorflow::Status StateSpace::ComputeSampledExpectation(
     scratch->SampleState(m, &state_samples);
 
     // Find qubits on which to measure parity
-    absl::flat_hash_set<unsigned int> parity_set;
+    std::vector<unsigned int> parity_bits;
     for (const tfq::proto::PauliQubitPair& pair : term.paulis()) {
       unsigned int location;
       if (!absl::SimpleAtoi(pair.qubit_id(), &location)) {
@@ -191,7 +191,7 @@ tensorflow::Status StateSpace::ComputeSampledExpectation(
       // Cirq order swapped relative to qsim
       // TODO(zaqqwerty): figure our a way to have all the swaps
       //                  contained in only one location
-      parity_set.insert(location);
+      parity_bits.push_back(location);
     }
 
     // Compute the expectation value over the samples
