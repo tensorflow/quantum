@@ -470,7 +470,7 @@ TEST(StateSpaceTest, ComputeSampledExpectation) {
   const uint64_t num_qubits(2);
   const uint64_t q0(0);
   const uint64_t q1(1);
-  const int m(1000000);
+  const int m(10000000);
   auto state = std::unique_ptr<StateSpace>(GetStateSpace(num_qubits, 1));
   auto scratch = std::unique_ptr<StateSpace>(GetStateSpace(num_qubits, 1));
   state->CreateState();
@@ -548,12 +548,14 @@ TEST(StateSpaceTest, ComputeSampledExpectation) {
       state->ComputeSampledExpectation(
           p_sum_xx, scratch.get(), &sampled_value_xx, m),
       tensorflow::Status::OK());
-  EXPECT_NEAR(sampled_value_zz, 1.4, 1E-2);
+  EXPECT_NEAR(sampled_value_zz, expectation_value_zz, 1E-2);
   EXPECT_NEAR(sampled_value_xx, expectation_value_xx, 1E-2);
   // |...0...1...>
   state->SetStateZero();
   expectation_value_zz = 0;
   expectation_value_xx = 0;
+  sampled_value_zz = 0;
+  sampled_value_xx = 0;
   state->SetAmpl(0, std::complex<float>(0., 0.));
   state->SetAmpl((1 << q1), std::complex<float>(1., 0.));
   ASSERT_EQ(
@@ -576,6 +578,8 @@ TEST(StateSpaceTest, ComputeSampledExpectation) {
   state->SetStateZero();
   expectation_value_zz = 0;
   expectation_value_xx = 0;
+  sampled_value_zz = 0;
+  sampled_value_xx = 0;
   state->SetAmpl(0, std::complex<float>(0., 0.));
   state->SetAmpl((1 << q0) + (1 << q1), std::complex<float>(1., 0.));
   ASSERT_EQ(
@@ -600,6 +604,8 @@ TEST(StateSpaceTest, ComputeSampledExpectation) {
   state->SetStateZero();
   expectation_value_zz = 0;
   expectation_value_xx = 0;
+  sampled_value_zz = 0;
+  sampled_value_xx = 0;
   state->SetAmpl(0, std::complex<float>(0.5, 0.));
   state->SetAmpl((1 << q0), std::complex<float>(0.5, 0.));
   state->SetAmpl((1 << q1), std::complex<float>(0.5, 0.));
@@ -624,6 +630,8 @@ TEST(StateSpaceTest, ComputeSampledExpectation) {
   state->SetStateZero();
   expectation_value_zz = 0;
   expectation_value_xx = 0;
+  sampled_value_zz = 0;
+  sampled_value_xx = 0;
   state->SetAmpl(0, std::complex<float>(0.5, 0.));
   state->SetAmpl((1 << q0), std::complex<float>(-0.5, 0.));
   state->SetAmpl((1 << q1), std::complex<float>(0.5, 0.));
@@ -648,6 +656,8 @@ TEST(StateSpaceTest, ComputeSampledExpectation) {
   state->SetStateZero();
   expectation_value_zz = 0;
   expectation_value_xx = 0;
+  sampled_value_zz = 0;
+  sampled_value_xx = 0;
   state->SetAmpl(0, std::complex<float>(0.5, 0.));
   state->SetAmpl((1 << q0), std::complex<float>(0.5, 0.));
   state->SetAmpl((1 << q1), std::complex<float>(-0.5, 0.));
@@ -672,6 +682,8 @@ TEST(StateSpaceTest, ComputeSampledExpectation) {
   state->SetStateZero();
   expectation_value_zz = 0;
   expectation_value_xx = 0;
+  sampled_value_zz = 0;
+  sampled_value_xx = 0;
   state->SetAmpl(0, std::complex<float>(0.5, 0.));
   state->SetAmpl((1 << q0), std::complex<float>(-0.5, 0.));
   state->SetAmpl((1 << q1), std::complex<float>(-0.5, 0.));
