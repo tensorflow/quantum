@@ -548,7 +548,7 @@ TEST(StateSpaceTest, ComputeSampledExpectation) {
       state->ComputeSampledExpectation(
           p_sum_xx, scratch.get(), &sampled_value_xx, m),
       tensorflow::Status::OK());
-  EXPECT_NEAR(sampled_value_zz, expectation_value_zz, 1E-2);
+  EXPECT_NEAR(sampled_value_zz, 1.4, 1E-2);
   EXPECT_NEAR(sampled_value_xx, expectation_value_xx, 1E-2);
   // |...0...1...>
   state->SetStateZero();
