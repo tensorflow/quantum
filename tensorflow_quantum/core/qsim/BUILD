@@ -135,9 +135,7 @@ cc_library(
     name = "util",
     srcs = ["util.cc"],
     hdrs = ["util.h"],
-    deps = [
-        "@com_google_absl//absl/container:flat_hash_set",
-    ],
+    deps = [],
 )
 
 cc_test(
