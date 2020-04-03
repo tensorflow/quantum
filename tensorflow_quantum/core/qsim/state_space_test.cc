@@ -470,7 +470,7 @@ TEST(StateSpaceTest, ComputeSampledExpectation) {
   const uint64_t num_qubits(2);
   const uint64_t q0(0);
   const uint64_t q1(1);
-  const int m(10000000);
+  const int m(100000);
   auto state = std::unique_ptr<StateSpace>(GetStateSpace(num_qubits, 1));
   auto scratch = std::unique_ptr<StateSpace>(GetStateSpace(num_qubits, 1));
   state->CreateState();
@@ -520,8 +520,8 @@ TEST(StateSpaceTest, ComputeSampledExpectation) {
   ASSERT_EQ(state->ComputeSampledExpectation(p_sum_xx, scratch.get(),
                                              &sampled_value_xx, m),
             tensorflow::Status::OK());
-  EXPECT_NEAR(sampled_value_zz, expectation_value_zz, 1E-2);
-  EXPECT_NEAR(sampled_value_xx, expectation_value_xx, 1E-2);
+  EXPECT_NEAR(sampled_value_zz, expectation_value_zz, 2E-2);
+  EXPECT_NEAR(sampled_value_xx, expectation_value_xx, 2E-2);
 
   // Check expectation values on bit flips
   // |...1...0...>
@@ -544,8 +544,8 @@ TEST(StateSpaceTest, ComputeSampledExpectation) {
   ASSERT_EQ(state->ComputeSampledExpectation(p_sum_xx, scratch.get(),
                                              &sampled_value_xx, m),
             tensorflow::Status::OK());
-  EXPECT_NEAR(sampled_value_zz, expectation_value_zz, 1E-2);
-  EXPECT_NEAR(sampled_value_xx, expectation_value_xx, 1E-2);
+  EXPECT_NEAR(sampled_value_zz, expectation_value_zz, 2E-2);
+  EXPECT_NEAR(sampled_value_xx, expectation_value_xx, 2E-2);
   // |...0...1...>
   state->SetStateZero();
   expectation_value_zz = 0;
@@ -566,8 +566,8 @@ TEST(StateSpaceTest, ComputeSampledExpectation) {
   ASSERT_EQ(state->ComputeSampledExpectation(p_sum_xx, scratch.get(),
                                              &sampled_value_xx, m),
             tensorflow::Status::OK());
-  EXPECT_NEAR(sampled_value_zz, expectation_value_zz, 1E-2);
-  EXPECT_NEAR(sampled_value_xx, expectation_value_xx, 1E-2);
+  EXPECT_NEAR(sampled_value_zz, expectation_value_zz, 2E-2);
+  EXPECT_NEAR(sampled_value_xx, expectation_value_xx, 2E-2);
   // |...1...1...>
   state->SetStateZero();
   expectation_value_zz = 0;
@@ -588,8 +588,8 @@ TEST(StateSpaceTest, ComputeSampledExpectation) {
   ASSERT_EQ(state->ComputeSampledExpectation(p_sum_xx, scratch.get(),
                                              &sampled_value_xx, m),
             tensorflow::Status::OK());
-  EXPECT_NEAR(sampled_value_zz, expectation_value_zz, 1E-2);
-  EXPECT_NEAR(sampled_value_xx, expectation_value_xx, 1E-2);
+  EXPECT_NEAR(sampled_value_zz, expectation_value_zz, 2E-2);
+  EXPECT_NEAR(sampled_value_xx, expectation_value_xx, 2E-2);
 
   // Check expectation values on phase flips
   // |...+...+...>
@@ -614,8 +614,8 @@ TEST(StateSpaceTest, ComputeSampledExpectation) {
   ASSERT_EQ(state->ComputeSampledExpectation(p_sum_xx, scratch.get(),
                                              &sampled_value_xx, m),
             tensorflow::Status::OK());
-  EXPECT_NEAR(sampled_value_zz, expectation_value_zz, 1E-2);
-  EXPECT_NEAR(sampled_value_xx, expectation_value_xx, 1E-2);
+  EXPECT_NEAR(sampled_value_zz, expectation_value_zz, 2E-2);
+  EXPECT_NEAR(sampled_value_xx, expectation_value_xx, 2E-2);
   // |...-...+...>
   state->SetStateZero();
   expectation_value_zz = 0;
@@ -638,8 +638,8 @@ TEST(StateSpaceTest, ComputeSampledExpectation) {
   ASSERT_EQ(state->ComputeSampledExpectation(p_sum_xx, scratch.get(),
                                              &sampled_value_xx, m),
             tensorflow::Status::OK());
-  EXPECT_NEAR(sampled_value_zz, expectation_value_zz, 1E-2);
-  EXPECT_NEAR(sampled_value_xx, expectation_value_xx, 1E-2);
+  EXPECT_NEAR(sampled_value_zz, expectation_value_zz, 2E-2);
+  EXPECT_NEAR(sampled_value_xx, expectation_value_xx, 2E-2);
   // |...+...-...>
   state->SetStateZero();
   expectation_value_zz = 0;
@@ -662,8 +662,8 @@ TEST(StateSpaceTest, ComputeSampledExpectation) {
   ASSERT_EQ(state->ComputeSampledExpectation(p_sum_xx, scratch.get(),
                                              &sampled_value_xx, m),
             tensorflow::Status::OK());
-  EXPECT_NEAR(sampled_value_zz, expectation_value_zz, 1E-2);
-  EXPECT_NEAR(sampled_value_xx, expectation_value_xx, 1E-2);
+  EXPECT_NEAR(sampled_value_zz, expectation_value_zz, 2E-2);
+  EXPECT_NEAR(sampled_value_xx, expectation_value_xx, 2E-2);
   // |...-...-...>
   state->SetStateZero();
   expectation_value_zz = 0;
@@ -686,8 +686,8 @@ TEST(StateSpaceTest, ComputeSampledExpectation) {
   ASSERT_EQ(state->ComputeSampledExpectation(p_sum_xx, scratch.get(),
                                              &sampled_value_xx, m),
             tensorflow::Status::OK());
-  EXPECT_NEAR(sampled_value_zz, expectation_value_zz, 1E-2);
-  EXPECT_NEAR(sampled_value_xx, expectation_value_xx, 1E-2);
+  EXPECT_NEAR(sampled_value_zz, expectation_value_zz, 2E-2);
+  EXPECT_NEAR(sampled_value_xx, expectation_value_xx, 2E-2);
 }
 
 }  // namespace
