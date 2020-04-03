@@ -20,8 +20,6 @@ limitations under the License.
 #include <cstddef>
 #include <vector>
 
-#include "absl/container/flat_hash_set.h"
-
 namespace tfq {
 namespace qsim {
 
