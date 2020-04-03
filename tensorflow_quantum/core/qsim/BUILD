@@ -135,3 +135,12 @@ cc_library(
     hdrs = ["util.h"],
     deps = [],
 )
+
+cc_test(
+    name = "util_test",
+    srcs = ["util_test.cc"],
+    deps = [
+        ":util",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
