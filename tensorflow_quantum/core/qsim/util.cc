@@ -18,8 +18,6 @@ limitations under the License.
 #include <cstddef>
 #include <cstdlib>
 
-#include "absl/container/flat_hash_set.h"
-
 namespace tfq {
 namespace qsim {
 
@@ -34,22 +32,6 @@ void* _aligned_malloc(size_t size) {
 }
 
 void _aligned_free(void* ptr) { free(*(reinterpret_cast<void**>(ptr) - 1)); }
-
-int ComputeParity(const absl::flat_hash_set<unsigned int>& parity_set, const uint64_t sample) {
-  uint64_t sample_copy(sample);
-  int parity(1);
-  unsigned int location = 0;
-  while (sample_copy > 0) {
-    if (sample_copy % 2 == 1) {
-      if (parity_set.find(location) != parity_set.end()) {
-        parity *= -1;
-      }
-    }
-    location++;
-    sample_copy /= 2;
-  }
-  return parity;
-}
 
 }  // namespace qsim
 }  // namespace tfq

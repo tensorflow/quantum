@@ -197,7 +197,7 @@ tensorflow::Status StateSpace::ComputeSampledExpectation(
     // Compute the expectation value over the samples
     int parity_total(0);
     for (const uint64_t& sample : state_samples) {
-      parity_total += ComputeParity(parity_set, sample);
+      parity_total += ComputeParity(parity_bits, sample);
     }
     *expectation_value +=
         static_cast<double>(parity_total) * term.coefficient_real() / static_cast<double>(m);
