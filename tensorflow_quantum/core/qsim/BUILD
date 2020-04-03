@@ -77,7 +77,6 @@ cc_library(
         "//tensorflow_quantum/core/src:circuit",
         "//tensorflow_quantum/core/src:circuit_parser",
         "//tensorflow_quantum/core/src:matrix",
-        "@com_google_absl//absl/container:flat_hash_set",
         "@local_config_tf//:libtensorflow_framework",
         "@local_config_tf//:tf_header_lib",
     ],
