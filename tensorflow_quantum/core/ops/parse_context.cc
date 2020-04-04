@@ -263,7 +263,7 @@ tensorflow::Status GetNumSamples(tensorflow::OpKernelContext* context,
     return status;
   }
 
-  if (input->dims() != 1) {
+  if (input_num_samples->dims() != 1) {
     return Status(tensorflow::error::INVALID_ARGUMENT,
                   absl::StrCat("num_samples must be rank 1. Got rank ",
                                input_num_samples->dims(), "."));
@@ -272,7 +272,7 @@ tensorflow::Status GetNumSamples(tensorflow::OpKernelContext* context,
   const auto vec_num_samples = input_num_samples->vec<uint64_t>();
   parsed_num_samples->reserve(vec_num_samples.dimension(0));
   for (int i = 0; i < vec_num_samples.dimension(0); i++) {
-    parsed_num_samples.push_back(vec_num_samples(i));
+    parsed_num_samples->push_back(vec_num_samples(i));
   }
 
   return Status::OK();
