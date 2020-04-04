@@ -54,6 +54,14 @@ class StateSpace {
   // Samples are stored as bit encoded integers.
   void SampleState(const int m, std::vector<uint64_t>* samples);
 
+  // Computes the expectation value for a given state vector and PauliSum.
+  // Uses scratch StateSpace for evolving pauli terms forward and computing
+  // expectations using m samples. Assumes that scratch has memory allocated,
+  // but does not require scratch to initialize values.
+  tensorflow::Status ComputeSampledExpectation(
+      const tfq::proto::PauliSum& p_sum, StateSpace* scratch,
+      float* expectation_value, const int m);
+
   // Returns true if memory for the state has been succesfully allocated
   bool Valid() const;
 
