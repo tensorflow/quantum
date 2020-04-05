@@ -193,8 +193,7 @@ tensorflow::Status StateSpace::ComputeSampledExpectation(
 
     // Compute the expectation value over the samples
     int parity_total(0);
-    uint64_t parity_mask;
-    parity_mask = ComputeBitmask(parity_bits);
+    uint64_t parity_mask = ComputeBitmask(parity_bits);
     for (const uint64_t& sample : state_samples) {
       parity_total += ComputeParity(parity_mask, sample);
     }
