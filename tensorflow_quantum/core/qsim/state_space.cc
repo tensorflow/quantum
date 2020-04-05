@@ -153,6 +153,9 @@ void StateSpace::SampleState(const int m, std::vector<uint64_t>* samples) {
 tensorflow::Status StateSpace::ComputeSampledExpectation(
     const tfq::proto::PauliSum& p_sum, StateSpace* scratch,
     float* expectation_value, const int m) {
+  if (m == 0) {
+    return tensorflow::Status::OK();
+  }
   // apply the  gates of the pauliterms to a copy of the wavefunction
   // and add up expectation value term by term.
   tensorflow::Status status = tensorflow::Status::OK();

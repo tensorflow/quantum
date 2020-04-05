@@ -466,10 +466,51 @@ TEST(StateSpaceTest, SampleStateComplexDist) {
   ASSERT_EQ(samples.size(), m);
 }
 
+
+TEST(StateSpaceTest, ComputeSampledExpectationFew) {
+  const uint64_t num_qubits(5);
+  const uint64_t q0(1);
+  const uint64_t q1(2);
+  auto state = std::unique_ptr<StateSpace>(GetStateSpace(num_qubits, 1));
+  auto scratch = std::unique_ptr<StateSpace>(GetStateSpace(num_qubits, 1));
+  state->CreateState();
+  scratch->CreateState();
+
+  // Initialize ZZ
+  float zz_coeff(-1.15);
+  tfq::proto::PauliSum p_sum_zz;
+  tfq::proto::PauliTerm* p_term_scratch_zz = p_sum_zz.add_terms();
+  p_term_scratch_zz->set_coefficient_real(zz_coeff);
+  tfq::proto::PauliQubitPair* pair_proto_zz = p_term_scratch_zz->add_paulis();
+  // NOTE: qubit endianess is opposite that of raw gates
+  pair_proto_zz->set_qubit_id(std::to_string(num_qubits - q0 - 1));
+  pair_proto_zz->set_pauli_type("Z");
+  pair_proto_zz = p_term_scratch_zz->add_paulis();
+  pair_proto_zz->set_qubit_id(std::to_string(num_qubits - q1 - 1));
+  pair_proto_zz->set_pauli_type("Z");
+
+  state->SetStateZero();
+  float sampled_value_zz(0);
+  int m(1);
+  ASSERT_EQ(state->ComputeSampledExpectation(p_sum_zz, scratch.get(),
+                                             &sampled_value_zz, m),
+            tensorflow::Status::OK());
+  EXPECT_NEAR(sampled_value_zz, zz_coeff, 1E-2);
+
+  // Exectation value is not updated when no samples are taken
+  state->SetStateZero();
+  sampled_value_zz = 0;
+  m = 0;
+  ASSERT_EQ(state->ComputeSampledExpectation(p_sum_zz, scratch.get(),
+                                             &sampled_value_zz, m),
+            tensorflow::Status::OK());
+  EXPECT_NEAR(sampled_value_zz, 0, 1E-2);
+}
+
 TEST(StateSpaceTest, ComputeSampledExpectation) {
-  const uint64_t num_qubits(2);
-  const uint64_t q0(0);
-  const uint64_t q1(1);
+  const uint64_t num_qubits(7);
+  const uint64_t q0(1);
+  const uint64_t q1(3);
   const int m(100000);
   auto state = std::unique_ptr<StateSpace>(GetStateSpace(num_qubits, 1));
   auto scratch = std::unique_ptr<StateSpace>(GetStateSpace(num_qubits, 1));
