@@ -20,7 +20,7 @@ limitations under the License.
 #include <memory>
 
 #include "tensorflow/core/lib/core/status.h"
-#include "tensorflow_quantum/core/src/matrix.h"
+#include "tensorflow_quantum/core/qsim/matrix.h"
 
 namespace tfq {
 namespace qsim {
