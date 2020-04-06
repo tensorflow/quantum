@@ -47,9 +47,7 @@ cc_test(
 cc_library(
     name = "matrix",
     hdrs = ["matrix.h"],
-    deps = [
-        "//tensorflow_quantum/core/src:gates_def",
-    ],
+    deps = [],
 )
 
 cc_test(
@@ -58,7 +56,6 @@ cc_test(
     srcs = ["matrix_test.cc"],
     deps = [
         ":matrix",
-        "//tensorflow_quantum/core/src:gates_def",
         "@com_google_googletest//:gtest_main",
     ],
 )

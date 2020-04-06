@@ -19,8 +19,6 @@ limitations under the License.
 #include <iostream>
 #include <vector>
 
-#include "tensorflow_quantum/core/src/gates_def.h"
-
 namespace tfq {
 
 // Routines for 2x2 complex matrices.
