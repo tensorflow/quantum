@@ -132,7 +132,7 @@ TEST(MatrixTest, Matrix4Set) {
   }
 }
 
-TEST(MatrixTest, Matrix4Multiply21) {
+TEST(MatrixTest, Matrix4Multiply20) {
   std::array<float, 8> a;
   std::array<float, 32> b;
   std::generate(begin(a), end(a), RandomFloat);
@@ -159,7 +159,7 @@ TEST(MatrixTest, Matrix4Multiply21) {
     }
   }
 
-  Matrix4Multiply21(a, b);
+  Matrix4Multiply20(a, b);
   for (int i = 0; i < 4; i++) {
     for (int j = 0; j < 4; j++) {
       EXPECT_NEAR(real(f[i][j]), b[8 * i + 2 * j], 1E-6);
@@ -168,7 +168,7 @@ TEST(MatrixTest, Matrix4Multiply21) {
   }
 }
 
-TEST(MatrixTest, Matrix4Multiply20) {
+TEST(MatrixTest, Matrix4Multiply21) {
   std::array<float, 8> a;
   std::array<float, 32> b;
   std::generate(begin(a), end(a), RandomFloat);
@@ -195,7 +195,7 @@ TEST(MatrixTest, Matrix4Multiply20) {
     }
   }
 
-  Matrix4Multiply20(a, b);
+  Matrix4Multiply21(a, b);
   for (int i = 0; i < 4; i++) {
     for (int j = 0; j < 4; j++) {
       EXPECT_NEAR(real(f[i][j]), b[8 * i + 2 * j], 1E-6);

@@ -89,7 +89,6 @@ class StateSpace {
   virtual void CopyFrom(const StateSpace& other) const = 0;
 
   // Function to apply a two qubit gate to the state on indices q0 and q1.
-  // Assumes little-endian qubit labeling.
   virtual void ApplyGate2(const unsigned int q0, const unsigned int q1,
                           const float* matrix) = 0;
 

@@ -60,10 +60,8 @@ tensorflow::Status StateSpace::Update(const Circuit& circuit) {
 
   for (const GateFused& gate : fused_gates) {
     float matrix[32];
-    // Qsim uses little-endian qubit addressing
     CalcMatrix4(gate.qubits[0], gate.qubits[1], gate.gates, matrix);
-    ApplyGate2(num_qubits_ - gate.qubits[0] - 1,
-               num_qubits_ - gate.qubits[1] - 1, matrix);
+    ApplyGate2(gate.qubits[0], gate.qubits[1], matrix);
   }
 
   return tensorflow::Status::OK();
