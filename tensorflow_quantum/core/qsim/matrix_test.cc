@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#include "tensorflow_quantum/core/src/matrix.h"
+#include "tensorflow_quantum/core/qsim/matrix.h"
 
 #include <stdlib.h>
 
@@ -239,10 +239,10 @@ TEST(MatrixTest, Calc4Matrix) {
   // q0 -- X --   -- |CNOT|
   // q1 --   -- Z -- |CNOT|
   // Associated matrix:
-  // | 0  1  0  0 |
-  // | 1  0  0  0 |
-  // | 0  0 -1  0 |
+  // | 0  0  1  0 |
   // | 0  0  0 -1 |
+  // | 0 -1  0  0 |
+  // | 1  0  0  0 |
   const Matrix1q x_mat{0, 0, 1, 0, 1, 0, 0, 0};
   const Matrix1q z_mat{1, 0, 0, 0, 0, 0, -1, 0};
   // clang-format off
@@ -250,10 +250,10 @@ TEST(MatrixTest, Calc4Matrix) {
                           0, 0, 1, 0, 0, 0, 0, 0,
                           0, 0, 0, 0, 0, 0, 1, 0,
                           0, 0, 0, 0, 1, 0, 0, 0};
-  const Matrix2q expected_mat{0, 0, 1, 0, 0, 0, 0, 0,
-                              1, 0, 0, 0, 0, 0, 0, 0,
-                              0, 0, 0, 0, -1, 0, 0, 0,
-                              0, 0, 0, 0, 0, 0, -1, 0};
+  const Matrix2q expected_mat{0, 0, 0, 0, 1, 0, 0, 0,
+                              0, 0, 0, 0, 0, 0, -1, 0,
+                              0, 0, -1, 0, 0, 0, 0, 0,
+                              1, 0, 0, 0, 0, 0, 0, 0};
   // clang-format on
   Gate x_gate(0, 0, x_mat);
   Gate z_gate(1, 1, z_mat);
