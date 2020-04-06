@@ -302,7 +302,8 @@ TEST(StateSpaceTest, ComputeExpectation) {
   expectation_value_zz = 0;
   expectation_value_xx = 0;
   state->SetAmpl(0, std::complex<float>(0., 0.));
-  state->SetAmpl((1 << (num_qubits - q0 - 1)) + (1 << (num_qubits - q1 - 1)), std::complex<float>(1., 0.));
+  state->SetAmpl((1 << (num_qubits - q0 - 1)) + (1 << (num_qubits - q1 - 1)),
+                 std::complex<float>(1., 0.));
   ASSERT_EQ(
       state->ComputeExpectation(p_sum_zz, scratch.get(), &expectation_value_zz),
       tensorflow::Status::OK());
@@ -320,7 +321,8 @@ TEST(StateSpaceTest, ComputeExpectation) {
   state->SetAmpl(0, std::complex<float>(0.5, 0.));
   state->SetAmpl(1 << (num_qubits - q0 - 1), std::complex<float>(0.5, 0.));
   state->SetAmpl(1 << (num_qubits - q1 - 1), std::complex<float>(0.5, 0.));
-  state->SetAmpl((1 << (num_qubits - q0 - 1)) + (1 << (num_qubits - q1 - 1)), std::complex<float>(0.5, 0.));
+  state->SetAmpl((1 << (num_qubits - q0 - 1)) + (1 << (num_qubits - q1 - 1)),
+                 std::complex<float>(0.5, 0.));
   ASSERT_EQ(
       state->ComputeExpectation(p_sum_zz, scratch.get(), &expectation_value_zz),
       tensorflow::Status::OK());
@@ -336,7 +338,8 @@ TEST(StateSpaceTest, ComputeExpectation) {
   state->SetAmpl(0, std::complex<float>(0.5, 0.));
   state->SetAmpl(1 << (num_qubits - q0 - 1), std::complex<float>(-0.5, 0.));
   state->SetAmpl(1 << (num_qubits - q1 - 1), std::complex<float>(0.5, 0.));
-  state->SetAmpl((1 << (num_qubits - q0 - 1)) + (1 << (num_qubits - q1 - 1)), std::complex<float>(-0.5, 0.));
+  state->SetAmpl((1 << (num_qubits - q0 - 1)) + (1 << (num_qubits - q1 - 1)),
+                 std::complex<float>(-0.5, 0.));
   ASSERT_EQ(
       state->ComputeExpectation(p_sum_zz, scratch.get(), &expectation_value_zz),
       tensorflow::Status::OK());
@@ -352,7 +355,8 @@ TEST(StateSpaceTest, ComputeExpectation) {
   state->SetAmpl(0, std::complex<float>(0.5, 0.));
   state->SetAmpl(1 << (num_qubits - q0 - 1), std::complex<float>(0.5, 0.));
   state->SetAmpl(1 << (num_qubits - q1 - 1), std::complex<float>(-0.5, 0.));
-  state->SetAmpl((1 << (num_qubits - q0 - 1)) + (1 << (num_qubits - q1 - 1)), std::complex<float>(-0.5, 0.));
+  state->SetAmpl((1 << (num_qubits - q0 - 1)) + (1 << (num_qubits - q1 - 1)),
+                 std::complex<float>(-0.5, 0.));
   ASSERT_EQ(
       state->ComputeExpectation(p_sum_zz, scratch.get(), &expectation_value_zz),
       tensorflow::Status::OK());
@@ -368,7 +372,8 @@ TEST(StateSpaceTest, ComputeExpectation) {
   state->SetAmpl(0, std::complex<float>(0.5, 0.));
   state->SetAmpl(1 << (num_qubits - q0 - 1), std::complex<float>(-0.5, 0.));
   state->SetAmpl(1 << (num_qubits - q1 - 1), std::complex<float>(-0.5, 0.));
-  state->SetAmpl((1 << (num_qubits - q0 - 1)) + (1 << (num_qubits - q1 - 1)), std::complex<float>(0.5, 0.));
+  state->SetAmpl((1 << (num_qubits - q0 - 1)) + (1 << (num_qubits - q1 - 1)),
+                 std::complex<float>(0.5, 0.));
   ASSERT_EQ(
       state->ComputeExpectation(p_sum_zz, scratch.get(), &expectation_value_zz),
       tensorflow::Status::OK());

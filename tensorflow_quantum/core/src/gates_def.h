@@ -33,7 +33,7 @@ limitations under the License.
 
 namespace tfq {
 
- // Permute 4x4 matrix to switch between two qubits.
+// Permute 4x4 matrix to switch between two qubits.
 template <typename Array2>
 static void SwapQubits(Array2& mat) {
   std::swap(mat[2], mat[4]);
