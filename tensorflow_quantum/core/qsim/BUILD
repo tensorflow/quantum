@@ -56,6 +56,7 @@ cc_test(
     srcs = ["matrix_test.cc"],
     deps = [
         ":matrix",
+	"//tensorflow_quantum/core/src:gates_def",
         "@com_google_googletest//:gtest_main",
     ],
 )
