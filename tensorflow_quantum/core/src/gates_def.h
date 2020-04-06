@@ -49,7 +49,7 @@ static void SwapQubits(Array2& mat) {
   std::swap(mat[26], mat[28]);
   std::swap(mat[27], mat[29]);
 }
- 
+
 class Gate {
  public:
   unsigned int time;
