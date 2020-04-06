@@ -73,15 +73,17 @@ void StateSpaceSSE::CopyFrom(const StateSpace& other) const {
   }
 }
 
-void StateSpaceSSE::ApplyGate2(const unsigned int q0, const unsigned int q1,
+void StateSpaceSSE::ApplyGate2(const unsigned int q0_be, const unsigned int q1_be,
                                const float* m) {
   // Assume q0 < q1.
-  if (q0 > 2) {
-    ApplyGate2HH(q0, q1, m);
-  } else if (q1 > 2) {
-    ApplyGate2HL(q0, q1, m);
+  const unsigned int q0_le = GetNumQubits() - q1_be - 1;
+  const unsigned int q1_le = GetNumQubits() - q0_be - 1;
+  if (q0_le > 2) {
+    ApplyGate2HH(q0_le, q1_le, m);
+  } else if (q1_le > 2) {
+    ApplyGate2HL(q0_le, q1_le, m);
   } else {
-    ApplyGate2LL(q0, q1, m);
+    ApplyGate2LL(q0_le, q1_le, m);
   }
 }
 
