@@ -191,7 +191,8 @@ tensorflow::Status StateSpace::ComputeSampledExpectation(
             tensorflow::error::INVALID_ARGUMENT,
             "Could not parse Pauli term qubit id: " + pair.ShortDebugString());
       }
-      parity_bits.push_back(location);
+      // Parity functions use little-endian indexing
+      parity_bits.push_back(num_qubits_ - location - 1);
     }
 
     // Compute the expectation value over the samples
