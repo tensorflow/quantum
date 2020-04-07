@@ -97,6 +97,7 @@ class StateSpace {
   virtual void CopyFrom(const StateSpace& other) const = 0;
 
   // Function to apply a two qubit gate to the state on indices q0 and q1.
+  // Must adhere to big-endian convention of Cirq.
   virtual void ApplyGate2(const unsigned int q0, const unsigned int q1,
                           const float* matrix) = 0;
 
@@ -110,7 +111,7 @@ class StateSpace {
   // Get the inner product between this state and the state in `other`
   virtual float GetRealInnerProduct(const StateSpace& other) const = 0;
 
-  // Get the amplitude at the given state index
+  // Get the amplitude at the given state index.
   virtual std::complex<float> GetAmpl(const uint64_t i) const = 0;
 
   // Set the amplitude at the given state index
