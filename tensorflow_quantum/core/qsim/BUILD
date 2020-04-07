@@ -90,6 +90,7 @@ cc_library(
     deps = [
         ":fuser_basic",
         ":matrix",
+        ":util",
         "//tensorflow_quantum/core/proto:pauli_sum_cc_proto",
         "//tensorflow_quantum/core/src:circuit",
         "//tensorflow_quantum/core/src:circuit_parser",
