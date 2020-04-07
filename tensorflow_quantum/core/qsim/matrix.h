@@ -210,6 +210,23 @@ inline void CalcMatrix4(unsigned q0, unsigned q1,
   }
 }
 
+// Permute 4x4 matrix to switch between two qubits.
+template <typename Array2>
+static void Matrix4Permute(Array2& mat) {
+  std::swap(mat[2], mat[4]);
+  std::swap(mat[3], mat[5]);
+  std::swap(mat[8], mat[16]);
+  std::swap(mat[9], mat[17]);
+  std::swap(mat[10], mat[20]);
+  std::swap(mat[11], mat[21]);
+  std::swap(mat[12], mat[18]);
+  std::swap(mat[13], mat[19]);
+  std::swap(mat[14], mat[22]);
+  std::swap(mat[15], mat[23]);
+  std::swap(mat[26], mat[28]);
+  std::swap(mat[27], mat[29]);
+}
+
 }  // namespace tfq
 
 #endif  // TFQ_CORE_QSIM_MATRIX_H_

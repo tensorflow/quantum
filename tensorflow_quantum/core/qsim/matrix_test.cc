@@ -271,5 +271,29 @@ TEST(MatrixTest, Calc4Matrix) {
   }
 }
 
+TEST(MatrixTest, Matrix4Permute) {
+  // Conjugation by swap gate:
+  //  | 0  1  2  3  |      | 0  2  1  3  |
+  //  | 4  5  6  7  |      | 8  10 9  11 |
+  //  | 8  9  10 11 | ---> | 4  6  5  7  |
+  //  | 12 13 14 15 |      | 12 14 13 15 |
+  // clang-format off
+  std::array<float, 32> matrix{
+    0,  0.5, 1, 1.5, 2, 2.5, 3, 3.5,
+    4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5,
+    8, 8.5, 9, 9.5, 10, 10.5, 11, 11.5,
+    12, 12.5, 13, 13.5, 14, 14.5, 15, 15.5};
+  const std::array<float, 32> matrix_swapped{
+    0,  0.5, 2, 2.5, 1, 1.5, 3, 3.5,
+    8, 8.5, 10, 10.5, 9, 9.5, 11, 11.5,
+    4, 4.5, 6, 6.5, 5, 5.5, 7, 7.5,
+    12, 12.5, 14, 14.5, 13, 13.5, 15, 15.5};
+  // clang-format on
+  Matrix4Permute(matrix);
+  for (int i = 0; i < 32; i++) {
+    EXPECT_EQ(matrix[i], matrix_swapped[i]);
+  }
+}
+
 }  // namespace
 }  // namespace tfq
