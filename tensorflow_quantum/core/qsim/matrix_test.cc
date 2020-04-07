@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#include "tensorflow_quantum/core/src/matrix.h"
+#include "tensorflow_quantum/core/qsim/matrix.h"
 
 #include <stdlib.h>
 
@@ -132,7 +132,7 @@ TEST(MatrixTest, Matrix4Set) {
   }
 }
 
-TEST(MatrixTest, Matrix4Multiply21) {
+TEST(MatrixTest, Matrix4Multiply20) {
   std::array<float, 8> a;
   std::array<float, 32> b;
   std::generate(begin(a), end(a), RandomFloat);
@@ -159,7 +159,7 @@ TEST(MatrixTest, Matrix4Multiply21) {
     }
   }
 
-  Matrix4Multiply21(a, b);
+  Matrix4Multiply20(a, b);
   for (int i = 0; i < 4; i++) {
     for (int j = 0; j < 4; j++) {
       EXPECT_NEAR(real(f[i][j]), b[8 * i + 2 * j], 1E-6);
@@ -168,7 +168,7 @@ TEST(MatrixTest, Matrix4Multiply21) {
   }
 }
 
-TEST(MatrixTest, Matrix4Multiply20) {
+TEST(MatrixTest, Matrix4Multiply21) {
   std::array<float, 8> a;
   std::array<float, 32> b;
   std::generate(begin(a), end(a), RandomFloat);
@@ -195,7 +195,7 @@ TEST(MatrixTest, Matrix4Multiply20) {
     }
   }
 
-  Matrix4Multiply20(a, b);
+  Matrix4Multiply21(a, b);
   for (int i = 0; i < 4; i++) {
     for (int j = 0; j < 4; j++) {
       EXPECT_NEAR(real(f[i][j]), b[8 * i + 2 * j], 1E-6);
@@ -239,10 +239,10 @@ TEST(MatrixTest, Calc4Matrix) {
   // q0 -- X --   -- |CNOT|
   // q1 --   -- Z -- |CNOT|
   // Associated matrix:
-  // | 0  1  0  0 |
-  // | 1  0  0  0 |
-  // | 0  0 -1  0 |
+  // | 0  0  1  0 |
   // | 0  0  0 -1 |
+  // | 0 -1  0  0 |
+  // | 1  0  0  0 |
   const Matrix1q x_mat{0, 0, 1, 0, 1, 0, 0, 0};
   const Matrix1q z_mat{1, 0, 0, 0, 0, 0, -1, 0};
   // clang-format off
@@ -250,10 +250,10 @@ TEST(MatrixTest, Calc4Matrix) {
                           0, 0, 1, 0, 0, 0, 0, 0,
                           0, 0, 0, 0, 0, 0, 1, 0,
                           0, 0, 0, 0, 1, 0, 0, 0};
-  const Matrix2q expected_mat{0, 0, 1, 0, 0, 0, 0, 0,
-                              1, 0, 0, 0, 0, 0, 0, 0,
-                              0, 0, 0, 0, -1, 0, 0, 0,
-                              0, 0, 0, 0, 0, 0, -1, 0};
+  const Matrix2q expected_mat{0, 0, 0, 0, 1, 0, 0, 0,
+                              0, 0, 0, 0, 0, 0, -1, 0,
+                              0, 0, -1, 0, 0, 0, 0, 0,
+                              1, 0, 0, 0, 0, 0, 0, 0};
   // clang-format on
   Gate x_gate(0, 0, x_mat);
   Gate z_gate(1, 1, z_mat);

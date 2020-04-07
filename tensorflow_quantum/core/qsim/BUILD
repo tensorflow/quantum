@@ -45,6 +45,23 @@ cc_test(
 )
 
 cc_library(
+    name = "matrix",
+    hdrs = ["matrix.h"],
+    deps = [],
+)
+
+cc_test(
+    name = "matrix_test",
+    size = "small",
+    srcs = ["matrix_test.cc"],
+    deps = [
+        ":matrix",
+	"//tensorflow_quantum/core/src:gates_def",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "mux",
     srcs = ["mux.cc"],
     hdrs = ["mux.h"],
@@ -72,11 +89,11 @@ cc_library(
     hdrs = ["state_space.h"],
     deps = [
         ":fuser_basic",
+        ":matrix",
         ":util",
         "//tensorflow_quantum/core/proto:pauli_sum_cc_proto",
         "//tensorflow_quantum/core/src:circuit",
         "//tensorflow_quantum/core/src:circuit_parser",
-        "//tensorflow_quantum/core/src:matrix",
         "@local_config_tf//:libtensorflow_framework",
         "@local_config_tf//:tf_header_lib",
     ],
@@ -99,8 +116,8 @@ cc_library(
     srcs = ["state_space_slow.cc"],
     hdrs = ["state_space_slow.h"],
     deps = [
+        ":matrix",
         ":state_space",
-        "//tensorflow_quantum/core/src:matrix",
         "@local_config_tf//:libtensorflow_framework",
         "@local_config_tf//:tf_header_lib",
     ],

@@ -162,12 +162,15 @@ TEST(StateSpaceTest, ApplyGate2) {
                                0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0,
                                0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0};
   state->SetStateZero();
+  // Apply H_0I_3, taking |000000> to (1/sqrt(2))|000000> + (1/sqrt(2))|100000>
   state->ApplyGate2(0, 3, matrix_hi);
   ASSERT_EQ(state->GetAmpl(0), std::complex<float>(1 / std::sqrt(2), 0.0));
-  ASSERT_EQ(state->GetAmpl(8), std::complex<float>(1 / std::sqrt(2), 0.0));
+  ASSERT_EQ(state->GetAmpl(32), std::complex<float>(1 / std::sqrt(2), 0.0));
+  // Apply CNOT_03, taking (1/sqrt(2))|000000> + (1/sqrt(2))|100000>
+  // to (1/sqrt(2))|000000> + (1/sqrt(2))|100100>
   state->ApplyGate2(0, 3, matrix_cnot);
   ASSERT_EQ(state->GetAmpl(0), std::complex<float>(1 / std::sqrt(2), 0.0));
-  ASSERT_EQ(state->GetAmpl(9), std::complex<float>(1 / std::sqrt(2), 0.0));
+  ASSERT_EQ(state->GetAmpl(36), std::complex<float>(1 / std::sqrt(2), 0.0));
 }
 
 TEST(StateSpaceTest, Update) {
@@ -189,8 +192,8 @@ TEST(StateSpaceTest, Update) {
 
   // TODO(zaqqwerty): Remove identity gates once fuser is updated (#171)
   const uint64_t num_qubits(7);
-  const uint64_t q0(2);
-  const uint64_t q1(5);
+  const uint64_t q0(0);
+  const uint64_t q1(1);
   Gate gate_0(0, q0, matrix_h);
   Gate gate_1(1, q1, matrix_h);
   const std::array<float, 32> matrix_i = {
@@ -208,7 +211,9 @@ TEST(StateSpaceTest, Update) {
   state->SetStateZero();
   ASSERT_EQ(state->Update(circuit), tensorflow::Status::OK());
   for (uint64_t i = 0; i < state_small->GetDimension(); i++) {
-    if (i == 0 || i == 1 << q0 || i == 1 << q1 || i == (1 << q0) + (1 << q1)) {
+    if (i == 0 || i == 1 << (num_qubits - q0 - 1) ||
+        i == 1 << (num_qubits - q1 - 1) ||
+        i == (1 << (num_qubits - q0 - 1)) + (1 << (num_qubits - q1 - 1))) {
       EXPECT_NEAR(state->GetAmpl(i).real(), 0.5, 1E-5);
       EXPECT_NEAR(state->GetAmpl(i).imag(), 0.0, 1E-5);
     } else {
@@ -236,20 +241,20 @@ TEST(StateSpaceTest, ComputeExpectation) {
   p_term_scratch_zz->set_coefficient_real(zz_coeff);
   tfq::proto::PauliQubitPair* pair_proto_zz = p_term_scratch_zz->add_paulis();
   // NOTE: qubit endianess is opposite that of raw gates
-  pair_proto_zz->set_qubit_id(std::to_string(num_qubits - q0 - 1));
+  pair_proto_zz->set_qubit_id(std::to_string(q0));
   pair_proto_zz->set_pauli_type("Z");
   pair_proto_zz = p_term_scratch_zz->add_paulis();
-  pair_proto_zz->set_qubit_id(std::to_string(num_qubits - q1 - 1));
+  pair_proto_zz->set_qubit_id(std::to_string(q1));
   pair_proto_zz->set_pauli_type("Z");
 
   // Initialize XX
   tfq::proto::PauliTerm* p_term_scratch_xx = p_sum_xx.add_terms();
   p_term_scratch_xx->set_coefficient_real(xx_coeff);
   tfq::proto::PauliQubitPair* pair_proto_xx = p_term_scratch_xx->add_paulis();
-  pair_proto_xx->set_qubit_id(std::to_string(num_qubits - q0 - 1));
+  pair_proto_xx->set_qubit_id(std::to_string(q0));
   pair_proto_xx->set_pauli_type("X");
   pair_proto_xx = p_term_scratch_xx->add_paulis();
-  pair_proto_xx->set_qubit_id(std::to_string(num_qubits - q1 - 1));
+  pair_proto_xx->set_qubit_id(std::to_string(q1));
   pair_proto_xx->set_pauli_type("X");
 
   // Check expectation values on vacuum
@@ -271,7 +276,7 @@ TEST(StateSpaceTest, ComputeExpectation) {
   expectation_value_zz = 0;
   expectation_value_xx = 0;
   state->SetAmpl(0, std::complex<float>(0., 0.));
-  state->SetAmpl((1 << q0), std::complex<float>(1., 0.));
+  state->SetAmpl(1 << (num_qubits - q0 - 1), std::complex<float>(1., 0.));
   ASSERT_EQ(
       state->ComputeExpectation(p_sum_zz, scratch.get(), &expectation_value_zz),
       tensorflow::Status::OK());
@@ -285,7 +290,7 @@ TEST(StateSpaceTest, ComputeExpectation) {
   expectation_value_zz = 0;
   expectation_value_xx = 0;
   state->SetAmpl(0, std::complex<float>(0., 0.));
-  state->SetAmpl((1 << q1), std::complex<float>(1., 0.));
+  state->SetAmpl(1 << (num_qubits - q1 - 1), std::complex<float>(1., 0.));
   ASSERT_EQ(
       state->ComputeExpectation(p_sum_zz, scratch.get(), &expectation_value_zz),
       tensorflow::Status::OK());
@@ -299,7 +304,8 @@ TEST(StateSpaceTest, ComputeExpectation) {
   expectation_value_zz = 0;
   expectation_value_xx = 0;
   state->SetAmpl(0, std::complex<float>(0., 0.));
-  state->SetAmpl((1 << q0) + (1 << q1), std::complex<float>(1., 0.));
+  state->SetAmpl((1 << (num_qubits - q0 - 1)) + (1 << (num_qubits - q1 - 1)),
+                 std::complex<float>(1., 0.));
   ASSERT_EQ(
       state->ComputeExpectation(p_sum_zz, scratch.get(), &expectation_value_zz),
       tensorflow::Status::OK());
@@ -315,9 +321,10 @@ TEST(StateSpaceTest, ComputeExpectation) {
   expectation_value_zz = 0;
   expectation_value_xx = 0;
   state->SetAmpl(0, std::complex<float>(0.5, 0.));
-  state->SetAmpl((1 << q0), std::complex<float>(0.5, 0.));
-  state->SetAmpl((1 << q1), std::complex<float>(0.5, 0.));
-  state->SetAmpl((1 << q0) + (1 << q1), std::complex<float>(0.5, 0.));
+  state->SetAmpl(1 << (num_qubits - q0 - 1), std::complex<float>(0.5, 0.));
+  state->SetAmpl(1 << (num_qubits - q1 - 1), std::complex<float>(0.5, 0.));
+  state->SetAmpl((1 << (num_qubits - q0 - 1)) + (1 << (num_qubits - q1 - 1)),
+                 std::complex<float>(0.5, 0.));
   ASSERT_EQ(
       state->ComputeExpectation(p_sum_zz, scratch.get(), &expectation_value_zz),
       tensorflow::Status::OK());
@@ -331,9 +338,10 @@ TEST(StateSpaceTest, ComputeExpectation) {
   expectation_value_zz = 0;
   expectation_value_xx = 0;
   state->SetAmpl(0, std::complex<float>(0.5, 0.));
-  state->SetAmpl((1 << q0), std::complex<float>(-0.5, 0.));
-  state->SetAmpl((1 << q1), std::complex<float>(0.5, 0.));
-  state->SetAmpl((1 << q0) + (1 << q1), std::complex<float>(-0.5, 0.));
+  state->SetAmpl(1 << (num_qubits - q0 - 1), std::complex<float>(-0.5, 0.));
+  state->SetAmpl(1 << (num_qubits - q1 - 1), std::complex<float>(0.5, 0.));
+  state->SetAmpl((1 << (num_qubits - q0 - 1)) + (1 << (num_qubits - q1 - 1)),
+                 std::complex<float>(-0.5, 0.));
   ASSERT_EQ(
       state->ComputeExpectation(p_sum_zz, scratch.get(), &expectation_value_zz),
       tensorflow::Status::OK());
@@ -347,9 +355,10 @@ TEST(StateSpaceTest, ComputeExpectation) {
   expectation_value_zz = 0;
   expectation_value_xx = 0;
   state->SetAmpl(0, std::complex<float>(0.5, 0.));
-  state->SetAmpl((1 << q0), std::complex<float>(0.5, 0.));
-  state->SetAmpl((1 << q1), std::complex<float>(-0.5, 0.));
-  state->SetAmpl((1 << q0) + (1 << q1), std::complex<float>(-0.5, 0.));
+  state->SetAmpl(1 << (num_qubits - q0 - 1), std::complex<float>(0.5, 0.));
+  state->SetAmpl(1 << (num_qubits - q1 - 1), std::complex<float>(-0.5, 0.));
+  state->SetAmpl((1 << (num_qubits - q0 - 1)) + (1 << (num_qubits - q1 - 1)),
+                 std::complex<float>(-0.5, 0.));
   ASSERT_EQ(
       state->ComputeExpectation(p_sum_zz, scratch.get(), &expectation_value_zz),
       tensorflow::Status::OK());
@@ -363,9 +372,10 @@ TEST(StateSpaceTest, ComputeExpectation) {
   expectation_value_zz = 0;
   expectation_value_xx = 0;
   state->SetAmpl(0, std::complex<float>(0.5, 0.));
-  state->SetAmpl((1 << q0), std::complex<float>(-0.5, 0.));
-  state->SetAmpl((1 << q1), std::complex<float>(-0.5, 0.));
-  state->SetAmpl((1 << q0) + (1 << q1), std::complex<float>(0.5, 0.));
+  state->SetAmpl(1 << (num_qubits - q0 - 1), std::complex<float>(-0.5, 0.));
+  state->SetAmpl(1 << (num_qubits - q1 - 1), std::complex<float>(-0.5, 0.));
+  state->SetAmpl((1 << (num_qubits - q0 - 1)) + (1 << (num_qubits - q1 - 1)),
+                 std::complex<float>(0.5, 0.));
   ASSERT_EQ(
       state->ComputeExpectation(p_sum_zz, scratch.get(), &expectation_value_zz),
       tensorflow::Status::OK());
@@ -466,10 +476,50 @@ TEST(StateSpaceTest, SampleStateComplexDist) {
   ASSERT_EQ(samples.size(), m);
 }
 
+TEST(StateSpaceTest, ComputeSampledExpectationFew) {
+  const uint64_t num_qubits(5);
+  const uint64_t q0(1);
+  const uint64_t q1(2);
+  auto state = std::unique_ptr<StateSpace>(GetStateSpace(num_qubits, 1));
+  auto scratch = std::unique_ptr<StateSpace>(GetStateSpace(num_qubits, 1));
+  state->CreateState();
+  scratch->CreateState();
+
+  // Initialize ZZ
+  float zz_coeff(-1.15);
+  tfq::proto::PauliSum p_sum_zz;
+  tfq::proto::PauliTerm* p_term_scratch_zz = p_sum_zz.add_terms();
+  p_term_scratch_zz->set_coefficient_real(zz_coeff);
+  tfq::proto::PauliQubitPair* pair_proto_zz = p_term_scratch_zz->add_paulis();
+  // NOTE: qubit endianess is opposite that of raw gates
+  pair_proto_zz->set_qubit_id(std::to_string(q0));
+  pair_proto_zz->set_pauli_type("Z");
+  pair_proto_zz = p_term_scratch_zz->add_paulis();
+  pair_proto_zz->set_qubit_id(std::to_string(q1));
+  pair_proto_zz->set_pauli_type("Z");
+
+  state->SetStateZero();
+  float sampled_value_zz(0);
+  int m(1);
+  ASSERT_EQ(state->ComputeSampledExpectation(p_sum_zz, scratch.get(),
+                                             &sampled_value_zz, m),
+            tensorflow::Status::OK());
+  EXPECT_NEAR(sampled_value_zz, zz_coeff, 1E-2);
+
+  // Exectation value is not updated when no samples are taken
+  state->SetStateZero();
+  sampled_value_zz = 0;
+  m = 0;
+  ASSERT_EQ(state->ComputeSampledExpectation(p_sum_zz, scratch.get(),
+                                             &sampled_value_zz, m),
+            tensorflow::Status::OK());
+  EXPECT_NEAR(sampled_value_zz, 0, 1E-2);
+}
+
 TEST(StateSpaceTest, ComputeSampledExpectation) {
-  const uint64_t num_qubits(2);
-  const uint64_t q0(0);
-  const uint64_t q1(1);
+  const uint64_t num_qubits(7);
+  const uint64_t q0(1);
+  const uint64_t q1(3);
   const int m(100000);
   auto state = std::unique_ptr<StateSpace>(GetStateSpace(num_qubits, 1));
   auto scratch = std::unique_ptr<StateSpace>(GetStateSpace(num_qubits, 1));
@@ -485,10 +535,10 @@ TEST(StateSpaceTest, ComputeSampledExpectation) {
   p_term_scratch_zz->set_coefficient_real(zz_coeff);
   tfq::proto::PauliQubitPair* pair_proto_zz = p_term_scratch_zz->add_paulis();
   // NOTE: qubit endianess is opposite that of raw gates
-  pair_proto_zz->set_qubit_id(std::to_string(num_qubits - q0 - 1));
+  pair_proto_zz->set_qubit_id(std::to_string(q0));
   pair_proto_zz->set_pauli_type("Z");
   pair_proto_zz = p_term_scratch_zz->add_paulis();
-  pair_proto_zz->set_qubit_id(std::to_string(num_qubits - q1 - 1));
+  pair_proto_zz->set_qubit_id(std::to_string(q1));
   pair_proto_zz->set_pauli_type("Z");
 
   // Initialize XX
@@ -520,8 +570,8 @@ TEST(StateSpaceTest, ComputeSampledExpectation) {
   ASSERT_EQ(state->ComputeSampledExpectation(p_sum_xx, scratch.get(),
                                              &sampled_value_xx, m),
             tensorflow::Status::OK());
-  EXPECT_NEAR(sampled_value_zz, expectation_value_zz, 2E-2);
-  EXPECT_NEAR(sampled_value_xx, expectation_value_xx, 2E-2);
+  EXPECT_NEAR(sampled_value_zz, expectation_value_zz, 4E-2);
+  EXPECT_NEAR(sampled_value_xx, expectation_value_xx, 4E-2);
 
   // Check expectation values on bit flips
   // |...1...0...>
@@ -531,7 +581,7 @@ TEST(StateSpaceTest, ComputeSampledExpectation) {
   sampled_value_zz = 0;
   sampled_value_xx = 0;
   state->SetAmpl(0, std::complex<float>(0., 0.));
-  state->SetAmpl((1 << q0), std::complex<float>(1., 0.));
+  state->SetAmpl((1 << (num_qubits - q0 - 1)), std::complex<float>(1., 0.));
   ASSERT_EQ(
       state->ComputeExpectation(p_sum_zz, scratch.get(), &expectation_value_zz),
       tensorflow::Status::OK());
@@ -544,8 +594,8 @@ TEST(StateSpaceTest, ComputeSampledExpectation) {
   ASSERT_EQ(state->ComputeSampledExpectation(p_sum_xx, scratch.get(),
                                              &sampled_value_xx, m),
             tensorflow::Status::OK());
-  EXPECT_NEAR(sampled_value_zz, expectation_value_zz, 2E-2);
-  EXPECT_NEAR(sampled_value_xx, expectation_value_xx, 2E-2);
+  EXPECT_NEAR(sampled_value_zz, expectation_value_zz, 4E-2);
+  EXPECT_NEAR(sampled_value_xx, expectation_value_xx, 4E-2);
   // |...0...1...>
   state->SetStateZero();
   expectation_value_zz = 0;
@@ -553,7 +603,7 @@ TEST(StateSpaceTest, ComputeSampledExpectation) {
   sampled_value_zz = 0;
   sampled_value_xx = 0;
   state->SetAmpl(0, std::complex<float>(0., 0.));
-  state->SetAmpl((1 << q1), std::complex<float>(1., 0.));
+  state->SetAmpl((1 << (num_qubits - q1 - 1)), std::complex<float>(1., 0.));
   ASSERT_EQ(
       state->ComputeExpectation(p_sum_zz, scratch.get(), &expectation_value_zz),
       tensorflow::Status::OK());
@@ -566,8 +616,8 @@ TEST(StateSpaceTest, ComputeSampledExpectation) {
   ASSERT_EQ(state->ComputeSampledExpectation(p_sum_xx, scratch.get(),
                                              &sampled_value_xx, m),
             tensorflow::Status::OK());
-  EXPECT_NEAR(sampled_value_zz, expectation_value_zz, 2E-2);
-  EXPECT_NEAR(sampled_value_xx, expectation_value_xx, 2E-2);
+  EXPECT_NEAR(sampled_value_zz, expectation_value_zz, 4E-2);
+  EXPECT_NEAR(sampled_value_xx, expectation_value_xx, 4E-2);
   // |...1...1...>
   state->SetStateZero();
   expectation_value_zz = 0;
@@ -575,7 +625,8 @@ TEST(StateSpaceTest, ComputeSampledExpectation) {
   sampled_value_zz = 0;
   sampled_value_xx = 0;
   state->SetAmpl(0, std::complex<float>(0., 0.));
-  state->SetAmpl((1 << q0) + (1 << q1), std::complex<float>(1., 0.));
+  state->SetAmpl((1 << (num_qubits - q0 - 1)) + (1 << (num_qubits - q1 - 1)),
+                 std::complex<float>(1., 0.));
   ASSERT_EQ(
       state->ComputeExpectation(p_sum_zz, scratch.get(), &expectation_value_zz),
       tensorflow::Status::OK());
@@ -588,8 +639,8 @@ TEST(StateSpaceTest, ComputeSampledExpectation) {
   ASSERT_EQ(state->ComputeSampledExpectation(p_sum_xx, scratch.get(),
                                              &sampled_value_xx, m),
             tensorflow::Status::OK());
-  EXPECT_NEAR(sampled_value_zz, expectation_value_zz, 2E-2);
-  EXPECT_NEAR(sampled_value_xx, expectation_value_xx, 2E-2);
+  EXPECT_NEAR(sampled_value_zz, expectation_value_zz, 4E-2);
+  EXPECT_NEAR(sampled_value_xx, expectation_value_xx, 4E-2);
 
   // Check expectation values on phase flips
   // |...+...+...>
@@ -599,9 +650,10 @@ TEST(StateSpaceTest, ComputeSampledExpectation) {
   sampled_value_zz = 0;
   sampled_value_xx = 0;
   state->SetAmpl(0, std::complex<float>(0.5, 0.));
-  state->SetAmpl((1 << q0), std::complex<float>(0.5, 0.));
-  state->SetAmpl((1 << q1), std::complex<float>(0.5, 0.));
-  state->SetAmpl((1 << q0) + (1 << q1), std::complex<float>(0.5, 0.));
+  state->SetAmpl((1 << (num_qubits - q0 - 1)), std::complex<float>(0.5, 0.));
+  state->SetAmpl((1 << (num_qubits - q1 - 1)), std::complex<float>(0.5, 0.));
+  state->SetAmpl((1 << (num_qubits - q0 - 1)) + (1 << (num_qubits - q1 - 1)),
+                 std::complex<float>(0.5, 0.));
   ASSERT_EQ(
       state->ComputeExpectation(p_sum_zz, scratch.get(), &expectation_value_zz),
       tensorflow::Status::OK());
@@ -614,8 +666,8 @@ TEST(StateSpaceTest, ComputeSampledExpectation) {
   ASSERT_EQ(state->ComputeSampledExpectation(p_sum_xx, scratch.get(),
                                              &sampled_value_xx, m),
             tensorflow::Status::OK());
-  EXPECT_NEAR(sampled_value_zz, expectation_value_zz, 2E-2);
-  EXPECT_NEAR(sampled_value_xx, expectation_value_xx, 2E-2);
+  EXPECT_NEAR(sampled_value_zz, expectation_value_zz, 4E-2);
+  EXPECT_NEAR(sampled_value_xx, expectation_value_xx, 4E-2);
   // |...-...+...>
   state->SetStateZero();
   expectation_value_zz = 0;
@@ -623,9 +675,10 @@ TEST(StateSpaceTest, ComputeSampledExpectation) {
   sampled_value_zz = 0;
   sampled_value_xx = 0;
   state->SetAmpl(0, std::complex<float>(0.5, 0.));
-  state->SetAmpl((1 << q0), std::complex<float>(-0.5, 0.));
-  state->SetAmpl((1 << q1), std::complex<float>(0.5, 0.));
-  state->SetAmpl((1 << q0) + (1 << q1), std::complex<float>(-0.5, 0.));
+  state->SetAmpl((1 << (num_qubits - q0 - 1)), std::complex<float>(-0.5, 0.));
+  state->SetAmpl((1 << (num_qubits - q1 - 1)), std::complex<float>(0.5, 0.));
+  state->SetAmpl((1 << (num_qubits - q0 - 1)) + (1 << (num_qubits - q1 - 1)),
+                 std::complex<float>(-0.5, 0.));
   ASSERT_EQ(
       state->ComputeExpectation(p_sum_zz, scratch.get(), &expectation_value_zz),
       tensorflow::Status::OK());
@@ -638,8 +691,8 @@ TEST(StateSpaceTest, ComputeSampledExpectation) {
   ASSERT_EQ(state->ComputeSampledExpectation(p_sum_xx, scratch.get(),
                                              &sampled_value_xx, m),
             tensorflow::Status::OK());
-  EXPECT_NEAR(sampled_value_zz, expectation_value_zz, 2E-2);
-  EXPECT_NEAR(sampled_value_xx, expectation_value_xx, 2E-2);
+  EXPECT_NEAR(sampled_value_zz, expectation_value_zz, 4E-2);
+  EXPECT_NEAR(sampled_value_xx, expectation_value_xx, 4E-2);
   // |...+...-...>
   state->SetStateZero();
   expectation_value_zz = 0;
@@ -647,9 +700,10 @@ TEST(StateSpaceTest, ComputeSampledExpectation) {
   sampled_value_zz = 0;
   sampled_value_xx = 0;
   state->SetAmpl(0, std::complex<float>(0.5, 0.));
-  state->SetAmpl((1 << q0), std::complex<float>(0.5, 0.));
-  state->SetAmpl((1 << q1), std::complex<float>(-0.5, 0.));
-  state->SetAmpl((1 << q0) + (1 << q1), std::complex<float>(-0.5, 0.));
+  state->SetAmpl((1 << (num_qubits - q0 - 1)), std::complex<float>(0.5, 0.));
+  state->SetAmpl((1 << (num_qubits - q1 - 1)), std::complex<float>(-0.5, 0.));
+  state->SetAmpl((1 << (num_qubits - q0 - 1)) + (1 << (num_qubits - q1 - 1)),
+                 std::complex<float>(-0.5, 0.));
   ASSERT_EQ(
       state->ComputeExpectation(p_sum_zz, scratch.get(), &expectation_value_zz),
       tensorflow::Status::OK());
@@ -662,8 +716,8 @@ TEST(StateSpaceTest, ComputeSampledExpectation) {
   ASSERT_EQ(state->ComputeSampledExpectation(p_sum_xx, scratch.get(),
                                              &sampled_value_xx, m),
             tensorflow::Status::OK());
-  EXPECT_NEAR(sampled_value_zz, expectation_value_zz, 2E-2);
-  EXPECT_NEAR(sampled_value_xx, expectation_value_xx, 2E-2);
+  EXPECT_NEAR(sampled_value_zz, expectation_value_zz, 4E-2);
+  EXPECT_NEAR(sampled_value_xx, expectation_value_xx, 4E-2);
   // |...-...-...>
   state->SetStateZero();
   expectation_value_zz = 0;
@@ -671,9 +725,10 @@ TEST(StateSpaceTest, ComputeSampledExpectation) {
   sampled_value_zz = 0;
   sampled_value_xx = 0;
   state->SetAmpl(0, std::complex<float>(0.5, 0.));
-  state->SetAmpl((1 << q0), std::complex<float>(-0.5, 0.));
-  state->SetAmpl((1 << q1), std::complex<float>(-0.5, 0.));
-  state->SetAmpl((1 << q0) + (1 << q1), std::complex<float>(0.5, 0.));
+  state->SetAmpl((1 << (num_qubits - q0 - 1)), std::complex<float>(-0.5, 0.));
+  state->SetAmpl((1 << (num_qubits - q1 - 1)), std::complex<float>(-0.5, 0.));
+  state->SetAmpl((1 << (num_qubits - q0 - 1)) + (1 << (num_qubits - q1 - 1)),
+                 std::complex<float>(0.5, 0.));
   ASSERT_EQ(
       state->ComputeExpectation(p_sum_zz, scratch.get(), &expectation_value_zz),
       tensorflow::Status::OK());
@@ -686,8 +741,8 @@ TEST(StateSpaceTest, ComputeSampledExpectation) {
   ASSERT_EQ(state->ComputeSampledExpectation(p_sum_xx, scratch.get(),
                                              &sampled_value_xx, m),
             tensorflow::Status::OK());
-  EXPECT_NEAR(sampled_value_zz, expectation_value_zz, 2E-2);
-  EXPECT_NEAR(sampled_value_xx, expectation_value_xx, 2E-2);
+  EXPECT_NEAR(sampled_value_zz, expectation_value_zz, 4E-2);
+  EXPECT_NEAR(sampled_value_xx, expectation_value_xx, 4E-2);
 }
 
 }  // namespace

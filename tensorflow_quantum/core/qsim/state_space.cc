@@ -22,10 +22,10 @@ limitations under the License.
 #include "tensorflow/core/lib/random/simple_philox.h"
 #include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
 #include "tensorflow_quantum/core/qsim/fuser_basic.h"
+#include "tensorflow_quantum/core/qsim/matrix.h"
 #include "tensorflow_quantum/core/qsim/util.h"
 #include "tensorflow_quantum/core/src/circuit.h"
 #include "tensorflow_quantum/core/src/circuit_parser.h"
-#include "tensorflow_quantum/core/src/matrix.h"
 
 namespace tfq {
 namespace qsim {
@@ -153,6 +153,9 @@ void StateSpace::SampleState(const int m, std::vector<uint64_t>* samples) {
 tensorflow::Status StateSpace::ComputeSampledExpectation(
     const tfq::proto::PauliSum& p_sum, StateSpace* scratch,
     float* expectation_value, const int m) {
+  if (m == 0) {
+    return tensorflow::Status::OK();
+  }
   // apply the  gates of the pauliterms to a copy of the wavefunction
   // and add up expectation value term by term.
   tensorflow::Status status = tensorflow::Status::OK();
@@ -188,13 +191,13 @@ tensorflow::Status StateSpace::ComputeSampledExpectation(
             tensorflow::error::INVALID_ARGUMENT,
             "Could not parse Pauli term qubit id: " + pair.ShortDebugString());
       }
-      parity_bits.push_back(location);
+      // Parity functions use little-endian indexing
+      parity_bits.push_back(num_qubits_ - location - 1);
     }
 
     // Compute the expectation value over the samples
     int parity_total(0);
-    uint64_t parity_mask;
-    parity_mask = ComputeBitmask(parity_bits);
+    uint64_t parity_mask = ComputeBitmask(parity_bits);
     for (const uint64_t& sample : state_samples) {
       parity_total += ComputeParity(parity_mask, sample);
     }
