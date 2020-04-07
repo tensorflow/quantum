@@ -68,15 +68,17 @@ void StateSpaceAVX::CopyFrom(const StateSpace& other) const {
   }
 }
 
-void StateSpaceAVX::ApplyGate2(const unsigned int q0, const unsigned int q1,
-                               const float* matrix) {
+void StateSpaceAVX::ApplyGate2(const unsigned int q0_be,
+                               const unsigned int q1_be, const float* matrix) {
   // Assume q0 < q1.
-  if (q0 > 2) {
-    ApplyGate2HH(q0, q1, matrix);
+  const unsigned int q0_le = GetNumQubits() - q1_be - 1;
+  const unsigned int q1_le = GetNumQubits() - q0_be - 1;
+  if (q0_le > 2) {
+    ApplyGate2HH(q0_le, q1_le, matrix);
   } else if (q1 > 2) {
-    ApplyGate2HL(q0, q1, matrix);
+    ApplyGate2HL(q0_le, q1_le, matrix);
   } else {
-    ApplyGate2LL(q0, q1, matrix);
+    ApplyGate2LL(q0_le, q1_le, matrix);
   }
 }
 

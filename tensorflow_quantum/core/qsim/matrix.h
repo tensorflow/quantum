@@ -108,9 +108,8 @@ inline void Matrix4Set(const Array1& u, Array2& mat) {
 
 // Multiply 4x4 matrix by one qubit matrix corresponding to qubit 1.
 // First arg is 2x2 matrix, second arg is 4x4 matrix.
-// In this function, qubit order is taken to be big-endian. See #936
 template <typename Array1, typename Array2>
-inline void Matrix4Multiply20(const Array1& u, Array2& mat) {
+inline void Matrix4Multiply21(const Array1& u, Array2& mat) {
   auto u00 = &u[0];
   auto u01 = &u[2];
   auto u10 = &u[4];
@@ -137,9 +136,8 @@ inline void Matrix4Multiply20(const Array1& u, Array2& mat) {
 
 // Multiply 4x4 matrix by one qubit matrix corresponding to qubit 0.
 // First arg is 2x2 matrix, second arg is 4x4 matrix.
-// In this function, qubit order is taken to be big-endian. See #936
 template <typename Array1, typename Array2>
-inline void Matrix4Multiply21(const Array1& u, Array2& mat) {
+inline void Matrix4Multiply20(const Array1& u, Array2& mat) {
   auto u00 = &u[0];
   auto u01 = &u[2];
   auto u10 = &u[4];

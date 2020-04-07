@@ -182,7 +182,7 @@ TEST(CircuitParserTest, CircuitFromProgramPaulis) {
   arg_map["global_shift"] = 0.0;
   arg_map["exponent"] = 1.0;
   arg_map["exponent_scalar"] = 1.0;
-  locations.push_back(real_circuit.num_qubits - 0 - 1);
+  locations.push_back(0);
   status = builder.Build(0, locations, arg_map, &gate_x);
   ASSERT_EQ(status, tensorflow::Status::OK());
   real_circuit.gates.push_back(gate_x);
@@ -225,7 +225,7 @@ TEST(CircuitParserTest, CircuitFromPauliTermPauli) {
   arg_map["global_shift"] = 0.0;
   arg_map["exponent"] = 1.0;
   arg_map["exponent_scalar"] = 1.0;
-  locations.push_back(real_circuit.num_qubits - 0 - 1);
+  locations.push_back(0);
   status = builder.Build(0, locations, arg_map, &gate_x);
   ASSERT_EQ(status, tensorflow::Status::OK());
   real_circuit.gates.push_back(gate_x);
@@ -350,7 +350,7 @@ TEST(CircuitParserTest, ZBasisFromPauliTermMulti) {
   arg_map["global_shift"] = 0.0;
   arg_map["exponent"] = -0.5;
   arg_map["exponent_scalar"] = 1.0;
-  status = y_builder.Build(0, {3}, arg_map, &gate);
+  status = y_builder.Build(0, {0}, arg_map, &gate);
   ASSERT_EQ(status, tensorflow::Status::OK());
   real_circuit.gates.push_back(gate);
 
@@ -360,7 +360,7 @@ TEST(CircuitParserTest, ZBasisFromPauliTermMulti) {
   arg_map["global_shift"] = 0.0;
   arg_map["exponent"] = -0.5;
   arg_map["exponent_scalar"] = 1.0;
-  status = y_builder.Build(0, {1}, arg_map, &gate);
+  status = y_builder.Build(0, {2}, arg_map, &gate);
   ASSERT_EQ(status, tensorflow::Status::OK());
   real_circuit.gates.push_back(gate);
 
@@ -368,7 +368,7 @@ TEST(CircuitParserTest, ZBasisFromPauliTermMulti) {
   arg_map["global_shift"] = 0.0;
   arg_map["exponent"] = 0.5;
   arg_map["exponent_scalar"] = 1.0;
-  status = x_builder.Build(0, {0}, arg_map, &gate);
+  status = x_builder.Build(0, {3}, arg_map, &gate);
   ASSERT_EQ(status, tensorflow::Status::OK());
   real_circuit.gates.push_back(gate);
 

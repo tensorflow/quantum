@@ -22,9 +22,9 @@ limitations under the License.
 #include "tensorflow/core/lib/random/simple_philox.h"
 #include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
 #include "tensorflow_quantum/core/qsim/fuser_basic.h"
+#include "tensorflow_quantum/core/qsim/matrix.h"
 #include "tensorflow_quantum/core/src/circuit.h"
 #include "tensorflow_quantum/core/src/circuit_parser.h"
-#include "tensorflow_quantum/core/src/matrix.h"
 
 namespace tfq {
 namespace qsim {
