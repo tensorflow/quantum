@@ -114,10 +114,9 @@ void StateSpaceSSE::SetStateZero() {
 
 float StateSpaceSSE::GetRealInnerProduct(const StateSpace& other) const {
   uint64_t size2 = GetDimension() / 4;
-  __m128d expv_0 = _mm_setzero_pd();
-  __m128d expv_1 = _mm_setzero_pd();
-  __m128d temp = _mm_setzero_pd();
+  __m128d expv = _mm_setzero_pd();
   __m128d rs_0, rs_1, is_0, is_1;
+  __m128 load_reg;
 
   auto statea = GetRawState();
   auto stateb = other.GetRawState();
@@ -126,37 +125,40 @@ float StateSpaceSSE::GetRealInnerProduct(const StateSpace& other) const {
   // Currently not a thread safe implementation of inner product!
   for (uint64_t i = 0; i < size2; ++i) {
     // rs = _mm256_cvtps_pd(_mm_load_ps(statea + 8 * i));
-    rs_0 = _mm_cvtps_pd(_mm_load_ps(statea + 8 * i));
-    rs_1 = _mm_cvtps_pd(_mm_load_ps(statea + 8 * i + 2));
+    load_reg = _mm_load_ps(statea + 8 * i);
+    rs_0 = _mm_cvtps_pd(load_reg);
+    rs_1 = _mm_cvtps_pd(
+        _mm_shuffle_ps(load_reg, load_reg, _MM_SHUFFLE(3, 2, 3, 2)));
 
     // is = _mm256_cvtps_pd(_mm_load_ps(stateb + 8 * i));
-    is_0 = _mm_cvtps_pd(_mm_load_ps(stateb + 8 * i));
-    is_1 = _mm_cvtps_pd(_mm_load_ps(stateb + 8 * i + 2));
+    load_reg = _mm_load_ps(stateb + 8 * i);
+    is_0 = _mm_cvtps_pd(load_reg);
+    is_1 = _mm_cvtps_pd(
+        _mm_shuffle_ps(load_reg, load_reg, _MM_SHUFFLE(3, 2, 3, 2)));
 
     // expv = _mm256_fmadd_pd(rs, is, expv);
-    temp = _mm_mul_pd(rs_0, is_0);
-    expv_0 = _mm_add_pd(expv_0, temp);
-    temp = _mm_mul_pd(rs_1, is_1);
-    expv_1 = _mm_add_pd(expv_1, temp);
+    expv = _mm_add_pd(expv, _mm_mul_pd(rs_0, is_0));
+    expv = _mm_add_pd(expv, _mm_mul_pd(rs_1, is_1));
 
     // rs = _mm256_cvtps_pd(_mm_load_ps(statea + 8 * i + 4));
-    rs_0 = _mm_cvtps_pd(_mm_load_ps(statea + 8 * i + 4));
-    rs_1 = _mm_cvtps_pd(_mm_load_ps(statea + 8 * i + 6));
+    load_reg = _mm_load_ps(statea + 8 * i + 4);
+    rs_0 = _mm_cvtps_pd(load_reg);
+    rs_1 = _mm_cvtps_pd(
+        _mm_shuffle_ps(load_reg, load_reg, _MM_SHUFFLE(3, 2, 3, 2)));
 
     // is = _mm256_cvtps_pd(_mm_load_ps(stateb + 8 * i + 4));
-    is_0 = _mm_cvtps_pd(_mm_load_ps(stateb + 8 * i + 4));
-    is_1 = _mm_cvtps_pd(_mm_load_ps(stateb + 8 * i + 6));
+    load_reg = _mm_load_ps(stateb + 8 * i + 4);
+    is_0 = _mm_cvtps_pd(load_reg);
+    is_1 = _mm_cvtps_pd(
+        _mm_shuffle_ps(load_reg, load_reg, _MM_SHUFFLE(3, 2, 3, 2)));
 
     // expv = _mm256_fmadd_pd(rs, is, expv);
-    temp = _mm_mul_pd(rs_0, is_0);
-    expv_0 = _mm_add_pd(expv_0, temp);
-    temp = _mm_mul_pd(rs_1, is_1);
-    expv_1 = _mm_add_pd(expv_1, temp);
+    expv = _mm_add_pd(expv, _mm_mul_pd(rs_0, is_0));
+    expv = _mm_add_pd(expv, _mm_mul_pd(rs_1, is_1));
   }
-  double buffer[4];
-  _mm_storeu_pd(buffer, expv_0);
-  _mm_storeu_pd(buffer + 2, expv_1);
-  return (float)(buffer[0] + buffer[1] + buffer[2] + buffer[3]);
+  double buffer[2];
+  _mm_storeu_pd(buffer, expv);
+  return (float)(buffer[0] + buffer[1]);
 }
 
 std::complex<float> StateSpaceSSE::GetAmpl(const uint64_t i) const {
