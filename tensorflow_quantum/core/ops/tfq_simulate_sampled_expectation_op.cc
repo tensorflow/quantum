@@ -140,9 +140,9 @@ class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
         }
 
         float expectation = 0.0;
-        OP_REQUIRES_OK(context, test_state->ComputeExpectation(
+        OP_REQUIRES_OK(context, test_state->ComputeSampledExpectation(
                                     pauli_sums[cur_batch_index][cur_op_index],
-                                    scratch_state.get(), &expectation));
+                                    scratch_state.get(), &expectation, parsed_num_samples.at(0)));
 
         output_tensor(cur_batch_index, cur_op_index) = expectation;
         old_batch_index = cur_batch_index;
@@ -159,14 +159,15 @@ class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
 };
 
 REGISTER_KERNEL_BUILDER(
-    Name("TfqSimulateExpectation").Device(tensorflow::DEVICE_CPU),
+    Name("TfqSimulateSampledExpectation").Device(tensorflow::DEVICE_CPU),
     TfqSimulateExpectationOp);
 
-REGISTER_OP("TfqSimulateExpectation")
+REGISTER_OP("TfqSimulateSampledExpectation")
     .Input("programs: string")
     .Input("symbol_names: string")
     .Input("symbol_values: float")
     .Input("pauli_sums: string")
+    .Input("num_samples: float")
     .Output("expectations: float")
     .SetShapeFn([](tensorflow::shape_inference::InferenceContext *c) {
       tensorflow::shape_inference::ShapeHandle programs_shape;
@@ -180,6 +181,9 @@ REGISTER_OP("TfqSimulateExpectation")
 
       tensorflow::shape_inference::ShapeHandle pauli_sums_shape;
       TF_RETURN_IF_ERROR(c->WithRank(c->input(3), 2, &pauli_sums_shape));
+
+      tensorflow::shape_inference::ShapeHandle pauli_sums_shape;
+      TF_RETURN_IF_ERROR(c->WithRank(c->input(4), 1, &num_samples_shape));
 
       tensorflow::shape_inference::DimensionHandle output_rows =
           c->Dim(programs_shape, 0);

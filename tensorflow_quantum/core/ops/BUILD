@@ -70,6 +70,7 @@ cc_binary(
     name = "_tfq_simulate_ops.so",
     srcs = [
         "tfq_simulate_expectation_op.cc",
+        "tfq_simulate_sampled_expectation_op.cc",
         "tfq_simulate_state_op.cc",
     ],
     copts = select({
