@@ -78,8 +78,8 @@ class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
                     programs.size(), " circuits and ", pauli_sums.size(),
                     " paulisums.")));
 
-    std::vector<uint64_t> parsed_num_samples;
-    OP_REQUIRES_OK(GetNumSamples(context, &parsed_num_samples));
+    std::vector<unsigned int> parsed_num_samples;
+    OP_REQUIRES_OK(context, GetNumSamples(context, &parsed_num_samples));
 
     // TODO(zaqqwerty): Eventually we want ability to specify num_samples per op
     OP_REQUIRES(context, parsed_num_samples.size() == 1,
@@ -160,14 +160,14 @@ class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
 
 REGISTER_KERNEL_BUILDER(
     Name("TfqSimulateSampledExpectation").Device(tensorflow::DEVICE_CPU),
-    TfqSimulateExpectationOp);
+    TfqSimulateSampledExpectationOp);
 
 REGISTER_OP("TfqSimulateSampledExpectation")
     .Input("programs: string")
     .Input("symbol_names: string")
     .Input("symbol_values: float")
     .Input("pauli_sums: string")
-    .Input("num_samples: float")
+    .Input("num_samples: int")
     .Output("expectations: float")
     .SetShapeFn([](tensorflow::shape_inference::InferenceContext *c) {
       tensorflow::shape_inference::ShapeHandle programs_shape;
@@ -182,7 +182,7 @@ REGISTER_OP("TfqSimulateSampledExpectation")
       tensorflow::shape_inference::ShapeHandle pauli_sums_shape;
       TF_RETURN_IF_ERROR(c->WithRank(c->input(3), 2, &pauli_sums_shape));
 
-      tensorflow::shape_inference::ShapeHandle pauli_sums_shape;
+      tensorflow::shape_inference::ShapeHandle num_samples_shape;
       TF_RETURN_IF_ERROR(c->WithRank(c->input(4), 1, &num_samples_shape));
 
       tensorflow::shape_inference::DimensionHandle output_rows =

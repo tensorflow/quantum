@@ -256,7 +256,7 @@ Status GetGradients(OpKernelContext* context,
 }
 
 tensorflow::Status GetNumSamples(tensorflow::OpKernelContext* context,
-                                 std::vector<uint64_t>* parsed_num_samples) {
+                                 std::vector<unsigned int>* parsed_num_samples) {
   const Tensor* input_num_samples;
   Status status = context->input("num_samples", &input_num_samples);
   if (!status.ok()) {
@@ -269,9 +269,9 @@ tensorflow::Status GetNumSamples(tensorflow::OpKernelContext* context,
                                input_num_samples->dims(), "."));
   }
 
-  const auto vec_num_samples = input_num_samples->vec<uint64_t>();
+  const auto vec_num_samples = input_num_samples->vec<unsigned int>();
   parsed_num_samples->reserve(vec_num_samples.dimension(0));
-  for (int i = 0; i < vec_num_samples.dimension(0); i++) {
+  for (unsigned int i = 0; i < vec_num_samples.dimension(0); i++) {
     parsed_num_samples->push_back(vec_num_samples(i));
   }
 
