@@ -152,7 +152,8 @@ def tfq_simulate_samples(programs, symbol_names, symbol_values, num_samples):
     return binary_samples - padding_mask
 
 
-def tfq_simulate_sampled_expectation(programs, symbol_names, symbol_values, pauli_sums, num_samples):
+def tfq_simulate_sampled_expectation(programs, symbol_names, symbol_values,
+                                     pauli_sums, num_samples):
     """Calculate the expectation value of circuits using samples.
 
     Simulate the final state of `programs` given `symbol_values` are placed
@@ -182,4 +183,5 @@ def tfq_simulate_sampled_expectation(programs, symbol_names, symbol_values, paul
             (after resolving the corresponding parameters in).
     """
     return SIM_OP_MODULE.tfq_simulate_sampled_expectation(
-        programs, symbol_names, tf.cast(symbol_values, tf.float32), pauli_sums, tf.cast(num_samples, dtype=tf.int32))
+        programs, symbol_names, tf.cast(symbol_values, tf.float32), pauli_sums,
+        tf.cast(num_samples, dtype=tf.int32))

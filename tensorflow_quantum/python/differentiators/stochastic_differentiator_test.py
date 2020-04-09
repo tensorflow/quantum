@@ -117,7 +117,8 @@ class SGDifferentiatorTest(tf.test.TestCase, parameterized.TestCase):
         diff = stochastic_differentiator.SGDifferentiator(
             coordinate, generator, cost, uniform)
         op = diff.generate_differentiable_op(
-            sampled_op=circuit_execution_ops.get_sampled_expectation_op(backend=cirq.Simulator()))
+            sampled_op=circuit_execution_ops.get_sampled_expectation_op(
+                backend=cirq.Simulator()))
 
         with tf.GradientTape() as g:
             g.watch(values)

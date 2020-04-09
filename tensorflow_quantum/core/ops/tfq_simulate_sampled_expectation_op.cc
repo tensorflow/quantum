@@ -42,7 +42,8 @@ using ::tfq::qsim::StateSpace;
 
 class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
  public:
-  explicit TfqSimulateSampledExpectationOp(tensorflow::OpKernelConstruction *context)
+  explicit TfqSimulateSampledExpectationOp(
+      tensorflow::OpKernelConstruction *context)
       : OpKernel(context) {}
 
   void Compute(tensorflow::OpKernelContext *context) override {
@@ -86,7 +87,7 @@ class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
                     "Dimension 0 of num_samples and pauli_sums do not match.",
                     "Got ", num_samples.size(), " lists of sample sizes and ",
                     pauli_sums.size(), " lists of pauli sums.")));
-    
+
     auto DoWork = [&](int start, int end) {
       int old_batch_index = -2;
       int cur_batch_index = -1;
@@ -138,10 +139,11 @@ class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
         }
 
         float expectation = 0.0;
-        OP_REQUIRES_OK(context, test_state->ComputeSampledExpectation(
-                                    pauli_sums[cur_batch_index][cur_op_index],
-                                    scratch_state.get(), &expectation,
-                                    num_samples[cur_batch_index][cur_op_index]));
+        OP_REQUIRES_OK(
+            context,
+            test_state->ComputeSampledExpectation(
+                pauli_sums[cur_batch_index][cur_op_index], scratch_state.get(),
+                &expectation, num_samples[cur_batch_index][cur_op_index]));
 
         output_tensor(cur_batch_index, cur_op_index) = expectation;
         old_batch_index = cur_batch_index;

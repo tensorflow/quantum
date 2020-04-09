@@ -255,8 +255,9 @@ Status GetGradients(OpKernelContext* context,
   return Status::OK();
 }
 
-tensorflow::Status GetNumSamples(tensorflow::OpKernelContext* context,
-                                 std::vector<std::vector<unsigned int>>* parsed_num_samples) {
+tensorflow::Status GetNumSamples(
+    tensorflow::OpKernelContext* context,
+    std::vector<std::vector<unsigned int>>* parsed_num_samples) {
   const Tensor* input_num_samples;
   Status status = context->input("num_samples", &input_num_samples);
   if (!status.ok()) {

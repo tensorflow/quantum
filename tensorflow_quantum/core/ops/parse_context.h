@@ -76,8 +76,9 @@ tensorflow::Status GetGradients(tensorflow::OpKernelContext* context,
                                 std::vector<std::vector<float>>* grads);
 
 // Parses the number of samples from the 'num_samples' input tensor.
-tensorflow::Status GetNumSamples(tensorflow::OpKernelContext* context,
-                                 std::vector<std::vector<unsigned int>>* parsed_num_samples);
+tensorflow::Status GetNumSamples(
+    tensorflow::OpKernelContext* context,
+    std::vector<std::vector<unsigned int>>* parsed_num_samples);
 
 }  // namespace tfq
 
