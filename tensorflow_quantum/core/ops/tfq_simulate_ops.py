@@ -184,4 +184,4 @@ def tfq_simulate_sampled_expectation(programs, symbol_names, symbol_values,
     """
     return SIM_OP_MODULE.tfq_simulate_sampled_expectation(
         programs, symbol_names, tf.cast(symbol_values, tf.float32), pauli_sums,
-        tf.cast(num_samples, dtype=tf.int32))
+        tf.cast(num_samples, dtype=tf.uint32))
