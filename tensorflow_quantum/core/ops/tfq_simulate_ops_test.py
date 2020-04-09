@@ -437,7 +437,7 @@ class SimulateSampledExpectationTest(tf.test.TestCase):
     """Tests tfq_simulate_expectation."""
 
     def test_simulate_sampled_expectation_inputs(self):
-        """Make sure the the sampled expectation op fails gracefully on bad inputs."""
+        """Make sure sampled expectation op fails gracefully on bad inputs."""
         n_qubits = 5
         batch_size = 5
         num_samples = 10
@@ -461,7 +461,7 @@ class SimulateSampledExpectationTest(tf.test.TestCase):
                 util.convert_to_tensor([circuit_batch]), symbol_names,
                 symbol_values_array,
                 util.convert_to_tensor([[x] for x in pauli_sums]),
-                [num_samples])
+                [[num_samples]])
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'symbol_names must be rank 1.'):
@@ -470,7 +470,7 @@ class SimulateSampledExpectationTest(tf.test.TestCase):
                 util.convert_to_tensor(circuit_batch), np.array([symbol_names]),
                 symbol_values_array,
                 util.convert_to_tensor([[x] for x in pauli_sums]),
-                [num_samples])
+                [[num_samples]])
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'symbol_values must be rank 2.'):
@@ -479,7 +479,7 @@ class SimulateSampledExpectationTest(tf.test.TestCase):
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 np.array([symbol_values_array]),
                 util.convert_to_tensor([[x] for x in pauli_sums]),
-                [num_samples])
+                [[num_samples]])
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'symbol_values must be rank 2.'):
@@ -488,7 +488,7 @@ class SimulateSampledExpectationTest(tf.test.TestCase):
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 symbol_values_array[0],
                 util.convert_to_tensor([[x] for x in pauli_sums]),
-                [num_samples])
+                [[num_samples]])
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'pauli_sums must be rank 2.'):
@@ -496,7 +496,8 @@ class SimulateSampledExpectationTest(tf.test.TestCase):
             tfq_simulate_ops.tfq_simulate_sampled_expectation(
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 symbol_values_array,
-                util.convert_to_tensor([x for x in pauli_sums]), [num_samples])
+                util.convert_to_tensor([x for x in pauli_sums]),
+                [[num_samples]])
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'pauli_sums must be rank 2.'):
@@ -505,42 +506,25 @@ class SimulateSampledExpectationTest(tf.test.TestCase):
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 symbol_values_array,
                 util.convert_to_tensor([[[x]] for x in pauli_sums]),
-                [num_samples])
-
-        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
-                                    'num_samples must be rank 1'):
-            # num_samples tensor has the wrong shape.
-            tfq_simulate_ops.tfq_simulate_sampled_expectation(
-                util.convert_to_tensor(circuit_batch), symbol_names,
-                symbol_values_array,
-                util.convert_to_tensor([[x] for x in pauli_sums]),
                 [[num_samples]])
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
-                                    'num_samples must be rank 1'):
-            # num_samples tensor has the wrong shape.
-            tfq_simulate_ops.tfq_simulate_sampled_expectation(
-                util.convert_to_tensor(circuit_batch), symbol_names,
-                symbol_values_array,
-                util.convert_to_tensor([[x] for x in pauli_sums]), num_samples)
-
-        with self.assertRaisesRegex(
-                tf.errors.InvalidArgumentError,
-                'Only one value of num_samples can be specified.'):
+                                    'num_samples must be rank 2'):
             # num_samples tensor has the wrong shape.
             tfq_simulate_ops.tfq_simulate_sampled_expectation(
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 symbol_values_array,
                 util.convert_to_tensor([[x] for x in pauli_sums]),
-                [num_samples, num_samples])
+                [[[num_samples]]])
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
-                                    'num_samples cannot contain zero.'):
+                                    'num_samples must be rank 2'):
             # num_samples tensor has the wrong shape.
             tfq_simulate_ops.tfq_simulate_sampled_expectation(
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 symbol_values_array,
-                util.convert_to_tensor([[x] for x in pauli_sums]), [0])
+                util.convert_to_tensor([[x] for x in pauli_sums]),
+                [num_samples])
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'Unparseable proto'):
@@ -548,7 +532,7 @@ class SimulateSampledExpectationTest(tf.test.TestCase):
             tfq_simulate_ops.tfq_simulate_sampled_expectation(
                 ['junk'] * batch_size, symbol_names, symbol_values_array,
                 util.convert_to_tensor([[x] for x in pauli_sums]),
-                [num_samples])
+                [[num_samples]])
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'Could not find symbol in parameter map'):
@@ -557,7 +541,7 @@ class SimulateSampledExpectationTest(tf.test.TestCase):
                 util.convert_to_tensor(circuit_batch), ['junk'],
                 symbol_values_array,
                 util.convert_to_tensor([[x] for x in pauli_sums]),
-                [num_samples])
+                [[num_samples]])
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'qubits not found in circuit'):
@@ -568,21 +552,21 @@ class SimulateSampledExpectationTest(tf.test.TestCase):
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 symbol_values_array,
                 util.convert_to_tensor([[x] for x in new_pauli_sums]),
-                [num_samples])
+                [[num_samples]])
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'Unparseable proto'):
             # pauli_sums tensor has the right type but invalid values 2.
             tfq_simulate_ops.tfq_simulate_sampled_expectation(
                 util.convert_to_tensor(circuit_batch), symbol_names,
-                symbol_values_array, [['junk']] * batch_size, [num_samples])
+                symbol_values_array, [['junk']] * batch_size, [[num_samples]])
 
         with self.assertRaisesRegex(TypeError, 'Cannot convert'):
             # circuits tensor has the wrong type.
             tfq_simulate_ops.tfq_simulate_sampled_expectation(
                 [1.0] * batch_size, symbol_names, symbol_values_array,
                 util.convert_to_tensor([[x] for x in pauli_sums]),
-                [num_samples])
+                [[num_samples]])
 
         with self.assertRaisesRegex(TypeError, 'Cannot convert'):
             # symbol_names tensor has the wrong type.
@@ -590,7 +574,7 @@ class SimulateSampledExpectationTest(tf.test.TestCase):
                 util.convert_to_tensor(circuit_batch), [0.1234],
                 symbol_values_array,
                 util.convert_to_tensor([[x] for x in pauli_sums]),
-                [num_samples])
+                [[num_samples]])
 
         with self.assertRaisesRegex(tf.errors.UnimplementedError, ''):
             # symbol_values tensor has the wrong type.
@@ -598,20 +582,20 @@ class SimulateSampledExpectationTest(tf.test.TestCase):
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 [['junk']] * batch_size,
                 util.convert_to_tensor([[x] for x in pauli_sums]),
-                [num_samples])
+                [[num_samples]])
 
         with self.assertRaisesRegex(TypeError, 'Cannot convert'):
             # pauli_sums tensor has the wrong type.
             tfq_simulate_ops.tfq_simulate_sampled_expectation(
                 util.convert_to_tensor(circuit_batch), symbol_names,
-                symbol_values_array, [[1.0]] * batch_size, [num_samples])
+                symbol_values_array, [[1.0]] * batch_size, [[num_samples]])
 
         with self.assertRaisesRegex(TypeError, 'missing'):
             # we are missing an argument.
             # pylint: disable=no-value-for-parameter
             tfq_simulate_ops.tfq_simulate_sampled_expectation(
                 util.convert_to_tensor(circuit_batch), symbol_names,
-                symbol_values_array, [num_samples])
+                symbol_values_array, [[num_samples]])
             # pylint: enable=no-value-for-parameter
 
         with self.assertRaisesRegex(TypeError, 'positional arguments'):
@@ -620,7 +604,7 @@ class SimulateSampledExpectationTest(tf.test.TestCase):
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 symbol_values_array,
                 util.convert_to_tensor([[x] for x in pauli_sums]), [],
-                [num_samples])
+                [[num_samples]])
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     expected_regex='do not match'):
@@ -629,7 +613,7 @@ class SimulateSampledExpectationTest(tf.test.TestCase):
                 util.convert_to_tensor([cirq.Circuit()]), symbol_names,
                 symbol_values_array.astype(np.float64),
                 util.convert_to_tensor([[x] for x in pauli_sums]),
-                [num_samples])
+                [[num_samples]])
 
         with self.assertRaisesRegex(
                 tf.errors.InvalidArgumentError,
@@ -638,12 +622,12 @@ class SimulateSampledExpectationTest(tf.test.TestCase):
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 symbol_values_array,
                 util.convert_to_tensor([[x] for x in pauli_sums]), [],
-                [num_samples])
+                [[num_samples]])
 
         res = tfq_simulate_ops.tfq_simulate_sampled_expectation(
             util.convert_to_tensor([cirq.Circuit() for _ in pauli_sums]),
             symbol_names, symbol_values_array.astype(np.float64),
-            util.convert_to_tensor([[x] for x in pauli_sums]), [num_samples])
+            util.convert_to_tensor([[x] for x in pauli_sums]), [[num_samples]])
         self.assertDTypeEqual(res, np.float32)
 
 
