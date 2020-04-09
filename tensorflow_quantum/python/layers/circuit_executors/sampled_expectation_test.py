@@ -147,7 +147,7 @@ class SampledExpectationTest(tf.test.TestCase):
                                                      repetitions='junk')
 
     def test_sampled_expectation_op_error(self):
-        """Test that expectation errors within underlying ops correctly."""
+        """Test that expectation errors."""
         # Note the expected_regex is left blank here since there is a
         # discrepancy between the error strings provided between backends.
         bit = cirq.GridQubit(0, 0)
@@ -157,7 +157,8 @@ class SampledExpectationTest(tf.test.TestCase):
         symb_circuit = cirq.Circuit(cirq.H(bit)**symbol)
         reg_circuit = cirq.Circuit(cirq.H(bit))
 
-        with self.assertRaisesRegex(Exception, expected_regex="bytes-like"):
+        with self.assertRaisesRegex(Exception,
+                                    expected_regex="pauli_sums"):
             # Operators has wrong rank. Parse error.
             sampled_expectation.SampledExpectation()(
                 [reg_circuit],
@@ -165,7 +166,7 @@ class SampledExpectationTest(tf.test.TestCase):
                 repetitions=1)
 
         with self.assertRaisesRegex(
-                Exception, expected_regex="must match second dimension"):
+                Exception, expected_regex="symbol_values"):
             # symbol_values has wrong rank.
             sampled_expectation.SampledExpectation()([symb_circuit],
                                                      symbol_names=[symbol],
@@ -181,7 +182,7 @@ class SampledExpectationTest(tf.test.TestCase):
                                                                 [test_psum]],
                                                      repetitions=1)
 
-        with self.assertRaisesRegex(Exception, expected_regex="same batch"):
+        with self.assertRaisesRegex(Exception, expected_regex="pauli_sums"):
             # Wrong batch size for pauli operators.
             sampled_expectation.SampledExpectation()(reg_circuit,
                                                      operators=[[test_psum],
