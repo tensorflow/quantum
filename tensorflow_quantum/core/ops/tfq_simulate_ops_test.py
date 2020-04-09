@@ -615,15 +615,6 @@ class SimulateSampledExpectationTest(tf.test.TestCase):
                 util.convert_to_tensor([[x] for x in pauli_sums]),
                 [[num_samples]])
 
-        with self.assertRaisesRegex(
-                tf.errors.InvalidArgumentError,
-                'Only one value of num_samples can be specified.'):
-            tfq_simulate_ops.tfq_simulate_sampled_expectation(
-                util.convert_to_tensor(circuit_batch), symbol_names,
-                symbol_values_array,
-                util.convert_to_tensor([[x] for x in pauli_sums]), [],
-                [[num_samples]])
-
         res = tfq_simulate_ops.tfq_simulate_sampled_expectation(
             util.convert_to_tensor([cirq.Circuit() for _ in pauli_sums]),
             symbol_names, symbol_values_array.astype(np.float64),
@@ -673,7 +664,7 @@ class InputTypesTest(tf.test.TestCase, parameterized.TestCase):
         self.assertDTypeEqual(result, np.int8)
 
         result = tfq_simulate_ops.tfq_simulate_sampled_expectation(
-            circuits, symbol_names, symbol_values, pauli_sums), [100]
+            circuits, symbol_names, symbol_values, pauli_sums, [[100]])
         self.assertDTypeEqual(result, np.float32)
 
 
