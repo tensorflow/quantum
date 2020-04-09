@@ -78,16 +78,14 @@ class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
                     programs.size(), " circuits and ", pauli_sums.size(),
                     " paulisums.")));
 
-    std::vector<unsigned int> parsed_num_samples;
-    OP_REQUIRES_OK(context, GetNumSamples(context, &parsed_num_samples));
+    std::vector<std::vector<unsigned int>> num_samples;
+    OP_REQUIRES_OK(context, GetNumSamples(context, &num_samples));
 
-    // TODO(zaqqwerty): Eventually we want ability to specify num_samples per op
-    OP_REQUIRES(context, parsed_num_samples.size() == 1,
-                tensorflow::errors::InvalidArgument(
-                    "Only one value of num_samples can be specified."));
-    OP_REQUIRES(context, parsed_num_samples.at(0) == 0,
-                tensorflow::errors::InvalidArgument(
-                    "num_samples cannot contain zero."));
+    OP_REQUIRES(context, num_samples.size() == pauli_sums.size(),
+                tensorflow::errors::InvalidArgument(absl::StrCat(
+                    "Dimension 0 of num_samples and pauli_sums do not match.",
+                    "Got ", num_samples.size(), " lists of sample sizes and ",
+                    pauli_sums.size(), " lists of pauli sums.")));
     
     auto DoWork = [&](int start, int end) {
       int old_batch_index = -2;
@@ -142,7 +140,8 @@ class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
         float expectation = 0.0;
         OP_REQUIRES_OK(context, test_state->ComputeSampledExpectation(
                                     pauli_sums[cur_batch_index][cur_op_index],
-                                    scratch_state.get(), &expectation, parsed_num_samples.at(0)));
+                                    scratch_state.get(), &expectation,
+                                    num_samples[cur_batch_index][cur_op_index]));
 
         output_tensor(cur_batch_index, cur_op_index) = expectation;
         old_batch_index = cur_batch_index;
@@ -183,7 +182,7 @@ REGISTER_OP("TfqSimulateSampledExpectation")
       TF_RETURN_IF_ERROR(c->WithRank(c->input(3), 2, &pauli_sums_shape));
 
       tensorflow::shape_inference::ShapeHandle num_samples_shape;
-      TF_RETURN_IF_ERROR(c->WithRank(c->input(4), 1, &num_samples_shape));
+      TF_RETURN_IF_ERROR(c->WithRank(c->input(4), 2, &num_samples_shape));
 
       tensorflow::shape_inference::DimensionHandle output_rows =
           c->Dim(programs_shape, 0);

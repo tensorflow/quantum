@@ -177,7 +177,7 @@ class LinearCombinationTest(tf.test.TestCase, parameterized.TestCase):
     def test_sampled_functional(self, diff):
         """Test that the differentiate_sampled function WORKS."""
         differentiable_op = diff.generate_differentiable_op(
-            sampled_op=circuit_execution_ops.get_sampled_expectation_op())
+            sampled_op=circuit_execution_ops.get_sampled_expectation_op(backend=cirq.Simulator()))
         circuit, names, values, ops, n_samples, true_f, true_g = \
             _simple_op_inputs()
         with tf.GradientTape() as g:

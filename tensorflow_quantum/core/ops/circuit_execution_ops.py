@@ -313,12 +313,10 @@ def get_sampled_expectation_op(backend=None):
         pauli_sums: `tf.Tensor` of strings with shape [batch_size, n_ops]
             containing the string representation of the operators that will
             be used on all of the circuits in the expectation calculations.
-        num_samples: `tf.Tensor` with `n_samples[i][j]` is equal to the
+        num_samples: `tf.Tensor` with `num_samples[i][j]` is equal to the
             number of samples to draw in each term of `pauli_sums[i][j]`
-            when estimating the expectation. It can also be tiled up to the
-            shape of pauli_sums by broadcasting if tf.shape(num_samples)[0]
-            or tf.shape(num_samples)[1] is 1 and the other dimension is the
-            same with that of pauli_sums.
+            when estimating the expectation. Therefore, `num_samples` must
+            have the same shape as `pauli_sums`.
 
         Returns:
             `tf.Tensor` with shape [batch_size, n_ops] that holds the

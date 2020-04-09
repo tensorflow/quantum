@@ -256,23 +256,28 @@ Status GetGradients(OpKernelContext* context,
 }
 
 tensorflow::Status GetNumSamples(tensorflow::OpKernelContext* context,
-                                 std::vector<unsigned int>* parsed_num_samples) {
+                                 std::vector<std::vector<unsigned int>>* parsed_num_samples) {
   const Tensor* input_num_samples;
   Status status = context->input("num_samples", &input_num_samples);
   if (!status.ok()) {
     return status;
   }
 
-  if (input_num_samples->dims() != 1) {
+  if (input_num_samples->dims() != 2) {
     return Status(tensorflow::error::INVALID_ARGUMENT,
-                  absl::StrCat("num_samples must be rank 1. Got rank ",
+                  absl::StrCat("num_samples must be rank 2. Got rank ",
                                input_num_samples->dims(), "."));
   }
 
-  const auto vec_num_samples = input_num_samples->vec<unsigned int>();
-  parsed_num_samples->reserve(vec_num_samples.dimension(0));
-  for (unsigned int i = 0; i < vec_num_samples.dimension(0); i++) {
-    parsed_num_samples->push_back(vec_num_samples(i));
+  const auto matrix_num_samples = input_num_samples->matrix<unsigned int>();
+  parsed_num_samples->reserve(matrix_num_samples.dimension(0));
+  for (unsigned int i = 0; i < matrix_num_samples.dimension(0); i++) {
+    std::vector<unsigned int> sub_parsed_num_samples;
+    sub_parsed_num_samples.reserve(matrix_num_samples.dimension(1));
+    for (int j = 0; j < matrix_num_samples.dimension(1); j++) {
+      sub_parsed_num_samples.push_back(matrix_num_samples(i, j));
+    }
+    parsed_num_samples->push_back(sub_parsed_num_samples);
   }
 
   return Status::OK();
