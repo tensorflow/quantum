@@ -168,7 +168,7 @@ REGISTER_OP("TfqSimulateSampledExpectation")
     .Input("symbol_names: string")
     .Input("symbol_values: float")
     .Input("pauli_sums: string")
-    .Input("num_samples: int32")
+    .Input("num_samples: uint32")
     .Output("expectations: float")
     .SetShapeFn([](tensorflow::shape_inference::InferenceContext *c) {
       tensorflow::shape_inference::ShapeHandle programs_shape;
