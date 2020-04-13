@@ -14,7 +14,7 @@
 # ==============================================================================
 book_path: /quantum/_book.yaml
 project_path: /quantum/_project.yaml
-description: <!--no description-->
+description: A quantum ML library for rapid prototyping of hybrid quantum-classical models. Leverage Google’s quantum  computing frameworks, all from within TensorFlow.
 landing_page:
   custom_css_path: /site-assets/css/style.css
   rows:
