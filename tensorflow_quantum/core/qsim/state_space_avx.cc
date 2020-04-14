@@ -75,7 +75,7 @@ void StateSpaceAVX::ApplyGate2(const unsigned int q0_be,
   const unsigned int q1_le = GetNumQubits() - q0_be - 1;
   if (q0_le > 2) {
     ApplyGate2HH(q0_le, q1_le, matrix);
-  } else if (q1 > 2) {
+  } else if (q1_le > 2) {
     ApplyGate2HL(q0_le, q1_le, matrix);
   } else {
     ApplyGate2LL(q0_le, q1_le, matrix);
