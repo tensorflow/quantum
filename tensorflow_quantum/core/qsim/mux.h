@@ -26,6 +26,9 @@ namespace qsim {
 StateSpace* GetStateSpace(const uint64_t num_qubits,
                           const uint64_t num_threads);
 
+Unitary* GetUnitary(const uint64_t num_qubits,
+					const uint64_t num_threads);
+
 }  // namespace qsim
 }  // namespace tfq
 
