@@ -30,7 +30,7 @@ class StateSpaceSlow : public StateSpace {
 
   virtual ~StateSpaceSlow();
 
-  StateSpaceType GetType() const override;
+  virtual StateSpaceType GetType() const override;
 
   // Reserve the memory associated with the state in this space
   virtual void CreateState() override;
@@ -40,7 +40,7 @@ class StateSpaceSlow : public StateSpace {
 
   // Return a pointer to a copy of this StateSpace.
   // NOTE: user is responsible for deleting the returned copy.
-  virtual StateSpace* Clone() const override;
+  virtual std::unique_ptr<StateSpace> Clone() const override;
 
   // Copy the state information from another statespace.
   // Assumes the state has been initialized/created.

@@ -26,8 +26,7 @@ namespace {
 
 TEST(MuxTest, GetStateSpace) {
   auto simulator = GetStateSpace(1, 1);
-  EXPECT_FALSE(simulator == nullptr);
-  delete simulator;
+  EXPECT_FALSE(simulator.get() == nullptr);
 }
 
 }  // namespace

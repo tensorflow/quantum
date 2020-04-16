@@ -43,7 +43,7 @@ class StateSpaceSSE : public StateSpace {
 
   // Return a pointer to a copy of this StateSpace.
   // NOTE: user is responsible for deleting the returned copy.
-  virtual StateSpace* Clone() const override;
+  virtual std::unique_ptr<StateSpace> Clone() const override;
 
   // Copy the state information from another statespace.
   // Assumes the state has been initialized/created.
