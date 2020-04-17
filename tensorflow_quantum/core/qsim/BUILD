@@ -56,7 +56,7 @@ cc_test(
     srcs = ["matrix_test.cc"],
     deps = [
         ":matrix",
-	"//tensorflow_quantum/core/src:gates_def",
+        "//tensorflow_quantum/core/src:gates_def",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -120,6 +120,7 @@ cc_library(
     deps = [
         ":matrix",
         ":state_space",
+        "@com_google_absl//absl/memory",
         "@local_config_tf//:libtensorflow_framework",
         "@local_config_tf//:tf_header_lib",
     ],
@@ -132,6 +133,7 @@ cc_library(
     deps = [
         ":state_space",
         ":util",
+        "@com_google_absl//absl/memory",
         "@local_config_tf//:libtensorflow_framework",
         "@local_config_tf//:tf_header_lib",
     ],
@@ -144,6 +146,7 @@ cc_library(
     deps = [
         ":state_space",
         ":util",
+        "@com_google_absl//absl/memory",
         "@local_config_tf//:libtensorflow_framework",
         "@local_config_tf//:tf_header_lib",
     ],

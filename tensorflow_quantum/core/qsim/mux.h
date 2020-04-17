@@ -24,8 +24,8 @@ limitations under the License.
 namespace tfq {
 namespace qsim {
 
-StateSpace* GetStateSpace(const uint64_t num_qubits,
-                          const uint64_t num_threads);
+std::unique_ptr<StateSpace> GetStateSpace(const uint64_t num_qubits,
+                                          const uint64_t num_threads);
 
 std::unique_ptr<UnitarySpace> GetUnitarySpace(const uint64_t num_qubits,
                                               const uint64_t num_threads);

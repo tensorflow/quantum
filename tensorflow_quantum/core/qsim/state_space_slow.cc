@@ -19,6 +19,7 @@ limitations under the License.
 #include <cstdint>
 #include <memory>
 
+#include "absl/memory/memory.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow_quantum/core/qsim/matrix.h"
 
@@ -44,9 +45,9 @@ void StateSpaceSlow::DeleteState() {
   }
 }
 
-StateSpace* StateSpaceSlow::Clone() const {
-  StateSpaceSlow* state_copy =
-      new StateSpaceSlow(GetNumQubits(), GetNumThreads());
+std::unique_ptr<StateSpace> StateSpaceSlow::Clone() const {
+  std::unique_ptr<StateSpaceSlow> state_copy =
+      absl::make_unique<StateSpaceSlow>(GetNumQubits(), GetNumThreads());
   return state_copy;
 }
 
