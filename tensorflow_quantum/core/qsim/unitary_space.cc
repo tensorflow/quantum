@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#include "tensorflow_quantum/core/qsim/unitary.h"
+#include "tensorflow_quantum/core/qsim/unitary_space.h"
 
 #include <complex>
 #include <memory>
@@ -21,18 +21,17 @@ limitations under the License.
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow_quantum/core/qsim/fuser_basic.h"
 #include "tensorflow_quantum/core/qsim/matrix.h"
-#include "tensorflow_quantum/core/qsim/util.h"
 #include "tensorflow_quantum/core/src/circuit.h"
 #include "tensorflow_quantum/core/src/circuit_parser.h"
 
 namespace tfq {
 namespace qsim {
 
-tensorflow::Status Unitary::Update(const Circuit& circuit) {
+tensorflow::Status UnitarySpace::Update(const Circuit& circuit) {
   tensorflow::Status status;
   // Special case for single qubit;
   // derived classes free to return an error.
-  if (GetDimension() <= 2) {
+  if (GetNumQubits() <= 1) {
     for (uint64_t i = 0; i < circuit.gates.size(); i++) {
       const auto& gate = circuit.gates[i];
       if (gate.num_qubits == 1) {
@@ -66,18 +65,16 @@ tensorflow::Status Unitary::Update(const Circuit& circuit) {
   return tensorflow::Status::OK();
 }
 
-bool Unitary::Valid() const {
+bool UnitarySpace::Valid() const {
   // TODO: more roubust test?
   return state_ != nullptr;
 }
 
-float* Unitary::GetRawState() const { return state_; };
+float* UnitarySpace::GetRawUnitary() const { return state_; };
 
-uint64_t Unitary::GetDimension() const { return size_ / 2; }
+uint64_t UnitarySpace::GetNumQubits() const { return num_qubits_; }
 
-uint64_t Unitary::GetNumQubits() const { return num_qubits_; }
-
-uint64_t Unitary::GetNumThreads() const { return num_threads_; }
+uint64_t UnitarySpace::GetNumThreads() const { return num_threads_; }
 
 }  // namespace qsim
 }  // namespace tfq

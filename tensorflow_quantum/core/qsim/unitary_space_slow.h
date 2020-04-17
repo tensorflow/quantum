@@ -13,60 +13,56 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#ifndef TFQ_CORE_QSIM_UNITARY_SLOW_H_
-#define TFQ_CORE_QSIM_UNITARY_SLOW_H_
+#ifndef TFQ_CORE_QSIM_UNITARY_SPACE_SLOW_H_
+#define TFQ_CORE_QSIM_UNITARY_SPACE_SLOW_H_
 
 #include <complex>
-#include <memory>
 
 #include "tensorflow/core/lib/core/status.h"
+#include "tensorflow_quantum/core/qsim/unitary_space.h"
 #include "tensorflow_quantum/core/src/circuit.h"
 
 namespace tfq {
 namespace qsim {
 
 // Handles calculations of unitary matrices that a circuit enacts.
-class UnitarySlow : public Unitary {
+class UnitarySpaceSlow : public UnitarySpace {
  public:
-  UnitarySlow(const uint64_t num_qubits, const uint64_t num_threads);
+  UnitarySpaceSlow(const uint64_t num_qubits, const uint64_t num_threads);
 
-  virtual ~Unitary() {}
+  virtual ~UnitarySpaceSlow();
 
   // Get the Unitary type.
-  virtual UnitaryType GetType() const = 0;
+  virtual UnitarySpaceType GetType() const override;
 
   // Reserve the memory associated with this Unitary.
-  virtual void CreateState() = 0;
+  virtual void CreateUnitary() override;
 
   // Free the memory associated with this Unitary.
-  virtual void DeleteState() = 0;
+  virtual void DeleteUnitary() override;
 
   // Function to apply a two qubit gate to the Unitary on indices q0 and q1.
   // Must adhere to big-endian convention of Cirq.
   virtual void ApplyGate2(const unsigned int q0, const unsigned int q1,
-                          const float* matrix) = 0;
+                          const float* matrix) override;
 
   // Function to apply a one-qubit gate if there is one qubit in the Unitary.
   // Implementations are given the option to return an error.
-  virtual tensorflow::Status ApplyGate1(const float* matrix) = 0;
+  virtual tensorflow::Status ApplyGate1(const float* matrix) override;
 
   // Set to identity matrix.
-  virtual void SetIdentity() = 0;
+  virtual void SetIdentity() override;
 
   // Get the amplitude at the given state index.
-  virtual std::complex<float> GetEntry(const uint64_t i, const uint64_t j) const = 0;
+  virtual std::complex<float> GetEntry(const uint64_t i,
+                                       const uint64_t j) const override;
 
   // Set the amplitude at the given state index
-  virtual void SetEntry(const uint64_t i, const uint64_t j, const std::complex<float>& val) = 0;
-
- protected:
-  float* state_;
-  uint64_t size_;
-  uint64_t num_qubits_;
-  uint64_t num_threads_;
+  virtual void SetEntry(const uint64_t i, const uint64_t j,
+                        const std::complex<float>& val) override;
 };
 
 }  // namespace qsim
 }  // namespace tfq
 
-#endif  // TFQ_CORE_QSIM_UNITARY_SLOW_H_
+#endif  // TFQ_CORE_QSIM_UNITARY_SPACE_SLOW_H_

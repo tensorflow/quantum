@@ -30,6 +30,11 @@ TEST(MuxTest, GetStateSpace) {
   delete simulator;
 }
 
+TEST(MuxTest, GetUnitary) {
+  auto unitary = GetUnitarySpace(1, 1);
+  EXPECT_FALSE(unitary.get() == nullptr);
+}
+
 }  // namespace
 }  // namespace qsim
 }  // namespace tfq

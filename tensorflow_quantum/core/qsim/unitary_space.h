@@ -13,8 +13,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#ifndef TFQ_CORE_QSIM_UNITARY_H_
-#define TFQ_CORE_QSIM_UNITARY_H_
+#ifndef TFQ_CORE_QSIM_UNITARY_SPACE_H_
+#define TFQ_CORE_QSIM_UNITARY_SPACE_H_
 
 #include <complex>
 #include <memory>
@@ -26,14 +26,15 @@ namespace tfq {
 namespace qsim {
 
 // Contains the allowed Unitary labels
-enum UnitaryType { SLOW };
+enum UnitarySpaceType { USLOW };
 
 // Handles calculations of unitary matrices that a circuit enacts.
-class Unitary {
+class UnitarySpace {
  public:
-  Unitary(const uint64_t num_qubits, const uint64_t num_threads)
+  UnitarySpace(const uint64_t num_qubits, const uint64_t num_threads)
       : state_(NULL),
-        size_(4 * (uint64_t{1} << num_qubits) * (uint64_t{1} << num_qubits)),
+        size_(uint64_t{4} * (uint64_t{1} << num_qubits) *
+              (uint64_t{1} << num_qubits)),
         num_qubits_(num_qubits),
         num_threads_(num_threads) {}
 
@@ -44,10 +45,7 @@ class Unitary {
   bool Valid() const;
 
   // Pointer to the raw state managed by this Unitary
-  float* GetRawState() const;
-
-  // The number of entries in this Unitary matrix.
-  uint64_t GetDimension() const;
+  float* GetRawUnitary() const;
 
   // Number of qubits this Unitary Matrix acts on.
   uint64_t GetNumQubits() const;
@@ -55,16 +53,16 @@ class Unitary {
   // Number of threads that can be used by this Unitary.
   uint64_t GetNumThreads() const;
 
-  virtual ~Unitary() {}
+  virtual ~UnitarySpace() {}
 
   // Get the Unitary type.
-  virtual UnitaryType GetType() const = 0;
+  virtual UnitarySpaceType GetType() const = 0;
 
   // Reserve the memory associated with this Unitary.
-  virtual void CreateState() = 0;
+  virtual void CreateUnitary() = 0;
 
   // Free the memory associated with this Unitary.
-  virtual void DeleteState() = 0;
+  virtual void DeleteUnitary() = 0;
 
   // Function to apply a two qubit gate to the Unitary on indices q0 and q1.
   // Must adhere to big-endian convention of Cirq.
@@ -79,10 +77,12 @@ class Unitary {
   virtual void SetIdentity() = 0;
 
   // Get the amplitude at the given state index.
-  virtual std::complex<float> GetEntry(const uint64_t i, const uint64_t j) const = 0;
+  virtual std::complex<float> GetEntry(const uint64_t i,
+                                       const uint64_t j) const = 0;
 
   // Set the amplitude at the given state index
-  virtual void SetEntry(const uint64_t i, const uint64_t j, const std::complex<float>& val) = 0;
+  virtual void SetEntry(const uint64_t i, const uint64_t j,
+                        const std::complex<float>& val) = 0;
 
  protected:
   float* state_;
@@ -94,4 +94,4 @@ class Unitary {
 }  // namespace qsim
 }  // namespace tfq
 
-#endif  // TFQ_CORE_QSIM_UNITARY_H_
+#endif  // TFQ_CORE_QSIM_UNITARY_SPACE_H_
