@@ -116,9 +116,9 @@ class ParameterShift(differentiator.Differentiator):
         # new_programs has [n_symbols, n_param_gates, n_shifts, n_programs].
         # These new_programs has programs that parameter-shift rule is applied,
         # so those programs has
-        new_programs, weights, shifts, n_param_gates = \
-            parameter_shift_util.parse_programs(
-                programs, symbol_names, symbol_values, n_symbols)
+        (new_programs, weights, shifts,
+         n_param_gates) = parameter_shift_util.parse_programs(
+             programs, symbol_names, symbol_values, n_symbols)
 
         # Reshape & transpose new_programs, weights and shifts to fit into
         # the input format of tensorflow_quantum simulator.
@@ -258,9 +258,9 @@ class ParameterShift(differentiator.Differentiator):
         # new_programs has [n_symbols, n_param_gates, n_shifts, n_programs].
         # These new_programs has programs that parameter-shift rule is applied,
         # so those programs has
-        new_programs, weights, shifts, n_param_gates = \
-            parameter_shift_util.parse_programs(
-                programs, symbol_names, symbol_values, n_symbols)
+        (new_programs, weights, shifts,
+         n_param_gates) = parameter_shift_util.parse_programs(
+             programs, symbol_names, symbol_values, n_symbols)
 
         # Reshape & transpose new_programs, weights and shifts to fit into
         # the input format of tensorflow_quantum simulator.
