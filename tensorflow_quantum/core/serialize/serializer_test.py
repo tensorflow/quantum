@@ -474,7 +474,7 @@ class SerializerTest(tf.test.TestCase, parameterized.TestCase):
         q0 = cirq.GridQubit(0, 0)
         q1 = cirq.GridQubit(0, 1)
         unsupported_circuit = cirq.Circuit(
-            cirq.ops.identity.IdentityGate(num_qubits=2)(q0, q1))
+            cirq.IdentityGate(num_qubits=2)(q0, q1))
 
         with self.assertRaisesRegex(ValueError, expected_regex="cirq.I"):
             serializer.serialize_circuit(unsupported_circuit)

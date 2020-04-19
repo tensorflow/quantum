@@ -222,11 +222,10 @@ def _identity_gate_serializer():
                                    serialized_type=bool,
                                    gate_getter=_identity_check)
     ]
-    return cirq.google.GateOpSerializer(
-        gate_type=cirq.ops.identity.IdentityGate,
-        serialized_gate_id="I",
-        args=args,
-        can_serialize_predicate=_CONSTANT_TRUE)
+    return cirq.google.GateOpSerializer(gate_type=cirq.IdentityGate,
+                                        serialized_gate_id="I",
+                                        args=args,
+                                        can_serialize_predicate=_CONSTANT_TRUE)
 
 
 def _identity_gate_deserializer():
