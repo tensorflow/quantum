@@ -83,10 +83,8 @@ class TfqSimulateExpectationOp : public tensorflow::OpKernel {
       int cur_batch_index = -1;
       int old_num_qubits = -2;
       int cur_op_index;
-      std::unique_ptr<StateSpace> test_state =
-          std::unique_ptr<StateSpace>(GetStateSpace(1, 1));
-      std::unique_ptr<StateSpace> scratch_state =
-          std::unique_ptr<StateSpace>(GetStateSpace(1, 1));
+      std::unique_ptr<StateSpace> test_state = GetStateSpace(1, 1);
+      std::unique_ptr<StateSpace> scratch_state = GetStateSpace(1, 1);
       for (int i = start; i < end; i++) {
         cur_batch_index = i / output_dim_op_size;
         cur_op_index = i % output_dim_op_size;
@@ -114,11 +112,11 @@ class TfqSimulateExpectationOp : public tensorflow::OpKernel {
           //  to implement because right now certain statespaces can't simulate
           //  all states and we use StateSpaceSlow for smaller circuits.
           if (num != old_num_qubits) {
-            test_state.reset(GetStateSpace(num, 1));
+            test_state = GetStateSpace(num, 1);
             test_state->CreateState();
 
             // Also re-allocate scratch state for expectation calculations.
-            scratch_state.reset(GetStateSpace(num, 1));
+            scratch_state = GetStateSpace(num, 1);
             scratch_state->CreateState();
           }
           // no need to update scratch_state since ComputeExpectation
