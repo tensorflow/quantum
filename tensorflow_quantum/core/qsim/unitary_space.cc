@@ -67,10 +67,10 @@ tensorflow::Status UnitarySpace::Update(const Circuit& circuit) {
 
 bool UnitarySpace::Valid() const {
   // TODO: more roubust test?
-  return state_ != nullptr;
+  return unitary_ != nullptr;
 }
 
-float* UnitarySpace::GetRawUnitary() const { return state_; };
+float* UnitarySpace::GetRawUnitary() const { return unitary_; };
 
 uint64_t UnitarySpace::GetNumQubits() const { return num_qubits_; }
 

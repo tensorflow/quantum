@@ -32,8 +32,8 @@ enum UnitarySpaceType { USLOW };
 class UnitarySpace {
  public:
   UnitarySpace(const uint64_t num_qubits, const uint64_t num_threads)
-      : state_(NULL),
-        size_(uint64_t{4} * (uint64_t{1} << num_qubits) *
+      : unitary_(NULL),
+        size_(uint64_t{2} * (uint64_t{1} << num_qubits) *
               (uint64_t{1} << num_qubits)),
         num_qubits_(num_qubits),
         num_threads_(num_threads) {}
@@ -76,16 +76,16 @@ class UnitarySpace {
   // Set to identity matrix.
   virtual void SetIdentity() = 0;
 
-  // Get the amplitude at the given state index.
+  // Get the matrix entry at the given index.
   virtual std::complex<float> GetEntry(const uint64_t i,
                                        const uint64_t j) const = 0;
 
-  // Set the amplitude at the given state index
+  // Set the matrix entry at the given index
   virtual void SetEntry(const uint64_t i, const uint64_t j,
                         const std::complex<float>& val) = 0;
 
  protected:
-  float* state_;
+  float* unitary_;
   uint64_t size_;
   uint64_t num_qubits_;
   uint64_t num_threads_;

@@ -76,13 +76,13 @@ UnitarySpaceType UnitarySpaceSlow::GetType() const {
 }
 
 void UnitarySpaceSlow::CreateUnitary() {
-  state_ = (float*)malloc(sizeof(float) * size_);
+  unitary_ = (float*)malloc(sizeof(float) * size_);
 }
 
 void UnitarySpaceSlow::DeleteUnitary() {
   if (GetRawUnitary() != NULL) {
-    free(state_);
-    state_ = NULL;
+    free(unitary_);
+    unitary_ = NULL;
   }
 }
 
@@ -300,27 +300,27 @@ tensorflow::Status UnitarySpaceSlow::ApplyGate1(const float* matrix) {
   float mat_00_r, mat_01_r, mat_10_r, mat_11_r;
   float mat_00_i, mat_01_i, mat_10_i, mat_11_i;
 
-  auto state = GetRawUnitary();
-  mat_00_r = dot_one_r(state[0], state[1], state[4], state[5], 0, matrix);
-  mat_00_i = dot_one_i(state[0], state[1], state[4], state[5], 0, matrix);
+  auto data = GetRawUnitary();
+  mat_00_r = dot_one_r(data[0], data[1], data[4], data[5], 0, matrix);
+  mat_00_i = dot_one_i(data[0], data[1], data[4], data[5], 0, matrix);
 
-  mat_01_r = dot_one_r(state[2], state[3], state[6], state[7], 0, matrix);
-  mat_01_i = dot_one_i(state[2], state[3], state[6], state[7], 0, matrix);
+  mat_01_r = dot_one_r(data[2], data[3], data[6], data[7], 0, matrix);
+  mat_01_i = dot_one_i(data[2], data[3], data[6], data[7], 0, matrix);
 
-  mat_10_r = dot_one_r(state[0], state[1], state[4], state[5], 1, matrix);
-  mat_10_i = dot_one_i(state[0], state[1], state[4], state[5], 1, matrix);
+  mat_10_r = dot_one_r(data[0], data[1], data[4], data[5], 1, matrix);
+  mat_10_i = dot_one_i(data[0], data[1], data[4], data[5], 1, matrix);
 
-  mat_11_r = dot_one_r(state[2], state[3], state[6], state[7], 1, matrix);
-  mat_11_i = dot_one_i(state[2], state[3], state[6], state[7], 1, matrix);
+  mat_11_r = dot_one_r(data[2], data[3], data[6], data[7], 1, matrix);
+  mat_11_i = dot_one_i(data[2], data[3], data[6], data[7], 1, matrix);
 
-  state[0] = mat_00_r;
-  state[1] = mat_00_i;
-  state[2] = mat_01_r;
-  state[3] = mat_01_i;
-  state[4] = mat_10_r;
-  state[5] = mat_10_i;
-  state[6] = mat_11_r;
-  state[7] = mat_11_i;
+  data[0] = mat_00_r;
+  data[1] = mat_00_i;
+  data[2] = mat_01_r;
+  data[3] = mat_01_i;
+  data[4] = mat_10_r;
+  data[5] = mat_10_i;
+  data[6] = mat_11_r;
+  data[7] = mat_11_i;
 
   return tensorflow::Status::OK();
 }

@@ -53,11 +53,11 @@ class UnitarySpaceSlow : public UnitarySpace {
   // Set to identity matrix.
   virtual void SetIdentity() override;
 
-  // Get the amplitude at the given state index.
+  // Get the matrix entry at the given index.
   virtual std::complex<float> GetEntry(const uint64_t i,
                                        const uint64_t j) const override;
 
-  // Set the amplitude at the given state index
+  // Set the matrix entry at the given index
   virtual void SetEntry(const uint64_t i, const uint64_t j,
                         const std::complex<float>& val) override;
 };
