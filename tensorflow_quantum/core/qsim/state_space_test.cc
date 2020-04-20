@@ -33,8 +33,7 @@ namespace {
 TEST(StateSpaceTest, Initialization) {
   uint64_t num_qubits = 4;
   uint64_t num_threads = 5;
-  auto state =
-      std::unique_ptr<StateSpace>(GetStateSpace(num_qubits, num_threads));
+  auto state = GetStateSpace(num_qubits, num_threads);
   ASSERT_FALSE(state->Valid());
   ASSERT_FALSE(state->GetRawState());
   ASSERT_EQ(state->GetDimension(), 1 << num_qubits);
@@ -63,8 +62,8 @@ TEST(StateSpaceTest, Initialization) {
 }
 
 TEST(StateSpaceTest, CloneTest) {
-  auto state = std::unique_ptr<StateSpace>(GetStateSpace(5, 3));
-  auto state_clone = std::unique_ptr<StateSpace>(state->Clone());
+  auto state = GetStateSpace(5, 3);
+  auto state_clone = state->Clone();
 
   ASSERT_EQ(state->GetDimension(), state_clone->GetDimension());
   ASSERT_EQ(state->GetNumQubits(), state_clone->GetNumQubits());
@@ -72,7 +71,7 @@ TEST(StateSpaceTest, CloneTest) {
 }
 
 TEST(StateSpaceTest, Amplitudes) {
-  auto state = std::unique_ptr<StateSpace>(GetStateSpace(2, 1));
+  auto state = GetStateSpace(2, 1);
   state->CreateState();
 
   std::complex<float> ampl_00(0.1, 0.5);
@@ -98,13 +97,13 @@ TEST(StateSpaceTest, Amplitudes) {
 }
 
 TEST(StateSpaceTest, CopyFromGetRealInnerProduct) {
-  auto state = std::unique_ptr<StateSpace>(GetStateSpace(12, 1));
+  auto state = GetStateSpace(12, 1);
   state->CreateState();
   for (uint64_t i = 0; i < state->GetDimension(); i++) {
     state->SetAmpl(i, std::complex<float>(std::sqrt(i), std::sqrt(i)));
   }
 
-  auto state_clone = std::unique_ptr<StateSpace>(state->Clone());
+  auto state_clone = state->Clone();
   state_clone->CreateState();
   state_clone->CopyFrom(*state);
 
@@ -120,7 +119,7 @@ TEST(StateSpaceTest, CopyFromGetRealInnerProduct) {
 }
 
 TEST(StateSpaceTest, ApplyGate1) {
-  auto state = std::unique_ptr<StateSpace>(GetStateSpace(5, 1));
+  auto state = GetStateSpace(5, 1);
   state->CreateState();
   const float matrix_h[] = {1.0 / std::sqrt(2), 0.0, 1.0 / std::sqrt(2),  0.0,
                             1.0 / std::sqrt(2), 0.0, -1.0 / std::sqrt(2), 0.0};
@@ -149,7 +148,7 @@ TEST(StateSpaceTest, ApplyGate1) {
 }
 
 TEST(StateSpaceTest, ApplyGate2) {
-  auto state = std::unique_ptr<StateSpace>(GetStateSpace(6, 1));
+  auto state = GetStateSpace(6, 1);
   state->CreateState();
   // clang-format off
   const float matrix_hi[] = {1.0 / std::sqrt(2), 0.0, 0.0, 0.0, 1.0 / std::sqrt(2), 0.0, 0.0, 0.0,
@@ -181,7 +180,7 @@ TEST(StateSpaceTest, Update) {
   std::vector<Gate> gates_small;
   gates_small.push_back(gate_small);
   const Circuit circuit_small(1, gates_small);
-  auto state_small = std::unique_ptr<StateSpace>(GetStateSpace(1, 1));
+  auto state_small = GetStateSpace(1, 1);
   state_small->CreateState();
   state_small->SetStateZero();
   ASSERT_EQ(state_small->Update(circuit_small), tensorflow::Status::OK());
@@ -206,7 +205,7 @@ TEST(StateSpaceTest, Update) {
   gates.push_back(gate_1);
   gates.push_back(gate_i);
   const Circuit circuit(num_qubits, gates);
-  auto state = std::unique_ptr<StateSpace>(GetStateSpace(num_qubits, 1));
+  auto state = GetStateSpace(num_qubits, 1);
   state->CreateState();
   state->SetStateZero();
   ASSERT_EQ(state->Update(circuit), tensorflow::Status::OK());
@@ -227,8 +226,8 @@ TEST(StateSpaceTest, ComputeExpectation) {
   const uint64_t num_qubits(9);
   const uint64_t q0(3);
   const uint64_t q1(7);
-  auto state = std::unique_ptr<StateSpace>(GetStateSpace(num_qubits, 1));
-  auto scratch = std::unique_ptr<StateSpace>(GetStateSpace(num_qubits, 1));
+  auto state = GetStateSpace(num_qubits, 1);
+  auto scratch = GetStateSpace(num_qubits, 1);
   state->CreateState();
   scratch->CreateState();
 
@@ -387,7 +386,7 @@ TEST(StateSpaceTest, ComputeExpectation) {
 }
 
 TEST(StateSpaceTest, SampleStateOneSample) {
-  auto equal = std::unique_ptr<StateSpace>(GetStateSpace(1, 1));
+  auto equal = GetStateSpace(1, 1);
   equal->CreateState();
   equal->SetAmpl(0, std::complex<float>(1.0, 0.));
   equal->SetAmpl(1, std::complex<float>(0.0, 0.));
@@ -398,7 +397,7 @@ TEST(StateSpaceTest, SampleStateOneSample) {
 }
 
 TEST(StateSpaceTest, SampleStateZeroSamples) {
-  auto equal = std::unique_ptr<StateSpace>(GetStateSpace(1, 1));
+  auto equal = GetStateSpace(1, 1);
   equal->CreateState();
   equal->SetAmpl(0, std::complex<float>(1.0, 0.));
   equal->SetAmpl(1, std::complex<float>(0.0, 0.));
@@ -409,7 +408,7 @@ TEST(StateSpaceTest, SampleStateZeroSamples) {
 }
 
 TEST(StateSpaceTest, SampleStateEqual) {
-  auto equal = std::unique_ptr<StateSpace>(GetStateSpace(1, 1));
+  auto equal = GetStateSpace(1, 1);
   equal->CreateState();
   equal->SetAmpl(0, std::complex<float>(0.707, 0.));
   equal->SetAmpl(1, std::complex<float>(0.707, 0.));
@@ -429,7 +428,7 @@ TEST(StateSpaceTest, SampleStateEqual) {
 }
 
 TEST(StateSpaceTest, SampleStateSkew) {
-  auto skew = std::unique_ptr<StateSpace>(GetStateSpace(1, 1));
+  auto skew = GetStateSpace(1, 1);
   skew->CreateState();
 
   std::vector<float> rots = {0.1, 0.3, 0.5, 0.7, 0.9};
@@ -454,7 +453,7 @@ TEST(StateSpaceTest, SampleStateSkew) {
 }
 
 TEST(StateSpaceTest, SampleStateComplexDist) {
-  auto state = std::unique_ptr<StateSpace>(GetStateSpace(3, 1));
+  auto state = GetStateSpace(3, 1);
   state->CreateState();
 
   std::vector<float> probs = {0.05, 0.2, 0.05, 0.2, 0.05, 0.2, 0.05, 0.2};
@@ -480,8 +479,8 @@ TEST(StateSpaceTest, ComputeSampledExpectationFew) {
   const uint64_t num_qubits(5);
   const uint64_t q0(1);
   const uint64_t q1(2);
-  auto state = std::unique_ptr<StateSpace>(GetStateSpace(num_qubits, 1));
-  auto scratch = std::unique_ptr<StateSpace>(GetStateSpace(num_qubits, 1));
+  auto state = GetStateSpace(num_qubits, 1);
+  auto scratch = GetStateSpace(num_qubits, 1);
   state->CreateState();
   scratch->CreateState();
 
@@ -521,8 +520,8 @@ TEST(StateSpaceTest, ComputeSampledExpectation) {
   const uint64_t q0(1);
   const uint64_t q1(3);
   const int m(100000);
-  auto state = std::unique_ptr<StateSpace>(GetStateSpace(num_qubits, 1));
-  auto scratch = std::unique_ptr<StateSpace>(GetStateSpace(num_qubits, 1));
+  auto state = GetStateSpace(num_qubits, 1);
+  auto scratch = GetStateSpace(num_qubits, 1);
   state->CreateState();
   scratch->CreateState();
 

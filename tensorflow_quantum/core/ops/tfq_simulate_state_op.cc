@@ -77,8 +77,7 @@ class TfqSimulateStateOp : public tensorflow::OpKernel {
     auto output_tensor = output->matrix<std::complex<float>>();
 
     auto DoWork = [&](int start, int end) {
-      std::unique_ptr<StateSpace> state =
-          std::unique_ptr<StateSpace>(GetStateSpace(1, 1));
+      std::unique_ptr<StateSpace> state = GetStateSpace(1, 1);
       int old_num_qubits = -1;
       for (int i = start; i < end; i++) {
         Program program = programs[i];
@@ -95,7 +94,7 @@ class TfqSimulateStateOp : public tensorflow::OpKernel {
         //  tricky to implement because right now certain statespaces can't
         //  simulate all states and we use StateSpaceSlow for smaller circuits.
         if (num != old_num_qubits) {
-          state.reset(GetStateSpace(num, 1));
+          state = GetStateSpace(num, 1);
           state->CreateState();
         }
         state->SetStateZero();

@@ -90,7 +90,7 @@ class StateSpace {
 
   // Return a pointer to a clone of this StateSpace that is unitialized.
   // NOTE: user is responsible for deleting the returned copy.
-  virtual StateSpace* Clone() const = 0;
+  virtual std::unique_ptr<StateSpace> Clone() const = 0;
 
   // Copy the contents of others state into this state. Will not
   // check if state has been initialized.
