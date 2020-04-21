@@ -46,6 +46,14 @@ py_library(
     ],
 )
 
+py_library(
+    name = "common_input_checks",
+    srcs = ["common_input_checks.py"],
+    deps = [
+        "//tensorflow_quantum/python:util",
+    ],
+)
+
 py_test(
     name = "state_test",
     srcs = ["state_test.py"],
@@ -85,6 +93,16 @@ py_test(
     python_version = "PY3",
     deps = [
         ":sample",
+        "//tensorflow_quantum/python:util",
+    ],
+)
+
+py_test(
+    name = "common_input_checks_test",
+    srcs = ["common_input_checks_test.py"],
+    python_version = "PY3",
+    deps = [
+        ":common_input_checks",
         "//tensorflow_quantum/python:util",
     ],
 )
