@@ -38,3 +38,21 @@ def padded_to_ragged(masked_state):
     mask = tf.math.less(abs_state, tf.constant(1.1, dtype=abs_state.dtype))
     state_ragged = tf.ragged.boolean_mask(masked_state, mask)
     return state_ragged
+
+
+@tf.function
+def padded_to_ragged2d(masked_state):
+    """Utility `tf.function` that converts a 2d padded tensor to ragged.
+
+    Convert a [batch, dim, dim] `tf.Tensor` padded with -2 to a
+    `tf.RaggedTensor` using 2d boolean masking.
+
+    Args:
+        masked_state: `tf.Tensor` of rank 3 with -2 padding.
+    Returns:
+        state_ragged: `tf.RaggedTensor` of rank 3 with no -2 padding where the
+            outer most dimensions are now ragged instead of padded.
+    """
+    col_mask = tf.abs(tf.cast(masked_state[:, 0], tf.float32)) < 1.1
+    masked = tf.ragged.boolean_mask(masked_state, col_mask)
+    return padded_to_ragged(masked)

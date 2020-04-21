@@ -31,6 +31,7 @@ sh_binary(
         "setup.py",
 
         # Dependencies that the PIP package will import.
+        "//tensorflow_quantum/core/ops:tfq_unitary_op_py",
         "//tensorflow_quantum/core/ops:tfq_utility_ops_py",
         "//tensorflow_quantum/core/ops:tfq_simulate_ops_py",
         "//tensorflow_quantum/core/serialize:serializer",

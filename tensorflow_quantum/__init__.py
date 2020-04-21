@@ -15,7 +15,8 @@
 """Module functions for tensorflow_quantum.*"""
 
 # Import basic ops and op getters.
-from tensorflow_quantum.core import (append_circuit, get_expectation_op,
+from tensorflow_quantum.core import (append_circuit, calculate_unitary,
+                                     get_expectation_op,
                                      get_sampled_expectation_op,
                                      get_sampling_op, get_state_op,
                                      padded_to_ragged)

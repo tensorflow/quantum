@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 """Imports to tensorflow_quantum.core.* level."""
+from tensorflow_quantum.core.ops import calculate_unitary
 # Import getters for constructing ops.
 from tensorflow_quantum.core.ops import (get_expectation_op,
                                          get_sampled_expectation_op,
