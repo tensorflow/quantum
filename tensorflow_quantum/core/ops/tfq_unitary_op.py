@@ -24,8 +24,8 @@ def calculate_unitary(programs, symbol_names, symbol_values):
     """Calculate the unitary matrix for the given circuits.
 
 
-	>>> qubit = cirq.GridQubit(0, 0)
-	>>> symbol = sympy.Symbol('alpha')
+    >>> qubit = cirq.GridQubit(0, 0)
+    >>> symbol = sympy.Symbol('alpha')
     >>> my_circuit = cirq.Circuit(cirq.H(qubit) ** symbol)
     >>> tensor_circuit = tfq.convert_to_tensor([my_circuit])
     >>> tfq.calculate_unitary(tensor_circuit, ['alpha'], [[0.2]])
@@ -43,14 +43,14 @@ def calculate_unitary(programs, symbol_names, symbol_values):
             `programs`.
         symbol_values: `tf.Tensor` of real numbers with shape
             [batch_size, n_params] specifying parameter values to resolve
-            into the circuits specificed by programs, following the ordering
+            into the circuits specified by programs, following the ordering
             dictated by `symbol_names`.
 
     Returns:
-        `tf.RaggedTensor` with shape [batch_size, 2*n_qubits[i], 2*n_qubits[i]]
-        	where n_qubits[i] is the number of qubits for program `i` in
-        	`programs`. Each entry coresponds to the unitary matrix that circuit
-        	enacts.
+        `tf.RaggedTensor` with shape
+            [batch_size, 2**n_qubits[i], 2**n_qubits[i]] where n_qubits[i] is
+            the number of qubits for program `i` in `programs`. Each entry
+            corresponds to the unitary matrix that circuit enacts.
     """
     return tfq_utility_ops.padded_to_ragged2d(
         OP_MODULE.tfq_calculate_unitary(programs, symbol_names,

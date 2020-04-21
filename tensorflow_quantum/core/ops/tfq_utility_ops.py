@@ -34,6 +34,7 @@ def padded_to_ragged(masked_state):
     Returns:
         state_ragged: State tensor without padding as a `tf.RaggedTensor`.
     """
+    # All valid values will be < 1, anything > 1 is a padding entry.
     abs_state = tf.abs(tf.cast(masked_state, tf.float32))
     mask = tf.math.less(abs_state, tf.constant(1.1, dtype=abs_state.dtype))
     state_ragged = tf.ragged.boolean_mask(masked_state, mask)
@@ -53,6 +54,7 @@ def padded_to_ragged2d(masked_state):
         state_ragged: `tf.RaggedTensor` of rank 3 with no -2 padding where the
             outer most dimensions are now ragged instead of padded.
     """
+    # All valid values will be < 1, anything > 1 is a padding entry.
     col_mask = tf.abs(tf.cast(masked_state[:, 0], tf.float32)) < 1.1
     masked = tf.ragged.boolean_mask(masked_state, col_mask)
     return padded_to_ragged(masked)
