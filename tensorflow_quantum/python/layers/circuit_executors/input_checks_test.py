@@ -12,69 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""Tests for tensorflow_quantum.layers.circuit_executors.expectation."""
+"""Tests for tensorflow_quantum.layers.circuit_executors.input_checks."""
 import numpy as np
 import sympy
 import tensorflow as tf
 
 import cirq
-from tensorflow_quantum.python.layers.circuit_executors import common_input_checks
+from tensorflow_quantum.python.layers.circuit_executors import input_checks
 from tensorflow_quantum.python import util
 
 
-def _gen_single_bit_rotation_problem(bit, symbols):
-    """Generate a toy problem on 1 qubit."""
-    starting_state = np.random.uniform(0, 2 * np.pi, 3)
-    circuit = cirq.Circuit(
-        cirq.Rx(starting_state[0])(bit),
-        cirq.Ry(starting_state[1])(bit),
-        cirq.Rz(starting_state[2])(bit),
-        cirq.Rz(symbols[2])(bit),
-        cirq.Ry(symbols[1])(bit),
-        cirq.Rx(symbols[0])(bit))
+class ExpandCircuitsTest(tf.test.TestCase):
+    """Confirm circuits and symbols are upgraded correctly."""
 
-    return circuit
-
-
-class ExpectationTest(tf.test.TestCase):
-    """Basic tests for the expectation layer."""
-
-    def test_expectation_instantiate(self):
-        """Test that Expectation instantiates correctly."""
-        expectation.Expectation()
-        expectation.Expectation(backend=cirq.Simulator())
-        expectation.Expectation(
-            differentiator=linear_combination.ForwardDifference())
-
-    def test_expectation_instantiate_error(self):
-        """Test that Expectation errors with bad inputs."""
-
-        class MySampler(cirq.Sampler):
-            """Class to test sampler detection in Expectation."""
-
-            def run_sweep(self):
-                """do nothing."""
-                return
-
-        with self.assertRaisesRegex(TypeError,
-                                    expected_regex="SampledExpectation"):
-            expectation.Expectation(backend=MySampler())
-
-        with self.assertRaisesRegex(
-                TypeError, expected_regex="SimulatesFinalState or None"):
-            expectation.Expectation(backend='junk')
-
-        with self.assertRaisesRegex(
-                TypeError, expected_regex="tfq.differentiators.Differentiator"):
-            expectation.Expectation(differentiator='junk')
-
-    def test_expectation_type_inputs_error(self):
-        """Test that expectation errors within Keras call."""
+    def test_expand_circuits_type_inputs_error(self):
+        """Test that expand_circuits errors on bad types."""
 
         bit = cirq.GridQubit(0, 0)
         symbol = sympy.Symbol('alpha')
-        test_pstring = cirq.Z(bit)
-        test_psum = cirq.PauliSum.from_pauli_strings([test_pstring])
         symb_circuit = cirq.Circuit(cirq.H(bit)**symbol)
         reg_circuit = cirq.Circuit(cirq.H(bit))
 
@@ -127,8 +82,6 @@ class ExpectationTest(tf.test.TestCase):
 
         bit = cirq.GridQubit(0, 0)
         symbol = sympy.Symbol('alpha')
-        test_pstring = cirq.Z(bit)
-        test_psum = cirq.PauliSum.from_pauli_strings([test_pstring])
         symb_circuit = cirq.Circuit(cirq.H(bit)**symbol)
         reg_circuit = cirq.Circuit(cirq.H(bit))
 
@@ -203,22 +156,6 @@ class ExpectationTest(tf.test.TestCase):
                                   symbol_values=[[0.5]],
                                   operators=test_psum)
 
-    def test_expectation_simple_tf_train(self):
-        """Train a layer using standard tf (not keras).
-        This is a subtle test that will work since we don't use keras compile.
-        """
-        bit = cirq.GridQubit(0, 0)
-        circuit = \
-            cirq.Circuit(cirq.Rx(sympy.Symbol('theta'))(bit))
-        op = cirq.Z(bit)
-        layer = expectation.Expectation()
-        optimizer = tf.optimizers.Adam(learning_rate=0.05)
-        for _ in range(200):
-            with tf.GradientTape() as tape:
-                circuit_out = layer(circuit,
-                                    symbol_names=['theta'],
-                                    operators=op)
-                mse = tf.square(tf.reduce_sum(tf.subtract(circuit_out, -1)))
-            grads = tape.gradient(mse, layer.trainable_weights)
-            optimizer.apply_gradients(zip(grads, layer.trainable_weights))
-        self.assertAllClose(mse.numpy(), 0, atol=1e-3)
+    def test_allowed_cases(self):
+        """Ensure all allowed input combinations are upgraded correctly."""
+        

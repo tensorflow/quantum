@@ -13,6 +13,13 @@
 # limitations under the License.
 # ==============================================================================
 """Input checks common to circuit execution layers."""
+import numpy as np
+import sympy
+import tensorflow as tf
+
+import cirq
+from tensorflow_quantum.python import util
+
 
 def expand_circuits(self, inputs, symbol_names=None, symbol_values=None):
     """Function for consistently expanding input circuits.
