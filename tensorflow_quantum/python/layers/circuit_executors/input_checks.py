@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""Input checks common to circuit construction layers."""
+"""Input checks common to circuit execution layers."""
 
 def expand_circuits(self, inputs, symbol_names=None, symbol_values=None):
     """Function for consistently expanding input circuits.

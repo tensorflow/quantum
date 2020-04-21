@@ -18,8 +18,7 @@ import sympy
 import tensorflow as tf
 
 import cirq
-from tensorflow_quantum.python.layers.circuit_executors import expectation
-from tensorflow_quantum.python.differentiators import linear_combination
+from tensorflow_quantum.python.layers.circuit_executors import common_input_checks
 from tensorflow_quantum.python import util
 
 

@@ -47,8 +47,8 @@ py_library(
 )
 
 py_library(
-    name = "common_input_checks",
-    srcs = ["common_input_checks.py"],
+    name = "input_checks",
+    srcs = ["input_checks.py"],
     deps = [
         "//tensorflow_quantum/python:util",
     ],
@@ -98,11 +98,11 @@ py_test(
 )
 
 py_test(
-    name = "common_input_checks_test",
-    srcs = ["common_input_checks_test.py"],
+    name = "input_checks_test",
+    srcs = ["input_checks_test.py"],
     python_version = "PY3",
     deps = [
-        ":common_input_checks",
+        ":input_checks",
         "//tensorflow_quantum/python:util",
     ],
 )
