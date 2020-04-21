@@ -359,6 +359,10 @@ def _get_valid_circuit_proto_pairs():
                            ['exponent', 'exponent_scalar', 'global_shift'],
                            [1.0, 1.0, -0.5], ['0_0'])),
 
+        # Identity
+        (cirq.Circuit(cirq.I(q0)),
+         _build_gate_proto("I", ['unused'], [True], ['0_0'])),
+
         # FSimGate
         (cirq.Circuit(cirq.FSimGate(theta=0.1, phi=0.2)(q0, q1)),
          _build_gate_proto("FSIM",
@@ -465,10 +469,12 @@ class SerializerTest(tf.test.TestCase, parameterized.TestCase):
         with self.assertRaises(ValueError):
             serializer.serialize_circuit(unsupported_circuit)
 
-    def test_serialize_circuit_with_identity(self):
-        """A more generous error message for circuits containing cirq.I."""
+    def test_serialize_circuit_with_large_identity(self):
+        """Ensure that multi qubit identity errors correctly."""
         q0 = cirq.GridQubit(0, 0)
-        unsupported_circuit = cirq.Circuit.from_ops(cirq.I(q0))
+        q1 = cirq.GridQubit(0, 1)
+        unsupported_circuit = cirq.Circuit(
+            cirq.IdentityGate(num_qubits=2)(q0, q1))
 
         with self.assertRaisesRegex(ValueError, expected_regex="cirq.I"):
             serializer.serialize_circuit(unsupported_circuit)
