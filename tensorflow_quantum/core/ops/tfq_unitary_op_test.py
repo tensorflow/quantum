@@ -72,8 +72,7 @@ class UnitaryTest(tf.test.TestCase, parameterized.TestCase):
                                     'Unparseable proto'):
             # programs tensor has the right type, but invalid value.
             tfq_unitary_op.calculate_unitary(['junk'] * batch_size,
-                                                symbol_names,
-                                                symbol_values_array)
+                                             symbol_names, symbol_values_array)
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'Could not find symbol in parameter map'):
@@ -85,7 +84,7 @@ class UnitaryTest(tf.test.TestCase, parameterized.TestCase):
         with self.assertRaisesRegex(TypeError, 'Cannot convert'):
             # programs tensor has the wrong type.
             tfq_unitary_op.calculate_unitary([1] * batch_size, symbol_names,
-                                                symbol_values_array)
+                                             symbol_values_array)
 
         with self.assertRaisesRegex(TypeError, 'Cannot convert'):
             # symbol_names tensor has the wrong type.
@@ -143,16 +142,9 @@ class UnitaryTest(tf.test.TestCase, parameterized.TestCase):
         tfq_empty_u = tfq_unitary_op.calculate_unitary(
             util.convert_to_tensor([cirq.Circuit()]), [], [[]])
 
-        self.assertAllClose(tfq_empty_u, [empty_u], atol=1e-5) # wrap in batch.
+        self.assertAllClose(tfq_empty_u, [empty_u], atol=1e-5)  # wrap in batch.
 
-    @parameterized.parameters([
-        {
-            'n_qubits': 6
-        },
-        {
-            'n_qubits': 7
-        }
-    ])
+    @parameterized.parameters([{'n_qubits': 6}, {'n_qubits': 7}])
     def test_calculate_unitary_consistency_symbol_free(self, n_qubits):
         """Test calculate_unitary works without symbols."""
         qubits = cirq.GridQubit.rect(1, n_qubits)
@@ -166,14 +158,7 @@ class UnitaryTest(tf.test.TestCase, parameterized.TestCase):
 
         self.assertAllClose(tfq_results, results, atol=1e-5)
 
-    @parameterized.parameters([
-        {
-            'n_qubits': 4
-        },
-        {
-            'n_qubits': 5
-        }
-    ])
+    @parameterized.parameters([{'n_qubits': 4}, {'n_qubits': 5}])
     def test_calculate_unitary_consistency(self, n_qubits):
         """Test that calculate_unitary works with symbols."""
         qubits = cirq.GridQubit.rect(1, n_qubits)
@@ -187,8 +172,7 @@ class UnitaryTest(tf.test.TestCase, parameterized.TestCase):
                 values[i][j] = resolver_batch[i][symbols[j]]
 
         tfq_results = tfq_unitary_op.calculate_unitary(
-            util.convert_to_tensor(circuit_batch), symbols,
-            values)
+            util.convert_to_tensor(circuit_batch), symbols, values)
 
         results = []
         for circuit, resolver in zip(circuit_batch, resolver_batch):

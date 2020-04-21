@@ -53,5 +53,5 @@ def calculate_unitary(programs, symbol_names, symbol_values):
         	enacts.
     """
     return tfq_utility_ops.padded_to_ragged2d(
-    	OP_MODULE.tfq_calculate_unitary(
-    		programs, symbol_names, tf.cast(symbol_values, tf.float32)))
+        OP_MODULE.tfq_calculate_unitary(programs, symbol_names,
+                                        tf.cast(symbol_values, tf.float32)))
