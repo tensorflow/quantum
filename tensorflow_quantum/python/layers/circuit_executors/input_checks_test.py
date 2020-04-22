@@ -35,127 +35,39 @@ class ExpandCircuitsTest(tf.test.TestCase):
 
         with self.assertRaisesRegex(TypeError,
                                     expected_regex="string or sympy.Symbol"):
-            expectation.Expectation()(symb_circuit,
-                                      symbol_names=[symbol, 5.0],
-                                      operators=test_psum)
+            expand_circuits(symb_circuit, symbol_names=[symbol, 5.0])
 
         with self.assertRaisesRegex(ValueError,
                                     expected_regex="must be unique."):
-            expectation.Expectation()(symb_circuit,
-                                      symbol_names=[symbol, symbol],
-                                      operators=test_psum)
+            expand_circuits(symb_circuit, symbol_names=[symbol, symbol])
 
         with self.assertRaisesRegex(TypeError,
                                     expected_regex="cannot be parsed"):
-            expectation.Expectation()(symb_circuit,
-                                      symbol_names='junk',
-                                      operators=test_psum)
+            expand_circuits(symb_circuit, symbol_names='junk')
 
         with self.assertRaisesRegex(TypeError,
                                     expected_regex="cannot be parsed"):
-            expectation.Expectation()(symb_circuit,
-                                      symbol_names=[symbol],
-                                      symbol_values='junk',
-                                      operators=test_psum)
+            expand_circuits(symb_circuit, symbol_names=[symbol],
+                            symbol_values='junk')
 
         with self.assertRaisesRegex(TypeError,
                                     expected_regex="cannot be parsed"):
-            expectation.Expectation()('junk',
-                                      symbol_names=[symbol],
-                                      symbol_values=[[0.5]],
-                                      operators=test_psum)
+            expand_circuits('junk', symbol_names=[symbol],
+                            symbol_values=[[0.5]])
 
-        with self.assertRaisesRegex(RuntimeError,
-                                    expected_regex="operators not provided"):
-            expectation.Expectation()(symb_circuit,
-                                      symbol_names=[symbol],
-                                      symbol_values=[[0.5]])
-
-        with self.assertRaisesRegex(Exception,
-                                    expected_regex="Unknown initializer"):
-            expectation.Expectation()(reg_circuit,
-                                      operators=test_psum,
-                                      initializer='junk')
-
-    def test_expectation_op_error(self):
-        """Test that expectation errors within underlying ops correctly."""
-
-        bit = cirq.GridQubit(0, 0)
-        symbol = sympy.Symbol('alpha')
-        symb_circuit = cirq.Circuit(cirq.H(bit)**symbol)
-        reg_circuit = cirq.Circuit(cirq.H(bit))
-
-        with self.assertRaisesRegex(Exception,
-                                    expected_regex="Could not find symbol"):
-            # No symbol matchups.
-            expectation.Expectation()([symb_circuit], operators=test_psum)
-
-        with self.assertRaisesRegex(Exception,
-                                    expected_regex="Unparseable proto"):
-            # Proto is unparseable.
-            expectation.Expectation()([reg_circuit],
-                                      operators=tf.convert_to_tensor(
-                                          [['bad_operator']]))
-
-        with self.assertRaisesRegex(Exception, expected_regex="rank 2"):
-            # Operators has wrong rank.
-            expectation.Expectation()([reg_circuit],
-                                      operators=util.convert_to_tensor(
-                                          [test_psum]))
-
-        with self.assertRaisesRegex(Exception, expected_regex="rank 2"):
-            # symbol_values has wrong rank.
-            expectation.Expectation()([symb_circuit],
-                                      symbol_names=[symbol],
-                                      symbol_values=[0.5],
-                                      operators=test_psum)
-
-        with self.assertRaisesRegex(Exception, expected_regex="do not match."):
-            # Wrong batch size for pauli operators.
-            expectation.Expectation()(symb_circuit,
-                                      symbol_names=[symbol],
-                                      operators=[[test_psum], [test_psum]])
-
-    def test_static_cases(self):
-        """Run inputs through in complex cases."""
-
-        bit = cirq.GridQubit(0, 0)
-        symbol = sympy.Symbol('alpha')
-        test_pstring = cirq.Z(bit)
-        test_psum = cirq.PauliSum.from_pauli_strings([test_pstring])
-        symb_circuit = cirq.Circuit(cirq.H(bit)**symbol)
-        reg_circuit = cirq.Circuit(cirq.H(bit))
-
-        # Passing a 2d operators input requires a 1d circuit input.
-        expectation.Expectation()([reg_circuit, reg_circuit],
-                                  operators=[[test_psum, test_psum],
-                                             [test_psum, test_psum]])
-
-        # Passing 2d operators along with other inputs.
-        expectation.Expectation()([symb_circuit, symb_circuit],
-                                  symbol_names=[symbol],
-                                  operators=[[test_psum, test_psum],
-                                             [test_psum, test_psum]])
-        expectation.Expectation()([symb_circuit, symb_circuit],
-                                  symbol_names=[symbol],
-                                  symbol_values=[[0.5], [0.8]],
-                                  operators=[[test_psum, test_psum],
-                                             [test_psum, test_psum]])
-
-        # Ensure tiling up of circuits works as expected.
-        expectation.Expectation()(reg_circuit, operators=test_psum)
-        expectation.Expectation()(reg_circuit, operators=[test_psum, test_psum])
-
-        # Ensure tiling up of symbol_values works as expected.
-        expectation.Expectation()(symb_circuit,
-                                  symbol_names=[symbol],
-                                  symbol_values=[[0.5], [0.8]],
-                                  operators=test_psum)
-        expectation.Expectation()(symb_circuit,
-                                  symbol_names=[symbol],
-                                  symbol_values=[[0.5]],
-                                  operators=test_psum)
 
     def test_allowed_cases(self):
         """Ensure all allowed input combinations are upgraded correctly."""
-        
+        qubits = cirq.GridQubit.rect(1, 3);
+        names_symbol = list(sympy.symbols("s1:4"))
+        names_string = [str(s) for s in symbol_list_symbols]
+        names_tuple = tuple(names_string)
+        names_ndarray = np.array(names_string)
+        names_tensor = tf.convert_to_tensor(names_string,
+                                            dtype=tf.dtypes.string)
+        circuit_list = [cirq.Circuit(cirq.H(qubits[i]))**names_symbol[i]
+                        for i in range(3)]
+        circuit_alone = circuit_list[0]
+        circuit_tensor = util.convert_to_tensor(circuit_list)
+
+        values_list = [[]]

@@ -21,7 +21,7 @@ import cirq
 from tensorflow_quantum.python import util
 
 
-def expand_circuits(self, inputs, symbol_names=None, symbol_values=None):
+def expand_circuits(inputs, symbol_names=None, symbol_values=None):
     """Function for consistently expanding input circuits.
         
     Args:
@@ -54,7 +54,7 @@ def expand_circuits(self, inputs, symbol_names=None, symbol_values=None):
         symbol_values = [[]]
 
     # Ingest and promote symbol_names.
-    if isinstance(symbol_names, (list, tuple, np.ndarray)):
+    if isinstance(symbol_names, (list, tuple, np.ndarray)) or tf.is_tensor(symbol_names):
         if symbol_names and not all(
                 [isinstance(x, (str, sympy.Symbol)) for x in symbol_names]):
             raise TypeError("Each element in symbol_names"
@@ -64,10 +64,12 @@ def expand_circuits(self, inputs, symbol_names=None, symbol_values=None):
             raise ValueError("All elements of symbol_names must be unique.")
         symbol_names = tf.convert_to_tensor(symbol_names,
                                             dtype=tf.dtypes.string)
-    if not tf.is_tensor(symbol_names):
-        raise TypeError("symbol_names cannot be parsed to string"
-                        " tensor given input: ".format(symbol_names))
-
+        if not tf.is_tensor(symbol_names):
+            raise TypeError("symbol_names cannot be parsed to string"
+                            " tensor given input: ".format(symbol_names))
+    else:
+        raise TypeError("symbol_names must be list-like.")    
+        
     # Ingest and promote symbol_values.
     if isinstance(symbol_values, (list, tuple, np.ndarray)):
         symbol_values = tf.convert_to_tensor(symbol_values,
