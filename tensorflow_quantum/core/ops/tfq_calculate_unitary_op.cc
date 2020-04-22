@@ -103,21 +103,27 @@ class TfqSimulateStateOp : public tensorflow::OpKernel {
         uint64_t state_size = uint64_t(1) << state->GetNumQubits();
         for (uint64_t j = 0; j < state_size; j++) {
           for (uint64_t k = 0; k < state_size; k++) {
-            output_tensor(i, j, k) = state->GetEntry(j, k);
+            // Cast to size_t to keep windows compiler happy.
+            // We run less of a risk of overflowing size_t since
+            // this is a unitary and not a state.
+            output_tensor(static_cast<size_t>(i), static_cast<size_t>(j),
+                          static_cast<size_t>(k)) = state->GetEntry(j, k);
           }
         }
         // -2 padding for lower portion.
         for (uint64_t j = state_size; j < (uint64_t(1) << max_num_qubits);
              j++) {
           for (uint64_t k = 0; k < (uint64_t(1) << max_num_qubits); k++) {
-            output_tensor(i, j, k) = std::complex<float>(-2, 0);
+            output_tensor(static_cast<size_t>(i), static_cast<size_t>(j),
+                          static_cast<size_t>(k)) = std::complex<float>(-2, 0);
           }
         }
         // -2 padding for right portion.
         for (uint64_t j = 0; j < state_size; j++) {
           for (uint64_t k = state_size; k < (uint64_t(1) << max_num_qubits);
                k++) {
-            output_tensor(i, j, k) = std::complex<float>(-2, 0);
+            output_tensor(static_cast<size_t>(i), static_cast<size_t>(j),
+                          static_cast<size_t>(k)) = std::complex<float>(-2, 0);
           }
         }
         old_num_qubits = num;
