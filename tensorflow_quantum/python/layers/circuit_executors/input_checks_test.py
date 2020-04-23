@@ -143,8 +143,8 @@ class ExpandCircuitsTest(tf.test.TestCase):
         names_tensor = tf.convert_to_tensor([], dtype=tf.dtypes.string)
         values_tensor = tf.convert_to_tensor([[]] * 3, dtype=tf.dtypes.float32)
         for circuit in [circuit_list, circuit_tuple, circuit_tensor]:
-            circuit_test, names_test, values_test = input_checks.expand_circuits(
-                circuit)
+            circuit_test, names_test, values_test = \
+                input_checks.expand_circuits(circuit)
             self.assertAllEqual(circuit_test, circuit_tensor)
             self.assertAllEqual(names_test, names_tensor)
             self.assertAllEqual(values_test, values_tensor)
