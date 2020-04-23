@@ -101,6 +101,10 @@ class ExpandCircuitsTest(tf.test.TestCase):
                                     expected_regex="symbol_values tensor must be rank 2"):
             input_checks.expand_inputs(circuit_tensor, symbol_names=names_tensor,
                                          symbol_values=tf.constant([1], dtype=tf.dtypes.float32))
+        with self.assertRaisesRegex(ValueError,
+                                    expected_regex="symbol_values tensor must be rank 2"):
+            input_checks.expand_inputs(circuit_tensor, symbol_names=names_tensor,
+                                         symbol_values=tf.constant([[[1]]], dtype=tf.dtypes.float32))
 
 
     def test_allowed_cases(self):

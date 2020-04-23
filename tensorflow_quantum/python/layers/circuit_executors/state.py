@@ -20,7 +20,7 @@ import tensorflow as tf
 import cirq
 
 from tensorflow_quantum.core.ops import circuit_execution_ops
-from tensorflow_quantum.python import util
+from tensorflow_quantum.python.layers.circuit_executors import input_checks
 
 
 class State(tf.keras.layers.Layer):
