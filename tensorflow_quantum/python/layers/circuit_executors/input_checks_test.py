@@ -151,24 +151,32 @@ class ExpandCircuitsTest(tf.test.TestCase):
 
 
 class ExpandOperatorsTest(tf.test.TestCase):
-    """Confirm operators upgrade correctly."""
-
+    """Tests of expand_operators."""
+    
     def test_expand_operators_errors(self):
+        """Confirm error on bad input."""
         with self.assertRaisesRegex(RuntimeError,
                                     expected_regex="operators not provided"):
-            expectation.Expectation()(symb_circuit,
-                                      symbol_names=[symbol],
-                                      symbol_values=[[0.5]])
+            input_checks.expand_operators()
+        with self.assertRaisesRegex(TypeError,
+                                    expected_regex="must contain serialized paulis"):
+            input_checks.expand_operators(tf.constant([1, 2]))
+        with self.assertRaisesRegex(TypeError,
+                                    expected_regex="must be one of"):
+            input_checks.expand_operators('junk')        
 
-    def test_allowed_cases():
+    def test_allowed_cases(self):
+        """Confirm that allowed inputs are upgraded correctly."""
         batch_dim = 3
-        bare_string = cirq.Z(bit)
+        bare_string = cirq.Z(cirq.GridQubit(0, 0))
         bare_sum = cirq.PauliSum.from_pauli_strings([bare_string])
-        op_list
-        op_tuple
-        op_ndarray
-        op_tensor = util.convert_to_tensor(op_list)
-        for op in [bare_sum, bare_string, op_list, op_tuple, op_ndarray, op_tensor]:
+        bare_list = [bare_string]
+        bare_tuple = tuple(bare_list)
+        shaped_list = [[bare_string]]*batch_dim
+        shaped_tuple = tuple(shaped_list)
+        op_tensor = util.convert_to_tensor([[bare_string]])
+        op_tensor = tf.tile(op_tensor, [batch_dim, 1])
+        for op in [bare_string, bare_sum, bare_list, bare_tuple, shaped_list, shaped_tuple, op_tensor]:
             op_test = input_checks.expand_operators(op, batch_dim)
             self.assertAllEqual(op_test, op_tensor)
 

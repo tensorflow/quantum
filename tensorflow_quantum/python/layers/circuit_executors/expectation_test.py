@@ -73,6 +73,7 @@ class ExpectationTest(tf.test.TestCase):
         """Test that expectation errors within Keras call."""
 
         bit = cirq.GridQubit(0, 0)
+        test_pstring = cirq.Z(bit)
         test_psum = cirq.PauliSum.from_pauli_strings([test_pstring])
         reg_circuit = cirq.Circuit(cirq.H(bit))
 

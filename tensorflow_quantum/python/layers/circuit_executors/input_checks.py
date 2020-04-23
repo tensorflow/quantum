@@ -109,43 +109,49 @@ def expand_circuits(inputs, symbol_names=None, symbol_values=None):
     return inputs, symbol_names, symbol_values
 
 
-def expand_operators(operators, circuit_batch_dim):
+def expand_operators(operators=None, circuit_batch_dim=1):
     """Check and expand operators.
 
     Args:
-        operators:
+        operators: a single `cirq.PauliString` or `cirq.PauliSum`, a Python
+            `list` or `tuple` of `cirq.PauliString`s or `cirq.PauliSum`s, which
+            will be tiled to have size `circuit_batch_dim` along the first
+            dimension; or a Python `list` or `tuple` (of length
+            `circuit_batch_dim`) of `list`s or `tuple`s of `cirq.PauliString`s
+            or `cirq.PauliSum`s; or pre-converted `tf.Tensor` of
+            `cirq.PauliString`s or `cirq.PauliSum`s.
+        circuit_batch_dim: number of circuits in the final expansion
 
     Returns:
-        operators:
+        operators: `tf.Tensor` of dtype `string` with shape [batch_size, n_ops]
+            containing the serialized pauli sums to be measured.
+
     """
     if operators is None:
         raise RuntimeError("Value for operators not provided. operators "
                            "must be one of cirq.PauliSum, cirq.PauliString"
                            ", or a list/tensor/tuple containing "
                            "cirq.PauliSum or cirq.PauliString.")
-    
     op_needs_tile = False
     if isinstance(operators, (cirq.PauliSum, cirq.PauliString)):
-        # If we are given a single operator promote it to a list and tile
-        # it up to size.
-        operators = [[operators]]
+        operators = util.convert_to_tensor([[operators]])
         op_needs_tile = True
-
-    if isinstance(operators, (list, tuple, np.ndarray)):
-        if not isinstance(operators[0], (list, tuple, np.ndarray)):
-            # If we are given a flat list of operators. tile them up
-            # to match the batch size of circuits.
+    elif isinstance(operators, (list, tuple)):
+        if not isinstance(operators[0], (list, tuple)):
             operators = [operators]
             op_needs_tile = True
         operators = util.convert_to_tensor(operators)
-
+    elif tf.is_tensor(operators):
+        if not operators.dtype == tf.dtypes.string:
+            raise TypeError("operators tensor must contain serialized paulis.")
+    else:
+        raise TypeError("operators must be one of cirq.PauliSum, "
+                        "cirq.PauliString, or a list/tensor/tuple containing "
+                        "cirq.PauliSum or cirq.PauliString.")
+        
     if op_needs_tile:
         # Don't tile up if the user gave a python list that was precisely
         # the correct size to match circuits outer batch dim.
         operators = tf.tile(operators, [circuit_batch_dim, 1])
-        
-    if not tf.is_tensor(operators):
-        raise TypeError("operators cannot be parsed to string tensor"
-                        " given input: ".format(operators))
-
+    
     return operators
