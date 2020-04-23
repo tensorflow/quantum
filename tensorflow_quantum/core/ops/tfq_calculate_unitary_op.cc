@@ -25,7 +25,7 @@ limitations under the License.
 #include "tensorflow_quantum/core/ops/parse_context.h"
 #include "tensorflow_quantum/core/ops/tfq_simulate_utils.h"
 #include "tensorflow_quantum/core/qsim/mux.h"
-#include "tensorflow_quantum/core/qsim/state_space.h"
+#include "tensorflow_quantum/core/qsim/unitary_space.h"
 #include "tensorflow_quantum/core/src/circuit_parser.h"
 #include "tensorflow_quantum/core/src/program_resolution.h"
 
@@ -35,8 +35,8 @@ using ::cirq::google::api::v2::Program;
 using ::tensorflow::Status;
 using ::tfq::Circuit;
 using ::tfq::CircuitFromProgram;
-using ::tfq::qsim::GetStateSpace;
-using ::tfq::qsim::StateSpace;
+using ::tfq::qsim::GetUnitarySpace;
+using ::tfq::qsim::UnitarySpace;
 
 class TfqSimulateStateOp : public tensorflow::OpKernel {
  public:
@@ -71,14 +71,16 @@ class TfqSimulateStateOp : public tensorflow::OpKernel {
     tensorflow::TensorShape output_shape;
     output_shape.AddDim(output_dim_size);
     output_shape.AddDim(1 << max_num_qubits);
+    output_shape.AddDim(1 << max_num_qubits);
 
     tensorflow::Tensor *output = nullptr;
     OP_REQUIRES_OK(context, context->allocate_output(0, output_shape, &output));
-    auto output_tensor = output->matrix<std::complex<float>>();
+    auto output_tensor = output->tensor<std::complex<float>, 3>();
 
     auto DoWork = [&](int start, int end) {
-      std::unique_ptr<StateSpace> state = GetStateSpace(1, 1);
+      std::unique_ptr<UnitarySpace> state = GetUnitarySpace(1, 1);
       int old_num_qubits = -1;
+      auto pad = std::complex<float>(-2, 0);
       for (int i = start; i < end; i++) {
         Program program = programs[i];
         const int num = num_qubits[i];
@@ -94,18 +96,36 @@ class TfqSimulateStateOp : public tensorflow::OpKernel {
         //  tricky to implement because right now certain statespaces can't
         //  simulate all states and we use StateSpaceSlow for smaller circuits.
         if (num != old_num_qubits) {
-          state = GetStateSpace(num, 1);
-          state->CreateState();
+          state = GetUnitarySpace(num, 1);
+          state->CreateUnitary();
         }
-        state->SetStateZero();
+        state->SetIdentity();
         OP_REQUIRES_OK(context, state->Update(circuit));
-        uint64_t state_size = state->GetDimension();
+        uint64_t state_size = uint64_t(1) << state->GetNumQubits();
         for (uint64_t j = 0; j < state_size; j++) {
-          output_tensor(i, j) = state->GetAmpl(j);
+          for (uint64_t k = 0; k < state_size; k++) {
+            // Cast to size_t to keep windows compiler happy.
+            // We run less of a risk of overflowing size_t since
+            // this is a unitary and not a state.
+            output_tensor(static_cast<ptrdiff_t>(i), static_cast<ptrdiff_t>(j),
+                          static_cast<ptrdiff_t>(k)) = state->GetEntry(j, k);
+          }
         }
+        // -2 padding for lower portion.
         for (uint64_t j = state_size; j < (uint64_t(1) << max_num_qubits);
              j++) {
-          output_tensor(i, j) = std::complex<float>(-2, 0);
+          for (uint64_t k = 0; k < (uint64_t(1) << max_num_qubits); k++) {
+            output_tensor(static_cast<ptrdiff_t>(i), static_cast<ptrdiff_t>(j),
+                          static_cast<ptrdiff_t>(k)) = pad;
+          }
+        }
+        // -2 padding for right portion.
+        for (uint64_t j = 0; j < state_size; j++) {
+          for (uint64_t k = state_size; k < (uint64_t(1) << max_num_qubits);
+               k++) {
+            output_tensor(static_cast<ptrdiff_t>(i), static_cast<ptrdiff_t>(j),
+                          static_cast<ptrdiff_t>(k)) = pad;
+          }
         }
         old_num_qubits = num;
       }
@@ -119,10 +139,11 @@ class TfqSimulateStateOp : public tensorflow::OpKernel {
   }
 };
 
-REGISTER_KERNEL_BUILDER(Name("TfqSimulateState").Device(tensorflow::DEVICE_CPU),
-                        TfqSimulateStateOp);
+REGISTER_KERNEL_BUILDER(
+    Name("TfqCalculateUnitary").Device(tensorflow::DEVICE_CPU),
+    TfqSimulateStateOp);
 
-REGISTER_OP("TfqSimulateState")
+REGISTER_OP("TfqCalculateUnitary")
     .Input("programs: string")
     .Input("symbol_names: string")
     .Input("symbol_values: float")
@@ -140,6 +161,7 @@ REGISTER_OP("TfqSimulateState")
       c->set_output(
           0, c->MakeShape(
                  {c->Dim(programs_shape, 0),
+                  tensorflow::shape_inference::InferenceContext::kUnknownDim,
                   tensorflow::shape_inference::InferenceContext::kUnknownDim}));
 
       return tensorflow::Status::OK();

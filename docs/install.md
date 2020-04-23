@@ -10,6 +10,8 @@ There are a few ways to set up your environment to use TensorFlow Quantum (TFQ):
   Python's pip package manager.
 * Or build TensorFlow Quantum from source.
 
+TensorFlow Quantum is supported on Python 3.6 and 3.7.
+
 ## Pip package
 
 ### Requirements

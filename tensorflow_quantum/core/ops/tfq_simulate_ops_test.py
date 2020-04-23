@@ -18,7 +18,6 @@ from absl.testing import parameterized
 import tensorflow as tf
 import cirq
 
-from tensorflow_quantum.python import util
 from tensorflow_quantum.core.ops import tfq_simulate_ops
 from tensorflow_quantum.python import util
 

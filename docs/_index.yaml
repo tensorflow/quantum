@@ -14,7 +14,9 @@
 # ==============================================================================
 book_path: /quantum/_book.yaml
 project_path: /quantum/_project.yaml
-description: <!--no description-->
+description: >
+  A quantum ML library for rapid prototyping of hybrid quantum-classical models.
+  Leverage Google’s quantum computing frameworks, all from within TensorFlow.
 landing_page:
   custom_css_path: /site-assets/css/style.css
   rows:
@@ -68,17 +70,16 @@ landing_page:
       buttons:
       - label: "Read on the Google AI blog"
         path: https://ai.googleblog.com/2020/03/announcing-tensorflow-quantum-open.html
+    - heading: "TensorFlow Quantum (TF Dev Summit '20)"
+      youtube_id: -o9AhIz1uvo
+      buttons:
+      - label: Watch the video
+        path: https://www.youtube.com/watch?v=-o9AhIz1uvo
     - heading: "Programming a quantum computer with Cirq"
       youtube_id: 16ZfkPRVf2w
       buttons:
       - label: Watch the video
         path: https://www.youtube.com/watch?v=16ZfkPRVf2w
-    - heading: "Quantum supremacy using a programmable superconducting processor"
-      image_path: /resources/images/google-research-card-16x9.png
-      path: https://ai.googleblog.com/2019/10/quantum-supremacy-using-programmable.html
-      buttons:
-      - label: "Read on the Google AI blog"
-        path: https://ai.googleblog.com/2019/10/quantum-supremacy-using-programmable.html
     - heading: "TensorFlow Quantum on GitHub"
       image_path: /resources/images/github-card-16x9.png
       path: https://github.com/tensorflow/quantum
