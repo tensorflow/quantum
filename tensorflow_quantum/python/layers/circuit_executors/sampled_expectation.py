@@ -275,37 +275,8 @@ class SampledExpectation(tf.keras.layers.Layer):
 
         circuit_batch_dim = tf.gather(tf.shape(inputs), 0)
 
-        # Ingest and promote operators.
-        if operators is None:
-            raise RuntimeError("Value for operators not provided. operators "
-                               "must be one of cirq.PauliSum, cirq.PauliString"
-                               ", or a list/tensor/tuple containing "
-                               "cirq.PauliSum or cirq.PauliString.")
-
-        op_needs_tile = False
-        if isinstance(operators, (cirq.PauliSum, cirq.PauliString)):
-            # If we are given a single operator promote it to a list and tile
-            # it up to size.
-            operators = [[operators]]
-            op_needs_tile = True
-
-        if isinstance(operators, (list, tuple, np.ndarray)):
-            if not isinstance(operators[0], (list, tuple, np.ndarray)):
-                # If we are given a flat list of operators. tile them up
-                # to match the batch size of circuits.
-                operators = [operators]
-                op_needs_tile = True
-            operators = util.convert_to_tensor(operators)
-
-        if op_needs_tile:
-            # Don't tile up if the user gave a python list that was precisely
-            # the correct size to match circuits outer batch dim.
-            operators = tf.tile(operators, [circuit_batch_dim, 1])
-
-        if not tf.is_tensor(operators):
-            raise TypeError("operators cannot be parsed to string tensor"
-                            " given input: ".format(operators))
-
+        operators = input_checks.expand_operators(operators, circuit_batch_dim)
+        
         # Ingest and promote repetitions.
         if repetitions is None:
             raise RuntimeError("Value for repetitions not provided.")

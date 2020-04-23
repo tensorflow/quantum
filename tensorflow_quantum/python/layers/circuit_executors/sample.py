@@ -186,7 +186,6 @@ class Sample(tf.keras.layers.Layer):
                 [number of circuits, repetitions, <ragged string size>]
 
         """
-
         if repetitions is None:
             raise ValueError("Number of repetitions not specified.")
 

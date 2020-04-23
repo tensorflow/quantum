@@ -22,7 +22,7 @@ from tensorflow_quantum.python import util
 from tensorflow_quantum.python.layers.circuit_executors import input_checks
 
 
-class ExpandCircuitsTest(tf.test.TestCase):
+class ExpandInputsTest(tf.test.TestCase):
     """Confirm circuits and symbols are upgraded correctly."""
 
     def test_expand_inputs_error(self):
