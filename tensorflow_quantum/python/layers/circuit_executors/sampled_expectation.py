@@ -284,7 +284,7 @@ class SampledExpectation(tf.keras.layers.Layer):
         circuit_batch_dim = tf.gather(tf.shape(inputs), 0)
 
         operators = input_checks.expand_operators(operators, circuit_batch_dim)
-        
+
         # Ingest and promote repetitions.
         if repetitions is None:
             raise RuntimeError("Value for repetitions not provided.")

@@ -148,10 +148,10 @@ def expand_operators(operators=None, circuit_batch_dim=1):
         raise TypeError("operators must be one of cirq.PauliSum, "
                         "cirq.PauliString, or a list/tensor/tuple containing "
                         "cirq.PauliSum or cirq.PauliString.")
-        
+
     if op_needs_tile:
         # Don't tile up if the user gave a python list that was precisely
         # the correct size to match circuits outer batch dim.
         operators = tf.tile(operators, [circuit_batch_dim, 1])
-    
+
     return operators

@@ -46,57 +46,57 @@ class ExpandCircuitsTest(tf.test.TestCase):
         with self.assertRaisesRegex(
                 TypeError, expected_regex="must contain serialized circuits"):
             input_checks.expand_circuits(bad_tensor,
-                                       symbol_names=names_tensor,
-                                       symbol_values=values_tensor)
+                                         symbol_names=names_tensor,
+                                         symbol_values=values_tensor)
         with self.assertRaisesRegex(TypeError,
                                     expected_regex="inputs must be a "):
             input_checks.expand_circuits('junk',
-                                       symbol_names=names_tensor,
-                                       symbol_values=values_tensor)
+                                         symbol_names=names_tensor,
+                                         symbol_values=values_tensor)
 
         # Bad name arg
         with self.assertRaisesRegex(TypeError,
                                     expected_regex="string or sympy.Symbol"):
             input_checks.expand_circuits(circuit_tensor,
-                                       symbol_names=[symbol, 5.0],
-                                       symbol_values=values_tensor)
+                                         symbol_names=[symbol, 5.0],
+                                         symbol_values=values_tensor)
         with self.assertRaisesRegex(TypeError,
                                     expected_regex="string or sympy.Symbol"):
             input_checks.expand_circuits(circuit_tensor,
-                                       symbol_names=[[]],
-                                       symbol_values=values_tensor)
+                                         symbol_names=[[]],
+                                         symbol_values=values_tensor)
         with self.assertRaisesRegex(ValueError,
                                     expected_regex="must be unique."):
             input_checks.expand_circuits(circuit_tensor,
-                                       symbol_names=[symbol, symbol],
-                                       symbol_values=values_tensor)
+                                         symbol_names=[symbol, symbol],
+                                         symbol_values=values_tensor)
         with self.assertRaisesRegex(TypeError,
                                     expected_regex="must have dtype string"):
             input_checks.expand_circuits(circuit_tensor,
-                                       symbol_names=bad_tensor,
-                                       symbol_values=values_tensor)
+                                         symbol_names=bad_tensor,
+                                         symbol_values=values_tensor)
         with self.assertRaisesRegex(ValueError,
                                     expected_regex="must be unique."):
             input_checks.expand_circuits(circuit_tensor,
-                                       symbol_names=names_tensor_double,
-                                       symbol_values=values_tensor)
+                                         symbol_names=names_tensor_double,
+                                         symbol_values=values_tensor)
         with self.assertRaisesRegex(TypeError,
                                     expected_regex="must be list-like"):
             input_checks.expand_circuits(circuit_tensor,
-                                       symbol_names='junk',
-                                       symbol_values=values_tensor)
+                                         symbol_names='junk',
+                                         symbol_values=values_tensor)
 
         # Bad value arg
         with self.assertRaisesRegex(TypeError,
                                     expected_regex="must have dtype float32"):
             input_checks.expand_circuits(circuit_tensor,
-                                       symbol_names=names_tensor,
-                                       symbol_values=names_tensor)
+                                         symbol_names=names_tensor,
+                                         symbol_values=names_tensor)
         with self.assertRaisesRegex(TypeError,
                                     expected_regex="must be list-like"):
             input_checks.expand_circuits(circuit_tensor,
-                                       symbol_names=names_tensor,
-                                       symbol_values='junk')
+                                         symbol_names=names_tensor,
+                                         symbol_values='junk')
 
     def test_allowed_cases(self):
         """Ensure all allowed input combinations are upgraded correctly."""
@@ -152,18 +152,17 @@ class ExpandCircuitsTest(tf.test.TestCase):
 
 class ExpandOperatorsTest(tf.test.TestCase):
     """Tests of expand_operators."""
-    
+
     def test_expand_operators_errors(self):
         """Confirm error on bad input."""
         with self.assertRaisesRegex(RuntimeError,
                                     expected_regex="operators not provided"):
             input_checks.expand_operators()
-        with self.assertRaisesRegex(TypeError,
-                                    expected_regex="must contain serialized paulis"):
+        with self.assertRaisesRegex(
+                TypeError, expected_regex="must contain serialized paulis"):
             input_checks.expand_operators(tf.constant([1, 2]))
-        with self.assertRaisesRegex(TypeError,
-                                    expected_regex="must be one of"):
-            input_checks.expand_operators('junk')        
+        with self.assertRaisesRegex(TypeError, expected_regex="must be one of"):
+            input_checks.expand_operators('junk')
 
     def test_allowed_cases(self):
         """Confirm that allowed inputs are upgraded correctly."""
@@ -172,11 +171,14 @@ class ExpandOperatorsTest(tf.test.TestCase):
         bare_sum = cirq.PauliSum.from_pauli_strings([bare_string])
         bare_list = [bare_string]
         bare_tuple = tuple(bare_list)
-        shaped_list = [[bare_string]]*batch_dim
+        shaped_list = [[bare_string]] * batch_dim
         shaped_tuple = tuple(shaped_list)
         op_tensor = util.convert_to_tensor([[bare_string]])
         op_tensor = tf.tile(op_tensor, [batch_dim, 1])
-        for op in [bare_string, bare_sum, bare_list, bare_tuple, shaped_list, shaped_tuple, op_tensor]:
+        for op in [
+                bare_string, bare_sum, bare_list, bare_tuple, shaped_list,
+                shaped_tuple, op_tensor
+        ]:
             op_test = input_checks.expand_operators(op, batch_dim)
             self.assertAllEqual(op_test, op_tensor)
 
