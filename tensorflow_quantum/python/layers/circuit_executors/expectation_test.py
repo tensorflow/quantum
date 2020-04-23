@@ -73,17 +73,8 @@ class ExpectationTest(tf.test.TestCase):
         """Test that expectation errors within Keras call."""
 
         bit = cirq.GridQubit(0, 0)
-        symbol = sympy.Symbol('alpha')
-        test_pstring = cirq.Z(bit)
         test_psum = cirq.PauliSum.from_pauli_strings([test_pstring])
-        symb_circuit = cirq.Circuit(cirq.H(bit)**symbol)
         reg_circuit = cirq.Circuit(cirq.H(bit))
-
-        with self.assertRaisesRegex(RuntimeError,
-                                    expected_regex="operators not provided"):
-            expectation.Expectation()(symb_circuit,
-                                      symbol_names=[symbol],
-                                      symbol_values=[[0.5]])
 
         with self.assertRaisesRegex(Exception,
                                     expected_regex="Unknown initializer"):

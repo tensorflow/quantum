@@ -82,13 +82,6 @@ class SampledExpectationTest(tf.test.TestCase):
         reg_circuit = cirq.Circuit(cirq.H(bit))
 
         with self.assertRaisesRegex(RuntimeError,
-                                    expected_regex="operators not provided"):
-            sampled_expectation.SampledExpectation()(symb_circuit,
-                                                     symbol_names=[symbol],
-                                                     symbol_values=[[0.5]],
-                                                     repetitions=1)
-
-        with self.assertRaisesRegex(RuntimeError,
                                     expected_regex="repetitions not provided"):
             sampled_expectation.SampledExpectation()(symb_circuit,
                                                      symbol_names=[symbol],

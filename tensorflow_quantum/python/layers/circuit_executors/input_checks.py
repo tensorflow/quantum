@@ -118,8 +118,6 @@ def expand_operators(operators, circuit_batch_dim):
     Returns:
         operators:
     """
-
-    # Ingest and promote operators.
     if operators is None:
         raise RuntimeError("Value for operators not provided. operators "
                            "must be one of cirq.PauliSum, cirq.PauliString"

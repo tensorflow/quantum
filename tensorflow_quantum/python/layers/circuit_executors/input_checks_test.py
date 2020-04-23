@@ -150,5 +150,16 @@ class ExpandInputsTest(tf.test.TestCase):
             self.assertAllEqual(values_test, values_tensor)
 
 
+class ExpandOperatorsTest(tf.test.TestCase):
+    """Confirm operators upgraded correctly."""
+
+    def test_expand_operators_errors(self):
+        with self.assertRaisesRegex(RuntimeError,
+                                    expected_regex="operators not provided"):
+            expectation.Expectation()(symb_circuit,
+                                      symbol_names=[symbol],
+                                      symbol_values=[[0.5]])
+
+
 if __name__ == '__main__':
     tf.test.main()
