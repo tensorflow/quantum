@@ -54,7 +54,7 @@ def expand_circuits(inputs, symbol_names=None, symbol_values=None):
         symbol_values = [[]]
 
     # Ingest and promote symbol_names.
-    if isinstance(symbol_names, (list, tuple, np.ndarray)) or tf.is_tensor(symbol_names):
+    if isinstance(symbol_names, (list, tuple, np.ndarray)):
         if symbol_names and not all(
                 [isinstance(x, (str, sympy.Symbol)) for x in symbol_names]):
             raise TypeError("Each element in symbol_names"
@@ -64,9 +64,11 @@ def expand_circuits(inputs, symbol_names=None, symbol_values=None):
             raise ValueError("All elements of symbol_names must be unique.")
         symbol_names = tf.convert_to_tensor(symbol_names,
                                             dtype=tf.dtypes.string)
-        if not tf.is_tensor(symbol_names):
-            raise TypeError("symbol_names cannot be parsed to string"
-                            " tensor given input: ".format(symbol_names))
+    elif tf.is_tensor(symbol_names):
+        if not symbol_names.dtype == tf.dtypes.string:
+            raise TypeError("symbol_names tensor must have dtype string.")
+        if not symbol_names.shape[0] == len(list(set(symbol_names.numpy()))):
+            raise ValueError("All elements of symbol_names must be unique.")   
     else:
         raise TypeError("symbol_names must be list-like.")    
         
@@ -74,25 +76,27 @@ def expand_circuits(inputs, symbol_names=None, symbol_values=None):
     if isinstance(symbol_values, (list, tuple, np.ndarray)):
         symbol_values = tf.convert_to_tensor(symbol_values,
                                              dtype=tf.dtypes.float32)
-    if not tf.is_tensor(symbol_values):
-        raise TypeError("symbol_values cannot be parsed to float32"
-                        " tensor given input: ".format(symbol_values))
+    elif tf.is_tensor(symbol_values):
+        if not symbol_values.dtype == tf.dtypes.float32:
+            raise TypeError("symbol_values tensor must have dtype float32.")
+    else:
+        raise TypeError("symbol_values must be list-like.")
 
-    symbol_batch_dim = tf.gather(tf.shape(symbol_values), 0)
-    
     # Ingest and promote circuit.
+    symbol_batch_dim = tf.gather(tf.shape(symbol_values), 0)
     if isinstance(inputs, cirq.Circuit):
         # process single circuit.
         inputs = tf.tile(util.convert_to_tensor([inputs]),
                          [symbol_batch_dim])
-        
     elif isinstance(inputs, (list, tuple, np.ndarray)):
         # process list of circuits.
         inputs = util.convert_to_tensor(inputs)
-
-    if not tf.is_tensor(inputs):
-        raise TypeError("circuits cannot be parsed with given input:"
-                        " ".format(inputs))
+    elif tf.is_tensor(inputs):
+        if not inputs.dtype == tf.dtypes.string:
+            raise TypeError("inputs tensor must contain serialized circuits.")
+    else:
+        raise TypeError("inputs must be a single Circuit, a list of "
+                        "Circuits, or a tensor of serialized Circuits.")
 
     if symbols_empty:
         # No symbol_values were provided. so we must tile up the
