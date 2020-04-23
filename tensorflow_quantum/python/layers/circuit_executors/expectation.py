@@ -21,6 +21,7 @@ import cirq
 from tensorflow_quantum.core.ops import circuit_execution_ops
 from tensorflow_quantum.python.differentiators import linear_combination
 from tensorflow_quantum.python.differentiators import differentiator as diff
+from tensorflow_quantum.python.layers.circuit_executors import input_checks
 from tensorflow_quantum.python import util
 
 
@@ -260,47 +261,7 @@ class Expectation(tf.keras.layers.Layer):
             values_empty = True
             symbol_values = [[]]
 
-        # Ingest and promote symbol_names.
-        if isinstance(symbol_names, (list, tuple, np.ndarray)):
-            if not all(
-                    isinstance(x, (str, sympy.Symbol)) for x in symbol_names):
-                raise TypeError("Each element in symbol_names"
-                                " must be a string or sympy.Symbol.")
-            symbol_names = [str(s) for s in symbol_names]
-            if not len(symbol_names) == len(list(set(symbol_names))):
-                raise ValueError("All elements of symbol_names must be unique.")
-            symbol_names = tf.identity(
-                tf.convert_to_tensor(symbol_names, dtype=tf.dtypes.string))
-
-        if not tf.is_tensor(symbol_names):
-            raise TypeError("symbol_names cannot be parsed to string"
-                            " tensor given input: ".format(symbol_names))
-
-        # Ingest and promote symbol_values.
-        if isinstance(symbol_values, (list, tuple, np.ndarray)):
-            symbol_values = tf.convert_to_tensor(symbol_values,
-                                                 dtype=tf.dtypes.float32)
-
-        if not tf.is_tensor(symbol_values):
-            raise TypeError("symbol_values cannot be parsed to float32"
-                            " tensor given input: ".format(symbol_values))
-
-        symbol_batch_dim = tf.gather(tf.shape(symbol_values), 0)
-
-        # Ingest and promote circuits.
-        # Would be nice to support python circuits *fully* in this layer.
-        if isinstance(inputs, cirq.Circuit):
-            # process single circuit.
-            inputs = tf.tile(util.convert_to_tensor([inputs]),
-                             [symbol_batch_dim])
-
-        elif isinstance(inputs, (list, tuple, np.ndarray)):
-            # process list of circuits.
-            inputs = util.convert_to_tensor(inputs)
-
-        if not tf.is_tensor(inputs):
-            raise TypeError("circuits cannot be parsed with given input:"
-                            " ".format(inputs))
+        inputs, symbol_names, symbol_values = input_checks.expand_inputs(inputs, symbol_names, symbol_values)
 
         circuit_batch_dim = tf.gather(tf.shape(inputs), 0)
 
