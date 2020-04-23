@@ -18,70 +18,89 @@ import sympy
 import tensorflow as tf
 
 import cirq
-from tensorflow_quantum.python.layers.circuit_executors import input_checks
 from tensorflow_quantum.python import util
+from tensorflow_quantum.python.layers.circuit_executors import input_checks
 
 
 class ExpandCircuitsTest(tf.test.TestCase):
     """Confirm circuits and symbols are upgraded correctly."""
 
-    def test_expand_circuits_type_inputs_error(self):
-        """Test that expand_circuits errors on bad types."""
+    def test_expand_inputs_error(self):
+        """Test that expand_inputs errors on bad arguments."""
 
+        # Valid test constants
         qubit = cirq.GridQubit(0, 0)
         symbol = sympy.Symbol('alpha')
-        symb_circuit = cirq.Circuit(cirq.H(qubit)**symbol)
-        symbol_tensor = tf.convert_to_tensor(
-                [str(symbol)], dtype=tf.dtypes.string)
+        names_tensor = tf.convert_to_tensor([str(symbol)],
+                                            dtype=tf.dtypes.string)
+        circuit_tensor = util.convert_to_tensor([cirq.Circuit(cirq.H(qubit)**symbol)])
+        values_tensor = tf.convert_to_tensor([[0.5]],
+                                             dtype=tf.dtypes.float32)
+        
+        # Invalid test contants
         bad_tensor = tf.constant([1, 2])
-        symbol_tensor_double = tf.convert_to_tensor(
+        names_tensor_double = tf.convert_to_tensor(
                 [str(symbol), str(symbol)], dtype=tf.dtypes.string)
         
         # Bad circuit arg
         with self.assertRaisesRegex(TypeError,
                                     expected_regex="must contain serialized circuits"):
-            input_checks.expand_circuits(bad_tensor, symbol_names=symbol_tensor,
-                                         symbol_values=[[0.5]])
+            input_checks.expand_inputs(bad_tensor, symbol_names=names_tensor,
+                                         symbol_values=values_tensor)
         with self.assertRaisesRegex(TypeError,
                                     expected_regex="inputs must be a "):
-            input_checks.expand_circuits('junk', symbol_names=symbol_tensor,
-                                         symbol_values=[[0.5]])
+            input_checks.expand_inputs('junk', symbol_names=names_tensor,
+                                         symbol_values=values_tensor)
 
         # Bad name arg
         with self.assertRaisesRegex(TypeError,
                                     expected_regex="string or sympy.Symbol"):
-            input_checks.expand_circuits(symb_circuit, symbol_names=[symbol, 5.0],
-                                         symbol_values=[[0.5]])
+            input_checks.expand_inputs(circuit_tensor, symbol_names=[symbol, 5.0],
+                                         symbol_values=values_tensor)
         with self.assertRaisesRegex(TypeError,
                                     expected_regex="string or sympy.Symbol"):
-            input_checks.expand_circuits(symb_circuit, symbol_names=[[]],
-                                         symbol_values=[[0.5]])
+            input_checks.expand_inputs(circuit_tensor, symbol_names=[[]],
+                                         symbol_values=values_tensor)
         with self.assertRaisesRegex(ValueError,
                                     expected_regex="must be unique."):
-            input_checks.expand_circuits(symb_circuit, symbol_names=[symbol, symbol],
-                                         symbol_values=[[0.5]])
+            input_checks.expand_inputs(circuit_tensor, symbol_names=[symbol, symbol],
+                                         symbol_values=values_tensor)
         with self.assertRaisesRegex(TypeError,
                                     expected_regex="must have dtype string"):
-            input_checks.expand_circuits(symb_circuit, symbol_names=bad_tensor,
-                                         symbol_values=[[0.5]])
+            input_checks.expand_inputs(circuit_tensor, symbol_names=bad_tensor,
+                                         symbol_values=values_tensor)
         with self.assertRaisesRegex(ValueError,
                                     expected_regex="must be unique."):
-            input_checks.expand_circuits(symb_circuit, symbol_names=symbol_tensor_double,
-                                         symbol_values=[[0.5]])
+            input_checks.expand_inputs(circuit_tensor, symbol_names=names_tensor_double,
+                                         symbol_values=values_tensor)
         with self.assertRaisesRegex(TypeError,
                                     expected_regex="must be list-like"):
-            input_checks.expand_circuits(symb_circuit, symbol_names='junk',
-                                         symbol_values=[[0.5]])
+            input_checks.expand_inputs(circuit_tensor, symbol_names='junk',
+                                         symbol_values=values_tensor)
 
         # Bad value arg
         with self.assertRaisesRegex(TypeError,
                                     expected_regex="must have dtype float32"):
-            input_checks.expand_circuits(symb_circuit, symbol_names=symbol_tensor,
-                                         symbol_values=symbol_tensor)
+            input_checks.expand_inputs(circuit_tensor, symbol_names=names_tensor,
+                                         symbol_values=names_tensor)
         with self.assertRaisesRegex(TypeError,
                                     expected_regex="must be list-like"):
-            input_checks.expand_circuits(symb_circuit, symbol_names=symbol_tensor,
+            input_checks.expand_inputs(circuit_tensor, symbol_names=names_tensor,
                                          symbol_values='junk')
+
+        # Bad ranks
+        with self.assertRaisesRegex(ValueError,
+                                    expected_regex="inputs tensor must be rank 1"):
+            input_checks.expand_inputs(tf.constant([["circuit"]]), symbol_names=names_tensor,
+                                         symbol_values=values_tensor)
+        with self.assertRaisesRegex(ValueError,
+                                    expected_regex="symbol_names tensor must be rank 1"):
+            input_checks.expand_inputs(circuit_tensor, symbol_names=tf.constant([["alpha"]]),
+                                         symbol_values=values_tensor)
+        with self.assertRaisesRegex(ValueError,
+                                    expected_regex="symbol_values tensor must be rank 2"):
+            input_checks.expand_inputs(circuit_tensor, symbol_names=names_tensor,
+                                         symbol_values=tf.constant([1], dtype=tf.dtypes.float32))
 
 
     def test_allowed_cases(self):
@@ -94,7 +113,7 @@ class ExpandCircuitsTest(tf.test.TestCase):
         names_symbol_tuple = tuple(names_symbol_list)
         names_string_tuple = tuple(names_string_list)
         names_symbol_ndarray = np.array(names_symbol_list)
-        names_string_ndarray = np.array(names_string_list)        
+        names_string_ndarray = np.array(names_string_list)
         names_tensor = tf.convert_to_tensor(names_string_list,
                                             dtype=tf.dtypes.string)
         circuit_alone = cirq.Circuit(cirq.H(qubits[0])**names_symbol_list[0], cirq.X(qubits[1])**names_symbol_list[1])
@@ -111,7 +130,7 @@ class ExpandCircuitsTest(tf.test.TestCase):
                       names_symbol_ndarray, names_string_ndarray, names_tensor]:
             for circuit in [circuit_alone, circuit_list, circuit_tuple, circuit_tensor]:
                 for values in [values_list, values_tuple, values_ndarray, values_tensor]:
-                    circuit_test, names_test, values_test = input_checks.expand_circuits(circuit, names, values)
+                    circuit_test, names_test, values_test = input_checks.expand_inputs(circuit, names, values)
                     self.assertAllEqual(circuit_test, circuit_tensor)
                     self.assertAllEqual(names_test, names_tensor)
                     self.assertAllEqual(values_test, values_tensor)        
@@ -120,7 +139,7 @@ class ExpandCircuitsTest(tf.test.TestCase):
         names_tensor = tf.convert_to_tensor([], dtype=tf.dtypes.string)
         values_tensor = tf.convert_to_tensor([[]]*3, dtype=tf.dtypes.float32)
         for circuit in [circuit_list, circuit_tuple, circuit_tensor]:
-            circuit_test, names_test, values_test = input_checks.expand_circuits(circuit)
+            circuit_test, names_test, values_test = input_checks.expand_inputs(circuit)
             self.assertAllEqual(circuit_test, circuit_tensor)
             self.assertAllEqual(names_test, names_tensor)
             self.assertAllEqual(values_test, values_tensor)        
