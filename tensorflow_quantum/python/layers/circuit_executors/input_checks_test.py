@@ -88,24 +88,6 @@ class ExpandCircuitsTest(tf.test.TestCase):
             input_checks.expand_inputs(circuit_tensor, symbol_names=names_tensor,
                                          symbol_values='junk')
 
-        # Bad ranks
-        with self.assertRaisesRegex(ValueError,
-                                    expected_regex="inputs tensor must be rank 1"):
-            input_checks.expand_inputs(tf.constant([["circuit"]]), symbol_names=names_tensor,
-                                         symbol_values=values_tensor)
-        with self.assertRaisesRegex(ValueError,
-                                    expected_regex="symbol_names tensor must be rank 1"):
-            input_checks.expand_inputs(circuit_tensor, symbol_names=tf.constant([["alpha"]]),
-                                         symbol_values=values_tensor)
-        with self.assertRaisesRegex(ValueError,
-                                    expected_regex="symbol_values tensor must be rank 2"):
-            input_checks.expand_inputs(circuit_tensor, symbol_names=names_tensor,
-                                         symbol_values=tf.constant([1], dtype=tf.dtypes.float32))
-        with self.assertRaisesRegex(ValueError,
-                                    expected_regex="symbol_values tensor must be rank 2"):
-            input_checks.expand_inputs(circuit_tensor, symbol_names=names_tensor,
-                                         symbol_values=tf.constant([[[1]]], dtype=tf.dtypes.float32))
-
 
     def test_allowed_cases(self):
         """Ensure all allowed input combinations are upgraded correctly."""

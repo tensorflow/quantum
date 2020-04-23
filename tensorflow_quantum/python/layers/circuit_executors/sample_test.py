@@ -50,6 +50,28 @@ class SampleTest(tf.test.TestCase, parameterized.TestCase):
     def test_sample_invalid_shape_inputs(self):
         """Test that sample rejects bad input shapes."""
         sampler = sample.Sample()
+
+        with self.assertRaisesRegex(TypeError,
+                                    expected_regex="string or sympy.Symbol"):
+            sampler(cirq.Circuit(),
+                    symbol_values=[[0.5]],
+                    symbol_names=[[]],
+                    repetitions=10)
+
+        with self.assertRaisesRegex(ValueError,
+                                    expected_regex="rank 2 but is rank 1"):
+            sampler(cirq.Circuit(),
+                    symbol_values=[0.5],
+                    symbol_names=['name'],
+                    repetitions=10)
+
+        with self.assertRaisesRegex(ValueError,
+                                    expected_regex="rank 1 but is rank 2"):
+            sampler([[cirq.Circuit()]],
+                    symbol_values=[[0.5]],
+                    symbol_names=['name'],
+                    repetitions=10)
+
         with self.assertRaisesRegex(
                 TypeError, expected_regex="cannot be parsed to int32 tensor"):
             sampler([cirq.Circuit()], repetitions=[10])

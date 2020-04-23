@@ -68,9 +68,6 @@ def expand_inputs(inputs, symbol_names=None, symbol_values=None):
     elif tf.is_tensor(symbol_names):
         if not symbol_names.dtype == tf.dtypes.string:
             raise TypeError("symbol_names tensor must have dtype string.")
-        if tf.rank(symbol_names) != 1:
-            raise ValueError("symbol_names tensor must be rank 1, "
-                             "got rank {}".format(tf.rank(symbol_names)))
         if not symbol_names.shape[0] == len(list(set(symbol_names.numpy()))):
             raise ValueError("All elements of symbol_names must be unique.")   
     else:
@@ -110,12 +107,5 @@ def expand_inputs(inputs, symbol_names=None, symbol_values=None):
         circuit_batch_dim = tf.gather(tf.shape(inputs), 0)
         symbol_values = tf.tile(symbol_values,
                                 tf.stack([circuit_batch_dim, 1]))
-
-    if tf.rank(inputs) != 1:
-        raise ValueError("inputs tensor must be rank 1, "
-                         "got rank {}".format(tf.rank(inputs)))
-    if tf.rank(symbol_values) != 2:
-        raise ValueError("symbol_values tensor must be rank 2, "
-                         "got rank {}".format(tf.rank(symbol_values)))
 
     return inputs, symbol_names, symbol_values
