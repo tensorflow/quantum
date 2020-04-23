@@ -37,49 +37,12 @@ class SampleTest(tf.test.TestCase, parameterized.TestCase):
     def test_sample_invalid_type_inputs(self):
         """Test that sample rejects bad inputs."""
         sampler = sample.Sample()
-        with self.assertRaisesRegex(TypeError,
-                                    expected_regex="circuits cannot be parsed"):
-            sampler('junk_circuit', repetitions=10)
-
-        with self.assertRaisesRegex(
-                TypeError, expected_regex="symbol_values cannot be parsed"):
-            sampler(cirq.Circuit(), symbol_values='junk', repetitions=10)
-
-        with self.assertRaisesRegex(
-                TypeError, expected_regex="symbol_names cannot be parsed"):
-            sampler(cirq.Circuit(),
-                    symbol_values=[],
-                    symbol_names='junk',
-                    repetitions=10)
-
-        with self.assertRaisesRegex(TypeError, expected_regex="Cannot convert"):
-            sampler(cirq.Circuit(),
-                    symbol_values=[['bad']],
-                    symbol_names=['name'],
-                    repetitions=10)
-
-        with self.assertRaisesRegex(TypeError,
-                                    expected_regex="must be a string."):
-            sampler(cirq.Circuit(),
-                    symbol_values=[[0.5]],
-                    symbol_names=[0.33333],
-                    repetitions=10)
-
-        with self.assertRaisesRegex(ValueError,
-                                    expected_regex="must be unique."):
-            sampler(cirq.Circuit(),
-                    symbol_values=[[0.5]],
-                    symbol_names=['duplicate', 'duplicate'],
-                    repetitions=10)
-
         with self.assertRaisesRegex(ValueError,
                                     expected_regex="repetitions not specified"):
             sampler(cirq.Circuit())
-
         with self.assertRaisesRegex(ValueError,
                                     expected_regex="greater than zero"):
             sampler(cirq.Circuit(), repetitions=-1)
-
         with self.assertRaisesRegex(TypeError,
                                     expected_regex="cannot be parsed to int32"):
             sampler(cirq.Circuit(), repetitions='junk')
@@ -87,27 +50,6 @@ class SampleTest(tf.test.TestCase, parameterized.TestCase):
     def test_sample_invalid_shape_inputs(self):
         """Test that sample rejects bad input shapes."""
         sampler = sample.Sample()
-        with self.assertRaisesRegex(TypeError,
-                                    expected_regex="string or sympy.Symbol"):
-            sampler(cirq.Circuit(),
-                    symbol_values=[[0.5]],
-                    symbol_names=[[]],
-                    repetitions=10)
-
-        with self.assertRaisesRegex(ValueError,
-                                    expected_regex="rank 2 but is rank 1"):
-            sampler(cirq.Circuit(),
-                    symbol_values=[0.5],
-                    symbol_names=['name'],
-                    repetitions=10)
-
-        with self.assertRaisesRegex(ValueError,
-                                    expected_regex="rank 1 but is rank 2"):
-            sampler([[cirq.Circuit()]],
-                    symbol_values=[[0.5]],
-                    symbol_names=['name'],
-                    repetitions=10)
-
         with self.assertRaisesRegex(
                 TypeError, expected_regex="cannot be parsed to int32 tensor"):
             sampler([cirq.Circuit()], repetitions=[10])
