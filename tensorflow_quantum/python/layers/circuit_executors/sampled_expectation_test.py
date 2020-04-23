@@ -81,44 +81,6 @@ class SampledExpectationTest(tf.test.TestCase):
         symb_circuit = cirq.Circuit(cirq.H(bit)**symbol)
         reg_circuit = cirq.Circuit(cirq.H(bit))
 
-        with self.assertRaisesRegex(TypeError,
-                                    expected_regex="string or sympy.Symbol"):
-            sampled_expectation.SampledExpectation()(symb_circuit,
-                                                     symbol_names=[symbol, 5.0],
-                                                     operators=test_psum,
-                                                     repetitions=1)
-
-        with self.assertRaisesRegex(ValueError,
-                                    expected_regex="must be unique."):
-            sampled_expectation.SampledExpectation()(
-                symb_circuit,
-                symbol_names=[symbol, symbol],
-                operators=test_psum,
-                repetitions=1)
-
-        with self.assertRaisesRegex(TypeError,
-                                    expected_regex="cannot be parsed"):
-            sampled_expectation.SampledExpectation()(symb_circuit,
-                                                     symbol_names='junk',
-                                                     operators=test_psum,
-                                                     repetitions=1)
-
-        with self.assertRaisesRegex(TypeError,
-                                    expected_regex="cannot be parsed"):
-            sampled_expectation.SampledExpectation()(symb_circuit,
-                                                     symbol_names=[symbol],
-                                                     symbol_values='junk',
-                                                     operators=test_psum,
-                                                     repetitions=1)
-
-        with self.assertRaisesRegex(TypeError,
-                                    expected_regex="cannot be parsed"):
-            sampled_expectation.SampledExpectation()('junk',
-                                                     symbol_names=[symbol],
-                                                     symbol_values=[[0.5]],
-                                                     operators=test_psum,
-                                                     repetitions=1)
-
         with self.assertRaisesRegex(RuntimeError,
                                     expected_regex="operators not provided"):
             sampled_expectation.SampledExpectation()(symb_circuit,

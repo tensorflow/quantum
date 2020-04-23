@@ -29,6 +29,7 @@ py_library(
     name = "sampled_expectation",
     srcs = ["sampled_expectation.py"],
     deps = [
+        ":input_checks",
         "//tensorflow_quantum/core/ops:circuit_execution_ops",
         "//tensorflow_quantum/python:util",
         "//tensorflow_quantum/python/differentiators:differentiator",
