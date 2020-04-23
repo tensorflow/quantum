@@ -55,6 +55,8 @@ def expand_circuits(inputs, symbol_names=None, symbol_values=None):
 
     # Ingest and promote symbol_names.
     if isinstance(symbol_names, (list, tuple, np.ndarray)):
+        if isinstance(symbol_names, np.ndarray):
+            symbol_names = symbol_names.tolist()
         if symbol_names and not all(
                 [isinstance(x, (str, sympy.Symbol)) for x in symbol_names]):
             raise TypeError("Each element in symbol_names"
@@ -88,7 +90,8 @@ def expand_circuits(inputs, symbol_names=None, symbol_values=None):
         # process single circuit.
         inputs = tf.tile(util.convert_to_tensor([inputs]),
                          [symbol_batch_dim])
-    elif isinstance(inputs, (list, tuple, np.ndarray)):
+    # TODO(zaqqwerty): util.convert_to_tensor does not accept ndarrays
+    elif isinstance(inputs, (list, tuple)):
         # process list of circuits.
         inputs = util.convert_to_tensor(inputs)
     elif tf.is_tensor(inputs):
