@@ -260,8 +260,20 @@ class SampledExpectation(tf.keras.layers.Layer):
              operators=None,
              repetitions=None,
              initializer=tf.keras.initializers.RandomUniform(0, 2 * np.pi)):
-        """Keras call function."""
+        """Keras call function.
 
+        Input options:
+            `inputs`, `symbol_names`, `symbol_values`:
+                see `input_checks.expand_circuits`
+            `operators`: see `input_checks.expand_operators`
+            `repetitions`: a Python `int` or a pre-converted
+                `tf.Tensor` containing a single `int` entry.
+
+        Output shape:
+            `tf.Tensor` with shape [batch_size, n_ops] that holds the
+                expectation value for each circuit with each op applied to it
+                (after resolving the corresponding parameters in).
+        """
         values_empty = False
         if symbol_values is None:
             values_empty = True

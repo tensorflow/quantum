@@ -162,21 +162,10 @@ class Sample(tf.keras.layers.Layer):
              repetitions=None):
         """Keras call function.
 
-        Reference of options that are shown in examples above.
-
         Input options:
-
-            1. `inputs` can be a single `cirq.Circuit`, a Python `list` of
-                `cirq.Circuit`s or a pre-converted `tf.Tensor` of
-                `cirq.Circuit`s.
-
-            2. `symbol_names` can be a Python `list` of `str` or `sympy.Symbols`
-                or a pre-converted `tf.Tensor` of type `str`.
-
-            3. `symbol_values` can be a Python `list` of floating point values
-                or `np.ndarray` or pre-converted `tf.Tensor` of floats.
-
-            4. `repetitions` can be a Python `int` or a pre-converted
+            `inputs`, `symbol_names`, `symbol_values`:
+                see `input_checks.expand_circuits`
+            `repetitions`: a Python `int` or a pre-converted
                 `tf.Tensor` containing a single `int` entry.
 
         Output shape:
@@ -184,7 +173,6 @@ class Sample(tf.keras.layers.Layer):
                 [batch size of symbol_values, repetitions, <ragged string size>]
                     or
                 [number of circuits, repetitions, <ragged string size>]
-
         """
         if repetitions is None:
             raise ValueError("Number of repetitions not specified.")

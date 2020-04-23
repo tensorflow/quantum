@@ -250,8 +250,18 @@ class Expectation(tf.keras.layers.Layer):
              symbol_values=None,
              operators=None,
              initializer=tf.keras.initializers.RandomUniform(0, 2 * np.pi)):
-        """Keras call function."""
+        """Keras call function.
 
+        Input options:
+            `inputs`, `symbol_names`, `symbol_values`:
+                see `input_checks.expand_circuits`
+            `operators`: see `input_checks.expand_operators`
+
+        Output shape:
+            `tf.Tensor` with shape [batch_size, n_ops] that holds the
+                expectation value for each circuit with each op applied to it
+                (after resolving the corresponding parameters in).
+        """
         values_empty = False
         if symbol_values is None:
             values_empty = True

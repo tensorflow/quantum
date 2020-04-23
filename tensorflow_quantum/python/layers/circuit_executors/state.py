@@ -133,7 +133,9 @@ class State(tf.keras.layers.Layer):
     def call(self, inputs, *, symbol_names=None, symbol_values=None):
         """Keras call function.
 
-        Input options: see `input_checks.expand_inputs`
+        Input options:
+            `inputs`, `symbol_names`, `symbol_values`:
+                see `input_checks.expand_circuits`
 
         Output shape:
             `tf.RaggedTensor` with shape:

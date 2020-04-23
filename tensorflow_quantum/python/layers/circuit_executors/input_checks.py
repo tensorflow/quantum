@@ -22,7 +22,7 @@ from tensorflow_quantum.python import util
 
 
 def expand_circuits(inputs, symbol_names=None, symbol_values=None):
-    """Function for consistently expanding inputs.
+    """Function for consistently expanding circuit inputs.
 
     Args:
         inputs: a single `cirq.Circuit`, a Python `list` or `tuple` of
