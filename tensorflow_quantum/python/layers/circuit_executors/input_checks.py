@@ -21,31 +21,30 @@ import cirq
 from tensorflow_quantum.python import util
 
 
-def expand_circuits(inputs, symbol_names=None, symbol_values=None):
+def expand_circuits(circuits, symbol_names=None, symbol_values=None):
     """Function for consistently expanding input circuits.
         
     Args:
-        inputs: a single `cirq.Circuit`, a Python `list` of
+        circuits: a single `cirq.Circuit`, a Python `list` or `tuple` of
             `cirq.Circuit`s, or a pre-converted `tf.Tensor` of
             `cirq.Circuit`s.
-        symbol_names: a Python `list` of `str` or `sympy.Symbols`,
-            or a pre-converted `tf.Tensor` of type `str`.
-        symbol_values: a Python `list` of floating point values,
-            or `np.ndarray` or pre-converted `tf.Tensor` of floats.
+        symbol_names: a Python `list`, `tuple`, or `numpy.ndarray`
+            of `str` or `sympy.Symbols`, or a `tf.Tensor` of dtype `string`.
+            These are the symbols parameterizing the circuits.
+        symbol_values: a Python `list`, `tuple`, or `numpy.ndarray` of
+            floating point values, or `tf.Tensor` of dtype `float32`.
 
     Returns:
-        inputs: `tf.Tensor` of strings with shape [batch_size] containing
-            the string representations of the circuits to be executed.
-        symbol_names: `tf.Tensor` of strings with shape [n_params], which
+        circuits: `tf.Tensor` of dtype `string` with shape [batch_size]
+            containing the serialized circuits to be executed.
+        symbol_names: `tf.Tensor` of dtype `string` with shape [n_params], which
             is used to specify the order in which the values in
-            `symbol_values` should be placed inside of the circuits in
-            `programs`.
-        symbol_values: `tf.Tensor` of real numbers with shape
+            `symbol_values` should be placed inside of the circuits.
+        symbol_values: `tf.Tensor` of dtype `float32` with shape
             [batch_size, n_params] specifying parameter values to resolve
-            into the circuits specified by programs, following the ordering
-            dictated by `symbol_names`.
+            into the circuits following the ordering dictated by `symbol_names`.
     """
-    # inputs is the circuit(s).
+    # circuits is the circuit(s).
     symbols_empty = False
     if symbol_names is None:
         symbol_names = []
@@ -86,27 +85,27 @@ def expand_circuits(inputs, symbol_names=None, symbol_values=None):
 
     # Ingest and promote circuit.
     symbol_batch_dim = tf.gather(tf.shape(symbol_values), 0)
-    if isinstance(inputs, cirq.Circuit):
+    if isinstance(circuits, cirq.Circuit):
         # process single circuit.
-        inputs = tf.tile(util.convert_to_tensor([inputs]),
+        circuits = tf.tile(util.convert_to_tensor([circuits]),
                          [symbol_batch_dim])
     # TODO(zaqqwerty): util.convert_to_tensor does not accept ndarrays
-    elif isinstance(inputs, (list, tuple)):
+    elif isinstance(circuits, (list, tuple)):
         # process list of circuits.
-        inputs = util.convert_to_tensor(inputs)
-    elif tf.is_tensor(inputs):
-        if not inputs.dtype == tf.dtypes.string:
-            raise TypeError("inputs tensor must contain serialized circuits.")
+        circuits = util.convert_to_tensor(circuits)
+    elif tf.is_tensor(circuits):
+        if not circuits.dtype == tf.dtypes.string:
+            raise TypeError("circuits tensor must contain serialized circuits.")
     else:
-        raise TypeError("inputs must be a single Circuit, a list of "
+        raise TypeError("circuits must be a single Circuit, a list of "
                         "Circuits, or a tensor of serialized Circuits.")
 
     if symbols_empty:
         # No symbol_values were provided. so we must tile up the
         # symbol values so that symbol_values = [[]] * number of circuits
         # provided.
-        circuit_batch_dim = tf.gather(tf.shape(inputs), 0)
+        circuit_batch_dim = tf.gather(tf.shape(circuits), 0)
         symbol_values = tf.tile(symbol_values,
                                 tf.stack([circuit_batch_dim, 1]))
 
-    return inputs, symbol_names, symbol_values
+    return circuits, symbol_names, symbol_values
