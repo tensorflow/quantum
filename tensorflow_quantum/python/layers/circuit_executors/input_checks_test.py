@@ -133,8 +133,8 @@ class ExpandCircuitsTest(tf.test.TestCase):
                 for values in [
                         values_list, values_tuple, values_ndarray, values_tensor
                 ]:
-                    circuit_test, names_test, values_test = input_checks.expand_inputs(
-                        circuit, names, values)
+                    circuit_test, names_test, values_test = \
+                        input_checks.expand_inputs(circuit, names, values)
                     self.assertAllEqual(circuit_test, circuit_tensor)
                     self.assertAllEqual(names_test, names_tensor)
                     self.assertAllEqual(values_test, values_tensor)

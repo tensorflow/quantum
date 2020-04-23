@@ -17,7 +17,6 @@
 import numbers
 
 import numpy as np
-import sympy
 import tensorflow as tf
 
 import cirq

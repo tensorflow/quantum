@@ -14,7 +14,6 @@
 # ==============================================================================
 """A tf.keras.layer that ingests programs and outputs expectation values."""
 import numpy as np
-import sympy
 import tensorflow as tf
 
 import cirq

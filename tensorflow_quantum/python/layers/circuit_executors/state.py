@@ -13,11 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 """A tf.keras.layer that ingests programs and parameters and outputs a state."""
-import numpy as np
-import sympy
 import tensorflow as tf
-
-import cirq
 
 from tensorflow_quantum.core.ops import circuit_execution_ops
 from tensorflow_quantum.python.layers.circuit_executors import input_checks
