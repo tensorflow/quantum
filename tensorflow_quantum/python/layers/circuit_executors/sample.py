@@ -204,6 +204,7 @@ class Sample(tf.keras.layers.Layer):
             raise TypeError("repetitions cannot be parsed to int32 tensor"
                             " tensor given input: ".format(repetitions))
 
-        inputs, symbol_names, symbol_values = input_checks.expand_inputs(inputs, symbol_names, symbol_values)
-        
+        inputs, symbol_names, symbol_values = input_checks.expand_inputs(
+            inputs, symbol_names, symbol_values)
+
         return self.sample_op(inputs, symbol_names, symbol_values, repetitions)

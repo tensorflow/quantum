@@ -57,7 +57,7 @@ def expand_inputs(inputs, symbol_names=None, symbol_values=None):
         if isinstance(symbol_names, np.ndarray):
             symbol_names = symbol_names.tolist()
         if symbol_names and not all(
-                [isinstance(x, (str, sympy.Symbol)) for x in symbol_names]):
+            [isinstance(x, (str, sympy.Symbol)) for x in symbol_names]):
             raise TypeError("Each element in symbol_names"
                             " must be a string or sympy.Symbol.")
         symbol_names = [str(s) for s in symbol_names]
@@ -69,10 +69,10 @@ def expand_inputs(inputs, symbol_names=None, symbol_values=None):
         if not symbol_names.dtype == tf.dtypes.string:
             raise TypeError("symbol_names tensor must have dtype string.")
         if not symbol_names.shape[0] == len(list(set(symbol_names.numpy()))):
-            raise ValueError("All elements of symbol_names must be unique.")   
+            raise ValueError("All elements of symbol_names must be unique.")
     else:
-        raise TypeError("symbol_names must be list-like.")    
-        
+        raise TypeError("symbol_names must be list-like.")
+
     # Ingest and promote symbol_values.
     if isinstance(symbol_values, (list, tuple, np.ndarray)):
         symbol_values = tf.convert_to_tensor(symbol_values,
@@ -87,8 +87,7 @@ def expand_inputs(inputs, symbol_names=None, symbol_values=None):
     symbol_batch_dim = tf.gather(tf.shape(symbol_values), 0)
     if isinstance(inputs, cirq.Circuit):
         # process single circuit.
-        inputs = tf.tile(util.convert_to_tensor([inputs]),
-                         [symbol_batch_dim])
+        inputs = tf.tile(util.convert_to_tensor([inputs]), [symbol_batch_dim])
     # TODO(zaqqwerty): util.convert_to_tensor does not accept ndarrays
     elif isinstance(inputs, (list, tuple)):
         # process list of inputs.
@@ -105,7 +104,6 @@ def expand_inputs(inputs, symbol_names=None, symbol_values=None):
         # symbol values so that symbol_values = [[]] * number of circuits
         # provided.
         circuit_batch_dim = tf.gather(tf.shape(inputs), 0)
-        symbol_values = tf.tile(symbol_values,
-                                tf.stack([circuit_batch_dim, 1]))
+        symbol_values = tf.tile(symbol_values, tf.stack([circuit_batch_dim, 1]))
 
     return inputs, symbol_names, symbol_values

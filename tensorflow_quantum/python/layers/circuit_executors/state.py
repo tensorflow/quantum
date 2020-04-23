@@ -158,5 +158,6 @@ class State(tf.keras.layers.Layer):
                 [number of circuits, <size of state>]
 
         """
-        inputs, symbol_names, symbol_values = input_checks.expand_inputs(inputs, symbol_names, symbol_values)
+        inputs, symbol_names, symbol_values = input_checks.expand_inputs(
+            inputs, symbol_names, symbol_values)
         return self.state_op(inputs, symbol_names, symbol_values)

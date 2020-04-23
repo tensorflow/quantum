@@ -271,8 +271,9 @@ class SampledExpectation(tf.keras.layers.Layer):
             values_empty = True
             symbol_values = [[]]
 
-        inputs, symbol_names, symbol_values = input_checks.expand_inputs(inputs, symbol_names, symbol_values)
-        
+        inputs, symbol_names, symbol_values = input_checks.expand_inputs(
+            inputs, symbol_names, symbol_values)
+
         circuit_batch_dim = tf.gather(tf.shape(inputs), 0)
 
         # Ingest and promote operators.
