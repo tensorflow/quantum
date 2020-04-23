@@ -30,6 +30,8 @@ def test_imports():
     _ = tfq.get_state_op
     _ = tfq.append_circuit
     _ = tfq.padded_to_ragged
+    _ = tfq.padded_to_ragged2d
+    _ = tfq.calculate_unitary
 
     # Util functions.
     _ = tfq.convert_to_tensor
