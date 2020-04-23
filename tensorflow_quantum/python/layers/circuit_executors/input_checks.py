@@ -21,7 +21,7 @@ import cirq
 from tensorflow_quantum.python import util
 
 
-def expand_inputs(inputs, symbol_names=None, symbol_values=None):
+def expand_circuits(inputs, symbol_names=None, symbol_values=None):
     """Function for consistently expanding inputs.
 
     Args:

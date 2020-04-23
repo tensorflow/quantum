@@ -133,27 +133,14 @@ class State(tf.keras.layers.Layer):
     def call(self, inputs, *, symbol_names=None, symbol_values=None):
         """Keras call function.
 
-        Reference of options that are shown in examples above.
-
-        Input options:
-
-            1. `inputs` can be a single `cirq.Circuit`, a Python `list` of
-                `cirq.Circuit`s or a pre-converted `tf.Tensor` of
-                `cirq.Circuit`s.
-
-            2. `symbol_names` can be a Python `list` of `str` or `sympy.Symbols`
-                or a pre-converted `tf.Tensor` of type `str`.
-
-            3. `symbol_values` can be a Python `list` of floating point values
-                or `np.ndarray` or pre-converted `tf.Tensor` of floats.
+        Input options: see `input_checks.expand_inputs`
 
         Output shape:
             `tf.RaggedTensor` with shape:
                 [batch size of symbol_values, <size of state>]
                     or
                 [number of circuits, <size of state>]
-
         """
-        inputs, symbol_names, symbol_values = input_checks.expand_inputs(
+        inputs, symbol_names, symbol_values = input_checks.expand_circuits(
             inputs, symbol_names, symbol_values)
         return self.state_op(inputs, symbol_names, symbol_values)

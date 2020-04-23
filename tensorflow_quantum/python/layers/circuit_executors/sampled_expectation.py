@@ -262,15 +262,11 @@ class SampledExpectation(tf.keras.layers.Layer):
              initializer=tf.keras.initializers.RandomUniform(0, 2 * np.pi)):
         """Keras call function."""
 
-        # inputs is the circuit(s).
         values_empty = False
-        if symbol_names is None:
-            symbol_names = []
         if symbol_values is None:
             values_empty = True
-            symbol_values = [[]]
 
-        inputs, symbol_names, symbol_values = input_checks.expand_inputs(
+        inputs, symbol_names, symbol_values = input_checks.expand_circuits(
             inputs, symbol_names, symbol_values)
 
         circuit_batch_dim = tf.gather(tf.shape(inputs), 0)
