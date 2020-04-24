@@ -116,9 +116,7 @@ def expand_operators(operators=None, circuit_batch_dim=1):
     Returns:
         operators: `tf.Tensor` of dtype `string` with shape [batch_size, n_ops]
             containing the serialized pauli sums to be measured.
-
     """
-    # Ingest and promote operators.
     if operators is None:
         raise RuntimeError("Value for operators not provided. operators "
                            "must be one of cirq.PauliSum, cirq.PauliString"
