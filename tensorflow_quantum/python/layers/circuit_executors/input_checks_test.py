@@ -60,15 +60,15 @@ class ExpandCircuitsTest(tf.test.TestCase):
             input_checks.expand_circuits(circuit_tensor,
                                          symbol_names=[symbol, symbol],
                                          symbol_values=values_tensor)
-        with self.assertRaisesRegex(TypeError,
-                                    expected_regex="symbol_names cannot be parsed"):
+        with self.assertRaisesRegex(
+                TypeError, expected_regex="symbol_names cannot be parsed"):
             input_checks.expand_circuits(circuit_tensor,
                                          symbol_names='junk',
                                          symbol_values=values_tensor)
 
         # Bad value arg
-        with self.assertRaisesRegex(TypeError,
-                                    expected_regex="symbol_values cannot be parsed"):
+        with self.assertRaisesRegex(
+                TypeError, expected_regex="symbol_values cannot be parsed"):
             input_checks.expand_circuits(circuit_tensor,
                                          symbol_names=names_tensor,
                                          symbol_values='junk')
@@ -130,7 +130,8 @@ class ExpandOperatorsTest(tf.test.TestCase):
         with self.assertRaisesRegex(RuntimeError,
                                     expected_regex="operators not provided"):
             input_checks.expand_operators()
-        with self.assertRaisesRegex(TypeError, expected_regex="operators cannot be parsed"):
+        with self.assertRaisesRegex(
+                TypeError, expected_regex="operators cannot be parsed"):
             input_checks.expand_operators('junk')
 
     def test_allowed_cases(self):

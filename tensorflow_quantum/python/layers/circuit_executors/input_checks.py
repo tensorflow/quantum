@@ -80,8 +80,7 @@ def expand_circuits(inputs, symbol_names=None, symbol_values=None):
     # Ingest and promote circuit.
     if isinstance(inputs, cirq.Circuit):
         # process single circuit.
-        inputs = tf.tile(util.convert_to_tensor([inputs]),
-                         [symbol_batch_dim])
+        inputs = tf.tile(util.convert_to_tensor([inputs]), [symbol_batch_dim])
 
     elif isinstance(inputs, (list, tuple, np.ndarray)):
         # process list of circuits.
@@ -96,8 +95,7 @@ def expand_circuits(inputs, symbol_names=None, symbol_values=None):
         # symbol values so that symbol_values = [[]] * number of circuits
         # provided.
         circuit_batch_dim = tf.gather(tf.shape(inputs), 0)
-        symbol_values = tf.tile(symbol_values,
-                                tf.stack([circuit_batch_dim, 1]))
+        symbol_values = tf.tile(symbol_values, tf.stack([circuit_batch_dim, 1]))
 
     return inputs, symbol_names, symbol_values
 
@@ -150,5 +148,5 @@ def expand_operators(operators=None, circuit_batch_dim=1):
     if not tf.is_tensor(operators):
         raise TypeError("operators cannot be parsed to string tensor"
                         " given input: ".format(operators))
-    
+
     return operators
