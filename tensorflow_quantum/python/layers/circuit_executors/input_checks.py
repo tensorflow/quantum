@@ -28,9 +28,9 @@ def expand_circuits(inputs, symbol_names=None, symbol_values=None):
         inputs: a single `cirq.Circuit`, a Python `list` or `tuple` of
             `cirq.Circuit`s, or a pre-converted `tf.Tensor` of
             `cirq.Circuit`s.
-        symbol_names: a Python `list`, `tuple`, or `numpy.ndarray`
-            of `str` or `sympy.Symbols`, or a `tf.Tensor` of dtype `string`.
-            These are the symbols parameterizing the input circuits.
+        symbol_names: a Python `list` or `tuple` of `str` or `sympy.Symbols`,
+            or a `tf.Tensor` of dtype `string`. These are the symbols
+            parameterizing the input circuits.
         symbol_values: a Python `list`, `tuple`, or `numpy.ndarray` of
             floating point values, or `tf.Tensor` of dtype `float32`.
 
@@ -53,9 +53,7 @@ def expand_circuits(inputs, symbol_names=None, symbol_values=None):
         symbol_values = [[]]
 
     # Ingest and promote symbol_names.
-    if isinstance(symbol_names, (list, tuple, np.ndarray)):
-        if isinstance(symbol_names, np.ndarray):
-            symbol_names = symbol_names.tolist()
+    if isinstance(symbol_names, (list, tuple)):
         if symbol_names and not all(
             [isinstance(x, (str, sympy.Symbol)) for x in symbol_names]):
             raise TypeError("Each element in symbol_names"
@@ -65,46 +63,41 @@ def expand_circuits(inputs, symbol_names=None, symbol_values=None):
             raise ValueError("All elements of symbol_names must be unique.")
         symbol_names = tf.convert_to_tensor(symbol_names,
                                             dtype=tf.dtypes.string)
-    elif tf.is_tensor(symbol_names):
-        if not symbol_names.dtype == tf.dtypes.string:
-            raise TypeError("symbol_names tensor must have dtype string.")
-        if not symbol_names.shape[0] == len(list(set(symbol_names.numpy()))):
-            raise ValueError("All elements of symbol_names must be unique.")
-    else:
-        raise TypeError("symbol_names must be list-like.")
+    if not tf.is_tensor(symbol_names):
+        raise TypeError("symbol_names cannot be parsed to string"
+                        " tensor given input: ".format(symbol_names))
 
     # Ingest and promote symbol_values.
     if isinstance(symbol_values, (list, tuple, np.ndarray)):
         symbol_values = tf.convert_to_tensor(symbol_values,
                                              dtype=tf.dtypes.float32)
-    elif tf.is_tensor(symbol_values):
-        if not symbol_values.dtype == tf.dtypes.float32:
-            raise TypeError("symbol_values tensor must have dtype float32.")
-    else:
-        raise TypeError("symbol_values must be list-like.")
+    if not tf.is_tensor(symbol_values):
+        raise TypeError("symbol_values cannot be parsed to float32"
+                        " tensor given input: ".format(symbol_values))
+
+    symbol_batch_dim = tf.gather(tf.shape(symbol_values), 0)
 
     # Ingest and promote circuit.
-    symbol_batch_dim = tf.gather(tf.shape(symbol_values), 0)
     if isinstance(inputs, cirq.Circuit):
         # process single circuit.
-        inputs = tf.tile(util.convert_to_tensor([inputs]), [symbol_batch_dim])
-    # TODO(zaqqwerty): util.convert_to_tensor does not accept ndarrays
-    elif isinstance(inputs, (list, tuple)):
-        # process list of inputs.
+        inputs = tf.tile(util.convert_to_tensor([inputs]),
+                         [symbol_batch_dim])
+
+    elif isinstance(inputs, (list, tuple, np.ndarray)):
+        # process list of circuits.
         inputs = util.convert_to_tensor(inputs)
-    elif tf.is_tensor(inputs):
-        if not inputs.dtype == tf.dtypes.string:
-            raise TypeError("inputs tensor must contain serialized circuits.")
-    else:
-        raise TypeError("inputs must be a single Circuit, a list of "
-                        "Circuits, or a tensor of serialized Circuits.")
+
+    if not tf.is_tensor(inputs):
+        raise TypeError("circuits cannot be parsed with given input:"
+                        " ".format(inputs))
 
     if symbols_empty:
         # No symbol_values were provided. so we must tile up the
         # symbol values so that symbol_values = [[]] * number of circuits
         # provided.
         circuit_batch_dim = tf.gather(tf.shape(inputs), 0)
-        symbol_values = tf.tile(symbol_values, tf.stack([circuit_batch_dim, 1]))
+        symbol_values = tf.tile(symbol_values,
+                                tf.stack([circuit_batch_dim, 1]))
 
     return inputs, symbol_names, symbol_values
 
@@ -127,31 +120,35 @@ def expand_operators(operators=None, circuit_batch_dim=1):
             containing the serialized pauli sums to be measured.
 
     """
+    # Ingest and promote operators.
     if operators is None:
         raise RuntimeError("Value for operators not provided. operators "
                            "must be one of cirq.PauliSum, cirq.PauliString"
                            ", or a list/tensor/tuple containing "
                            "cirq.PauliSum or cirq.PauliString.")
+
     op_needs_tile = False
     if isinstance(operators, (cirq.PauliSum, cirq.PauliString)):
-        operators = util.convert_to_tensor([[operators]])
+        # If we are given a single operator promote it to a list and tile
+        # it up to size.
+        operators = [[operators]]
         op_needs_tile = True
-    elif isinstance(operators, (list, tuple)):
+
+    if isinstance(operators, (list, tuple)):
         if not isinstance(operators[0], (list, tuple)):
+            # If we are given a flat list of operators. tile them up
+            # to match the batch size of circuits.
             operators = [operators]
             op_needs_tile = True
         operators = util.convert_to_tensor(operators)
-    elif tf.is_tensor(operators):
-        if not operators.dtype == tf.dtypes.string:
-            raise TypeError("operators tensor must contain serialized paulis.")
-    else:
-        raise TypeError("operators must be one of cirq.PauliSum, "
-                        "cirq.PauliString, or a list/tensor/tuple containing "
-                        "cirq.PauliSum or cirq.PauliString.")
 
     if op_needs_tile:
         # Don't tile up if the user gave a python list that was precisely
         # the correct size to match circuits outer batch dim.
         operators = tf.tile(operators, [circuit_batch_dim, 1])
 
+    if not tf.is_tensor(operators):
+        raise TypeError("operators cannot be parsed to string tensor"
+                        " given input: ".format(operators))
+    
     return operators
