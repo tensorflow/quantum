@@ -15,14 +15,10 @@
 """A tf.keras.layer that ingests programs and outputs bitstring samples."""
 import numbers
 
-import numpy as np
-import sympy
 import tensorflow as tf
 
-import cirq
-
 from tensorflow_quantum.core.ops import circuit_execution_ops
-from tensorflow_quantum.python import util
+from tensorflow_quantum.python.layers.circuit_executors import input_checks
 
 
 class Sample(tf.keras.layers.Layer):
@@ -166,21 +162,10 @@ class Sample(tf.keras.layers.Layer):
              repetitions=None):
         """Keras call function.
 
-        Reference of options that are shown in examples above.
-
         Input options:
-
-            1. `inputs` can be a single `cirq.Circuit`, a Python `list` of
-                `cirq.Circuit`s or a pre-converted `tf.Tensor` of
-                `cirq.Circuit`s.
-
-            2. `symbol_names` can be a Python `list` of `str` or `sympy.Symbols`
-                or a pre-converted `tf.Tensor` of type `str`.
-
-            3. `symbol_values` can be a Python `list` of floating point values
-                or `np.ndarray` or pre-converted `tf.Tensor` of floats.
-
-            4. `repetitions` can be a Python `int` or a pre-converted
+            `inputs`, `symbol_names`, `symbol_values`:
+                see `input_checks.expand_circuits`
+            `repetitions`: a Python `int` or a pre-converted
                 `tf.Tensor` containing a single `int` entry.
 
         Output shape:
@@ -188,16 +173,7 @@ class Sample(tf.keras.layers.Layer):
                 [batch size of symbol_values, repetitions, <ragged string size>]
                     or
                 [number of circuits, repetitions, <ragged string size>]
-
         """
-        # inputs is the circuit(s).
-        symbols_empty = False
-        if symbol_names is None:
-            symbol_names = []
-        if symbol_values is None:
-            symbols_empty = True
-            symbol_values = [[]]
-
         if repetitions is None:
             raise ValueError("Number of repetitions not specified.")
 
@@ -211,51 +187,7 @@ class Sample(tf.keras.layers.Layer):
             raise TypeError("repetitions cannot be parsed to int32 tensor"
                             " tensor given input: ".format(repetitions))
 
-        # Ingest and promote symbol_names.
-        if isinstance(symbol_names, (list, tuple, np.ndarray)):
-            if symbol_names and not all(
-                [isinstance(x, (str, sympy.Symbol)) for x in symbol_names]):
-                raise TypeError("Each element in symbol_names"
-                                " must be a string or sympy.Symbol.")
-            symbol_names = [str(s) for s in symbol_names]
-            if not len(symbol_names) == len(list(set(symbol_names))):
-                raise ValueError("All elements of symbol_names must be unique.")
-            symbol_names = tf.convert_to_tensor(symbol_names,
-                                                dtype=tf.dtypes.string)
-        if not tf.is_tensor(symbol_names):
-            raise TypeError("symbol_names cannot be parsed to string"
-                            " tensor given input: ".format(symbol_names))
-
-        # Ingest and promote symbol_values.
-        if isinstance(symbol_values, (list, tuple, np.ndarray)):
-            symbol_values = tf.convert_to_tensor(symbol_values,
-                                                 dtype=tf.dtypes.float32)
-        if not tf.is_tensor(symbol_values):
-            raise TypeError("symbol_values cannot be parsed to float32"
-                            " tensor given input: ".format(symbol_values))
-
-        symbol_batch_dim = tf.gather(tf.shape(symbol_values), 0)
-
-        # Ingest and promote circuit.
-        if isinstance(inputs, cirq.Circuit):
-            # process single circuit.
-            inputs = tf.tile(util.convert_to_tensor([inputs]),
-                             [symbol_batch_dim])
-
-        elif isinstance(inputs, (list, tuple, np.ndarray)):
-            # process list of circuits.
-            inputs = util.convert_to_tensor(inputs)
-
-        if not tf.is_tensor(inputs):
-            raise TypeError("circuits cannot be parsed with given input:"
-                            " ".format(inputs))
-
-        if symbols_empty:
-            # No symbol_values were provided. so we must tile up the
-            # symbol values so that symbol_values = [[]] * number of circuits
-            # provided.
-            circuit_batch_dim = tf.gather(tf.shape(inputs), 0)
-            symbol_values = tf.tile(symbol_values,
-                                    tf.stack([circuit_batch_dim, 1]))
+        inputs, symbol_names, symbol_values = input_checks.expand_circuits(
+            inputs, symbol_names, symbol_values)
 
         return self.sample_op(inputs, symbol_names, symbol_values, repetitions)
