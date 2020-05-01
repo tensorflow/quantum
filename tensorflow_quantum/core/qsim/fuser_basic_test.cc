@@ -78,7 +78,7 @@ TEST(FuserBasicTest, GateFused) {
   test_fused.SetQubit0(real_fused.GetQubit0());
 
   test_fused.SetQubit1(real_fused.GetQubit1() + 1);
-  ASSERT_NE(test_fused, real_fused)
+  ASSERT_NE(test_fused, real_fused);
   test_fused.SetQubit1(real_fused.GetQubit1());
 
   test_fused.SetAnchor(&gate_x);
@@ -253,7 +253,6 @@ TEST(FuserBasicTest, FuseGatesDisjoint) {
   status = x_pow_builder.Build(0, locations, arg_map_1q, &gate_x_1);
   ASSERT_EQ(status, Status::OK());
   test_circuit.gates.push_back(gate_x_1);
-  real_fused_2.AddGate(&test_circuit.gates.back());
   locations.clear();
 
   unsigned int anchor_time_2 = 2;
