@@ -26,7 +26,7 @@ namespace qsim {
 
 class GateFused {
  public:
-    GateFused(const unsigned int time, const unsigned int q0,
+  GateFused(const unsigned int time, const unsigned int q0,
             const unsigned int q1, const Gate* anchor);
 
   ~GateFused() {}
