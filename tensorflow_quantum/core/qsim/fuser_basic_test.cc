@@ -67,19 +67,15 @@ TEST(FuserBasicTest, GateFused) {
   ASSERT_EQ(test_fused.GetAnchor(), real_fused.GetAnchor());
   ASSERT_EQ(test_fused.GetGate(0), real_fused.GetGate(0));
   ASSERT_EQ(test_fused.GetGate(1), real_fused.GetGate(1));
-  
+
   // check equality operator overload
-  test_fused.time = real_fused.time + 1;
+  test_fused.SetTime(real_fused.GetTime() + 1);
   ASSERT_NE(test_fused, real_fused);
-  test_fused.time = real_fused.time;
+  test_fused.SetTime(real_fused.GetTime());
 
-  test_fused.num_qubits = real_fused.num_qubits + 1;
+  test_fused.SetQubit0(real_fused.GetQubit0() + 1);
   ASSERT_NE(test_fused, real_fused);
-  test_fused.num_qubits = real_fused.num_qubits;
-
-  test_fused.qubits[0] = real_fused.qubits[0] + 1;
-  ASSERT_NE(test_fused, real_fused);
-  test_fused.qubits[0] = real_fused.qubits[0];
+  test_fused.SetQubit0(real_fused.GetQubit0());
 
   test_fused.qubits[1] = real_fused.qubits[1] + 1;
   ASSERT_NE(test_fused, real_fused);
