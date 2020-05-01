@@ -284,16 +284,14 @@ TEST(FuserBasicTest, FuseGatesDisjoint) {
   locations.clear();
 
   // Third fused gate
-  unsigned int pmaster_time_3 = 5;
+  unsigned int anchor_time_3 = 5;
   locations.push_back(1);
   locations.push_back(2);
-  status =
-      i2_builder.Build(pmaster_time_3, locations, empty_map, &gate_ident_2);
+  status = i2_builder.Build(anchor_time_3, locations, empty_map, &gate_ident_2);
   ASSERT_EQ(status, Status::OK());
   test_circuit.gates.push_back(gate_ident_2);
-  real_fused_3.pmaster = &test_circuit.gates.back();
-  real_fused_3.gates.push_back(&test_circuit.gates.back());
-  real_fused_3.time = pmaster_time_3;
+  GateFused real_fused_3(anchor_time_3, 1, 2, &gate_ident_2);
+  real_fused_3.AddGate(&test_circuit.gates.back());
   locations.clear();
 
   // Check fused gate equality
