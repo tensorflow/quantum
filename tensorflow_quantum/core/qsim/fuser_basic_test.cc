@@ -29,6 +29,11 @@ using ::tensorflow::Status;
 
 TEST(FuserBasicTest, GateFused) {
   Status status;
+  GateFused test_fused, real_fused;
+  test_fused.time = real_fused.time = 42;
+  test_fused.num_qubits = real_fused.num_qubits = 2;
+  test_fused.qubits[0] = real_fused.qubits[0] = 0;
+  test_fused.qubits[1] = real_fused.qubits[1] = 1;
 
   std::vector<unsigned int> locations;
   XPowGateBuilder x_pow_builder;
@@ -39,7 +44,10 @@ TEST(FuserBasicTest, GateFused) {
   arg_map["exponent_scalar"] = 1.0;
   locations.push_back(0);
   status = x_pow_builder.Build(0, locations, arg_map, &gate_x);
+
   ASSERT_EQ(status, Status::OK());
+  test_fused.gates.push_back(&gate_x);
+  real_fused.gates.push_back(&gate_x);
   locations.clear();
 
   CNotPowGateBuilder cnot_pow_builder;
@@ -50,48 +58,52 @@ TEST(FuserBasicTest, GateFused) {
   locations.push_back(0);
   locations.push_back(1);
   status = cnot_pow_builder.Build(1, locations, arg_map_cnot, &gate_cnot);
+
   ASSERT_EQ(status, Status::OK());
+  test_fused.gates.push_back(&gate_cnot);
+  real_fused.gates.push_back(&gate_cnot);
   locations.clear();
 
-  GateFused test_fused(42, 0, 1, &gate_cnot);
-  GateFused real_fused(42, 0, 1, &gate_cnot);
-  test_fused.AddGate(&gate_x);
-  real_fused.AddGate(&gate_x);
-  test_fused.AddGate(&gate_cnot);
-  real_fused.AddGate(&gate_cnot);
-  
+  test_fused.pmaster = &gate_cnot;
+  real_fused.pmaster = &gate_cnot;
+
   // confirm objects are actually equal
-  ASSERT_EQ(test_fused.GetTime(), real_fused.GetTime());
-  ASSERT_EQ(test_fused.GetQubit0(), real_fused.GetQubit0());
-  ASSERT_EQ(test_fused.GetQubit1(), real_fused.GetQubit1());
-  ASSERT_EQ(test_fused.GetAnchor(), real_fused.GetAnchor());
-  ASSERT_EQ(test_fused.GetGate(0), real_fused.GetGate(0));
-  ASSERT_EQ(test_fused.GetGate(1), real_fused.GetGate(1));
+  ASSERT_EQ(test_fused.time, real_fused.time);
+  ASSERT_EQ(test_fused.num_qubits, real_fused.num_qubits);
+  ASSERT_EQ(test_fused.qubits[0], real_fused.qubits[0]);
+  ASSERT_EQ(test_fused.qubits[1], real_fused.qubits[1]);
+  ASSERT_EQ(test_fused.pmaster, real_fused.pmaster);
+  ASSERT_EQ(test_fused.gates[0], real_fused.gates[0]);
+  ASSERT_EQ(test_fused.gates[1], real_fused.gates[1]);
 
   // check equality operator overload
-  test_fused.SetTime(real_fused.GetTime() + 1);
+  test_fused.time = real_fused.time + 1;
   ASSERT_NE(test_fused, real_fused);
-  test_fused.SetTime(real_fused.GetTime());
+  test_fused.time = real_fused.time;
 
-  test_fused.SetQubit0(real_fused.GetQubit0() + 1);
+  test_fused.num_qubits = real_fused.num_qubits + 1;
   ASSERT_NE(test_fused, real_fused);
-  test_fused.SetQubit0(real_fused.GetQubit0());
+  test_fused.num_qubits = real_fused.num_qubits;
 
-  test_fused.SetQubit1(real_fused.GetQubit1() + 1);
+  test_fused.qubits[0] = real_fused.qubits[0] + 1;
   ASSERT_NE(test_fused, real_fused);
-  test_fused.SetQubit1(real_fused.GetQubit1());
+  test_fused.qubits[0] = real_fused.qubits[0];
 
-  test_fused.SetAnchor(&gate_x);
+  test_fused.qubits[1] = real_fused.qubits[1] + 1;
   ASSERT_NE(test_fused, real_fused);
-  test_fused.SetAnchor(&gate_cnot);
+  test_fused.qubits[1] = real_fused.qubits[1];
 
-  test_fused.SetGate(0, &gate_cnot);
+  test_fused.pmaster = &gate_x;
   ASSERT_NE(test_fused, real_fused);
-  test_fused.SetGate(0, &gate_x);
-  
-  test_fused.SetGate(1, &gate_x);
+  test_fused.pmaster = &gate_cnot;
+
+  test_fused.gates[0] = &gate_cnot;
   ASSERT_NE(test_fused, real_fused);
-  test_fused.SetGate(1, &gate_cnot);
+  test_fused.gates[0] = &gate_x;
+
+  test_fused.gates[1] = &gate_x;
+  ASSERT_NE(test_fused, real_fused);
+  test_fused.gates[1] = &gate_cnot;
 
   ASSERT_EQ(test_fused, real_fused);
 }
