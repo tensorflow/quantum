@@ -301,7 +301,7 @@ class SampledExpectation(tf.keras.layers.Layer):
                 reps_need_tile = True
 
             repetitions = tf.convert_to_tensor(repetitions,
-                                               dtype=tf.dtypes.int32)
+                                               dtype=tf.dtypes.uint32)
 
         if reps_need_tile:
             # Don't tile up if the user gave a python list that was precisely
