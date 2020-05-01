@@ -26,39 +26,39 @@ class SpinSystemDataTest(tf.test.TestCase):
         """Test that it errors on invalid arguments."""
         with self.assertRaisesRegex(TypeError,
                                     expected_regex='must be an integer'):
-            spin_system.TFIChain('junk')
+            qbs = cirq.GridQubit.rect(4, 1)
+            spin_system.tfi_chain(qbs, 'junk')
         with self.assertRaisesRegex(ValueError,
                                     expected_regex='Supported number of'):
-            spin_system.TFIChain(3)
+            qbs = cirq.GridQubit.rect(4, 1)
+            spin_system.tfi_chain(qbs, 3)
         with self.assertRaisesRegex(
                 ValueError, expected_regex='Supported boundary conditions'):
-            spin_system.TFIChain(4, 'open')
+            qbs = cirq.GridQubit.rect(4, 1)
+            spin_system.tfi_chain(qbs, 4, 'open')
         with self.assertRaisesRegex(TypeError,
                                     expected_regex='must be a list of'):
-            system = spin_system.TFIChain(4)
-            system.circuit(['bob'])
+            spin_system.tfi_chain(['bob'], 4)
         with self.assertRaisesRegex(
                 ValueError, expected_regex='cirq.Gridqubit objects with shape'):
-            system = spin_system.TFIChain(4)
             qbs = cirq.GridQubit.rect(2, 2)
-            system.circuit(qbs)
+            spin_system.tfi_chain(qbs, 4)
         with self.assertRaisesRegex(ValueError,
                                     expected_regex='Expected 4 cirq.Gridqubit'):
-            system = spin_system.TFIChain(4)
             qbs = cirq.GridQubit.rect(3, 1)
-            system.circuit(qbs)
+            spin_system.tfi_chain(qbs, 4)
 
     def test_fidelity(self):
         """Test that it returns the correct number of circuits."""
         nspins = 4
-        s = spin_system.TFIChain(nspins, 'closed')
         qbs = cirq.GridQubit.rect(nspins, 1)
-        c = s.circuit(qbs)
+        circuit, resolved_parameters, system = spin_system.tfi_chain(
+            qbs, nspins, 'closed')
         fidelities = []
         for n in range(80):
-            phi = cirq.Simulator().simulate(
-                c, s.resolved_parameters[n]).final_state
-            gs = s.systems[n].ground_state()
+            phi = cirq.Simulator().simulate(circuit,
+                                            resolved_parameters[n]).final_state
+            gs = system[n].ground_state()
             fidelities.append(
                 np.abs(
                     np.conj(gs[:, 0].reshape((1, -1))) @ phi.reshape(

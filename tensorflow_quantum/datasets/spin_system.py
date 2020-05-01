@@ -14,7 +14,6 @@
 # ==============================================================================
 """Quantum datasets for several quantum many-body spin systems in the form of
 parameterized circuits"""
-from typing import List
 import os
 import numpy as np
 import sympy
@@ -52,17 +51,13 @@ class SpinSystem(object):
     def __lt__(self, other):
         return self.g < other.g
 
-    def hamiltonian(self) -> sps.csr_matrix:
+    def hamiltonian(self):
         """Load the hamiltonian into a scipy sparse CSR matrix."""
         return sps.load_npz(self.path + '/H.npz')
 
-    def ground_state(self) -> np.ndarray:
+    def ground_state(self):
         """Load the ground state wave function into a complex numpy array."""
         return np.load(self.path + '/groundstate.npy')
-
-    def final_state(self):
-        """Load the circuit wave function."""
-        return np.load(self.path + '/final_state.npy')
 
 
 def unique_name():
@@ -111,7 +106,7 @@ class SpinSystemDataset(object):
     def __len__(self):
         return len(self.systems)
 
-    def _get_spin_systems(self, path: str) -> List[SpinSystem]:
+    def _get_spin_systems(self, path: str):
         systems = []
         for directory in os.listdir(path):
             with open(path + directory + '/stats.txt', 'r') as file:
@@ -131,110 +126,85 @@ class SpinSystemDataset(object):
         pass
 
 
-class TFIChain(SpinSystemDataset):
-    """Transverse field Ising-model quantum data set
+def tfi_chain(qubits, nspins: int, boundary_condition: str = 'closed'):
+    """
+    Transverse field Ising-model quantum data set
 
     H = - \sum_{i} \sigma_i^z \sigma_{i+1}^z - g \sum_i \sigma_i^x
 
     Contains 80 circuit parameterizations corresponding to
     the ground states of the 1D TFI chain for g in [0.2,1.8].
+
+    Args:
+        qubits: cirq.Grid qubits of size (nspins,1)
+        nspins: Number of spins, supported numbers are [4,8,12,16]
+        boundary_condition: The boundary condition of the chain. Supported
+        boundary conditions are ['closed']
+
+    Returns:
+        cirq.Circuit of depth N/2.
+        List of resolved parameters for all 80 order parameters.
+        List of SpinSystem instances.
     """
 
-    def __init__(self, nspins: int, boundary_condition: str = 'closed'):
-        """Instatiate this data set.
+    supported_n = [4, 8, 12, 16]
+    supported_bc = ['closed']
+    if not isinstance(nspins, int):
+        raise TypeError("nspins must be an integer, received {}".format(
+            type(nspins)))
+    if not nspins in supported_n:
+        raise ValueError('Supported number of spins are {}, received {}'.format(
+            supported_n, nspins))
 
-        Args:
-            nspins: The number of spins in the chain.
-            boundary_condition: Whether the chain is "open", or "closed".
-        """
-        supported_n = [4, 8, 12, 16]
-        supported_bc = ['closed']
-        if not isinstance(nspins, int):
-            raise TypeError("nspins must be an integer, received {}".format(
-                type(nspins)))
-        if not nspins in supported_n:
-            raise ValueError(
-                'Supported number of spins are {}, received {}'.format(
-                    supported_n, nspins))
+    if not boundary_condition in supported_bc:
+        raise ValueError(
+            'Supported boundary conditions are {}, received {}'.format(
+                supported_bc, boundary_condition))
 
-        if not boundary_condition in supported_bc:
-            raise ValueError(
-                'Supported boundary conditions are {}, received {}'.format(
-                    supported_bc, boundary_condition))
+    boundary_condition = boundary_condition
+    name = 'TFI_' + boundary_condition
 
-        self.boundary_condition = boundary_condition
-        self.name = 'TFI_' + boundary_condition
+    dataset = SpinSystemDataset(nspins, name)
 
-        super(TFIChain, self).__init__(nspins, self.name)
+    name_generator = unique_name()
+    symbols = [sympy.Symbol(next(name_generator)) for _ in range(nspins)]
+    symbol_names = np.array([s.name for s in symbols]).reshape(
+        (2, int(nspins / 2)))
+    symbols = np.array(symbols).reshape((2, int(nspins / 2)))
+    resolved_parameters = []
+    for i in range(len(dataset.systems)):
+        parameter_map = dict(
+            zip(symbol_names.flatten(),
+                dataset.systems[i].parameters.flatten()))
+        resolved_parameters.append(cirq.ParamResolver(parameter_map))
 
-        name_generator = unique_name()
-        self.symbols = [
-            sympy.Symbol(next(name_generator)) for _ in range(self.nspins)
-        ]
-        self.symbol_names = np.array([s.name for s in self.symbols]).reshape(
-            (2, int(self.nspins / 2)))
-        self.symbols = np.array(self.symbols).reshape((2, int(self.nspins / 2)))
-        self.resolved_parameters = []
-        for i in range(len(self)):
-            parameter_map = dict(
-                zip(self.symbol_names.flatten(),
-                    self.systems[i].parameters.flatten()))
-            self.resolved_parameters.append(cirq.ParamResolver(parameter_map))
+    # define the circuit
+    if not all([isinstance(q, cirq.GridQubit) for q in qubits]):
+        raise TypeError("qubits must be a list of cirq.Gridqubit objects.")
+    if not all([q.col == 0 for q in qubits]):
+        raise ValueError(
+            'Must be list of cirq.Gridqubit objects with shape (i,0)')
+    if not len(qubits) == nspins:
+        raise ValueError(
+            "Expected {} cirq.Gridqubit objects, received {}".format(
+                nspins, len(qubits)))
+    circuit = cirq.Circuit()
+    circuit.append(cirq.H.on_each(qubits))
 
-    def circuit(self, qubits: List[cirq.GridQubit]) -> cirq.circuits.Circuit:
-        """
-        Construct the circuit of depth = N/2 for the transverse field Ising-
-        model. N is the number of qubits.
+    for d in range(int(nspins / 2)):
+        for j in range(0, nspins - 1, 2):
+            circuit.append(cirq.CNOT(qubits[j], qubits[j + 1]))
+            circuit.append(cirq.rz(symbols[0, d])(qubits[j + 1]))
+            circuit.append(cirq.CNOT(qubits[j], qubits[j + 1]))
+        for j in range(1, nspins - 1, 2):
+            circuit.append(cirq.CNOT(qubits[j], qubits[j + 1]))
+            circuit.append(cirq.rz(symbols[0, d])(qubits[j + 1]))
+            circuit.append(cirq.CNOT(qubits[j], qubits[j + 1]))
+        if boundary_condition == 'closed':
+            circuit.append(cirq.CNOT(qubits[nspins - 1], qubits[0]))
+            circuit.append(cirq.rz(symbols[0, d])(qubits[0]))
+            circuit.append(cirq.CNOT(qubits[nspins - 1], qubits[0]))
+        for j in range(0, nspins):
+            circuit.append(cirq.rx(symbols[1, d])(qubits[j]))
 
-        Args:
-            qubits: List of cirq.Gridqubits of size (N,1).
-
-        Returns:
-            The constructed circuit.
-        """
-        # define the circuit
-        if not all([isinstance(q, cirq.GridQubit) for q in qubits]):
-            raise TypeError("qubits must be a list of cirq.Gridqubit objects.")
-        if not all([q.col == 0 for q in qubits]):
-            raise ValueError(
-                'Must be list of cirq.Gridqubit objects with shape (i,0)')
-        if not len(qubits) == self.nspins:
-            raise ValueError(
-                "Expected {} cirq.Gridqubit objects, received {}".format(
-                    self.nspins, len(qubits)))
-        circuit = cirq.Circuit()
-        circuit.append(cirq.H.on_each(qubits))
-
-        for d in range(int(self.nspins / 2)):
-            for j in range(0, self.nspins - 1, 2):
-                circuit.append(cirq.CNOT(qubits[j], qubits[j + 1]))
-                circuit.append(cirq.rz(self.symbols[0, d])(qubits[j + 1]))
-                circuit.append(cirq.CNOT(qubits[j], qubits[j + 1]))
-            for j in range(1, self.nspins - 1, 2):
-                circuit.append(cirq.CNOT(qubits[j], qubits[j + 1]))
-                circuit.append(cirq.rz(self.symbols[0, d])(qubits[j + 1]))
-                circuit.append(cirq.CNOT(qubits[j], qubits[j + 1]))
-            if self.boundary_condition == 'closed':
-                circuit.append(cirq.CNOT(qubits[self.nspins - 1], qubits[0]))
-                circuit.append(cirq.rz(self.symbols[0, d])(qubits[0]))
-                circuit.append(cirq.CNOT(qubits[self.nspins - 1], qubits[0]))
-            for j in range(0, self.nspins):
-                circuit.append(cirq.rx(self.symbols[1, d])(qubits[j]))
-
-        return circuit
-
-
-# class TFILattice(SpinSystemDataset):
-#     """"""
-#     pass
-#
-# class TFIKagome(SpinSystemDataset):
-#     pass
-#
-#
-# class XXZChain(SpinSystemDataset):
-#     pass
-#
-#
-# class XXZLattice(SpinSystemDataset):
-#     pass
+    return circuit, resolved_parameters, dataset.systems
