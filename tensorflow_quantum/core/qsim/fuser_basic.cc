@@ -31,16 +31,74 @@ using ::tensorflow::Status;
 // Appends to `fused_gates` all single-qubit gates on the current `qubit_wire`,
 // until reaching the end of the wire or a multi-qubit gate.
 // Starts the search at `current_timeslice`.
-void Advance(const std::vector<const Gate*>& qubit_wire,
-             std::vector<const Gate*>* fused_gates,
+void Advance(const std::vector<const Gate*>& qubit_wire, GateFused* gate,
              unsigned int* current_timeslice) {
   while (*current_timeslice < qubit_wire.size() &&
          qubit_wire[*current_timeslice]->num_qubits == 1) {
-    fused_gates->push_back(qubit_wire[(*current_timeslice)++]);
+    gate->AddGate(qubit_wire[(*current_timeslice)++]);
   }
 }
 
 }  // namespace
+
+GateFused::GateFused(const unsigned int time, const unsigned int q0,
+                     const unsigned int q1, const Gate* anchor)
+    : time_(time), anchor_(anchor) {
+  qubits_[0] = q0;
+  qubits_[1] = q1;
+}
+
+void GateFused::AddGate(const Gate* gate) { gates_.push_back(gate); }
+
+std::vector<const Gate*> GateFused::GetAllGates() const { return gates_; }
+
+unsigned int GateFused::GetNumGates() const { return gates_.size(); }
+
+const Gate* GateFused::GetGate(unsigned int gate_index) const {
+  return gates_.at(gate_index);
+}
+
+void GateFused::SetGate(unsigned int gate_index, const Gate* gate) {
+  gates_.at(gate_index) = gate;
+}
+
+unsigned int GateFused::GetTime() const { return time_; }
+void GateFused::SetTime(unsigned int time) { time_ = time; }
+
+unsigned int GateFused::GetQubit0() const { return qubits_[0]; }
+void GateFused::SetQubit0(unsigned int q0) { qubits_[0] = q0; }
+
+unsigned int GateFused::GetQubit1() const { return qubits_[1]; }
+void GateFused::SetQubit1(unsigned int q1) { qubits_[1] = q1; }
+
+const Gate* GateFused::GetAnchor() const { return anchor_; }
+void GateFused::SetAnchor(const Gate* anchor) { anchor_ = anchor; }
+
+bool operator==(const GateFused& l, const GateFused& r) {
+  if (l.GetTime() != r.GetTime()) {
+    return false;
+  }
+  if (l.GetQubit0() != r.GetQubit0()) {
+    return false;
+  }
+  if (l.GetQubit1() != r.GetQubit1()) {
+    return false;
+  }
+  if (*l.GetAnchor() != *r.GetAnchor()) {
+    return false;
+  }
+  if (l.GetNumGates() != r.GetNumGates()) {
+    return false;
+  }
+  for (size_t i = 0; i < l.GetNumGates(); i++) {
+    if (*l.GetGate(i) != *r.GetGate(i)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool operator!=(const GateFused& l, const GateFused& r) { return !(l == r); }
 
 Status FuseGates(const Circuit& circuit, std::vector<GateFused>* fused) {
   // Holds only the two-qubit gates in the circuit, in correct time order;
@@ -88,11 +146,11 @@ Status FuseGates(const Circuit& circuit, std::vector<GateFused>* fused) {
     // This two-qubit gate has already been absorbed into a different anchor.
     if (gates_lat[q0][last[q0]]->time > pgate->time) continue;
 
-    GateFused gate_f = {pgate->time, 2, {q0, q1}, pgate};
+    GateFused gate_f(pgate->time, q0, q1, pgate);
     do {
       // Collect all available single-qubit gates before the anchor.
-      Advance(gates_lat[q0], &gate_f.gates, &last[q0]);
-      Advance(gates_lat[q1], &gate_f.gates, &last[q1]);
+      Advance(gates_lat[q0], &gate_f, &last[q0]);
+      Advance(gates_lat[q1], &gate_f, &last[q1]);
 
       // Initial fuse should end at the anchor which initiated the fuse.
       if (gates_lat[q0][last[q0]] != gates_lat[q1][last[q1]]) {
@@ -101,13 +159,13 @@ Status FuseGates(const Circuit& circuit, std::vector<GateFused>* fused) {
       }
 
       // Collect the anchor.
-      gate_f.gates.push_back(gates_lat[q0][last[q0]]);
+      gate_f.AddGate(gates_lat[q0][last[q0]]);
 
       // Collect all available single-qubit gates after the anchor.
       last[q0]++;
       last[q1]++;
-      Advance(gates_lat[q0], &gate_f.gates, &last[q0]);
-      Advance(gates_lat[q1], &gate_f.gates, &last[q1]);
+      Advance(gates_lat[q0], &gate_f, &last[q0]);
+      Advance(gates_lat[q1], &gate_f, &last[q1]);
 
     } while (
         // There are still gates available on both wires
