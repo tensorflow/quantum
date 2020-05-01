@@ -53,6 +53,13 @@ TEST(FuserBasicTest, GateFused) {
   ASSERT_EQ(status, Status::OK());
   locations.clear();
 
+  GateFused test_fused(42, 0, 1, &gate_cnot);
+  GateFused real_fused(42, 0, 1, &gate_cnot);
+  test_fused.AddGate(&gate_x);
+  real_fused.AddGate(&gate_x);
+  test_fused.AddGate(&gate_cnot);
+  real_fused.AddGate(&gate_cnot);
+  
   // confirm objects are actually equal
   ASSERT_EQ(test_fused.time, real_fused.time);
   ASSERT_EQ(test_fused.num_qubits, real_fused.num_qubits);
