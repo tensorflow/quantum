@@ -326,11 +326,6 @@ class SampledExpectation(tf.keras.layers.Layer):
 
             symbol_values = tf.tile(tf.expand_dims(self._w, axis=0),
                                     tf.stack([circuit_batch_dim, 1]))
-
-        if (
-            not isinstance(operators[0], (list, tuple, np.ndarray))
-            or not isinstance(symbol_values[0], (list, tuple, np.ndarray))):
-            raise TypeError("pauli_sums or symbol_values has wrong rank")
           
         return self._expectation_op(inputs, symbol_names, symbol_values,
                                     operators, repetitions)
