@@ -77,21 +77,21 @@ TEST(FuserBasicTest, GateFused) {
   ASSERT_NE(test_fused, real_fused);
   test_fused.SetQubit0(real_fused.GetQubit0());
 
-  test_fused.qubits[1] = real_fused.qubits[1] + 1;
-  ASSERT_NE(test_fused, real_fused);
-  test_fused.qubits[1] = real_fused.qubits[1];
+  test_fused.SetQubit1(real_fused.GetQubit1() + 1);
+  ASSERT_NE(test_fused, real_fused)
+  test_fused.SetQubit1(real_fused.GetQubit1());
 
-  test_fused.pmaster = &gate_x;
+  test_fused.SetAnchor(&gate_x);
   ASSERT_NE(test_fused, real_fused);
-  test_fused.pmaster = &gate_cnot;
+  test_fused.SetAnchor(&gate_cnot);
 
-  test_fused.gates[0] = &gate_cnot;
+  test_fused.SetGate(0, &gate_cnot);
   ASSERT_NE(test_fused, real_fused);
-  test_fused.gates[0] = &gate_x;
+  test_fused.SetGate(0, &gate_x);
 
-  test_fused.gates[1] = &gate_x;
+  test_fused.SetGate(1, &gate_x);
   ASSERT_NE(test_fused, real_fused);
-  test_fused.gates[1] = &gate_cnot;
+  test_fused.SetGate(1, &gate_cnot);
 
   ASSERT_EQ(test_fused, real_fused);
 }
