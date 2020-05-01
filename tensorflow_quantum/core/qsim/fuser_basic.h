@@ -26,41 +26,38 @@ namespace qsim {
 
 class GateFused {
  public:
-  unsigned int time;
-  unsigned int num_qubits;
-  std::array<unsigned int, 2> qubits;
-  const Gate* pmaster;
-  std::vector<const Gate*> gates;
+    GateFused(const unsigned int time, const unsigned int q0,
+            const unsigned int q1, const Gate* anchor);
 
-  // provided to ease fuser testing
-  bool operator==(const GateFused& r) const {
-    if (this->time != r.time) {
-      return false;
-    }
-    if (this->num_qubits != r.num_qubits) {
-      return false;
-    }
-    for (unsigned int i = 0; i < this->num_qubits; i++) {
-      if (this->qubits[i] != r.qubits[i]) {
-        return false;
-      }
-    }
-    if (*this->pmaster != *r.pmaster) {
-      return false;
-    }
-    if (this->gates.size() != r.gates.size()) {
-      return false;
-    }
-    for (size_t i = 0; i < this->gates.size(); i++) {
-      if (*this->gates.at(i) != *r.gates.at(i)) {
-        return false;
-      }
-    }
-    return true;
-  }
+  ~GateFused() {}
 
-  bool operator!=(const GateFused& r) const { return !(*this == r); }
+  void AddGate(const Gate* gate);
+  std::vector<const Gate*> GetAllGates() const;
+  unsigned int GetNumGates() const;
+  const Gate* GetGate(unsigned int gate_index) const;
+  void SetGate(unsigned int gate_index, const Gate* gate);
+
+  unsigned int GetTime() const;
+  void SetTime(unsigned int time);
+
+  unsigned int GetQubit0() const;
+  void SetQubit0(unsigned int q0);
+
+  unsigned int GetQubit1() const;
+  void SetQubit1(unsigned int q1);
+
+  const Gate* GetAnchor() const;
+  void SetAnchor(const Gate* anchor);
+
+ private:
+  unsigned int time_;
+  std::array<unsigned int, 2> qubits_;
+  const Gate* anchor_;
+  std::vector<const Gate*> gates_;
 };
+
+bool operator==(const GateFused& l, const GateFused& r);
+bool operator!=(const GateFused& l, const GateFused& r);
 
 tensorflow::Status FuseGates(const Circuit& circuit,
                              std::vector<GateFused>* fused);
