@@ -61,14 +61,13 @@ TEST(FuserBasicTest, GateFused) {
   real_fused.AddGate(&gate_cnot);
 
   // confirm objects are actually equal
-  ASSERT_EQ(test_fused.time, real_fused.time);
-  ASSERT_EQ(test_fused.num_qubits, real_fused.num_qubits);
-  ASSERT_EQ(test_fused.qubits[0], real_fused.qubits[0]);
-  ASSERT_EQ(test_fused.qubits[1], real_fused.qubits[1]);
-  ASSERT_EQ(test_fused.pmaster, real_fused.pmaster);
-  ASSERT_EQ(test_fused.gates[0], real_fused.gates[0]);
-  ASSERT_EQ(test_fused.gates[1], real_fused.gates[1]);
-
+  ASSERT_EQ(test_fused.GetTime(), real_fused.GetTime());
+  ASSERT_EQ(test_fused.GetQubit0(), real_fused.GetQubit0());
+  ASSERT_EQ(test_fused.GetQubit1(), real_fused.GetQubit1());
+  ASSERT_EQ(test_fused.GetAnchor(), real_fused.GetAnchor());
+  ASSERT_EQ(test_fused.GetGate(0), real_fused.GetGate(0));
+  ASSERT_EQ(test_fused.GetGate(1), real_fused.GetGate(1));
+  
   // check equality operator overload
   test_fused.time = real_fused.time + 1;
   ASSERT_NE(test_fused, real_fused);
