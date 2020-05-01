@@ -191,14 +191,8 @@ TEST(FuserBasicTest, FuseGatesDisjoint) {
   // the t = 2 CNOT should fuse the X gates and I(q0, q1);
   // and the final I(q1, q2) should be alone.
   Status status;
-  GateFused real_fused_1, real_fused_2, real_fused_3;
   std::vector<GateFused> test_fused_vec;
   Circuit test_circuit;
-  real_fused_1.num_qubits = real_fused_2.num_qubits = real_fused_3.num_qubits =
-      2;
-  real_fused_2.qubits[0] = 0;
-  real_fused_1.qubits[0] = real_fused_2.qubits[1] = real_fused_3.qubits[0] = 1;
-  real_fused_1.qubits[1] = real_fused_3.qubits[1] = 2;
   test_circuit.num_qubits = 3;
   test_circuit.gates.reserve(10);
 
@@ -221,37 +215,37 @@ TEST(FuserBasicTest, FuseGatesDisjoint) {
   arg_map_2q["exponent_scalar"] = 1.0;
 
   // First fused gate
-  unsigned int pmaster_time_1 = 0;
+  unsigned int anchor_time_1 = 0;
   locations.push_back(1);
   locations.push_back(2);
-  status = cnot_pow_builder.Build(pmaster_time_1, locations, arg_map_2q,
+  status = cnot_pow_builder.Build(anchor_time_1, locations, arg_map_2q,
                                   &gate_cnot_1);
   ASSERT_EQ(status, Status::OK());
-  test_circuit.gates.push_back(gate_cnot_1);
-  real_fused_1.pmaster = &test_circuit.gates.back();
-  real_fused_1.gates.push_back(&test_circuit.gates.back());
-  real_fused_1.time = pmaster_time_1;
   locations.clear();
+
+  test_circuit.gates.push_back(gate_cnot_1);
+  GateFused real_fused_1(anchor_time_1, 1, 2, &gate_cnot_1);
+  real_fused_1.AddGate(&test_circuit.gates.back());
 
   locations.push_back(1);
   status = y_pow_builder.Build(1, locations, arg_map_1q, &gate_y);
   ASSERT_EQ(status, Status::OK());
   test_circuit.gates.push_back(gate_y);
-  real_fused_1.gates.push_back(&test_circuit.gates.back());
+  real_fused_1.AddGate(&test_circuit.gates.back());
   locations.clear();
 
   locations.push_back(2);
   status = z_pow_builder.Build(1, locations, arg_map_1q, &gate_z);
   ASSERT_EQ(status, Status::OK());
   test_circuit.gates.push_back(gate_z);
-  real_fused_1.gates.push_back(&test_circuit.gates.back());
+  real_fused_1.AddGate(&test_circuit.gates.back());
   locations.clear();
 
   locations.push_back(2);
   status = h_pow_builder.Build(2, locations, arg_map_1q, &gate_h);
   ASSERT_EQ(status, Status::OK());
   test_circuit.gates.push_back(gate_h);
-  real_fused_1.gates.push_back(&test_circuit.gates.back());
+  real_fused_1.AddGate(&test_circuit.gates.back());
   locations.clear();
 
   // Second fused gate
@@ -259,26 +253,26 @@ TEST(FuserBasicTest, FuseGatesDisjoint) {
   status = x_pow_builder.Build(0, locations, arg_map_1q, &gate_x_1);
   ASSERT_EQ(status, Status::OK());
   test_circuit.gates.push_back(gate_x_1);
-  real_fused_2.gates.push_back(&test_circuit.gates.back());
+  real_fused_2.AddGate(&test_circuit.gates.back());
   locations.clear();
 
-  unsigned int pmaster_time_2 = 2;
+  unsigned int anchor_time_2 = 2;
   locations.push_back(0);
   locations.push_back(1);
-  status = cnot_pow_builder.Build(pmaster_time_2, locations, arg_map_2q,
+  status = cnot_pow_builder.Build(anchor_time_2, locations, arg_map_2q,
                                   &gate_cnot_2);
   ASSERT_EQ(status, Status::OK());
+  GateFused real_fused_2(anchor_time_2, 0, 1, &gate_cnot_2);
+  real_fused_2.AddGate(&test_circuit.gates.back());
   test_circuit.gates.push_back(gate_cnot_2);
-  real_fused_2.pmaster = &test_circuit.gates.back();
-  real_fused_2.gates.push_back(&test_circuit.gates.back());
-  real_fused_2.time = pmaster_time_2;
+  real_fused_2.AddGate(&test_circuit.gates.back());
   locations.clear();
 
   locations.push_back(1);
   status = x_pow_builder.Build(3, locations, arg_map_1q, &gate_x_2);
   ASSERT_EQ(status, Status::OK());
   test_circuit.gates.push_back(gate_x_2);
-  real_fused_2.gates.push_back(&test_circuit.gates.back());
+  real_fused_2.AddGate(&test_circuit.gates.back());
   locations.clear();
 
   locations.push_back(0);
@@ -286,7 +280,7 @@ TEST(FuserBasicTest, FuseGatesDisjoint) {
   status = i2_builder.Build(4, locations, empty_map, &gate_ident_1);
   ASSERT_EQ(status, Status::OK());
   test_circuit.gates.push_back(gate_ident_1);
-  real_fused_2.gates.push_back(&test_circuit.gates.back());
+  real_fused_2.AddGate(&test_circuit.gates.back());
   locations.clear();
 
   // Third fused gate
