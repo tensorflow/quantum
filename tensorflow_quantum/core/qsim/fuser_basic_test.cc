@@ -39,10 +39,7 @@ TEST(FuserBasicTest, GateFused) {
   arg_map["exponent_scalar"] = 1.0;
   locations.push_back(0);
   status = x_pow_builder.Build(0, locations, arg_map, &gate_x);
-
   ASSERT_EQ(status, Status::OK());
-  test_fused.gates.push_back(&gate_x);
-  real_fused.gates.push_back(&gate_x);
   locations.clear();
 
   CNotPowGateBuilder cnot_pow_builder;
@@ -53,14 +50,8 @@ TEST(FuserBasicTest, GateFused) {
   locations.push_back(0);
   locations.push_back(1);
   status = cnot_pow_builder.Build(1, locations, arg_map_cnot, &gate_cnot);
-
   ASSERT_EQ(status, Status::OK());
-  test_fused.gates.push_back(&gate_cnot);
-  real_fused.gates.push_back(&gate_cnot);
   locations.clear();
-
-  test_fused.pmaster = &gate_cnot;
-  real_fused.pmaster = &gate_cnot;
 
   // confirm objects are actually equal
   ASSERT_EQ(test_fused.time, real_fused.time);
