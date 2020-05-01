@@ -29,11 +29,6 @@ using ::tensorflow::Status;
 
 TEST(FuserBasicTest, GateFused) {
   Status status;
-  GateFused test_fused, real_fused;
-  test_fused.time = real_fused.time = 42;
-  test_fused.num_qubits = real_fused.num_qubits = 2;
-  test_fused.qubits[0] = real_fused.qubits[0] = 0;
-  test_fused.qubits[1] = real_fused.qubits[1] = 1;
 
   std::vector<unsigned int> locations;
   XPowGateBuilder x_pow_builder;
