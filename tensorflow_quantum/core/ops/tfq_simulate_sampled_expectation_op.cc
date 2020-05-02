@@ -79,7 +79,7 @@ class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
                     programs.size(), " circuits and ", pauli_sums.size(),
                     " paulisums.")));
 
-    std::vector<std::vector<unsigned int>> num_samples;
+    std::vector<std::vector<int>> num_samples;
     OP_REQUIRES_OK(context, GetNumSamples(context, &num_samples));
 
     OP_REQUIRES(context, num_samples.size() == pauli_sums.size(),
@@ -172,7 +172,7 @@ REGISTER_OP("TfqSimulateSampledExpectation")
     .Input("symbol_names: string")
     .Input("symbol_values: float")
     .Input("pauli_sums: string")
-    .Input("num_samples: uint32")
+    .Input("num_samples: int")
     .Output("expectations: float")
     .SetShapeFn([](tensorflow::shape_inference::InferenceContext *c) {
       tensorflow::shape_inference::ShapeHandle programs_shape;
