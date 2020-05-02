@@ -79,7 +79,7 @@ class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
                     programs.size(), " circuits and ", pauli_sums.size(),
                     " paulisums.")));
 
-    std::vector<std::vector<int>> num_samples;
+    std::vector<std::vector<unsigned int>> num_samples;
     OP_REQUIRES_OK(context, GetNumSamples(context, &num_samples));
 
     OP_REQUIRES(context, num_samples.size() == pauli_sums.size(),
@@ -88,11 +88,12 @@ class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
                     "Got ", num_samples.size(), " lists of sample sizes and ",
                     pauli_sums.size(), " lists of pauli sums.")));
 
-    OP_REQUIRES(context, num_samples[0].size() == pauli_sums[0].size(),
-                tensorflow::errors::InvalidArgument(absl::StrCat(
-                    "Dimension 1 of num_samples and pauli_sums do not match.",
-                    "Got ", num_samples[0].size(), " lists of sample sizes and ",
-                    pauli_sums[0].size(), " lists of pauli sums.")));
+    OP_REQUIRES(
+        context, num_samples[0].size() == pauli_sums[0].size(),
+        tensorflow::errors::InvalidArgument(absl::StrCat(
+            "Dimension 1 of num_samples and pauli_sums do not match.", "Got ",
+            num_samples[0].size(), " lists of sample sizes and ",
+            pauli_sums[0].size(), " lists of pauli sums.")));
 
     auto DoWork = [&](int start, int end) {
       int old_batch_index = -2;
@@ -172,7 +173,7 @@ REGISTER_OP("TfqSimulateSampledExpectation")
     .Input("symbol_names: string")
     .Input("symbol_values: float")
     .Input("pauli_sums: string")
-    .Input("num_samples: int")
+    .Input("num_samples: uint32")
     .Output("expectations: float")
     .SetShapeFn([](tensorflow::shape_inference::InferenceContext *c) {
       tensorflow::shape_inference::ShapeHandle programs_shape;

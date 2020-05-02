@@ -326,6 +326,6 @@ class SampledExpectation(tf.keras.layers.Layer):
 
             symbol_values = tf.tile(tf.expand_dims(self._w, axis=0),
                                     tf.stack([circuit_batch_dim, 1]))
-          
+
         return self._expectation_op(inputs, symbol_names, symbol_values,
                                     operators, repetitions)
