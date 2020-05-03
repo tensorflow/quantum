@@ -277,6 +277,10 @@ tensorflow::Status GetNumSamples(
     sub_parsed_num_samples.reserve(matrix_num_samples.dimension(1));
     for (unsigned int j = 0; j < matrix_num_samples.dimension(1); j++) {
       const int num_samples = matrix_num_samples(i, j);
+      if (num_samples < 1) {
+        return Status(tensorflow::error::INVALID_ARGUMENT,
+                      "Each element of num_samples must be greater than 0.");
+      }
       sub_parsed_num_samples.push_back(num_samples);
     }
     parsed_num_samples->push_back(sub_parsed_num_samples);
