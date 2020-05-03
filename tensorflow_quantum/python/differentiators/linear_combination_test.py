@@ -30,7 +30,7 @@ def _simple_op_inputs():
     circuit = cirq.Circuit(cirq.Y(qubit)**sympy.Symbol(symbol))
     op = cirq.X(qubit)
     value = 0.3
-    n_samples = 2000
+    n_samples = 5000000
 
     # Return inputs prepped for expectation ops.
     # circuit, symbol_names, values, ops, n_samples
