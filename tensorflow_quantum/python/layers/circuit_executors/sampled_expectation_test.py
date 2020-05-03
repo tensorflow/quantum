@@ -152,8 +152,9 @@ class SampledExpectationTest(tf.test.TestCase):
                                                      operators=test_psum,
                                                      repetitions=-1)
 
-        with self.assertRaisesRegex(Exception,
-                                    expected_regex="num_samples and pauli_sums do not match"):
+        with self.assertRaisesRegex(
+                Exception,
+                expected_regex="num_samples and pauli_sums do not match"):
             # Wrong second dimension size for repetitions & pauli operators.
             sampled_expectation.SampledExpectation()(reg_circuit,
                                                      operators=test_psum,

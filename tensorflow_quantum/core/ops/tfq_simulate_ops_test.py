@@ -603,12 +603,14 @@ class SimulateSampledExpectationTest(tf.test.TestCase):
                 symbol_values_array.astype(np.float64),
                 util.convert_to_tensor([[x] for x in pauli_sums]), num_samples)
 
-        with self.assertRaisesRegex(tf.errors.InvalidArgumentError, 'greater than 0'):
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'greater than 0'):
             # pylint: disable=too-many-function-args
             tfq_simulate_ops.tfq_simulate_sampled_expectation(
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 symbol_values_array,
-                util.convert_to_tensor([[x] for x in pauli_sums]), [[-1]]*batch_size)
+                util.convert_to_tensor([[x] for x in pauli_sums]),
+                [[-1]] * batch_size)
 
 
 class InputTypesTest(tf.test.TestCase, parameterized.TestCase):
