@@ -70,8 +70,7 @@ class ParameterShiftTest(tf.test.TestCase, parameterized.TestCase):
         _simple_op_inputs()
         ps = parameter_shift.ParameterShift()
         op = ps.generate_differentiable_op(
-            sampled_op=circuit_execution_ops.get_sampled_expectation_op(
-                backend=cirq.Simulator()))
+            sampled_op=circuit_execution_ops.get_sampled_expectation_op())
 
         with tf.GradientTape() as g:
             g.watch(values)
