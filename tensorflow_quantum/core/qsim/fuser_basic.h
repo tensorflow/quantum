@@ -32,7 +32,7 @@ class GateFused {
   ~GateFused() {}
 
   void AddGate(const Gate* gate);
-  std::vector<const Gate*> GetAllGates() const;
+  void GetAllGates(const std::vector<const Gate*>** ref) const;
   unsigned int GetNumGates() const;
   const Gate* GetGate(unsigned int gate_index) const;
   void SetGate(unsigned int gate_index, const Gate* gate);

@@ -50,7 +50,7 @@ GateFused::GateFused(const unsigned int time, const unsigned int q0,
 
 void GateFused::AddGate(const Gate* gate) { gates_.push_back(gate); }
 
-std::vector<const Gate*> GateFused::GetAllGates() const { return gates_; }
+void GateFused::GetAllGates(const std::vector<const Gate*>** ref) const { *ref = &gates_; }
 
 unsigned int GateFused::GetNumGates() const { return gates_.size(); }
 
