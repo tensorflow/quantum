@@ -26,6 +26,8 @@ limitations under the License.
 #include "absl/memory/memory.h"
 #include "tensorflow_quantum/core/qsim/state_space.h"
 #include "tensorflow_quantum/core/qsim/state_space_slow.h"
+#include "tensorflow_quantum/core/qsim/unitary_space.h"
+#include "tensorflow_quantum/core/qsim/unitary_space_slow.h"
 
 namespace tfq {
 namespace qsim {
@@ -43,6 +45,11 @@ std::unique_ptr<StateSpace> GetStateSpace(const uint64_t num_qubits,
 #else
   return absl::make_unique<StateSpaceSlow>(num_qubits, num_threads);
 #endif
+}
+
+std::unique_ptr<UnitarySpace> GetUnitarySpace(const uint64_t num_qubits,
+                                              const uint64_t num_threads) {
+  return absl::make_unique<UnitarySpaceSlow>(num_qubits, num_threads);
 }
 
 }  // namespace qsim
