@@ -9,8 +9,8 @@ py_library(
     name = "state",
     srcs = ["state.py"],
     deps = [
+        ":input_checks",
         "//tensorflow_quantum/core/ops:circuit_execution_ops",
-        "//tensorflow_quantum/python:util",
     ],
 )
 
@@ -18,6 +18,7 @@ py_library(
     name = "expectation",
     srcs = ["expectation.py"],
     deps = [
+        ":input_checks",
         "//tensorflow_quantum/core/ops:circuit_execution_ops",
         "//tensorflow_quantum/python:util",
         "//tensorflow_quantum/python/differentiators:differentiator",
@@ -29,6 +30,7 @@ py_library(
     name = "sampled_expectation",
     srcs = ["sampled_expectation.py"],
     deps = [
+        ":input_checks",
         "//tensorflow_quantum/core/ops:circuit_execution_ops",
         "//tensorflow_quantum/python:util",
         "//tensorflow_quantum/python/differentiators:differentiator",
@@ -41,7 +43,15 @@ py_library(
     name = "sample",
     srcs = ["sample.py"],
     deps = [
+        ":input_checks",
         "//tensorflow_quantum/core/ops:circuit_execution_ops",
+    ],
+)
+
+py_library(
+    name = "input_checks",
+    srcs = ["input_checks.py"],
+    deps = [
         "//tensorflow_quantum/python:util",
     ],
 )
@@ -85,6 +95,16 @@ py_test(
     python_version = "PY3",
     deps = [
         ":sample",
+        "//tensorflow_quantum/python:util",
+    ],
+)
+
+py_test(
+    name = "input_checks_test",
+    srcs = ["input_checks_test.py"],
+    python_version = "PY3",
+    deps = [
+        ":input_checks",
         "//tensorflow_quantum/python:util",
     ],
 )
