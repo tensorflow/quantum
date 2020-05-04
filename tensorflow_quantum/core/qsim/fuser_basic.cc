@@ -48,8 +48,6 @@ GateFused::GateFused(const unsigned int time, const unsigned int q0,
   qubits_[1] = q1;
 }
 
-void GateFused::AddGate(const Gate* gate) { gates_.push_back(gate); }
-
 void GateFused::GetAllGates(const std::vector<const Gate*>** ref) const { *ref = &gates_; }
 
 unsigned int GateFused::GetNumGates() const { return gates_.size(); }
