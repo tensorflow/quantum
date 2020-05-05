@@ -31,9 +31,10 @@ def _single_to_tensor(item):
         return serializer.serialize_paulisum(item).SerializeToString()
     return serializer.serialize_circuit(item).SerializeToString()
 
+
 def _exponential(theta, op):
-    G = cirq.unitary(op)
-    return np.eye(G.shape[0]) * np.cos(theta) - 1j * G * np.sin(theta)
+    op_mat = cirq.unitary(op)
+    return np.eye(op_mat.shape[0]) * np.cos(theta) - 1j * op_mat * np.sin(theta)
 
 
 BITS = list(cirq.GridQubit.rect(1, 10))
