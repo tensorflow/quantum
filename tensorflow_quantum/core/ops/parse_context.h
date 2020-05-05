@@ -75,6 +75,11 @@ tensorflow::Status GetSymbolMaps(tensorflow::OpKernelContext* context,
 tensorflow::Status GetGradients(tensorflow::OpKernelContext* context,
                                 std::vector<std::vector<float>>* grads);
 
+// Parses the number of samples from the 'num_samples' input tensor.
+tensorflow::Status GetNumSamples(
+    tensorflow::OpKernelContext* context,
+    std::vector<std::vector<int>>* parsed_num_samples);
+
 }  // namespace tfq
 
 #endif  // TFQ_CORE_OPS_PARSE_CONTEXT

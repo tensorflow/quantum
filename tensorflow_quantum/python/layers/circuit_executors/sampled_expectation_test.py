@@ -112,15 +112,14 @@ class SampledExpectationTest(tf.test.TestCase):
         symb_circuit = cirq.Circuit(cirq.H(bit)**symbol)
         reg_circuit = cirq.Circuit(cirq.H(bit))
 
-        with self.assertRaisesRegex(Exception, expected_regex="bytes-like"):
+        with self.assertRaisesRegex(Exception, expected_regex="pauli_sums"):
             # Operators has wrong rank. Parse error.
             sampled_expectation.SampledExpectation()(
                 [reg_circuit],
                 operators=util.convert_to_tensor([test_psum]),
                 repetitions=1)
 
-        with self.assertRaisesRegex(
-                Exception, expected_regex="must match second dimension"):
+        with self.assertRaisesRegex(Exception, expected_regex="symbol_values"):
             # symbol_values has wrong rank.
             sampled_expectation.SampledExpectation()([symb_circuit],
                                                      symbol_names=[symbol],
@@ -128,7 +127,9 @@ class SampledExpectationTest(tf.test.TestCase):
                                                      operators=test_psum,
                                                      repetitions=1)
 
-        with self.assertRaisesRegex(Exception, expected_regex="same batch"):
+        with self.assertRaisesRegex(
+                Exception,
+                expected_regex="Number of circuits and PauliSums do not match"):
             # Wrong batch size for pauli operators.
             sampled_expectation.SampledExpectation()(symb_circuit,
                                                      symbol_names=[symbol],
@@ -136,21 +137,24 @@ class SampledExpectationTest(tf.test.TestCase):
                                                                 [test_psum]],
                                                      repetitions=1)
 
-        with self.assertRaisesRegex(Exception, expected_regex="same batch"):
+        with self.assertRaisesRegex(
+                Exception,
+                expected_regex="Number of circuits and PauliSums do not match"):
             # Wrong batch size for pauli operators.
             sampled_expectation.SampledExpectation()(reg_circuit,
                                                      operators=[[test_psum],
                                                                 [test_psum]],
                                                      repetitions=1)
 
-        with self.assertRaisesRegex(Exception, expected_regex="<= 0"):
+        with self.assertRaisesRegex(Exception, expected_regex="greater than 0"):
             # Wrong repetitions.
             sampled_expectation.SampledExpectation()(reg_circuit,
                                                      operators=test_psum,
                                                      repetitions=-1)
 
-        with self.assertRaisesRegex(Exception,
-                                    expected_regex="same shape as pauli_sums"):
+        with self.assertRaisesRegex(
+                Exception,
+                expected_regex="num_samples and pauli_sums do not match"):
             # Wrong second dimension size for repetitions & pauli operators.
             sampled_expectation.SampledExpectation()(reg_circuit,
                                                      operators=test_psum,
