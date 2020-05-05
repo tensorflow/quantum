@@ -31,6 +31,10 @@ def _single_to_tensor(item):
         return serializer.serialize_paulisum(item).SerializeToString()
     return serializer.serialize_circuit(item).SerializeToString()
 
+def _exponential(theta, op):
+    G = cirq.unitary(op)
+    return np.eye(G.shape[0]) * np.cos(theta) - 1j * G * np.sin(theta)
+
 
 BITS = list(cirq.GridQubit.rect(1, 10))
 
@@ -262,10 +266,7 @@ class ExponentialUtilFunctionsTest(tf.test.TestCase):
         for op in [cirq.X, cirq.Y, cirq.Z]:
             theta = np.random.random()
             circuit = util.exponential(operators=[theta * op(q)])
-
-            # TODO(jaeyoo) : remove factor 2 if cirq issue is resolved
-            # https://github.com/quantumlib/Cirq/issues/2710
-            ground_truth_unitary = cirq.unitary(np.exp(-1j * 2 * theta * op(q)))
+            ground_truth_unitary = _exponential(theta, op(q))
             self.assertAllClose(ground_truth_unitary, cirq.unitary(circuit))
 
     def test_exponential_identity(self):
@@ -298,9 +299,9 @@ class ExponentialUtilFunctionsTest(tf.test.TestCase):
         theta1 = np.random.random()
         theta2 = np.random.random()
         identity = cirq.PauliString({None: cirq.I})
-        op1 = theta1 * cirq.Z(q[1]) * cirq.Z(q[2])
-        op2 = theta2 * identity
-        circuit = util.exponential(operators=[op1, op2])
+        op1 = cirq.Z(q[1]) * cirq.Z(q[2])
+        op2 = identity
+        circuit = util.exponential(operators=[theta1 * op1, theta2 * op2])
 
         result_gates = []
         for moment in circuit:
@@ -319,10 +320,7 @@ class ExponentialUtilFunctionsTest(tf.test.TestCase):
         for i in range(3, 7):
             self.assertEqual(result_gates[i].qubits, (q[1],))
 
-        # TODO(jaeyoo) : remove factor 2 if cirq issue is resolved
-        # https://github.com/quantumlib/Cirq/issues/2710
-        ground_truth_unitary = cirq.unitary(np.exp(-1j * 2 * op1))
-        ground_truth_unitary *= cirq.unitary(np.exp(-1j * op2))
+        ground_truth_unitary = _exponential(theta1, op1)
         result_unitary = cirq.unitary(circuit)
         global_phase = ground_truth_unitary[0][0] / result_unitary[0][0]
         result_unitary *= global_phase
