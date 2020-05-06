@@ -353,7 +353,7 @@ class ExecutionOpsConsistentyTest(tf.test.TestCase, parameterized.TestCase):
 
         pauli_sums = util.random_pauli_sums(qubits, max_paulisum_length,
                                             BATCH_SIZE)
-        num_samples = [[1000]] * BATCH_SIZE
+        num_samples = [[2000]] * BATCH_SIZE
 
         op_expectations = op(
             util.convert_to_tensor(circuit_batch), symbol_names,
