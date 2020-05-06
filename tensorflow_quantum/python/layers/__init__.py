@@ -22,6 +22,7 @@ from tensorflow_quantum.python.layers.circuit_executors import (
     Sample,
     State,
     SampledExpectation,
+    Unitary,
 )
 # High level layers.
 from tensorflow_quantum.python.layers.high_level import (
