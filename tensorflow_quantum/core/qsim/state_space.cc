@@ -62,7 +62,7 @@ tensorflow::Status StateSpace::Update(const Circuit& circuit) {
   for (const GateFused& gate : fused_gates) {
     float matrix[32];
     const std::vector<const Gate*>* ref;
-    gate.GetAllGates(&ref);
+    gate.GetAllGates(ref);
     CalcMatrix4(gate.GetQubit0(), gate.GetQubit1(), *ref, matrix);
     ApplyGate2(gate.GetQubit0(), gate.GetQubit1(), matrix);
   }
