@@ -28,7 +28,7 @@ class UnitaryTest(parameterized.TestCase, tf.test.TestCase):
 
     def test_unitary_create(self):
         """Test that State layers can be created."""
-        u = unitary.Unitary()
+        _ = unitary.Unitary()
 
     def test_basic_inputs(self):
         """Test that State layer outputs work end to end."""
@@ -41,11 +41,14 @@ class UnitaryTest(parameterized.TestCase, tf.test.TestCase):
         """Test that a single circuit with multiple parameters works."""
         a_symbol = sympy.Symbol('alpha')
         some_values = np.array([[0.5], [3.5]])
-        circuit = cirq.Circuit(cirq.H(cirq.GridQubit(0, 0)) ** a_symbol)
-        results = unitary.Unitary()(
-            circuit, symbol_names=[a_symbol], symbol_values=some_values)
-        u_1 = cirq.unitary(cirq.resolve_parameters(circuit, {a_symbol: some_values[0][0]}))
-        u_2 = cirq.unitary(cirq.resolve_parameters(circuit, {a_symbol: some_values[1][0]}))
+        circuit = cirq.Circuit(cirq.H(cirq.GridQubit(0, 0))**a_symbol)
+        results = unitary.Unitary()(circuit,
+                                    symbol_names=[a_symbol],
+                                    symbol_values=some_values)
+        u_1 = cirq.unitary(
+            cirq.resolve_parameters(circuit, {a_symbol: some_values[0][0]}))
+        u_2 = cirq.unitary(
+            cirq.resolve_parameters(circuit, {a_symbol: some_values[1][0]}))
         print(u_1)
         self.assertAllClose(results, [u_1, u_2])
 
@@ -53,14 +56,16 @@ class UnitaryTest(parameterized.TestCase, tf.test.TestCase):
         """Test that a batch of circuits works."""
         a_symbol = sympy.Symbol('alpha')
         some_values = np.array([[0.5], [3.5]])
-        circuit = cirq.Circuit(cirq.H(cirq.GridQubit(0, 0)) ** a_symbol)
-        results = unitary.Unitary()(
-            [circuit, circuit], symbol_names=[a_symbol], symbol_values=some_values)
-        u_1 = cirq.unitary(cirq.resolve_parameters(circuit, {a_symbol: some_values[0][0]}))
-        u_2 = cirq.unitary(cirq.resolve_parameters(circuit, {a_symbol: some_values[1][0]}))
+        circuit = cirq.Circuit(cirq.H(cirq.GridQubit(0, 0))**a_symbol)
+        results = unitary.Unitary()(util.convert_to_tensor([circuit, circuit]),
+                                    symbol_names=[a_symbol],
+                                    symbol_values=some_values)
+        u_1 = cirq.unitary(
+            cirq.resolve_parameters(circuit, {a_symbol: some_values[0][0]}))
+        u_2 = cirq.unitary(
+            cirq.resolve_parameters(circuit, {a_symbol: some_values[1][0]}))
         print(u_1)
         self.assertAllClose(results, [u_1, u_2])
-
 
     def test_input_errors(self):
         """Test that bad inputs caught input_check.py."""
@@ -74,26 +79,27 @@ class UnitaryTest(parameterized.TestCase, tf.test.TestCase):
         with self.assertRaisesRegex(Exception, expected_regex=""):
             # no name provided.
             u_calc([circuit, circuit],
-                       symbol_names=[],
-                       symbol_values=[[2.0], [3.0]])
+                   symbol_names=[],
+                   symbol_values=[[2.0], [3.0]])
 
         with self.assertRaisesRegex(Exception, expected_regex=""):
             # deceptive, but the circuit shouldn't be in a list. otherwise fine.
             u_calc([circuit],
-                       symbol_names=['alpha'],
-                       symbol_values=[[2.0], [3.0]])
+                   symbol_names=['alpha'],
+                   symbol_values=[[2.0], [3.0]])
 
         with self.assertRaisesRegex(Exception, expected_regex=""):
             # wrong symbol name.
             u_calc([circuit],
-                       symbol_names=['alphaaaa'],
-                       symbol_values=[[2.0], [3.0]])
+                   symbol_names=['alphaaaa'],
+                   symbol_values=[[2.0], [3.0]])
 
         with self.assertRaisesRegex(Exception, expected_regex=""):
             # too many symbol values provided.
             u_calc(circuit,
-                       symbol_names=['alpha'],
-                       symbol_values=[[2.0, 4.0], [3.0, 5.0]])
+                   symbol_names=['alpha'],
+                   symbol_values=[[2.0, 4.0], [3.0, 5.0]])
+
 
 if __name__ == '__main__':
     tf.test.main()
