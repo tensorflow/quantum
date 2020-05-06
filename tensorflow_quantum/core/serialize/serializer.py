@@ -116,9 +116,10 @@ def _eigen_gate_serializer(gate_type, serialized_id):
             serialized_name="exponent_scalar",
             serialized_type=float,
             op_getter=lambda x: _scalar_extractor(x.gate.exponent)),
-        cirq.google.SerializingArg(serialized_name="global_shift",
-                                   serialized_type=float,
-                                   op_getter=lambda x: float(x.gate._global_shift))
+        cirq.google.SerializingArg(
+            serialized_name="global_shift",
+            serialized_type=float,
+            op_getter=lambda x: float(x.gate._global_shift))
     ]
     return cirq.google.GateOpSerializer(gate_type=gate_type,
                                         serialized_gate_id=serialized_id,
@@ -263,9 +264,10 @@ def _phased_eigen_gate_serializer(gate_type, serialized_id):
             serialized_name="exponent_scalar",
             serialized_type=float,
             op_getter=lambda x: _scalar_extractor(x.gate.exponent)),
-        cirq.google.SerializingArg(serialized_name="global_shift",
-                                   serialized_type=float,
-                                   op_getter=lambda x: float(x.gate.global_shift))
+        cirq.google.SerializingArg(
+            serialized_name="global_shift",
+            serialized_type=float,
+            op_getter=lambda x: float(x.gate.global_shift))
     ]
     return cirq.google.GateOpSerializer(gate_type=gate_type,
                                         serialized_gate_id=serialized_id,
