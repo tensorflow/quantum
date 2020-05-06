@@ -37,6 +37,10 @@ class SpinSystemDataTest(tf.test.TestCase):
             qbs = cirq.GridQubit.rect(4, 1)
             spin_system.tfi_chain(qbs, 4, 'open')
         with self.assertRaisesRegex(TypeError,
+                                    expected_regex='expected str, bytes '):
+            qbs = cirq.GridQubit.rect(4, 1)
+            spin_system.tfi_chain(qbs, 4, data_dir=123)
+        with self.assertRaisesRegex(TypeError,
                                     expected_regex='must be a list of'):
             spin_system.tfi_chain(['bob'], 4)
         with self.assertRaisesRegex(
