@@ -48,7 +48,7 @@ class ParameterShiftUtilTest(tf.test.TestCase, parameterized.TestCase):
         q = cirq.GridQubit.rect(1, n_qubits)
         c = cirq.Circuit()
         c.append([
-            cirq.Rz(coeff[i] * sympy_symbols[i % 2]).on(q[i])
+            cirq.rz(coeff[i] * sympy_symbols[i % 2]).on(q[i])
             for i in range(n_qubits)
         ])
         circuit_batch = [c] * n_programs

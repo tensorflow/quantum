@@ -238,8 +238,8 @@ class ExponentialUtilFunctionsTest(tf.test.TestCase):
         """Confirm correct basis transformations of input PauliSums."""
         q = cirq.GridQubit.rect(1, 4)
         test_term = 0.2277 * cirq.Z(q[1]) * cirq.X(q[2]) * cirq.Y(q[3])
-        test_basis_gates = [cirq.H(q[2]), cirq.Rx(np.pi / 2)(q[3])]
-        test_conj_gates = [cirq.Rx(-np.pi / 2)(q[3]), cirq.H(q[2])]
+        test_basis_gates = [cirq.H(q[2]), cirq.rx(np.pi / 2)(q[3])]
+        test_conj_gates = [cirq.rx(-np.pi / 2)(q[3]), cirq.H(q[2])]
 
         gate_list, conj_gate_list = util._many_clifford_to_many_z(test_term)
         self.assertEqual(gate_list, test_basis_gates)

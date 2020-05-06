@@ -34,7 +34,7 @@ def _example_circuit_helper(n_qubits, n_programs):
     coeff = [1.0, -2.0, 3.0, -4.0, 5.0]
     q = cirq.GridQubit.rect(1, n_qubits)
     c = cirq.Circuit([
-        cirq.Rz(coeff[i] * sympy_symbols[i % 2]).on(q[i])
+        cirq.rz(coeff[i] * sympy_symbols[i % 2]).on(q[i])
         for i in range(n_qubits)
     ])
     circuit_batch = [c] * n_programs

@@ -29,12 +29,12 @@ def _gen_single_bit_rotation_problem(bit, symbols):
     """Generate a toy problem on 1 qubit."""
     starting_state = np.random.uniform(0, 2 * np.pi, 3)
     circuit = cirq.Circuit(
-        cirq.Rx(starting_state[0])(bit),
-        cirq.Ry(starting_state[1])(bit),
-        cirq.Rz(starting_state[2])(bit),
-        cirq.Rz(symbols[2])(bit),
-        cirq.Ry(symbols[1])(bit),
-        cirq.Rx(symbols[0])(bit))
+        cirq.rx(starting_state[0])(bit),
+        cirq.ry(starting_state[1])(bit),
+        cirq.rz(starting_state[2])(bit),
+        cirq.rz(symbols[2])(bit),
+        cirq.ry(symbols[1])(bit),
+        cirq.rx(symbols[0])(bit))
 
     return circuit
 
@@ -227,7 +227,7 @@ class SampledExpectationTest(tf.test.TestCase):
     def test_sampled_expectation_simple_tf_train(self):
         """Train a layer using standard tf (not keras)."""
         bit = cirq.GridQubit(0, 0)
-        circuit = cirq.Circuit(cirq.Rx(sympy.Symbol('theta'))(bit))
+        circuit = cirq.Circuit(cirq.rx(sympy.Symbol('theta'))(bit))
         layer = sampled_expectation.SampledExpectation()
         optimizer = tf.optimizers.Adam(learning_rate=0.05)
         for _ in range(10):
