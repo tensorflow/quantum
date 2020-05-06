@@ -55,9 +55,8 @@ void GateFused::GetAllGates(const std::vector<const Gate*>** ref) const {
 unsigned int GateFused::GetNumGates() const { return gates_.size(); }
 
 // Return a copy of the gate pointed to by the given index
-const Gate GateFused::GetGate(unsigned int gate_index) const {
-  Gate gate_copy(*gates_.at(gate_index));
-  return gate_copy;
+const Gate* GateFused::GetGate(unsigned int gate_index) const {
+  return gates_.at(gate_index);
 }
 
 void GateFused::SetGate(unsigned int gate_index, const Gate* gate) {
@@ -93,7 +92,7 @@ bool operator==(const GateFused& l, const GateFused& r) {
     return false;
   }
   for (size_t i = 0; i < l.GetNumGates(); i++) {
-    if (l.GetGate(i) != r.GetGate(i)) {
+    if (*l.GetGate(i) != *r.GetGate(i)) {
       return false;
     }
   }
