@@ -14,7 +14,7 @@
 # ==============================================================================
 """Quantum datasets for several quantum many-body spin systems in the form of
 parameterized circuits"""
-import os
+from pathlib import Path
 import numpy as np
 import sympy
 import scipy.sparse as sps
@@ -27,7 +27,7 @@ class SpinSystem(object):
     """
 
     def __init__(self, g: float, res_e: float, fidelity: float,
-                 gs_energy: float, parameters: np.ndarray, path: str):
+                 gs_energy: float, parameters: np.ndarray, path: Path):
         """Instantiate this spin system.
 
         Args:
@@ -38,7 +38,7 @@ class SpinSystem(object):
             and the circuit state.
             gs_energy: Exact diagonalization  round state energy
             parameters: Numpy array of shape (M,depth) where M is the required
-             number of parameters per layer.
+            number of parameters per layer.
             path: Path to the data.
         """
         self.g = g
@@ -53,11 +53,11 @@ class SpinSystem(object):
 
     def hamiltonian(self):
         """Load the hamiltonian into a scipy sparse CSR matrix."""
-        return sps.load_npz(self.path + '/H.npz')
+        return sps.load_npz(self.path / Path('H.npz'))
 
     def ground_state(self):
         """Load the ground state wave function into a complex numpy array."""
-        return np.load(self.path + '/groundstate.npy')
+        return np.load(self.path / Path('groundstate.npy'))
 
 
 def unique_name():
@@ -79,20 +79,26 @@ class SpinSystemDataset(object):
     single set of order parameters.
     """
 
-    def __init__(self, nspins: int, system_name: str):
+    def __init__(self, nspins: int, system_name: str, data_dir: str):
         """Instantiate this data set.
 
         Args:
             nspins: The number of spins in the system.
             system_name: Name of the system we want to load.
+            data_dir: Location where to store the data on disk. Default is
+        ~/tfq-datasets
         """
 
         # TODO: How should downloading and storing the data be handled?
-        data_path = '/tmp/data/' + system_name + "_{}/".format(int(nspins))
+        if data_dir is None:
+            data_dir = Path.expanduser(Path('~/tfq-datasets'))
+            data_dir.mkdir(parents=True, exist_ok=True)
+        else:
+            data_dir = Path(data_dir)
+            assert data_dir.exists(), "{} does not exist".format(data_dir)
+        data_path = data_dir / Path(system_name + "_{}/".format(int(nspins)))
         self.nspins = nspins
-        if not os.path.exists(data_path):
-            os.mkdir(data_path)
-            self._download_dataset(data_path)
+        self._download_dataset(data_path)
         # TODO: This only works for a single order parameter. For
         #  the XY model or XYZ model, this will have to be generalized.
         self.systems = self._get_spin_systems(data_path)
@@ -106,19 +112,19 @@ class SpinSystemDataset(object):
     def __len__(self):
         return len(self.systems)
 
-    def _get_spin_systems(self, path: str):
+    def _get_spin_systems(self, path: Path):
         systems = []
-        for directory in os.listdir(path):
-            with open(path + directory + '/stats.txt', 'r') as file:
-                g = float(directory)
+        for directory in [x for x in path.iterdir() if x.is_dir()]:
+            with open(directory / Path('stats.txt'), 'r') as file:
+                g = float(str(directory.name))
                 lines = file.readlines()
                 res_e = float(lines[0].split('=')[1].strip('\n'))
                 fidelity = float(lines[0].split('=')[1].strip('\n'))
-            gs_energy = np.load(path + directory + '/energy.npy')[0]
-            parameters = np.load(path + directory + '/params.npy')
+            gs_energy = np.load(directory / Path('energy.npy'))[0]
+            parameters = np.load(directory / Path('params.npy'))
             systems.append(
                 SpinSystem(g, res_e, fidelity, gs_energy, parameters,
-                           path + directory))
+                           directory))
         return sorted(systems)
 
     def _download_dataset(self, path: str):
@@ -126,7 +132,10 @@ class SpinSystemDataset(object):
         pass
 
 
-def tfi_chain(qubits, nspins: int, boundary_condition: str = 'closed'):
+def tfi_chain(qubits,
+              nspins: int,
+              boundary_condition: str = 'closed',
+              data_dir=None):
     """
     Transverse field Ising-model quantum data set
 
@@ -140,6 +149,8 @@ def tfi_chain(qubits, nspins: int, boundary_condition: str = 'closed'):
         nspins: Number of spins, supported numbers are [4,8,12,16]
         boundary_condition: The boundary condition of the chain. Supported
         boundary conditions are ['closed']
+        data_dir: Location where to store the data on disk. Default is
+        ~/tfq-datasets
 
     Returns:
         cirq.Circuit of depth N/2.
@@ -164,7 +175,7 @@ def tfi_chain(qubits, nspins: int, boundary_condition: str = 'closed'):
     boundary_condition = boundary_condition
     name = 'TFI_' + boundary_condition
 
-    dataset = SpinSystemDataset(nspins, name)
+    dataset = SpinSystemDataset(nspins, name, data_dir)
 
     name_generator = unique_name()
     symbols = [sympy.Symbol(next(name_generator)) for _ in range(nspins)]
