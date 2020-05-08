@@ -68,6 +68,21 @@ TEST(ProgramResolutionTest, ResolveQubitIdsInvalidArg) {
             id: "0_0"
           }
           qubits {
+            id: "junk_1"
+          }
+        }
+      }
+    }
+  )";
+
+  const std::string bad_text3 = R"(
+    circuit {
+      moments {
+        operations {
+          qubits {
+            id: "0_0"
+          }
+          qubits {
             id: "1_2_3"
           }
         }
@@ -123,6 +138,12 @@ TEST(ProgramResolutionTest, ResolveQubitIdsInvalidArg) {
 
   ASSERT_TRUE(
       google::protobuf::TextFormat::ParseFromString(bad_text2, &program));
+  EXPECT_EQ(ResolveQubitIds(&program, &num_qubits, &p_sums),
+            tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
+                               "Unable to parse qubit: junk_1"));
+
+  ASSERT_TRUE(
+      google::protobuf::TextFormat::ParseFromString(bad_text3, &program));
   EXPECT_EQ(ResolveQubitIds(&program, &num_qubits, &p_sums),
             tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
                                "Unable to parse qubit: 1_2_3"));
