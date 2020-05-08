@@ -37,6 +37,13 @@ class UnitaryTest(parameterized.TestCase, tf.test.TestCase):
         tfq_u = unitary.Unitary()(simple_circuit)
         self.assertAllClose(tfq_u, [cirq_u])
 
+    def test_basic_inputs_fixed(self):
+        """Test that State layer outputs work on hand case."""
+        simple_circuit = cirq.Circuit(cirq.X(cirq.GridQubit(0, 0)))
+        true_u = np.array([[0, 1], [1, 0]], dtype=np.complex64)
+        tfq_u = unitary.Unitary()(simple_circuit)
+        self.assertAllClose(tfq_u, [true_u])
+
     def test_single_circuit_batch_inputs(self):
         """Test that a single circuit with multiple parameters works."""
         a_symbol = sympy.Symbol('alpha')
@@ -49,7 +56,7 @@ class UnitaryTest(parameterized.TestCase, tf.test.TestCase):
             cirq.resolve_parameters(circuit, {a_symbol: some_values[0][0]}))
         u_2 = cirq.unitary(
             cirq.resolve_parameters(circuit, {a_symbol: some_values[1][0]}))
-        print(u_1)
+
         self.assertAllClose(results, [u_1, u_2])
 
     def test_multi_circuit_batch(self):
@@ -64,7 +71,7 @@ class UnitaryTest(parameterized.TestCase, tf.test.TestCase):
             cirq.resolve_parameters(circuit, {a_symbol: some_values[0][0]}))
         u_2 = cirq.unitary(
             cirq.resolve_parameters(circuit, {a_symbol: some_values[1][0]}))
-        print(u_1)
+
         self.assertAllClose(results, [u_1, u_2])
 
     def test_input_errors(self):
@@ -88,6 +95,11 @@ class UnitaryTest(parameterized.TestCase, tf.test.TestCase):
                    symbol_names=['alpha'],
                    symbol_values=[[2.0], [3.0]])
 
+    def test_op_errors(self):
+        """Test that op errors can be hit."""
+        u_calc = unitary.Unitary()
+        symbol = sympy.Symbol('alpha')
+        circuit = cirq.Circuit(cirq.H(cirq.GridQubit(0, 0))**symbol)
         with self.assertRaisesRegex(Exception, expected_regex=""):
             # wrong symbol name.
             u_calc([circuit],

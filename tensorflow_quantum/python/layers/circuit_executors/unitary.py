@@ -20,7 +20,7 @@ from tensorflow_quantum.python.layers.circuit_executors import input_checks
 
 
 class Unitary(tf.keras.layers.Layer):
-    """A Layer that calculate unitary matrices for circuits.
+    """A Layer that calculates unitary matrices of circuits.
 
     The Unitary layer can function in several different ways. The first is:
     Given an input circuit and set of parameter values, Calculate the unitary
