@@ -60,175 +60,178 @@ SIMS = [WF_SIM, WF_SIM, DM_SIM]
 class OpGetterInputChecks(tf.test.TestCase):
     """Check that the op getters handle inputs correctly."""
 
-#     def test_get_expectation_inputs(self):
-#         """Test that get expectation only accepts inputs it should."""
-#         circuit_execution_ops.get_expectation_op()
-#         circuit_execution_ops.get_expectation_op(backend=cirq.Simulator())
-#         circuit_execution_ops.get_expectation_op(
-#             backend=cirq.DensityMatrixSimulator())
-#         circuit_execution_ops.get_expectation_op()
-#         with self.assertRaisesRegex(NotImplementedError,
-#                                     expected_regex='Sample-based'):
-#             mock_engine = mock.Mock()
-#             circuit_execution_ops.get_expectation_op(
-#                 cirq.google.QuantumEngineSampler(engine=mock_engine,
-#                                                  processor_id='test',
-#                                                  gate_set=cirq.google.XMON))
-#         with self.assertRaisesRegex(
-#                 TypeError, expected_regex="a Cirq.SimulatesFinalState"):
-#             circuit_execution_ops.get_expectation_op(backend="junk")
+    def test_get_expectation_inputs(self):
+        """Test that get expectation only accepts inputs it should."""
+        circuit_execution_ops.get_expectation_op()
+        circuit_execution_ops.get_expectation_op(backend=cirq.Simulator())
+        circuit_execution_ops.get_expectation_op(
+            backend=cirq.DensityMatrixSimulator())
+        circuit_execution_ops.get_expectation_op()
+        with self.assertRaisesRegex(NotImplementedError,
+                                    expected_regex='Sample-based'):
+            mock_engine = mock.Mock()
+            circuit_execution_ops.get_expectation_op(
+                cirq.google.QuantumEngineSampler(engine=mock_engine,
+                                                 processor_id='test',
+                                                 gate_set=cirq.google.XMON))
+        with self.assertRaisesRegex(
+                TypeError, expected_regex="a Cirq.SimulatesFinalState"):
+            circuit_execution_ops.get_expectation_op(backend="junk")
 
-#     def test_get_sampled_expectation_inputs(self):
-#         """Test that get expectation only accepts inputs it should."""
-#         circuit_execution_ops.get_sampled_expectation_op()
-#         circuit_execution_ops.get_sampled_expectation_op(
-#             backend=cirq.Simulator())
-#         circuit_execution_ops.get_sampled_expectation_op(
-#             backend=cirq.DensityMatrixSimulator())
-#         mock_engine = mock.Mock()
-#         circuit_execution_ops.get_sampled_expectation_op(
-#             cirq.google.QuantumEngineSampler(engine=mock_engine,
-#                                              processor_id='test',
-#                                              gate_set=cirq.google.XMON))
-#         with self.assertRaisesRegex(TypeError, expected_regex="a Cirq.Sampler"):
-#             circuit_execution_ops.get_sampled_expectation_op(backend="junk")
+    def test_get_sampled_expectation_inputs(self):
+        """Test that get expectation only accepts inputs it should."""
+        circuit_execution_ops.get_sampled_expectation_op()
+        circuit_execution_ops.get_sampled_expectation_op(
+            backend=cirq.Simulator())
+        circuit_execution_ops.get_sampled_expectation_op(
+            backend=cirq.DensityMatrixSimulator())
+        mock_engine = mock.Mock()
+        circuit_execution_ops.get_sampled_expectation_op(
+            cirq.google.QuantumEngineSampler(engine=mock_engine,
+                                             processor_id='test',
+                                             gate_set=cirq.google.XMON))
+        with self.assertRaisesRegex(TypeError, expected_regex="a Cirq.Sampler"):
+            circuit_execution_ops.get_sampled_expectation_op(backend="junk")
 
-#     def test_get_samples_inputs(self):
-#         """Test that get_samples only accepts inputs it should."""
-#         circuit_execution_ops.get_sampling_op()
-#         circuit_execution_ops.get_sampling_op(backend=cirq.Simulator())
-#         circuit_execution_ops.get_sampling_op(
-#             backend=cirq.DensityMatrixSimulator())
-#         mock_engine = mock.Mock()
-#         circuit_execution_ops.get_sampling_op(
-#             backend=cirq.google.QuantumEngineSampler(engine=mock_engine,
-#                                                      processor_id='test',
-#                                                      gate_set=cirq.google.XMON))
-#         with self.assertRaisesRegex(TypeError,
-#                                     expected_regex="Expected a Cirq.Sampler"):
-#             circuit_execution_ops.get_sampling_op(backend="junk")
+    def test_get_samples_inputs(self):
+        """Test that get_samples only accepts inputs it should."""
+        circuit_execution_ops.get_sampling_op()
+        circuit_execution_ops.get_sampling_op(backend=cirq.Simulator())
+        circuit_execution_ops.get_sampling_op(
+            backend=cirq.DensityMatrixSimulator())
+        mock_engine = mock.Mock()
+        circuit_execution_ops.get_sampling_op(
+            backend=cirq.google.QuantumEngineSampler(engine=mock_engine,
+                                                     processor_id='test',
+                                                     gate_set=cirq.google.XMON))
+        with self.assertRaisesRegex(TypeError,
+                                    expected_regex="Expected a Cirq.Sampler"):
+            circuit_execution_ops.get_sampling_op(backend="junk")
 
-#     def test_get_state_inputs(self):
-#         """Test that get_states only accepts inputs it should."""
-#         circuit_execution_ops.get_state_op()
-#         circuit_execution_ops.get_state_op(backend=cirq.Simulator())
-#         circuit_execution_ops.get_state_op(
-#             backend=cirq.DensityMatrixSimulator())
-#         with self.assertRaisesRegex(TypeError,
-#                                     expected_regex="Cirq.SimulatesFinalState"):
-#             circuit_execution_ops.get_state_op(backend="junk")
-#         with self.assertRaisesRegex(TypeError,
-#                                     expected_regex="Cirq.SimulatesFinalState"):
-#             mock_engine = mock.Mock()
-#             circuit_execution_ops.get_state_op(
-#                 backend=cirq.google.QuantumEngineSampler(
-#                     engine=mock_engine,
-#                     processor_id='test',
-#                     gate_set=cirq.google.XMON))
+    def test_get_state_inputs(self):
+        """Test that get_states only accepts inputs it should."""
+        circuit_execution_ops.get_state_op()
+        circuit_execution_ops.get_state_op(backend=cirq.Simulator())
+        circuit_execution_ops.get_state_op(
+            backend=cirq.DensityMatrixSimulator())
+        with self.assertRaisesRegex(TypeError,
+                                    expected_regex="Cirq.SimulatesFinalState"):
+            circuit_execution_ops.get_state_op(backend="junk")
+        with self.assertRaisesRegex(TypeError,
+                                    expected_regex="Cirq.SimulatesFinalState"):
+            mock_engine = mock.Mock()
+            circuit_execution_ops.get_state_op(
+                backend=cirq.google.QuantumEngineSampler(
+                    engine=mock_engine,
+                    processor_id='test',
+                    gate_set=cirq.google.XMON))
 
 
 class ExecutionOpsConsistentyTest(tf.test.TestCase, parameterized.TestCase):
     """Test all ops produce equivalent output to one another."""
 
-    # @parameterized.parameters([{
-    #     'op_and_sim': (op, sim)
-    # } for (op, sim) in zip(STATE_OPS, SIMS)])
-    # def test_supported_gates_consistent(self, op_and_sim):
-    #     """Ensure that supported gates are consistent across backends."""
-    #     op = op_and_sim[0]
-    #     sim = op_and_sim[1]
-    #     qubits = cirq.GridQubit.rect(1, 5)
-    #     circuit_batch = []
+    @parameterized.parameters([{
+        'op_and_sim': (op, sim)
+    } for (op, sim) in zip(STATE_OPS, SIMS)])
+    def test_supported_gates_consistent(self, op_and_sim):
+        """Ensure that supported gates are consistent across backends."""
+        op = op_and_sim[0]
+        sim = op_and_sim[1]
+        qubits = cirq.GridQubit.rect(1, 5)
+        circuit_batch = []
 
-    #     gate_ref = util.get_supported_gates()
-    #     for gate in gate_ref:
-    #         # Create a circuit with non zero entries on real
-    #         # and imaginary values.
-    #         c = cirq.Circuit()
-    #         for qubit in qubits:
-    #             c += cirq.Circuit(cirq.Y(qubit)**0.125)
+        gate_ref = util.get_supported_gates()
+        for gate in gate_ref:
+            # Create a circuit with non zero entries on real
+            # and imaginary values.
+            c = cirq.Circuit()
+            for qubit in qubits:
+                c += cirq.Circuit(cirq.Y(qubit)**0.125)
 
-    #         if gate_ref[gate] == 2:
-    #             op_qubits = np.random.choice(qubits, size=2, replace=False)
-    #             c += cirq.Circuit(gate(*op_qubits))
-    #         elif gate_ref[gate] == 1:
-    #             op_qubits = np.random.choice(qubits, size=1, replace=False)
-    #             c += cirq.Circuit(gate(*op_qubits))
-    #         else:
-    #             raise ValueError(
-    #                 "Unable to test supported gates across all ops."
-    #                 "please update circuit_execution_ops_test.py")
+            if gate_ref[gate] == 2:
+                op_qubits = np.random.choice(qubits, size=2, replace=False)
+                c += cirq.Circuit(gate(*op_qubits))
+            elif gate_ref[gate] == 1:
+                op_qubits = np.random.choice(qubits, size=1, replace=False)
+                c += cirq.Circuit(gate(*op_qubits))
+            else:
+                raise ValueError(
+                    "Unable to test supported gates across all ops."
+                    "please update circuit_execution_ops_test.py")
 
-    #         circuit_batch.append(c)
+            circuit_batch.append(c)
 
-    #     op_states = op(util.convert_to_tensor(circuit_batch), [],
-    #                    [[]] * len(circuit_batch)).to_list()
-    #     cirq_states = batch_util.batch_calculate_state(
-    #         circuit_batch, [cirq.ParamResolver({}) for _ in circuit_batch], sim)
+        op_states = op(util.convert_to_tensor(circuit_batch), [],
+                       [[]] * len(circuit_batch)).to_list()
+        cirq_states = batch_util.batch_calculate_state(
+            circuit_batch, [cirq.ParamResolver({}) for _ in circuit_batch], sim)
 
-    #     self.assertAllClose(cirq_states, op_states, atol=1e-5, rtol=1e-5)
-
-    # @parameterized.parameters(
-    #     list(
-    #         util.kwargs_cartesian_product(
-    #             **{
-    #                 'op_and_sim': [(op, sim)
-    #                                for (op, sim) in zip(STATE_OPS, SIMS)],
-    #                 'n_qubits': [3, 7]
-    #             })))
-    # def test_simulate_state_no_symbols(self, op_and_sim, n_qubits):
-    #     """Compute states using cirq and tfq without symbols."""
-    #     op = op_and_sim[0]
-    #     sim = op_and_sim[1]
-
-    #     circuit_batch, resolver_batch = util.random_circuit_resolver_batch(
-    #         cirq.GridQubit.rect(1, n_qubits), BATCH_SIZE)
-
-    #     op_states = op(util.convert_to_tensor(circuit_batch), [],
-    #                    [[]] * BATCH_SIZE).to_list()
-    #     cirq_states = batch_util.batch_calculate_state(circuit_batch,
-    #                                                    resolver_batch, sim)
-
-    #     self.assertAllClose(cirq_states, op_states, atol=1e-5, rtol=1e-5)
-
-    # @parameterized.parameters(
-    #     list(
-    #         util.kwargs_cartesian_product(
-    #             **{
-    #                 'op_and_sim': [(op, sim)
-    #                                for (op, sim) in zip(STATE_OPS, SIMS)],
-    #                 'n_qubits': [3, 7],
-    #                 'symbol_names': [['a'], ['a', 'b'],
-    #                                  ['a', 'b', 'c', 'd', 'e']]
-    #             })))
-    # def test_simulate_state_with_symbols(self, op_and_sim, n_qubits,
-    #                                      symbol_names):
-    #     """Compute states using cirq and tfq with symbols."""
-    #     op = op_and_sim[0]
-    #     sim = op_and_sim[1]
-
-    #     circuit_batch, resolver_batch = \
-    #         util.random_symbol_circuit_resolver_batch(
-    #             cirq.GridQubit.rect(1, n_qubits), symbol_names, BATCH_SIZE)
-
-    #     symbol_values_array = np.array(
-    #         [[resolver[symbol]
-    #           for symbol in symbol_names]
-    #          for resolver in resolver_batch])
-
-    #     op_states = op(util.convert_to_tensor(circuit_batch), symbol_names,
-    #                    symbol_values_array).to_list()
-
-    #     cirq_states = batch_util.batch_calculate_state(circuit_batch,
-    #                                                    resolver_batch, sim)
-
-    #     self.assertAllClose(cirq_states, op_states, atol=1e-5, rtol=1e-5)
+        self.assertAllClose(cirq_states, op_states, atol=1e-5, rtol=1e-5)
 
     @parameterized.parameters(
         list(
-            util.kwargs_cartesian_product(**{
-                'op_and_sim': [(op, sim) for (op, sim) in zip(STATE_OPS[:-1], SIMS[:-1])],
-            })))
+            util.kwargs_cartesian_product(
+                **{
+                    'op_and_sim': [(op, sim)
+                                   for (op, sim) in zip(STATE_OPS, SIMS)],
+                    'n_qubits': [3, 7]
+                })))
+    def test_simulate_state_no_symbols(self, op_and_sim, n_qubits):
+        """Compute states using cirq and tfq without symbols."""
+        op = op_and_sim[0]
+        sim = op_and_sim[1]
+
+        circuit_batch, resolver_batch = util.random_circuit_resolver_batch(
+            cirq.GridQubit.rect(1, n_qubits), BATCH_SIZE)
+
+        op_states = op(util.convert_to_tensor(circuit_batch), [],
+                       [[]] * BATCH_SIZE).to_list()
+        cirq_states = batch_util.batch_calculate_state(circuit_batch,
+                                                       resolver_batch, sim)
+
+        self.assertAllClose(cirq_states, op_states, atol=1e-5, rtol=1e-5)
+
+    @parameterized.parameters(
+        list(
+            util.kwargs_cartesian_product(
+                **{
+                    'op_and_sim': [(op, sim)
+                                   for (op, sim) in zip(STATE_OPS, SIMS)],
+                    'n_qubits': [3, 7],
+                    'symbol_names': [['a'], ['a', 'b'],
+                                     ['a', 'b', 'c', 'd', 'e']]
+                })))
+    def test_simulate_state_with_symbols(self, op_and_sim, n_qubits,
+                                         symbol_names):
+        """Compute states using cirq and tfq with symbols."""
+        op = op_and_sim[0]
+        sim = op_and_sim[1]
+
+        circuit_batch, resolver_batch = \
+            util.random_symbol_circuit_resolver_batch(
+                cirq.GridQubit.rect(1, n_qubits), symbol_names, BATCH_SIZE)
+
+        symbol_values_array = np.array(
+            [[resolver[symbol]
+              for symbol in symbol_names]
+             for resolver in resolver_batch])
+
+        op_states = op(util.convert_to_tensor(circuit_batch), symbol_names,
+                       symbol_values_array).to_list()
+
+        cirq_states = batch_util.batch_calculate_state(circuit_batch,
+                                                       resolver_batch, sim)
+
+        self.assertAllClose(cirq_states, op_states, atol=1e-5, rtol=1e-5)
+
+    @parameterized.parameters(
+        list(
+            util.kwargs_cartesian_product(
+                **{
+                    'op_and_sim': [(op, sim)
+                                   for (op,
+                                        sim) in zip(STATE_OPS[:-1], SIMS[:-1])],
+                })))
     def test_simulate_state_large(self, op_and_sim):
         """Test a reasonably large and complex circuit."""
         op, sim = op_and_sim
@@ -249,7 +252,6 @@ class ExecutionOpsConsistentyTest(tf.test.TestCase, parameterized.TestCase):
                                                        resolver_batch, sim)
 
         self.assertAllClose(cirq_states, op_states, atol=1e-5, rtol=1e-5)
-
 
     @parameterized.parameters(
         list(

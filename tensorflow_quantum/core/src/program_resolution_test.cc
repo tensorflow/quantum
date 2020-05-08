@@ -115,18 +115,17 @@ TEST(ProgramResolutionTest, ResolveQubitIdsInvalidArg) {
                 tensorflow::error::INVALID_ARGUMENT,
                 "Found a Pauli sum operating on qubits not found in circuit."));
 
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(bad_text, &program));
+  ASSERT_TRUE(
+      google::protobuf::TextFormat::ParseFromString(bad_text, &program));
   EXPECT_EQ(ResolveQubitIds(&program, &num_qubits, &p_sums),
-          tensorflow::Status(
-              tensorflow::error::INVALID_ARGUMENT,
-              "Unable to parse qubit: 1_junk"));
+            tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
+                               "Unable to parse qubit: 1_junk"));
 
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(bad_text2, &program));
+  ASSERT_TRUE(
+      google::protobuf::TextFormat::ParseFromString(bad_text2, &program));
   EXPECT_EQ(ResolveQubitIds(&program, &num_qubits, &p_sums),
-          tensorflow::Status(
-              tensorflow::error::INVALID_ARGUMENT,
-              "Unable to parse qubit: 1_2_3"));
-
+            tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
+                               "Unable to parse qubit: 1_2_3"));
 }
 
 TEST(ProgramResolutionTest, ResolveQubitIds) {
