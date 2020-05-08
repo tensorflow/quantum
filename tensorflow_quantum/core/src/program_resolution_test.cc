@@ -45,6 +45,51 @@ TEST(ProgramResolutionTest, ResolveQubitIdsInvalidArg) {
     }
   )";
 
+  const std::string bad_text = R"(
+    circuit {
+      moments {
+        operations {
+          qubits {
+            id: "0_0"
+          }
+          qubits {
+            id: "1_junk"
+          }
+        }
+      }
+    }
+  )";
+
+  const std::string bad_text2 = R"(
+    circuit {
+      moments {
+        operations {
+          qubits {
+            id: "0_0"
+          }
+          qubits {
+            id: "junk_1"
+          }
+        }
+      }
+    }
+  )";
+
+  const std::string bad_text3 = R"(
+    circuit {
+      moments {
+        operations {
+          qubits {
+            id: "0_0"
+          }
+          qubits {
+            id: "1_2_3"
+          }
+        }
+      }
+    }
+  )";
+
   const std::string text_good_p_sum = R"(
     terms {
       coefficient_real: 1.0
@@ -84,6 +129,24 @@ TEST(ProgramResolutionTest, ResolveQubitIdsInvalidArg) {
             tensorflow::Status(
                 tensorflow::error::INVALID_ARGUMENT,
                 "Found a Pauli sum operating on qubits not found in circuit."));
+
+  ASSERT_TRUE(
+      google::protobuf::TextFormat::ParseFromString(bad_text, &program));
+  EXPECT_EQ(ResolveQubitIds(&program, &num_qubits, &p_sums),
+            tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
+                               "Unable to parse qubit: 1_junk"));
+
+  ASSERT_TRUE(
+      google::protobuf::TextFormat::ParseFromString(bad_text2, &program));
+  EXPECT_EQ(ResolveQubitIds(&program, &num_qubits, &p_sums),
+            tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
+                               "Unable to parse qubit: junk_1"));
+
+  ASSERT_TRUE(
+      google::protobuf::TextFormat::ParseFromString(bad_text3, &program));
+  EXPECT_EQ(ResolveQubitIds(&program, &num_qubits, &p_sums),
+            tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
+                               "Unable to parse qubit: 1_2_3"));
 }
 
 TEST(ProgramResolutionTest, ResolveQubitIds) {
@@ -139,20 +202,20 @@ TEST(ProgramResolutionTest, ResolveQubitIds) {
       moments {
         operations {
           qubits {
-            id: "C"
+            id: "0_0"
           }
           qubits {
-            id: "D"
+            id: "0_1"
           }
         }
       }
       moments {
         operations {
           qubits {
-            id: "X"
+            id: "0_2"
           }
           qubits {
-            id: "A"
+            id: "0_3"
           }
         }
       }
@@ -164,7 +227,7 @@ TEST(ProgramResolutionTest, ResolveQubitIds) {
       coefficient_real: 1.0
       coefficient_imag: 0.0
       paulis {
-        qubit_id: "D"
+        qubit_id: "0_1"
         pauli_type: "Z"
       }
     }
@@ -175,7 +238,7 @@ TEST(ProgramResolutionTest, ResolveQubitIds) {
       coefficient_real: 1.0
       coefficient_imag: 0.0
       paulis {
-        qubit_id: "C"
+        qubit_id: "0_0"
         pauli_type: "X"
       }
     }
@@ -222,19 +285,19 @@ TEST(ProgramResolutionTest, ResolveQubitIds) {
   EXPECT_EQ(program.circuit().moments(1).operations(0).qubits(1).id(), "1");
 
   EXPECT_EQ(alphabet_program.circuit().moments(0).operations(0).qubits(0).id(),
-            "1");
-  EXPECT_EQ(alphabet_program.circuit().moments(0).operations(0).qubits(1).id(),
-            "2");
-  EXPECT_EQ(alphabet_program.circuit().moments(1).operations(0).qubits(0).id(),
-            "3");
-  EXPECT_EQ(alphabet_program.circuit().moments(1).operations(0).qubits(1).id(),
             "0");
+  EXPECT_EQ(alphabet_program.circuit().moments(0).operations(0).qubits(1).id(),
+            "1");
+  EXPECT_EQ(alphabet_program.circuit().moments(1).operations(0).qubits(0).id(),
+            "2");
+  EXPECT_EQ(alphabet_program.circuit().moments(1).operations(0).qubits(1).id(),
+            "3");
 
   EXPECT_EQ(p_sums.at(0).terms(0).paulis(0).qubit_id(), "0");
   EXPECT_EQ(p_sums.at(1).terms(0).paulis(0).qubit_id(), "2");
 
-  EXPECT_EQ(p_sums_alphabet.at(0).terms(0).paulis(0).qubit_id(), "2");
-  EXPECT_EQ(p_sums_alphabet.at(1).terms(0).paulis(0).qubit_id(), "1");
+  EXPECT_EQ(p_sums_alphabet.at(0).terms(0).paulis(0).qubit_id(), "1");
+  EXPECT_EQ(p_sums_alphabet.at(1).terms(0).paulis(0).qubit_id(), "0");
 
   EXPECT_EQ(num_qubits, 3);
   EXPECT_EQ(num_qubits_empty, 0);

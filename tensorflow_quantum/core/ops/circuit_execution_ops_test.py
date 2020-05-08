@@ -226,6 +226,35 @@ class ExecutionOpsConsistentyTest(tf.test.TestCase, parameterized.TestCase):
 
     @parameterized.parameters(
         list(
+            util.kwargs_cartesian_product(
+                **{
+                    'op_and_sim': [(op, sim)
+                                   for (op,
+                                        sim) in zip(STATE_OPS[:-1], SIMS[:-1])],
+                })))
+    def test_simulate_state_large(self, op_and_sim):
+        """Test a reasonably large and complex circuit."""
+        op, sim = op_and_sim
+        symbol_names = []
+        circuit_batch, resolver_batch = \
+            util.random_circuit_resolver_batch(
+                cirq.GridQubit.rect(4, 4), 5)
+
+        symbol_values_array = np.array(
+            [[resolver[symbol]
+              for symbol in symbol_names]
+             for resolver in resolver_batch]).astype(np.float32)
+
+        op_states = op(util.convert_to_tensor(circuit_batch), symbol_names,
+                       symbol_values_array).to_list()
+
+        cirq_states = batch_util.batch_calculate_state(circuit_batch,
+                                                       resolver_batch, sim)
+
+        self.assertAllClose(cirq_states, op_states, atol=1e-5, rtol=1e-5)
+
+    @parameterized.parameters(
+        list(
             util.kwargs_cartesian_product(**{
                 'op_and_sim': [(op, sim) for (op, sim) in zip(STATE_OPS, SIMS)],
             })))
@@ -353,7 +382,7 @@ class ExecutionOpsConsistentyTest(tf.test.TestCase, parameterized.TestCase):
 
         pauli_sums = util.random_pauli_sums(qubits, max_paulisum_length,
                                             BATCH_SIZE)
-        num_samples = [[2000]] * BATCH_SIZE
+        num_samples = [[10000]] * BATCH_SIZE
 
         op_expectations = op(
             util.convert_to_tensor(circuit_batch), symbol_names,
