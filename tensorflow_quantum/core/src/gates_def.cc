@@ -82,6 +82,7 @@ Gate::Gate(const unsigned int time_in, const unsigned int qubit_in,
            const std::array<float, 8>& matrix_in)
     : time(time_in), num_qubits(1) {
   qubits[0] = qubit_in;
+  std::fill(matrix.begin(), matrix.end(), 0);
   std::copy(matrix_in.begin(), matrix_in.end(), matrix.begin());
 }
 
