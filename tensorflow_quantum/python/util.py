@@ -366,8 +366,8 @@ def _many_clifford_to_many_z(pauli_sum):
             # It is identical to the conjugate of Phase and Hadamard gate up to
             # global phase. This global phase difference is gone with
             # multiplication of hermition conjugate later.
-            gate_list.append(cirq.Rx(np.pi / 2)(qubit))
-            conjugate_list.append(cirq.Rx(-np.pi / 2)(qubit))
+            gate_list.append(cirq.rx(np.pi / 2)(qubit))
+            conjugate_list.append(cirq.rx(-np.pi / 2)(qubit))
     return gate_list, conjugate_list[::-1]
 
 
@@ -399,7 +399,7 @@ def check_commutability(pauli_sum):
     """
     for term1 in pauli_sum:
         for term2 in pauli_sum:
-            if not term1.commutes_with(term2):
+            if not cirq.commutes(term1, term2):
                 raise ValueError("Given an operator has non-commutable "
                                  "terms, whose exponentiation is not "
                                  "supported yet: {} and {}".format(
@@ -512,9 +512,9 @@ def exponential(operators, coefficients=None):
             # Set of gates to convert many Z's into a single Z using CNOTs.
             w, w_dagger = _many_z_to_single_z(k, op)
 
-            # cirq.Rz(2*theta) = exp(-i*0.5*(2*theta)*Z) == exp(-i*theta*Z)
+            # cirq.rz(2*theta) = exp(-i*0.5*(2*theta)*Z) == exp(-i*theta*Z)
             # focal point of the CNOT ladder.
-            exp_circuit = u + w + [cirq.Rz(2 * param * c)(k)
+            exp_circuit = u + w + [cirq.rz(2 * param * c)(k)
                                   ] + w_dagger + u_dagger
             circuit += cirq.Circuit(exp_circuit)
     return circuit

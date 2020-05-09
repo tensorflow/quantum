@@ -346,15 +346,15 @@ def _get_valid_circuit_proto_pairs():
         # RX, RY, RZ with symbolization is tested in special cases as the
         # string comparison of the float converted sympy.pi does not happen
         # smoothly. See: test_serialize_deserialize_special_case_one_qubit
-        (cirq.Circuit(cirq.Rx(np.pi)(q0)),
+        (cirq.Circuit(cirq.rx(np.pi)(q0)),
          _build_gate_proto("XP",
                            ['exponent', 'exponent_scalar', 'global_shift'],
                            [1.0, 1.0, -0.5], ['0_0'])),
-        (cirq.Circuit(cirq.Ry(np.pi)(q0)),
+        (cirq.Circuit(cirq.ry(np.pi)(q0)),
          _build_gate_proto("YP",
                            ['exponent', 'exponent_scalar', 'global_shift'],
                            [1.0, 1.0, -0.5], ['0_0'])),
-        (cirq.Circuit(cirq.Rz(np.pi)(q0)),
+        (cirq.Circuit(cirq.rz(np.pi)(q0)),
          _build_gate_proto("ZP",
                            ['exponent', 'exponent_scalar', 'global_shift'],
                            [1.0, 1.0, -0.5], ['0_0'])),
@@ -591,13 +591,13 @@ class SerializerTest(tf.test.TestCase, parameterized.TestCase):
 
     @parameterized.parameters([
         {
-            'gate': cirq.Rx(3.0 * sympy.Symbol('alpha'))
+            'gate': cirq.rx(3.0 * sympy.Symbol('alpha'))
         },
         {
-            'gate': cirq.Ry(-1.0 * sympy.Symbol('alpha'))
+            'gate': cirq.ry(-1.0 * sympy.Symbol('alpha'))
         },
         {
-            'gate': cirq.Rz(sympy.Symbol('alpha'))
+            'gate': cirq.rz(sympy.Symbol('alpha'))
         },
     ])
     def test_serialize_deserialize_special_case_one_qubit(self, gate):
