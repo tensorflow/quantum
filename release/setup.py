@@ -51,7 +51,7 @@ class InstallPlatlib(install):
 
 
 REQUIRED_PACKAGES = ['cirq >= 0.7.0']
-CUR_VERSION = '0.3.0'
+CUR_VERSION = '0.4.0'
 
 
 class BinaryDistribution(Distribution):
