@@ -77,8 +77,7 @@ class TfqSimulateStateOp : public tensorflow::OpKernel {
     auto output_tensor = output->matrix<std::complex<float>>();
 
     auto DoWork = [&](int start, int end) {
-      std::unique_ptr<StateSpace> state =
-          std::unique_ptr<StateSpace>(GetStateSpace(1, 1));
+      std::unique_ptr<StateSpace> state = GetStateSpace(1, 1);
       int old_num_qubits = -1;
       for (int i = start; i < end; i++) {
         Program program = programs[i];
@@ -95,7 +94,7 @@ class TfqSimulateStateOp : public tensorflow::OpKernel {
         //  tricky to implement because right now certain statespaces can't
         //  simulate all states and we use StateSpaceSlow for smaller circuits.
         if (num != old_num_qubits) {
-          state.reset(GetStateSpace(num, 1));
+          state = GetStateSpace(num, 1);
           state->CreateState();
         }
         state->SetStateZero();
@@ -138,14 +137,10 @@ REGISTER_OP("TfqSimulateState")
       tensorflow::shape_inference::ShapeHandle symbol_values_shape;
       TF_RETURN_IF_ERROR(c->WithRank(c->input(2), 2, &symbol_values_shape));
 
-      // TODO(pmassey): Which output dimension size matters? Does this allocate
-      // any memory or gives hints to the graph building? I apparently just set
-      // this as rows in the previous run and that seemed to work.
-      tensorflow::shape_inference::DimensionHandle output_rows =
-          c->Dim(symbol_values_shape, 0);
-      tensorflow::shape_inference::DimensionHandle output_cols =
-          c->Dim(symbol_values_shape, 1);
-      c->set_output(0, c->Matrix(output_rows, output_cols));
+      c->set_output(
+          0, c->MakeShape(
+                 {c->Dim(programs_shape, 0),
+                  tensorflow::shape_inference::InferenceContext::kUnknownDim}));
 
       return tensorflow::Status::OK();
     });

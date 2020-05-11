@@ -18,6 +18,7 @@ import numpy as np
 import tensorflow as tf
 
 import cirq
+import sympy
 from tensorflow_quantum.python.layers.circuit_executors import \
     expectation, sampled_expectation
 from tensorflow_quantum.python.layers.circuit_construction import elementary
@@ -39,11 +40,11 @@ class PQC(tf.keras.layers.Layer):
     >>> q = cirq.GridQubit(0, 0)
     >>> (a, b, c) = sympy.symbols("a b c")
     >>> circuit = cirq.Circuit(
-    ...     cirq.Rz(a)(q),
-    ...     cirq.Rx(b)(q),
-    ...     cirq.Rz(c)(q),
-    ...     cirq.Rx(-b)(q),
-    ...     cirq.Rz(-a)(q)
+    ...     cirq.rz(a)(q),
+    ...     cirq.rx(b)(q),
+    ...     cirq.rz(c)(q),
+    ...     cirq.rx(-b)(q),
+    ...     cirq.rz(-a)(q)
     ... )
 
 
@@ -100,11 +101,11 @@ class PQC(tf.keras.layers.Layer):
     >>> q = cirq.GridQubit(0, 0)
     >>> (a, b, c) = sympy.symbols("a b c")
     >>> circuit = cirq.Circuit(
-    ...     cirq.Rz(a)(q),
-    ...     cirq.Rx(b)(q),
-    ...     cirq.Rz(c)(q),
-    ...     cirq.Rx(-b)(q),
-    ...     cirq.Rz(-a)(q)
+    ...     cirq.rz(a)(q),
+    ...     cirq.rx(b)(q),
+    ...     cirq.rz(c)(q),
+    ...     cirq.rx(-b)(q),
+    ...     cirq.rz(-a)(q)
     ... )
     >>> measurement = [cirq.X(q), cirq.Y(q), cirq.Z(q)]
     >>> outputs = tfq.layers.PQC(
@@ -180,10 +181,13 @@ class PQC(tf.keras.layers.Layer):
         if not isinstance(model_circuit, cirq.Circuit):
             raise TypeError("model_circuit must be a cirq.Circuit object."
                             " Given: {}".format(model_circuit))
-        self._symbols = tf.constant(
-            list(sorted(util.get_circuit_symbols(model_circuit))))
+
+        self._symbols_list = list(
+            sorted(util.get_circuit_symbols(model_circuit)))
+        self._symbols = tf.constant([str(x) for x in self._symbols_list])
+
         self._model_circuit = util.convert_to_tensor([model_circuit])
-        if len(self._symbols) == 0:
+        if len(self._symbols_list) == 0:
             raise ValueError("model_circuit has no sympy.Symbols. Please "
                              "provide a circuit that contains symbols so "
                              "that their values can be trained.")
@@ -250,12 +254,30 @@ class PQC(tf.keras.layers.Layer):
         # Weight creation is not placed in a Build function because the number
         # of weights is independent of the input shape.
         self.parameters = self.add_weight('parameters',
-                                          shape=[len(self._symbols)],
+                                          shape=self._symbols.shape,
                                           initializer=self.initializer,
                                           regularizer=self.regularizer,
                                           constraint=self.constraint,
                                           dtype=tf.float32,
                                           trainable=True)
+
+    @property
+    def symbols(self):
+        """The symbols that are managed by this layer (in-order).
+
+        Note: `symbols[i]` indicates what symbol name the managed variables in
+            this layer map to.
+        """
+        return [sympy.Symbol(x) for x in self._symbols_list]
+
+    def symbol_values(self):
+        """Returns a Python `dict` containing symbol name, value pairs.
+
+        Returns:
+            Python `dict` with `str` keys and `float` values representing
+                the current symbol values.
+        """
+        return dict(zip(self.symbols, self.get_weights()[0]))
 
     def build(self, input_shape):
         """Keras build function."""

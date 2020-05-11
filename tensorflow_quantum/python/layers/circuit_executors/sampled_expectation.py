@@ -17,14 +17,13 @@
 import numbers
 
 import numpy as np
-import sympy
 import tensorflow as tf
 
 import cirq
 from tensorflow_quantum.core.ops import circuit_execution_ops
 from tensorflow_quantum.python.differentiators import differentiator as diff
 from tensorflow_quantum.python.differentiators import parameter_shift
-from tensorflow_quantum.python import util
+from tensorflow_quantum.python.layers.circuit_executors import input_checks
 
 
 class SampledExpectation(tf.keras.layers.Layer):
@@ -42,12 +41,12 @@ class SampledExpectation(tf.keras.layers.Layer):
     ...     \"""Generate a toy problem on 1 qubit.\"""
     ...     starting_state = [0.123, 0.456, 0.789]
     ...     circuit = cirq.Circuit(
-    ...         cirq.Rx(starting_state[0])(bit),
-    ...         cirq.Ry(starting_state[1])(bit),
-    ...         cirq.Rz(starting_state[2])(bit),
-    ...         cirq.Rz(symbols[2])(bit),
-    ...         cirq.Ry(symbols[1])(bit),
-    ...         cirq.Rx(symbols[0])(bit)
+    ...         cirq.rx(starting_state[0])(bit),
+    ...         cirq.ry(starting_state[1])(bit),
+    ...         cirq.rz(starting_state[2])(bit),
+    ...         cirq.rz(symbols[2])(bit),
+    ...         cirq.ry(symbols[1])(bit),
+    ...         cirq.rx(symbols[0])(bit)
     ...     )
     ...     return circuit
 
@@ -260,90 +259,30 @@ class SampledExpectation(tf.keras.layers.Layer):
              operators=None,
              repetitions=None,
              initializer=tf.keras.initializers.RandomUniform(0, 2 * np.pi)):
-        """Keras call function."""
+        """Keras call function.
 
-        # inputs is the circuit(s).
+        Input options:
+            `inputs`, `symbol_names`, `symbol_values`:
+                see `input_checks.expand_circuits`
+            `operators`: see `input_checks.expand_operators`
+            `repetitions`: a Python `int` or a pre-converted
+                `tf.Tensor` containing a single `int` entry.
+
+        Output shape:
+            `tf.Tensor` with shape [batch_size, n_ops] that holds the
+                expectation value for each circuit with each op applied to it
+                (after resolving the corresponding parameters in).
+        """
         values_empty = False
-        if symbol_names is None:
-            symbol_names = []
         if symbol_values is None:
             values_empty = True
-            symbol_values = [[]]
 
-        # Ingest and promote symbol_names.
-        if isinstance(symbol_names, (list, tuple, np.ndarray)):
-            if not all(
-                    isinstance(x, (str, sympy.Symbol)) for x in symbol_names):
-                raise TypeError("Each element in symbol_names"
-                                " must be a string or sympy.Symbol.")
-            symbol_names = [str(s) for s in symbol_names]
-            if not len(symbol_names) == len(list(set(symbol_names))):
-                raise ValueError("All elements of symbol_names must be unique.")
-            symbol_names = tf.identity(
-                tf.convert_to_tensor(symbol_names, dtype=tf.dtypes.string))
-
-        if not tf.is_tensor(symbol_names):
-            raise TypeError("symbol_names cannot be parsed to string"
-                            " tensor given input: ".format(symbol_names))
-
-        # Ingest and promote symbol_values.
-        if isinstance(symbol_values, (list, tuple, np.ndarray)):
-            symbol_values = tf.convert_to_tensor(symbol_values,
-                                                 dtype=tf.dtypes.float32)
-
-        if not tf.is_tensor(symbol_values):
-            raise TypeError("symbol_values cannot be parsed to float32"
-                            " tensor given input: ".format(symbol_values))
-
-        symbol_batch_dim = tf.gather(tf.shape(symbol_values), 0)
-
-        # Ingest and promote circuits.
-        # Would be nice to support python circuits *fully* in this layer.
-        if isinstance(inputs, cirq.Circuit):
-            # process single circuit.
-            inputs = tf.tile(util.convert_to_tensor([inputs]),
-                             [symbol_batch_dim])
-
-        elif isinstance(inputs, (list, tuple, np.ndarray)):
-            # process list of circuits.
-            inputs = util.convert_to_tensor(inputs)
-
-        if not tf.is_tensor(inputs):
-            raise TypeError("circuits cannot be parsed with given input:"
-                            " ".format(inputs))
+        inputs, symbol_names, symbol_values = input_checks.expand_circuits(
+            inputs, symbol_names, symbol_values)
 
         circuit_batch_dim = tf.gather(tf.shape(inputs), 0)
 
-        # Ingest and promote operators.
-        if operators is None:
-            raise RuntimeError("Value for operators not provided. operators "
-                               "must be one of cirq.PauliSum, cirq.PauliString"
-                               ", or a list/tensor/tuple containing "
-                               "cirq.PauliSum or cirq.PauliString.")
-
-        op_needs_tile = False
-        if isinstance(operators, (cirq.PauliSum, cirq.PauliString)):
-            # If we are given a single operator promote it to a list and tile
-            # it up to size.
-            operators = [[operators]]
-            op_needs_tile = True
-
-        if isinstance(operators, (list, tuple, np.ndarray)):
-            if not isinstance(operators[0], (list, tuple, np.ndarray)):
-                # If we are given a flat list of operators. tile them up
-                # to match the batch size of circuits.
-                operators = [operators]
-                op_needs_tile = True
-            operators = util.convert_to_tensor(operators)
-
-        if op_needs_tile:
-            # Don't tile up if the user gave a python list that was precisely
-            # the correct size to match circuits outer batch dim.
-            operators = tf.tile(operators, [circuit_batch_dim, 1])
-
-        if not tf.is_tensor(operators):
-            raise TypeError("operators cannot be parsed to string tensor"
-                            " given input: ".format(operators))
+        operators = input_checks.expand_operators(operators, circuit_batch_dim)
 
         # Ingest and promote repetitions.
         if repetitions is None:
@@ -382,7 +321,7 @@ class SampledExpectation(tf.keras.layers.Layer):
             if self._w is None:
                 # don't re-add variable.
                 self._w = self.add_weight(name='circuit_learnable_parameters',
-                                          shape=[len(symbol_names)],
+                                          shape=symbol_names.shape,
                                           initializer=initializer)
 
             symbol_values = tf.tile(tf.expand_dims(self._w, axis=0),

@@ -14,7 +14,9 @@
 # ==============================================================================
 book_path: /quantum/_book.yaml
 project_path: /quantum/_project.yaml
-description: <!--no description-->
+description: >
+  A quantum ML library for rapid prototyping of hybrid quantum-classical models.
+  Leverage Google’s quantum computing frameworks, all from within TensorFlow.
 landing_page:
   custom_css_path: /site-assets/css/style.css
   rows:
@@ -36,7 +38,8 @@ landing_page:
         <a href="https://github.com/quantumlib/Cirq" class="external">Cirq</a>,
         and provides
         quantum computing primitives compatible with existing TensorFlow APIs,
-        along with high-performance quantum circuit simulators.
+        along with high-performance quantum circuit simulators. Read more in the
+        <a href="https://arxiv.org/abs/2003.02989" class="external">TensorFlow Quantum white paper</a>.
         </p>
         <p>
         Start with the <a href="./overview">overview</a>, then run the
@@ -61,13 +64,18 @@ landing_page:
 
   - classname: devsite-landing-row-cards
     items:
-    - heading: "Quantum supremacy using a programmable superconducting processor"
-      image_path: /resources/images/tf-logo-card-16x9.png
-      path: https://ai.googleblog.com/2019/10/quantum-supremacy-using-programmable.html
+    - heading: "Announcing<br>TensorFlow Quantum"
+      image_path: /resources/images/google-research-card-16x9.png
+      path: https://ai.googleblog.com/2020/03/announcing-tensorflow-quantum-open.html
       buttons:
       - label: "Read on the Google AI blog"
-        path: https://ai.googleblog.com/2019/10/quantum-supremacy-using-programmable.html
-    - heading: "Programming a quantum computer<br/>with Cirq"
+        path: https://ai.googleblog.com/2020/03/announcing-tensorflow-quantum-open.html
+    - heading: "TensorFlow Quantum (TF Dev Summit '20)"
+      youtube_id: -o9AhIz1uvo
+      buttons:
+      - label: Watch the video
+        path: https://www.youtube.com/watch?v=-o9AhIz1uvo
+    - heading: "Programming a quantum computer with Cirq"
       youtube_id: 16ZfkPRVf2w
       buttons:
       - label: Watch the video

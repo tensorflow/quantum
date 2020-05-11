@@ -18,7 +18,6 @@ from absl.testing import parameterized
 import tensorflow as tf
 import cirq
 
-from tensorflow_quantum.python import util
 from tensorflow_quantum.core.ops import tfq_simulate_ops
 from tensorflow_quantum.python import util
 
@@ -433,6 +432,187 @@ class SimulateSamplesTest(tf.test.TestCase, parameterized.TestCase):
         self.assertAllClose(expected_outputs, results)
 
 
+class SimulateSampledExpectationTest(tf.test.TestCase):
+    """Tests tfq_simulate_sampled_expectation."""
+
+    def test_simulate_sampled_expectation_inputs(self):
+        """Make sure sampled expectation op fails gracefully on bad inputs."""
+        n_qubits = 5
+        batch_size = 5
+        symbol_names = ['alpha']
+        qubits = cirq.GridQubit.rect(1, n_qubits)
+        circuit_batch, resolver_batch = \
+            util.random_symbol_circuit_resolver_batch(
+                qubits, symbol_names, batch_size)
+
+        symbol_values_array = np.array(
+            [[resolver[symbol]
+              for symbol in symbol_names]
+             for resolver in resolver_batch])
+
+        pauli_sums = util.random_pauli_sums(qubits, 3, batch_size)
+        num_samples = [[10]] * batch_size
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'programs must be rank 1'):
+            # Circuit tensor has too many dimensions.
+            tfq_simulate_ops.tfq_simulate_sampled_expectation(
+                util.convert_to_tensor([circuit_batch]), symbol_names,
+                symbol_values_array,
+                util.convert_to_tensor([[x] for x in pauli_sums]), num_samples)
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'symbol_names must be rank 1.'):
+            # symbol_names tensor has too many dimensions.
+            tfq_simulate_ops.tfq_simulate_sampled_expectation(
+                util.convert_to_tensor(circuit_batch), np.array([symbol_names]),
+                symbol_values_array,
+                util.convert_to_tensor([[x] for x in pauli_sums]), num_samples)
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'symbol_values must be rank 2.'):
+            # symbol_values_array tensor has too many dimensions.
+            tfq_simulate_ops.tfq_simulate_sampled_expectation(
+                util.convert_to_tensor(circuit_batch), symbol_names,
+                np.array([symbol_values_array]),
+                util.convert_to_tensor([[x] for x in pauli_sums]), num_samples)
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'symbol_values must be rank 2.'):
+            # symbol_values_array tensor has too few dimensions.
+            tfq_simulate_ops.tfq_simulate_sampled_expectation(
+                util.convert_to_tensor(circuit_batch), symbol_names,
+                symbol_values_array[0],
+                util.convert_to_tensor([[x] for x in pauli_sums]), num_samples)
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'pauli_sums must be rank 2.'):
+            # pauli_sums tensor has too few dimensions.
+            tfq_simulate_ops.tfq_simulate_sampled_expectation(
+                util.convert_to_tensor(circuit_batch), symbol_names,
+                symbol_values_array,
+                util.convert_to_tensor([x for x in pauli_sums]), num_samples)
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'pauli_sums must be rank 2.'):
+            # pauli_sums tensor has too many dimensions.
+            tfq_simulate_ops.tfq_simulate_sampled_expectation(
+                util.convert_to_tensor(circuit_batch), symbol_names,
+                symbol_values_array,
+                [util.convert_to_tensor([[x] for x in pauli_sums])],
+                num_samples)
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'num_samples must be rank 2'):
+            # num_samples tensor has the wrong shape.
+            tfq_simulate_ops.tfq_simulate_sampled_expectation(
+                util.convert_to_tensor(circuit_batch), symbol_names,
+                symbol_values_array,
+                util.convert_to_tensor([[x] for x in pauli_sums]),
+                [num_samples])
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'num_samples must be rank 2'):
+            # num_samples tensor has the wrong shape.
+            tfq_simulate_ops.tfq_simulate_sampled_expectation(
+                util.convert_to_tensor(circuit_batch), symbol_names,
+                symbol_values_array,
+                util.convert_to_tensor([[x] for x in pauli_sums]),
+                num_samples[0])
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'Unparseable proto'):
+            # circuit tensor has the right type but invalid values.
+            tfq_simulate_ops.tfq_simulate_sampled_expectation(
+                ['junk'] * batch_size, symbol_names, symbol_values_array,
+                util.convert_to_tensor([[x] for x in pauli_sums]), num_samples)
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'Could not find symbol in parameter map'):
+            # symbol_names tensor has the right type but invalid values.
+            tfq_simulate_ops.tfq_simulate_sampled_expectation(
+                util.convert_to_tensor(circuit_batch), ['junk'],
+                symbol_values_array,
+                util.convert_to_tensor([[x] for x in pauli_sums]), num_samples)
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'qubits not found in circuit'):
+            # pauli_sums tensor has the right type but invalid values.
+            new_qubits = [cirq.GridQubit(5, 5), cirq.GridQubit(9, 9)]
+            new_pauli_sums = util.random_pauli_sums(new_qubits, 2, batch_size)
+            tfq_simulate_ops.tfq_simulate_sampled_expectation(
+                util.convert_to_tensor(circuit_batch), symbol_names,
+                symbol_values_array,
+                util.convert_to_tensor([[x] for x in new_pauli_sums]),
+                num_samples)
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'Unparseable proto'):
+            # pauli_sums tensor has the right type but invalid values 2.
+            tfq_simulate_ops.tfq_simulate_sampled_expectation(
+                util.convert_to_tensor(circuit_batch), symbol_names,
+                symbol_values_array, [['junk']] * batch_size, num_samples)
+
+        with self.assertRaisesRegex(TypeError, 'Cannot convert'):
+            # circuits tensor has the wrong type.
+            tfq_simulate_ops.tfq_simulate_sampled_expectation(
+                [1.0] * batch_size, symbol_names, symbol_values_array,
+                util.convert_to_tensor([[x] for x in pauli_sums]), num_samples)
+
+        with self.assertRaisesRegex(TypeError, 'Cannot convert'):
+            # symbol_names tensor has the wrong type.
+            tfq_simulate_ops.tfq_simulate_sampled_expectation(
+                util.convert_to_tensor(circuit_batch), [0.1234],
+                symbol_values_array,
+                util.convert_to_tensor([[x] for x in pauli_sums]), num_samples)
+
+        with self.assertRaisesRegex(tf.errors.UnimplementedError, ''):
+            # symbol_values tensor has the wrong type.
+            tfq_simulate_ops.tfq_simulate_sampled_expectation(
+                util.convert_to_tensor(circuit_batch), symbol_names,
+                [['junk']] * batch_size,
+                util.convert_to_tensor([[x] for x in pauli_sums]), num_samples)
+
+        with self.assertRaisesRegex(TypeError, 'Cannot convert'):
+            # pauli_sums tensor has the wrong type.
+            tfq_simulate_ops.tfq_simulate_sampled_expectation(
+                util.convert_to_tensor(circuit_batch), symbol_names,
+                symbol_values_array, [[1.0]] * batch_size, num_samples)
+
+        with self.assertRaisesRegex(TypeError, 'missing'):
+            # we are missing an argument.
+            # pylint: disable=no-value-for-parameter
+            tfq_simulate_ops.tfq_simulate_sampled_expectation(
+                util.convert_to_tensor(circuit_batch), symbol_names,
+                symbol_values_array, num_samples)
+            # pylint: enable=no-value-for-parameter
+
+        with self.assertRaisesRegex(TypeError, 'positional arguments'):
+            # pylint: disable=too-many-function-args
+            tfq_simulate_ops.tfq_simulate_sampled_expectation(
+                util.convert_to_tensor(circuit_batch), symbol_names,
+                symbol_values_array,
+                util.convert_to_tensor([[x] for x in pauli_sums]), [],
+                num_samples)
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    expected_regex='do not match'):
+            # wrong op size.
+            tfq_simulate_ops.tfq_simulate_sampled_expectation(
+                util.convert_to_tensor([cirq.Circuit()]), symbol_names,
+                symbol_values_array.astype(np.float64),
+                util.convert_to_tensor([[x] for x in pauli_sums]), num_samples)
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'greater than 0'):
+            # pylint: disable=too-many-function-args
+            tfq_simulate_ops.tfq_simulate_sampled_expectation(
+                util.convert_to_tensor(circuit_batch), symbol_names,
+                symbol_values_array,
+                util.convert_to_tensor([[x] for x in pauli_sums]),
+                [[-1]] * batch_size)
+
+
 class InputTypesTest(tf.test.TestCase, parameterized.TestCase):
     """Tests that different inputs types work for all of the ops. """
 
@@ -473,6 +653,10 @@ class InputTypesTest(tf.test.TestCase, parameterized.TestCase):
         result = tfq_simulate_ops.tfq_simulate_samples(circuits, symbol_names,
                                                        symbol_values, [100])
         self.assertDTypeEqual(result, np.int8)
+
+        result = tfq_simulate_ops.tfq_simulate_sampled_expectation(
+            circuits, symbol_names, symbol_values, pauli_sums, [[100]])
+        self.assertDTypeEqual(result, np.float32)
 
 
 if __name__ == "__main__":

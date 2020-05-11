@@ -1,8 +1,6 @@
 # For installation/testing scripts
 
-TODO (mbbrough): once we have dependancies on non github version of cirq add a pip requirements file.
-
-We have basic scripts to make doing local testin, code linting and formatting easier for you.
+We have basic scripts to make doing local testing, code linting and formatting easier for you.
 
 1. `./scripts/format_all.sh` will apply clang-format and yapf to all source files.
 2. `./scripts/test_all.sh` will run all bazel py_test and cc_test rules.

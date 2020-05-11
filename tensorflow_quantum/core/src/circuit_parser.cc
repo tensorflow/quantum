@@ -39,7 +39,6 @@ using ::cirq::google::api::v2::Qubit;
 using ::tensorflow::Status;
 
 // Adds the operation as a Gate in the circuit. The index is the moment number.
-// TODO(pmassey): Remove duplciate code between this and ../src/moment
 Status ParseOperation(const Operation& op, const int num_qubits,
                       const int index, Gate* gate) {
   std::vector<unsigned int> locations;
@@ -49,11 +48,8 @@ Status ParseOperation(const Operation& op, const int num_qubits,
       return Status(tensorflow::error::INVALID_ARGUMENT,
                     "Could not parse Qubit id: " + qubit.ShortDebugString());
     }
-    locations.push_back(num_qubits - location - 1);
+    locations.push_back(location);
   }
-
-  // Control and target are swapped relative to cirq convention
-  std::reverse(locations.begin(), locations.end());
 
   absl::flat_hash_map<std::string, float> arg_map;
   for (const auto& pair : op.args()) {
@@ -148,6 +144,47 @@ Status CircuitFromPauliTerm(const tfq::proto::PauliTerm& term,
     new_op->mutable_gate()->set_id(pair.pauli_type() + "P");
     (*new_op->mutable_args())["exponent"].mutable_arg_value()->set_float_value(
         1.0);
+    (*new_op->mutable_args())["global_shift"]
+        .mutable_arg_value()
+        ->set_float_value(0.0);
+    (*new_op->mutable_args())["exponent_scalar"]
+        .mutable_arg_value()
+        ->set_float_value(1.0);
+  }
+
+  return CircuitFromProgram(measurement_program, num_qubits, circuit);
+}
+
+Status ZBasisCircuitFromPauliTerm(const tfq::proto::PauliTerm& term,
+                                  const int num_qubits, Circuit* circuit) {
+  Program measurement_program;
+  measurement_program.mutable_circuit()->set_scheduling_strategy(
+      cirq::google::api::v2::Circuit::MOMENT_BY_MOMENT);
+  Moment* term_moment = measurement_program.mutable_circuit()->add_moments();
+  float transform_exponent = 0.0;
+  std::string gate_type;
+  for (const tfq::proto::PauliQubitPair& pair : term.paulis()) {
+    if (pair.pauli_type() == "Z") {
+      // Z requires no transform.
+      continue;
+    }
+
+    // Assume it is X and the transform is Y^-0.5
+    transform_exponent = -0.5;
+    gate_type = "Y";
+    if (pair.pauli_type() == "Y") {
+      // Y regquires X**0.5 transform.
+      transform_exponent = 0.5;
+      gate_type = "X";
+    }
+
+    Operation* new_op = term_moment->add_operations();
+
+    // create corresponding eigen gate op.
+    new_op->add_qubits()->set_id(pair.qubit_id());
+    new_op->mutable_gate()->set_id(gate_type + "P");
+    (*new_op->mutable_args())["exponent"].mutable_arg_value()->set_float_value(
+        transform_exponent);
     (*new_op->mutable_args())["global_shift"]
         .mutable_arg_value()
         ->set_float_value(0.0);

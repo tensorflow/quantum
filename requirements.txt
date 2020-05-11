@@ -1,6 +1,9 @@
-cirq==0.7.0
+cirq==0.8.0
+sympy==1.4
 nbconvert==5.6.1
 nbformat==4.4.0
 pylint==2.4.4
 yapf==0.28.0
 tensorflow==2.1.0
+pathos==0.2.5
+google-api-python-client==1.8.0

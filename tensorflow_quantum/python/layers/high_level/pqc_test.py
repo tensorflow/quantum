@@ -158,6 +158,34 @@ class PQCTest(tf.test.TestCase, parameterized.TestCase):
                        constraint=my_constraint)
         self.assertEqual(my_constraint, mpqc.parameters.constraint)
 
+    def test_pqc_symbols_property(self):
+        """Test that the `symbols` property returns the symbols."""
+        c, b, a, d = sympy.symbols('c b a d')
+        bit = cirq.GridQubit(0, 0)
+        test_circuit = cirq.Circuit(
+            cirq.H(bit)**a,
+            cirq.Z(bit)**b,
+            cirq.X(bit)**d,
+            cirq.Y(bit)**c)
+        layer = pqc.PQC(test_circuit, cirq.Z(bit))
+        self.assertEqual(layer.symbols, [a, b, c, d])
+
+    def test_pqc_symbol_values(self):
+        """Test that PQC symbol_values returns the correct key value pairs."""
+        c, b, a, d = sympy.symbols('c b a d')
+        bit = cirq.GridQubit(0, 0)
+        test_circuit = cirq.Circuit(
+            cirq.H(bit)**a,
+            cirq.Z(bit)**b,
+            cirq.X(bit)**d,
+            cirq.Y(bit)**c)
+        init_vals = [1, 2, 3, 4]
+        layer = pqc.PQC(test_circuit,
+                        cirq.Z(bit),
+                        initializer=tf.constant_initializer(init_vals))
+        expected_vals = dict(zip([a, b, c, d], init_vals))
+        self.assertAllClose(layer.symbol_values(), expected_vals)
+
     @parameterized.parameters(
         list(
             util.kwargs_cartesian_product(backend=[None, cirq.Simulator()],

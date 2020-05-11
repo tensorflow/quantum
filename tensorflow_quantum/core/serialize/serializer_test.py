@@ -346,18 +346,22 @@ def _get_valid_circuit_proto_pairs():
         # RX, RY, RZ with symbolization is tested in special cases as the
         # string comparison of the float converted sympy.pi does not happen
         # smoothly. See: test_serialize_deserialize_special_case_one_qubit
-        (cirq.Circuit(cirq.Rx(np.pi)(q0)),
+        (cirq.Circuit(cirq.rx(np.pi)(q0)),
          _build_gate_proto("XP",
                            ['exponent', 'exponent_scalar', 'global_shift'],
                            [1.0, 1.0, -0.5], ['0_0'])),
-        (cirq.Circuit(cirq.Ry(np.pi)(q0)),
+        (cirq.Circuit(cirq.ry(np.pi)(q0)),
          _build_gate_proto("YP",
                            ['exponent', 'exponent_scalar', 'global_shift'],
                            [1.0, 1.0, -0.5], ['0_0'])),
-        (cirq.Circuit(cirq.Rz(np.pi)(q0)),
+        (cirq.Circuit(cirq.rz(np.pi)(q0)),
          _build_gate_proto("ZP",
                            ['exponent', 'exponent_scalar', 'global_shift'],
                            [1.0, 1.0, -0.5], ['0_0'])),
+
+        # Identity
+        (cirq.Circuit(cirq.I(q0)),
+         _build_gate_proto("I", ['unused'], [True], ['0_0'])),
 
         # FSimGate
         (cirq.Circuit(cirq.FSimGate(theta=0.1, phi=0.2)(q0, q1)),
@@ -465,10 +469,12 @@ class SerializerTest(tf.test.TestCase, parameterized.TestCase):
         with self.assertRaises(ValueError):
             serializer.serialize_circuit(unsupported_circuit)
 
-    def test_serialize_circuit_with_identity(self):
-        """A more generous error message for circuits containing cirq.I."""
+    def test_serialize_circuit_with_large_identity(self):
+        """Ensure that multi qubit identity errors correctly."""
         q0 = cirq.GridQubit(0, 0)
-        unsupported_circuit = cirq.Circuit.from_ops(cirq.I(q0))
+        q1 = cirq.GridQubit(0, 1)
+        unsupported_circuit = cirq.Circuit(
+            cirq.IdentityGate(num_qubits=2)(q0, q1))
 
         with self.assertRaisesRegex(ValueError, expected_regex="cirq.I"):
             serializer.serialize_circuit(unsupported_circuit)
@@ -585,13 +591,13 @@ class SerializerTest(tf.test.TestCase, parameterized.TestCase):
 
     @parameterized.parameters([
         {
-            'gate': cirq.Rx(3.0 * sympy.Symbol('alpha'))
+            'gate': cirq.rx(3.0 * sympy.Symbol('alpha'))
         },
         {
-            'gate': cirq.Ry(-1.0 * sympy.Symbol('alpha'))
+            'gate': cirq.ry(-1.0 * sympy.Symbol('alpha'))
         },
         {
-            'gate': cirq.Rz(sympy.Symbol('alpha'))
+            'gate': cirq.rz(sympy.Symbol('alpha'))
         },
     ])
     def test_serialize_deserialize_special_case_one_qubit(self, gate):

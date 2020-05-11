@@ -31,6 +31,7 @@ sh_binary(
         "setup.py",
 
         # Dependencies that the PIP package will import.
+        "//tensorflow_quantum/core/ops:tfq_unitary_op_py",
         "//tensorflow_quantum/core/ops:tfq_utility_ops_py",
         "//tensorflow_quantum/core/ops:tfq_simulate_ops_py",
         "//tensorflow_quantum/core/serialize:serializer",
@@ -42,6 +43,7 @@ sh_binary(
         "//tensorflow_quantum/python/layers/circuit_executors:sample",
         "//tensorflow_quantum/python/layers/circuit_executors:state",
         "//tensorflow_quantum/python/layers/circuit_executors:sampled_expectation",
+        "//tensorflow_quantum/python/layers/circuit_executors:unitary",
         "//tensorflow_quantum/python/layers/high_level:controlled_pqc",
         "//tensorflow_quantum/python/layers/high_level:pqc",
         "//tensorflow_quantum/python:util",

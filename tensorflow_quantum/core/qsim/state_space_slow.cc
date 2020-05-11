@@ -19,8 +19,9 @@ limitations under the License.
 #include <cstdint>
 #include <memory>
 
+#include "absl/memory/memory.h"
 #include "tensorflow/core/lib/core/status.h"
-#include "tensorflow_quantum/core/src/matrix.h"
+#include "tensorflow_quantum/core/qsim/matrix.h"
 
 namespace tfq {
 namespace qsim {
@@ -37,11 +38,16 @@ void StateSpaceSlow::CreateState() {
   state_ = (float*)malloc(sizeof(float) * size_);
 }
 
-void StateSpaceSlow::DeleteState() { free(state_); }
+void StateSpaceSlow::DeleteState() {
+  if (GetRawState() != NULL) {
+    free(state_);
+    state_ = NULL;
+  }
+}
 
-StateSpace* StateSpaceSlow::Clone() const {
-  StateSpaceSlow* state_copy =
-      new StateSpaceSlow(GetNumQubits(), GetNumThreads());
+std::unique_ptr<StateSpace> StateSpaceSlow::Clone() const {
+  std::unique_ptr<StateSpaceSlow> state_copy =
+      absl::make_unique<StateSpaceSlow>(GetNumQubits(), GetNumThreads());
   return state_copy;
 }
 
@@ -53,12 +59,15 @@ void StateSpaceSlow::CopyFrom(const StateSpace& other) const {
   }
 }
 
-void StateSpaceSlow::ApplyGate2(const unsigned int q0, const unsigned int q1,
-                                const float* m) {
+void StateSpaceSlow::ApplyGate2(const unsigned int q0_be,
+                                const unsigned int q1_be, const float* m) {
   // Assume q0 < q1.
+  const unsigned int q0_le = GetNumQubits() - q1_be - 1;
+  const unsigned int q1_le = GetNumQubits() - q0_be - 1;
+
   uint64_t sizei = uint64_t(1) << (GetNumQubits() + 1);
-  uint64_t sizej = uint64_t(1) << (q1 + 1);
-  uint64_t sizek = uint64_t(1) << (q0 + 1);
+  uint64_t sizej = uint64_t(1) << (q1_le + 1);
+  uint64_t sizek = uint64_t(1) << (q0_le + 1);
 
   auto data = GetRawState();
 

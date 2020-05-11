@@ -17,15 +17,46 @@ cc_binary(
         "tfq_ps_symbol_replace_op.cc",
         "tfq_ps_weights_from_symbols_op.cc",
     ],
+    copts = select({
+        ":windows": [
+            "/D__CLANG_SUPPORT_DYN_ANNOTATION__",
+            "/D_USE_MATH_DEFINES",
+            "/DEIGEN_MPL2_ONLY",
+            "/DEIGEN_MAX_ALIGN_BYTES=64",
+            "/DEIGEN_HAS_TYPE_TRAITS=0",
+            "/DTF_USE_SNAPPY",
+            "/showIncludes",
+            "/MD",
+            "/O2",
+            "/DNDEBUG",
+            "/w",
+            "-DWIN32_LEAN_AND_MEAN",
+            "-DNOGDI",
+            "/d2ReducedOptimizeHugeFunctions",
+            "/arch:AVX",
+            "/std:c++14",
+            "-DTENSORFLOW_MONOLITHIC_BUILD",
+            "/DPLATFORM_WINDOWS",
+            "/DEIGEN_HAS_C99_MATH",
+            "/DTENSORFLOW_USE_EIGEN_THREADPOOL",
+            "/DEIGEN_AVOID_STL_ARRAY",
+            "/Iexternal/gemmlowp",
+            "/wd4018",
+            "/wd4577",
+            "/DNOGDI",
+            "/UTF_COMPILE_LIBRARY",
+        ],
+        "//conditions:default": [
+            "-pthread",
+            "-std=c++11",
+            "-D_GLIBCXX_USE_CXX11_ABI=0",
+        ],
+    }),
     features = select({
         ":windows": ["windows_export_all_symbols"],
         "//conditions:default": [],
     }),
-    copts = select({
-        ":windows": ["/D__CLANG_SUPPORT_DYN_ANNOTATION__", "/DEIGEN_MPL2_ONLY", "/DEIGEN_MAX_ALIGN_BYTES=64", "/DEIGEN_HAS_TYPE_TRAITS=0", "/DTF_USE_SNAPPY", "/showIncludes", "/MD", "/O2", "/DNDEBUG", "/w", "-DWIN32_LEAN_AND_MEAN", "-DNOGDI", "/d2ReducedOptimizeHugeFunctions", "/arch:AVX", "/std:c++14", "-DTENSORFLOW_MONOLITHIC_BUILD", "/DPLATFORM_WINDOWS", "/DEIGEN_HAS_C99_MATH", "/DTENSORFLOW_USE_EIGEN_THREADPOOL", "/DEIGEN_AVOID_STL_ARRAY", "/Iexternal/gemmlowp", "/wd4018", "/wd4577", "/DNOGDI", "/UTF_COMPILE_LIBRARY"],
-        "//conditions:default": ["-pthread", "-std=c++11", "-D_GLIBCXX_USE_CXX11_ABI=0"],
-    }),
-	linkshared = 1,
+    linkshared = 1,
     deps = [
         ":parse_context",
         ":tfq_simulate_utils",
@@ -39,15 +70,47 @@ cc_binary(
     name = "_tfq_simulate_ops.so",
     srcs = [
         "tfq_simulate_expectation_op.cc",
+        "tfq_simulate_sampled_expectation_op.cc",
         "tfq_simulate_state_op.cc",
     ],
+    copts = select({
+        ":windows": [
+            "/D__CLANG_SUPPORT_DYN_ANNOTATION__",
+            "/D_USE_MATH_DEFINES",
+            "/DEIGEN_MPL2_ONLY",
+            "/DEIGEN_MAX_ALIGN_BYTES=64",
+            "/DEIGEN_HAS_TYPE_TRAITS=0",
+            "/DTF_USE_SNAPPY",
+            "/showIncludes",
+            "/MD",
+            "/O2",
+            "/DNDEBUG",
+            "/w",
+            "-DWIN32_LEAN_AND_MEAN",
+            "-DNOGDI",
+            "/d2ReducedOptimizeHugeFunctions",
+            "/arch:AVX",
+            "/std:c++14",
+            "-DTENSORFLOW_MONOLITHIC_BUILD",
+            "/DPLATFORM_WINDOWS",
+            "/DEIGEN_HAS_C99_MATH",
+            "/DTENSORFLOW_USE_EIGEN_THREADPOOL",
+            "/DEIGEN_AVOID_STL_ARRAY",
+            "/Iexternal/gemmlowp",
+            "/wd4018",
+            "/wd4577",
+            "/DNOGDI",
+            "/UTF_COMPILE_LIBRARY",
+        ],
+        "//conditions:default": [
+            "-pthread",
+            "-std=c++11",
+            "-D_GLIBCXX_USE_CXX11_ABI=0",
+        ],
+    }),
     features = select({
         ":windows": ["windows_export_all_symbols"],
         "//conditions:default": [],
-    }),
-    copts = select({
-        ":windows": ["/D__CLANG_SUPPORT_DYN_ANNOTATION__", "/DEIGEN_MPL2_ONLY", "/DEIGEN_MAX_ALIGN_BYTES=64", "/DEIGEN_HAS_TYPE_TRAITS=0", "/DTF_USE_SNAPPY", "/showIncludes", "/MD", "/O2", "/DNDEBUG", "/w", "-DWIN32_LEAN_AND_MEAN", "-DNOGDI", "/d2ReducedOptimizeHugeFunctions", "/arch:AVX", "/std:c++14", "-DTENSORFLOW_MONOLITHIC_BUILD", "/DPLATFORM_WINDOWS", "/DEIGEN_HAS_C99_MATH", "/DTENSORFLOW_USE_EIGEN_THREADPOOL", "/DEIGEN_AVOID_STL_ARRAY", "/Iexternal/gemmlowp", "/wd4018", "/wd4577", "/DNOGDI", "/UTF_COMPILE_LIBRARY"],
-        "//conditions:default": ["-pthread", "-std=c++11", "-D_GLIBCXX_USE_CXX11_ABI=0"],
     }),
     linkshared = 1,
     deps = [
@@ -71,6 +134,45 @@ cc_binary(
     srcs = [
         "tfq_circuit_append_op.cc",
     ],
+    copts = select({
+        ":windows": [
+            "/D__CLANG_SUPPORT_DYN_ANNOTATION__",
+            "/D_USE_MATH_DEFINES",
+            "/DEIGEN_MPL2_ONLY",
+            "/DEIGEN_MAX_ALIGN_BYTES=64",
+            "/DEIGEN_HAS_TYPE_TRAITS=0",
+            "/DTF_USE_SNAPPY",
+            "/showIncludes",
+            "/MD",
+            "/O2",
+            "/DNDEBUG",
+            "/w",
+            "-DWIN32_LEAN_AND_MEAN",
+            "-DNOGDI",
+            "/d2ReducedOptimizeHugeFunctions",
+            "/arch:AVX",
+            "/std:c++14",
+            "-DTENSORFLOW_MONOLITHIC_BUILD",
+            "/DPLATFORM_WINDOWS",
+            "/DEIGEN_HAS_C99_MATH",
+            "/DTENSORFLOW_USE_EIGEN_THREADPOOL",
+            "/DEIGEN_AVOID_STL_ARRAY",
+            "/Iexternal/gemmlowp",
+            "/wd4018",
+            "/wd4577",
+            "/DNOGDI",
+            "/UTF_COMPILE_LIBRARY",
+        ],
+        "//conditions:default": [
+            "-pthread",
+            "-std=c++11",
+            "-D_GLIBCXX_USE_CXX11_ABI=0",
+        ],
+    }),
+    features = select({
+        ":windows": ["windows_export_all_symbols"],
+        "//conditions:default": [],
+    }),
     linkshared = 1,
     deps = [
         ":parse_context",
@@ -83,14 +185,6 @@ cc_binary(
         "@local_config_tf//:libtensorflow_framework",
         "@local_config_tf//:tf_header_lib",
     ],
-    features = select({
-        ":windows": ["windows_export_all_symbols"],
-        "//conditions:default": [],
-    }),
-    copts = select({
-        ":windows": ["/D__CLANG_SUPPORT_DYN_ANNOTATION__", "/DEIGEN_MPL2_ONLY", "/DEIGEN_MAX_ALIGN_BYTES=64", "/DEIGEN_HAS_TYPE_TRAITS=0", "/DTF_USE_SNAPPY", "/showIncludes", "/MD", "/O2", "/DNDEBUG", "/w", "-DWIN32_LEAN_AND_MEAN", "-DNOGDI", "/d2ReducedOptimizeHugeFunctions", "/arch:AVX", "/std:c++14", "-DTENSORFLOW_MONOLITHIC_BUILD", "/DPLATFORM_WINDOWS", "/DEIGEN_HAS_C99_MATH", "/DTENSORFLOW_USE_EIGEN_THREADPOOL", "/DEIGEN_AVOID_STL_ARRAY", "/Iexternal/gemmlowp", "/wd4018", "/wd4577", "/DNOGDI", "/UTF_COMPILE_LIBRARY"],
-        "//conditions:default": ["-pthread", "-std=c++11", "-D_GLIBCXX_USE_CXX11_ABI=0"],
-    }),
 )
 
 cc_library(
@@ -109,6 +203,67 @@ cc_library(
     ],
 )
 
+cc_binary(
+    name = "_tfq_calculate_unitary_op.so",
+    srcs = [
+        "tfq_calculate_unitary_op.cc"
+    ],
+    copts = select({
+        ":windows": [
+            "/D__CLANG_SUPPORT_DYN_ANNOTATION__",
+            "/D_USE_MATH_DEFINES",
+            "/DEIGEN_MPL2_ONLY",
+            "/DEIGEN_MAX_ALIGN_BYTES=64",
+            "/DEIGEN_HAS_TYPE_TRAITS=0",
+            "/DTF_USE_SNAPPY",
+            "/showIncludes",
+            "/MD",
+            "/O2",
+            "/DNDEBUG",
+            "/w",
+            "-DWIN32_LEAN_AND_MEAN",
+            "-DNOGDI",
+            "/d2ReducedOptimizeHugeFunctions",
+            "/arch:AVX",
+            "/std:c++14",
+            "-DTENSORFLOW_MONOLITHIC_BUILD",
+            "/DPLATFORM_WINDOWS",
+            "/DEIGEN_HAS_C99_MATH",
+            "/DTENSORFLOW_USE_EIGEN_THREADPOOL",
+            "/DEIGEN_AVOID_STL_ARRAY",
+            "/Iexternal/gemmlowp",
+            "/wd4018",
+            "/wd4577",
+            "/DNOGDI",
+            "/UTF_COMPILE_LIBRARY",
+        ],
+        "//conditions:default": [
+            "-pthread",
+            "-std=c++11",
+            "-D_GLIBCXX_USE_CXX11_ABI=0",
+        ],
+    }),
+    features = select({
+        ":windows": ["windows_export_all_symbols"],
+        "//conditions:default": [],
+    }),
+    linkshared = 1,
+    deps = [
+        ":parse_context",
+        ":tfq_simulate_utils",
+        "//tensorflow_quantum/core/proto:pauli_sum_cc_proto",
+        "//tensorflow_quantum/core/proto:program_cc_proto",
+        "//tensorflow_quantum/core/qsim",
+        "//tensorflow_quantum/core/src:program_resolution",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/container:inlined_vector",
+        "@com_google_absl//absl/types:optional",
+        "@com_google_absl//absl/types:span",
+        "@local_config_tf//:libtensorflow_framework",
+        "@local_config_tf//:tf_header_lib",
+    ],
+)
+
 cc_library(
     name = "tfq_simulate_utils",
     srcs = ["tfq_simulate_utils.cc"],
@@ -116,6 +271,26 @@ cc_library(
     deps = [
         "@local_config_tf//:libtensorflow_framework",
         "@local_config_tf//:tf_header_lib",
+    ],
+)
+
+py_library(
+    name = "tfq_unitary_op_py",
+    srcs = ["tfq_unitary_op.py"],
+    data = [":_tfq_calculate_unitary_op.so"],
+    deps = [
+        ":load_module",
+        ":tfq_utility_ops_py",
+    ],
+)
+
+py_test(
+    name = "tfq_unitary_op_test",
+    srcs = ["tfq_unitary_op_test.py"],
+    python_version = "PY3",
+    deps = [
+        ":tfq_unitary_op_py",
+        "//tensorflow_quantum/python:util",
     ],
 )
 

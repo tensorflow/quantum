@@ -30,7 +30,7 @@ class StateSpaceSlow : public StateSpace {
 
   virtual ~StateSpaceSlow();
 
-  StateSpaceType GetType() const override;
+  virtual StateSpaceType GetType() const override;
 
   // Reserve the memory associated with the state in this space
   virtual void CreateState() override;
@@ -40,7 +40,7 @@ class StateSpaceSlow : public StateSpace {
 
   // Return a pointer to a copy of this StateSpace.
   // NOTE: user is responsible for deleting the returned copy.
-  virtual StateSpace* Clone() const override;
+  virtual std::unique_ptr<StateSpace> Clone() const override;
 
   // Copy the state information from another statespace.
   // Assumes the state has been initialized/created.
@@ -54,7 +54,7 @@ class StateSpaceSlow : public StateSpace {
   // Implementations are given the option to return an error.
   virtual tensorflow::Status ApplyGate1(const float* matrix) override;
 
-  // Set all entries in the state to zero
+  // Set state to the all zero |000...0> state
   virtual void SetStateZero() override;
 
   // Get the inner product between this state and the state in `other`

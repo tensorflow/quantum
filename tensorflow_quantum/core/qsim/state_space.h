@@ -49,6 +49,19 @@ class StateSpace {
                                         StateSpace* scratch,
                                         float* expectation_value);
 
+  // Function to draw m samples from a StateSpace Object in
+  // O(2 ** num_qubits + m * log(m)) time.
+  // Samples are stored as bit encoded integers.
+  void SampleState(const int m, std::vector<uint64_t>* samples);
+
+  // Computes the expectation value for a given state vector and PauliSum.
+  // Uses scratch StateSpace for evolving pauli terms forward and computing
+  // expectations using m samples. Assumes that scratch has memory allocated,
+  // but does not require scratch to initialize values.
+  tensorflow::Status ComputeSampledExpectation(
+      const tfq::proto::PauliSum& p_sum, StateSpace* scratch,
+      float* expectation_value, const int m);
+
   // Returns true if memory for the state has been succesfully allocated
   bool Valid() const;
 
@@ -77,13 +90,14 @@ class StateSpace {
 
   // Return a pointer to a clone of this StateSpace that is unitialized.
   // NOTE: user is responsible for deleting the returned copy.
-  virtual StateSpace* Clone() const = 0;
+  virtual std::unique_ptr<StateSpace> Clone() const = 0;
 
   // Copy the contents of others state into this state. Will not
   // check if state has been initialized.
   virtual void CopyFrom(const StateSpace& other) const = 0;
 
   // Function to apply a two qubit gate to the state on indices q0 and q1.
+  // Must adhere to big-endian convention of Cirq.
   virtual void ApplyGate2(const unsigned int q0, const unsigned int q1,
                           const float* matrix) = 0;
 
@@ -91,13 +105,13 @@ class StateSpace {
   // Implementations are given the option to return an error.
   virtual tensorflow::Status ApplyGate1(const float* matrix) = 0;
 
-  // Set all entries in the state to zero
+  // Set state to the all zero |000...0> state
   virtual void SetStateZero() = 0;
 
   // Get the inner product between this state and the state in `other`
   virtual float GetRealInnerProduct(const StateSpace& other) const = 0;
 
-  // Get the amplitude at the given state index
+  // Get the amplitude at the given state index.
   virtual std::complex<float> GetAmpl(const uint64_t i) const = 0;
 
   // Set the amplitude at the given state index

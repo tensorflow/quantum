@@ -1,16 +1,18 @@
-# TensorFlow Quantum
+![TensorFlow Quantum](./docs/images/logo/tf_quantum_circle.jpg)
 
-TensorFlow Quantum (TFQ) is a python framework for hybrid
-quantum-classical machine learning that is primarily focused on
-modeling quantum data. TFQ is an application framework developed to
+---
+
+[TensorFlow Quantum](https://www.tensorflow.org/quantum) (TFQ) is a Python
+framework for hybrid quantum-classical machine learning that is primarily
+focused on modeling quantum data. TFQ is an application framework developed to
 allow quantum algorithms researchers and machine learning applications
-researchers to explore computing workflows that leverage Google’s
-quantum computing offerings, all from within TensorFlow.
+researchers to explore computing workflows that leverage Google’s quantum
+computing offerings, all from within TensorFlow.
 
 
 ## Motivation
 
-Quantum computing at Google has hit an exciting milestone with the achievment
+Quantum computing at Google has hit an exciting milestone with the achievement
 of [Quantum Supremacy](https://www.nature.com/articles/s41586-019-1666-5).
 In the wake of this demonstration, Google is now turning its attention to
 developing and implementing new algorithms to run on its Quantum Computer
@@ -43,13 +45,24 @@ All of our examples can be found here in the form of
 Report bugs or feature requests using the
 [TensorFlow Quantum issue tracker](https://github.com/tensorflow/quantum/issues).
 
+We also have a [Stack Overflow tag](https://stackoverflow.com/questions/tagged/tensorflow-quantum)
+for more general TFQ related discussions.
+
 In the meantime check out the [install instructions](./docs/install.md) to get
 the experimental code running!
 
 
 ## Contributing
 
-We are eager to collaborate with you! TensorFlow Quantum is still a very young codebase,
+We are eager to collaborate with you! TensorFlow Quantum is still a very young code base,
 if you have ideas for features that you would like added feel free to check out our
 [Contributor Guidelines](https://github.com/tensorflow/quantum/blob/master/CONTRIBUTING.md)
 to get started.
+
+
+## References
+
+If you use TensorFlow Quantum in your research, please cite:
+
+TensorFlow Quantum: A Software Framework for Quantum Machine Learning
+[arXiv:2003.02989, 2020](https://arxiv.org/abs/2003.02989).
