@@ -69,6 +69,14 @@ class SpinSystemDataTest(tf.test.TestCase):
                         (-1, 1)))[0])
         assert all([np.isclose(fid, 1.0, rtol=1e-3) for fid in fidelities])
 
+    def test_paulisum(self):
+        """Test that hamiltonian returns a PauliSum"""
+        nspins = 4
+        qbs = cirq.GridQubit.rect(nspins, 1)
+        _, _, system = spin_system.tfi_chain(
+            qbs, nspins, 'closed')
+        assert isinstance(system[0].hamiltonian(qbs), cirq.PauliSum)
+
 
 if __name__ == '__main__':
     tf.test.main()

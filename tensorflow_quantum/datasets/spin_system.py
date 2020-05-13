@@ -17,7 +17,6 @@ parameterized circuits"""
 from pathlib import Path
 import numpy as np
 import sympy
-import scipy.sparse as sps
 import cirq
 
 
@@ -27,7 +26,8 @@ class SpinSystem(object):
     """
 
     def __init__(self, g: float, res_e: float, fidelity: float,
-                 gs_energy: float, parameters: np.ndarray, path: Path):
+                 gs_energy: float, parameters: np.ndarray, path: Path,
+                 hamiltonian_fn):
         """Instantiate this spin system.
 
         Args:
@@ -47,13 +47,14 @@ class SpinSystem(object):
         self.gs_energy = gs_energy
         self.parameters = parameters
         self.path = path
+        self._hamiltonian_fn = hamiltonian_fn
 
     def __lt__(self, other):
         return self.g < other.g
 
-    def hamiltonian(self):
-        """Load the hamiltonian into a scipy sparse CSR matrix."""
-        return sps.load_npz(self.path / Path('H.npz'))
+    def hamiltonian(self, qubits):
+        """Get a cirq.Paulisum object that represents the Hamiltonian"""
+        return self._hamiltonian_fn(qubits, self.g)
 
     def ground_state(self):
         """Load the ground state wave function into a complex numpy array."""
@@ -79,7 +80,8 @@ class SpinSystemDataset(object):
     single set of order parameters.
     """
 
-    def __init__(self, nspins: int, system_name: str, data_dir: str):
+    def __init__(self, nspins: int, system_name: str, data_dir: str,
+                 hamiltonian_fn):
         """Instantiate this data set.
 
         Args:
@@ -99,6 +101,7 @@ class SpinSystemDataset(object):
         data_path = data_dir / Path(system_name + "_{}/".format(int(nspins)))
         self.nspins = nspins
         self._download_dataset(data_path)
+        self._hamiltonian_fn = hamiltonian_fn
         # TODO: This only works for a single order parameter. For
         #  the XY model or XYZ model, this will have to be generalized.
         self.systems = self._get_spin_systems(data_path)
@@ -123,8 +126,8 @@ class SpinSystemDataset(object):
             gs_energy = np.load(directory / Path('energy.npy'))[0]
             parameters = np.load(directory / Path('params.npy'))
             systems.append(
-                SpinSystem(g, res_e, fidelity, gs_energy, parameters,
-                           directory))
+                SpinSystem(g, res_e, fidelity, gs_energy, parameters, directory,
+                           self._hamiltonian_fn))
         return sorted(systems)
 
     def _download_dataset(self, path: str):
@@ -175,7 +178,20 @@ def tfi_chain(qubits,
     boundary_condition = boundary_condition
     name = 'TFI_' + boundary_condition
 
-    dataset = SpinSystemDataset(nspins, name, data_dir)
+    def get_hamiltonian(qubits, g):
+        paulisum = []
+        for j in range(0, nspins - 1, 1):
+            paulisum.append(-cirq.Z(qubits[j]) * cirq.Z(qubits[j + 1]))
+        if boundary_condition == 'closed':
+            paulisum.append(-cirq.Z(qubits[nspins - 1]) * cirq.Z(qubits[0]))
+        for j in range(0, nspins):
+            paulisum.append(-g * cirq.X(qubits[j]))
+        hamiltonian = cirq.PauliString(paulisum[0])
+        for p in paulisum[1:]:
+            hamiltonian += p
+        return cirq.PauliSum.from_pauli_strings(hamiltonian)
+
+    dataset = SpinSystemDataset(nspins, name, data_dir, get_hamiltonian)
 
     name_generator = unique_name()
     symbols = [sympy.Symbol(next(name_generator)) for _ in range(nspins)]
