@@ -40,11 +40,11 @@ class PQC(tf.keras.layers.Layer):
     >>> q = cirq.GridQubit(0, 0)
     >>> (a, b, c) = sympy.symbols("a b c")
     >>> circuit = cirq.Circuit(
-    ...     cirq.Rz(a)(q),
-    ...     cirq.Rx(b)(q),
-    ...     cirq.Rz(c)(q),
-    ...     cirq.Rx(-b)(q),
-    ...     cirq.Rz(-a)(q)
+    ...     cirq.rz(a)(q),
+    ...     cirq.rx(b)(q),
+    ...     cirq.rz(c)(q),
+    ...     cirq.rx(-b)(q),
+    ...     cirq.rz(-a)(q)
     ... )
 
 
@@ -101,11 +101,11 @@ class PQC(tf.keras.layers.Layer):
     >>> q = cirq.GridQubit(0, 0)
     >>> (a, b, c) = sympy.symbols("a b c")
     >>> circuit = cirq.Circuit(
-    ...     cirq.Rz(a)(q),
-    ...     cirq.Rx(b)(q),
-    ...     cirq.Rz(c)(q),
-    ...     cirq.Rx(-b)(q),
-    ...     cirq.Rz(-a)(q)
+    ...     cirq.rz(a)(q),
+    ...     cirq.rx(b)(q),
+    ...     cirq.rz(c)(q),
+    ...     cirq.rx(-b)(q),
+    ...     cirq.rz(-a)(q)
     ... )
     >>> measurement = [cirq.X(q), cirq.Y(q), cirq.Z(q)]
     >>> outputs = tfq.layers.PQC(

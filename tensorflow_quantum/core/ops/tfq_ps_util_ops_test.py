@@ -671,7 +671,7 @@ class PSWeightsFromSymbolTest(tf.test.TestCase):
     def test_rotation_gates(self):
         """Test that rotation gates work."""
         bit = cirq.GridQubit(0, 0)
-        circuit = cirq.Circuit(cirq.Rx(sympy.Symbol('alpha') * 5.0)(bit))
+        circuit = cirq.Circuit(cirq.rx(sympy.Symbol('alpha') * 5.0)(bit))
         inputs = util.convert_to_tensor([circuit])
         symbols = tf.convert_to_tensor(['alpha'])
         res = tfq_ps_util_ops.tfq_ps_weights_from_symbols(inputs, symbols)
