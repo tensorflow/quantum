@@ -29,12 +29,12 @@ def _gen_single_bit_rotation_problem(bit, symbols):
     """Generate a toy problem on 1 qubit."""
     starting_state = np.random.uniform(0, 2 * np.pi, 3)
     circuit = cirq.Circuit(
-        cirq.Rx(starting_state[0])(bit),
-        cirq.Ry(starting_state[1])(bit),
-        cirq.Rz(starting_state[2])(bit),
-        cirq.Rz(symbols[2])(bit),
-        cirq.Ry(symbols[1])(bit),
-        cirq.Rx(symbols[0])(bit))
+        cirq.rx(starting_state[0])(bit),
+        cirq.ry(starting_state[1])(bit),
+        cirq.rz(starting_state[2])(bit),
+        cirq.rz(symbols[2])(bit),
+        cirq.ry(symbols[1])(bit),
+        cirq.rx(symbols[0])(bit))
 
     return circuit
 
@@ -112,15 +112,14 @@ class SampledExpectationTest(tf.test.TestCase):
         symb_circuit = cirq.Circuit(cirq.H(bit)**symbol)
         reg_circuit = cirq.Circuit(cirq.H(bit))
 
-        with self.assertRaisesRegex(Exception, expected_regex="bytes-like"):
+        with self.assertRaisesRegex(Exception, expected_regex="pauli_sums"):
             # Operators has wrong rank. Parse error.
             sampled_expectation.SampledExpectation()(
                 [reg_circuit],
                 operators=util.convert_to_tensor([test_psum]),
                 repetitions=1)
 
-        with self.assertRaisesRegex(
-                Exception, expected_regex="must match second dimension"):
+        with self.assertRaisesRegex(Exception, expected_regex="symbol_values"):
             # symbol_values has wrong rank.
             sampled_expectation.SampledExpectation()([symb_circuit],
                                                      symbol_names=[symbol],
@@ -128,7 +127,9 @@ class SampledExpectationTest(tf.test.TestCase):
                                                      operators=test_psum,
                                                      repetitions=1)
 
-        with self.assertRaisesRegex(Exception, expected_regex="same batch"):
+        with self.assertRaisesRegex(
+                Exception,
+                expected_regex="Number of circuits and PauliSums do not match"):
             # Wrong batch size for pauli operators.
             sampled_expectation.SampledExpectation()(symb_circuit,
                                                      symbol_names=[symbol],
@@ -136,21 +137,24 @@ class SampledExpectationTest(tf.test.TestCase):
                                                                 [test_psum]],
                                                      repetitions=1)
 
-        with self.assertRaisesRegex(Exception, expected_regex="same batch"):
+        with self.assertRaisesRegex(
+                Exception,
+                expected_regex="Number of circuits and PauliSums do not match"):
             # Wrong batch size for pauli operators.
             sampled_expectation.SampledExpectation()(reg_circuit,
                                                      operators=[[test_psum],
                                                                 [test_psum]],
                                                      repetitions=1)
 
-        with self.assertRaisesRegex(Exception, expected_regex="<= 0"):
+        with self.assertRaisesRegex(Exception, expected_regex="greater than 0"):
             # Wrong repetitions.
             sampled_expectation.SampledExpectation()(reg_circuit,
                                                      operators=test_psum,
                                                      repetitions=-1)
 
-        with self.assertRaisesRegex(Exception,
-                                    expected_regex="same shape as pauli_sums"):
+        with self.assertRaisesRegex(
+                Exception,
+                expected_regex="num_samples and pauli_sums do not match"):
             # Wrong second dimension size for repetitions & pauli operators.
             sampled_expectation.SampledExpectation()(reg_circuit,
                                                      operators=test_psum,
@@ -223,7 +227,7 @@ class SampledExpectationTest(tf.test.TestCase):
     def test_sampled_expectation_simple_tf_train(self):
         """Train a layer using standard tf (not keras)."""
         bit = cirq.GridQubit(0, 0)
-        circuit = cirq.Circuit(cirq.Rx(sympy.Symbol('theta'))(bit))
+        circuit = cirq.Circuit(cirq.rx(sympy.Symbol('theta'))(bit))
         layer = sampled_expectation.SampledExpectation()
         optimizer = tf.optimizers.Adam(learning_rate=0.05)
         for _ in range(10):

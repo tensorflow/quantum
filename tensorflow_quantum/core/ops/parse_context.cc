@@ -255,4 +255,38 @@ Status GetGradients(OpKernelContext* context,
   return Status::OK();
 }
 
+tensorflow::Status GetNumSamples(
+    tensorflow::OpKernelContext* context,
+    std::vector<std::vector<int>>* parsed_num_samples) {
+  const Tensor* input_num_samples;
+  Status status = context->input("num_samples", &input_num_samples);
+  if (!status.ok()) {
+    return status;
+  }
+
+  if (input_num_samples->dims() != 2) {
+    return Status(tensorflow::error::INVALID_ARGUMENT,
+                  absl::StrCat("num_samples must be rank 2. Got rank ",
+                               input_num_samples->dims(), "."));
+  }
+
+  const auto matrix_num_samples = input_num_samples->matrix<int>();
+  parsed_num_samples->reserve(matrix_num_samples.dimension(0));
+  for (unsigned int i = 0; i < matrix_num_samples.dimension(0); i++) {
+    std::vector<int> sub_parsed_num_samples;
+    sub_parsed_num_samples.reserve(matrix_num_samples.dimension(1));
+    for (unsigned int j = 0; j < matrix_num_samples.dimension(1); j++) {
+      const int num_samples = matrix_num_samples(i, j);
+      if (num_samples < 1) {
+        return Status(tensorflow::error::INVALID_ARGUMENT,
+                      "Each element of num_samples must be greater than 0.");
+      }
+      sub_parsed_num_samples.push_back(num_samples);
+    }
+    parsed_num_samples->push_back(sub_parsed_num_samples);
+  }
+
+  return Status::OK();
+}
+
 }  // namespace tfq

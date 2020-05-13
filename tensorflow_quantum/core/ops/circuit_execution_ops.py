@@ -25,6 +25,7 @@ class TFQWavefunctionSimulator(enum.Enum):
     expectation = tfq_simulate_ops.tfq_simulate_expectation
     samples = tfq_simulate_ops.tfq_simulate_samples
     state = tfq_simulate_ops.tfq_simulate_state
+    sampled_expectation = tfq_simulate_ops.tfq_simulate_sampled_expectation
 
 
 def get_expectation_op(backend=None):
@@ -290,8 +291,9 @@ def get_sampled_expectation_op(backend=None):
     ... )
 
     Args:
-        backend: Python `object` that specifies what backend this op should use
-            when evaluating circuits. It only accepts `cirq.Sampler`.
+        backend: Optional Python `object` that specifies what backend this op
+            should use when evaluating circuits. Can be any `cirq.Sampler`. If
+            not provided the default C++ sampled expectation op is returned.
 
     Returns:
         A `callable` with the following signature:
@@ -311,12 +313,10 @@ def get_sampled_expectation_op(backend=None):
         pauli_sums: `tf.Tensor` of strings with shape [batch_size, n_ops]
             containing the string representation of the operators that will
             be used on all of the circuits in the expectation calculations.
-        num_samples: `tf.Tensor` with `n_samples[i][j]` is equal to the
+        num_samples: `tf.Tensor` with `num_samples[i][j]` is equal to the
             number of samples to draw in each term of `pauli_sums[i][j]`
-            when estimating the expectation. It can also be tiled up to the
-            shape of pauli_sums by broadcasting if tf.shape(num_samples)[0]
-            or tf.shape(num_samples)[1] is 1 and the other dimension is the
-            same with that of pauli_sums.
+            when estimating the expectation. Therefore, `num_samples` must
+            have the same shape as `pauli_sums`.
 
         Returns:
             `tf.Tensor` with shape [batch_size, n_ops] that holds the
@@ -325,10 +325,7 @@ def get_sampled_expectation_op(backend=None):
     """
     # TODO (mbbrough): investigate how the above docstring renders.
     if backend is None:
-        # TODO(zaqqwerty, jaeyoo): Remove comment once sampled_expectation
-        # is implemented, and update docstring
-        # return TFQWavefunctionSimulator.sampled_expectation
-        return cirq_ops._get_cirq_sampled_expectation(cirq.sim.Simulator())
+        return TFQWavefunctionSimulator.sampled_expectation
 
     if isinstance(backend, cirq.Sampler):
         return cirq_ops._get_cirq_sampled_expectation(backend)

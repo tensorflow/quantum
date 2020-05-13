@@ -38,12 +38,12 @@ class Expectation(tf.keras.layers.Layer):
     ...     \"""Generate a toy problem on 1 qubit.\"""
     ...     starting_state = [0.123, 0.456, 0.789]
     ...     circuit = cirq.Circuit(
-    ...         cirq.Rx(starting_state[0])(bit),
-    ...         cirq.Ry(starting_state[1])(bit),
-    ...         cirq.Rz(starting_state[2])(bit),
-    ...         cirq.Rz(symbols[2])(bit),
-    ...         cirq.Ry(symbols[1])(bit),
-    ...         cirq.Rx(symbols[0])(bit)
+    ...         cirq.rx(starting_state[0])(bit),
+    ...         cirq.ry(starting_state[1])(bit),
+    ...         cirq.rz(starting_state[2])(bit),
+    ...         cirq.rz(symbols[2])(bit),
+    ...         cirq.ry(symbols[1])(bit),
+    ...         cirq.rx(symbols[0])(bit)
     ...     )
     ...     return circuit
 
