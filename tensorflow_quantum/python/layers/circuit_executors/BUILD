@@ -49,6 +49,15 @@ py_library(
 )
 
 py_library(
+    name = "unitary",
+    srcs = ["unitary.py"],
+    deps = [
+        ":input_checks",
+        "//tensorflow_quantum/core/ops:tfq_unitary_op_py",
+    ],
+)
+
+py_library(
     name = "input_checks",
     srcs = ["input_checks.py"],
     deps = [
@@ -95,6 +104,16 @@ py_test(
     python_version = "PY3",
     deps = [
         ":sample",
+        "//tensorflow_quantum/python:util",
+    ],
+)
+
+py_test(
+    name = "unitary_test",
+    srcs = ["unitary_test.py"],
+    python_version = "PY3",
+    deps = [
+        ":unitary",
         "//tensorflow_quantum/python:util",
     ],
 )

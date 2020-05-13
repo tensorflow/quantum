@@ -147,7 +147,7 @@ REGISTER_OP("TfqCalculateUnitary")
     .Input("programs: string")
     .Input("symbol_names: string")
     .Input("symbol_values: float")
-    .Output("wavefunction: complex64")
+    .Output("unitary: complex64")
     .SetShapeFn([](tensorflow::shape_inference::InferenceContext *c) {
       tensorflow::shape_inference::ShapeHandle programs_shape;
       TF_RETURN_IF_ERROR(c->WithRank(c->input(0), 1, &programs_shape));

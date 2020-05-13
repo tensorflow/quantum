@@ -16,6 +16,7 @@ limitations under the License.
 #include "tensorflow_quantum/core/src/program_resolution.h"
 
 #include <string>
+#include <utility>
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
@@ -47,31 +48,47 @@ Status ResolveQubitIds(Program* program, unsigned int* num_qubits,
     return Status::OK();
   }
 
-  absl::flat_hash_set<std::string> id_set;
+  absl::flat_hash_set<std::pair<std::pair<int, int>, std::string>> id_set;
   for (const Moment& moment : program->circuit().moments()) {
     for (const Operation& operation : moment.operations()) {
       for (const Qubit& qubit : operation.qubits()) {
-        id_set.insert(qubit.id());
+        int r, c;
+        const std::vector<std::string> splits = absl::StrSplit(qubit.id(), "_");
+        if (splits.size() != 2) {
+          return Status(tensorflow::error::INVALID_ARGUMENT,
+                        "Unable to parse qubit: " + qubit.id());
+        }
+        if (!absl::SimpleAtoi(splits[0], &r)) {
+          return Status(tensorflow::error::INVALID_ARGUMENT,
+                        "Unable to parse qubit: " + qubit.id());
+        }
+        if (!absl::SimpleAtoi(splits[1], &c)) {
+          return Status(tensorflow::error::INVALID_ARGUMENT,
+                        "Unable to parse qubit: " + qubit.id());
+        }
+        auto locs = std::pair<std::pair<int, int>, std::string>(
+            std::pair<int, int>(r, c), qubit.id());
+        id_set.insert(locs);
       }
     }
   }
   *num_qubits = id_set.size();
 
-  std::vector<std::string> ids(id_set.begin(), id_set.end());
+  // call to std::sort will do (r1 < r2) || ((r1 == r2) && c1 < c2)
+  std::vector<std::pair<std::pair<int, int>, std::string>> ids(id_set.begin(),
+                                                               id_set.end());
   std::sort(ids.begin(), ids.end());
 
-  absl::flat_hash_map<std::string, int> id_to_index;
+  absl::flat_hash_map<std::string, std::string> id_to_index;
   for (size_t i = 0; i < ids.size(); i++) {
-    id_to_index[ids[i]] = i;
+    id_to_index[ids[i].second] = absl::StrCat(i);
   }
 
   // Replace the Program Qubit ids with the indices.
   for (Moment& moment : *program->mutable_circuit()->mutable_moments()) {
     for (Operation& operation : *moment.mutable_operations()) {
       for (Qubit& qubit : *operation.mutable_qubits()) {
-        const int index = id_to_index.at(qubit.id());
-        const std::string new_id = absl::StrCat(index);
-        qubit.set_id(new_id);
+        qubit.set_id(id_to_index.at(qubit.id()));
       }
     }
   }
@@ -87,9 +104,7 @@ Status ResolveQubitIds(Program* program, unsigned int* num_qubits,
                 tensorflow::error::INVALID_ARGUMENT,
                 "Found a Pauli sum operating on qubits not found in circuit.");
           }
-          const int index = result->second;
-          const std::string new_id = absl::StrCat(index);
-          pair.set_qubit_id(new_id);
+          pair.set_qubit_id(result->second);
         }
       }
     }

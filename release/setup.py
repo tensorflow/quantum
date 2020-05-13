@@ -50,8 +50,8 @@ class InstallPlatlib(install):
             self.install_lib = self.install_platlib
 
 
-REQUIRED_PACKAGES = ['cirq == 0.7.0', 'pathos == 0.2.5']
-CUR_VERSION = '0.3.0'
+REQUIRED_PACKAGES = ['cirq == 0.8.0', 'pathos == 0.2.5', 'sympy == 1.4']
+CUR_VERSION = '0.4.0'
 
 
 class BinaryDistribution(Distribution):
