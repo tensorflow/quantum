@@ -14,12 +14,31 @@ py_library(
     ],
 )
 
+py_library(
+    name = "qudit",
+    srcs = ["qudit.py"],
+    deps = [
+        "//tensorflow_quantum/core/ops:tfq_utility_ops_py",
+        "//tensorflow_quantum/python:util",
+    ],
+)
+
 py_test(
     name = "elementary_test",
     srcs = ["elementary_test.py"],
     python_version = "PY3",
     deps = [
         ":elementary",
+        "//tensorflow_quantum/python:util",
+    ],
+)
+
+py_test(
+    name = "qudit_test",
+    srcs = ["qudit_test.py"],
+    python_version = "PY3",
+    deps = [
+        ":qudit",
         "//tensorflow_quantum/python:util",
     ],
 )
