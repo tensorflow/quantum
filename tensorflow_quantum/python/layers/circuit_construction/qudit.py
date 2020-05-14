@@ -21,7 +21,7 @@ from tensorflow_quantum.core.ops import tfq_utility_ops
 from tensorflow_quantum.python import util
 
 
-def qudit_layer_input_check(inputs, precision, cliques):
+def layer_input_check(inputs, precision, cliques):
     """Function for error checking and expanding qudit layer inputs.
 
     Args:
@@ -57,15 +57,15 @@ def qudit_layer_input_check(inputs, precision, cliques):
     return inputs, precision, cliques
 
 
-class QuditAppendCostExp(tf.keras.layers.Layer):
+class AppendCostExp(tf.keras.layers.Layer):
     """Layer appending exponential of a qudit cost to the input circuit tensor.
 
 
     Note: When specifying a new layer for a *compiled* `tf.keras.Model` using
     something like
-    `tfq.layers.QuditAppendCostExp()(cirq.Circuit(...), ...)`
+    `tfq.layers.AppendCostExp()(cirq.Circuit(...), ...)`
     please be sure to instead use
-    `tfq.layers.QuditAppendCostExp()(circuit_input, ...)`
+    `tfq.layers.AppendCostExp()(circuit_input, ...)`
     where `circuit_input` is a `tf.keras.Input` that is filled with
     `tfq.conver_to_tensor([cirq.Circuit(..)] * batch_size)` at runtime. This
     is because compiled Keras models require non keyword layer `call` inputs to
@@ -82,7 +82,7 @@ class QuditAppendCostExp(tf.keras.layers.Layer):
 
         Input options:
             `inputs`, `symbol_names`, `symbol_values`:
-                see `qudit_layer_input_checks`
+                see `layer_input_checks`
 
         Output shape:
             `tf.Tensor` of shape [batch_size] containing the exponential of the
@@ -90,7 +90,7 @@ class QuditAppendCostExp(tf.keras.layers.Layer):
 
         """
 
-        inputs, precision, cost = qudit_layer_input_check(inputs, precision, cost)
+        inputs, precision, cost = layer_input_check(inputs, precision, cost)
 
 
         batch_dim = tf.gather(tf.shape(inputs), 0)
