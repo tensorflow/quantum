@@ -18,9 +18,9 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
+from operator import mul
+from functools import reduce
 import tensorflow as tf
-import numpy
-
 
 def function_factory(model, loss, train_x, train_y):
     """A factory to create a function required by tfq.optimizer.rotosolve.
@@ -49,7 +49,7 @@ def function_factory(model, loss, train_x, train_y):
     part = []  # partition indices
 
     for i, shape in enumerate(shapes):
-        n = numpy.product(shape)
+        n = reduce(mul, shape)
         idx.append(
             tf.reshape(tf.range(count, count + n, dtype=tf.int32), shape))
         part.extend([i] * n)
