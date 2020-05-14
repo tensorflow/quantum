@@ -20,8 +20,8 @@ from __future__ import division
 from __future__ import print_function
 import tensorflow as tf
 from absl.testing import parameterized
-from .utils import function_factory
 import numpy as np
+from .utils import function_factory
 
 
 class RotosolveMinimizerTest(tf.test.TestCase, parameterized.TestCase):
@@ -31,13 +31,13 @@ class RotosolveMinimizerTest(tf.test.TestCase, parameterized.TestCase):
         """Test the function_factory"""
 
         class LinearModel(object):
-            # We here first define a simplest formular.
+            """ A simple tensorflow linear model"""
             def __init__(self):
-                self.W = tf.Variable(0.0)
+                self.w = tf.Variable(0.0)
                 self.b = tf.Variable(0.0)
 
             def __call__(self, x):
-                return self.W * x + self.b
+                return self.w * x + self.b
 
         model = LinearModel()
 
@@ -49,9 +49,8 @@ class RotosolveMinimizerTest(tf.test.TestCase, parameterized.TestCase):
 
         new_func = function_factory(model, loss, xs, ys)
 
-        loss_1 = new_func(np.asarray([2, 3])) # ys = 5, 7 / loss = 32.5
-        loss_2 = new_func(np.asarray([5, 4])) # ys = 9, 14 / loss = 0
+        loss_1 = new_func(np.asarray([2, 3]))  # ys = 5, 7 / loss = 32.5
+        loss_2 = new_func(np.asarray([5, 4]))  # ys = 9, 14 / loss = 0
 
         self.assertNear(loss_1, 32.5, 1e-6)
         self.assertNear(loss_2, 0, 1e-6)
-

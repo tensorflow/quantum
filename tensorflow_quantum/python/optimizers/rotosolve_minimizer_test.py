@@ -21,7 +21,9 @@ import sympy
 
 from tensorflow_quantum.python.layers.high_level import pqc
 from tensorflow_quantum.python import util
-from tensorflow_quantum.python.optimizers import rotosolve_minimizer,function_factory
+from tensorflow_quantum.python.optimizers \
+    import rotosolve_minimizer, function_factory
+
 
 class RotosolveMinimizerTest(tf.test.TestCase, parameterized.TestCase):
     """Tests for the rotosolve optimization algorithm."""
@@ -29,14 +31,14 @@ class RotosolveMinimizerTest(tf.test.TestCase, parameterized.TestCase):
     def test_optimization(self):
         """Optimization test."""
 
-        X = np.asarray([
+        x = np.asarray([
             [0, 0],
             [0, 1],
             [1, 0],
             [1, 1],
         ], dtype=float)
 
-        Y = np.asarray([
+        y = np.asarray([
             [-1], [1], [1], [-1]
         ], dtype=float)
 
@@ -50,7 +52,7 @@ class RotosolveMinimizerTest(tf.test.TestCase, parameterized.TestCase):
                     circuit.append(cirq.X(qubits[i]))
             return circuit
 
-        x_circ = util.convert_to_tensor([convert_to_circuit(x) for x in X])
+        x_circ = util.convert_to_tensor([convert_to_circuit(x) for x in x])
 
         # Create two qubits
         q0, q1 = cirq.GridQubit.rect(1, 2)
@@ -65,7 +67,8 @@ class RotosolveMinimizerTest(tf.test.TestCase, parameterized.TestCase):
         model = tf.keras.Sequential([
             # The input is the data-circuit, encoded as a tf.string
             tf.keras.layers.Input(shape=(), dtype=tf.string),
-            # The PQC layer returns the expected value of the readout gate, range [-1,1].
+            # The PQC layer returns the expected value of the
+            # readout gate, range [-1,1].
             pqc.PQC(circuit, cirq.Z(q1)),
         ])
 
@@ -73,6 +76,7 @@ class RotosolveMinimizerTest(tf.test.TestCase, parameterized.TestCase):
             # Here we use hinge loss as the cost function
             return tf.reduce_mean(tf.cast(1 - y_true * y_pred, tf.float32))
 
-        rotosolve_minimizer.minimize(function_factory(model, hinge_loss, x_circ, Y),
-                                              np.random.random(2) * 2 * np.pi)  # Initial guess of the parameter
-
+        # Initial guess of the parameter from random number
+        rotosolve_minimizer.minimize(
+            function_factory(model, hinge_loss, x_circ, y),
+                                     np.random.random(2) * 2 * np.pi)

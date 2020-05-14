@@ -21,6 +21,7 @@ from __future__ import print_function
 import tensorflow as tf
 import numpy
 
+
 def function_factory(model, loss, train_x, train_y):
     """A factory to create a function required by tfq.optimizer.rotosolve.
     This function is originally defined for l-bgfs minimizer for tensorflow
@@ -49,7 +50,8 @@ def function_factory(model, loss, train_x, train_y):
 
     for i, shape in enumerate(shapes):
         n = numpy.product(shape)
-        idx.append(tf.reshape(tf.range(count, count + n, dtype=tf.int32), shape))
+        idx.append(
+            tf.reshape(tf.range(count, count + n, dtype=tf.int32), shape))
         part.extend([i] * n)
         count += n
 
@@ -60,7 +62,8 @@ def function_factory(model, loss, train_x, train_y):
         """A function updating the model's parameters with a 1D tf.Tensor.
 
         Args:
-            params_1d [in]: a 1D tf.Tensor representing the model's trainable parameters.
+            params_1d [in]: a 1D tf.Tensor representing the model's
+                trainable parameters.
         """
 
         params = tf.dynamic_partition(params_1d, part, n_tensors)
@@ -69,7 +72,7 @@ def function_factory(model, loss, train_x, train_y):
 
     # now create a function that will be returned by this factory
     @tf.function
-    def f(params_1d):
+    def exposed_func(params_1d):
         """A function that can be used by tfp.optimizer.rotosolve_minimize.
 
         This function is created by function_factory.
@@ -85,15 +88,15 @@ def function_factory(model, loss, train_x, train_y):
         assign_new_model_parameters(params_1d)
         # calculate the loss
         loss_value = loss(model(train_x, training=True), train_y)
-        f.iter.assign_add(1)
+        exposed_func.iter.assign_add(1)
 
         return loss_value
 
     # store these information as members so we can use them outside the scope
-    f.iter = tf.Variable(0)
-    f.idx = idx
-    f.part = part
-    f.shapes = shapes
-    f.assign_new_model_parameters = assign_new_model_parameters
+    exposed_func.iter = tf.Variable(0)
+    exposed_func.idx = idx
+    exposed_func.part = part
+    exposed_func.shapes = shapes
+    exposed_func.assign_new_model_parameters = assign_new_model_parameters
 
-    return f
+    return exposed_func
