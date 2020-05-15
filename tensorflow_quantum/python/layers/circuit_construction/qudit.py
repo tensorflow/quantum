@@ -21,23 +21,66 @@ from tensorflow_quantum.core.ops import tfq_utility_ops
 from tensorflow_quantum.python import util
 
 
-def layer_input_check(inputs, precision, cliques):
-    """Function for error checking and expanding qudit layer inputs.
+def projector_on_one(index):
+    """Returns the projector on 1 for the given qubit.
+ 
+    Given a qubit k, the projector onto one can be represented by
+        |1><1|_k = 0.5(I_k - Z_k).
+
+    Args:
+        index: A `cirq.GridQubit` on which the projector is supported.
+    
+    Returns:
+        `cirq.PauliSum` representing the projector.
+    """
+    if not isinstance(index, cirq.GridQubit):
+        raise TypeError("A projector must live on a cirq.GridQubit.")
+    return 0.5*cirq.I(index)-0.5*cirq.Z(index)
+
+
+def integer_operator(indices):
+    """Returns operator representing position in binary on a qubit register.
+
+    Unsigned integers on computers can be represented as a bitstring.  For an
+    integer represented by N bits, the k-th bit represents the presence
+    of the number 2**(N - k - 1) in the sum representing the integer.
+    Similarly, we can define a binary operator J as
+        J = \sum_P{k=0}^{N-1} 2^{N-k-1}|1><1|_k,
+    where
+        |1><1|_k = 0.5(I_k - Z_k).
+    J can be represented by a `cirq.PauliSum`.
+
+    Args:
+        indices: Python `list` of `GridQubit`s on which the operator is
+            supported.
+
+    Returns:
+        int_op: A `cirq.PauliSum` representing the integer operator.
+    """
+    int_op = cirq.PauliSum()
+    width = len(indices)
+    for loc, q in enumerate(indices):
+        int_op += 2**(width - 1 - loc) * projector_on_one(q)
+    return int_op
+
+
+def layer_input_check(inputs, precisions, cliques):
+    """Function for error checking and expanding quantum integer layer inputs.
 
     Args:
         inputs: a single `cirq.Circuit`, a Python `list` of
             `cirq.Circuit`s or a pre-converted `tf.Tensor` of
             `cirq.Circuit`s.
-        precision: a Python `list` of `int`s.  Entry `precision[i]` sets
-            the number of qubits on which qudit `i` is supported.
-        cliques: a Python `dict` mapping sets of qudit labels which are to be
-            combined via tensor product to the coefficient of that product.
+        precisions: a Python `list` of `int`s.  Entry `precisions[i]` sets
+            the number of qubits on which quantum integer `i` is supported.
+        cliques: a Python `dict` mapping sets of quantum integer labels to
+            the coefficient of the tensor product of those qints.
 
     Returns:
         inputs: `tf.Tensor` of dtype `string` with shape [batch_size]
             containing the serialized circuits to which further operations
             will be appended.
-        precision: Argument passed unchanged after error checking.
+        precisions: Argument passed unchanged after error checking.
         cliques: Argument passed unchanged after error checking.
     """
     if isinstance(inputs, cirq.Circuit):
@@ -48,17 +91,17 @@ def layer_input_check(inputs, precision, cliques):
         raise TypeError("Circuits cannot be parsed with given input:"
                         " ".format(inputs))
 
-    if precision is None:
+    if precisions is None:
         raise RuntimeError("`precisions` must be a list of integers.")
 
     if cliques is None:
         raise RuntimeError("`cliques` must be a dict mapping sets to floats.")
 
-    return inputs, precision, cliques
+    return inputs, precisions, cliques
 
 
 class AppendCostExp(tf.keras.layers.Layer):
-    """Layer appending exponential of a qudit cost to the input circuit tensor.
+    """Layer appending the exponential of quantum integer cost to input circuit.
 
 
     Note: When specifying a new layer for a *compiled* `tf.keras.Model` using
@@ -77,11 +120,11 @@ class AppendCostExp(tf.keras.layers.Layer):
         """Instantiate this layer."""
         super().__init__(**kwargs)
 
-    def call(self, inputs, *, precision=None, cost=None):
+    def call(self, inputs, *, precisions=None, cost=None):
         """Keras call method.
 
         Input options:
-            `inputs`, `symbol_names`, `symbol_values`:
+            `inputs`, `precisions`, `cost`:
                 see `layer_input_checks`
 
         Output shape:
@@ -90,7 +133,7 @@ class AppendCostExp(tf.keras.layers.Layer):
 
         """
 
-        inputs, precision, cost = layer_input_check(inputs, precision, cost)
+        inputs, precisions, cost = layer_input_check(inputs, precisions, cost)
 
 
         batch_dim = tf.gather(tf.shape(inputs), 0)

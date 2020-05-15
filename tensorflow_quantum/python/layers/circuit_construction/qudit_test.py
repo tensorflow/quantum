@@ -17,7 +17,13 @@ import tensorflow as tf
 import cirq
 import sympy
 
-from tensorflow_quantum.python.layers.circuit_construction import qudit
+from tensorflow_quantum.python.layers.circuit_construction import integer
+
+
+class ProjectorOnOneTest(tf.test.TestCase):
+
+
+class IntegerOperatorTest(tf.test.TestCase):
 
 
 class LayerInputCheckTest(tf.test.TestCase):
@@ -25,25 +31,13 @@ class LayerInputCheckTest(tf.test.TestCase):
 
     def test_bad_cases(self):
         """Test that qudit_layer_input_check errors on bad arguments."""
-    def test_allowed_cases(self):
-        """Ensure all allowed input combinations are upgraded correctly."""
-        
-
-class AppendCostExpTest(tf.test.TestCase):
-    """Test AppendCostExp."""
-
-    def test_addcircuit_instantiate(self):
-        """Test that a addcircuit layer can be instantiated correctly."""
-        qudit.AppendCostExp()
-
-    def test_addcircuit_keras_error(self):
-        """Test that addcircuit layer errors in keras call."""
         add = elementary.AddCircuit()
         circuit = cirq.Circuit(cirq.X(cirq.GridQubit(0, 0)))
 
+        # Bad input argument
         with self.assertRaisesRegex(TypeError,
                                     expected_regex="cannot be parsed"):
-            add(circuit, append='junk')
+            qudit_input_check(circuit, append='junk')
 
         with self.assertRaisesRegex(TypeError,
                                     expected_regex="cannot be parsed"):
@@ -61,67 +55,36 @@ class AppendCostExpTest(tf.test.TestCase):
                                     expected_regex="append and prepend"):
             add(circuit, append=circuit, prepend=circuit)
 
-    def test_addcircuit_op_error(self):
+    def test_allowed_cases(self):
+        """Ensure all allowed input combinations are upgraded correctly."""
+        
+
+class AppendCostExpTest(tf.test.TestCase):
+    """Test AppendCostExp."""
+
+    def test_append_cost_exp_instantiate(self):
+        """Test that a addcircuit layer can be instantiated correctly."""
+        qudit.AppendCostExp()
+
+
+    def test_append_cost_exp_op_error(self):
         """Test that addcircuit will error inside of ops correctly."""
         add = elementary.AddCircuit()
         circuit = cirq.Circuit(cirq.X(cirq.GridQubit(0, 0)))
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
-                                    expected_regex="matching sizes"):
-            # append is wrong shape.
-            add(circuit, append=[circuit, circuit])
-
-        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
-                                    expected_regex="matching sizes"):
-            # prepend is wrong shape.
-            add(circuit, prepend=[circuit, circuit])
-
-        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
-                                    expected_regex="rank 1"):
-            # prepend is wrong shape.
-            add(circuit, prepend=[[circuit]])
-
-        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
-                                    expected_regex="rank 1"):
-            # append is wrong shape.
-            add(circuit, append=[[circuit]])
-
-        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     expected_regex="rank 1"):
             # circuit is wrong shape.
-            add([[circuit]], append=[circuit])
+            add([[circuit]], )
 
-    def test_addcircuit_simple_inputs(self):
-        """Test the valid cases."""
-        add = elementary.AddCircuit()
-        circuit = cirq.Circuit(
-            cirq.X(cirq.GridQubit(0, 0))**(sympy.Symbol('alpha') * sympy.pi))
-        add([circuit, circuit], append=circuit)
-        add([circuit, circuit], prepend=circuit)
-        add(circuit, append=circuit)
-        add(circuit, prepend=circuit)
-
-    def test_addcircuit_modify(self):
-        """Test that a addcircuit layer correctly modifies input circuits."""
-        bits = cirq.GridQubit.rect(1, 20)
-        circuit_a = cirq.testing.random_circuit(bits, 10, 0.9,
-                                                util.get_supported_gates())
-        circuit_b = cirq.testing.random_circuit(bits, 10, 0.9,
-                                                util.get_supported_gates())
-
-        expected_append = util.convert_to_tensor([circuit_a + circuit_b])
-        expected_prepend = util.convert_to_tensor([circuit_b + circuit_a])
-
-        append_layer = elementary.AddCircuit()
-        prepend_layer = elementary.AddCircuit()
-
-        actual_append = util.convert_to_tensor(
-            util.from_tensor(append_layer(circuit_a, append=circuit_b)))
-        actual_prepend = util.convert_to_tensor(
-            util.from_tensor(prepend_layer(circuit_a, prepend=circuit_b)))
-
-        self.assertEqual(expected_append.numpy()[0], actual_append.numpy()[0])
-        self.assertEqual(expected_prepend.numpy()[0], actual_prepend.numpy()[0])
+    def test_append_cost_exp(self):
+        """Test that the correct circuit is generated."""
+        precisions = [3, 4]
+        cliques = {(0,): 2, (1,): 3, (1, 2,): 4}
+        my_cost_exp = AppendCostExp(cirq.Circuit(), precisions=precisions, cost=cliques)
+        
+    def test_append_cost_exp_append(self):
+        
 
 
 if __name__ == "__main__":
