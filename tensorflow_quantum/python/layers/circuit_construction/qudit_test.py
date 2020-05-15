@@ -17,14 +17,38 @@ import tensorflow as tf
 import cirq
 import sympy
 
-from tensorflow_quantum.python.layers.circuit_construction import integer
+from tensorflow_quantum.python.layers.circuit_construction import qudit
 
 
 class ProjectorOnOneTest(tf.test.TestCase):
+    """Test the projector_on_one function."""
 
+    def test_bad_inputs(self):
+        """Confirm that function raises error on bad input."""
+        for bad_arg in [-5, 12, cirq.LineQubit(6), []]:
+        with self.assertRaisesRegex(TypeError,
+                                    expected_regex="cirq.GridQubit"):
+            integer.projector_on_one(bad_arg)
 
+    def test_return(self):
+        """Confirm that GridQubit input returns correct PauliSum."""
+        for i in range(12):
+            for j in range(12):
+                this_q = cirq.GridQubit(i, j)
+                expected_psum = 0.5*cirq.I(this_q) - 0.5*cirq.Z(this_q)
+                test_psum = qudit.projector_on_one(this_q)
+                self.assertEqual(expected_psum, test_psum)
+
+    
 class IntegerOperatorTest(tf.test.TestCase):
+    """Test the integer_operator function."""
 
+    def test_bad_inputs(self):
+        """Confirm that function raises error on bad input."""
+
+    def test_return(self):
+        """Confirm that correct operators are created."""
+    
 
 class LayerInputCheckTest(tf.test.TestCase):
     """Confirm layer arguments are error checked and upgraded correctly."""
