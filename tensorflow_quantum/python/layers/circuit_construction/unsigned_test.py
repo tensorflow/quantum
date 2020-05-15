@@ -17,7 +17,7 @@ import tensorflow as tf
 import cirq
 import sympy
 
-from tensorflow_quantum.python.layers.circuit_construction import qudit
+from tensorflow_quantum.python.layers.circuit_construction import unsigned
 
 
 class ProjectorOnOneTest(tf.test.TestCase):
@@ -26,9 +26,9 @@ class ProjectorOnOneTest(tf.test.TestCase):
     def test_bad_inputs(self):
         """Confirm that function raises error on bad input."""
         for bad_arg in [-5, 12, cirq.LineQubit(6), []]:
-        with self.assertRaisesRegex(TypeError,
-                                    expected_regex="cirq.GridQubit"):
-            integer.projector_on_one(bad_arg)
+            with self.assertRaisesRegex(TypeError,
+                                        expected_regex="cirq.GridQubit"):
+                _ = unsigned.projector_on_one(bad_arg)
 
     def test_return(self):
         """Confirm that GridQubit input returns correct PauliSum."""
@@ -36,7 +36,7 @@ class ProjectorOnOneTest(tf.test.TestCase):
             for j in range(12):
                 this_q = cirq.GridQubit(i, j)
                 expected_psum = 0.5*cirq.I(this_q) - 0.5*cirq.Z(this_q)
-                test_psum = qudit.projector_on_one(this_q)
+                test_psum = unsigned.projector_on_one(this_q)
                 self.assertEqual(expected_psum, test_psum)
 
     
@@ -45,10 +45,21 @@ class IntegerOperatorTest(tf.test.TestCase):
 
     def test_bad_inputs(self):
         """Confirm that function raises error on bad input."""
-
+        for bad_arg in [-7, 3, cirq.LineQubit(2), []]:
+            with self.assertRaisesRegex(TypeError,
+                                        expected_regex="cirq.GridQubit"):
+                _ = unsigned.integer_operator(bad_arg)
+        
     def test_return(self):
         """Confirm that correct operators are created."""
-    
+        for i in range(5):
+            qubits = cirq.GridQubit.rect(1, i + 1)
+            expected_psum = (2**(i+1) - 1)*cirq.I(cirq.GridQubit(0, 0))
+            for loc, q in enumerate(qubits):
+                expected_psum -= 2**(i - 1 - loc)*0.5*cirq.Z(q)
+            test_psum = unsigned.integer_operator(qubits)
+            self.assertEqual(expected_psum, test_psum)
+
 
 class LayerInputCheckTest(tf.test.TestCase):
     """Confirm layer arguments are error checked and upgraded correctly."""
