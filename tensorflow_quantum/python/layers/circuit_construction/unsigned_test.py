@@ -61,6 +61,21 @@ class IntegerOperatorTest(tf.test.TestCase):
             self.assertEqual(expected_psum, test_psum)
 
 
+class RegistersFromPrecisionsTest(tf.test.TestCase):
+    """Test the registers_from_precisions function."""
+
+    def test_bad_inputs(self):
+        """Confirm that function raises error on bad input."""
+        for bad_arg in [-7, 3, cirq.LineQubit(2), [[]]]:
+            with self.assertRaisesRegex(TypeError,
+                                        expected_regex="cirq.GridQubit"):
+                _ = unsigned.registers_from_precisions(bad_arg)
+
+    
+
+class BuildCostPsumTest(tf.test.TestCase):
+    """Test the build_cost_psum function."""
+
 class LayerInputCheckTest(tf.test.TestCase):
     """Confirm layer arguments are error checked and upgraded correctly."""
 
