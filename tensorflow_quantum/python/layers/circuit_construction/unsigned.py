@@ -19,6 +19,7 @@ import cirq
 
 from tensorflow_quantum.core.ops import tfq_utility_ops
 from tensorflow_quantum.python import util
+from tensorflow_quantum.python.layers.circuit_executors import expectation
 
 
 def projector_on_one(qubit):
@@ -100,42 +101,6 @@ def build_cost_psum(precisions, cliques):
         this_psum *= cliques[clique]
         cost_psum += this_psum
     return cost_psum
-
-
-# def layer_input_check(inputs, precisions, cliques):
-#     """Function for error checking and expanding quantum integer layer inputs.
-
-#     Args:
-#         inputs: a single `cirq.Circuit`, a Python `list` of
-#             `cirq.Circuit`s or a pre-converted `tf.Tensor` of
-#             `cirq.Circuit`s.
-#         precisions: a Python `list` of `int`s.  Entry `precisions[i]` sets
-#             the number of qubits on which quantum integer `i` is supported.
-#         cliques: a Python `dict` mapping `tuple`s of quantum integer register
-#             labels to the coefficient of the tensor product of those qints.
-
-#     Returns:
-#         inputs: `tf.Tensor` of dtype `string` with shape [batch_size]
-#             containing the serialized circuits to which further operations
-#             will be appended.
-#         precisions: Argument passed unchanged after error checking.
-#         cliques: Argument passed unchanged after error checking.
-#     """
-#     if isinstance(inputs, cirq.Circuit):
-#         inputs = util.convert_to_tensor([inputs])
-#     if isinstance(inputs, (tuple, list, np.ndarray)):
-#         inputs = util.convert_to_tensor(inputs)
-#     if not tf.is_tensor(inputs):
-#         raise TypeError("Circuits cannot be parsed with given input:"
-#                         " ".format(inputs))
-
-#     if precisions is None:
-#         raise RuntimeError("`precisions` must be a list of integers.")
-
-#     if cliques is None:
-#         raise RuntimeError("`cliques` must be a dict mapping sets to floats.")
-
-#     return inputs, precisions, cliques
 
 
 # class AppendCostExp(tf.keras.layers.Layer):

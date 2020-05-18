@@ -18,6 +18,7 @@ import cirq
 import sympy
 
 from tensorflow_quantum.python.layers.circuit_construction import unsigned
+from tensorflow_quantum.python.layers.circuit_executors import expectation
 
 
 class ProjectorOnOneTest(tf.test.TestCase):
@@ -88,38 +89,28 @@ class RegistersFromPrecisionsTest(tf.test.TestCase):
 class BuildCostPsumTest(tf.test.TestCase):
     """Test the build_cost_psum function."""
 
-# class LayerInputCheckTest(tf.test.TestCase):
-#     """Confirm layer arguments are error checked and upgraded correctly."""
+    def test_bad_inputs(self):
+        """Confirm function raises error on bad inputs."""
 
-#     def test_bad_cases(self):
-#         """Test that qudit_layer_input_check errors on bad arguments."""
-#         add = elementary.AddCircuit()
-#         circuit = cirq.Circuit(cirq.X(cirq.GridQubit(0, 0)))
+    def test_psum_return(self):
+        """Confirm operators are built correctly."""
 
-#         # Bad input argument
-#         with self.assertRaisesRegex(TypeError,
-#                                     expected_regex="cannot be parsed"):
-#             qudit_input_check(circuit, append='junk')
+    def test_counting(self):
+        """Confirm we get numbers as expected from quantum integer psums."""
+        precisions = [5]
+        registers = unsigned.registers_from_precisions(precisions)
+        cliques = {(0,): 1}
+        cliques_psum = unsigned.build_cost_psum(precisions, cliques)
+        exp_layer = expectations.Expectation()
+        for i in range(precisions[0]):
+            my_str = format(i, 'b')
+            bit_circ = cirq.Circuit()
+            for n, c in enumerate(my_str[::-1]):
+                if bool(int(c)):
+                    bit_circ += cirq.X(registers[0][precisions[0] -1 - n])
+            test_val = exp_layer(bit_circ, operators=cliques_psum)
+            self.assertAlmostEqual(i, test_val.numpy()[0][0], 1e-5)
 
-#         with self.assertRaisesRegex(TypeError,
-#                                     expected_regex="cannot be parsed"):
-#             add(circuit, prepend='junk')
-
-#         with self.assertRaisesRegex(TypeError,
-#                                     expected_regex="cannot be parsed"):
-#             add('junk', prepend=circuit)
-
-#         with self.assertRaisesRegex(ValueError,
-#                                     expected_regex="append or prepend"):
-#             add(circuit)
-
-#         with self.assertRaisesRegex(ValueError,
-#                                     expected_regex="append and prepend"):
-#             add(circuit, append=circuit, prepend=circuit)
-
-#     def test_allowed_cases(self):
-#         """Ensure all allowed input combinations are upgraded correctly."""
-        
 
 # class AppendCostExpTest(tf.test.TestCase):
 #     """Test AppendCostExp."""
