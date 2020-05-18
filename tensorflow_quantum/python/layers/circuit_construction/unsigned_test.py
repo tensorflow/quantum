@@ -45,18 +45,18 @@ class IntegerOperatorTest(tf.test.TestCase):
 
     def test_bad_inputs(self):
         """Confirm that function raises error on bad input."""
-        for bad_arg in [-7, 3, cirq.LineQubit(2), []]:
+        for bad_arg in [-7, 3, cirq.LineQubit(2), ["junk"]]:
             with self.assertRaisesRegex(TypeError,
-                                        expected_regex="ffff"):
+                                        expected_regex="cirq.GridQubit"):
                 _ = unsigned.integer_operator(bad_arg)
-        
+
     def test_return(self):
         """Confirm that correct operators are created."""
         for i in range(5):
             qubits = cirq.GridQubit.rect(1, i + 1)
-            expected_psum = (2**(i+1) - 1)*cirq.I(cirq.GridQubit(0, 0))
+            expected_psum = (2**(i+1) - 1)*0.5*cirq.I(qubits[0])
             for loc, q in enumerate(qubits):
-                expected_psum -= 2**(i - 1 - loc)*0.5*cirq.Z(q)
+                expected_psum -= 2**(i - loc)*0.5*cirq.Z(q)
             test_psum = unsigned.integer_operator(qubits)
             self.assertEqual(expected_psum, test_psum)
 
@@ -66,12 +66,24 @@ class RegistersFromPrecisionsTest(tf.test.TestCase):
 
     def test_bad_inputs(self):
         """Confirm that function raises error on bad input."""
-        for bad_arg in [-7, 3, cirq.LineQubit(2), [[]]]:
+        for bad_arg in [-7, 3, cirq.LineQubit(2), [[]], ["junk"]]:
             with self.assertRaisesRegex(TypeError,
-                                        expected_regex="cirq.GridQubit"):
+                                        expected_regex=""):
                 _ = unsigned.registers_from_precisions(bad_arg)
 
-    
+    def test_return(self):
+        """Confirm that registers are built correctly."""
+        precisions = [3, 2, 4]
+        register_list = unsigned.registers_from_precisions(precisions)
+        test_set = set()
+        for r, p in zip(register_list, precisions):
+            self.assertEqual(len(r), p)
+            for q in r:
+                test_set.add(q)
+                self.assertIsInstance(q, cirq.GridQubit)
+        # Ensure all qubits are unique
+        self.assertEqual(len(test_set), sum(precisions))
+
 
 class BuildCostPsumTest(tf.test.TestCase):
     """Test the build_cost_psum function."""

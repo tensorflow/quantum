@@ -57,6 +57,8 @@ def integer_operator(qubits):
     Returns:
         int_op: A `cirq.PauliSum` representing the integer operator.
     """
+    if not isinstance(qubits, list):
+        raise TypeError("Argument qubits must be a list of cirq.GridQubits.")
     int_op = cirq.PauliSum()
     width = len(qubits)
     for loc, q in enumerate(qubits):
@@ -75,6 +77,8 @@ def registers_from_precisions(precisions):
         register_list: lists of `cirq.GridQubit`s, such that
             len(register_list[i]) == precisions[i] and all entries are unique.
     """
+    if not isinstance(precisions, list):
+        raise TypeError("Argument qubits must be a list of cirq.GridQubits.")
     register_list = []
     for r, width in enumerate(precisions):
         this_register = []
