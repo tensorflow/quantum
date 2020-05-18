@@ -191,7 +191,7 @@ def tfi_chain(qubits, boundary_condition='closed', data_dir=None):
     >>> print(addinfo[10].params)
     [[2.39218603 2.1284263 ]
      [2.01284773 2.30447438]]
-     ```
+    ```
 
     If we want to know the path where the data is stored we use
     ```python
@@ -224,7 +224,7 @@ def tfi_chain(qubits, boundary_condition='closed', data_dir=None):
                 and the exact energy from exact diagonalization.
             - `fidelity`: Python `float` overlap between the circuit state
                 and the exact ground state from exact diagonalization.
-            -.`data_path`: Python `str` location of the data set.
+            - `data_path`: Python `str` location of the data set.
     """
 
     supported_n = [4, 8, 12, 16]
