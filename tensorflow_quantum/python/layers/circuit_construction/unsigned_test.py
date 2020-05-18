@@ -47,7 +47,7 @@ class IntegerOperatorTest(tf.test.TestCase):
         """Confirm that function raises error on bad input."""
         for bad_arg in [-7, 3, cirq.LineQubit(2), []]:
             with self.assertRaisesRegex(TypeError,
-                                        expected_regex="cirq.GridQubit"):
+                                        expected_regex="ffff"):
                 _ = unsigned.integer_operator(bad_arg)
         
     def test_return(self):
@@ -76,64 +76,64 @@ class RegistersFromPrecisionsTest(tf.test.TestCase):
 class BuildCostPsumTest(tf.test.TestCase):
     """Test the build_cost_psum function."""
 
-class LayerInputCheckTest(tf.test.TestCase):
-    """Confirm layer arguments are error checked and upgraded correctly."""
+# class LayerInputCheckTest(tf.test.TestCase):
+#     """Confirm layer arguments are error checked and upgraded correctly."""
 
-    def test_bad_cases(self):
-        """Test that qudit_layer_input_check errors on bad arguments."""
-        add = elementary.AddCircuit()
-        circuit = cirq.Circuit(cirq.X(cirq.GridQubit(0, 0)))
+#     def test_bad_cases(self):
+#         """Test that qudit_layer_input_check errors on bad arguments."""
+#         add = elementary.AddCircuit()
+#         circuit = cirq.Circuit(cirq.X(cirq.GridQubit(0, 0)))
 
-        # Bad input argument
-        with self.assertRaisesRegex(TypeError,
-                                    expected_regex="cannot be parsed"):
-            qudit_input_check(circuit, append='junk')
+#         # Bad input argument
+#         with self.assertRaisesRegex(TypeError,
+#                                     expected_regex="cannot be parsed"):
+#             qudit_input_check(circuit, append='junk')
 
-        with self.assertRaisesRegex(TypeError,
-                                    expected_regex="cannot be parsed"):
-            add(circuit, prepend='junk')
+#         with self.assertRaisesRegex(TypeError,
+#                                     expected_regex="cannot be parsed"):
+#             add(circuit, prepend='junk')
 
-        with self.assertRaisesRegex(TypeError,
-                                    expected_regex="cannot be parsed"):
-            add('junk', prepend=circuit)
+#         with self.assertRaisesRegex(TypeError,
+#                                     expected_regex="cannot be parsed"):
+#             add('junk', prepend=circuit)
 
-        with self.assertRaisesRegex(ValueError,
-                                    expected_regex="append or prepend"):
-            add(circuit)
+#         with self.assertRaisesRegex(ValueError,
+#                                     expected_regex="append or prepend"):
+#             add(circuit)
 
-        with self.assertRaisesRegex(ValueError,
-                                    expected_regex="append and prepend"):
-            add(circuit, append=circuit, prepend=circuit)
+#         with self.assertRaisesRegex(ValueError,
+#                                     expected_regex="append and prepend"):
+#             add(circuit, append=circuit, prepend=circuit)
 
-    def test_allowed_cases(self):
-        """Ensure all allowed input combinations are upgraded correctly."""
+#     def test_allowed_cases(self):
+#         """Ensure all allowed input combinations are upgraded correctly."""
         
 
-class AppendCostExpTest(tf.test.TestCase):
-    """Test AppendCostExp."""
+# class AppendCostExpTest(tf.test.TestCase):
+#     """Test AppendCostExp."""
 
-    def test_append_cost_exp_instantiate(self):
-        """Test that a addcircuit layer can be instantiated correctly."""
-        qudit.AppendCostExp()
+#     def test_append_cost_exp_instantiate(self):
+#         """Test that a addcircuit layer can be instantiated correctly."""
+#         qudit.AppendCostExp()
 
 
-    def test_append_cost_exp_op_error(self):
-        """Test that addcircuit will error inside of ops correctly."""
-        add = elementary.AddCircuit()
-        circuit = cirq.Circuit(cirq.X(cirq.GridQubit(0, 0)))
+#     def test_append_cost_exp_op_error(self):
+#         """Test that addcircuit will error inside of ops correctly."""
+#         add = elementary.AddCircuit()
+#         circuit = cirq.Circuit(cirq.X(cirq.GridQubit(0, 0)))
 
-        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
-                                    expected_regex="rank 1"):
-            # circuit is wrong shape.
-            add([[circuit]], )
+#         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+#                                     expected_regex="rank 1"):
+#             # circuit is wrong shape.
+#             add([[circuit]], )
 
-    def test_append_cost_exp(self):
-        """Test that the correct circuit is generated."""
-        precisions = [3, 4]
-        cliques = {(0,): 2, (1,): 3, (1, 2,): 4}
-        my_cost_exp = AppendCostExp(cirq.Circuit(), precisions=precisions, cost=cliques)
+#     def test_append_cost_exp(self):
+#         """Test that the correct circuit is generated."""
+#         precisions = [3, 4]
+#         cliques = {(0,): 2, (1,): 3, (1, 2,): 4}
+#         my_cost_exp = AppendCostExp(cirq.Circuit(), precisions=precisions, cost=cliques)
         
-    def test_append_cost_exp_append(self):
+#     def test_append_cost_exp_append(self):
         
 
 

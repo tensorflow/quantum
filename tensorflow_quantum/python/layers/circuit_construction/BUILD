@@ -15,8 +15,8 @@ py_library(
 )
 
 py_library(
-    name = "qudit",
-    srcs = ["qudit.py"],
+    name = "unsigned",
+    srcs = ["unsigned.py"],
     deps = [
         "//tensorflow_quantum/core/ops:tfq_utility_ops_py",
         "//tensorflow_quantum/python:util",
@@ -34,11 +34,11 @@ py_test(
 )
 
 py_test(
-    name = "qudit_test",
-    srcs = ["qudit_test.py"],
+    name = "unsigned_test",
+    srcs = ["unsigned_test.py"],
     python_version = "PY3",
     deps = [
-        ":qudit",
+        ":unsigned",
         "//tensorflow_quantum/python:util",
     ],
 )

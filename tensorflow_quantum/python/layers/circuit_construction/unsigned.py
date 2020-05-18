@@ -98,84 +98,84 @@ def build_cost_psum(precisions, cliques):
     return cost_psum
 
 
-def layer_input_check(inputs, precisions, cliques):
-    """Function for error checking and expanding quantum integer layer inputs.
+# def layer_input_check(inputs, precisions, cliques):
+#     """Function for error checking and expanding quantum integer layer inputs.
 
-    Args:
-        inputs: a single `cirq.Circuit`, a Python `list` of
-            `cirq.Circuit`s or a pre-converted `tf.Tensor` of
-            `cirq.Circuit`s.
-        precisions: a Python `list` of `int`s.  Entry `precisions[i]` sets
-            the number of qubits on which quantum integer `i` is supported.
-        cliques: a Python `dict` mapping `tuple`s of quantum integer register
-            labels to the coefficient of the tensor product of those qints.
+#     Args:
+#         inputs: a single `cirq.Circuit`, a Python `list` of
+#             `cirq.Circuit`s or a pre-converted `tf.Tensor` of
+#             `cirq.Circuit`s.
+#         precisions: a Python `list` of `int`s.  Entry `precisions[i]` sets
+#             the number of qubits on which quantum integer `i` is supported.
+#         cliques: a Python `dict` mapping `tuple`s of quantum integer register
+#             labels to the coefficient of the tensor product of those qints.
 
-    Returns:
-        inputs: `tf.Tensor` of dtype `string` with shape [batch_size]
-            containing the serialized circuits to which further operations
-            will be appended.
-        precisions: Argument passed unchanged after error checking.
-        cliques: Argument passed unchanged after error checking.
-    """
-    if isinstance(inputs, cirq.Circuit):
-        inputs = util.convert_to_tensor([inputs])
-    if isinstance(inputs, (tuple, list, np.ndarray)):
-        inputs = util.convert_to_tensor(inputs)
-    if not tf.is_tensor(inputs):
-        raise TypeError("Circuits cannot be parsed with given input:"
-                        " ".format(inputs))
+#     Returns:
+#         inputs: `tf.Tensor` of dtype `string` with shape [batch_size]
+#             containing the serialized circuits to which further operations
+#             will be appended.
+#         precisions: Argument passed unchanged after error checking.
+#         cliques: Argument passed unchanged after error checking.
+#     """
+#     if isinstance(inputs, cirq.Circuit):
+#         inputs = util.convert_to_tensor([inputs])
+#     if isinstance(inputs, (tuple, list, np.ndarray)):
+#         inputs = util.convert_to_tensor(inputs)
+#     if not tf.is_tensor(inputs):
+#         raise TypeError("Circuits cannot be parsed with given input:"
+#                         " ".format(inputs))
 
-    if precisions is None:
-        raise RuntimeError("`precisions` must be a list of integers.")
+#     if precisions is None:
+#         raise RuntimeError("`precisions` must be a list of integers.")
 
-    if cliques is None:
-        raise RuntimeError("`cliques` must be a dict mapping sets to floats.")
+#     if cliques is None:
+#         raise RuntimeError("`cliques` must be a dict mapping sets to floats.")
 
-    return inputs, precisions, cliques
-
-
-class AppendCostExp(tf.keras.layers.Layer):
-    """Layer appending the exponential of quantum integer cost to input circuit.
+#     return inputs, precisions, cliques
 
 
-    Note: When specifying a new layer for a *compiled* `tf.keras.Model` using
-    something like
-    `tfq.layers.AppendCostExp()(cirq.Circuit(...), ...)`
-    please be sure to instead use
-    `tfq.layers.AppendCostExp()(circuit_input, ...)`
-    where `circuit_input` is a `tf.keras.Input` that is filled with
-    `tfq.conver_to_tensor([cirq.Circuit(..)] * batch_size)` at runtime. This
-    is because compiled Keras models require non keyword layer `call` inputs to
-    be traceable back to a `tf.keras.Input`.
-
-    """
-
-    def __init__(self, precisions, cost, **kwargs):
-        """Instantiate this layer."""
-        super().__init__(**kwargs)
+# class AppendCostExp(tf.keras.layers.Layer):
+#     """Layer appending the exponential of quantum integer cost to input circuit.
 
 
+#     Note: When specifying a new layer for a *compiled* `tf.keras.Model` using
+#     something like
+#     `tfq.layers.AppendCostExp()(cirq.Circuit(...), ...)`
+#     please be sure to instead use
+#     `tfq.layers.AppendCostExp()(circuit_input, ...)`
+#     where `circuit_input` is a `tf.keras.Input` that is filled with
+#     `tfq.conver_to_tensor([cirq.Circuit(..)] * batch_size)` at runtime. This
+#     is because compiled Keras models require non keyword layer `call` inputs to
+#     be traceable back to a `tf.keras.Input`.
 
-    def call(self, inputs, *, exp_symbol_name=None, exp_symbol_value=None):
-        """Keras call method.
+#     """
 
-        Input options:
-            `inputs`, `precisions`, `cost`:
-                see `layer_input_checks`
+#     def __init__(self, precisions, cost, **kwargs):
+#         """Instantiate this layer."""
+#         super().__init__(**kwargs)
 
-        Output shape:
-            `tf.Tensor` of shape [batch_size] containing the exponential of the
-                qudit cost appended to the input circuits.
 
-        """
 
-        inputs, precisions, cost = layer_input_check(inputs, precisions, cost)
+#     def call(self, inputs, *, exp_symbol_name=None, exp_symbol_value=None):
+#         """Keras call method.
+
+#         Input options:
+#             `inputs`, `precisions`, `cost`:
+#                 see `layer_input_checks`
+
+#         Output shape:
+#             `tf.Tensor` of shape [batch_size] containing the exponential of the
+#                 qudit cost appended to the input circuits.
+
+#         """
+
+#         inputs, precisions, cost = layer_input_check(inputs, precisions, cost)
 
         
-        batch_dim = tf.gather(tf.shape(inputs), 0)
-        if isinstance(append, cirq.Circuit):
-            append = tf.tile(util.convert_to_tensor([append]), [batch_dim])
-        else:
-            append = util.convert_to_tensor(append)
+#         batch_dim = tf.gather(tf.shape(inputs), 0)
+#         if isinstance(append, cirq.Circuit):
+#             append = tf.tile(util.convert_to_tensor([append]), [batch_dim])
+#         else:
+#             append = util.convert_to_tensor(append)
 
-        return tfq_utility_ops.tfq_append_circuit(inputs, append)
+#         return tfq_utility_ops.tfq_append_circuit(inputs, append)
