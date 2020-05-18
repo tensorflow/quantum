@@ -112,13 +112,14 @@ class BuildCostPsumTest(tf.test.TestCase):
                 bit_circ += cirq.I(q)
             return bit_circ
         # Test that all counts increment correctly
-        for i in range(precisions[0]):
-            bit_circ = append_register_bits(0, i, precisions, registers)
-            for j in range(precisions[1]):
-                bit_circ += append_register_bits(1, j, precisions, registers)
-                for k in range(precisions[2]):
-                    bit_circ += append_register_bits(2, k, precisions, registers)
-                    test_val = exp_layer(bit_circ, operators=cliques_psums)
+        for i in range(2**precisions[0]):
+            bit_circ_i = append_register_bits(0, i, precisions, registers)
+            for j in range(2**precisions[1]):
+                bit_circ_j = append_register_bits(1, j, precisions, registers)
+                for k in range(2**precisions[2]):
+                    bit_circ_k = append_register_bits(2, k, precisions, registers)
+                    test_val = exp_layer(bit_circ_i + bit_circ_j + bit_circ_k,
+                                         operators=cliques_psums)
                     self.assertAllClose([i, j, k], test_val.numpy()[0], atol=1e-5)
 
 
