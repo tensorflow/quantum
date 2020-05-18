@@ -129,12 +129,10 @@ def build_cost_psum(precisions, cliques):
 #         """Keras call method.
 
 #         Input options:
-#             `inputs`, `precisions`, `cost`:
-#                 see `layer_input_checks`
 
 #         Output shape:
 #             `tf.Tensor` of shape [batch_size] containing the exponential of the
-#                 qudit cost appended to the input circuits.
+#                 quantum integer cost appended to the input circuits.
 
 #         """
 

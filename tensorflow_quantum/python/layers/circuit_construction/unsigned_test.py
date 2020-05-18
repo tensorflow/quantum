@@ -97,19 +97,29 @@ class BuildCostPsumTest(tf.test.TestCase):
 
     def test_counting(self):
         """Confirm we get numbers as expected from quantum integer psums."""
-        precisions = [5]
+        precisions = [5, 3, 4]
         registers = unsigned.registers_from_precisions(precisions)
-        cliques = {(0,): 1}
-        cliques_psum = unsigned.build_cost_psum(precisions, cliques)
-        exp_layer = expectations.Expectation()
-        for i in range(precisions[0]):
-            my_str = format(i, 'b')
+        cliques = [{(0,): 1}, {(1,): 1}, {(2,): 1}]
+        cliques_psums = [unsigned.build_cost_psum(precisions, c) for c in cliques]
+        exp_layer = expectation.Expectation()
+        def append_register_bits(r, r_int, precisions, register_list):
+            r_int_str = format(r_int, 'b')
             bit_circ = cirq.Circuit()
-            for n, c in enumerate(my_str[::-1]):
+            for n, c in enumerate(r_int_str[::-1]):
                 if bool(int(c)):
-                    bit_circ += cirq.X(registers[0][precisions[0] -1 - n])
-            test_val = exp_layer(bit_circ, operators=cliques_psum)
-            self.assertAlmostEqual(i, test_val.numpy()[0][0], 1e-5)
+                    bit_circ += cirq.X(registers[r][precisions[r] - 1 - n])
+            for q in registers[r]:
+                bit_circ += cirq.I(q)
+            return bit_circ
+        # Test that all counts increment correctly
+        for i in range(precisions[0]):
+            bit_circ = append_register_bits(0, i, precisions, registers)
+            for j in range(precisions[1]):
+                bit_circ += append_register_bits(1, j, precisions, registers)
+                for k in range(precisions[2]):
+                    bit_circ += append_register_bits(2, k, precisions, registers)
+                    test_val = exp_layer(bit_circ, operators=cliques_psums)
+                    self.assertAllClose([i, j, k], test_val.numpy()[0], atol=1e-5)
 
 
 # class AppendCostExpTest(tf.test.TestCase):

@@ -39,6 +39,7 @@ py_test(
     python_version = "PY3",
     deps = [
         ":unsigned",
+        "//tensorflow_quantum/python/layers/circuit_executors:expectation",
         "//tensorflow_quantum/python:util",
     ],
 )
