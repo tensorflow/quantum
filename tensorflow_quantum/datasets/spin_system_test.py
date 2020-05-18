@@ -24,57 +24,42 @@ class SpinSystemDataTest(tf.test.TestCase):
 
     def test_errors(self):
         """Test that it errors on invalid arguments."""
-        with self.assertRaisesRegex(TypeError,
-                                    expected_regex='must be an integer'):
-            qbs = cirq.GridQubit.rect(4, 1)
-            spin_system.tfi_chain(qbs, 'junk')
         with self.assertRaisesRegex(ValueError,
                                     expected_regex='Supported number of'):
-            qbs = cirq.GridQubit.rect(4, 1)
-            spin_system.tfi_chain(qbs, 3)
+            qbs = cirq.GridQubit.rect(3, 1)
+            spin_system.tfi_chain(qbs)
         with self.assertRaisesRegex(
                 ValueError, expected_regex='Supported boundary conditions'):
             qbs = cirq.GridQubit.rect(4, 1)
-            spin_system.tfi_chain(qbs, 4, 'open')
+            spin_system.tfi_chain(qbs, 'open')
         with self.assertRaisesRegex(TypeError,
                                     expected_regex='expected str, bytes '):
             qbs = cirq.GridQubit.rect(4, 1)
-            spin_system.tfi_chain(qbs, 4, data_dir=123)
+            spin_system.tfi_chain(qbs, data_dir=123)
         with self.assertRaisesRegex(TypeError,
                                     expected_regex='must be a list of'):
-            spin_system.tfi_chain(['bob'], 4)
+            spin_system.tfi_chain(['bob'])
         with self.assertRaisesRegex(
-                ValueError, expected_regex='cirq.Gridqubit objects with shape'):
+                ValueError, expected_regex='cirq.GridQubit objects with shape'):
             qbs = cirq.GridQubit.rect(2, 2)
-            spin_system.tfi_chain(qbs, 4)
-        with self.assertRaisesRegex(ValueError,
-                                    expected_regex='Expected 4 cirq.Gridqubit'):
-            qbs = cirq.GridQubit.rect(3, 1)
-            spin_system.tfi_chain(qbs, 4)
+            spin_system.tfi_chain(qbs)
 
     def test_fidelity(self):
         """Test that it returns the correct number of circuits."""
-        nspins = 4
-        qbs = cirq.GridQubit.rect(nspins, 1)
-        circuit, resolved_parameters, system = spin_system.tfi_chain(
-            qbs, nspins, 'closed')
+        qbs = cirq.GridQubit.rect(4, 1)
+        circuit, _, _, systems = spin_system.tfi_chain(qbs, 'closed')
         fidelities = []
-        for n in range(80):
-            phi = cirq.Simulator().simulate(circuit,
-                                            resolved_parameters[n]).final_state
-            gs = system[n].ground_state()
-            fidelities.append(
-                np.abs(
-                    np.conj(gs[:, 0].reshape((1, -1))) @ phi.reshape(
-                        (-1, 1)))[0])
-        assert all([np.isclose(fid, 1.0, rtol=1e-3) for fid in fidelities])
+        for n in range(len(systems)):
+            phi = cirq.Simulator().simulate(circuit[n]).final_state
+            gs = systems[n].ground_state()
+            fidelities.append(np.abs(np.conj(np.dot(gs.flatten(), phi))))
+        assert all([np.isclose(fid, 1.0, rtol=1e-5) for fid in fidelities])
 
     def test_paulisum(self):
         """Test that hamiltonian returns a PauliSum"""
-        nspins = 4
-        qbs = cirq.GridQubit.rect(nspins, 1)
-        _, _, system = spin_system.tfi_chain(qbs, nspins, 'closed')
-        assert isinstance(system[0].hamiltonian(qbs), cirq.PauliSum)
+        qbs = cirq.GridQubit.rect(4, 1)
+        pauli_sums = spin_system.tfi_chain(qbs, 'closed')[2]
+        assert all(isinstance(ps, cirq.PauliSum) for ps in pauli_sums)
 
 
 if __name__ == '__main__':
