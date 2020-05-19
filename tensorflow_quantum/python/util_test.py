@@ -243,14 +243,14 @@ class ExponentialUtilFunctionsTest(tf.test.TestCase):
                 util.exponential(bad_op_list)
         with self.assertRaisesRegex(TypeError,
                                     expected_regex="only supports real"):
-            util.exponential([1j*test_paulistring])
+            util.exponential([1j * test_paulistring])
 
         # bad coefficients
         with self.assertRaisesRegex(TypeError, expected_regex='not a list'):
             util.exponential([test_paulisum], coefficients='junk')
 
-        for bad_coeff_list in [
-                [None, 1.0], [['junk'], 1.0], [1.0, ['junk']], [1.0, 1j]]:
+        for bad_coeff_list in [[None, 1.0], [['junk'], 1.0], [1.0, ['junk']],
+                               [1.0, 1j]]:
             with self.assertRaisesRegex(TypeError,
                                         expected_regex='in coefficients'):
                 util.exponential([test_paulistring, test_paulistring],
@@ -258,7 +258,6 @@ class ExponentialUtilFunctionsTest(tf.test.TestCase):
         with self.assertRaisesRegex(ValueError,
                                     expected_regex='should be the same as'):
             util.exponential([test_paulistring], coefficients=[1.0, 2.0])
-
 
     def test_exponential_simple(self):
         """Test exponential for a simple operator."""
