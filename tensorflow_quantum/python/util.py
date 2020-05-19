@@ -452,7 +452,7 @@ def exponential(operators, coefficients=None):
     if not all(
             isinstance(x, (cirq.PauliSum, cirq.PauliString))
             for x in operators):
-        raise TypeError("Each element in operators must be a float or a "
+        raise TypeError("Each element in operators must be a "
                         "cirq.PauliSum or cirq.PauliString object.")
 
     # Ingest coefficients.
