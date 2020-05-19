@@ -120,7 +120,7 @@ class BuildCostPsumTest(tf.test.TestCase):
                     bit_circ_k = append_register_bits(2, k, precisions, registers)
                     test_val = exp_layer(bit_circ_i + bit_circ_j + bit_circ_k,
                                          operators=cliques_psums)
-                    self.assertAllClose([i, j, k], test_val.numpy()[0], atol=1e-5)
+                    self.assertAllClose([[i, j, k]], test_val.numpy(), atol=1e-5)
 
 
 # class AppendCostExpTest(tf.test.TestCase):

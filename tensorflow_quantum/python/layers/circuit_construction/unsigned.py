@@ -90,7 +90,14 @@ def registers_from_precisions(precisions):
 
 
 def build_cost_psum(precisions, cliques):
-    """Returns the cirq.PauliSum corresponding to the given cliques."""
+    """Returns the cirq.PauliSum corresponding to the given cliques.
+
+    Args:
+        precisions:
+        cliques:
+    Returns:
+        cost_psum:
+    """
     register_list = registers_from_precisions(precisions)
     op_list = [integer_operator(register) for register in register_list]
     cost_psum = cirq.PauliSum()
@@ -103,46 +110,43 @@ def build_cost_psum(precisions, cliques):
     return cost_psum
 
 
-# class AppendCostExp(tf.keras.layers.Layer):
-#     """Layer appending the exponential of quantum integer cost to input circuit.
+class AppendCostExp(tf.keras.layers.Layer):
+    """Layer appending the exponential of quantum integer cost to input circuit.
 
 
-#     Note: When specifying a new layer for a *compiled* `tf.keras.Model` using
-#     something like
-#     `tfq.layers.AppendCostExp()(cirq.Circuit(...), ...)`
-#     please be sure to instead use
-#     `tfq.layers.AppendCostExp()(circuit_input, ...)`
-#     where `circuit_input` is a `tf.keras.Input` that is filled with
-#     `tfq.conver_to_tensor([cirq.Circuit(..)] * batch_size)` at runtime. This
-#     is because compiled Keras models require non keyword layer `call` inputs to
-#     be traceable back to a `tf.keras.Input`.
+    Note: When specifying a new layer for a *compiled* `tf.keras.Model` using
+    something like
+    `tfq.layers.AppendCostExp()(cirq.Circuit(...), ...)`
+    please be sure to instead use
+    `tfq.layers.AppendCostExp()(circuit_input, ...)`
+    where `circuit_input` is a `tf.keras.Input` that is filled with
+    `tfq.conver_to_tensor([cirq.Circuit(..)] * batch_size)` at runtime. This
+    is because compiled Keras models require non keyword layer `call` inputs to
+    be traceable back to a `tf.keras.Input`.
 
-#     """
+    """
 
-#     def __init__(self, precisions, cost, **kwargs):
-#         """Instantiate this layer."""
-#         super().__init__(**kwargs)
+    def __init__(self, precisions, cost, **kwargs):
+        """Instantiate this layer."""
+        super().__init__(**kwargs)
+        self.registers = registers_from_precisions(precisions)
+        self.cost_psum = build_cost_psum(precisions, cliques)
 
+    def call(self, inputs, *, exp_symbol_name=None, exp_symbol_values=None):
+        """Keras call method.
 
+        Input options:
 
-#     def call(self, inputs, *, exp_symbol_name=None, exp_symbol_value=None):
-#         """Keras call method.
+        Output shape:
+            `tf.Tensor` of shape [batch_size] containing the exponential of the
+                quantum integer cost appended to the input circuits.
 
-#         Input options:
+        """
+        util.exponential()
+        batch_dim = tf.gather(tf.shape(inputs), 0)
+        if isinstance(append, cirq.Circuit):
+            append = tf.tile(util.convert_to_tensor([append]), [batch_dim])
+        else:
+            append = util.convert_to_tensor(append)
 
-#         Output shape:
-#             `tf.Tensor` of shape [batch_size] containing the exponential of the
-#                 quantum integer cost appended to the input circuits.
-
-#         """
-
-#         inputs, precisions, cost = layer_input_check(inputs, precisions, cost)
-
-        
-#         batch_dim = tf.gather(tf.shape(inputs), 0)
-#         if isinstance(append, cirq.Circuit):
-#             append = tf.tile(util.convert_to_tensor([append]), [batch_dim])
-#         else:
-#             append = util.convert_to_tensor(append)
-
-#         return tfq_utility_ops.tfq_append_circuit(inputs, append)
+        return tfq_utility_ops.tfq_append_circuit(inputs, append)
