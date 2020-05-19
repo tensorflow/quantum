@@ -200,40 +200,6 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
 class ExponentialUtilFunctionsTest(tf.test.TestCase):
     """Test that Exponential utility functions work."""
 
-    def test_exponential_error(self):
-        """Test exponential failed when it should"""
-        test_paulistring = cirq.X(cirq.GridQubit(0, 0))
-        test_paulisum = cirq.X(cirq.GridQubit(0, 0)) + cirq.Z(
-            cirq.GridQubit(0, 1))
-
-        # operators
-        with self.assertRaisesRegex(TypeError, expected_regex='not a list'):
-            util.exponential(operators='junk')
-        with self.assertRaisesRegex(TypeError, expected_regex='PauliString'):
-            util.exponential(operators=['junk'])
-            util.exponential(operators=[test_paulistring, 'junk'])
-            util.exponential(
-                operators=[test_paulistring, test_paulisum, 'junk'])
-
-        util.exponential(operators=[test_paulistring, test_paulisum])
-
-        # coefficients
-        with self.assertRaisesRegex(TypeError, expected_regex='not a list'):
-            util.exponential(operators=[], coefficients='junk')
-
-        with self.assertRaisesRegex(TypeError, expected_regex='Each element'):
-            util.exponential(operators=[test_paulistring], coefficients=[None])
-            util.exponential(operators=[test_paulistring, test_paulisum],
-                             coefficients=[1.0, None])
-
-        util.exponential(
-            operators=[test_paulistring, test_paulisum, test_paulisum],
-            coefficients=[1.0, 'test', sympy.Symbol('test')])
-
-        with self.assertRaisesRegex(ValueError,
-                                    expected_regex='should be the same as'):
-            util.exponential(operators=[test_paulistring], coefficients=[])
-
     def test_many_clifford_to_many_z(self):
         """Confirm correct basis transformations of input PauliSums."""
         q = cirq.GridQubit.rect(1, 4)
@@ -261,6 +227,36 @@ class ExponentialUtilFunctionsTest(tf.test.TestCase):
             benchmark_gates_indices.remove(qubits)
         self.assertEqual([], benchmark_gates_indices)
 
+    def test_exponential_error(self):
+        """Test exponential fails on bad inputs."""
+        test_paulistring = cirq.X(cirq.GridQubit(0, 0))
+        test_paulisum = cirq.X(cirq.GridQubit(0, 0)) + cirq.Z(
+            cirq.GridQubit(0, 1))
+
+        # bad operators
+        with self.assertRaisesRegex(TypeError, expected_regex='not a list'):
+            util.exponential(operators='junk')
+        for bad_op_list in [['junk'], [test_paulistring, 'junk'],
+                            [test_paulistring, test_paulisum, 'junk']]:
+            with self.assertRaisesRegex(TypeError,
+                                        expected_regex='element in operators'):
+                util.exponential(operators=bad_op_list)
+        with self.assertRaisesRegex(ValueError,
+                                    expected_regex="only supports real"):
+            util.exponential(operators=[1j*test_paulistring])
+
+        # bad coefficients
+        with self.assertRaisesRegex(TypeError, expected_regex='not a list'):
+            util.exponential(operators=[test_paulisum], coefficients='junk')
+
+        for bad_coeff_list in [[None], ['junk'], [1.0, 'junk'], [1j]]:
+        with self.assertRaisesRegex(TypeError,
+                                    expected_regex='element in coefficients'):
+            util.exponential(operators=[test_paulistring], coefficients=bad_coeff_list)
+        with self.assertRaisesRegex(ValueError,
+                                    expected_regex='should be the same as'):
+            util.exponential(operators=[test_paulistring], coefficients=[1.0, 2.0])
+    
     def test_exponential_simple(self):
         """Test exponential for a simple operator."""
         q = cirq.GridQubit(0, 0)
@@ -269,6 +265,18 @@ class ExponentialUtilFunctionsTest(tf.test.TestCase):
             circuit = util.exponential(operators=[theta * op(q)])
             ground_truth_unitary = _exponential(theta, op(q))
             self.assertAllClose(ground_truth_unitary, cirq.unitary(circuit))
+
+    def test_allowed_cases(self):
+        """Confirm all valid arguments can be passed to exponential."""
+        test_paulistring = cirq.X(cirq.GridQubit(0, 0))
+        test_paulisum = cirq.X(cirq.GridQubit(0, 0)) + cirq.Z(
+            cirq.GridQubit(0, 1))
+        _ = util.exponential(operators=[test_paulistring])
+        _ = util.exponential(operators=[test_paulisum])
+        _ = util.exponential(operators=(test_paulistring,))
+        _ = util.exponential(operators=(test_paulisum,))
+        _ = util.exponential(operators=np.array([test_paulistring]))
+        _ = util.exponential(operators=np.array([test_paulisum]))
 
     def test_exponential_identity(self):
         """Test exponential for an identity."""
@@ -347,14 +355,6 @@ class ExponentialUtilFunctionsTest(tf.test.TestCase):
         op2 = theta * identity
         circuit = util.exponential(operators=[op1, op2])
         util.convert_to_tensor([circuit])
-
-    def test_real_coefficients(self):
-        """Test exponential with complex coefficient."""
-        q = cirq.GridQubit.rect(1, 2)
-        theta = np.random.random()
-        op = 1j * theta * cirq.Z(q[0]) * cirq.Z(q[1])
-        with self.assertRaisesRegex(ValueError, expected_regex="supports real"):
-            util.exponential(operators=[op])
 
 
 if __name__ == "__main__":
