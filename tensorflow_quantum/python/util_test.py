@@ -268,15 +268,12 @@ class ExponentialUtilFunctionsTest(tf.test.TestCase):
 
     def test_allowed_cases(self):
         """Confirm all valid arguments can be passed to exponential."""
-        test_paulistring = cirq.X(cirq.GridQubit(0, 0))
-        test_paulisum = cirq.X(cirq.GridQubit(0, 0)) + cirq.Z(
-            cirq.GridQubit(0, 1))
-        _ = util.exponential(operators=[test_paulistring])
-        _ = util.exponential(operators=[test_paulisum])
-        _ = util.exponential(operators=(test_paulistring,))
-        _ = util.exponential(operators=(test_paulisum,))
-        _ = util.exponential(operators=np.array([test_paulistring]))
-        _ = util.exponential(operators=np.array([test_paulisum]))
+        t_pstr = cirq.X(cirq.GridQubit(0, 0))
+        t_psum = cirq.X(cirq.GridQubit(0, 0)) + cirq.Z(cirq.GridQubit(0, 1))
+        for op_list in [[t_pstr], [t_psum], (t_pstr,), (t_psum,),
+                        np.array([t_pstr]), np.array([t_psum])]:
+            for coeff_list in [["test"], [sympy.Symbol("test")], [0.5]]:
+                _ = util.exponential(operators=op_list, coefficients=coeff_list)
 
     def test_exponential_identity(self):
         """Test exponential for an identity."""
