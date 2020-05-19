@@ -239,9 +239,9 @@ class ExponentialUtilFunctionsTest(tf.test.TestCase):
         for bad_op_list in [['junk'], [test_paulistring, 'junk'],
                             [test_paulistring, test_paulisum, 'junk']]:
             with self.assertRaisesRegex(TypeError,
-                                        expected_regex='element in operators'):
+                                        expected_regex='in operators'):
                 util.exponential(operators=bad_op_list)
-        with self.assertRaisesRegex(ValueError,
+        with self.assertRaisesRegex(TypeError,
                                     expected_regex="only supports real"):
             util.exponential(operators=[1j*test_paulistring])
 
@@ -249,13 +249,17 @@ class ExponentialUtilFunctionsTest(tf.test.TestCase):
         with self.assertRaisesRegex(TypeError, expected_regex='not a list'):
             util.exponential(operators=[test_paulisum], coefficients='junk')
 
-        for bad_coeff_list in [[None], ['junk'], [1.0, 'junk'], [1j]]:
-        with self.assertRaisesRegex(TypeError,
-                                    expected_regex='element in coefficients'):
-            util.exponential(operators=[test_paulistring], coefficients=bad_coeff_list)
+        for bad_coeff_list in [
+                [None, 1.0], [['junk'], 1.0], [1.0, ['junk']], [1.0, 1j]]:
+            with self.assertRaisesRegex(TypeError,
+                                        expected_regex='in coefficients'):
+                util.exponential(operators=[test_paulistring, test_paulistring],
+                                 coefficients=bad_coeff_list)
         with self.assertRaisesRegex(ValueError,
                                     expected_regex='should be the same as'):
-            util.exponential(operators=[test_paulistring], coefficients=[1.0, 2.0])
+            util.exponential(operators=[test_paulistring],
+                             coefficients=[1.0, 2.0])
+
     
     def test_exponential_simple(self):
         """Test exponential for a simple operator."""
@@ -267,13 +271,14 @@ class ExponentialUtilFunctionsTest(tf.test.TestCase):
             self.assertAllClose(ground_truth_unitary, cirq.unitary(circuit))
 
     def test_allowed_cases(self):
-        """Confirm all valid arguments can be passed to exponential."""
+        """Confirm all valid argument combinations are accepted."""
         t_pstr = cirq.X(cirq.GridQubit(0, 0))
         t_psum = cirq.X(cirq.GridQubit(0, 0)) + cirq.Z(cirq.GridQubit(0, 1))
-        for op_list in [[t_pstr], [t_psum], (t_pstr,), (t_psum,),
-                        np.array([t_pstr]), np.array([t_psum])]:
-            for coeff_list in [["test"], [sympy.Symbol("test")], [0.5]]:
-                _ = util.exponential(operators=op_list, coefficients=coeff_list)
+        for op_list in [[t_pstr], [t_psum], (t_pstr,), (t_psum,)]:
+            for coeff in ["test", sympy.Symbol("test"), 0.5]:
+                for coeff_inp in [[coeff], (coeff,), np.array([coeff])]:
+                    _ = util.exponential(operators=op_list,
+                                         coefficients=coeff_inp)
 
     def test_exponential_identity(self):
         """Test exponential for an identity."""
