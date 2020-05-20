@@ -92,11 +92,19 @@ def registers_from_precisions(precisions):
 def build_cost_psum(precisions, cliques):
     """Returns the cirq.PauliSum corresponding to the given cliques.
 
+    For example, the precisions list [3, 3] and the cliques dict
+    {(0,): 2, (1,): 3, (0, 1): 6} corresponds to a ferromagnetic interaction
+    Hamiltonian between two three-qubit quantum integer registers Ja and Jb,
+    H = 2*Ja + 3*Jb + 6*Ja*Jb
+
     Args:
-        precisions:
-        cliques:
+        precisions: a Python `list` of `int`s.  Entry precisions[i] sets
+            the number of qubits on which quantum integer `i` is supported.
+        cliques: a Python `dict` mapping tuples of quantum integer register
+            labels to the cost of their product.
     Returns:
-        cost_psum:
+        cost_psum: `cirq.PauliSum` representation of the Hamiltonian
+            corresponding to the given precisions and clique costs.
     """
     register_list = registers_from_precisions(precisions)
     op_list = [integer_operator(register) for register in register_list]
