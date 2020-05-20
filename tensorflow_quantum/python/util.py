@@ -430,8 +430,9 @@ def exponential(operators, coefficients=None):
     handling of Trotterization and convergence, which is not supported yet.
 
     Args:
-        operators: Python `list` of `cirq.PauliSum` or `cirq.PauliString` object
-            to be exponentiated. Here are simple examples.
+        operators: Python `list` or `tuple` of `cirq.PauliSum` or
+            `cirq.PauliString` objects to be exponentiated.
+            Here are simple examples.
             Let q = cirq.GridQubit(0, 0)
             E.g. operator = 0.5 * X(q) -> exp(-i * 0.5 * X(q))
                  operator = 0.5 * cirq.PauliString({q: cirq.I})
@@ -445,13 +446,13 @@ def exponential(operators, coefficients=None):
             and `coefficients`.
     """
     # Ingest operators.
-    if not isinstance(operators, (list, tuple, np.ndarray)):
+    if not isinstance(operators, (list, tuple)):
         raise TypeError("operators is not a list of operators.")
 
     if not all(
             isinstance(x, (cirq.PauliSum, cirq.PauliString))
             for x in operators):
-        raise TypeError("Each element in coefficients must be a float or a "
+        raise TypeError("Each element in operators must be a "
                         "cirq.PauliSum or cirq.PauliString object.")
 
     # Ingest coefficients.
@@ -492,9 +493,9 @@ def exponential(operators, coefficients=None):
             check_commutability(pauli_sum)
         for op in pauli_sum:
             if abs(op.coefficient.imag) > 1e-9:
-                raise ValueError('exponential only supports real '
-                                 'coefficients: got '
-                                 '{}'.format(op.coefficient))
+                raise TypeError('exponential only supports real '
+                                'coefficients: got '
+                                '{}'.format(op.coefficient))
             # Create a circuit with exponentiating `op` with param
             c = op.coefficient.real
             if len(op.gate.pauli_mask) == 0:
