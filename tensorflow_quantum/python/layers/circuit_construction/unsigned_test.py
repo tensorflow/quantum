@@ -21,6 +21,18 @@ from tensorflow_quantum.python.layers.circuit_construction import unsigned
 from tensorflow_quantum.python.layers.circuit_executors import expectation
 
 
+def _append_register_bits(r, r_int, precisions, register_list):
+    """Generate a bitstring corresponding to r_int on the indicated register."""
+    r_int_str = format(r_int, 'b')
+    bit_circ = cirq.Circuit()
+    for n, c in enumerate(r_int_str[::-1]):
+        if bool(int(c)):
+            bit_circ += cirq.X(register_list[r][precisions[r] - 1 - n])
+    for q in register_list[r]:
+        bit_circ += cirq.I(q)
+    return bit_circ
+
+
 class ProjectorOnOneTest(tf.test.TestCase):
     """Test the projector_on_one function."""
 
@@ -113,14 +125,27 @@ class BuildCostPsumTest(tf.test.TestCase):
             return bit_circ
         # Test that all counts increment correctly
         for i in range(2**precisions[0]):
-            bit_circ_i = append_register_bits(0, i, precisions, registers)
+            bit_circ_i = _append_register_bits(0, i, precisions, registers)
             for j in range(2**precisions[1]):
-                bit_circ_j = append_register_bits(1, j, precisions, registers)
+                bit_circ_j = _append_register_bits(1, j, precisions, registers)
                 for k in range(2**precisions[2]):
-                    bit_circ_k = append_register_bits(2, k, precisions, registers)
+                    bit_circ_k = _append_register_bits(2, k, precisions, registers)
                     test_val = exp_layer(bit_circ_i + bit_circ_j + bit_circ_k,
                                          operators=cliques_psums)
                     self.assertAllClose([[i, j, k]], test_val.numpy(), atol=1e-5)
+
+    def test_squares(self):
+        """Confirm we get squared numbers as expected from quantum integer psums."""
+        precisions = [5]
+        registers = unsigned.registers_from_precisions(precisions)
+        cliques = {(0, 0): 1}
+        cliques_psums = unsigned.build_cost_psum(precisions, cliques)
+        exp_layer = expectation.Expectation()
+        # Test that all counts increment correctly
+        for i in range(2**precisions[0]):
+            bit_circ_i = _append_register_bits(0, i, precisions, registers)
+            test_val = exp_layer(bit_circ_i, operators=cliques_psums)
+                    self.assertAllClose([[i**2]], test_val.numpy(), atol=1e-5)
 
 
 # class AppendCostExpTest(tf.test.TestCase):
