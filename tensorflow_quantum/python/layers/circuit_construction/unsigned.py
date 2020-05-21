@@ -120,6 +120,18 @@ def build_cliques_psum(precisions, cliques):
 class AppendCliquesExp(tf.keras.layers.Layer):
     """Layer appending the exponential of q integer cliques to input circuit.
 
+    Suppose we wish to specify the exponential exp(-i*s*(J0^2 + J0*J1 + J1^2)),
+    where Ji is the integer operator on register i.  This exponential is
+    specified by a precisions argument containing the number of qubits to use
+    for each register, a cliques argument specifying the operator sum, and the
+    exp_coeff argument specifying the prefactor of the operator sum:
+
+
+    >>> precisions = [3, 3]
+    >>> cliques = {(0, 0): 1, (0, 1): 1, (1, 1): 1}
+    >>> symbol = sympy.Symbol("theta")
+    >>> exp_layer = AppendMomentaExp(precisions, cliques, symbol)
+
 
     Note: When specifying a new layer for a *compiled* `tf.keras.Model` using
     something like
