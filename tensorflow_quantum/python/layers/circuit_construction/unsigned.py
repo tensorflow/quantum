@@ -36,7 +36,7 @@ def projector_on_one(qubit):
     """
     if not isinstance(qubit, cirq.GridQubit):
         raise TypeError("A projector must live on a cirq.GridQubit.")
-    return 0.5*cirq.I(qubit)-0.5*cirq.Z(qubit)
+    return 0.5 * cirq.I(qubit) - 0.5 * cirq.Z(qubit)
 
 
 def integer_operator(qubits):
@@ -170,7 +170,8 @@ class AppendCliquesExp(tf.keras.layers.Layer):
         # Ingest and promote circuit.
         if isinstance(inputs, cirq.Circuit):
             # process single circuit.
-            inputs = tf.tile(util.convert_to_tensor([inputs]), [symbol_batch_dim])
+            inputs = tf.tile(util.convert_to_tensor([inputs]),
+                             [symbol_batch_dim])
         elif isinstance(inputs, (list, tuple)):
             # process list of circuits.
             inputs = util.convert_to_tensor(inputs)
@@ -234,7 +235,8 @@ class AppendMomentaExp(tf.keras.layers.Layer):
         # Ingest and promote circuit.
         if isinstance(inputs, cirq.Circuit):
             # process single circuit.
-            inputs = tf.tile(util.convert_to_tensor([inputs]), [symbol_batch_dim])
+            inputs = tf.tile(util.convert_to_tensor([inputs]),
+                             [symbol_batch_dim])
         elif isinstance(inputs, (list, tuple)):
             # process list of circuits.
             inputs = util.convert_to_tensor(inputs)

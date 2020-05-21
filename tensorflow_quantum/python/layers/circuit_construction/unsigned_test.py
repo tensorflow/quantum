@@ -48,11 +48,11 @@ class ProjectorOnOneTest(tf.test.TestCase):
         for i in range(12):
             for j in range(12):
                 this_q = cirq.GridQubit(i, j)
-                expected_psum = 0.5*cirq.I(this_q) - 0.5*cirq.Z(this_q)
+                expected_psum = 0.5 * cirq.I(this_q) - 0.5 * cirq.Z(this_q)
                 test_psum = unsigned.projector_on_one(this_q)
                 self.assertEqual(expected_psum, test_psum)
 
-    
+
 class IntegerOperatorTest(tf.test.TestCase):
     """Test the integer_operator function."""
 
@@ -67,9 +67,9 @@ class IntegerOperatorTest(tf.test.TestCase):
         """Confirm that correct operators are created."""
         for i in range(5):
             qubits = cirq.GridQubit.rect(1, i + 1)
-            expected_psum = (2**(i+1) - 1)*0.5*cirq.I(qubits[0])
+            expected_psum = (2**(i + 1) - 1) * 0.5 * cirq.I(qubits[0])
             for loc, q in enumerate(qubits):
-                expected_psum -= 2**(i - loc)*0.5*cirq.Z(q)
+                expected_psum -= 2**(i - loc) * 0.5 * cirq.Z(q)
             test_psum = unsigned.integer_operator(qubits)
             self.assertEqual(expected_psum, test_psum)
 
@@ -80,8 +80,7 @@ class RegistersFromPrecisionsTest(tf.test.TestCase):
     def test_bad_inputs(self):
         """Confirm that function raises error on bad input."""
         for bad_arg in [-7, 3, cirq.LineQubit(2), [[]], ["junk"]]:
-            with self.assertRaisesRegex(TypeError,
-                                        expected_regex=""):
+            with self.assertRaisesRegex(TypeError, expected_regex=""):
                 _ = unsigned.registers_from_precisions(bad_arg)
 
     def test_return(self):
@@ -112,8 +111,11 @@ class BuildCliquesPsumTest(tf.test.TestCase):
         precisions = [5, 3, 4]
         registers = unsigned.registers_from_precisions(precisions)
         cliques = [{(0,): 1}, {(1,): 1}, {(2,): 1}]
-        cliques_psums = [unsigned.build_cliques_psum(precisions, c) for c in cliques]
+        cliques_psums = [
+            unsigned.build_cliques_psum(precisions, c) for c in cliques
+        ]
         exp_layer = expectation.Expectation()
+
         def append_register_bits(r, r_int, precisions, register_list):
             r_int_str = format(r_int, 'b')
             bit_circ = cirq.Circuit()
@@ -123,16 +125,20 @@ class BuildCliquesPsumTest(tf.test.TestCase):
             for q in registers[r]:
                 bit_circ += cirq.I(q)
             return bit_circ
+
         # Test that all counts increment correctly
         for i in range(2**precisions[0]):
             bit_circ_i = _append_register_bits(0, i, precisions, registers)
             for j in range(2**precisions[1]):
                 bit_circ_j = _append_register_bits(1, j, precisions, registers)
                 for k in range(2**precisions[2]):
-                    bit_circ_k = _append_register_bits(2, k, precisions, registers)
+                    bit_circ_k = _append_register_bits(2, k, precisions,
+                                                       registers)
                     test_val = exp_layer(bit_circ_i + bit_circ_j + bit_circ_k,
                                          operators=cliques_psums)
-                    self.assertAllClose([[i, j, k]], test_val.numpy(), atol=1e-5)
+                    self.assertAllClose([[i, j, k]],
+                                        test_val.numpy(),
+                                        atol=1e-5)
 
     def test_squares(self):
         """Confirm we get squared numbers as expected from quantum integer psums."""
@@ -155,7 +161,6 @@ class BuildCliquesPsumTest(tf.test.TestCase):
 #         """Test that a addcircuit layer can be instantiated correctly."""
 #         qudit.AppendCostExp()
 
-
 #     def test_append_cost_exp_op_error(self):
 #         """Test that addcircuit will error inside of ops correctly."""
 #         add = elementary.AddCircuit()
@@ -171,10 +176,8 @@ class BuildCliquesPsumTest(tf.test.TestCase):
 #         precisions = [3, 4]
 #         cliques = {(0,): 2, (1,): 3, (1, 2,): 4}
 #         my_cost_exp = AppendCostExp(cirq.Circuit(), precisions=precisions, cost=cliques)
-        
-#     def test_append_cost_exp_append(self):
-        
 
+#     def test_append_cost_exp_append(self):
 
 if __name__ == "__main__":
     tf.test.main()
