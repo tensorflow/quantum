@@ -102,6 +102,7 @@ def build_cliques_psum(precisions, cliques):
             the number of qubits on which quantum integer `i` is supported.
         cliques: a Python `dict` mapping tuples of quantum integer register
             labels to the weight of their product.
+
     Returns:
         cliques_psum: `cirq.PauliSum` representation of the Hamiltonian
             corresponding to the given precisions and clique weights.
@@ -185,6 +186,19 @@ class AppendCliquesExp(tf.keras.layers.Layer):
 
 class AppendMomentaExp(tf.keras.layers.Layer):
     """Layer appending the exponential of q integer momenta to input circuit.
+
+    Suppose we wish to specify the exponential exp(-i*s*(K0^2 + K0*K1 + K1^2)),
+    where Ki is the generator of the shift operator on the quantum integer on
+    register i.  This exponential is specified by a precisions argument
+    containing the number of qubits to use for each register, a cliques argument
+    specifying the operator sum, and the exp_coeff argument specifying the
+    prefactor of the operator sum:
+
+
+    >>> precisions = [3, 3]
+    >>> cliques = {(0, 0): 1, (0, 1): 1, (1, 1): 1}
+    >>> symbol = sympy.Symbol("theta")
+    >>> exp_layer = AppendMomentaExp(precisions, cliques, symbol)
 
 
     Note: When specifying a new layer for a *compiled* `tf.keras.Model` using
