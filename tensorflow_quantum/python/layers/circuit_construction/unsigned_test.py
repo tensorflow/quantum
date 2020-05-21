@@ -98,8 +98,8 @@ class RegistersFromPrecisionsTest(tf.test.TestCase):
         self.assertEqual(len(test_set), sum(precisions))
 
 
-class BuildCostPsumTest(tf.test.TestCase):
-    """Test the build_cost_psum function."""
+class BuildCliquesPsumTest(tf.test.TestCase):
+    """Test the build_cliques_psum function."""
 
     def test_bad_inputs(self):
         """Confirm function raises error on bad inputs."""
@@ -112,7 +112,7 @@ class BuildCostPsumTest(tf.test.TestCase):
         precisions = [5, 3, 4]
         registers = unsigned.registers_from_precisions(precisions)
         cliques = [{(0,): 1}, {(1,): 1}, {(2,): 1}]
-        cliques_psums = [unsigned.build_cost_psum(precisions, c) for c in cliques]
+        cliques_psums = [unsigned.build_cliques_psum(precisions, c) for c in cliques]
         exp_layer = expectation.Expectation()
         def append_register_bits(r, r_int, precisions, register_list):
             r_int_str = format(r_int, 'b')
@@ -139,7 +139,7 @@ class BuildCostPsumTest(tf.test.TestCase):
         precisions = [5]
         registers = unsigned.registers_from_precisions(precisions)
         cliques = {(0, 0): 1}
-        cliques_psums = unsigned.build_cost_psum(precisions, cliques)
+        cliques_psums = unsigned.build_cliques_psum(precisions, cliques)
         exp_layer = expectation.Expectation()
         # Test that all counts increment correctly
         for i in range(2**precisions[0]):
