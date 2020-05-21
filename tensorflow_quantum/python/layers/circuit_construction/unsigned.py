@@ -12,25 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""Layers for constructing qudit circuits on qubit backends."""
-import numpy as np
+"""Layers for constructing quantum integer circuits on qubit backends."""
 import tensorflow as tf
 import cirq
 
 from tensorflow_quantum.core.ops import tfq_utility_ops
 from tensorflow_quantum.python import util
-from tensorflow_quantum.python.layers.circuit_executors import expectation
 
 
 def projector_on_one(qubit):
     """Returns the projector on 1 for the given qubit.
- 
+
     Given a qubit k, the projector onto one can be represented by
         |1><1|_k = 0.5(I_k - Z_k).
 
     Args:
         qubit: A `cirq.GridQubit` on which the projector is supported.
-    
+
     Returns:
         `cirq.PauliSum` representing the projector.
     """
@@ -149,7 +147,6 @@ class AppendCliquesExp(tf.keras.layers.Layer):
 
         """
         super().__init__(**kwargs)
-        registers = registers_from_precisions(precisions)
         cliques_psum = build_cliques_psum(precisions, cliques)
         if exp_coeff is None:
             exp_coeff = 1.0
@@ -163,7 +160,7 @@ class AppendCliquesExp(tf.keras.layers.Layer):
             inputs: a single `cirq.Circuit`, a Python `list` or `tuple` of
                 `cirq.Circuit`s, or a pre-converted `tf.Tensor` of
                 `cirq.Circuit`s.
-        
+
         Output shape:
             `tf.Tensor` of shape [batch_size] containing the exponential of the
                 quantum integer cliques appended to the input circuits.
@@ -171,8 +168,7 @@ class AppendCliquesExp(tf.keras.layers.Layer):
         # Ingest and promote circuit.
         if isinstance(inputs, cirq.Circuit):
             # process single circuit.
-            inputs = tf.tile(util.convert_to_tensor([inputs]),
-                             [symbol_batch_dim])
+            inputs = util.convert_to_tensor([inputs])
         elif isinstance(inputs, (list, tuple)):
             # process list of circuits.
             inputs = util.convert_to_tensor(inputs)
@@ -227,7 +223,6 @@ class AppendMomentaExp(tf.keras.layers.Layer):
 
         """
         super().__init__(**kwargs)
-        registers = registers_from_precisions(precisions)
         cliques_psum = build_cliques_psum(precisions, cliques)
         if exp_coeff is None:
             exp_coeff = 1.0
@@ -241,7 +236,7 @@ class AppendMomentaExp(tf.keras.layers.Layer):
             inputs: a single `cirq.Circuit`, a Python `list` or `tuple` of
                 `cirq.Circuit`s, or a pre-converted `tf.Tensor` of
                 `cirq.Circuit`s.
-        
+
         Output shape:
             `tf.Tensor` of shape [batch_size] containing the exponential of the
                 quantum integer cliques appended to the input circuits.
@@ -249,8 +244,7 @@ class AppendMomentaExp(tf.keras.layers.Layer):
         # Ingest and promote circuit.
         if isinstance(inputs, cirq.Circuit):
             # process single circuit.
-            inputs = tf.tile(util.convert_to_tensor([inputs]),
-                             [symbol_batch_dim])
+            inputs = util.convert_to_tensor([inputs])
         elif isinstance(inputs, (list, tuple)):
             # process list of circuits.
             inputs = util.convert_to_tensor(inputs)

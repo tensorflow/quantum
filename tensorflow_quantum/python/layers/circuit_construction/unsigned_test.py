@@ -15,7 +15,7 @@
 """Tests for the qudit layers."""
 import tensorflow as tf
 import cirq
-import sympy
+# import sympy
 
 from tensorflow_quantum.python.layers.circuit_construction import unsigned
 from tensorflow_quantum.python.layers.circuit_executors import expectation
@@ -115,17 +115,6 @@ class BuildCliquesPsumTest(tf.test.TestCase):
             unsigned.build_cliques_psum(precisions, c) for c in cliques
         ]
         exp_layer = expectation.Expectation()
-
-        def append_register_bits(r, r_int, precisions, register_list):
-            r_int_str = format(r_int, 'b')
-            bit_circ = cirq.Circuit()
-            for n, c in enumerate(r_int_str[::-1]):
-                if bool(int(c)):
-                    bit_circ += cirq.X(registers[r][precisions[r] - 1 - n])
-            for q in registers[r]:
-                bit_circ += cirq.I(q)
-            return bit_circ
-
         # Test that all counts increment correctly
         for i in range(2**precisions[0]):
             bit_circ_i = _append_register_bits(0, i, precisions, registers)
@@ -141,7 +130,7 @@ class BuildCliquesPsumTest(tf.test.TestCase):
                                         atol=1e-5)
 
     def test_squares(self):
-        """Confirm we get squared numbers as expected from quantum integer psums."""
+        """Confirm we get squared numbers as expected from q integer psums."""
         precisions = [5]
         registers = unsigned.registers_from_precisions(precisions)
         cliques = {(0, 0): 1}
@@ -175,7 +164,7 @@ class BuildCliquesPsumTest(tf.test.TestCase):
 #         """Test that the correct circuit is generated."""
 #         precisions = [3, 4]
 #         cliques = {(0,): 2, (1,): 3, (1, 2,): 4}
-#         my_cost_exp = AppendCostExp(cirq.Circuit(), precisions=precisions, cost=cliques)
+#         my_cost_exp =
 
 #     def test_append_cost_exp_append(self):
 
