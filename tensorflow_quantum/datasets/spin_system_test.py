@@ -39,15 +39,11 @@ class SpinSystemDataTest(tf.test.TestCase):
         with self.assertRaisesRegex(TypeError,
                                     expected_regex='must be a list of'):
             spin_system.tfi_chain(['bob'])
-        with self.assertRaisesRegex(
-                ValueError, expected_regex='cirq.GridQubit objects with shape'):
-            qbs = cirq.GridQubit.rect(2, 2)
-            spin_system.tfi_chain(qbs)
 
     def test_fidelity(self):
         """Test that it returns the correct number of circuits."""
         qbs = cirq.GridQubit.rect(4, 1)
-        circuit, _, _, addinfo = spin_system.tfi_chain(qbs, 'closed')
+        circuit, _, _, addinfo,_ = spin_system.tfi_chain(qbs, 'closed')
         fidelities = []
         for n in range(len(addinfo)):
             phi = cirq.Simulator().simulate(circuit[n]).final_state
