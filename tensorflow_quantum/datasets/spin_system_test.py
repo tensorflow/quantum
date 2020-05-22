@@ -43,7 +43,7 @@ class SpinSystemDataTest(tf.test.TestCase):
     def test_fidelity(self):
         """Test that it returns the correct number of circuits."""
         qbs = cirq.GridQubit.rect(4, 1)
-        circuit, _, _, addinfo,_ = spin_system.tfi_chain(qbs, 'closed')
+        circuit, _, _, addinfo, _ = spin_system.tfi_chain(qbs, 'closed')
         fidelities = []
         for n in range(len(addinfo)):
             phi = cirq.Simulator().simulate(circuit[n]).final_state

@@ -76,10 +76,9 @@ def spin_system_data_set(nspins, system_name, data_dir):
     #  the XY model or XYZ model, this will have to be generalized.
     order_parameters = []
     additional_info = []
-    SpinSystemInfo = namedtuple('SpinSystemInfo',
-                                ['g', 'gs', 'gs_energy', 'res_energy',
-                                 'fidelity', 'data_path', 'params']
-                                )
+    SpinSystemInfo = namedtuple('SpinSystemInfo', [
+        'g', 'gs', 'gs_energy', 'res_energy', 'fidelity', 'data_path', 'params'
+    ])
 
     for directory in [x for x in data_path.iterdir() if x.is_dir()]:
         g = float(str(directory.name))
@@ -89,14 +88,15 @@ def spin_system_data_set(nspins, system_name, data_dir):
             fidelity = float(lines[2].split('=')[1].strip('\n'))
         order_parameters.append(g)
         additional_info.append(
-            SpinSystemInfo(g=g,
-                           gs=np.load(directory / Path('groundstate.npy')),
-                           gs_energy=np.load(directory / Path('energy.npy'))[0],
-                           res_energy=res_e,
-                           fidelity=fidelity,
-                           data_path=str(directory),
-                           params=np.load(directory / Path('params.npy')),
-                           ))
+            SpinSystemInfo(
+                g=g,
+                gs=np.load(directory / Path('groundstate.npy')),
+                gs_energy=np.load(directory / Path('energy.npy'))[0],
+                res_energy=res_e,
+                fidelity=fidelity,
+                data_path=str(directory),
+                params=np.load(directory / Path('params.npy')),
+            ))
     return list(zip(*sorted(zip(order_parameters, additional_info))))
 
 
@@ -271,12 +271,11 @@ def tfi_chain(qubits, boundary_condition='closed', data_dir=None):
 
     for d in range(int(nspins / 2)):
         circuit.append(
-            cirq.ZZ(q1, q2) ** (symbols[0, d] / np.pi)
+            cirq.ZZ(q1, q2)**(symbols[0, d] / np.pi)
             for q1, q2 in zip(qubits, qubits[1:]))
         if boundary_condition == 'closed':
             circuit.append(
-                cirq.ZZ(qubits[nspins - 1], qubits[0]) ** (
-                        symbols[0, d] / np.pi))
+                cirq.ZZ(qubits[nspins - 1], qubits[0])**(symbols[0, d] / np.pi))
         circuit.append(cirq.rx(symbols[1, d])(q1) for q1 in qubits)
 
     # Resolve the parameters
@@ -287,8 +286,7 @@ def tfi_chain(qubits, boundary_condition='closed', data_dir=None):
         parameter_map = dict(
             zip(symbol_names.flatten(), additional_info[i].params.flatten()))
         resolved_circuits.append(cirq.resolve_parameters(
-            circuit, parameter_map)
-        )
+            circuit, parameter_map))
 
         hamiltonians.append(get_hamiltonian(qubits, order_parameters[i]))
 
