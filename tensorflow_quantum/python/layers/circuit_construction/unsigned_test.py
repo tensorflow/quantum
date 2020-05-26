@@ -105,10 +105,37 @@ class BuildCliquesPsumTest(tf.test.TestCase):
         """Confirm function raises error on bad inputs."""
         p = [3, 4]
         c = {(0,): 2, (1,): 3, (0, 1): 4}
-        with self.assertRaisesRegex(TypeError, expected_regex=""):
+        with self.assertRaisesRegex(TypeError, expected_regex="list"):
             _ = unsigned.build_cliques_psum("junk", c)
-        with self.assertRaisesRegex(TypeError, expected_regex=""):
+        with self.assertRaisesRegex(TypeError, expected_regex="integer"):
+            _ = unsigned.build_cliques_psum(["junk"], c)
+        with self.assertRaisesRegex(TypeError, expected_regex="greater than"):
+            _ = unsigned.build_cliques_psum([2, 0], c)
+        with self.assertRaisesRegex(ValueError, expected_regex="Cannot access"):
+            # All labels must be in range
+            _ = unsigned.build_cliques_psum(p, {(0, 1, 2): 3})
+        with self.assertRaisesRegex(TypeError, expected_regex="dict"):
             _ = unsigned.build_cliques_psum(p, "junk")
+        with self.assertRaisesRegex(TypeError, expected_regex="dict"):
+            _ = unsigned.build_cliques_psum(p, [1])
+        with self.assertRaisesRegex(TypeError, expected_regex="tuple"):
+            # Most common error, where the key is not parsed as a tuple
+            _ = unsigned.build_cliques_psum(p, {(0): 1})
+        with self.assertRaisesRegex(TypeError, expected_regex="tuple"):
+            # Most common error, where the key is not parsed as a tuple
+            _ = unsigned.build_cliques_psum(p, {(0,): 1, (0): 1})
+        with self.assertRaisesRegex(TypeError, expected_regex="tuple"):
+            _ = unsigned.build_cliques_psum(p, {"junk": 1})
+        with self.assertRaisesRegex(TypeError, expected_regex="integer"):
+            _ = unsigned.build_cliques_psum(p, {(0, 1, "junk"): 1})
+        with self.assertRaisesRegex(TypeError, expected_regex="non-negative"):
+            _ = unsigned.build_cliques_psum(p, {(0, 1, -1): 1})
+        with self.assertRaisesRegex(TypeError, expected_regex="integer"):
+            _ = unsigned.build_cliques_psum(p, {(2.7,): 1})
+        with self.assertRaisesRegex(TypeError, expected_regex="value"):
+            _ = unsigned.build_cliques_psum(p, {(0,): "junk"})
+        with self.assertRaisesRegex(TypeError, expected_regex="value"):
+            _ = unsigned.build_cliques_psum(p, {(0,): 1, (1,): 1j})
 
     def test_psum_return(self):
         """Confirm operators are built correctly."""

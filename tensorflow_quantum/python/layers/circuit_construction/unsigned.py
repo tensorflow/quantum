@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 """Layers for constructing quantum integer circuits on qubit backends."""
+import numbers
 import tensorflow as tf
 import cirq
 
@@ -105,6 +106,32 @@ def build_cliques_psum(precisions, cliques):
         cliques_psum: `cirq.PauliSum` representation of the Hamiltonian
             corresponding to the given precisions and clique weights.
     """
+    if not isinstance(precisions, list):
+        raise TypeError("`precisions` must be a Python list.")
+    for p in precisions:
+        if not isinstance(p, numbers.Integral) or p < 1:
+            raise TypeError("Each entry in precisions must be an integer"
+                            " greater than zero, got {}.".format(p))
+    if not isinstance(cliques, dict):
+        raise TypeError("`cliques` must be a Python dict.")
+    for key, value in cliques.items():
+        if not isinstance(key, tuple):
+            raise TypeError("Each key in cliques must be a (possibly empty)"
+                            " tuple of register labels, got {}."
+                            " Check that no key has the form `(n)`."
+                            " Instead use `(n,)` else the key will be"
+                            " parsed as an integer.".format(key))
+        for entry in key:
+            if not isinstance(entry, numbers.Integral) or entry < 0:
+                raise TypeError("Each entry of each key in cliques must be a"
+                                " non-negative integer, got {}.".format(entry))
+            if entry > (len(precisions) - 1):
+                raise ValueError("Cannot access requested register {0} as there"
+                                 " are only {1} registers available.".format(
+                                     entry, len(precisions)))
+        if not isinstance(value, numbers.Real):
+            raise TypeError("Each value in cliques must be a real number,"
+                            " got {}.".format(value))
     register_list = registers_from_precisions(precisions)
     op_list = [integer_operator(register) for register in register_list]
     cliques_psum = cirq.PauliSum()
