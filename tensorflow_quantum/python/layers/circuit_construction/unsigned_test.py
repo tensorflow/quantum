@@ -15,8 +15,9 @@
 """Tests for the qudit layers."""
 import tensorflow as tf
 import cirq
-# import sympy
+import sympy
 
+from tensorflow_quantum.python import util
 from tensorflow_quantum.python.layers.circuit_construction import unsigned
 from tensorflow_quantum.python.layers.circuit_executors import expectation
 
@@ -186,14 +187,15 @@ class AppendCliquesExpTest(tf.test.TestCase):
                                     expected_regex="rank 1"):
             unsigned.AppendCliquesExp(p, c)([[circuit]])
 
-    # def test_append_cliques_exp(self):
-    #     """Test that the correct circuit is generated."""
-    #     p = [3, 4]
-    #     c = {(0,): 2, (1,): 3, (0, 1,): 4}
-    #     my_cost_exp = 
-
-    # def test_append_cliques_exp_append(self):
-        
+    def test_append_cliques_exp(self):
+        """Test that the correct circuit is generated."""
+        p = [3, 4]
+        c = {(1,): 2}
+        for coeff in [3.4, "gamma", sympy.Symbol("symbol")]:
+            expected_circuit = util.convert_to_tensor([
+                util.exponential([unsigned.build_cliques_psum(p, c)], [coeff])])
+            cliques_exp_layer = unsigned.AppendCliquesExp(p, c, coeff)
+            self.assertEqual(expected_circuit, cliques_exp_layer.exp_circuit)
 
 
 if __name__ == "__main__":
