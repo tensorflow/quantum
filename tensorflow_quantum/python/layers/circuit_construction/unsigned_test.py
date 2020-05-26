@@ -102,9 +102,23 @@ class BuildCliquesPsumTest(tf.test.TestCase):
 
     def test_bad_inputs(self):
         """Confirm function raises error on bad inputs."""
+        p = [3, 4]
+        c = {(0,): 2, (1,): 3, (0, 1): 4}
+        with self.assertRaisesRegex(TypeError, expected_regex=""):
+            _ = unsigned.build_cliques_psum("junk", c)
+        with self.assertRaisesRegex(TypeError, expected_regex=""):
+            _ = unsigned.build_cliques_psum(p, "junk")        
 
     def test_psum_return(self):
         """Confirm operators are built correctly."""
+        p = [3, 4]
+        c = {(0,): 2, (1,): 3, (0, 1): 4}
+        test_psum = unsigned.build_cliques_psum(p, c)
+        registers = unsigned.registers_from_precisions(p)
+        j0 = unsigned.integer_operator(registers[0])
+        j1 = unsigned.integer_operator(registers[1])
+        expected_psum = 2*j0 + 3*j1 + 4*j0*j1
+        self.assertEqual(expected_psum, test_psum)
 
     def test_counting(self):
         """Confirm we get numbers as expected from quantum integer psums."""
@@ -143,7 +157,7 @@ class BuildCliquesPsumTest(tf.test.TestCase):
             self.assertAllClose([[i**2]], test_val.numpy(), atol=1e-5)
 
 
-# class AppendCostExpTest(tf.test.TestCase):
+# class AppendCliquesExpTest(tf.test.TestCase):
 #     """Test AppendCostExp."""
 
 #     def test_append_cost_exp_instantiate(self):
