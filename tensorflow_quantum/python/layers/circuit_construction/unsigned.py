@@ -109,10 +109,14 @@ def build_cliques_psum(precisions, cliques):
     op_list = [integer_operator(register) for register in register_list]
     cliques_psum = cirq.PauliSum()
     for clique in cliques:
-        this_psum = cirq.PauliString(cirq.I(register_list[clique[0]][0]))
-        for i in clique:
-            this_psum *= op_list[i]
-        this_psum *= cliques[clique]
+        if clique:
+            this_psum = cirq.PauliString(cirq.I(register_list[clique[0]][0]))
+            for i in clique:
+                this_psum *= op_list[i]
+            this_psum *= cliques[clique]
+        else:
+            # Empty label tuple is a constant offset.
+            this_psum = cliques[clique]*cirq.PauliString(cirq.I(register_list[clique[0]][0]))
         cliques_psum += this_psum
     return cliques_psum
 
