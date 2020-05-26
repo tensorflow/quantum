@@ -197,6 +197,79 @@ class AppendCliquesExpTest(tf.test.TestCase):
             cliques_exp_layer = unsigned.AppendCliquesExp(p, c, coeff)
             self.assertEqual(expected_circuit, cliques_exp_layer.exp_circuit)
 
+    def test_append_cliques_exp(self):
+        """Test that circuits are appended correctly."""
+        p = [3]
+        c = {(0,): 1}
+        coeff = -2.2
+        pre_circuit = cirq.Circuit(cirq.X(cirq.GridQubit(0, 0)))
+        expected_circuit = util.from_tensor(util.convert_to_tensor([
+            pre_circuit + util.exponential(
+                [unsigned.build_cliques_psum(p, c)], [coeff])]))
+        cliques_exp_layer = unsigned.AppendCliquesExp(p, c, coeff)
+        test_circuit = util.from_tensor(cliques_exp_layer(pre_circuit))
+        self.assertEqual(expected_circuit, test_circuit)
+
+
+class AppendMomentaExpTest(tf.test.TestCase):
+    """Test the AppendMomentaExp class."""
+
+    def test_append_momenta_exp_instantiate(self):
+        """Test that an AppendMomentaExp layer can be instantiated."""
+        p = [5]
+        c = {(0,): 1}
+        _ = unsigned.AppendMomentaExp(p, c)
+
+    def test_append_momenta_exp_layer_error(self):
+        """Test that layer instantiation raises error on bad input."""
+        p = [5]
+        c = {(0,): 1}
+        with self.assertRaisesRegex(TypeError, expected_regex=""):
+            _ = unsigned.AppendMomentaExp("junk", c)
+        with self.assertRaisesRegex(TypeError, expected_regex=""):
+            _ = unsigned.AppendMomentaExp(p, "junk")
+        with self.assertRaisesRegex(TypeError, expected_regex=""):
+            _ = unsigned.AppendMomentaExp(p, c, [])
+        
+    def test_append_momenta_exp_op_error(self):
+        """Test that AppendMomentaExp will error inside of ops correctly."""
+        p = [2, 5]
+        c = {(1,): 1}
+        circuit = cirq.Circuit(cirq.X(cirq.GridQubit(0, 0)))
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    expected_regex="rank 1"):
+            unsigned.AppendMomentaExp(p, c)([[circuit]])
+
+    def test_append_momenta_exp(self):
+        """Test that the correct circuit is generated."""
+        p = [3, 4]
+        c = {(1,): 2}
+        r = unsigned.registers_from_precisions(p)
+        for coeff in [3.4, "gamma", sympy.Symbol("symbol")]:
+            expected_circuit = util.convert_to_tensor([
+                cirq.QFT(*r[0]) + cirq.QFT(*r[1]) +
+                util.exponential([unsigned.build_momenta_psum(p, c)], [coeff])
+                + cirq.QFT(*r[0])**-1 + cirq.QFT(*r[1])**-1
+            ])
+            momenta_exp_layer = unsigned.AppendMomentaExp(p, c, coeff)
+            self.assertEqual(expected_circuit, momenta_exp_layer.exp_circuit)
+
+    def test_append_momenta_exp(self):
+        """Test that circuits are appended correctly."""
+        p = [3]
+        c = {(0,): 1}
+        coeff = -2.2
+        pre_circuit = cirq.Circuit(cirq.X(cirq.GridQubit(0, 0)))
+        r = unsigned.registers_from_precisions(p)
+        expected_circuit = util.from_tensor(util.convert_to_tensor([
+            pre_circuit + cirq.QFT(*r[0]) +
+                util.exponential([unsigned.build_cliques_psum(p, c)], [coeff])
+                + cirq.QFT(*r[0])**-1
+        ]))
+        momenta_exp_layer = unsigned.AppendMomentaExp(p, c, coeff)
+        test_circuit = util.from_tensor(momenta_exp_layer(pre_circuit))
+        self.assertEqual(expected_circuit, test_circuit)
+
 
 if __name__ == "__main__":
     tf.test.main()

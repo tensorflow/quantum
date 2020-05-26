@@ -186,7 +186,7 @@ class AppendCliquesExp(tf.keras.layers.Layer):
             inputs = util.convert_to_tensor(inputs)
         if not tf.is_tensor(inputs):
             raise TypeError("circuits cannot be parsed with given input:"
-                            " ".format(inputs))
+                            "{}".format(inputs))
         batch_dim = tf.gather(tf.shape(inputs), 0)
         append = tf.tile(self.exp_circuit, [batch_dim])
         return tfq_utility_ops.tfq_append_circuit(inputs, append)
@@ -240,8 +240,8 @@ class AppendMomentaExp(tf.keras.layers.Layer):
             exp_coeff = 1.0
         exp_circuit = util.exponential([cliques_psum], coefficients=[exp_coeff])
         transform = cirq.Circuit()
-        for r in registers:
-            transform += cirq.QFT(r)
+        for r in registers_from_precisions(precisions):
+            transform += cirq.QFT(*r)
         transformed_exp_circuit = transform + exp_circuit + transform**(-1)
         self.exp_circuit = util.convert_to_tensor([exp_circuit])
 
@@ -266,7 +266,7 @@ class AppendMomentaExp(tf.keras.layers.Layer):
             inputs = util.convert_to_tensor(inputs)
         if not tf.is_tensor(inputs):
             raise TypeError("circuits cannot be parsed with given input:"
-                            " ".format(inputs))
+                            "{}".format(inputs))
         batch_dim = tf.gather(tf.shape(inputs), 0)
         append = tf.tile(self.exp_circuit, [batch_dim])
         return tfq_utility_ops.tfq_append_circuit(inputs, append)
