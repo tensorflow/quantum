@@ -241,7 +241,7 @@ class AppendMomentaExp(tf.keras.layers.Layer):
         exp_circuit = util.exponential([cliques_psum], coefficients=[exp_coeff])
         transform = cirq.Circuit()
         for r in registers_from_precisions(precisions):
-            transform += cirq.QFT(*r)
+            transform += cirq.Circuit(cirq.decompose(cirq.QFT(*r)))
         transformed_exp_circuit = transform + exp_circuit + transform**(-1)
         self.exp_circuit = util.convert_to_tensor([exp_circuit])
 
