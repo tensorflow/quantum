@@ -245,8 +245,8 @@ class AppendMomentaExp(tf.keras.layers.Layer):
             this_transform = cirq.Circuit(cirq.QFT(*r))
             convert(this_transform)
             transform += this_transform
-        self.exp_circuit = util.convert_to_tensor([
-            transform + exp_circuit + transform**(-1)])
+        self.exp_circuit = util.convert_to_tensor(
+            [transform + exp_circuit + transform**(-1)])
 
     def call(self, inputs):
         """Keras call method.

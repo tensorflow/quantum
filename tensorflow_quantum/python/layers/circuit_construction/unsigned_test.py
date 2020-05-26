@@ -204,10 +204,11 @@ class AppendCliquesExpTest(tf.test.TestCase):
         c = {(0,): 1}
         coeff = -2.2
         pre_circuit = cirq.Circuit(cirq.X(cirq.GridQubit(0, 0)))
-        expected_circuit = util.from_tensor(util.convert_to_tensor([
-            pre_circuit +
-            util.exponential([unsigned.build_cliques_psum(p, c)], [coeff])
-        ]))
+        expected_circuit = util.from_tensor(
+            util.convert_to_tensor([
+                pre_circuit +
+                util.exponential([unsigned.build_cliques_psum(p, c)], [coeff])
+            ]))
         cliques_exp_layer = unsigned.AppendCliquesExp(p, c, coeff)
         test_circuit = util.from_tensor(cliques_exp_layer(pre_circuit))
         self.assertEqual(expected_circuit, test_circuit)
@@ -271,11 +272,12 @@ class AppendMomentaExpTest(tf.test.TestCase):
         qft_0 = cirq.Circuit(cirq.QFT(*r[0]))
         convert = cirq.ConvertToCzAndSingleGates(allow_partial_czs=True)
         convert(qft_0)
-        expected_circuit = util.from_tensor(util.convert_to_tensor([
-            pre_circuit + qft_0 +
-            util.exponential([unsigned.build_cliques_psum(p, c)], [coeff]) +
-            qft_0**-1
-        ]))
+        expected_circuit = util.from_tensor(
+            util.convert_to_tensor([
+                pre_circuit + qft_0 +
+                util.exponential([unsigned.build_cliques_psum(p, c)], [coeff]) +
+                qft_0**-1
+            ]))
         momenta_exp_layer = unsigned.AppendMomentaExp(p, c, coeff)
         test_circuit = util.from_tensor(momenta_exp_layer(pre_circuit))
         print(expected_circuit)
