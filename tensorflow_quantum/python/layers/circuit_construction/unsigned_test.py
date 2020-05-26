@@ -108,7 +108,7 @@ class BuildCliquesPsumTest(tf.test.TestCase):
         with self.assertRaisesRegex(TypeError, expected_regex=""):
             _ = unsigned.build_cliques_psum("junk", c)
         with self.assertRaisesRegex(TypeError, expected_regex=""):
-            _ = unsigned.build_cliques_psum(p, "junk")        
+            _ = unsigned.build_cliques_psum(p, "junk")
 
     def test_psum_return(self):
         """Confirm operators are built correctly."""
@@ -118,7 +118,7 @@ class BuildCliquesPsumTest(tf.test.TestCase):
         registers = unsigned.registers_from_precisions(p)
         j0 = unsigned.integer_operator(registers[0])
         j1 = unsigned.integer_operator(registers[1])
-        expected_psum = 2*j0 + 3*j1 + 4*j0*j1
+        expected_psum = 2 * j0 + 3 * j1 + 4 * j0 * j1
         self.assertEqual(expected_psum, test_psum)
 
     def test_counting(self):
@@ -177,7 +177,7 @@ class AppendCliquesExpTest(tf.test.TestCase):
             _ = unsigned.AppendCliquesExp(p, "junk")
         with self.assertRaisesRegex(TypeError, expected_regex=""):
             _ = unsigned.AppendCliquesExp(p, c, [])
-        
+
     def test_append_cliques_exp_op_error(self):
         """Test that AppendCliquesExp will error inside of ops correctly."""
         p = [2, 5]
@@ -193,7 +193,8 @@ class AppendCliquesExpTest(tf.test.TestCase):
         c = {(1,): 2}
         for coeff in [3.4, "gamma", sympy.Symbol("symbol")]:
             expected_circuit = util.convert_to_tensor([
-                util.exponential([unsigned.build_cliques_psum(p, c)], [coeff])])
+                util.exponential([unsigned.build_cliques_psum(p, c)], [coeff])
+            ])
             cliques_exp_layer = unsigned.AppendCliquesExp(p, c, coeff)
             self.assertEqual(expected_circuit, cliques_exp_layer.exp_circuit)
 
@@ -204,8 +205,9 @@ class AppendCliquesExpTest(tf.test.TestCase):
         coeff = -2.2
         pre_circuit = cirq.Circuit(cirq.X(cirq.GridQubit(0, 0)))
         expected_circuit = util.convert_to_tensor([
-            pre_circuit + util.exponential(
-                [unsigned.build_cliques_psum(p, c)], [coeff])])
+            pre_circuit +
+            util.exponential([unsigned.build_cliques_psum(p, c)], [coeff])
+        ])
         cliques_exp_layer = unsigned.AppendCliquesExp(p, c, coeff)
         test_circuit = cliques_exp_layer(pre_circuit)
         self.assertEqual(expected_circuit, test_circuit)
@@ -230,7 +232,7 @@ class AppendMomentaExpTest(tf.test.TestCase):
             _ = unsigned.AppendMomentaExp(p, "junk")
         with self.assertRaisesRegex(TypeError, expected_regex=""):
             _ = unsigned.AppendMomentaExp(p, c, [])
-        
+
     def test_append_momenta_exp_op_error(self):
         """Test that AppendMomentaExp will error inside of ops correctly."""
         p = [2, 5]
@@ -250,9 +252,8 @@ class AppendMomentaExpTest(tf.test.TestCase):
         for coeff in [3.4, "gamma", sympy.Symbol("symbol")]:
             expected_circuit = util.convert_to_tensor([
                 qft_0 + qft_1 +
-                util.exponential([unsigned.build_momenta_psum(p, c)], [coeff])
-                + qft_0**-1 + qft_1**-1
-                
+                util.exponential([unsigned.build_momenta_psum(p, c)], [coeff]) +
+                qft_0**-1 + qft_1**-1
             ])
             momenta_exp_layer = unsigned.AppendMomentaExp(p, c, coeff)
             self.assertEqual(expected_circuit, momenta_exp_layer.exp_circuit)
@@ -267,8 +268,8 @@ class AppendMomentaExpTest(tf.test.TestCase):
         qft_0 = cirq.Circuit(cirq.decompose(cirq.QFT(*r[0])))
         expected_circuit = util.convert_to_tensor([
             pre_circuit + qft_0 +
-                util.exponential([unsigned.build_cliques_psum(p, c)], [coeff])
-            + qft_0**-1
+            util.exponential([unsigned.build_cliques_psum(p, c)], [coeff]) +
+            qft_0**-1
         ])
         momenta_exp_layer = unsigned.AppendMomentaExp(p, c, coeff)
         test_circuit = momenta_exp_layer(pre_circuit)
