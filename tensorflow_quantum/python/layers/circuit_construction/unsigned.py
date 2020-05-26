@@ -135,9 +135,9 @@ class AppendCliquesExp(tf.keras.layers.Layer):
 
     Note: When specifying a new layer for a *compiled* `tf.keras.Model` using
     something like
-    `tfq.layers.AppendCostExp()(cirq.Circuit(...), ...)`
+    `tfq.layers.AppendCliquesExp()(cirq.Circuit(...), ...)`
     please be sure to instead use
-    `tfq.layers.AppendCostExp()(circuit_input, ...)`
+    `tfq.layers.AppendCliquesExp()(circuit_input, ...)`
     where `circuit_input` is a `tf.keras.Input` that is filled with
     `tfq.conver_to_tensor([cirq.Circuit(..)] * batch_size)` at runtime. This
     is because compiled Keras models require non keyword layer `call` inputs to
@@ -211,9 +211,9 @@ class AppendMomentaExp(tf.keras.layers.Layer):
 
     Note: When specifying a new layer for a *compiled* `tf.keras.Model` using
     something like
-    `tfq.layers.AppendCostExp()(cirq.Circuit(...), ...)`
+    `tfq.layers.AppendMomentaExp()(cirq.Circuit(...), ...)`
     please be sure to instead use
-    `tfq.layers.AppendCostExp()(circuit_input, ...)`
+    `tfq.layers.AppendMomentaExp()(circuit_input, ...)`
     where `circuit_input` is a `tf.keras.Input` that is filled with
     `tfq.conver_to_tensor([cirq.Circuit(..)] * batch_size)` at runtime. This
     is because compiled Keras models require non keyword layer `call` inputs to
@@ -230,7 +230,7 @@ class AppendMomentaExp(tf.keras.layers.Layer):
             cliques: a Python `dict` mapping tuples of quantum integer register
                 labels to the weight of their product.
             exp_coeff: A Python `str`, `sympy.Symbol`, or float, which will be
-                the coefficient of the cost Hamiltonian in the exponential.
+                the coefficient of the momentum Hamiltonian in the exponential.
                 If None, the value 1.0 will be used.
 
         """
@@ -239,6 +239,10 @@ class AppendMomentaExp(tf.keras.layers.Layer):
         if exp_coeff is None:
             exp_coeff = 1.0
         exp_circuit = util.exponential([cliques_psum], coefficients=[exp_coeff])
+        transform = cirq.Circuit()
+        for r in registers:
+            transform += cirq.QFT(r)
+        transformed_exp_circuit = transform + exp_circuit + transform**(-1)
         self.exp_circuit = util.convert_to_tensor([exp_circuit])
 
     def call(self, inputs):
