@@ -157,6 +157,21 @@ class BuildCliquesPsumTest(tf.test.TestCase):
             test_val = exp_layer(bit_circ_i, operators=cliques_psums)
             self.assertAllClose([[i**2]], test_val.numpy(), atol=1e-5)
 
+    def test_polynomial(self):
+        """Confirm that expectations of polynomial with offset are correct."""
+        precisions = [5]
+        registers = unsigned.registers_from_precisions(precisions)
+        # test the polynomial y = 3 + 5.2x - 7.5x**2 + 0.3x**3
+        cliques = {(): 3, (0,): 5.2, (0, 0): -7.5, (0, 0, 0): 0.3}
+        cliques_psums = unsigned.build_cliques_psum(precisions, cliques)
+        exp_layer = expectation.Expectation()
+        # Test that all counts increment correctly
+        for i in range(2**precisions[0]):
+            bit_circ_i = _append_register_bits(0, i, precisions, registers)
+            test_val = exp_layer(bit_circ_i, operators=cliques_psums)
+            self.assertAllClose([[3 + 5.2*i - 7.5*i**2 + 0.3*i**3]],
+                                test_val.numpy(), atol=1e-4)
+
 
 class AppendCliquesExpTest(tf.test.TestCase):
     """Test the AppendCliquesExp class."""
