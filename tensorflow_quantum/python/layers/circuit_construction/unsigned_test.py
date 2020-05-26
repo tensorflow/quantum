@@ -187,7 +187,7 @@ class AppendCliquesExpTest(tf.test.TestCase):
                                     expected_regex="rank 1"):
             unsigned.AppendCliquesExp(p, c)([[circuit]])
 
-    def test_append_cliques_exp(self):
+    def test_append_cliques_exp_internal(self):
         """Test that the correct circuit is generated."""
         p = [3, 4]
         c = {(1,): 2}
@@ -198,7 +198,7 @@ class AppendCliquesExpTest(tf.test.TestCase):
             cliques_exp_layer = unsigned.AppendCliquesExp(p, c, coeff)
             self.assertEqual(expected_circuit, cliques_exp_layer.exp_circuit)
 
-    def test_append_cliques_exp(self):
+    def test_append_cliques_exp_return(self):
         """Test that circuits are appended correctly."""
         p = [3]
         c = {(0,): 1}
@@ -243,7 +243,7 @@ class AppendMomentaExpTest(tf.test.TestCase):
                                     expected_regex="rank 1"):
             unsigned.AppendMomentaExp(p, c)([[circuit]])
 
-    def test_append_momenta_exp(self):
+    def test_append_momenta_exp_internal(self):
         """Test that the correct circuit is generated."""
         p = [3, 4]
         c = {(1,): 2}
@@ -262,7 +262,7 @@ class AppendMomentaExpTest(tf.test.TestCase):
             momenta_exp_layer = unsigned.AppendMomentaExp(p, c, coeff)
             self.assertEqual(expected_circuit, momenta_exp_layer.exp_circuit)
 
-    def test_append_momenta_exp(self):
+    def test_append_momenta_exp_return(self):
         """Test that circuits are appended correctly."""
         p = [3]
         c = {(0,): 1}
