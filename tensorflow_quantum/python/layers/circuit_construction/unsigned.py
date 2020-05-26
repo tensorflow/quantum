@@ -130,7 +130,7 @@ class AppendCliquesExp(tf.keras.layers.Layer):
     >>> precisions = [3, 3]
     >>> cliques = {(0, 0): 1, (0, 1): 1, (1, 1): 1}
     >>> symbol = sympy.Symbol("theta")
-    >>> exp_layer = AppendMomentaExp(precisions, cliques, symbol)
+    >>> exp_layer = AppendCliquesExp(precisions, cliques, symbol)
 
 
     Note: When specifying a new layer for a *compiled* `tf.keras.Model` using

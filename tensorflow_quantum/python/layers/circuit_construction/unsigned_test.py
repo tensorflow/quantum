@@ -157,30 +157,44 @@ class BuildCliquesPsumTest(tf.test.TestCase):
             self.assertAllClose([[i**2]], test_val.numpy(), atol=1e-5)
 
 
-# class AppendCliquesExpTest(tf.test.TestCase):
-#     """Test AppendCostExp."""
+class AppendCliquesExpTest(tf.test.TestCase):
+    """Test the AppendCliquesExp class."""
 
-#     def test_append_cost_exp_instantiate(self):
-#         """Test that a addcircuit layer can be instantiated correctly."""
-#         qudit.AppendCostExp()
+    def test_append_cliques_exp_instantiate(self):
+        """Test that an AppendCliquesExp layer can be instantiated."""
+        p = [5]
+        c = {(0,): 1}
+        _ = unsigned.AppendCliquesExp(p, c)
 
-#     def test_append_cost_exp_op_error(self):
-#         """Test that addcircuit will error inside of ops correctly."""
-#         add = elementary.AddCircuit()
-#         circuit = cirq.Circuit(cirq.X(cirq.GridQubit(0, 0)))
+    def test_append_cliques_exp_layer_error(self):
+        """Test that layer instantiation raises error on bad input."""
+        p = [5]
+        c = {(0,): 1}
+        with self.assertRaisesRegex(TypeError, expected_regex=""):
+            _ = unsigned.AppendCliquesExp("junk", c)
+        with self.assertRaisesRegex(TypeError, expected_regex=""):
+            _ = unsigned.AppendCliquesExp(p, "junk")
+        with self.assertRaisesRegex(TypeError, expected_regex=""):
+            _ = unsigned.AppendCliquesExp(p, c, [])
+        
+    def test_append_cliques_exp_op_error(self):
+        """Test that AppendCliquesExp will error inside of ops correctly."""
+        p = [2, 5]
+        c = {(1,): 1}
+        circuit = cirq.Circuit(cirq.X(cirq.GridQubit(0, 0)))
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    expected_regex="rank 1"):
+            unsigned.AppendCliquesExp(p, c)([[circuit]])
 
-#         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
-#                                     expected_regex="rank 1"):
-#             # circuit is wrong shape.
-#             add([[circuit]], )
+    # def test_append_cliques_exp(self):
+    #     """Test that the correct circuit is generated."""
+    #     p = [3, 4]
+    #     c = {(0,): 2, (1,): 3, (0, 1,): 4}
+    #     my_cost_exp = 
 
-#     def test_append_cost_exp(self):
-#         """Test that the correct circuit is generated."""
-#         precisions = [3, 4]
-#         cliques = {(0,): 2, (1,): 3, (1, 2,): 4}
-#         my_cost_exp =
+    # def test_append_cliques_exp_append(self):
+        
 
-#     def test_append_cost_exp_append(self):
 
 if __name__ == "__main__":
     tf.test.main()
