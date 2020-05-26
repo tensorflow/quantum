@@ -113,12 +113,12 @@ class BuildCliquesPsumTest(tf.test.TestCase):
     def test_psum_return(self):
         """Confirm operators are built correctly."""
         p = [3, 4]
-        c = {(0,): 2, (1,): 3, (0, 1): 4}
+        c = {(0,): 2, (1,): 3, (0, 1): 4, (): 7}
         test_psum = unsigned.build_cliques_psum(p, c)
         registers = unsigned.registers_from_precisions(p)
         j0 = unsigned.integer_operator(registers[0])
         j1 = unsigned.integer_operator(registers[1])
-        expected_psum = 2 * j0 + 3 * j1 + 4 * j0 * j1
+        expected_psum = 2 * j0 + 3 * j1 + 4 * j0 * j1 + 7*cirq.PauliString(cirq.I(registers[0][0]))
         self.assertEqual(expected_psum, test_psum)
 
     def test_counting(self):
