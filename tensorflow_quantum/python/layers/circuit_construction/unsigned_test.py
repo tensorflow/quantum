@@ -145,7 +145,8 @@ class BuildCliquesPsumTest(tf.test.TestCase):
         registers = unsigned.registers_from_precisions(p)
         j0 = unsigned.integer_operator(registers[0])
         j1 = unsigned.integer_operator(registers[1])
-        expected_psum = 2 * j0 + 3 * j1 + 4 * j0 * j1 + 7*cirq.PauliString(cirq.I(registers[0][0]))
+        expected_psum = 2 * j0 + 3 * j1 + 4 * j0 * j1 + 7 * cirq.PauliString(
+            cirq.I(registers[0][0]))
         self.assertEqual(expected_psum, test_psum)
 
     def test_counting(self):
@@ -196,8 +197,9 @@ class BuildCliquesPsumTest(tf.test.TestCase):
         for i in range(2**precisions[0]):
             bit_circ_i = _append_register_bits(0, i, precisions, registers)
             test_val = exp_layer(bit_circ_i, operators=cliques_psums)
-            self.assertAllClose([[3 + 5.2*i - 7.5*i**2 + 0.3*i**3]],
-                                test_val.numpy(), atol=1e-4)
+            self.assertAllClose([[3 + 5.2 * i - 7.5 * i**2 + 0.3 * i**3]],
+                                test_val.numpy(),
+                                atol=1e-4)
 
 
 class AppendCliquesExpTest(tf.test.TestCase):

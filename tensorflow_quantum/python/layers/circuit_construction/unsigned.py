@@ -143,7 +143,8 @@ def build_cliques_psum(precisions, cliques):
             this_psum *= cliques[clique]
         else:
             # Empty label tuple is a constant offset.
-            this_psum = cliques[clique]*cirq.PauliString(cirq.I(register_list[0][0]))
+            this_psum = cliques[clique] * cirq.PauliString(
+                cirq.I(register_list[0][0]))
         cliques_psum += this_psum
     return cliques_psum
 
