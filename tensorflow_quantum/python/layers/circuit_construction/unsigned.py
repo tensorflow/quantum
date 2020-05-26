@@ -240,10 +240,13 @@ class AppendMomentaExp(tf.keras.layers.Layer):
             exp_coeff = 1.0
         exp_circuit = util.exponential([cliques_psum], coefficients=[exp_coeff])
         transform = cirq.Circuit()
+        convert = cirq.ConvertToCzAndSingleGates(allow_partial_czs=True)
         for r in registers_from_precisions(precisions):
-            transform += cirq.Circuit(cirq.decompose(cirq.QFT(*r)))
-        transformed_exp_circuit = transform + exp_circuit + transform**(-1)
-        self.exp_circuit = util.convert_to_tensor([exp_circuit])
+            this_transform = cirq.Circuit(cirq.QFT(*r))
+            convert(this_transform)
+            transform += this_transform
+        self.exp_circuit = util.convert_to_tensor([
+            transform + exp_circuit + transform**(-1)])
 
     def call(self, inputs):
         """Keras call method.
