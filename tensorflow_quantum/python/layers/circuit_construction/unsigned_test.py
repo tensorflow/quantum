@@ -192,11 +192,15 @@ class AppendCliquesExpTest(tf.test.TestCase):
         p = [3, 4]
         c = {(1,): 2}
         for coeff in [3.4, "gamma", sympy.Symbol("symbol")]:
-            expected_circuit = util.from_tensor(util.convert_to_tensor([
-                util.exponential([unsigned.build_cliques_psum(p, c)], [coeff])
-            ]))
-            test_circuit = util.from_tensor(unsigned.AppendCliquesExp(p, c, coeff).exp_circuit)
-            self.assertTrue(cirq.protocols.approx_eq(expected_circuit, test_circuit))
+            expected_circuit = util.from_tensor(
+                util.convert_to_tensor([
+                    util.exponential([unsigned.build_cliques_psum(p, c)],
+                                     [coeff])
+                ]))
+            test_circuit = util.from_tensor(
+                unsigned.AppendCliquesExp(p, c, coeff).exp_circuit)
+            self.assertTrue(
+                cirq.protocols.approx_eq(expected_circuit, test_circuit))
 
     def test_append_cliques_exp_return(self):
         """Test that circuits are appended correctly."""
@@ -211,7 +215,8 @@ class AppendCliquesExpTest(tf.test.TestCase):
             ]))
         cliques_exp_layer = unsigned.AppendCliquesExp(p, c, coeff)
         test_circuit = util.from_tensor(cliques_exp_layer(pre_circuit))
-        self.assertTrue(cirq.protocols.approx_eq(expected_circuit, test_circuit))
+        self.assertTrue(cirq.protocols.approx_eq(expected_circuit,
+                                                 test_circuit))
 
 
 class AppendMomentaExpTest(tf.test.TestCase):
@@ -254,13 +259,16 @@ class AppendMomentaExpTest(tf.test.TestCase):
         convert(qft_0)
         convert(qft_1)
         for coeff in [3.4, "gamma", sympy.Symbol("symbol")]:
-            expected_circuit = util.from_tensor(util.convert_to_tensor([
-                qft_0 + qft_1 +
-                util.exponential([unsigned.build_cliques_psum(p, c)], [coeff]) +
-                qft_1**-1 + qft_0**-1
-            ]))
-            test_circuit = util.from_tensor(unsigned.AppendMomentaExp(p, c, coeff).exp_circuit)
-            self.assertTrue(cirq.protocols.approx_eq(expected_circuit, test_circuit))
+            expected_circuit = util.from_tensor(
+                util.convert_to_tensor([
+                    qft_0 + qft_1 + util.exponential(
+                        [unsigned.build_cliques_psum(p, c)], [coeff]) +
+                    qft_1**-1 + qft_0**-1
+                ]))
+            test_circuit = util.from_tensor(
+                unsigned.AppendMomentaExp(p, c, coeff).exp_circuit)
+            self.assertTrue(
+                cirq.protocols.approx_eq(expected_circuit, test_circuit))
 
     def test_append_momenta_exp_return(self):
         """Test that circuits are appended correctly."""
@@ -280,7 +288,8 @@ class AppendMomentaExpTest(tf.test.TestCase):
             ]))
         momenta_exp_layer = unsigned.AppendMomentaExp(p, c, coeff)
         test_circuit = util.from_tensor(momenta_exp_layer(pre_circuit))
-        self.assertTrue(cirq.protocols.approx_eq(expected_circuit, test_circuit))
+        self.assertTrue(cirq.protocols.approx_eq(expected_circuit,
+                                                 test_circuit))
 
 
 if __name__ == "__main__":
