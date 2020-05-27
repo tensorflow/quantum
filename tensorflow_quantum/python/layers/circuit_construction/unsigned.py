@@ -14,10 +14,8 @@
 # ==============================================================================
 """Layers for constructing quantum integer circuits on qubit backends."""
 import numbers
-import tensorflow as tf
 import cirq
 
-from tensorflow_quantum.core.ops import tfq_utility_ops
 from tensorflow_quantum.python import util
 
 
