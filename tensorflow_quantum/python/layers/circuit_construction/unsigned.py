@@ -149,8 +149,8 @@ def build_cliques_psum(precisions, cliques):
     return cliques_psum
 
 
-class AppendCliquesExp(tf.keras.layers.Layer):
-    """Layer appending the exponential of q integer cliques to input circuit.
+def build_cliques_exp(precisions, cliques, exp_coeff=None):
+    """Builds circuit representing the exponential of quantum integer cliques.
 
     Suppose we wish to specify the exponential exp(-i*s*(J0^2 + J0*J1 + J1^2)),
     where Ji is the integer operator on register i.  This exponential is
@@ -162,70 +162,30 @@ class AppendCliquesExp(tf.keras.layers.Layer):
     >>> precisions = [3, 3]
     >>> cliques = {(0, 0): 1, (0, 1): 1, (1, 1): 1}
     >>> symbol = sympy.Symbol("theta")
-    >>> exp_layer = AppendCliquesExp(precisions, cliques, symbol)
+    >>> exp_circuit = build_cliques_exp(precisions, cliques, symbol)
 
 
-    Note: When specifying a new layer for a *compiled* `tf.keras.Model` using
-    something like
-    `tfq.layers.AppendCliquesExp()(cirq.Circuit(...), ...)`
-    please be sure to instead use
-    `tfq.layers.AppendCliquesExp()(circuit_input, ...)`
-    where `circuit_input` is a `tf.keras.Input` that is filled with
-    `tfq.conver_to_tensor([cirq.Circuit(..)] * batch_size)` at runtime. This
-    is because compiled Keras models require non keyword layer `call` inputs to
-    be traceable back to a `tf.keras.Input`.
+    Args:
+        precisions: a Python `list` of `int`s.  Entry precisions[i] sets
+            the number of qubits on which quantum integer `i` is supported.
+        cliques: a Python `dict` mapping tuples of quantum integer register
+            labels to the weight of their product.
+        exp_coeff: A Python `str`, `sympy.Symbol`, or float, which will be
+            the coefficient of the cost Hamiltonian in the exponential.
+            If None, the value 1.0 will be used.
 
+    Returns:
+        `cirq.Circuit` which is the exponential of the cliques on registers
+            of the specified sizes.
     """
-
-    def __init__(self, precisions, cliques, exp_coeff=None, **kwargs):
-        """Instantiate this layer.
-
-        Args:
-            precisions: a Python `list` of `int`s.  Entry precisions[i] sets
-                the number of qubits on which quantum integer `i` is supported.
-            cliques: a Python `dict` mapping tuples of quantum integer register
-                labels to the weight of their product.
-            exp_coeff: A Python `str`, `sympy.Symbol`, or float, which will be
-                the coefficient of the cost Hamiltonian in the exponential.
-                If None, the value 1.0 will be used.
-
-        """
-        super().__init__(**kwargs)
-        cliques_psum = build_cliques_psum(precisions, cliques)
-        if exp_coeff is None:
-            exp_coeff = 1.0
-        exp_circuit = util.exponential([cliques_psum], coefficients=[exp_coeff])
-        self.exp_circuit = util.convert_to_tensor([exp_circuit])
-
-    def call(self, inputs):
-        """Keras call method.
-
-        Input options:
-            inputs: a single `cirq.Circuit`, a Python `list` or `tuple` of
-                `cirq.Circuit`s, or a pre-converted `tf.Tensor` of
-                `cirq.Circuit`s.
-
-        Output shape:
-            `tf.Tensor` of shape [batch_size] containing the exponential of the
-                quantum integer cliques appended to the input circuits.
-        """
-        # Ingest and promote circuit.
-        if isinstance(inputs, cirq.Circuit):
-            # process single circuit.
-            inputs = util.convert_to_tensor([inputs])
-        elif isinstance(inputs, (list, tuple)):
-            # process list of circuits.
-            inputs = util.convert_to_tensor(inputs)
-        if not tf.is_tensor(inputs):
-            raise TypeError("circuits cannot be parsed with given input:"
-                            "{}".format(inputs))
-        batch_dim = tf.gather(tf.shape(inputs), 0)
-        append = tf.tile(self.exp_circuit, [batch_dim])
-        return tfq_utility_ops.tfq_append_circuit(inputs, append)
+    cliques_psum = build_cliques_psum(precisions, cliques)
+    if exp_coeff is None:
+        exp_coeff = 1.0
+    return util.exponential([cliques_psum], coefficients=[exp_coeff])
 
 
-class AppendMomentaExp(tf.keras.layers.Layer):
-    """Layer appending the exponential of q integer momenta to input circuit.
+def build_momenta_exp(precisions, cliques, exp_coeff=None):
+    """Builds circuit representing the exponential of quantum integer momenta.
 
     Suppose we wish to specify the exponential exp(-i*s*(K0^2 + K0*K1 + K1^2)),
     where Ki is the generator of the shift operator on the quantum integer on
@@ -238,70 +198,26 @@ class AppendMomentaExp(tf.keras.layers.Layer):
     >>> precisions = [3, 3]
     >>> cliques = {(0, 0): 1, (0, 1): 1, (1, 1): 1}
     >>> symbol = sympy.Symbol("theta")
-    >>> exp_layer = AppendMomentaExp(precisions, cliques, symbol)
+    >>> exp_layer = build_momenta_exp(precisions, cliques, symbol)
 
 
-    Note: When specifying a new layer for a *compiled* `tf.keras.Model` using
-    something like
-    `tfq.layers.AppendMomentaExp()(cirq.Circuit(...), ...)`
-    please be sure to instead use
-    `tfq.layers.AppendMomentaExp()(circuit_input, ...)`
-    where `circuit_input` is a `tf.keras.Input` that is filled with
-    `tfq.conver_to_tensor([cirq.Circuit(..)] * batch_size)` at runtime. This
-    is because compiled Keras models require non keyword layer `call` inputs to
-    be traceable back to a `tf.keras.Input`.
-
+    Args:
+        precisions: a Python `list` of `int`s.  Entry precisions[i] sets
+            the number of qubits on which quantum integer `i` is supported.
+        cliques: a Python `dict` mapping tuples of quantum integer register
+            labels to the weight of their product.
+        exp_coeff: A Python `str`, `sympy.Symbol`, or float, which will be
+            the coefficient of the momentum Hamiltonian in the exponential.
+            If None, the value 1.0 will be used.
     """
-
-    def __init__(self, precisions, cliques, exp_coeff=None, **kwargs):
-        """Instantiate this layer.
-
-        Args:
-            precisions: a Python `list` of `int`s.  Entry precisions[i] sets
-                the number of qubits on which quantum integer `i` is supported.
-            cliques: a Python `dict` mapping tuples of quantum integer register
-                labels to the weight of their product.
-            exp_coeff: A Python `str`, `sympy.Symbol`, or float, which will be
-                the coefficient of the momentum Hamiltonian in the exponential.
-                If None, the value 1.0 will be used.
-
-        """
-        super().__init__(**kwargs)
-        cliques_psum = build_cliques_psum(precisions, cliques)
-        if exp_coeff is None:
-            exp_coeff = 1.0
-        exp_circuit = util.exponential([cliques_psum], coefficients=[exp_coeff])
-        transform = cirq.Circuit()
-        convert = cirq.ConvertToCzAndSingleGates(allow_partial_czs=True)
-        for r in registers_from_precisions(precisions):
-            this_transform = cirq.Circuit(cirq.QFT(*r))
-            convert(this_transform)
-            transform += this_transform
-        self.exp_circuit = util.convert_to_tensor(
-            [transform + exp_circuit + transform**(-1)])
-
-    def call(self, inputs):
-        """Keras call method.
-
-        Input options:
-            inputs: a single `cirq.Circuit`, a Python `list` or `tuple` of
-                `cirq.Circuit`s, or a pre-converted `tf.Tensor` of
-                `cirq.Circuit`s.
-
-        Output shape:
-            `tf.Tensor` of shape [batch_size] containing the exponential of the
-                quantum integer cliques appended to the input circuits.
-        """
-        # Ingest and promote circuit.
-        if isinstance(inputs, cirq.Circuit):
-            # process single circuit.
-            inputs = util.convert_to_tensor([inputs])
-        elif isinstance(inputs, (list, tuple)):
-            # process list of circuits.
-            inputs = util.convert_to_tensor(inputs)
-        if not tf.is_tensor(inputs):
-            raise TypeError("circuits cannot be parsed with given input:"
-                            "{}".format(inputs))
-        batch_dim = tf.gather(tf.shape(inputs), 0)
-        append = tf.tile(self.exp_circuit, [batch_dim])
-        return tfq_utility_ops.tfq_append_circuit(inputs, append)
+    cliques_psum = build_cliques_psum(precisions, cliques)
+    if exp_coeff is None:
+        exp_coeff = 1.0
+    exp_circuit = util.exponential([cliques_psum], coefficients=[exp_coeff])
+    transform = cirq.Circuit()
+    convert = cirq.ConvertToCzAndSingleGates(allow_partial_czs=True)
+    for r in registers_from_precisions(precisions):
+        this_transform = cirq.Circuit(cirq.QFT(*r))
+        convert(this_transform)
+        transform += this_transform
+    return transform + exp_circuit + transform**(-1)
