@@ -253,9 +253,10 @@ class BuildMomentaExpTest(tf.test.TestCase):
         convert(qft_0)
         convert(qft_1)
         for coeff in [3.4, "gamma", sympy.Symbol("symbol")]:
-            expected_circuit = (qft_0 + qft_1 + util.exponential(
-                        [unsigned.build_cliques_psum(p, c)], [coeff]) +
-                    qft_1**-1 + qft_0**-1)
+            expected_circuit = (
+                qft_0 + qft_1 +
+                util.exponential([unsigned.build_cliques_psum(p, c)], [coeff]) +
+                qft_1**-1 + qft_0**-1)
             test_circuit = unsigned.build_momenta_exp(p, c, coeff)
             self.assertTrue(
                 cirq.protocols.approx_eq(expected_circuit, test_circuit))
