@@ -32,6 +32,7 @@ class RotosolveMinimizerTest(tf.test.TestCase, parameterized.TestCase):
 
         class LinearModel(object):
             """ A simple tensorflow linear model"""
+
             def __init__(self):
                 self.w = tf.Variable(0.0)
                 self.b = tf.Variable(0.0)
