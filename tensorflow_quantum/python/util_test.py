@@ -357,6 +357,11 @@ class ExponentialUtilFunctionsTest(tf.test.TestCase):
         util.convert_to_tensor([circuit])
 
 
+# ==============================================================================
+# Unsigned quantum integer tests.
+# ==============================================================================
+
+
 def _append_register_bits(r, r_int, precisions, register_list):
     """Generate a bitstring corresponding to r_int on the indicated register."""
     r_int_str = format(r_int, 'b')
@@ -367,11 +372,6 @@ def _append_register_bits(r, r_int, precisions, register_list):
     for q in register_list[r]:
         bit_circ += cirq.I(q)
     return bit_circ
-
-
-# ==============================================================================
-# Unsigned quantum integer tests.
-# ==============================================================================
 
 
 class ProjectorOnOneTest(tf.test.TestCase):
