@@ -13,12 +13,31 @@
 # limitations under the License.
 # ==============================================================================
 """Quantum datasets for quantum many-body spin systems"""
-from pathlib import Path
+
 from collections import namedtuple
+import os
 
 import numpy as np
 import sympy
 import cirq
+from tensorflow.keras.utils import get_file
+
+SpinSystemInfo = namedtuple(
+    'SpinSystemInfo',
+    [
+        'g',  # Numpy `float` order parameter.
+        'gs',  # Numpy `complex` array ground state wave function from exact
+        # diagonalization.
+        'gs_energy',  # Numpy `float` ground state energy from exact
+        # diagonalization.
+        'res_energy',  # Python `float` residual between the  circuit energy and
+        # the exact energy from exact diagonalization.
+        'fidelity',  # Python `float` overlap between the circuit state and the
+        # exact ground state from exact diagonalization.
+        'params'  # Dict with Python `str` keys and Numpy`float` values.
+        # Contains $M \times P parameters. Here $M$ is the number of
+        # parameters per circuit layer and $P$ the circuit depth.
+    ])
 
 
 def unique_name():
@@ -56,33 +75,27 @@ def spin_system_data_set(nspins, system_name, data_dir):
                 and the exact energy from exact diagonalization.
             - `fidelity`: Python `float` overlap between the circuit state
                 and the exact ground state from exact diagonalization.
-            - `data_path`: Python `str` location of the data set.
-            - `params`: Numpy `float` array the circuit parameters with shape
-                (M,circuit_depth). Here `M` is the number of parameters per
-                circuit layer.
+            - `params`: Dict with Python `str` keys and Numpy`float` values.
+                Contains $M \times P parameters. Here $M$ is the number of
+                parameters per circuit layer and $P$ the circuit depth.
 
     """
-
-    # TODO: How should downloading and storing the data be handled?
+    # Set default storage location
     if data_dir is None:
-        data_dir = Path.expanduser(Path('~/tfq-datasets'))
-        data_dir.mkdir(parents=True, exist_ok=True)
-    else:
-        data_dir = Path(data_dir)
-        assert data_dir.exists(), "{} does not exist".format(data_dir)
-    data_path = data_dir / Path(system_name + "_{}/".format(int(nspins)))
-    download_dataset(system_name, data_path)
+        data_dir = os.path.expanduser('~/tfq-datasets')
+    # Use Keras file downloader.
+    data_path = get_file(fname=system_name + "_{}".format(nspins),
+                         cache_subdir='spin_systems',
+                         cache_dir=data_dir,
+                         origin='link-to-google-storage.page')
     # TODO: This only works for a single order parameter. For
     #  the XY model or XYZ model, this will have to be generalized.
     order_parameters = []
     additional_info = []
-    SpinSystemInfo = namedtuple('SpinSystemInfo', [
-        'g', 'gs', 'gs_energy', 'res_energy', 'fidelity', 'data_path', 'params'
-    ])
-
-    for directory in [x for x in data_path.iterdir() if x.is_dir()]:
-        g = float(str(directory.name))
-        with open(directory / Path('stats.txt'), 'r') as file:
+    parameters = []
+    for directory in [x for x in os.listdir(data_path)]:
+        g = float(directory)
+        with open(data_path + "/" + directory + '/stats.txt', 'r') as file:
             lines = file.readlines()
             res_e = float(lines[0].split('=')[1].strip('\n'))
             fidelity = float(lines[2].split('=')[1].strip('\n'))
@@ -90,27 +103,18 @@ def spin_system_data_set(nspins, system_name, data_dir):
         additional_info.append(
             SpinSystemInfo(
                 g=g,
-                gs=np.load(directory / Path('groundstate.npy')),
-                gs_energy=np.load(directory / Path('energy.npy'))[0],
+                gs=np.load(data_path + "/" + directory +
+                           '/groundstate.npy')[:, 0],
+                gs_energy=np.load(data_path + "/" + directory +
+                                  '/energy.npy')[0],
                 res_energy=res_e,
                 fidelity=fidelity,
-                data_path=str(directory),
-                params=np.load(directory / Path('params.npy')),
+                params={},
             ))
-    return list(zip(*sorted(zip(order_parameters, additional_info))))
-
-
-def download_dataset(system_name, path):
-    """
-    Download the data from <location>
-
-    Args:
-        Python `str` name of the system.
-        path: Python `str` location where to store the data on disk.
-            Default is `~/tfq-datasets`
-
-    """
-    # TODO: Implement this.
+        parameters.append(
+            np.load(data_path + "/" + directory + '/params.npy') / np.pi)
+    return list(
+        zip(*sorted(zip(order_parameters, additional_info, parameters))))
 
 
 def tfi_chain(qubits, boundary_condition='closed', data_dir=None):
@@ -123,20 +127,20 @@ def tfi_chain(qubits, boundary_condition='closed', data_dir=None):
     Contains 81 circuit parameterizations corresponding to
     the ground states of the 1D TFI chain for g in [0.2,1.8].
     This dataset contains 81 datapoints. Each datapoint is represented by a
-    circuit (`cirq.Circuit`), a label (Python `float`) a hamiltonian
-    (`cirq.PauliSum`) and some additional metadata. Each hamiltonian in a
+    circuit (`cirq.Circuit`), a label (Python `float`) a Hamiltonian
+    (`cirq.PauliSum`) and some additional metadata. Each Hamiltonian in a
     datapoint is a 1D TFI chain with boundary condition `boundary_condition` on
     `qubits` whos order parameter dictates the value of label. The circuit in a
-    datapoint prepares (an approximation to) the ground state of the hamiltonian
+    datapoint prepares (an approximation to) the ground state of the Hamiltonian
     in the datapoint.
 
     Example usage:
 
     >>> qbs = cirq.GridQubit.rect(4, 1)
     >>> circuits, labels, pauli_sums, addinfo, variational_circuit  =
-     tfq.datasets.tfi_chain(qbs, 'closed')
+    ... tfq.datasets.tfi_chain(qbs, 'closed')
 
-    We can print the available order parameters
+    You can print the available order parameters
 
     >>> [info.g for info in addinfo]
     [0.20, 0.22, 0.24, ... ,1.76, 1.78, 1.8]
@@ -144,21 +148,22 @@ def tfi_chain(qubits, boundary_condition='closed', data_dir=None):
     and the circuit corresponding to the ground state for a certain order
     parameter
 
+    >>> print(circuits[10])
+                                                          ┌─────── ...
+    (0, 0): ───H───ZZ──────────────────────────────────ZZ───────── ...
+                   │                                   │
+    (1, 0): ───H───ZZ^0.761───ZZ─────────X^0.641───────┼────────── ...
+                              │                        │
+    (2, 0): ───H──────────────ZZ^0.761───ZZ────────────┼────────── ...
+                                         │             │
+    (3, 0): ───H─────────────────────────ZZ^0.761──────ZZ^0.761─── ...
+                                                      └─────────── ...
+
+    The labels indicate the phase of the system
     >>> labels[10]
     0
-    >>> print(circuits[10])
 
-                              ┌────────────────┐
-    (0, 0): ───H───ZZ──────────────────ZZ──────────Rx(0.641π)── ...
-                   │                   │
-    (1, 0): ───H───ZZ^0.761────ZZ──────┼───────────Rx(0.641π)── ...
-                               │       │
-    (2, 0): ───H───ZZ──────────ZZ^0.761┼───────────Rx(0.641π)── ...
-                   │                   │
-    (3, 0): ───H───ZZ^0.761────────────ZZ^0.761────Rx(0.641π)── ...
-                              └────────────────┘
-
-    Additionally, we can obtain the `cirq.PauliSum` representation of the
+    Additionally, you can obtain the `cirq.PauliSum` representation of the
     Hamiltonian
 
     >>> print(pauli_sums[10])
@@ -166,11 +171,11 @@ def tfi_chain(qubits, boundary_condition='closed', data_dir=None):
     Z((3, 0))-1.000*Z((0, 0))*Z((3, 0))-0.400*X((0, 0))-0.400*X((1, 0))-
     0.400*X((2, 0))-0.400*X((3, 0))
 
-    Finally, the fourth output, `systems`, contains additional information
+    The fourth output, `addinfo`, contains additional information
     about each instance of the system (see `tfq.datasets.spin_system.SpinSystem`
     ).
 
-    For instance, we can print the ground state obtained from
+    For instance, you can print the ground state obtained from
     exact diagonalization
 
     >>> addinfo[10].gs
@@ -185,26 +190,39 @@ def tfi_chain(qubits, boundary_condition='closed', data_dir=None):
     >>> addinfo[10].gs_energy
     -4.169142950406478
 
-    Or we could print the parameters
+    You can also inspect the parameters
 
     >>> addinfo[10].params
-    [[2.39218603 2.1284263 ]
-     [2.01284773 2.30447438]]
+    {'theta_0': 0.7614564630036476, 'theta_1': 0.6774991338794768,
+    'theta_2': 0.6407093304791429, 'theta_3': 0.7335369771742435}
 
-    If we want to know the path where the data is stored we use
-
-    >>> addinfo[10].data_path
-    /home/username/tfq-datasets/TFI_closed_4/0.40
-
+    # and change them to experiment with different parameter values by using
+    # the unresolved variational circuit returned by tfichain
+    >>> new_params = {}
+    ... for symbol_name, value in addinfo[10].params.items():
+    ...    new_params[symbol_name] = 0.5 * value
+    >>> new_params
+    {'theta_0': 0.3807282315018238, 'theta_1': 0.3387495669397384,
+    'theta_2': 0.32035466523957146, 'theta_3': 0.36676848858712174}
+    >>> new_circuit = cirq.resolve_parameters(variational_circuit, new_params)
+    >>> print(new_circuit)
+                                                           ┌─────── ...
+    (0, 0): ───H───ZZ──────────────────────────────────ZZ───────── ...
+                   │                                   │
+    (1, 0): ───H───ZZ^0.761───ZZ─────────X^0.32────────┼────────── ...
+                              │                        │
+    (2, 0): ───H──────────────ZZ^0.761───ZZ────────────┼────────── ...
+                                         │             │
+    (3, 0): ───H─────────────────────────ZZ^0.761──────ZZ^0.761─── ...
+                                                      └─────────── ...
 
     Args:
-        qubits: Python `lst` of `cirq.GridQubit`s of size (N,1).
-            Supported number of spins are [4, 8, 12, 16].
+        qubits: Python `lst` of `cirq.GridQubit`s. Supported number of spins
+            are [4, 8, 12, 16].
         boundary_condition: Python `str` indicating the boundary condition
             of the chain. Supported boundary conditions are ['closed']
-        data_dir: Python `str` location where to store the data on disk.
-            Default is `~/tfq-datasets`
-
+        data_dir: Optional Python `str` location where to store the data on
+            disk. Defaults to `~/tfq-datasets`
     Returns:
         A Python `lst` cirq.Circuit of depth N / 2 with resolved parameters.
         A Python `lst` of labels, 0, for the ferromagnetic phase (`g<1`), 1 for
@@ -223,21 +241,28 @@ def tfi_chain(qubits, boundary_condition='closed', data_dir=None):
             - `fidelity`: Python `float` overlap between the circuit state
                 and the exact ground state from exact diagonalization.
             - `data_path`: Python `str` location of the data set.
-            - `params`: Numpy `float` array the circuit parameters with shape
-                (2,circuit_depth). Here `params[0]` and `params[1]` correspond
-                to the `ZZ` and `X` gate parameters respectively.
+            - `params`: Python `dict` with a field `raw` containing a Numpy
+                `float` array with circuit parameters with shape
+                (2, circuit_depth). Here `params[0]` and `params[1]` correspond
+                to the `ZZ` and `X` gate parameters respectively. The field
+                `symbol_names` contains a Numpy `str` array with a unique symbol
+                name for each parameter. These names correspond to the `Sympy`
+                variables in the returned variational circuit. The field
+                `param_resolver`
         A variational `cirq.Circuit` with unresolved parameters.
     """
 
     supported_n = [4, 8, 12, 16]
     supported_bc = ['closed']
+    if not all(not isinstance(q, list) for q in qubits):
+        raise TypeError("qubits must be a one-dimensional list")
 
     if not all(isinstance(q, cirq.GridQubit) for q in qubits):
         raise TypeError("qubits must be a list of cirq.GridQubit objects.")
 
     nspins = len(qubits)
 
-    if len(qubits) not in supported_n:
+    if nspins not in supported_n:
         raise ValueError('Supported number of spins are {}, received {}'.format(
             supported_n, len(qubits)))
 
@@ -246,49 +271,50 @@ def tfi_chain(qubits, boundary_condition='closed', data_dir=None):
             'Supported boundary conditions are {}, received {}'.format(
                 supported_bc, boundary_condition))
 
-    boundary_condition = boundary_condition
     name = 'TFI_' + boundary_condition
 
-    def get_hamiltonian(qbs, g):
-        paulisum = sum(-cirq.Z(q1) * cirq.Z(q2) for q1, q2 in zip(qbs, qbs[1:]))
-        if boundary_condition == 'closed':
-            paulisum += -cirq.Z(qbs[0]) * cirq.Z(qbs[-1])
-        paulisum += -g * sum(cirq.X(q) for q in qbs)
-        return paulisum
-
-    order_parameters, additional_info = spin_system_data_set(
+    order_parameters, additional_info, params = spin_system_data_set(
         nspins, name, data_dir)
 
     name_generator = unique_name()
+
+    # 2 * N/2 parameters
     symbols = [sympy.Symbol(next(name_generator)) for _ in range(nspins)]
     symbol_names = np.array([s.name for s in symbols]).reshape(
         (2, int(nspins / 2)))
-    symbols = np.array(symbols).reshape((2, int(nspins / 2)))
+    symbols = np.array(symbols).reshape((2, nspins // 2))
 
     # Define the circuit
-    circuit = cirq.Circuit()
-    circuit.append(cirq.H.on_each(qubits))
+    circuit = cirq.Circuit(cirq.H.on_each(qubits))
 
-    for d in range(int(nspins / 2)):
+    for d in range(nspins // 2):
         circuit.append(
-            cirq.ZZ(q1, q2)**(symbols[0, d] / np.pi)
+            cirq.ZZ(q1, q2)**(symbols[0, d])
             for q1, q2 in zip(qubits, qubits[1:]))
         if boundary_condition == 'closed':
             circuit.append(
-                cirq.ZZ(qubits[nspins - 1], qubits[0])**(symbols[0, d] / np.pi))
-        circuit.append(cirq.rx(symbols[1, d])(q1) for q1 in qubits)
+                cirq.ZZ(qubits[nspins - 1], qubits[0])**(symbols[0, d]))
+        circuit.append(cirq.X(q1)**(symbols[1, d]) for q1 in qubits)
 
     # Resolve the parameters
     resolved_circuits = []
     hamiltonians = []
 
     for i in range(len(order_parameters)):
-        parameter_map = dict(
-            zip(symbol_names.flatten(), additional_info[i].params.flatten()))
-        resolved_circuits.append(cirq.resolve_parameters(
-            circuit, parameter_map))
+        for symbol_name, value in zip(symbol_names.flatten(),
+                                      params[i].flatten()):
+            additional_info[i].params[symbol_name] = value
+        param_resolver = cirq.resolve_parameters(circuit,
+                                                 additional_info[i].params)
+        resolved_circuits.append(param_resolver)
 
-        hamiltonians.append(get_hamiltonian(qubits, order_parameters[i]))
+        # Make the PauliSum
+        paulisum = sum(
+            -cirq.Z(q1) * cirq.Z(q2) for q1, q2 in zip(qubits, qubits[1:]))
+        if boundary_condition == 'closed':
+            paulisum += -cirq.Z(qubits[0]) * cirq.Z(qubits[-1])
+        paulisum += -order_parameters[i] * sum(cirq.X(q) for q in qubits)
+        hamiltonians.append(paulisum)
 
     labels = np.zeros(len(order_parameters), dtype=np.int)
     labels[np.array(order_parameters) < 1.0] = 0
