@@ -47,7 +47,8 @@ def prefer_static_value(x):
 
 
 RotosolveOptimizerResults = collections.namedtuple(
-    'RotosolveOptimizerResults', [
+    'RotosolveOptimizerResults',
+    [
         'converged',  # Scalar boolean tensor indicating whether the minimum
         # was found within tolerance.
         'num_iterations',  # The number of iterations of the BFGS update.
@@ -65,13 +66,12 @@ RotosolveOptimizerResults = collections.namedtuple(
         'tolerance',  # Define the stop criteria. Iteration will stop when the
         # objective value difference between two iterations is smaller than
         # tolerance
-        'solve_param_i', # The parameter index where rotosolve is currently
+        'solve_param_i',  # The parameter index where rotosolve is currently
         # modifying. Reserved for internal use.
     ])
 
 
-def _get_initial_state(initial_position,
-                       tolerance, expectation_value_function):
+def _get_initial_state(initial_position, tolerance, expectation_value_function):
     """Create RotosolveOptimizerResults with initial state of search ."""
     init_args = {
         "converged": tf.Variable(False),
@@ -185,23 +185,26 @@ def minimize(expectation_value_function,
     """
 
     with tf.name_scope(name or 'minimize'):
-        initial_position = tf.convert_to_tensor(
-            initial_position, name='initial_position', dtype='float32')
+        initial_position = tf.convert_to_tensor(initial_position,
+                                                name='initial_position',
+                                                dtype='float32')
         dtype = initial_position.dtype.base_dtype
-        tolerance = tf.convert_to_tensor(
-            tolerance, dtype=dtype, name='grad_tolerance')
-        max_iterations = tf.convert_to_tensor(
-            max_iterations, name='max_iterations')
+        tolerance = tf.convert_to_tensor(tolerance,
+                                         dtype=dtype,
+                                         name='grad_tolerance')
+        max_iterations = tf.convert_to_tensor(max_iterations,
+                                              name='max_iterations')
 
         def _rotosolve_one_parameter_once(state):
             """
             Rotosolve a single parameter.
             """
-            delta_shift = tf.reshape(tf.cast(tf.sparse.to_dense(
-                tf.sparse.SparseTensor(
-                    [[state.solve_param_i, 0]], [math.pi / 2],
-                    [prefer_static_shape(state.position)[0], 1])
-            ), dtype=dtype), prefer_static_shape(state.position))
+            delta_shift = tf.reshape(
+                tf.cast(tf.sparse.to_dense(
+                    tf.sparse.SparseTensor(
+                        [[state.solve_param_i, 0]], [math.pi / 2],
+                        [prefer_static_shape(state.position)[0], 1])),
+                        dtype=dtype), prefer_static_shape(state.position))
 
             # Evaluate three different point for curve fitting
             v_l, v_n, v_r = expectation_value_function(
@@ -213,15 +216,17 @@ def minimize(expectation_value_function,
             delta_update = -math.pi / 2 - \
                 tf.math.atan2(2 * v_n - v_l - v_r, v_r - v_l)
 
-            delta_update_tensor = tf.reshape(tf.cast(tf.sparse.to_dense(
-                tf.sparse.SparseTensor(
-                    [[state.solve_param_i, 0]], [delta_update],
-                     [prefer_static_shape(state.position)[0], 1])),
-                dtype=dtype), prefer_static_shape(state.position))
+            delta_update_tensor = tf.reshape(
+                tf.cast(tf.sparse.to_dense(
+                    tf.sparse.SparseTensor(
+                        [[state.solve_param_i, 0]], [delta_update],
+                        [prefer_static_shape(state.position)[0], 1])),
+                        dtype=dtype), prefer_static_shape(state.position))
 
             state.solve_param_i.assign_add(1)
-            state.position.assign(tf.math.floormod(
-                state.position + delta_update_tensor, math.pi * 2))
+            state.position.assign(
+                tf.math.floormod(state.position + delta_update_tensor,
+                                 math.pi * 2))
 
             state.last_objective_value.assign(state.objective_value)
             state.objective_value.assign(
@@ -241,7 +246,8 @@ def minimize(expectation_value_function,
             return tf.while_loop(
                 cond=_cond_internal,
                 body=_rotosolve_one_parameter_once,
-                loop_vars=[state], parallel_iterations=1,
+                loop_vars=[state],
+                parallel_iterations=1,
             )
 
         # The `state` here is a `RotosolveOptimizerResults` tuple with
@@ -261,20 +267,18 @@ def minimize(expectation_value_function,
 
             state.num_iterations.assign_add(1)
             state.converged.assign(
-                tf.abs(
-                    state.objective_value - state.last_objective_value
-                ) < state.tolerance)
+                tf.abs(state.objective_value -
+                       state.last_objective_value) < state.tolerance)
 
             return [state]
 
-        initial_state = _get_initial_state(
-            initial_position, tolerance, expectation_value_function)
+        initial_state = _get_initial_state(initial_position, tolerance,
+                                           expectation_value_function)
 
         initial_state.objective_value.assign(
             expectation_value_function(initial_state.position))
 
-        return tf.while_loop(
-            cond=_cond,
-            body=_body,
-            loop_vars=[initial_state],
-            parallel_iterations=1)[0]
+        return tf.while_loop(cond=_cond,
+                             body=_body,
+                             loop_vars=[initial_state],
+                             parallel_iterations=1)[0]

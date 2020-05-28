@@ -22,6 +22,7 @@ from operator import mul
 from functools import reduce
 import tensorflow as tf
 
+
 def function_factory(model, loss, train_x, train_y):
     """A factory to create a function required by tfq.optimizer.rotosolve.
     This function is originally defined for l-bgfs minimizer for tensorflow
@@ -50,8 +51,8 @@ def function_factory(model, loss, train_x, train_y):
 
     for i, shape in enumerate(shapes):
         n = reduce(mul, shape)
-        idx.append(
-            tf.reshape(tf.range(count, count + n, dtype=tf.int32), shape))
+        idx.append(tf.reshape(tf.range(count, count + n, dtype=tf.int32),
+                              shape))
         part.extend([i] * n)
         count += n
 

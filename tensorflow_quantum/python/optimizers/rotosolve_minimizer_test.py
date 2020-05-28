@@ -38,9 +38,7 @@ class RotosolveMinimizerTest(tf.test.TestCase, parameterized.TestCase):
             [1, 1],
         ], dtype=float)
 
-        y = np.asarray([
-            [-1], [1], [1], [-1]
-        ], dtype=float)
+        y = np.asarray([[-1], [1], [1], [-1]], dtype=float)
 
         def convert_to_circuit(input_data):
             """Encode into quantum datapoint."""
@@ -79,4 +77,4 @@ class RotosolveMinimizerTest(tf.test.TestCase, parameterized.TestCase):
         # Initial guess of the parameter from random number
         rotosolve_minimizer.minimize(
             function_factory(model, hinge_loss, x_circ, y),
-                                     np.random.random(2) * 2 * np.pi)
+            np.random.random(2) * 2 * np.pi)
