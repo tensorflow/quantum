@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 """A collection of helper functions that are useful several places in tfq."""
+import numbers
 import random
 import itertools
 
@@ -686,7 +687,7 @@ def unsigned_cliques_exp(precisions, cliques, exp_coeff=None):
     cliques_psum = unsigned_cliques_psum(precisions, cliques)
     if exp_coeff is None:
         exp_coeff = 1.0
-    return util.exponential([cliques_psum], coefficients=[exp_coeff])
+    return exponential([cliques_psum], coefficients=[exp_coeff])
 
 
 def unsigned_momenta_exp(precisions, cliques, exp_coeff=None):
@@ -722,7 +723,7 @@ def unsigned_momenta_exp(precisions, cliques, exp_coeff=None):
     cliques_psum = unsigned_cliques_psum(precisions, cliques)
     if exp_coeff is None:
         exp_coeff = 1.0
-    exp_circuit = util.exponential([cliques_psum], coefficients=[exp_coeff])
+    exp_circuit = exponential([cliques_psum], coefficients=[exp_coeff])
     transform = cirq.Circuit()
     convert = cirq.ConvertToCzAndSingleGates(allow_partial_czs=True)
     for r in registers_from_precisions(precisions):

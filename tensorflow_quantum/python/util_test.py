@@ -438,7 +438,7 @@ class RegistersFromPrecisionsTest(tf.test.TestCase):
         self.assertEqual(len(test_set), sum(precisions))
 
 
-class BuildUnsignedCliquesPsumTest(tf.test.TestCase):
+class UnsignedCliquesPsumTest(tf.test.TestCase):
     """Test the build_unsigned_cliques_psum function."""
 
     def test_bad_inputs(self):
@@ -446,42 +446,42 @@ class BuildUnsignedCliquesPsumTest(tf.test.TestCase):
         p = [3, 4]
         c = {(0,): 2, (1,): 3, (0, 1): 4}
         with self.assertRaisesRegex(TypeError, expected_regex="list"):
-            _ = util.build_unsigned_cliques_psum("junk", c)
+            _ = util.unsigned_cliques_psum("junk", c)
         with self.assertRaisesRegex(TypeError, expected_regex="integer"):
-            _ = util.build_unsigned_cliques_psum(["junk"], c)
+            _ = util.unsigned_cliques_psum(["junk"], c)
         with self.assertRaisesRegex(TypeError, expected_regex="greater than"):
-            _ = util.build_unsigned_cliques_psum([2, 0], c)
+            _ = util.unsigned_cliques_psum([2, 0], c)
         with self.assertRaisesRegex(ValueError, expected_regex="Cannot access"):
             # All labels must be in range
-            _ = util.build_unsigned_cliques_psum(p, {(0, 1, 2): 3})
+            _ = util.unsigned_cliques_psum(p, {(0, 1, 2): 3})
         with self.assertRaisesRegex(TypeError, expected_regex="dict"):
-            _ = util.build_unsigned_cliques_psum(p, "junk")
+            _ = util.unsigned_cliques_psum(p, "junk")
         with self.assertRaisesRegex(TypeError, expected_regex="dict"):
-            _ = util.build_unsigned_cliques_psum(p, [1])
+            _ = util.unsigned_cliques_psum(p, [1])
         with self.assertRaisesRegex(TypeError, expected_regex="tuple"):
             # Most common error, where the key is not parsed as a tuple
-            _ = util.build_unsigned_cliques_psum(p, {(0): 1})
+            _ = util.unsigned_cliques_psum(p, {(0): 1})
         with self.assertRaisesRegex(TypeError, expected_regex="tuple"):
             # Most common error, where the key is not parsed as a tuple
-            _ = util.build_unsigned_cliques_psum(p, {(0,): 1, (0): 1})
+            _ = util.unsigned_cliques_psum(p, {(0,): 1, (0): 1})
         with self.assertRaisesRegex(TypeError, expected_regex="tuple"):
-            _ = util.build_unsigned_cliques_psum(p, {"junk": 1})
+            _ = util.unsigned_cliques_psum(p, {"junk": 1})
         with self.assertRaisesRegex(TypeError, expected_regex="integer"):
-            _ = util.build_unsigned_cliques_psum(p, {(0, 1, "junk"): 1})
+            _ = util.unsigned_cliques_psum(p, {(0, 1, "junk"): 1})
         with self.assertRaisesRegex(TypeError, expected_regex="non-negative"):
-            _ = util.build_unsigned_cliques_psum(p, {(0, 1, -1): 1})
+            _ = util.unsigned_cliques_psum(p, {(0, 1, -1): 1})
         with self.assertRaisesRegex(TypeError, expected_regex="integer"):
-            _ = util.build_unsigned_cliques_psum(p, {(2.7,): 1})
+            _ = util.unsigned_cliques_psum(p, {(2.7,): 1})
         with self.assertRaisesRegex(TypeError, expected_regex="value"):
-            _ = util.build_unsigned_cliques_psum(p, {(0,): "junk"})
+            _ = util.unsigned_cliques_psum(p, {(0,): "junk"})
         with self.assertRaisesRegex(TypeError, expected_regex="value"):
-            _ = util.build_unsigned_cliques_psum(p, {(0,): 1, (1,): 1j})
+            _ = util.unsigned_cliques_psum(p, {(0,): 1, (1,): 1j})
 
     def test_psum_return(self):
         """Confirm operators are built correctly."""
         p = [3, 4]
         c = {(0,): 2, (1,): 3, (0, 1): 4, (): 7}
-        test_psum = util.build_unsigned_cliques_psum(p, c)
+        test_psum = util.unsigned_cliques_psum(p, c)
         registers = util.registers_from_precisions(p)
         j0 = util.unsigned_integer_operator(registers[0])
         j1 = util.unsigned_integer_operator(registers[1])
@@ -495,7 +495,7 @@ class BuildUnsignedCliquesPsumTest(tf.test.TestCase):
         registers = util.registers_from_precisions(precisions)
         cliques = [{(0,): 1}, {(1,): 1}, {(2,): 1}]
         cliques_psums = [
-            util.build_unsigned_cliques_psum(precisions, c) for c in cliques
+            util.unsigned_cliques_psum(precisions, c) for c in cliques
         ]
         exp_layer = expectation.Expectation()
         # Test that all counts increment correctly
@@ -517,7 +517,7 @@ class BuildUnsignedCliquesPsumTest(tf.test.TestCase):
         precisions = [5]
         registers = util.registers_from_precisions(precisions)
         cliques = {(0, 0): 1}
-        cliques_psums = util.build_unsigned_cliques_psum(precisions, cliques)
+        cliques_psums = util.unsigned_cliques_psum(precisions, cliques)
         exp_layer = expectation.Expectation()
         # Test that all counts increment correctly
         for i in range(2**precisions[0]):
@@ -531,7 +531,7 @@ class BuildUnsignedCliquesPsumTest(tf.test.TestCase):
         registers = util.registers_from_precisions(precisions)
         # test the polynomial y = 3 + 5.2x - 7.5x**2 + 0.3x**3
         cliques = {(): 3, (0,): 5.2, (0, 0): -7.5, (0, 0, 0): 0.3}
-        cliques_psums = util.build_unsigned_cliques_psum(precisions, cliques)
+        cliques_psums = util.unsigned_cliques_psum(precisions, cliques)
         exp_layer = expectation.Expectation()
         # Test that all counts increment correctly
         for i in range(2**precisions[0]):
@@ -542,47 +542,47 @@ class BuildUnsignedCliquesPsumTest(tf.test.TestCase):
                                 atol=1e-4)
 
 
-class BuildUnsignedCliquesExpTest(tf.test.TestCase):
-    """Test the build_unsigned_cliques_exp function."""
+class UnsignedCliquesExpTest(tf.test.TestCase):
+    """Test the unsigned_cliques_exp function."""
 
-    def test_build_unsigned_cliques_exp_error(self):
-        """Test that build_unsigned_cliques_exp raises error on bad input."""
+    def test_unsigned_cliques_exp_error(self):
+        """Test that unsigned_cliques_exp raises error on bad input."""
         p = [5]
         c = {(0,): 1}
         with self.assertRaisesRegex(TypeError, expected_regex=""):
-            _ = util.build_unsigned_cliques_exp("junk", c)
+            _ = util.unsigned_cliques_exp("junk", c)
         with self.assertRaisesRegex(TypeError, expected_regex=""):
-            _ = util.build_unsigned_cliques_exp(p, "junk")
+            _ = util.unsigned_cliques_exp(p, "junk")
         with self.assertRaisesRegex(TypeError, expected_regex=""):
-            _ = util.build_unsigned_cliques_exp(p, c, [])
+            _ = util.unsigned_cliques_exp(p, c, [])
 
-    def test_build_unsigned_cliques_exp_return(self):
+    def test_unsigned_cliques_exp_return(self):
         """Test that the correct circuit is generated."""
         p = [3, 4]
         c = {(1,): 2}
         for coeff in [3.4, "gamma", sympy.Symbol("symbol")]:
             expected_circuit = util.exponential(
-                [util.build_unsigned_cliques_psum(p, c)], [coeff])
-            test_circuit = util.build_unsigned_cliques_exp(p, c, coeff)
+                [util.unsigned_cliques_psum(p, c)], [coeff])
+            test_circuit = util.unsigned_cliques_exp(p, c, coeff)
             self.assertTrue(
                 cirq.protocols.approx_eq(expected_circuit, test_circuit))
 
 
-class BuildUnsignedMomentaExpTest(tf.test.TestCase):
-    """Test the build_unsigned_momenta_exp function."""
+class UnsignedMomentaExpTest(tf.test.TestCase):
+    """Test the unsigned_momenta_exp function."""
 
-    def test_build_unsigned_momenta_exp_layer_error(self):
-        """Test that build_unsigned_momenta_exp raises error on bad input."""
+    def test_unsigned_momenta_exp_layer_error(self):
+        """Test that unsigned_momenta_exp raises error on bad input."""
         p = [5]
         c = {(0,): 1}
         with self.assertRaisesRegex(TypeError, expected_regex=""):
-            _ = util.build_unsigned_momenta_exp("junk", c)
+            _ = util.unsigned_momenta_exp("junk", c)
         with self.assertRaisesRegex(TypeError, expected_regex=""):
-            _ = util.build_unsigned_momenta_exp(p, "junk")
+            _ = util.unsigned_momenta_exp(p, "junk")
         with self.assertRaisesRegex(TypeError, expected_regex=""):
-            _ = util.build_unsigned_momenta_exp(p, c, [])
+            _ = util.unsigned_momenta_exp(p, c, [])
 
-    def test_build_unsigned_momenta_exp_return(self):
+    def test_unsigned_momenta_exp_return(self):
         """Test that the correct circuit is generated."""
         p = [3, 4]
         c = {(1,): 2}
@@ -595,9 +595,9 @@ class BuildUnsignedMomentaExpTest(tf.test.TestCase):
         for coeff in [3.4, "gamma", sympy.Symbol("symbol")]:
             expected_circuit = (
                 qft_0 + qft_1 +
-                util.exponential([util.build_unsigned_cliques_psum(p, c)], [coeff]) +
+                util.exponential([util.unsigned_cliques_psum(p, c)], [coeff]) +
                 qft_1**-1 + qft_0**-1)
-            test_circuit = util.build_unsigned_momenta_exp(p, c, coeff)
+            test_circuit = util.unsigned_momenta_exp(p, c, coeff)
             self.assertTrue(
                 cirq.protocols.approx_eq(expected_circuit, test_circuit))
 

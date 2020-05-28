@@ -20,5 +20,6 @@ py_test(
     deps = [
         ":util",
         "//tensorflow_quantum/core/serialize:serializer",
+        "//tensorflow_quantum/python/layers/circuit_executors:expectation",
     ],
 )
