@@ -639,7 +639,9 @@ def unsigned_cliques_psum(precisions, cliques):
             raise TypeError("Each value in cliques must be a real number,"
                             " got {}.".format(value))
     register_list = registers_from_precisions(precisions)
-    op_list = [unsigned_integer_operator(register) for register in register_list]
+    op_list = [
+        unsigned_integer_operator(register) for register in register_list
+    ]
     cliques_psum = cirq.PauliSum()
     for clique in cliques:
         if clique:
