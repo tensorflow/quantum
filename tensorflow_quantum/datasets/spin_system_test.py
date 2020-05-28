@@ -40,16 +40,26 @@ class SpinSystemDataTest(tf.test.TestCase):
                                     expected_regex='must be a list of'):
             spin_system.tfi_chain(['bob'])
 
+        with self.assertRaisesRegex(TypeError,
+                                    expected_regex='must be a one-dimensional'):
+            qbs = cirq.GridQubit.rect(4, 1)
+            spin_system.tfi_chain([qbs])
+
     def test_fidelity(self):
         """Test that it returns the correct number of circuits."""
-        qbs = cirq.GridQubit.rect(4, 1)
-        circuit, _, _, addinfo, _ = spin_system.tfi_chain(qbs, 'closed')
-        fidelities = []
-        for n in range(len(addinfo)):
-            phi = cirq.Simulator().simulate(circuit[n]).final_state
-            gs = addinfo[n].gs
-            fidelities.append(np.abs(np.conj(np.dot(gs.flatten(), phi))))
-        assert all([np.isclose(fid, 1.0, rtol=1e-5) for fid in fidelities])
+        supported_nspins = [4, 8, 12, 16]
+        for nspins in supported_nspins:
+            qbs = cirq.GridQubit.rect(nspins, 1)
+            circuits, _, _, addinfo, _ = spin_system.tfi_chain(
+                qbs,
+                'closed',
+            )
+            fidelities = []
+            for n in range(len(addinfo)):
+                phi = cirq.Simulator().simulate(circuits[n]).final_state
+                gs = addinfo[n].gs
+                fidelities.append(np.abs(np.conj(np.dot(gs, phi))))
+            assert all([np.isclose(fid, 1.0, rtol=1e-3) for fid in fidelities])
 
     def test_paulisum(self):
         """Test that hamiltonian returns a PauliSum"""
