@@ -25,9 +25,9 @@ def prefer_static_shape(x):
     """Return static shape of tensor `x` if available,
      else `tf.shape(x)`.
     Args:
-      x: `Tensor` (already converted).
+      x: `tf.Tensor` (already converted).
     Returns:
-      Numpy array (if static shape is obtainable), else `Tensor`.
+      Numpy array (if static shape is obtainable), else `tf.Tensor`.
     """
     return prefer_static_value(tf.shape(x))
 
@@ -35,9 +35,9 @@ def prefer_static_shape(x):
 def prefer_static_value(x):
     """Return static value of tensor `x` if available, else `x`.
     Args:
-      x: `Tensor` (already converted).
+      x: `tf.Tensor` (already converted).
     Returns:
-      Numpy array (if static value is obtainable), else `Tensor`.
+      Numpy array (if static value is obtainable), else `tf.Tensor`.
     """
     static_x = tf.get_static_value(x)
     if static_x is not None:
@@ -171,21 +171,21 @@ def minimize(expectation_value_function,
 
     Args:
       expectation_value_function:  A Python callable that accepts
-        a point as a real `Tensor` and returns a tuple of `Tensor`s
+        a point as a real `tf.Tensor` and returns a `tf.Tensor`s
         of real dtype containing the value of the function.
         The function to be minimized. The input is of shape `[..., n]`,
         where `n` is the size of the domain of input points.
-        The return value is a real `Tensor` of matching shape `[...]`.
+        The return value is a real `tf.Tensor` of matching shape `[...]`.
         This must be a linear combination of quantum measurement
         expectation value, otherwise this algorithm cannot work.
-      initial_position: Real `Tensor` of shape `[..., n]`. The starting
+      initial_position: Real `tf.Tensor` of shape `[..., n]`. The starting
         point, or points when using batching dimensions, of the search
         procedure. At these points the function value and the gradient
          norm should be finite.
-      tolerance: Scalar `Tensor` of real dtype. Specifies the tolerance
+      tolerance: Scalar `tf.Tensor` of real dtype. Specifies the tolerance
         for the procedure. If the supremum norm between two iteration
         vector is below this number, the algorithm is stopped.
-      name: (Optional) Python str. The name prefixed to the ops created
+      name: (Optional) Python `str`. The name prefixed to the ops created
         by this function. If not supplied, the default name 'minimize'
         is used.
 
