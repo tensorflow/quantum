@@ -49,26 +49,26 @@ RotosolveOptimizerResults = collections.namedtuple(
     'RotosolveOptimizerResults',
     [
         'converged',  # Scalar boolean tensor indicating whether the minimum
-                      # was found within tolerance.
+        # was found within tolerance.
         'num_iterations',  # The number of iterations of the rotosolve update.
-        'num_objective_evaluations',# The total number of objective 
-                                    # evaluations performed.
+        'num_objective_evaluations',  # The total number of objective 
+        # evaluations performed.
         'position',  # A tensor containing the last argument value found
-                     # during the search. If the search converged, then
-                     # this value is the argmin of the objective function.
-                     # A tensor containing the value of the objective from
-                     # previous iteration
-        'last_objective_value', # Save the latest evalued value of the 
-                                # objective function 
+        # during the search. If the search converged, then
+        # this value is the argmin of the objective function.
+        # A tensor containing the value of the objective from
+        # previous iteration
+        'last_objective_value',  # Save the latest evalued value of the 
+        # objective function
         'objective_value',  # A tensor containing the value of the objective
-                            # function at the `position`. If the search
-                            # converged, then this is the (local) minimum of
-                            # the objective function.
+        # function at the `position`. If the search
+        # converged, then this is the (local) minimum of
+        # the objective function.
         'tolerance',  # Define the stop criteria. Iteration will stop when the
-                      # objective value difference between two iterations is 
-                      # smaller than tolerance
+        # objective value difference between two iterations is
+        # smaller than tolerance
         'solve_param_i',  # The parameter index where rotosolve is currently
-                          # modifying. Reserved for internal use.
+        # modifying. Reserved for internal use.
     ])
 
 
@@ -101,80 +101,89 @@ def minimize(expectation_value_function,
     The following example demonstrates the Rotosolve optimizer attempting
      to find the minimum for two qubit ansatz expectation value.
 
-    ```python
+    We first start by defining some variables for training dataset. In this 
+    example we train a circuit perform an XOR operation 
 
-    # In this example we train a circuit perform an XOR operation
-    X = np.asarray([
-        [0, 0],
-        [0, 1],
-        [1, 0],
-        [1, 1],
-    ], dtype=float)
+    >>> X = np.asarray([
+    ...    [0, 0],
+    ...    [0, 1],
+    ...    [1, 0],
+    ...    [1, 1],
+    ...], dtype=float)
 
-    Y = np.asarray([
-        [-1], [1], [1], [-1]
-    ], dtype=float)
+    >>> Y = np.asarray([
+    ...    [-1], [1], [1], [-1]
+    ...], dtype=float)
 
-    def convert_to_circuit(input_data):
-        # Encode into quantum datapoint.
-        values = np.ndarray.flatten(input_data)
-        qubits = cirq.GridQubit.rect(1, 2)
-        circuit = cirq.Circuit()
-        for i, value in enumerate(values):
-            if value:
-                circuit.append(cirq.X(qubits[i]))
-        return circuit
+    While we have classical dataset defined, it needs to be 
+    converted into a quantum data before a quantum circuit 
+    can handle it. We here by encode the data as follow.
 
-    x_circ = tfq.convert_to_tensor([convert_to_circuit(x) for x in X])
+    >>> def convert_to_circuit(input_data):
+    ...    # Encode into quantum datapoint.
+    ...    values = np.ndarray.flatten(input_data)
+    ...    qubits = cirq.GridQubit.rect(1, 2)
+    ...    circuit = cirq.Circuit()
+    ...    for i, value in enumerate(values):
+    ...        if value:
+    ...            circuit.append(cirq.X(qubits[i]))
+    ...    return circuit
 
-    # Create two qubits
-    q0, q1 = cirq.GridQubit.rect(1, 2)
+    >>> x_circ = tfq.convert_to_tensor([convert_to_circuit(x) for x in X])
 
-    # Create an anzatz on these qubits.
-    a, b = sympy.symbols('a b') # parameters for the circuit
-    circuit = cirq.Circuit(
-        cirq.rx(a).on(q0),
-        cirq.ry(b).on(q1), cirq.CNOT(control=q0, target=q1))
 
-    # Build the Keras model.
-    model = tf.keras.Sequential([
-        # The input is the data-circuit, encoded as a tf.string
-        tf.keras.layers.Input(shape=(), dtype=tf.string),
-        # The PQC layer returns the expected value of the
-        # readout gate, range [-1,1].
-        tfq.layers.PQC(circuit, cirq.Z(q1)),
-    ])
+    Now we define our ansatz circuit
 
-    def hinge_loss(y_true, y_pred):
-        # Here we use hinge loss as the cost function
-        tf.reduce_mean(tf.cast(1 - y_true * y_pred, tf.float32))
+    >>> q0, q1 = cirq.GridQubit.rect(1, 2)
+    >>> a, b = sympy.symbols('a b') # parameters for the circuit
+    >>> circuit = cirq.Circuit(
+    ...    cirq.rx(a).on(q0),
+    ...    cirq.ry(b).on(q1), cirq.CNOT(control=q0, target=q1))
 
-    result = rotosolve_minimizer.minimize(
-        rotosolve_minimizer.function_factory(
-            model, hinge_loss, x_circ, Y), np.random.rand([2])
-            ) # Initial guess of the parameter
+    And embed our circuit into a keras model
+    >>> model = tf.keras.Sequential([
+    ...    # The input is the data-circuit, encoded as a tf.string
+    ...    tf.keras.layers.Input(shape=(), dtype=tf.string),
+    ...    # The PQC layer returns the expected value of the
+    ...    # readout gate, range [-1,1].
+    ...    tfq.layers.PQC(circuit, cirq.Z(q1)),
+    ...])
 
-    print(result)
-    ```
+    Rotosolve minimizer can only accept linear loss functions.
+    Here we define the hinge_loss as use it as the loss function.
+
+    >>> def hinge_loss(y_true, y_pred):
+    ...    # Here we use hinge loss as the cost function
+    ...    tf.reduce_mean(tf.cast(1 - y_true * y_pred, tf.float32))
+
+    Lastly, we expose the trainable parameter from our model with 
+    `function_factory`, then run the minimize algorithm. The initial
+    parameter is guessed randomly.
+
+    >>> rotosolve_minimizer.minimize(
+    ...    rotosolve_minimizer.function_factory(
+    ...        model, 
+    ...        hinge_loss, 
+    ...        x_circ, 
+    ...        Y), 
+    ...     np.random.rand([2])
+    ...     ) 
 
     Args:
       expectation_value_function:  A Python callable that accepts
         a point as a real `Tensor` and returns a tuple of `Tensor`s
-        of real dtype containing the value of the function and its
-        gradient at that point. The function to be minimized. The
-        input is of shape `[..., n]`, where `n` is the size of the
-        domain of input points, and all others are batching dimensions.
-        The first component of the return value is a real `Tensor` of
-        matching shape `[...]`. The second component (the gradient)
-        is also of shape `[..., n]` like the input value to the function.
+        of real dtype containing the value of the function.
+        The function to be minimized. The input is of shape `[..., n]`,
+        where `n` is the size of the domain of input points.
+        The return value is a real `Tensor` of matching shape `[...]`. 
         This must be a linear combination of quantum measurement
         expectation value, otherwise this algorithm cannot work.
       initial_position: Real `Tensor` of shape `[..., n]`. The starting
         point, or points when using batching dimensions, of the search
         procedure. At these points the function value and the gradient
          norm should be finite.
-      tolerance: Scalar `Tensor` of real dtype. Specifies the gradient
-        tolerance for the procedure. If the supremum norm of the gradient
+      tolerance: Scalar `Tensor` of real dtype. Specifies the tolerance
+        for the procedure. If the supremum norm between two iteration 
         vector is below this number, the algorithm is stopped.
       name: (Optional) Python str. The name prefixed to the ops created
         by this function. If not supplied, the default name 'minimize'
