@@ -176,9 +176,9 @@ def minimize(expectation_value_function,
             of real dtype containing the value of the function.
             The function to be minimized. The input is of shape `[n]`,
             where `n` is the size of the trainable parameters.
-            The return value is a real `tf.Tensor` scala (matching shape 
-            `[1]`).  This must be a linear combination of quantum 
-            measurement expectation value, otherwise this algorithm cannot 
+            The return value is a real `tf.Tensor` scala (matching shape
+            `[1]`).  This must be a linear combination of quantum
+            measurement expectation value, otherwise this algorithm cannot
             work.
         initial_position: Real `tf.Tensor` of shape `[n]`. The starting
             point, or points when using batching dimensions, of the search
@@ -210,7 +210,7 @@ def minimize(expectation_value_function,
         def _rotosolve_one_parameter_once(state):
             """Rotosolve a single parameter once.
 
-            Args: 
+            Args:
                 state: A RotosolveOptimizerResults object stores the
                        current state of the minimizer.
 
@@ -253,17 +253,18 @@ def minimize(expectation_value_function,
             return [state]
 
         def _rotosolve_all_parameters_once(state):
-            """Iterate over all parameters and rotosolve each single 
-            
+            """Iterate over all parameters and rotosolve each single
+
             of them once.
 
-            Args: 
+            Args:
                 state: A RotosolveOptimizerResults object stores the
                        current state of the minimizer.
 
             Returns:
                 states: A list which the first element is the new state
             """
+
             def _cond_internal(state_cond):
                 return state_cond.solve_param_i < \
                        prefer_static_shape(state_cond.position)[0]
