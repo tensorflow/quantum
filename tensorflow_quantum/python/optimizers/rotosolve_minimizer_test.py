@@ -21,8 +21,8 @@ import sympy
 
 from tensorflow_quantum.python.layers.high_level import pqc
 from tensorflow_quantum.python import util
-from tensorflow_quantum.python.optimizers \
-    import rotosolve_minimizer, function_factory
+from tensorflow_quantum.python.optimizers import rotosolve_minimizer
+from tensorflow_quantum.python.optimizers.utils import function_factory
 
 
 class RotosolveMinimizerTest(tf.test.TestCase, parameterized.TestCase):
