@@ -51,14 +51,14 @@ RotosolveOptimizerResults = collections.namedtuple(
         'converged',  # Scalar boolean tensor indicating whether the minimum
         # was found within tolerance.
         'num_iterations',  # The number of iterations of the rotosolve update.
-        'num_objective_evaluations',  # The total number of objective 
+        'num_objective_evaluations',  # The total number of objective
         # evaluations performed.
         'position',  # A tensor containing the last argument value found
         # during the search. If the search converged, then
         # this value is the argmin of the objective function.
         # A tensor containing the value of the objective from
         # previous iteration
-        'last_objective_value',  # Save the latest evalued value of the 
+        'last_objective_value',  # Save the latest evalued value of the
         # objective function
         'objective_value',  # A tensor containing the value of the objective
         # function at the `position`. If the search
@@ -73,7 +73,7 @@ RotosolveOptimizerResults = collections.namedtuple(
 
 
 def _get_initial_state(initial_position, tolerance, expectation_value_function):
-    """Create RotosolveOptimizerResults with initial state of search ."""
+    """Create RotosolveOptimizerResults with initial state of search."""
     init_args = {
         "converged": tf.Variable(False),
         "num_iterations": tf.Variable(0),
@@ -101,8 +101,8 @@ def minimize(expectation_value_function,
     The following example demonstrates the Rotosolve optimizer attempting
      to find the minimum for two qubit ansatz expectation value.
 
-    We first start by defining some variables for training dataset. In this 
-    example we train a circuit perform an XOR operation 
+    We first start by defining some variables for training dataset. In this
+    example we train a circuit perform an XOR operation
 
     >>> X = np.asarray([
     ...    [0, 0],
@@ -115,8 +115,8 @@ def minimize(expectation_value_function,
     ...    [-1], [1], [1], [-1]
     ...], dtype=float)
 
-    While we have classical dataset defined, it needs to be 
-    converted into a quantum data before a quantum circuit 
+    While we have classical dataset defined, it needs to be
+    converted into a quantum data before a quantum circuit
     can handle it. We here by encode the data as follow.
 
     >>> def convert_to_circuit(input_data):
@@ -156,18 +156,18 @@ def minimize(expectation_value_function,
     ...    # Here we use hinge loss as the cost function
     ...    tf.reduce_mean(tf.cast(1 - y_true * y_pred, tf.float32))
 
-    Lastly, we expose the trainable parameter from our model with 
+    Lastly, we expose the trainable parameter from our model with
     `function_factory`, then run the minimize algorithm. The initial
     parameter is guessed randomly.
 
     >>> rotosolve_minimizer.minimize(
     ...    rotosolve_minimizer.function_factory(
-    ...        model, 
-    ...        hinge_loss, 
-    ...        x_circ, 
-    ...        Y), 
+    ...        model,
+    ...        hinge_loss,
+    ...        x_circ,
+    ...        Y),
     ...     np.random.rand([2])
-    ...     ) 
+    ...     )
 
     Args:
       expectation_value_function:  A Python callable that accepts
@@ -175,7 +175,7 @@ def minimize(expectation_value_function,
         of real dtype containing the value of the function.
         The function to be minimized. The input is of shape `[..., n]`,
         where `n` is the size of the domain of input points.
-        The return value is a real `Tensor` of matching shape `[...]`. 
+        The return value is a real `Tensor` of matching shape `[...]`.
         This must be a linear combination of quantum measurement
         expectation value, otherwise this algorithm cannot work.
       initial_position: Real `Tensor` of shape `[..., n]`. The starting
@@ -183,7 +183,7 @@ def minimize(expectation_value_function,
         procedure. At these points the function value and the gradient
          norm should be finite.
       tolerance: Scalar `Tensor` of real dtype. Specifies the tolerance
-        for the procedure. If the supremum norm between two iteration 
+        for the procedure. If the supremum norm between two iteration
         vector is below this number, the algorithm is stopped.
       name: (Optional) Python str. The name prefixed to the ops created
         by this function. If not supplied, the default name 'minimize'
