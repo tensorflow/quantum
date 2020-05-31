@@ -49,24 +49,26 @@ RotosolveOptimizerResults = collections.namedtuple(
     'RotosolveOptimizerResults',
     [
         'converged',  # Scalar boolean tensor indicating whether the minimum
-        # was found within tolerance.
-        'num_iterations',  # The number of iterations of the BFGS update.
-        # The total number of objective evaluations performed.
-        'num_objective_evaluations',
+                      # was found within tolerance.
+        'num_iterations',  # The number of iterations of the rotosolve update.
+        'num_objective_evaluations',# The total number of objective 
+                                    # evaluations performed.
         'position',  # A tensor containing the last argument value found
-        # during the search. If the search converged, then
-        # this value is the argmin of the objective function.
-        # A tensor containing the value of the objective from previous iteration
-        'last_objective_value',
+                     # during the search. If the search converged, then
+                     # this value is the argmin of the objective function.
+                     # A tensor containing the value of the objective from
+                     # previous iteration
+        'last_objective_value', # Save the latest evalued value of the 
+                                # objective function 
         'objective_value',  # A tensor containing the value of the objective
-        # function at the `position`. If the search
-        # converged, then this is the (local) minimum of
-        # the objective function.
+                            # function at the `position`. If the search
+                            # converged, then this is the (local) minimum of
+                            # the objective function.
         'tolerance',  # Define the stop criteria. Iteration will stop when the
-        # objective value difference between two iterations is smaller than
-        # tolerance
+                      # objective value difference between two iterations is 
+                      # smaller than tolerance
         'solve_param_i',  # The parameter index where rotosolve is currently
-        # modifying. Reserved for internal use.
+                          # modifying. Reserved for internal use.
     ])
 
 
