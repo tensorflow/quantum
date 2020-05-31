@@ -21,7 +21,7 @@ from __future__ import print_function
 import tensorflow as tf
 from absl.testing import parameterized
 import numpy as np
-from .utils import function_factory
+from tensorflow_quantum.python.optimizers.utils import function_factory
 
 
 class RotosolveMinimizerTest(tf.test.TestCase, parameterized.TestCase):
