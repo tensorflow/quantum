@@ -12,8 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""Utils for tensorflow quantum optimizers
-"""
+"""Utils for tensorflow quantum optimizers"""
 
 from __future__ import absolute_import
 from __future__ import division
@@ -25,14 +24,16 @@ import tensorflow as tf
 
 def function_factory(model, loss, train_x, train_y):
     """A factory to create a function required by tfq.optimizer.rotosolve.
+
     This function is originally defined for l-bgfs minimizer for tensorflow
+
     probability package.
 
     Args:
-        model : an instance of `tf.keras.Model` or its subclasses.
-        loss : a function with signature loss_value = loss(pred_y, true_y).
-        train_x : the input part of training data.
-        train_y : the output part of training data.
+        model: an instance of `tf.keras.Model` or its subclasses.
+        loss: a function with signature loss_value = loss(pred_y, true_y).
+        train_x: the input part of training data.
+        train_y: the output part of training data.
 
     Returns:
         A function that has a signature of:
