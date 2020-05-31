@@ -208,8 +208,14 @@ def minimize(expectation_value_function,
                                               name='max_iterations')
 
         def _rotosolve_one_parameter_once(state):
-            """
-            Rotosolve a single parameter.
+            """Rotosolve a single parameter once.
+
+            Args: 
+                state: A RotosolveOptimizerResults object stores the
+                       current state of the minimizer.
+
+            Returns:
+                states: A list which the first element is the new state
             """
             delta_shift = tf.reshape(
                 tf.cast(tf.sparse.to_dense(
@@ -247,10 +253,17 @@ def minimize(expectation_value_function,
             return [state]
 
         def _rotosolve_all_parameters_once(state):
-            """
-            Loop iterate over all parameters and update each one of them
-            """
+            """Iterate over all parameters and rotosolve each single 
+            
+            of them once.
 
+            Args: 
+                state: A RotosolveOptimizerResults object stores the
+                       current state of the minimizer.
+
+            Returns:
+                states: A list which the first element is the new state
+            """
             def _cond_internal(state_cond):
                 return state_cond.solve_param_i < \
                        prefer_static_shape(state_cond.position)[0]
