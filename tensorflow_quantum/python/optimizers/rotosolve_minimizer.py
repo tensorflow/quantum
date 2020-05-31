@@ -174,12 +174,13 @@ def minimize(expectation_value_function,
         expectation_value_function:  A Python callable that accepts
             a point as a real `tf.Tensor` and returns a `tf.Tensor`s
             of real dtype containing the value of the function.
-            The function to be minimized. The input is of shape `[..., n]`,
-            where `n` is the size of the domain of input points.
-            The return value is a real `tf.Tensor` of matching shape `[...]`.
-            This must be a linear combination of quantum measurement
-            expectation value, otherwise this algorithm cannot work.
-        initial_position: Real `tf.Tensor` of shape `[..., n]`. The starting
+            The function to be minimized. The input is of shape `[n]`,
+            where `n` is the size of the trainable parameters.
+            The return value is a real `tf.Tensor` scala (matching shape 
+            `[1]`).  This must be a linear combination of quantum 
+            measurement expectation value, otherwise this algorithm cannot 
+            work.
+        initial_position: Real `tf.Tensor` of shape `[n]`. The starting
             point, or points when using batching dimensions, of the search
             procedure. At these points the function value and the gradient
             norm should be finite.
