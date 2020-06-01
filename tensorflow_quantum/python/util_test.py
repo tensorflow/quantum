@@ -463,22 +463,21 @@ class UnsignedIntegerOperatorTest(tf.test.TestCase):
         """Confirm we get squared numbers as expected from q integer psums."""
         precisions = [5]
         registers = util.registers_from_precisions(precisions)
-        J0 = util.unsigned_integer_operator(registers[0])
+        j_0 = util.unsigned_integer_operator(registers[0])
         exp_layer = expectation.Expectation()
         # Test that all counts increment correctly
         for i in range(2**precisions[0]):
             bit_circ_i = _append_register_bits(0, i, precisions, registers)
-            test_val = exp_layer(bit_circ_i, operators=[J0 * J0])
+            test_val = exp_layer(bit_circ_i, operators=[j_0 * j_0])
             self.assertAllClose([[i**2]], test_val.numpy(), atol=1e-5)
 
     def test_polynomial(self):
         """Confirm that expectations of polynomial with offset are correct."""
         precisions = [5]
         registers = util.registers_from_precisions(precisions)
-        J0 = util.unsigned_integer_operator(registers[0])
+        j_0 = util.unsigned_integer_operator(registers[0])
         # test the polynomial y = 3 + 5.2x - 7.5x**2 + 0.3x**3
-        poly_op = 3 * cirq.I(
-            registers[0][0]) + 5.2 * J0 - 7.5 * J0 * J0 + 0.3 * J0 * J0 * J0
+        poly_op = 3 * cirq.I(registers[0][0]) + 5.2 * j_0 - 7.5 * j_0 * j_0  + 0.3 * j_0 * j_0 * j_0
         exp_layer = expectation.Expectation()
         # Test that all counts increment correctly
         for i in range(2**precisions[0]):
@@ -496,12 +495,12 @@ class UnsignedToMomentumBasisTest(tf.test.TestCase):
         """Test that the correct circuit is generated."""
         p = [3, 4]
         r = util.registers_from_precisions(p)
-        J0 = util.unsigned_integer_operator(r[1])
+        j_0 = util.unsigned_integer_operator(r[1])
         qft_1 = cirq.Circuit(cirq.QFT(*r[1]))
         convert = cirq.ConvertToCzAndSingleGates(allow_partial_czs=True)
         convert(qft_1)
         for coeff in [3.4, "gamma", sympy.Symbol("symbol")]:
-            exp_c = util.exponential([J0], [coeff])
+            exp_c = util.exponential([j_0], [coeff])
             expected_circuit = qft_1 + exp_c + qft_1**-1
             test_circuit = util.unsigned_to_momentum_basis(r[1], exp_c)
             self.assertTrue(

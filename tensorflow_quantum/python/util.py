@@ -13,7 +13,6 @@
 # limitations under the License.
 # ==============================================================================
 """A collection of helper functions that are useful several places in tfq."""
-import numbers
 import random
 import itertools
 
