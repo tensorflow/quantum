@@ -23,6 +23,7 @@ import tensorflow as tf
 
 def prefer_static_shape(x):
     """Return static shape of tensor `x` if available,
+
     else `tf.shape(x)`.
 
     Args:
@@ -35,6 +36,7 @@ def prefer_static_shape(x):
 
 def prefer_static_value(x):
     """Return static value of tensor `x` if available, else `x`.
+
     Args:
         x: `tf.Tensor` (already converted).
     Returns:
@@ -50,26 +52,26 @@ RotosolveOptimizerResults = collections.namedtuple(
     'RotosolveOptimizerResults',
     [
         'converged',  # Scalar boolean tensor indicating whether the minimum
-        # was found within tolerance.
+                      # was found within tolerance.
         'num_iterations',  # The number of iterations of the rotosolve update.
         'num_objective_evaluations',  # The total number of objective
-        # evaluations performed.
+                                      # evaluations performed.
         'position',  # A tensor containing the last argument value found
-        # during the search. If the search converged, then
-        # this value is the argmin of the objective function.
-        # A tensor containing the value of the objective from
-        # previous iteration
+                     # during the search. If the search converged, then
+                     # this value is the argmin of the objective function.
+                     # A tensor containing the value of the objective from
+                     # previous iteration
         'last_objective_value',  # Save the latest evalued value of the
-        # objective function
+                                 # objective function
         'objective_value',  # A tensor containing the value of the objective
-        # function at the `position`. If the search
-        # converged, then this is the (local) minimum of
-        # the objective function.
+                            # function at the `position`. If the search
+                            # converged, then this is the (local) minimum of
+                            # the objective function.
         'tolerance',  # Define the stop criteria. Iteration will stop when the
-        # objective value difference between two iterations is
-        # smaller than tolerance
+                      # objective value difference between two iterations is
+                      # smaller than tolerance
         'solve_param_i',  # The parameter index where rotosolve is currently
-        # modifying. Reserved for internal use.
+                          # modifying. Reserved for internal use.
     ])
 
 
@@ -94,7 +96,9 @@ def minimize(expectation_value_function,
              max_iterations=50,
              name=None):
     """Applies the rotosolve algorithm to minimize a linear combination
+
      of quantum measurement expectation values. See arXiv:1903.12166,
+
       arXiv:1905.09692
 
     ### Usage:
