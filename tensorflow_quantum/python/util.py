@@ -610,5 +610,5 @@ def unsigned_to_momentum_basis(register, circuit):
     """
     convert = cirq.ConvertToCzAndSingleGates(allow_partial_czs=True)
     transform = cirq.Circuit(cirq.QFT(*register))
-    convert(this_transform)
+    convert(transform)
     return transform + circuit + transform**(-1)
