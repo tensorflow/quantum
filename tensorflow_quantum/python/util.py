@@ -594,142 +594,21 @@ def unsigned_integer_operator(qubits):
     return int_op
 
 
-def unsigned_cliques_psum(precisions, cliques):
-    """Returns the cirq.PauliSum corresponding to the given cliques.
+def unsigned_to_momentum_basis(register, circuit):
+    """Convert a circuit on qubits to the momentum basis.
 
-    For example, the precisions list [3, 3] and the cliques dict
-    {(0,): 2, (1,): 3, (0, 1): 6} corresponds to a ferromagnetic interaction
-    Hamiltonian between two three-qubit quantum integer registers Ja and Jb,
-    H = 2*Ja + 3*Jb + 6*Ja*Jb
-
-    Args:
-        precisions: a Python `list` of `int`s.  Entry precisions[i] sets
-            the number of qubits on which quantum integer `i` is supported.
-        cliques: a Python `dict` mapping tuples of quantum integer register
-            labels to the weight of their product.
-
-    Returns:
-        cliques_psum: `cirq.PauliSum` representation of the Hamiltonian
-            corresponding to the given precisions and clique weights.
-    """
-    if not isinstance(precisions, list):
-        raise TypeError("`precisions` must be a Python list.")
-    for p in precisions:
-        if not isinstance(p, numbers.Integral) or p < 1:
-            raise TypeError("Each entry in precisions must be an integer"
-                            " greater than zero, got {}.".format(p))
-    if not isinstance(cliques, dict):
-        raise TypeError("`cliques` must be a Python dict.")
-    for key, value in cliques.items():
-        if not isinstance(key, tuple):
-            raise TypeError("Each key in cliques must be a (possibly empty)"
-                            " tuple of register labels, got {}."
-                            " Check that no key has the form `(n)`."
-                            " Instead use `(n,)` else the key will be"
-                            " parsed as an integer.".format(key))
-        for entry in key:
-            if not isinstance(entry, numbers.Integral) or entry < 0:
-                raise TypeError("Each entry of each key in cliques must be a"
-                                " non-negative integer, got {}.".format(entry))
-            if entry > (len(precisions) - 1):
-                raise ValueError("Cannot access requested register {0} as there"
-                                 " are only {1} registers available.".format(
-                                     entry, len(precisions)))
-        if not isinstance(value, numbers.Real):
-            raise TypeError("Each value in cliques must be a real number,"
-                            " got {}.".format(value))
-    register_list = registers_from_precisions(precisions)
-    op_list = [
-        unsigned_integer_operator(register) for register in register_list
-    ]
-    cliques_psum = cirq.PauliSum()
-    for clique in cliques:
-        if clique:
-            this_psum = cirq.PauliString(cirq.I(register_list[clique[0]][0]))
-            for i in clique:
-                this_psum *= op_list[i]
-            this_psum *= cliques[clique]
-        else:
-            # Empty label tuple is a constant offset.
-            this_psum = cliques[clique] * cirq.PauliString(
-                cirq.I(register_list[0][0]))
-        cliques_psum += this_psum
-    return cliques_psum
-
-
-def unsigned_cliques_exp(precisions, cliques, exp_coeff=None):
-    """Builds circuit representing the exponential of quantum integer cliques.
-
-    Suppose we wish to specify the exponential exp(-i*s*(J0^2 + J0*J1 + J1^2)),
-    where Ji is the integer operator on register i.  This exponential is
-    specified by a precisions argument containing the number of qubits to use
-    for each register, a cliques argument specifying the operator sum, and the
-    exp_coeff argument specifying the prefactor of the operator sum:
-
-
-    >>> precisions = [3, 3]
-    >>> cliques = {(0, 0): 1, (0, 1): 1, (1, 1): 1}
-    >>> symbol = sympy.Symbol("theta")
-    >>> exp_circuit = build_cliques_exp(precisions, cliques, symbol)
-
+    Given a circuit C in the position basis, conversion to momentum basis
+    requires conjugation by the quantum Fourier transform Q, so that the
+    circuit in the momentum basis is --- Q --- C --- Q**-1 ---
 
     Args:
-        precisions: a Python `list` of `int`s.  Entry precisions[i] sets
-            the number of qubits on which quantum integer `i` is supported.
-        cliques: a Python `dict` mapping tuples of quantum integer register
-            labels to the weight of their product.
-        exp_coeff: A Python `str`, `sympy.Symbol`, or float, which will be
-            the coefficient of the cost Hamiltonian in the exponential.
-            If None, the value 1.0 will be used.
+        qubits: a Python `list` of qubits on which the circuit is supported.
+        circuit: a `cirq.Circuit` to be taken to the momentum basis.
 
     Returns:
-        `cirq.Circuit` which is the exponential of the cliques on registers
-            of the specified sizes.
+        `cirq.Circuit` which is the momentum basis version of the given circuit.
     """
-    cliques_psum = unsigned_cliques_psum(precisions, cliques)
-    if exp_coeff is None:
-        exp_coeff = 1.0
-    return exponential([cliques_psum], coefficients=[exp_coeff])
-
-
-def unsigned_momenta_exp(precisions, cliques, exp_coeff=None):
-    """Builds circuit representing the exponential of quantum integer momenta.
-
-    Suppose we wish to specify the exponential exp(-i*s*(K0^2 + K0*K1 + K1^2)),
-    where Ki is the generator of the shift operator on the quantum integer on
-    register i.  This exponential is specified by a precisions argument
-    containing the number of qubits to use for each register, a cliques argument
-    specifying the operator sum, and the exp_coeff argument specifying the
-    prefactor of the operator sum:
-
-
-    >>> precisions = [3, 3]
-    >>> cliques = {(0, 0): 1, (0, 1): 1, (1, 1): 1}
-    >>> symbol = sympy.Symbol("theta")
-    >>> exp_layer = build_momenta_exp(precisions, cliques, symbol)
-
-
-    Args:
-        precisions: a Python `list` of `int`s.  Entry precisions[i] sets
-            the number of qubits on which quantum integer `i` is supported.
-        cliques: a Python `dict` mapping tuples of quantum integer register
-            labels to the weight of their product.
-        exp_coeff: A Python `str`, `sympy.Symbol`, or float, which will be
-            the coefficient of the momentum Hamiltonian in the exponential.
-            If None, the value 1.0 will be used.
-
-    Returns:
-        `cirq.Circuit` which is the exponential of the momenta on registers
-            of the specified sizes.
-    """
-    cliques_psum = unsigned_cliques_psum(precisions, cliques)
-    if exp_coeff is None:
-        exp_coeff = 1.0
-    exp_circuit = exponential([cliques_psum], coefficients=[exp_coeff])
-    transform = cirq.Circuit()
     convert = cirq.ConvertToCzAndSingleGates(allow_partial_czs=True)
-    for r in registers_from_precisions(precisions):
-        this_transform = cirq.Circuit(cirq.QFT(*r))
-        convert(this_transform)
-        transform += this_transform
-    return transform + exp_circuit + transform**(-1)
+    transform = cirq.Circuit(cirq.QFT(*register))
+    convert(this_transform)
+    return transform + circuit + transform**(-1)
