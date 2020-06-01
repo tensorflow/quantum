@@ -477,7 +477,8 @@ class UnsignedIntegerOperatorTest(tf.test.TestCase):
         registers = util.registers_from_precisions(precisions)
         j_0 = util.unsigned_integer_operator(registers[0])
         # test the polynomial y = 3 + 5.2x - 7.5x**2 + 0.3x**3
-        poly_op = 3 * cirq.I(registers[0][0]) + 5.2 * j_0 - 7.5 * j_0 * j_0  + 0.3 * j_0 * j_0 * j_0
+        poly_op = 3 * cirq.I(registers[0][
+            0]) + 5.2 * j_0 - 7.5 * j_0 * j_0 + 0.3 * j_0 * j_0 * j_0
         exp_layer = expectation.Expectation()
         # Test that all counts increment correctly
         for i in range(2**precisions[0]):
