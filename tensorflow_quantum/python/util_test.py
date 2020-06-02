@@ -374,26 +374,6 @@ def _append_register_bits(r, r_int, precisions, register_list):
     return bit_circ
 
 
-class ProjectorOnOneTest(tf.test.TestCase):
-    """Test the projector_on_one function."""
-
-    def test_bad_inputs(self):
-        """Confirm that function raises error on bad input."""
-        for bad_arg in [-5, 12, cirq.LineQubit(6), []]:
-            with self.assertRaisesRegex(TypeError,
-                                        expected_regex="cirq.GridQubit"):
-                _ = util.projector_on_one(bad_arg)
-
-    def test_return(self):
-        """Confirm that GridQubit input returns correct PauliSum."""
-        for i in range(12):
-            for j in range(12):
-                this_q = cirq.GridQubit(i, j)
-                expected_psum = 0.5 * cirq.I(this_q) - 0.5 * cirq.Z(this_q)
-                test_psum = util.projector_on_one(this_q)
-                self.assertEqual(expected_psum, test_psum)
-
-
 class RegistersFromPrecisionsTest(tf.test.TestCase):
     """Test the registers_from_precisions function."""
 

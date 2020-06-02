@@ -526,23 +526,6 @@ def exponential(operators, coefficients=None):
 # ==============================================================================
 
 
-def projector_on_one(qubit):
-    """Returns the projector on 1 for the given qubit.
-
-    Given a qubit k, the projector onto one can be represented by
-        |1><1|_k = 0.5(I_k - Z_k).
-
-    Args:
-        qubit: A `cirq.GridQubit` on which the projector is supported.
-
-    Returns:
-        `cirq.PauliSum` representing the projector.
-    """
-    if not isinstance(qubit, cirq.GridQubit):
-        raise TypeError("A projector must live on a cirq.GridQubit.")
-    return 0.5 * cirq.I(qubit) - 0.5 * cirq.Z(qubit)
-
-
 def registers_from_precisions(precisions):
     """Returns list of cirq.GridQubit registers for the given precisions.
 
@@ -555,7 +538,7 @@ def registers_from_precisions(precisions):
             len(register_list[i]) == precisions[i] and all entries are unique.
     """
     if not isinstance(precisions, list):
-        raise TypeError("Argument qubits must be a list of cirq.GridQubits.")
+        raise TypeError("precisions must be a list of positive integers.")
     register_list = []
     for r, width in enumerate(precisions):
         this_register = []
@@ -589,7 +572,9 @@ def unsigned_integer_operator(qubits):
     int_op = cirq.PauliSum()
     width = len(qubits)
     for loc, q in enumerate(qubits):
-        int_op += 2**(width - 1 - loc) * projector_on_one(q)
+        if not isinstance(q, cirq.GridQubit):
+            raise TypeError("qubits must be a list of cirq.GridQubits.")
+        int_op += 2**(width - 1 - loc) * (0.5 * cirq.I(q) - 0.5 * cirq.Z(q))
     return int_op
 
 
