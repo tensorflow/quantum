@@ -83,6 +83,8 @@ def spin_system_data_set(nspins, system_name, data_dir):
     # Set default storage location
     if data_dir is None:
         data_dir = os.path.expanduser("~/tfq-datasets")
+        os.mkdir(data_dir)
+
     # Use Keras file downloader.
     get_file(fname='spin_systems',
              cache_dir=data_dir,
