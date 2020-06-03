@@ -83,7 +83,8 @@ def spin_system_data_set(nspins, system_name, data_dir):
     # Set default storage location
     if data_dir is None:
         data_dir = os.path.expanduser("~/tfq-datasets")
-        os.mkdir(data_dir)
+        if not os.path.exists(data_dir):
+            os.mkdir(data_dir)
 
     # Use Keras file downloader.
     get_file(fname='spin_systems',
@@ -329,3 +330,7 @@ def tfi_chain(qubits, boundary_condition="closed", data_dir=None):
     labels[np.array(order_parameters) > 1.0] = 2
 
     return resolved_circuits, labels, hamiltonians, additional_info, circuit
+
+if __name__ =="__main__":
+    qbs = cirq.GridQubit.rect(4, 1)
+    pauli_sums = tfi_chain(qbs, 'closed')[2]
