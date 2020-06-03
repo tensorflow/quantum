@@ -330,7 +330,3 @@ def tfi_chain(qubits, boundary_condition="closed", data_dir=None):
     labels[np.array(order_parameters) > 1.0] = 2
 
     return resolved_circuits, labels, hamiltonians, additional_info, circuit
-
-if __name__ =="__main__":
-    qbs = cirq.GridQubit.rect(4, 1)
-    pauli_sums = tfi_chain(qbs, 'closed')[2]
