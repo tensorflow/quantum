@@ -66,18 +66,18 @@ def spin_system_data_set(nspins, system_name, data_dir):
         A Python `lst` of Python `float` order parameters for the system
         A Python `lst` of `namedtuple` instances containing the following
             fields:
-            - `g`: Numpy `float` order parameter.
-            - `gs`: Numpy `complex` array ground state wave function from
-                exact diagonalization.
-            - `gs_energy`: Numpy `float` ground state energy from exact
-                diagonalization.
-            - `res_energy`: Python `float` residual between the circuit energy
-                and the exact energy from exact diagonalization.
-            - `fidelity`: Python `float` overlap between the circuit state
-                and the exact ground state from exact diagonalization.
-            - `params`: Dict with Python `str` keys and Numpy`float` values.
-                Contains $M \times P parameters. Here $M$ is the number of
-                parameters per circuit layer and $P$ the circuit depth.
+        - `g`: Numpy `float` order parameter.
+        - `gs`: Numpy `complex` array ground state wave function from
+            exact diagonalization.
+        - `gs_energy`: Numpy `float` ground state energy from exact
+            diagonalization.
+        - `res_energy`: Python `float` residual between the circuit energy
+            and the exact energy from exact diagonalization.
+        - `fidelity`: Python `float` overlap between the circuit state
+            and the exact ground state from exact diagonalization.
+        - `params`: Dict with Python `str` keys and Numpy`float` values.
+            Contains $M \times P $ parameters. Here $M$ is the number of
+            parameters per circuit layer and $P$ the circuit depth.
 
     """
     # Set default storage location
@@ -231,24 +231,24 @@ def tfi_chain(qubits, boundary_condition='closed', data_dir=None):
         A Python `lst` of `cirq.PauliSum`s
         A Python `lst` of `namedtuple` instances containing the following
             fields:
-            - `g`: Numpy `float` order parameter.
-            - `gs`: Complex numpy array ground state wave function from
-                exact diagonalization.
-            - `gs_energy`: Numpy `float` ground state energy from exact
-                diagonalization.
-            - `res_energy`: Python `float` residual between the circuit energy
-                and the exact energy from exact diagonalization.
-            - `fidelity`: Python `float` overlap between the circuit state
-                and the exact ground state from exact diagonalization.
-            - `data_path`: Python `str` location of the data set.
-            - `params`: Python `dict` with a field `raw` containing a Numpy
-                `float` array with circuit parameters with shape
-                (2, circuit_depth). Here `params[0]` and `params[1]` correspond
-                to the `ZZ` and `X` gate parameters respectively. The field
-                `symbol_names` contains a Numpy `str` array with a unique symbol
-                name for each parameter. These names correspond to the `Sympy`
-                variables in the returned variational circuit. The field
-                `param_resolver`
+        - `g`: Numpy `float` order parameter.
+        - `gs`: Complex numpy array ground state wave function from
+            exact diagonalization.
+        - `gs_energy`: Numpy `float` ground state energy from exact
+            diagonalization.
+        - `res_energy`: Python `float` residual between the circuit energy
+            and the exact energy from exact diagonalization.
+        - `fidelity`: Python `float` overlap between the circuit state
+            and the exact ground state from exact diagonalization.
+        - `data_path`: Python `str` location of the data set.
+        - `params`: Python `dict` with a field `raw` containing a Numpy
+            `float` array with circuit parameters with shape
+            (2, circuit_depth). Here `params[0]` and `params[1]` correspond
+            to the `ZZ` and `X` gate parameters respectively. The field
+            `symbol_names` contains a Numpy `str` array with a unique symbol
+            name for each parameter. These names correspond to the `Sympy`
+            variables in the returned variational circuit. The field
+            `param_resolver`
         A variational `cirq.Circuit` with unresolved parameters.
     """
 
