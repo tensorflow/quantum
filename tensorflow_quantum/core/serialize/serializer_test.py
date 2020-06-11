@@ -80,7 +80,7 @@ def _build_gate_proto(gate_id, arg_names, arg_vals, qubit_ids):
         if isinstance(arg_vals[i], str) else \
             program_pb2.Arg(
                 arg_value=cirq.google.api.v2.program_pb2.ArgValue(
-                    float_value=float(arg_vals[i])))) for i in range(len(arg_vals))},
+                    float_value=arg_vals[i]))) for i in range(len(arg_vals))},
         qubits=[program_pb2.Qubit(
             id=q_id) for q_id in qubit_ids])])
 
