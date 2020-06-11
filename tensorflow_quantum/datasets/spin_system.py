@@ -57,7 +57,7 @@ def unique_name():
 
 def download_spin_data(nspins, system_name, data_dir):
     """Download data and load the data and convert to useful data structures.
-    dfsdf
+
     Args:
         nspins: Python `int` number of spins in the system.
         system_name: Python `str` name of the system.
