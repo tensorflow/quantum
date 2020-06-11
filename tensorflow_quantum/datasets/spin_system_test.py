@@ -50,7 +50,7 @@ class SpinSystemDataTest(tf.test.TestCase):
         supported_nspins = [4, 8, 12, 16]
         for nspins in supported_nspins:
             qbs = cirq.GridQubit.rect(nspins, 1)
-            circuits, _, _, addinfo, _ = spin_system.tfi_chain(
+            circuits, _, _, addinfo = spin_system.tfi_chain(
                 qbs,
                 'closed',
             )
