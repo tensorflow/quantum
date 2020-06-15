@@ -23,7 +23,7 @@ limitations under the License.
 #include "tensorflow_quantum/core/src/circuit.h"
 
 namespace tfq {
-namespace qsim {
+namespace qsim_old {
 
 // Contains the allowed Unitary labels
 enum UnitarySpaceType { USLOW };
@@ -91,7 +91,7 @@ class UnitarySpace {
   uint64_t num_threads_;
 };
 
-}  // namespace qsim
+}  // namespace qsim_old
 }  // namespace tfq
 
 #endif  // TFQ_CORE_QSIM_UNITARY_SPACE_H_

@@ -19,7 +19,7 @@ limitations under the License.
 #include <cstdlib>
 
 namespace tfq {
-namespace qsim {
+namespace qsim_old {
 
 void* _aligned_malloc(size_t size) {
   // choose 64 bit alignment in case we ever introduce avx 512 support.
@@ -33,5 +33,5 @@ void* _aligned_malloc(size_t size) {
 
 void _aligned_free(void* ptr) { free(*(reinterpret_cast<void**>(ptr) - 1)); }
 
-}  // namespace qsim
+}  // namespace qsim_old
 }  // namespace tfq

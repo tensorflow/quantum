@@ -25,7 +25,7 @@ limitations under the License.
 #include "tensorflow_quantum/core/src/circuit_parser.h"
 
 namespace tfq {
-namespace qsim {
+namespace qsim_old {
 
 tensorflow::Status UnitarySpace::Update(const Circuit& circuit) {
   tensorflow::Status status;
@@ -76,5 +76,5 @@ uint64_t UnitarySpace::GetNumQubits() const { return num_qubits_; }
 
 uint64_t UnitarySpace::GetNumThreads() const { return num_threads_; }
 
-}  // namespace qsim
+}  // namespace qsim_old
 }  // namespace tfq

@@ -27,7 +27,7 @@ limitations under the License.
 #include "tensorflow_quantum/core/src/circuit.h"
 
 namespace tfq {
-namespace qsim {
+namespace qsim_old {
 namespace {
 
 TEST(StateSpaceTest, Initialization) {
@@ -48,11 +48,11 @@ TEST(StateSpaceTest, Initialization) {
   ASSERT_EQ(state->GetNumThreads(), num_threads);
 
 #ifdef __AVX2__
-  tfq::qsim::StateSpaceType state_space_type = tfq::qsim::StateSpaceType::AVX;
+  tfq::qsim_old::StateSpaceType state_space_type = tfq::qsim_old::StateSpaceType::AVX;
 #elif __SSE4_1__
-  tfq::qsim::StateSpaceType state_space_type = tfq::qsim::StateSpaceType::SSE;
+  tfq::qsim_old::StateSpaceType state_space_type = tfq::qsim_old::StateSpaceType::SSE;
 #else
-  tfq::qsim::StateSpaceType state_space_type = tfq::qsim::StateSpaceType::SLOW;
+  tfq::qsim_old::StateSpaceType state_space_type = tfq::qsim_old::StateSpaceType::SLOW;
 #endif
   ASSERT_EQ(state->GetType(), state_space_type);
 
@@ -745,5 +745,5 @@ TEST(StateSpaceTest, ComputeSampledExpectation) {
 }
 
 }  // namespace
-}  // namespace qsim
+}  // namespace qsim_old
 }  // namespace tfq

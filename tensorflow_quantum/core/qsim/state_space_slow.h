@@ -22,7 +22,7 @@ limitations under the License.
 #include "tensorflow_quantum/core/qsim/state_space.h"
 
 namespace tfq {
-namespace qsim {
+namespace qsim_old {
 
 class StateSpaceSlow : public StateSpace {
  public:
@@ -68,7 +68,7 @@ class StateSpaceSlow : public StateSpace {
                        const std::complex<float>& val) override;
 };
 
-}  // namespace qsim
+}  // namespace qsim_old
 }  // namespace tfq
 
 #endif  // TFQ_CORE_QSIM_STATE_SPACE_SLOW_H_

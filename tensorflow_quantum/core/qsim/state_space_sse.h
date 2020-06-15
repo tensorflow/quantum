@@ -25,7 +25,7 @@ limitations under the License.
 #include "tensorflow_quantum/core/qsim/state_space.h"
 
 namespace tfq {
-namespace qsim {
+namespace qsim_old {
 
 class StateSpaceSSE : public StateSpace {
  public:
@@ -81,7 +81,7 @@ class StateSpaceSSE : public StateSpace {
                     const float* matrix);
 };
 
-}  // namespace qsim
+}  // namespace qsim_old
 }  // namespace tfq
 
 #endif  // TFQ_CORE_QSIM_STATE_SPACE_SSE_H_

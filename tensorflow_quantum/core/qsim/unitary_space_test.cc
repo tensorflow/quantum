@@ -25,7 +25,7 @@ limitations under the License.
 #include "tensorflow_quantum/core/src/circuit.h"
 
 namespace tfq {
-namespace qsim {
+namespace qsim_old {
 namespace {
 
 TEST(UnitaryTest, GetSetEntry) {
@@ -306,5 +306,5 @@ TEST(UnitaryGate, UpdateSimpleTwoQubit) {
 }
 
 }  // namespace
-}  // namespace qsim
+}  // namespace qsim_old
 }  // namespace tfq

@@ -24,7 +24,7 @@ limitations under the License.
 #include "tensorflow_quantum/core/qsim/matrix.h"
 
 namespace tfq {
-namespace qsim {
+namespace qsim_old {
 
 StateSpaceSlow::StateSpaceSlow(const uint64_t num_qubits,
                                const uint64_t num_threads)
@@ -180,5 +180,5 @@ void StateSpaceSlow::SetAmpl(const uint64_t i, const std::complex<float>& val) {
   GetRawState()[2 * i + 1] = val.imag();
 }
 
-}  // namespace qsim
+}  // namespace qsim_old
 }  // namespace tfq
