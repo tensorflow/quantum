@@ -26,7 +26,7 @@ SpinSystemInfo = namedtuple(
     "SpinSystemInfo",
     [
         "g",  # Numpy `float` order parameter.
-        "gs", # Complex `np.ndarray` ground state wave function from
+        "gs",  # Complex `np.ndarray` ground state wave function from
         # exact diagonalization.
         "gs_energy",  # Numpy `float` ground state energy from exact
         # diagonalization.
