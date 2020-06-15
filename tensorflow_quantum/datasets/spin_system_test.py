@@ -13,7 +13,6 @@
 # limitations under the License.
 # ==============================================================================
 """Test the spin system dataset"""
-from collections import namedtuple
 import tensorflow as tf
 import numpy as np
 import cirq
@@ -21,7 +20,7 @@ from tensorflow_quantum.datasets import spin_system
 from tensorflow_quantum.datasets.spin_system import SpinSystemInfo
 
 
-class TFI_ChainTest(tf.test.TestCase):
+class TFIChainTest(tf.test.TestCase):
     """Testing tfi_chain."""
 
     def test_errors(self):
