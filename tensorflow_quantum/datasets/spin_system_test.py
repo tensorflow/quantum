@@ -13,14 +13,16 @@
 # limitations under the License.
 # ==============================================================================
 """Test the spin system dataset"""
+from collections import namedtuple
 import tensorflow as tf
 import numpy as np
 import cirq
 from tensorflow_quantum.datasets import spin_system
+from tensorflow_quantum.datasets.spin_system import SpinSystemInfo
 
 
-class SpinSystemDataTest(tf.test.TestCase):
-    """Small test to make sure dataset for ClusterState works."""
+class TFI_ChainTest(tf.test.TestCase):
+    """Testing tfi_chain."""
 
     def test_errors(self):
         """Test that it errors on invalid arguments."""
@@ -46,7 +48,7 @@ class SpinSystemDataTest(tf.test.TestCase):
             spin_system.tfi_chain([qbs])
 
     def test_fidelity(self):
-        """Test that it returns the correct number of circuits."""
+        """Test that all fidelities are close to 1."""
         supported_nspins = [4, 8, 12, 16]
         for nspins in supported_nspins:
             qbs = cirq.GridQubit.rect(nspins, 1)
@@ -54,18 +56,42 @@ class SpinSystemDataTest(tf.test.TestCase):
                 qbs,
                 'closed',
             )
-            fidelities = []
             for n in range(len(addinfo)):
                 phi = cirq.Simulator().simulate(circuits[n]).final_state
                 gs = addinfo[n].gs
-                fidelities.append(np.abs(np.conj(np.dot(gs, phi))))
-            assert all([np.isclose(fid, 1.0, rtol=1e-3) for fid in fidelities])
+                self.assertAllClose(np.abs(np.conj(np.dot(gs, phi))),
+                                    1.0,
+                                    rtol=1e-3)
 
     def test_paulisum(self):
-        """Test that hamiltonian returns a PauliSum"""
-        qbs = cirq.GridQubit.rect(4, 1)
-        pauli_sums = spin_system.tfi_chain(qbs, 'closed')[2]
-        assert all(isinstance(ps, cirq.PauliSum) for ps in pauli_sums)
+        """Test that the PauliSum Hamiltonians give the ground state energy."""
+        supported_nspins = [4, 8, 12, 16]
+        for nspins in supported_nspins:
+            qbs = cirq.GridQubit.rect(nspins, 1)
+            circuits, _, pauli_sums, addinfo = spin_system.tfi_chain(
+                qbs, 'closed')
+            qubit_map = {qbs[i]: i for i in range(len(qbs))}
+            for n in range(len(pauli_sums)):
+                phi = cirq.Simulator().simulate(circuits[n]).final_state
+                e = pauli_sums[n].expectation_from_wavefunction(phi, qubit_map)
+                self.assertAllClose(e, addinfo[n].gs_energy, rtol=1e-4)
+
+    def test_returned_objects(self):
+        """Test that the length and types of returned objects are correct."""
+        supported_nspins = [4, 8, 12, 16]
+        for nspins in supported_nspins:
+            qbs = cirq.GridQubit.rect(nspins, 1)
+            circuits, labels, pauli_sums, addinfo = spin_system.tfi_chain(
+                qbs, 'closed')
+            self.assertLen(circuits, 81)
+            self.assertLen(labels, 81)
+            self.assertLen(pauli_sums, 81)
+            self.assertLen(addinfo, 81)
+            for n in range(81):
+                self.assertIsInstance(circuits[n], cirq.Circuit)
+                self.assertIsInstance(labels[n], int)
+                self.assertIsInstance(pauli_sums[n], cirq.PauliSum)
+                self.assertIsInstance(addinfo[n], SpinSystemInfo)
 
 
 if __name__ == '__main__':
