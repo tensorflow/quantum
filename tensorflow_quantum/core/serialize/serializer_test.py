@@ -101,10 +101,10 @@ def _get_valid_circuit_proto_pairs():
          _build_gate_proto("HP",
                            ['exponent', 'exponent_scalar', 'global_shift'],
                            ['alpha', 1.0, 0.0], ['0_0'])),
-        (cirq.Circuit(cirq.HPowGate(exponent=3.0 * sympy.Symbol('alpha'))(q0)),
+        (cirq.Circuit(cirq.HPowGate(exponent=3.1 * sympy.Symbol('alpha'))(q0)),
          _build_gate_proto("HP",
                            ['exponent', 'exponent_scalar', 'global_shift'],
-                           ['alpha', 3.0, 0.0], ['0_0'])),
+                           ['alpha', 3.1, 0.0], ['0_0'])),
         (cirq.Circuit(cirq.H(q0)),
          _build_gate_proto("HP",
                            ['exponent', 'exponent_scalar', 'global_shift'],
@@ -119,10 +119,10 @@ def _get_valid_circuit_proto_pairs():
          _build_gate_proto("XP",
                            ['exponent', 'exponent_scalar', 'global_shift'],
                            ['alpha', 1.0, 0.0], ['0_0'])),
-        (cirq.Circuit(cirq.XPowGate(exponent=3.0 * sympy.Symbol('alpha'))(q0)),
+        (cirq.Circuit(cirq.XPowGate(exponent=3.1 * sympy.Symbol('alpha'))(q0)),
          _build_gate_proto("XP",
                            ['exponent', 'exponent_scalar', 'global_shift'],
-                           ['alpha', 3.0, 0.0], ['0_0'])),
+                           ['alpha', 3.1, 0.0], ['0_0'])),
         (cirq.Circuit(cirq.X(q0)),
          _build_gate_proto("XP",
                            ['exponent', 'exponent_scalar', 'global_shift'],
@@ -137,10 +137,10 @@ def _get_valid_circuit_proto_pairs():
          _build_gate_proto("YP",
                            ['exponent', 'exponent_scalar', 'global_shift'],
                            ['alpha', 1.0, 0.0], ['0_0'])),
-        (cirq.Circuit(cirq.YPowGate(exponent=3.0 * sympy.Symbol('alpha'))(q0)),
+        (cirq.Circuit(cirq.YPowGate(exponent=3.1 * sympy.Symbol('alpha'))(q0)),
          _build_gate_proto("YP",
                            ['exponent', 'exponent_scalar', 'global_shift'],
-                           ['alpha', 3.0, 0.0], ['0_0'])),
+                           ['alpha', 3.1, 0.0], ['0_0'])),
         (cirq.Circuit(cirq.Y(q0)),
          _build_gate_proto("YP",
                            ['exponent', 'exponent_scalar', 'global_shift'],
@@ -155,10 +155,10 @@ def _get_valid_circuit_proto_pairs():
          _build_gate_proto("ZP",
                            ['exponent', 'exponent_scalar', 'global_shift'],
                            ['alpha', 1.0, 0.0], ['0_0'])),
-        (cirq.Circuit(cirq.ZPowGate(exponent=3.0 * sympy.Symbol('alpha'))(q0)),
+        (cirq.Circuit(cirq.ZPowGate(exponent=3.1 * sympy.Symbol('alpha'))(q0)),
          _build_gate_proto("ZP",
                            ['exponent', 'exponent_scalar', 'global_shift'],
-                           ['alpha', 3.0, 0.0], ['0_0'])),
+                           ['alpha', 3.1, 0.0], ['0_0'])),
         (cirq.Circuit(cirq.Z(q0)),
          _build_gate_proto("ZP",
                            ['exponent', 'exponent_scalar', 'global_shift'],
@@ -174,10 +174,10 @@ def _get_valid_circuit_proto_pairs():
                            ['exponent', 'exponent_scalar', 'global_shift'],
                            ['alpha', 1.0, 0.0], ['0_0', '0_1'])),
         (cirq.Circuit(
-            cirq.XXPowGate(exponent=3.0 * sympy.Symbol('alpha'))(q0, q1)),
+            cirq.XXPowGate(exponent=3.1 * sympy.Symbol('alpha'))(q0, q1)),
          _build_gate_proto("XXP",
                            ['exponent', 'exponent_scalar', 'global_shift'],
-                           ['alpha', 3.0, 0.0], ['0_0', '0_1'])),
+                           ['alpha', 3.1, 0.0], ['0_0', '0_1'])),
         (cirq.Circuit(cirq.XX(q0, q1)),
          _build_gate_proto("XXP",
                            ['exponent', 'exponent_scalar', 'global_shift'],
@@ -193,10 +193,10 @@ def _get_valid_circuit_proto_pairs():
                            ['exponent', 'exponent_scalar', 'global_shift'],
                            ['alpha', 1.0, 0.0], ['0_0', '0_1'])),
         (cirq.Circuit(
-            cirq.YYPowGate(exponent=3.0 * sympy.Symbol('alpha'))(q0, q1)),
+            cirq.YYPowGate(exponent=3.1 * sympy.Symbol('alpha'))(q0, q1)),
          _build_gate_proto("YYP",
                            ['exponent', 'exponent_scalar', 'global_shift'],
-                           ['alpha', 3.0, 0.0], ['0_0', '0_1'])),
+                           ['alpha', 3.1, 0.0], ['0_0', '0_1'])),
         (cirq.Circuit(cirq.YY(q0, q1)),
          _build_gate_proto("YYP",
                            ['exponent', 'exponent_scalar', 'global_shift'],
@@ -212,10 +212,10 @@ def _get_valid_circuit_proto_pairs():
                            ['exponent', 'exponent_scalar', 'global_shift'],
                            ['alpha', 1.0, 0.0], ['0_0', '0_1'])),
         (cirq.Circuit(
-            cirq.ZZPowGate(exponent=3.0 * sympy.Symbol('alpha'))(q0, q1)),
+            cirq.ZZPowGate(exponent=3.1 * sympy.Symbol('alpha'))(q0, q1)),
          _build_gate_proto("ZZP",
                            ['exponent', 'exponent_scalar', 'global_shift'],
-                           ['alpha', 3.0, 0.0], ['0_0', '0_1'])),
+                           ['alpha', 3.1, 0.0], ['0_0', '0_1'])),
         (cirq.Circuit(cirq.ZZ(q0, q1)),
          _build_gate_proto("ZZP",
                            ['exponent', 'exponent_scalar', 'global_shift'],
@@ -231,10 +231,10 @@ def _get_valid_circuit_proto_pairs():
                            ['exponent', 'exponent_scalar', 'global_shift'],
                            ['alpha', 1.0, 0.0], ['0_0', '0_1'])),
         (cirq.Circuit(
-            cirq.CZPowGate(exponent=3.0 * sympy.Symbol('alpha'))(q0, q1)),
+            cirq.CZPowGate(exponent=3.1 * sympy.Symbol('alpha'))(q0, q1)),
          _build_gate_proto("CZP",
                            ['exponent', 'exponent_scalar', 'global_shift'],
-                           ['alpha', 3.0, 0.0], ['0_0', '0_1'])),
+                           ['alpha', 3.1, 0.0], ['0_0', '0_1'])),
         (cirq.Circuit(cirq.CZ(q0, q1)),
          _build_gate_proto("CZP",
                            ['exponent', 'exponent_scalar', 'global_shift'],
@@ -250,10 +250,10 @@ def _get_valid_circuit_proto_pairs():
                            ['exponent', 'exponent_scalar', 'global_shift'],
                            ['alpha', 1.0, 0.0], ['0_0', '0_1'])),
         (cirq.Circuit(
-            cirq.CNotPowGate(exponent=3.0 * sympy.Symbol('alpha'))(q0, q1)),
+            cirq.CNotPowGate(exponent=3.1 * sympy.Symbol('alpha'))(q0, q1)),
          _build_gate_proto("CNP",
                            ['exponent', 'exponent_scalar', 'global_shift'],
-                           ['alpha', 3.0, 0.0], ['0_0', '0_1'])),
+                           ['alpha', 3.1, 0.0], ['0_0', '0_1'])),
         (cirq.Circuit(cirq.CNOT(q0, q1)),
          _build_gate_proto("CNP",
                            ['exponent', 'exponent_scalar', 'global_shift'],
@@ -269,10 +269,10 @@ def _get_valid_circuit_proto_pairs():
                            ['exponent', 'exponent_scalar', 'global_shift'],
                            ['alpha', 1.0, 0.0], ['0_0', '0_1'])),
         (cirq.Circuit(
-            cirq.SwapPowGate(exponent=3.0 * sympy.Symbol('alpha'))(q0, q1)),
+            cirq.SwapPowGate(exponent=3.1 * sympy.Symbol('alpha'))(q0, q1)),
          _build_gate_proto("SP",
                            ['exponent', 'exponent_scalar', 'global_shift'],
-                           ['alpha', 3.0, 0.0], ['0_0', '0_1'])),
+                           ['alpha', 3.1, 0.0], ['0_0', '0_1'])),
         (cirq.Circuit(cirq.SWAP(q0, q1)),
          _build_gate_proto("SP",
                            ['exponent', 'exponent_scalar', 'global_shift'],
@@ -289,10 +289,10 @@ def _get_valid_circuit_proto_pairs():
                            ['exponent', 'exponent_scalar', 'global_shift'],
                            ['alpha', 1.0, 0.0], ['0_0', '0_1'])),
         (cirq.Circuit(
-            cirq.ISwapPowGate(exponent=3.0 * sympy.Symbol('alpha'))(q0, q1)),
+            cirq.ISwapPowGate(exponent=3.1 * sympy.Symbol('alpha'))(q0, q1)),
          _build_gate_proto("ISP",
                            ['exponent', 'exponent_scalar', 'global_shift'],
-                           ['alpha', 3.0, 0.0], ['0_0', '0_1'])),
+                           ['alpha', 3.1, 0.0], ['0_0', '0_1'])),
         (cirq.Circuit(cirq.ISWAP(q0, q1)),
          _build_gate_proto("ISP",
                            ['exponent', 'exponent_scalar', 'global_shift'],
@@ -315,12 +315,12 @@ def _get_valid_circuit_proto_pairs():
              'exponent_scalar', 'global_shift'
          ], ['alpha', 1.0, 0.3, 1.0, 0.0], ['0_0'])),
         (cirq.Circuit(
-            cirq.PhasedXPowGate(phase_exponent=3.0 * sympy.Symbol('alpha'),
+            cirq.PhasedXPowGate(phase_exponent=3.1 * sympy.Symbol('alpha'),
                                 exponent=0.3)(q0)),
          _build_gate_proto("PXP", [
              'phase_exponent', 'phase_exponent_scalar', 'exponent',
              'exponent_scalar', 'global_shift'
-         ], ['alpha', 3.0, 0.3, 1.0, 0.0], ['0_0'])),
+         ], ['alpha', 3.1, 0.3, 1.0, 0.0], ['0_0'])),
         (cirq.Circuit(
             cirq.PhasedXPowGate(phase_exponent=0.9,
                                 exponent=sympy.Symbol('beta'))(q0)),
@@ -330,18 +330,18 @@ def _get_valid_circuit_proto_pairs():
          ], [0.9, 1.0, 'beta', 1.0, 0.0], ['0_0'])),
         (cirq.Circuit(
             cirq.PhasedXPowGate(phase_exponent=0.9,
-                                exponent=5.0 * sympy.Symbol('beta'))(q0)),
+                                exponent=5.1 * sympy.Symbol('beta'))(q0)),
          _build_gate_proto("PXP", [
              'phase_exponent', 'phase_exponent_scalar', 'exponent',
              'exponent_scalar', 'global_shift'
-         ], [0.9, 1.0, 'beta', 5.0, 0.0], ['0_0'])),
+         ], [0.9, 1.0, 'beta', 5.1, 0.0], ['0_0'])),
         (cirq.Circuit(
-            cirq.PhasedXPowGate(phase_exponent=3.0 * sympy.Symbol('alpha'),
-                                exponent=5.0 * sympy.Symbol('beta'))(q0)),
+            cirq.PhasedXPowGate(phase_exponent=3.1 * sympy.Symbol('alpha'),
+                                exponent=5.1 * sympy.Symbol('beta'))(q0)),
          _build_gate_proto("PXP", [
              'phase_exponent', 'phase_exponent_scalar', 'exponent',
              'exponent_scalar', 'global_shift'
-         ], ['alpha', 3.0, 'beta', 5.0, 0.0], ['0_0'])),
+         ], ['alpha', 3.1, 'beta', 5.1, 0.0], ['0_0'])),
 
         # RX, RY, RZ with symbolization is tested in special cases as the
         # string comparison of the float converted sympy.pi does not happen
@@ -369,11 +369,11 @@ def _get_valid_circuit_proto_pairs():
                            ['theta', 'theta_scalar', 'phi', 'phi_scalar'],
                            [0.1, 1.0, 0.2, 1.0], ['0_0', '0_1'])),
         (cirq.Circuit(
-            cirq.FSimGate(theta=2.0 * sympy.Symbol("alpha"),
+            cirq.FSimGate(theta=2.1 * sympy.Symbol("alpha"),
                           phi=1.3 * sympy.Symbol("beta"))(q0, q1)),
          _build_gate_proto("FSIM",
                            ['theta', 'theta_scalar', 'phi', 'phi_scalar'],
-                           ['alpha', 2.0, 'beta', 1.3], ['0_0', '0_1'])),
+                           ['alpha', 2.1, 'beta', 1.3], ['0_0', '0_1'])),
     ]
 
     return pairs
