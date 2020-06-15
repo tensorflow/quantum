@@ -276,11 +276,11 @@ Status TwoQubitConstantGateBuilder::Build(
     return Status(tensorflow::error::INVALID_ARGUMENT,
                   "Only two qubit locations should be provided.");
   }
-  if (!args.empty()) {
+  /*if (!args.empty()) {
     return Status(tensorflow::error::INVALID_ARGUMENT,
                   "Constant gates take no arguments, " +
                       std::to_string(args.size()) + " were given.");
-  }
+  }*/
   *gate = Gate(time, locations[0], locations[1], GetMatrix());
   return Status::OK();
 }
