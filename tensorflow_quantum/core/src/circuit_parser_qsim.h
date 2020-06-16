@@ -28,7 +28,7 @@ limitations under the License.
 #include "../qsim/lib/fuser.h"
 #include "../qsim/lib/gates_cirq.h"
 
-namespace tfq2 {
+namespace tfq {
 
 // parse a serialized Cirq program into a qsim representation.
 // ingests a Cirq Circuit proto and produces a resolved qsim Circuit.
