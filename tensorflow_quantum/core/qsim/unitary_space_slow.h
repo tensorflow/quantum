@@ -23,7 +23,7 @@ limitations under the License.
 #include "tensorflow_quantum/core/src/circuit.h"
 
 namespace tfq {
-namespace qsim {
+namespace qsim_old {
 
 // Handles calculations of unitary matrices that a circuit enacts.
 class UnitarySpaceSlow : public UnitarySpace {
@@ -62,7 +62,7 @@ class UnitarySpaceSlow : public UnitarySpace {
                         const std::complex<float>& val) override;
 };
 
-}  // namespace qsim
+}  // namespace qsim_old
 }  // namespace tfq
 
 #endif  // TFQ_CORE_QSIM_UNITARY_SPACE_SLOW_H_

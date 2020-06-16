@@ -21,7 +21,7 @@ limitations under the License.
 #include "tensorflow_quantum/core/qsim/state_space.h"
 
 namespace tfq {
-namespace qsim {
+namespace qsim_old {
 namespace {
 
 TEST(MuxTest, GetStateSpace) {
@@ -35,5 +35,5 @@ TEST(MuxTest, GetUnitary) {
 }
 
 }  // namespace
-}  // namespace qsim
+}  // namespace qsim_old
 }  // namespace tfq

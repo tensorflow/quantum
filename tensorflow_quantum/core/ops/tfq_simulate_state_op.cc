@@ -35,8 +35,8 @@ using ::cirq::google::api::v2::Program;
 using ::tensorflow::Status;
 using ::tfq::Circuit;
 using ::tfq::CircuitFromProgram;
-using ::tfq::qsim::GetStateSpace;
-using ::tfq::qsim::StateSpace;
+using ::tfq::qsim_old::GetStateSpace;
+using ::tfq::qsim_old::StateSpace;
 
 class TfqSimulateStateOp : public tensorflow::OpKernel {
  public:

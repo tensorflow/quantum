@@ -24,7 +24,7 @@ limitations under the License.
 #include "tensorflow_quantum/core/qsim/matrix.h"
 
 namespace tfq {
-namespace qsim {
+namespace qsim_old {
 namespace {
 
 inline const float dot_one_r(const float m_0i_r, const float m_0i_i,
@@ -352,5 +352,5 @@ void UnitarySpaceSlow::SetEntry(const uint64_t i, const uint64_t j,
   GetRawUnitary()[i * dim + 2 * j + 1] = val.imag();
 }
 
-}  // namespace qsim
+}  // namespace qsim_old
 }  // namespace tfq
