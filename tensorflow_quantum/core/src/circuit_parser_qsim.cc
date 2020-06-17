@@ -41,23 +41,49 @@ typedef absl::flat_hash_map<std::string, std::pair<int, float>> SymbolMap;
 typedef qsim::Cirq::GateCirq<float> QsimGate;
 typedef qsim::Circuit<QsimGate> QsimCircuit;
 
+inline Status ParseProtoArg(const Operation& op, const std::string& arg_name,
+                            const SymbolMap& param_map, float* result) {
+  // find arg_name in proto.
+  const auto arg_v = op.args().find(arg_name);
+  if (arg_v == op.args().end()) {
+    return Status(tensorflow::error::INVALID_ARGUMENT,
+                  "Could not find arg: " + arg_name + " in op.");
+  }
+  // find proto arg field.
+  const auto proto_arg = arg_v->second;
+  float out = proto_arg.arg_value().float_value();
+  if (!proto_arg.symbol().empty()) {
+    // find symbol value in param_map.
+    const auto iter = param_map.find(proto_arg.symbol());
+    if (iter == param_map.end()) {
+      return Status(
+          tensorflow::error::INVALID_ARGUMENT,
+          "Could not find symbol in parameter map: " + proto_arg.symbol());
+    }
+    out = iter->second.second;
+  }
+  result = &out;
+  return Status::OK();
+}
+
 // series of fixed signature gate builders.
 // there is no need to error check for unparseable symbols
 // or proto args not being present. Those errors are caught
 // upstream.
 
 // single qubit gate Create(time, q0)
-inline void SingleConstantGate(
+inline Status SingleConstantGate(
     const Operation& op, const SymbolMap& param_map,
     const std::function<QsimGate(unsigned, unsigned)>& create_f,
     const unsigned time, QsimCircuit* circuit) {
   int q0;
   bool unused = absl::SimpleAtoi(op.qubits(0).id(), &q0);
   circuit->gates.push_back(create_f(time, q0));
+  return Status::OK();
 }
 
 // two qubit gate Create(time, q0, q1)
-inline void TwoConstantGate(
+inline Status TwoConstantGate(
     const Operation& op, const SymbolMap& param_map,
     const std::function<QsimGate(unsigned, unsigned, unsigned)>& create_f,
     const unsigned time, QsimCircuit* circuit) {
@@ -65,150 +91,211 @@ inline void TwoConstantGate(
   bool unused = absl::SimpleAtoi(op.qubits(0).id(), &q0);
   unused = absl::SimpleAtoi(op.qubits(1).id(), &q1);
   circuit->gates.push_back(create_f(time, q0, q1));
+  return Status::OK();
 }
 
 // single qubit eigen -> Create(time, q0, exponent, global_shift)
-inline void SingleEigenGate(
+inline Status SingleEigenGate(
     const Operation& op, const SymbolMap& param_map,
     const std::function<QsimGate(unsigned, unsigned, float, float)>& create_f,
     const unsigned time, QsimCircuit* circuit) {
   int q0;
-  bool unused = absl::SimpleAtoi(op.qubits(0).id(), &q0);
-  const auto expi = param_map.find("exponent");
-  const auto exp_s_i = param_map.find("exponent_scalar");
-  const auto gs_i = param_map.find("global_shift");
-  circuit->gates.push_back(
-      create_f(time, q0, expi->second.second * exp_s_i->second.second,
-               gs_i->second.second));
+  bool unused;
+  float exp, exp_s, gs;
+  Status u;
+  unused = absl::SimpleAtoi(op.qubits(0).id(), &q0);
+  u = ParseProtoArg(op, "exponent", param_map, &exp);
+  if (!u.ok()) {
+    return u;
+  }
+  u = ParseProtoArg(op, "exponent_scalar", param_map, &exp_s);
+  if (!u.ok()) {
+    return u;
+  }
+  u = ParseProtoArg(op, "global_shift", param_map, &gs);
+  if (!u.ok()) {
+    return u;
+  }
+
+  circuit->gates.push_back(create_f(time, q0, exp * exp_s, gs));
+  return Status::OK();
 }
 
 // two qubit eigen -> Create(time, q0, q1, exp, gs)
-inline void TwoEigenGate(
+inline Status TwoEigenGate(
     const Operation& op, const SymbolMap& param_map,
     const std::function<QsimGate(unsigned, unsigned, unsigned, float, float)>&
         create_f,
     const unsigned time, QsimCircuit* circuit) {
   int q0, q1;
-  bool unused = absl::SimpleAtoi(op.qubits(0).id(), &q0);
+  float exp, exp_s, gs;
+  bool unused;
+  Status u;
+  unused = absl::SimpleAtoi(op.qubits(0).id(), &q0);
   unused = absl::SimpleAtoi(op.qubits(1).id(), &q1);
-  const auto expi = param_map.find("exponent");
-  const auto exp_s_i = param_map.find("exponent_scalar");
-  const auto gs_i = param_map.find("global_shift");
-  circuit->gates.push_back(
-      create_f(time, q0, q1, expi->second.second * exp_s_i->second.second,
-               gs_i->second.second));
+
+  u = ParseProtoArg(op, "exponent", param_map, &exp);
+  if (!u.ok()) {
+    return u;
+  }
+  u = ParseProtoArg(op, "exponent_scalar", param_map, &exp_s);
+  if (!u.ok()) {
+    return u;
+  }
+  u = ParseProtoArg(op, "global_shift", param_map, &gs);
+  if (!u.ok()) {
+    return u;
+  }
+
+  circuit->gates.push_back(create_f(time, q0, q1, exp * exp_s, gs));
+  return Status::OK();
 }
 
-void IGate(const Operation& op, const SymbolMap& param_map, const unsigned time,
-           QsimCircuit* circuit) {
-  SingleConstantGate(op, param_map, &qsim::Cirq::I<float>::Create, time,
-                     circuit);
+Status IGate(const Operation& op, const SymbolMap& param_map,
+             const unsigned time, QsimCircuit* circuit) {
+  return SingleConstantGate(op, param_map, &qsim::Cirq::I<float>::Create, time,
+                            circuit);
 }
 
-void I2Gate(const Operation& op, const SymbolMap& param_map,
-            const unsigned time, QsimCircuit* circuit) {
-  TwoConstantGate(op, param_map, &qsim::Cirq::I2<float>::Create, time, circuit);
-}
-
-void HGate(const Operation& op, const SymbolMap& param_map, const unsigned time,
-           QsimCircuit* circuit) {
-  SingleEigenGate(op, param_map, &qsim::Cirq::HPowGate<float>::Create, time,
-                  circuit);
-}
-
-void XGate(const Operation& op, const SymbolMap& param_map, const unsigned time,
-           QsimCircuit* circuit) {
-  SingleEigenGate(op, param_map, &qsim::Cirq::XPowGate<float>::Create, time,
-                  circuit);
-}
-
-void XXGate(const Operation& op, const SymbolMap& param_map,
-            const unsigned time, QsimCircuit* circuit) {
-  TwoEigenGate(op, param_map, &qsim::Cirq::XXPowGate<float>::Create, time,
-               circuit);
-}
-
-void YGate(const Operation& op, const SymbolMap& param_map, const unsigned time,
-           QsimCircuit* circuit) {
-  SingleEigenGate(op, param_map, &qsim::Cirq::YPowGate<float>::Create, time,
-                  circuit);
-}
-
-void YYGate(const Operation& op, const SymbolMap& param_map,
-            const unsigned time, QsimCircuit* circuit) {
-  TwoEigenGate(op, param_map, &qsim::Cirq::YYPowGate<float>::Create, time,
-               circuit);
-}
-
-void ZGate(const Operation& op, const SymbolMap& param_map, const unsigned time,
-           QsimCircuit* circuit) {
-  SingleEigenGate(op, param_map, &qsim::Cirq::ZPowGate<float>::Create, time,
-                  circuit);
-}
-
-void ZZGate(const Operation& op, const SymbolMap& param_map,
-            const unsigned time, QsimCircuit* circuit) {
-  TwoEigenGate(op, param_map, &qsim::Cirq::ZZPowGate<float>::Create, time,
-               circuit);
-}
-
-void CZGate(const Operation& op, const SymbolMap& param_map,
-            const unsigned time, QsimCircuit* circuit) {
-  TwoEigenGate(op, param_map, &qsim::Cirq::CZPowGate<float>::Create, time,
-               circuit);
-}
-
-void CXGate(const Operation& op, const SymbolMap& param_map,
-            const unsigned time, QsimCircuit* circuit) {
-  TwoEigenGate(op, param_map, &qsim::Cirq::CXPowGate<float>::Create, time,
-               circuit);
-}
-
-void SwapGate(const Operation& op, const SymbolMap& param_map,
+Status I2Gate(const Operation& op, const SymbolMap& param_map,
               const unsigned time, QsimCircuit* circuit) {
-  TwoEigenGate(op, param_map, &qsim::Cirq::SwapPowGate<float>::Create, time,
-               circuit);
+  return TwoConstantGate(op, param_map, &qsim::Cirq::I2<float>::Create, time,
+                         circuit);
 }
 
-void ISwapGate(const Operation& op, const SymbolMap& param_map,
-               const unsigned time, QsimCircuit* circuit) {
-  TwoEigenGate(op, param_map, &qsim::Cirq::ISwapPowGate<float>::Create, time,
-               circuit);
+Status HGate(const Operation& op, const SymbolMap& param_map,
+             const unsigned time, QsimCircuit* circuit) {
+  return SingleEigenGate(op, param_map, &qsim::Cirq::HPowGate<float>::Create,
+                         time, circuit);
+}
+
+Status XGate(const Operation& op, const SymbolMap& param_map,
+             const unsigned time, QsimCircuit* circuit) {
+  return SingleEigenGate(op, param_map, &qsim::Cirq::XPowGate<float>::Create,
+                         time, circuit);
+}
+
+Status XXGate(const Operation& op, const SymbolMap& param_map,
+              const unsigned time, QsimCircuit* circuit) {
+  return TwoEigenGate(op, param_map, &qsim::Cirq::XXPowGate<float>::Create,
+                      time, circuit);
+}
+
+Status YGate(const Operation& op, const SymbolMap& param_map,
+             const unsigned time, QsimCircuit* circuit) {
+  return SingleEigenGate(op, param_map, &qsim::Cirq::YPowGate<float>::Create,
+                         time, circuit);
+}
+
+Status YYGate(const Operation& op, const SymbolMap& param_map,
+              const unsigned time, QsimCircuit* circuit) {
+  return TwoEigenGate(op, param_map, &qsim::Cirq::YYPowGate<float>::Create,
+                      time, circuit);
+}
+
+Status ZGate(const Operation& op, const SymbolMap& param_map,
+             const unsigned time, QsimCircuit* circuit) {
+  return SingleEigenGate(op, param_map, &qsim::Cirq::ZPowGate<float>::Create,
+                         time, circuit);
+}
+
+Status ZZGate(const Operation& op, const SymbolMap& param_map,
+              const unsigned time, QsimCircuit* circuit) {
+  return TwoEigenGate(op, param_map, &qsim::Cirq::ZZPowGate<float>::Create,
+                      time, circuit);
+}
+
+Status CZGate(const Operation& op, const SymbolMap& param_map,
+              const unsigned time, QsimCircuit* circuit) {
+  return TwoEigenGate(op, param_map, &qsim::Cirq::CZPowGate<float>::Create,
+                      time, circuit);
+}
+
+Status CXGate(const Operation& op, const SymbolMap& param_map,
+              const unsigned time, QsimCircuit* circuit) {
+  return TwoEigenGate(op, param_map, &qsim::Cirq::CXPowGate<float>::Create,
+                      time, circuit);
+}
+
+Status SwapGate(const Operation& op, const SymbolMap& param_map,
+                const unsigned time, QsimCircuit* circuit) {
+  return TwoEigenGate(op, param_map, &qsim::Cirq::SwapPowGate<float>::Create,
+                      time, circuit);
+}
+
+Status ISwapGate(const Operation& op, const SymbolMap& param_map,
+                 const unsigned time, QsimCircuit* circuit) {
+  return TwoEigenGate(op, param_map, &qsim::Cirq::ISwapPowGate<float>::Create,
+                      time, circuit);
 }
 
 // single qubit PhasedXPow -> Create(time, q0, pexp, exp)
-inline void PhasedXGate(const Operation& op, const SymbolMap& param_map,
-                        const unsigned time, QsimCircuit* circuit) {
+inline Status PhasedXGate(const Operation& op, const SymbolMap& param_map,
+                          const unsigned time, QsimCircuit* circuit) {
   int q0;
-  bool unused = absl::SimpleAtoi(op.qubits(0).id(), &q0);
-  const auto expi = param_map.find("exponent");
-  const auto exp_s_i = param_map.find("exponent_scalar");
-  const auto pexpi = param_map.find("phase_exponent");
-  const auto pexp_s_i = param_map.find("phase_exponent_scalar");
-  const auto gs_i = param_map.find("global_shift");
+  bool unused;
+  float pexp, pexp_s, exp, exp_s, gs;
+  Status u;
+  unused = absl::SimpleAtoi(op.qubits(0).id(), &q0);
+
+  u = ParseProtoArg(op, "exponent", param_map, &exp);
+  if (!u.ok()) {
+    return u;
+  }
+  u = ParseProtoArg(op, "exponent_scalar", param_map, &exp_s);
+  if (!u.ok()) {
+    return u;
+  }
+  u = ParseProtoArg(op, "phase_exponent", param_map, &pexp);
+  if (!u.ok()) {
+    return u;
+  }
+  u = ParseProtoArg(op, "phase_exponent_scalar", param_map, &pexp_s);
+  if (!u.ok()) {
+    return u;
+  }
+  u = ParseProtoArg(op, "global_shift", param_map, &gs);
+  if (!u.ok()) {
+    return u;
+  }
   circuit->gates.push_back(qsim::Cirq::PhasedXPowGate<float>::Create(
-      time, q0, pexpi->second.second * pexp_s_i->second.second,
-      expi->second.second * exp_s_i->second.second, gs_i->second.second));
+      time, q0, pexp * pexp_s, exp * exp_s, gs));
+  return Status::OK();
 }
 
 // two qubit fsim -> Create(time, q0, q1, theta, phi)
-inline void FsimGate(const Operation& op, const SymbolMap& param_map,
-                     const unsigned time, QsimCircuit* circuit) {
+inline Status FsimGate(const Operation& op, const SymbolMap& param_map,
+                       const unsigned time, QsimCircuit* circuit) {
   int q0, q1;
-  bool unused = absl::SimpleAtoi(op.qubits(0).id(), &q0);
+  bool unused;
+  float theta, theta_s, phi, phi_s;
+  Status u;
+  unused = absl::SimpleAtoi(op.qubits(0).id(), &q0);
   unused = absl::SimpleAtoi(op.qubits(1).id(), &q1);
-  const auto theta = param_map.find("theta");
-  const auto theta_s = param_map.find("theta_scalar");
-  const auto phi = param_map.find("phi");
-  const auto phi_s = param_map.find("phi_scalar");
+  u = ParseProtoArg(op, "theta", param_map, &theta);
+  if (!u.ok()) {
+    return u;
+  }
+  u = ParseProtoArg(op, "theta_scalar", param_map, &theta_s);
+  if (!u.ok()) {
+    return u;
+  }
+  u = ParseProtoArg(op, "phi", param_map, &phi);
+  if (!u.ok()) {
+    return u;
+  }
+  u = ParseProtoArg(op, "phi_scalar", param_map, &phi_s);
+  if (!u.ok()) {
+    return u;
+  }
   circuit->gates.push_back(qsim::Cirq::FSimGate<float>::Create(
-      time, q0, q1, theta->second.second * theta_s->second.second,
-      phi->second.second * phi_s->second.second));
+      time, q0, q1, theta * theta_s, phi * phi_s));
+  return Status::OK();
 }
 
 // two qubit phase iswap -> Create(time, q0, q1, pexp, exp)
-inline void PhasedISwapGate(const Operation& op, const SymbolMap& param_map,
-                            const unsigned time, QsimCircuit* circuit) {
+inline Status PhasedISwapGate(const Operation& op, const SymbolMap& param_map,
+                              const unsigned time, QsimCircuit* circuit) {
   int q0, q1;
   bool unused = absl::SimpleAtoi(op.qubits(0).id(), &q0);
   unused = absl::SimpleAtoi(op.qubits(1).id(), &q1);
@@ -226,8 +313,8 @@ tensorflow::Status ParseAppendGate(const Operation& op,
                                    const unsigned time, QsimCircuit* circuit) {
   // map gate name -> callable to build that qsim gate from operation proto.
   static const absl::flat_hash_map<
-      std::string, std::function<void(const Operation&, const SymbolMap&,
-                                      const unsigned, QsimCircuit*)>>
+      std::string, std::function<Status(const Operation&, const SymbolMap&,
+                                        const unsigned, QsimCircuit*)>>
       func_map = {{"I", &IGate},       {"HP", &HGate},
                   {"XP", &XGate},      {"XXP", &XXGate},
                   {"YP", &YGate},      {"YYP", &YYGate},
@@ -242,8 +329,7 @@ tensorflow::Status ParseAppendGate(const Operation& op,
     return Status(tensorflow::error::INVALID_ARGUMENT,
                   "Could not parse gate id: " + op.gate().id());
   }
-  build_f->second(op, param_map, time, circuit);
-  return Status::OK();
+  return build_f->second(op, param_map, time, circuit);
 }
 
 }  // namespace
