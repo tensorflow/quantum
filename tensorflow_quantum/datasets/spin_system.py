@@ -37,8 +37,8 @@ SpinSystemInfo = namedtuple(
         "params",  # Dict with Python `str` keys and Numpy`float` values.
         # Contains $M \times P parameters. Here $M$ is the number of
         # parameters per circuit layer and $P$ the circuit depth.
-        "circuit"  # Variational `cirq.Circuit` quantum circuit with Sympy
-        # parameters
+        "var_circuit"  # Variational `cirq.Circuit` quantum circuit with
+        # unresolved Sympy parameters.
     ])
 
 
@@ -55,14 +55,17 @@ def unique_name():
         num += 1
 
 
-def _download_spin_data(nspins, system_name, data_dir):
+def _download_spin_data(system_name, boundary_condition, nspins, data_dir):
     """Download data and load the data and convert to useful data structures.
 
     Args:
-        nspins: Python `int` number of spins in the system.
         system_name: Python `str` name of the system.
+        boundary_condition: Python `str` specifying the boundary conditions of
+            the system.
+        nspins: Python `int` number of spins in the system.
         data_dir: Python `str` location where to store the data on disk.
-            Default is `~/tmp/.keras`.
+            If None, the default path is `~/tfq-datasets`.If the passed
+            `data_dir` does not exist, defaults to `~/tmp/.keras`.
 
     Returns:
         A Python `str` path where the data is stored.
@@ -71,19 +74,21 @@ def _download_spin_data(nspins, system_name, data_dir):
     # Set default storage location.
     if data_dir is None:
         data_dir = os.path.expanduser("~/tfq-datasets")
-        if not os.path.exists(data_dir):
-            os.mkdir(data_dir)
 
     # Use Keras file downloader.
-    tf.keras.utils.get_file(fname='spin_systems',
-                            cache_dir=data_dir,
-                            cache_subdir='',
-                            origin="https://storage.googleapis.com/"
-                            "download.tensorflow.org/data/"
-                            "quantum/spin_systems_data.zip",
-                            extract=True)
-    data_path = data_dir + "/tfq_data-master/spin_systems/" + system_name \
-                + "_{}".format(nspins)
+    file_path = tf.keras.utils.get_file(fname=system_name + '.zip',
+                                        cache_dir=data_dir,
+                                        cache_subdir='spin_systems',
+                                        origin=os.path.join(
+                                            "https://github.com/therooler/",
+                                            system_name, "/archive/master.zip"),
+                                        extract=True)
+
+    file_path = os.path.splitext(file_path)[0]
+
+    # TODO: if we host the data elsewhere, we can remove this "-master" addition
+    data_path = os.path.join(file_path + "-master", boundary_condition,
+                             str(nspins))
     return data_path
 
 
@@ -174,7 +179,8 @@ def tfi_chain(qubits, boundary_condition="closed", data_dir=None):
     >>> new_params
     {"theta_0": 0.3807282315018238, "theta_1": 0.3387495669397384,
     "theta_2": 0.32035466523957146, "theta_3": 0.36676848858712174}
-    >>> new_circuit = cirq.resolve_parameters(addinfo[10].circuit, new_params)
+    >>> new_circuit = cirq.resolve_parameters(addinfo[10].var_circuit,
+    ... new_params)
     >>> print(new_circuit)
                                                            ┌─────── ...
     (0, 0): ───H───ZZ──────────────────────────────────ZZ───────── ...
@@ -214,8 +220,8 @@ def tfi_chain(qubits, boundary_condition="closed", data_dir=None):
         - `params`: Dict with Python `str` keys and Numpy`float` values.
             Contains $M \times P $ parameters. Here $M$ is the number of
             parameters per circuit layer and $P$ the circuit depth.
-        - `circuit`: Variational `cirq.Circuit` quantum circuit with unresolved
-            Sympy parameters.
+        - `var_circuit`: Variational `cirq.Circuit` quantum circuit with
+            unresolved Sympy parameters.
     """
 
     supported_n = [4, 8, 12, 16]
@@ -237,9 +243,8 @@ def tfi_chain(qubits, boundary_condition="closed", data_dir=None):
             "Supported boundary conditions are {}, received {}".format(
                 supported_bc, boundary_condition))
 
-    name = "TFI_" + boundary_condition
-
-    data_path = _download_spin_data(nspins, name, data_dir)
+    data_path = _download_spin_data('TFI_chain', boundary_condition, nspins,
+                                    data_dir)
 
     name_generator = unique_name()
 
@@ -286,7 +291,7 @@ def tfi_chain(qubits, boundary_condition="closed", data_dir=None):
                            res_energy=res_e,
                            fidelity=fidelity,
                            params=dict(zip(symbol_names, params.flatten())),
-                           circuit=circuit))
+                           var_circuit=circuit))
 
         # Resolve the circuit parameters.
         param_resolver = cirq.resolve_parameters(circuit,
