@@ -24,7 +24,7 @@ limitations under the License.
 #include "tensorflow_quantum/core/src/circuit.h"
 
 namespace tfq {
-namespace qsim {
+namespace qsim_old {
 
 // Contains the allowed StateSpace labels
 enum StateSpaceType { AVX, SLOW, SSE };
@@ -124,7 +124,7 @@ class StateSpace {
   uint64_t num_threads_;
 };
 
-}  // namespace qsim
+}  // namespace qsim_old
 }  // namespace tfq
 
 #endif  // TFQ_CORE_QSIM_STATE_SPACE_H_

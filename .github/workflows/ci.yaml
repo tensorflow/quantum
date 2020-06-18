@@ -69,6 +69,24 @@ jobs:
       - name: Full Library Test
         run: ./scripts/test_all.sh
 
+  leak-tests:
+    name: Memory Leak tests
+    runs-on: ubuntu-16.04
+    needs: [lint, format]
+
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-python@v1
+        with:
+          python-version: '3.6'
+          architecture: 'x64'
+      - name: Install Bazel on CI
+        run: ./scripts/ci_install.sh
+      - name: Configure CI TF
+        run: echo "Y\n" | ./configure.sh
+      - name: Leak Test qsim and src
+        run: ./scripts/msan_test.sh
+
   tutorials-test:
     name: Tutorial tests
     runs-on: ubuntu-16.04

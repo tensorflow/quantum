@@ -21,7 +21,7 @@ limitations under the License.
 #include <vector>
 
 namespace tfq {
-namespace qsim {
+namespace qsim_old {
 
 // Workaround for std::aligned_alloc not working on C++11.
 void* _aligned_malloc(size_t size);
@@ -46,7 +46,7 @@ inline int ComputeParity(const uint64_t mask, const uint64_t sample) {
   return count ? -1 : 1;
 }
 
-}  // namespace qsim
+}  // namespace qsim_old
 }  // namespace tfq
 
 #endif  // TFQ_CORE_QSIM_UTIL_H_

@@ -22,7 +22,7 @@ limitations under the License.
 #include "tensorflow_quantum/core/qsim/unitary_space.h"
 
 namespace tfq {
-namespace qsim {
+namespace qsim_old {
 
 std::unique_ptr<StateSpace> GetStateSpace(const uint64_t num_qubits,
                                           const uint64_t num_threads);
@@ -30,7 +30,7 @@ std::unique_ptr<StateSpace> GetStateSpace(const uint64_t num_qubits,
 std::unique_ptr<UnitarySpace> GetUnitarySpace(const uint64_t num_qubits,
                                               const uint64_t num_threads);
 
-}  // namespace qsim
+}  // namespace qsim_old
 }  // namespace tfq
 
 #endif  //  TFQ_CORE_QSIM_MUX_H_

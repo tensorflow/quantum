@@ -23,7 +23,7 @@ limitations under the License.
 #include "tensorflow_quantum/core/src/circuit.h"
 
 namespace tfq {
-namespace qsim {
+namespace qsim_old {
 namespace {
 
 using ::tensorflow::Status;
@@ -125,5 +125,5 @@ Status FuseGates(const Circuit& circuit, std::vector<GateFused>* fused) {
   return Status::OK();
 }
 
-}  // namespace qsim
+}  // namespace qsim_old
 }  // namespace tfq

@@ -20,7 +20,7 @@ limitations under the License.
 #include "gtest/gtest.h"
 
 namespace tfq {
-namespace qsim {
+namespace qsim_old {
 namespace {
 
 TEST(Util, ComputeBitmask) {
@@ -110,5 +110,5 @@ TEST(Util, ComputeParity) {
 }
 
 }  // namespace
-}  // namespace qsim
+}  // namespace qsim_old
 }  // namespace tfq

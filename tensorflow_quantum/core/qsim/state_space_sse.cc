@@ -28,7 +28,7 @@ limitations under the License.
 #include "tensorflow_quantum/core/qsim/util.h"
 
 namespace tfq {
-namespace qsim {
+namespace qsim_old {
 
 StateSpaceSSE::StateSpaceSSE(const uint64_t num_qubits,
                              const uint64_t num_threads)
@@ -39,12 +39,12 @@ StateSpaceSSE::~StateSpaceSSE() { DeleteState(); }
 StateSpaceType StateSpaceSSE::GetType() const { return StateSpaceType::SSE; }
 
 void StateSpaceSSE::CreateState() {
-  state_ = (float*)qsim::_aligned_malloc(sizeof(float) * size_);
+  state_ = (float*)qsim_old::_aligned_malloc(sizeof(float) * size_);
 }
 
 void StateSpaceSSE::DeleteState() {
   if (GetRawState() != NULL) {
-    qsim::_aligned_free(state_);
+    qsim_old::_aligned_free(state_);
     state_ = NULL;
   }
 }
@@ -4475,7 +4475,7 @@ void StateSpaceSSE::ApplyGate2HL(const unsigned int q0, const unsigned int q1,
   }
 }
 
-}  // namespace qsim
+}  // namespace qsim_old
 }  // namespace tfq
 
 #endif

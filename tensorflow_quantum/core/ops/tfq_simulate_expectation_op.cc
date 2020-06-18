@@ -37,8 +37,8 @@ namespace tfq {
 using ::cirq::google::api::v2::Program;
 using ::tensorflow::Status;
 using ::tfq::proto::PauliSum;
-using ::tfq::qsim::GetStateSpace;
-using ::tfq::qsim::StateSpace;
+using ::tfq::qsim_old::GetStateSpace;
+using ::tfq::qsim_old::StateSpace;
 
 class TfqSimulateExpectationOp : public tensorflow::OpKernel {
  public:
