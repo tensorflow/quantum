@@ -56,7 +56,7 @@ def unique_name():
 
 
 def _download_spin_data(system_name, boundary_condition, nspins, data_dir):
-    """Download data and load the data and convert to useful data structures.
+    """Download and load the data and convert to useful data structures.
 
     Args:
         system_name: Python `str` name of the system.
@@ -79,9 +79,8 @@ def _download_spin_data(system_name, boundary_condition, nspins, data_dir):
     file_path = tf.keras.utils.get_file(fname=system_name + '.zip',
                                         cache_dir=data_dir,
                                         cache_subdir='spin_systems',
-                                        origin=os.path.join(
-                                            "https://github.com/therooler/",
-                                            system_name, "/archive/master.zip"),
+                                        origin="https://github.com/therooler/" +
+                                        system_name + "/archive/master.zip",
                                         extract=True)
 
     file_path = os.path.splitext(file_path)[0]
