@@ -16,22 +16,23 @@ limitations under the License.
 #ifndef TFQ_CORE_SRC_CIRCUIT_PARSER_QSIM_H_
 #define TFQ_CORE_SRC_CIRCUIT_PARSER_QSIM_H_
 
-#include <algorithm>
 #include <string>
 #include <vector>
 
-#include "absl/container/flat_hash_map.h"
-#include "cirq/google/api/v2/program.pb.h"
-#include "tensorflow/core/lib/core/status.h"
-//#include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
 #include "../qsim/lib/circuit.h"
 #include "../qsim/lib/fuser.h"
 #include "../qsim/lib/gates_cirq.h"
 
+#include "absl/container/flat_hash_map.h"
+#include "cirq/google/api/v2/program.pb.h"
+#include "tensorflow/core/lib/core/status.h"
+
+
 namespace tfq {
 
 // parse a serialized Cirq program into a qsim representation.
-// ingests a Cirq Circuit proto and produces a resolved qsim Circuit.
+// ingests a Cirq Circuit proto and produces a resolved qsim Circuit,
+// as well as a fused circuit.
 tensorflow::Status QsimCircuitFromProgram(
     const cirq::google::api::v2::Program& program,
     const absl::flat_hash_map<std::string, std::pair<int, float>>& param_map,

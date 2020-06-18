@@ -45,7 +45,6 @@ cc_library(
     srcs = ["circuit_parser_qsim.cc"],
     hdrs = ["circuit_parser_qsim.h"],
     deps = [
-        "//tensorflow_quantum/core/proto:pauli_sum_cc_proto",
         "//tensorflow_quantum/core/proto:program_cc_proto",
         "@com_google_absl//absl/container:flat_hash_map",
         "@local_config_tf//:libtensorflow_framework",

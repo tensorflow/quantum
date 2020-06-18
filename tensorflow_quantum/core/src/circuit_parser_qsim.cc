@@ -26,7 +26,6 @@ limitations under the License.
 #include "absl/strings/numbers.h"
 #include "cirq/google/api/v2/program.pb.h"
 #include "tensorflow/core/lib/core/status.h"
-#include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
 
 namespace tfq {
 
@@ -51,7 +50,7 @@ inline Status ParseProtoArg(const Operation& op, const std::string& arg_name,
   }
   // find proto arg field.
   const auto proto_arg = arg_v->second;
-  float out = proto_arg.arg_value().float_value();
+  *result = proto_arg.arg_value().float_value();
   if (!proto_arg.symbol().empty()) {
     // find symbol value in param_map.
     const auto iter = param_map.find(proto_arg.symbol());
@@ -60,9 +59,8 @@ inline Status ParseProtoArg(const Operation& op, const std::string& arg_name,
           tensorflow::error::INVALID_ARGUMENT,
           "Could not find symbol in parameter map: " + proto_arg.symbol());
     }
-    out = iter->second.second;
+    *result = iter->second.second;
   }
-  result = &out;
   return Status::OK();
 }
 
@@ -146,7 +144,6 @@ inline Status TwoEigenGate(
   if (!u.ok()) {
     return u;
   }
-
   circuit->gates.push_back(create_f(time, q0, q1, exp * exp_s, gs));
   return Status::OK();
 }
@@ -297,15 +294,31 @@ inline Status FsimGate(const Operation& op, const SymbolMap& param_map,
 inline Status PhasedISwapGate(const Operation& op, const SymbolMap& param_map,
                               const unsigned time, QsimCircuit* circuit) {
   int q0, q1;
-  bool unused = absl::SimpleAtoi(op.qubits(0).id(), &q0);
+  bool unused;
+  float pexp, pexp_s, exp, exp_s;
+  Status u;
+  unused = absl::SimpleAtoi(op.qubits(0).id(), &q0);
   unused = absl::SimpleAtoi(op.qubits(1).id(), &q1);
-  const auto pexp = param_map.find("phase_exponent");
-  const auto pexp_s = param_map.find("phase_exponent_scalar");
-  const auto exp = param_map.find("exponent");
-  const auto exp_s = param_map.find("exponent_scalar");
+
+  u = ParseProtoArg(op, "exponent", param_map, &exp);
+  if (!u.ok()) {
+    return u;
+  }
+  u = ParseProtoArg(op, "exponent_scalar", param_map, &exp_s);
+  if (!u.ok()) {
+    return u;
+  }
+  u = ParseProtoArg(op, "phase_exponent", param_map, &pexp);
+  if (!u.ok()) {
+    return u;
+  }
+  u = ParseProtoArg(op, "phase_exponent_scalar", param_map, &pexp_s);
+  if (!u.ok()) {
+    return u;
+  }
   circuit->gates.push_back(qsim::Cirq::PhasedISwapPowGate<float>::Create(
-      time, q0, q1, pexp->second.second * pexp_s->second.second,
-      exp->second.second * exp_s->second.second));
+      time, q0, q1, pexp * pexp_s, exp * exp_s));
+  return Status::OK();
 }
 
 tensorflow::Status ParseAppendGate(const Operation& op,
@@ -322,7 +335,7 @@ tensorflow::Status ParseAppendGate(const Operation& op,
                   {"CZP", &CZGate},    {"I2", &I2Gate},
                   {"CNP", &CXGate},    {"SP", &SwapGate},
                   {"ISP", &ISwapGate}, {"PXP", &PhasedXGate},
-                  {"FSIM", &FsimGate}, {"PSIP", &PhasedISwapGate}};
+                  {"FSIM", &FsimGate}, {"PISP", &PhasedISwapGate}};
 
   auto build_f = func_map.find(op.gate().id());
   if (build_f == func_map.end()) {
