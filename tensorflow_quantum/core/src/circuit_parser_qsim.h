@@ -22,11 +22,9 @@ limitations under the License.
 #include "../qsim/lib/circuit.h"
 #include "../qsim/lib/fuser.h"
 #include "../qsim/lib/gates_cirq.h"
-
 #include "absl/container/flat_hash_map.h"
 #include "cirq/google/api/v2/program.pb.h"
 #include "tensorflow/core/lib/core/status.h"
-
 
 namespace tfq {
 
