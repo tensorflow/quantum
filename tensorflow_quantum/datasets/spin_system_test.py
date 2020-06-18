@@ -92,6 +92,24 @@ class TFIChainTest(tf.test.TestCase):
                 self.assertIsInstance(pauli_sums[n], cirq.PauliSum)
                 self.assertIsInstance(addinfo[n], SpinSystemInfo)
 
+    def test_param_resolver(self):
+        """Test that the length and types of returned objects are correct."""
+        supported_nspins = [4, 8, 12, 16]
+        for nspins in supported_nspins:
+            qbs = cirq.GridQubit.rect(nspins, 1)
+            circuits, _, _, addinfo = spin_system.tfi_chain(qbs, 'closed')
+            for n in range(81):
+                resolved_circuit = cirq.resolve_parameters(
+                    addinfo[n].var_circuit, addinfo[n].params)
+                state_circuit = cirq.Simulator().simulate(
+                    circuits[n]).final_state
+                state_resolved_circuit = cirq.Simulator().simulate(
+                    resolved_circuit).final_state
+                self.assertAllClose(np.abs(
+                    np.conj(np.dot(state_circuit, state_resolved_circuit))),
+                                    1.0,
+                                    rtol=1e-3)
+
 
 if __name__ == '__main__':
     tf.test.main()
