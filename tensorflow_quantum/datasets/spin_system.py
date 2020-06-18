@@ -76,18 +76,18 @@ def _download_spin_data(system_name, boundary_condition, nspins, data_dir):
         data_dir = os.path.expanduser("~/tfq-datasets")
 
     # Use Keras file downloader.
-    file_path = tf.keras.utils.get_file(fname=system_name + '.zip',
-                                        cache_dir=data_dir,
-                                        cache_subdir='spin_systems',
-                                        origin="https://github.com/therooler/" +
-                                        system_name + "/archive/master.zip",
-                                        extract=True)
+    file_path = tf.keras.utils.get_file(
+        fname=system_name + '.zip',
+        cache_dir=data_dir,
+        cache_subdir='spin_systems',
+        origin="https://storage.googleapis.com/download"
+        ".tensorflow.org/data/quantum/"
+        "spin_systems/" + system_name + ".zip ",
+        extract=True)
 
     file_path = os.path.splitext(file_path)[0]
 
-    # TODO: if we host the data elsewhere, we can remove this "-master" addition
-    data_path = os.path.join(file_path + "-master", boundary_condition,
-                             str(nspins))
+    data_path = os.path.join(file_path + "-master", boundary_condition, str(nspins))
     return data_path
 
 
