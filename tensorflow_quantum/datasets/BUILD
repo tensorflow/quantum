@@ -10,11 +10,25 @@ py_library(
     srcs = ["cluster_state.py"],
 )
 
+py_library(
+    name = "spin_system",
+    srcs = ["spin_system.py"],
+)
+
 py_test(
     name = "cluster_state_test",
     srcs = ["cluster_state_test.py"],
     python_version = "PY3",
     deps = [
         ":cluster_state",
+    ],
+)
+
+py_test(
+    name = "spin_system_test",
+    srcs = ["spin_system_test.py"],
+    python_version = "PY3",
+    deps = [
+        ":spin_system",
     ],
 )

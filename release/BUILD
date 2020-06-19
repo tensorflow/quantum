@@ -36,6 +36,7 @@ sh_binary(
         "//tensorflow_quantum/core/ops:tfq_simulate_ops_py",
         "//tensorflow_quantum/core/serialize:serializer",
         "//tensorflow_quantum/datasets:cluster_state",
+        "//tensorflow_quantum/datasets:spin_system",
         "//tensorflow_quantum/python/differentiators:parameter_shift",
         "//tensorflow_quantum/python/differentiators:stochastic_differentiator",
         "//tensorflow_quantum/python/layers/circuit_construction:elementary",
