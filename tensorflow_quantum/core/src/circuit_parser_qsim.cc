@@ -43,12 +43,14 @@ typedef qsim::Circuit<QsimGate> QsimCircuit;
 inline Status ParseProtoArg(const Operation& op, const std::string& arg_name,
                             const SymbolMap& param_map, float* result) {
   // find arg_name in proto.
+  // iterator<Map<str, Arg>>
   const auto arg_v = op.args().find(arg_name);
   if (arg_v == op.args().end()) {
     return Status(tensorflow::error::INVALID_ARGUMENT,
                   "Could not find arg: " + arg_name + " in op.");
   }
   // find proto arg field.
+  // ::cirq::google::api::v2::Arg
   const auto proto_arg = arg_v->second;
   *result = proto_arg.arg_value().float_value();
   if (!proto_arg.symbol().empty()) {
@@ -72,7 +74,7 @@ inline Status ParseProtoArg(const Operation& op, const std::string& arg_name,
 // single qubit gate Create(time, q0)
 inline Status SingleConstantGate(
     const Operation& op, const SymbolMap& param_map,
-    const std::function<QsimGate(unsigned, unsigned)>& create_f,
+    const std::function<QsimGate(unsigned int, unsigned int)>& create_f,
     const unsigned time, QsimCircuit* circuit) {
   int q0;
   bool unused = absl::SimpleAtoi(op.qubits(0).id(), &q0);
@@ -83,7 +85,8 @@ inline Status SingleConstantGate(
 // two qubit gate Create(time, q0, q1)
 inline Status TwoConstantGate(
     const Operation& op, const SymbolMap& param_map,
-    const std::function<QsimGate(unsigned, unsigned, unsigned)>& create_f,
+    const std::function<QsimGate(unsigned int, unsigned int, unsigned int)>&
+        create_f,
     const unsigned time, QsimCircuit* circuit) {
   int q0, q1;
   bool unused = absl::SimpleAtoi(op.qubits(0).id(), &q0);
@@ -95,7 +98,8 @@ inline Status TwoConstantGate(
 // single qubit eigen -> Create(time, q0, exponent, global_shift)
 inline Status SingleEigenGate(
     const Operation& op, const SymbolMap& param_map,
-    const std::function<QsimGate(unsigned, unsigned, float, float)>& create_f,
+    const std::function<QsimGate(unsigned int, unsigned int, float, float)>&
+        create_f,
     const unsigned time, QsimCircuit* circuit) {
   int q0;
   bool unused;
@@ -122,8 +126,8 @@ inline Status SingleEigenGate(
 // two qubit eigen -> Create(time, q0, q1, exp, gs)
 inline Status TwoEigenGate(
     const Operation& op, const SymbolMap& param_map,
-    const std::function<QsimGate(unsigned, unsigned, unsigned, float, float)>&
-        create_f,
+    const std::function<QsimGate(unsigned int, unsigned int, unsigned int,
+                                 float, float)>& create_f,
     const unsigned time, QsimCircuit* circuit) {
   int q0, q1;
   float exp, exp_s, gs;
@@ -226,7 +230,7 @@ Status ISwapGate(const Operation& op, const SymbolMap& param_map,
                       time, circuit);
 }
 
-// single qubit PhasedXPow -> Create(time, q0, pexp, exp)
+// single qubit PhasedXPow -> Create(time, q0, pexp, exp, gs)
 inline Status PhasedXGate(const Operation& op, const SymbolMap& param_map,
                           const unsigned time, QsimCircuit* circuit) {
   int q0;

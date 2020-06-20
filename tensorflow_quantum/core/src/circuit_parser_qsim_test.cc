@@ -69,8 +69,8 @@ inline void AssertOneQubitEqual(const QsimGate& a, const QsimGate& b) {
 
 class TwoQubitEigenFixture
     : public ::testing::TestWithParam<std::tuple<
-          std::string, std::function<QsimGate(int, int, int, float, float)>>> {
-};
+          std::string, std::function<QsimGate(unsigned int, unsigned int,
+                                              unsigned int, float, float)>>> {};
 
 TEST_P(TwoQubitEigenFixture, TwoEigenGate) {
   float exp = 1.1234;
@@ -454,6 +454,85 @@ TEST(QsimCircuitParserTest, PhasedISwapTest) {
   // Test case where symbol value not present in resolver.
   ASSERT_EQ(
       QsimCircuitFromProgram(program_proto, symbol_map, 2, &test_circuit,
+                             &fused_circuit),
+      tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
+                         "Could not find symbol in parameter map: alpha"));
+}
+
+TEST(QsimCircuitParserTest, PhasedXPowTest) {
+  float exponent = 0.1234;
+  float phase_exponent = 0.4567;
+  float gs = 0.8910;
+  auto reference = qsim::Cirq::PhasedXPowGate<float>::Create(
+      0, 0, phase_exponent, exponent, gs);
+  Program program_proto;
+  Circuit* circuit_proto = program_proto.mutable_circuit();
+  circuit_proto->set_scheduling_strategy(circuit_proto->MOMENT_BY_MOMENT);
+  Moment* moments_proto = circuit_proto->add_moments();
+
+  // Add gate.
+  Operation* operations_proto = moments_proto->add_operations();
+  Gate* gate_proto = operations_proto->mutable_gate();
+  gate_proto->set_id("PXP");
+
+  // Set the args.
+  google::protobuf::Map<std::string, Arg>* args_proto =
+      operations_proto->mutable_args();
+  (*args_proto)["phase_exponent"] = MakeArg("alpha");
+  (*args_proto)["phase_exponent_scalar"] = MakeArg(0.5);
+  (*args_proto)["exponent"] = MakeArg("beta");
+  (*args_proto)["exponent_scalar"] = MakeArg(0.2);
+  (*args_proto)["global_shift"] = MakeArg(gs);
+
+  // Set the qubits.
+  Qubit* qubits_proto = operations_proto->add_qubits();
+  qubits_proto->set_id("0");
+
+  QsimCircuit test_circuit;
+  std::vector<qsim::GateFused<QsimGate>> fused_circuit;
+  SymbolMap symbol_map = {
+      {"alpha", std::pair<int, float>(0, 2 * phase_exponent)},
+      {"beta", std::pair<int, float>(1, 5 * exponent)}};
+
+  // Test symbol resolution.
+  ASSERT_EQ(QsimCircuitFromProgram(program_proto, symbol_map, 1, &test_circuit,
+                                   &fused_circuit),
+            tensorflow::Status::OK());
+  AssertOneQubitEqual(test_circuit.gates[0], reference);
+
+  symbol_map.clear();
+  test_circuit.gates.clear();
+  fused_circuit.clear();
+  (*args_proto)["phase_exponent"] = MakeArg(phase_exponent);
+  (*args_proto)["phase_exponent_scalar"] = MakeArg(1.0);
+  (*args_proto)["exponent"] = MakeArg(exponent);
+  (*args_proto)["exponent_scalar"] = MakeArg(1.0);
+  (*args_proto)["global_shift"] = MakeArg(gs);
+
+  // Test float values only.
+  ASSERT_EQ(QsimCircuitFromProgram(program_proto, symbol_map, 1, &test_circuit,
+                                   &fused_circuit),
+            tensorflow::Status::OK());
+  AssertOneQubitEqual(test_circuit.gates[0], reference);
+
+  test_circuit.gates.clear();
+  fused_circuit.clear();
+  args_proto->erase(args_proto->find("phase_exponent"));
+
+  // Test case where proto arg missing.
+  ASSERT_EQ(QsimCircuitFromProgram(program_proto, symbol_map, 1, &test_circuit,
+                                   &fused_circuit),
+            tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
+                               "Could not find arg: phase_exponent in op."));
+
+  test_circuit.gates.clear();
+  fused_circuit.clear();
+  (*args_proto)["phase_exponent"] = MakeArg("alpha");
+  symbol_map.clear();
+
+  // Test case where symbol value not present in resolver.
+  ASSERT_EQ(
+      QsimCircuitFromProgram(program_proto, symbol_map, 1, &test_circuit,
                              &fused_circuit),
       tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
                          "Could not find symbol in parameter map: alpha"));
