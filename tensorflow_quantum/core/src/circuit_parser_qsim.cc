@@ -76,7 +76,7 @@ inline Status SingleConstantGate(
     const Operation& op, const SymbolMap& param_map,
     const std::function<QsimGate(unsigned int, unsigned int)>& create_f,
     const unsigned time, QsimCircuit* circuit) {
-  int q0;
+  unsigned int q0;
   bool unused = absl::SimpleAtoi(op.qubits(0).id(), &q0);
   circuit->gates.push_back(create_f(time, q0));
   return Status::OK();
@@ -88,7 +88,7 @@ inline Status TwoConstantGate(
     const std::function<QsimGate(unsigned int, unsigned int, unsigned int)>&
         create_f,
     const unsigned time, QsimCircuit* circuit) {
-  int q0, q1;
+  unsigned int q0, q1;
   bool unused = absl::SimpleAtoi(op.qubits(0).id(), &q0);
   unused = absl::SimpleAtoi(op.qubits(1).id(), &q1);
   circuit->gates.push_back(create_f(time, q0, q1));
@@ -101,7 +101,7 @@ inline Status SingleEigenGate(
     const std::function<QsimGate(unsigned int, unsigned int, float, float)>&
         create_f,
     const unsigned time, QsimCircuit* circuit) {
-  int q0;
+  unsigned int q0;
   bool unused;
   float exp, exp_s, gs;
   Status u;
@@ -129,7 +129,7 @@ inline Status TwoEigenGate(
     const std::function<QsimGate(unsigned int, unsigned int, unsigned int,
                                  float, float)>& create_f,
     const unsigned time, QsimCircuit* circuit) {
-  int q0, q1;
+  unsigned int q0, q1;
   float exp, exp_s, gs;
   bool unused;
   Status u;
