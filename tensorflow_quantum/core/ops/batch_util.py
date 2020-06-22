@@ -186,7 +186,7 @@ def _convert_simple_view_to_result(view, dtype, shape):
 
 
 def _prep_pool_input_args(indices, *args, slice_args=True):
-    """Break down a set of indices, and optinal args into a generator
+    """Break down a set of indices, and optional args into a generator
     of length cpu_count."""
     block_size = int(np.ceil(len(indices) / os.cpu_count()))
     for i in range(0, len(indices), block_size):
