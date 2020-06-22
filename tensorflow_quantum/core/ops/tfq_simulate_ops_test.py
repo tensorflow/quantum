@@ -26,7 +26,7 @@ class SimulateExpectationTest(tf.test.TestCase):
     """Tests tfq_simulate_expectation."""
 
     def test_simulate_expectation_inputs(self):
-        """Make sure the the expectation op fails gracefully on bad inputs."""
+        """Make sure that the expectation op fails gracefully on bad inputs."""
         n_qubits = 5
         batch_size = 5
         symbol_names = ['alpha']

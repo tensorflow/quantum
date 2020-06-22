@@ -278,7 +278,7 @@ class CirqSimulateStateTest(tf.test.TestCase, parameterized.TestCase):
         tfq_results = op(util.convert_to_tensor(circuit_batch), [],
                          [[]] * len(circuit_batch))
 
-        # dont use batch_util here to enforce consistant padding everywhere
+        # don't use batch_util here to enforce consistent padding everywhere
         # without extra tests
         manual_padded_results = []
         for circuit in circuit_batch:
