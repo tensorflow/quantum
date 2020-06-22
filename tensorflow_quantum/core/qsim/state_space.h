@@ -62,7 +62,7 @@ class StateSpace {
       const tfq::proto::PauliSum& p_sum, StateSpace* scratch,
       float* expectation_value, const int m);
 
-  // Returns true if memory for the state has been succesfully allocated
+  // Returns true if memory for the state has been successfully allocated
   bool Valid() const;
 
   // Pointer to the raw state managed by this StateSpace
@@ -88,7 +88,7 @@ class StateSpace {
   // Free the memory associated with the state in this space
   virtual void DeleteState() = 0;
 
-  // Return a pointer to a clone of this StateSpace that is unitialized.
+  // Return a pointer to a clone of this StateSpace that is uninitialized.
   // NOTE: user is responsible for deleting the returned copy.
   virtual std::unique_ptr<StateSpace> Clone() const = 0;
 

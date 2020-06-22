@@ -68,7 +68,7 @@ def _scalar_extractor(x):
             # lhs contains number.
             return float(lhs_eval)
 
-    raise ValueError("Arithmatic expression outside of simple "
+    raise ValueError("Arithmetic expression outside of simple "
                      "scalar multiplication is currently not "
                      "supported. See serializer.py for more "
                      "information.")

@@ -191,7 +191,7 @@ class ControlledPQC(tf.keras.layers.Layer):
 
         self._operators = util.convert_to_tensor([operators])
 
-        # Ingest and promote reptitions.
+        # Ingest and promote repetitions.
         self._analytic = False
         if repetitions is None:
             self._analytic = True
