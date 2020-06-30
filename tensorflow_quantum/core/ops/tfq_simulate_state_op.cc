@@ -29,6 +29,15 @@ limitations under the License.
 #include "tensorflow_quantum/core/src/circuit_parser.h"
 #include "tensorflow_quantum/core/src/program_resolution.h"
 
+#include "../qsim/lib/circuit.h"
+#include "../qsim/lib/gate_appl.h"
+#include "../qsim/lib/gates_cirq.h"
+#include "../qsim/lib/simmux.h"
+#include "../qsim/lib/seqfor.h"
+#include "tensorflow_quantum/core/src/circuit_parser_qsim.h"
+#include "tensorflow_quantum/core/src/util_qsim.h"
+
+
 namespace tfq {
 
 using ::cirq::google::api::v2::Program;
@@ -37,6 +46,9 @@ using ::tfq::Circuit;
 using ::tfq::CircuitFromProgram;
 using ::tfq::qsim_old::GetStateSpace;
 using ::tfq::qsim_old::StateSpace;
+
+typedef qsim::Cirq::GateCirq<float> QsimGate;
+typedef qsim::Circuit<QsimGate> QsimCircuit;
 
 class TfqSimulateStateOp : public tensorflow::OpKernel {
  public:
@@ -76,6 +88,43 @@ class TfqSimulateStateOp : public tensorflow::OpKernel {
     OP_REQUIRES_OK(context, context->allocate_output(0, output_shape, &output));
     auto output_tensor = output->matrix<std::complex<float>>();
 
+    
+    //auto tfq_for = tfq::TFQQsimFor(context);
+    using Simulator = qsim::Simulator<qsim::SequentialFor>;
+    using StateSpace = Simulator::StateSpace;
+    using State = StateSpace::State;
+
+    for(int i =0;i<programs.size();i++) {
+      Program program = programs[i];
+      int nq = num_qubits[i];
+      SymbolMap map = maps[i];
+
+      QsimCircuit main_circuit;
+      std::vector<qsim::GateFused<QsimGate>> fused_circuit;
+
+      OP_REQUIRES_OK(context, QsimCircuitFromProgram(
+        program, map, nq, &main_circuit, &fused_circuit));
+
+      auto sim = Simulator(nq, -1);
+      auto ss = StateSpace(nq, -1);
+      auto sv = ss.CreateState();
+
+      ss.SetStateZero(sv);
+
+      for(int j =0;j<fused_circuit.size();j++){
+        qsim::ApplyFusedGate(sim, fused_circuit[j], sv);
+      }
+
+      for (uint64_t j = 0; j < (1 << nq); j++) {
+        output_tensor(i, j) = ss.GetAmpl(sv, j);
+      }
+      for (uint64_t j = (1 << nq); j < (uint64_t(1) << max_num_qubits);
+           j++) {
+        output_tensor(i, j) = std::complex<float>(-2, 0);
+      }
+
+    }
+/*
     auto DoWork = [&](int start, int end) {
       std::unique_ptr<StateSpace> state = GetStateSpace(1, 1);
       int old_num_qubits = -1;
@@ -116,6 +165,7 @@ class TfqSimulateStateOp : public tensorflow::OpKernel {
         ->tensorflow_cpu_worker_threads()
         ->workers->TransformRangeConcurrently(block_size, output_dim_size,
                                               DoWork);
+*/
   }
 };
 

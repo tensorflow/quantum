@@ -78,7 +78,7 @@ TEST_P(TwoQubitEigenFixture, TwoEigenGate) {
 
   // Get gate name and reference qsim gate.
   std::string name = std::get<0>(GetParam());
-  auto ref_gate = std::get<1>(GetParam())(0, 0, 1, exp, gs);
+  auto ref_gate = std::get<1>(GetParam())(0, 1, 0, exp, gs);
   Program program_proto;
   Circuit* circuit_proto = program_proto.mutable_circuit();
   circuit_proto->set_scheduling_strategy(circuit_proto->MOMENT_BY_MOMENT);
@@ -276,7 +276,7 @@ TEST(QsimCircuitParserTest, SingleConstantGate) {
 
 TEST(QsimCircuitParserTest, TwoConstantGate) {
   absl::flat_hash_map<std::string, QsimGate> reference = {
-      {"I2", qsim::Cirq::I2<float>::Create(0, 0, 1)}};
+      {"I2", qsim::Cirq::I2<float>::Create(0, 1, 0)}};
   for (auto kv : reference) {
     Program program_proto;
     Circuit* circuit_proto = program_proto.mutable_circuit();
@@ -385,7 +385,7 @@ TEST(QsimCircuitParserTest, PhasedISwapTest) {
   float exponent = 0.1234;
   float phase_exponent = 0.4567;
   auto reference = qsim::Cirq::PhasedISwapPowGate<float>::Create(
-      0, 0, 1, phase_exponent, exponent);
+      0, 1, 0, phase_exponent, exponent);
   Program program_proto;
   Circuit* circuit_proto = program_proto.mutable_circuit();
   circuit_proto->set_scheduling_strategy(circuit_proto->MOMENT_BY_MOMENT);
@@ -553,6 +553,41 @@ TEST(QsimCircuitParserTest, EmptyTest) {
             tensorflow::Status::OK());
   ASSERT_EQ(test_circuit.gates.size(), 0);
   ASSERT_EQ(fused_circuit.size(), 0);
+}
+
+TEST(QsimCircuitParserTest, CircuitFromPauliTermPauli) {
+  tfq::proto::PauliTerm pauli_proto;
+  // The created circuit should not depend on the coefficient
+  pauli_proto.set_coefficient_real(3.14);
+  tfq::proto::PauliQubitPair* pair_proto = pauli_proto.add_paulis();
+  pair_proto->set_qubit_id("0");
+  pair_proto->set_pauli_type("X");
+
+  // Build the corresponding correct circuit
+  auto reference = qsim::Cirq::XPowGate<float>::Create(0, 0, 1.0, 0.0);
+  QsimCircuit test_circuit;
+  std::vector<qsim::GateFused<QsimGate>> fused_circuit;
+  tensorflow::Status status;
+
+  // Check conversion
+  status =
+      QsimCircuitFromPauliTerm(pauli_proto, 1, &test_circuit, &fused_circuit);
+  ASSERT_EQ(status, tensorflow::Status::OK());
+  ASSERT_EQ(test_circuit.num_qubits, 1);
+  ASSERT_EQ(test_circuit.gates.size(), 1);
+  AssertOneQubitEqual(test_circuit.gates[0], reference);
+}
+
+TEST(QsimCircuitParserTest, CircuitFromPauliTermEmpty) {
+  tfq::proto::PauliTerm pauli_proto;
+  tensorflow::Status status;
+  QsimCircuit test_circuit;
+  std::vector<qsim::GateFused<QsimGate>> fused_circuit;
+  status =
+      QsimCircuitFromPauliTerm(pauli_proto, 0, &test_circuit, &fused_circuit);
+  ASSERT_EQ(status, tensorflow::Status::OK());
+  ASSERT_EQ(test_circuit.num_qubits, 0);
+  ASSERT_EQ(test_circuit.gates.size(), 0);
 }
 
 }  // namespace

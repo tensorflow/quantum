@@ -45,6 +45,7 @@ cc_library(
     srcs = ["circuit_parser_qsim.cc"],
     hdrs = ["circuit_parser_qsim.h"],
     deps = [
+        "//tensorflow_quantum/core/proto:pauli_sum_cc_proto",
         "//tensorflow_quantum/core/proto:program_cc_proto",
         "@com_google_absl//absl/container:flat_hash_map",
         "@local_config_tf//:libtensorflow_framework",
@@ -56,6 +57,16 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "util_qsim",
+    srcs = [],
+    hdrs = ["util_qsim.h"],
+    deps = [
+        "@local_config_tf//:libtensorflow_framework",
+        "@local_config_tf//:tf_header_lib",
+    ]
+)
+
 cc_test(
     name = "circuit_parser_qsim_test",
     size = "small",
@@ -63,6 +74,7 @@ cc_test(
     linkstatic = 0,
     deps = [
         ":circuit_parser_qsim",
+        "//tensorflow_quantum/core/proto:pauli_sum_cc_proto",
         "//tensorflow_quantum/core/proto:program_cc_proto",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/strings",
