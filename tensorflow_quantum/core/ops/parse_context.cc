@@ -171,20 +171,21 @@ Status GetPauliSums(OpKernelContext* context,
   const auto sum_specs = input->matrix<tensorflow::tstring>();
   p_sums->assign(sum_specs.dimension(0),
                  std::vector<PauliSum>(sum_specs.dimension(1), PauliSum()));
+  const int op_dim = sum_specs.dimension(1);
   auto DoWork = [&](int start, int end) {
-    for (int i = start; i < end; i++) {
-      for (int j = 0; j < sum_specs.dimension(1); j++) {
-        PauliSum p;
-        OP_REQUIRES_OK(context, ParseProto(sum_specs(i, j), &p));
-        (*p_sums)[i][j] = p;
-      }
+    for (int ii = start; ii < end; ii++) {
+      const int i = ii / op_dim;
+      const int j = ii % op_dim;
+      PauliSum p;
+      OP_REQUIRES_OK(context, ParseProto(sum_specs(i, j), &p));
+      (*p_sums)[i][j] = p;
     }
   };
 
   // TODO(mbbrough): Determine if this is a good cycle estimate.
   const int cycle_estimate = 1000;
   context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
-      sum_specs.dimension(0), cycle_estimate, DoWork);
+      sum_specs.dimension(0) * sum_specs.dimension(1), cycle_estimate, DoWork);
 
   return Status::OK();
 }
@@ -225,20 +226,22 @@ Status GetSymbolMaps(OpKernelContext* context, std::vector<SymbolMap>* maps) {
 
   maps->assign(symbol_values.dimension(0), SymbolMap());
 
+  const int symbol_dim = symbol_values.dimension(1);
   auto DoWork = [&](int start, int end) {
-    for (int i = start; i < end; i++) {
-      for (int j = 0; j < symbol_values.dimension(1); j++) {
-        const std::string& name = symbol_names(j);
-        const float value = symbol_values(i, j);
-        (*maps)[i][name] = {j, value};
-      }
+    for (int ii = start; ii < end; ii++) {
+      const int i = ii / symbol_dim;
+      const int j = ii % symbol_dim;
+      const std::string& name = symbol_names(j);
+      const float value = symbol_values(i, j);
+      (*maps)[i][name] = {j, value};
     }
   };
 
   // TODO(mbbrough): Determine if this is a good cycle estimate.
   const int cycle_estimate = 1000;
   context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
-      symbol_values.dimension(0), cycle_estimate, DoWork);
+      symbol_values.dimension(0) * symbol_values.dimension(1), cycle_estimate,
+      DoWork);
 
   return Status::OK();
 }
