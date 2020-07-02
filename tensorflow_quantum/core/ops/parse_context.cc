@@ -246,30 +246,6 @@ Status GetSymbolMaps(OpKernelContext* context, std::vector<SymbolMap>* maps) {
   return Status::OK();
 }
 
-// TODO (mbbrough/pmassey/jaeyoo): Should grads return an EigenMatrixXd instead
-// of a vector of vectors ?
-Status GetGradients(OpKernelContext* context,
-                    std::vector<std::vector<float>>* grads) {
-  const Tensor* input;
-  const Status status = context->input("grad", &input);
-  if (!status.ok()) {
-    return status;
-  }
-
-  const auto input_grads = input->matrix<float>();
-  grads->reserve(input_grads.dimension(0));
-  for (int i = 0; i < input_grads.dimension(0); i++) {
-    std::vector<float> sub_grads;
-    sub_grads.reserve(input_grads.dimension(1));
-    for (int j = 0; j < input_grads.dimension(1); j++) {
-      sub_grads.push_back(input_grads(i, j));
-    }
-    grads->push_back(sub_grads);
-  }
-
-  return Status::OK();
-}
-
 tensorflow::Status GetNumSamples(
     tensorflow::OpKernelContext* context,
     std::vector<std::vector<int>>* parsed_num_samples) {

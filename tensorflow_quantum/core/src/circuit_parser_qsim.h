@@ -25,6 +25,7 @@ limitations under the License.
 #include "absl/container/flat_hash_map.h"
 #include "cirq/google/api/v2/program.pb.h"
 #include "tensorflow/core/lib/core/status.h"
+#include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
 
 namespace tfq {
 
@@ -35,6 +36,13 @@ tensorflow::Status QsimCircuitFromProgram(
     const cirq::google::api::v2::Program& program,
     const absl::flat_hash_map<std::string, std::pair<int, float>>& param_map,
     const int num_qubits, qsim::Circuit<qsim::Cirq::GateCirq<float>>* circuit,
+    std::vector<qsim::GateFused<qsim::Cirq::GateCirq<float>>>* fused_circuit);
+
+// parse a serialized pauliTerm from a larger cirq.Paulisum proto
+// into a qsim Circuit and fused circuit.
+tensorflow::Status QsimCircuitFromPauliTerm(
+    const tfq::proto::PauliTerm& term, const int num_qubits,
+    qsim::Circuit<qsim::Cirq::GateCirq<float>>* circuit,
     std::vector<qsim::GateFused<qsim::Cirq::GateCirq<float>>>* fused_circuit);
 
 }  // namespace tfq

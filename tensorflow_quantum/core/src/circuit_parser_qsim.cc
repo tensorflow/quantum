@@ -26,6 +26,7 @@ limitations under the License.
 #include "absl/strings/numbers.h"
 #include "cirq/google/api/v2/program.pb.h"
 #include "tensorflow/core/lib/core/status.h"
+#include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
 
 namespace tfq {
 
@@ -33,6 +34,7 @@ using ::cirq::google::api::v2::Moment;
 using ::cirq::google::api::v2::Operation;
 using ::cirq::google::api::v2::Program;
 using ::tensorflow::Status;
+using ::tfq::proto::PauliTerm;
 
 namespace {
 
@@ -372,6 +374,34 @@ tensorflow::Status QsimCircuitFromProgram(
   *fused_circuit = qsim::BasicGateFuser<QsimGate>().FuseGates(
       circuit->num_qubits, circuit->gates, time);
   return Status::OK();
+}
+
+Status QsimCircuitFromPauliTerm(
+    const PauliTerm& term, const int num_qubits, QsimCircuit* circuit,
+    std::vector<qsim::GateFused<QsimGate>>* fused_circuit) {
+  Program measurement_program;
+  SymbolMap empty_map;
+  measurement_program.mutable_circuit()->set_scheduling_strategy(
+      cirq::google::api::v2::Circuit::MOMENT_BY_MOMENT);
+  Moment* term_moment = measurement_program.mutable_circuit()->add_moments();
+  for (const tfq::proto::PauliQubitPair& pair : term.paulis()) {
+    Operation* new_op = term_moment->add_operations();
+
+    // create corresponding eigen gate op.
+    new_op->add_qubits()->set_id(pair.qubit_id());
+    new_op->mutable_gate()->set_id(pair.pauli_type() + "P");
+    (*new_op->mutable_args())["exponent"].mutable_arg_value()->set_float_value(
+        1.0);
+    (*new_op->mutable_args())["global_shift"]
+        .mutable_arg_value()
+        ->set_float_value(0.0);
+    (*new_op->mutable_args())["exponent_scalar"]
+        .mutable_arg_value()
+        ->set_float_value(1.0);
+  }
+
+  return QsimCircuitFromProgram(measurement_program, empty_map, num_qubits,
+                                circuit, fused_circuit);
 }
 
 }  // namespace tfq
