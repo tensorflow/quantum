@@ -81,10 +81,10 @@ Status ParsePrograms(OpKernelContext* context, const std::string& input_name,
     }
   };
 
-  const int block_size = GetBlockSize(context, num_programs);
-  context->device()
-      ->tensorflow_cpu_worker_threads()
-      ->workers->TransformRangeConcurrently(block_size, num_programs, DoWork);
+  // TODO(mbbrough): Determine if this is a good cycle estimate.
+  const int cycle_estimate = 1000;
+  context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
+      num_programs, cycle_estimate, DoWork);
 
   return Status::OK();
 }
@@ -110,12 +110,13 @@ Status GetProgramsAndProgramsToAppend(
   return Status::OK();
 }
 
-// TODO(pmassey): Add a getter for the case where there is only 1 input program.
-
 Status GetProgramsAndNumQubits(
     OpKernelContext* context, std::vector<Program>* programs,
     std::vector<int>* num_qubits,
     std::vector<std::vector<PauliSum>>* p_sums /*=nullptr*/) {
+  // 1. Parse input programs
+  // 2. (Optional) Parse input PauliSums
+  // 3. Convert GridQubit locations to integers.
   Status status = ParsePrograms(context, "programs", programs);
   if (!status.ok()) {
     return status;
@@ -128,27 +129,33 @@ Status GetProgramsAndNumQubits(
     }
   }
 
-  num_qubits->reserve(programs->size());
-  for (size_t i = 0; i < programs->size(); i++) {
-    Program& program = (*programs)[i];
-    Status status = Status::OK();
-    unsigned int this_num_qubits;
-    if (p_sums) {
-      status = ResolveQubitIds(&program, &this_num_qubits, &(p_sums->at(i)));
-    } else {
-      status = ResolveQubitIds(&program, &this_num_qubits);
+  // Resolve qubit ID's in parallel.
+  num_qubits->assign(programs->size(), -1);
+  auto DoWork = [&](int start, int end) {
+    for (int i = start; i < end; i++) {
+      Program& program = (*programs)[i];
+      unsigned int this_num_qubits;
+      if (p_sums) {
+        OP_REQUIRES_OK(context, ResolveQubitIds(&program, &this_num_qubits,
+                                                &(p_sums->at(i))));
+      } else {
+        OP_REQUIRES_OK(context, ResolveQubitIds(&program, &this_num_qubits));
+      }
+      (*num_qubits)[i] = this_num_qubits;
     }
-    if (!status.ok()) {
-      return status;
-    }
-    num_qubits->push_back(this_num_qubits);
-  }
+  };
+
+  // TODO(mbbrough): Determine if this is a good cycle estimate.
+  const int cycle_estimate = 1000;
+  context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
+      num_qubits->size(), cycle_estimate, DoWork);
 
   return Status::OK();
 }
 
 Status GetPauliSums(OpKernelContext* context,
                     std::vector<std::vector<PauliSum>>* p_sums) {
+  // 1. Parses PauliSum proto.
   const Tensor* input;
   Status status = context->input("pauli_sums", &input);
   if (!status.ok()) {
@@ -162,28 +169,29 @@ Status GetPauliSums(OpKernelContext* context,
   }
 
   const auto sum_specs = input->matrix<tensorflow::tstring>();
-  p_sums->reserve(sum_specs.dimension(0));
-  for (int i = 0; i < sum_specs.dimension(0); i++) {
-    std::vector<PauliSum> sub_ops;
-    sub_ops.reserve(sum_specs.dimension(1));
-    for (int j = 0; j < sum_specs.dimension(1); j++) {
-      const std::string& text = sum_specs(i, j);
+  p_sums->assign(sum_specs.dimension(0),
+                 std::vector<PauliSum>(sum_specs.dimension(1), PauliSum()));
+  const int op_dim = sum_specs.dimension(1);
+  auto DoWork = [&](int start, int end) {
+    for (int ii = start; ii < end; ii++) {
+      const int i = ii / op_dim;
+      const int j = ii % op_dim;
       PauliSum p;
-      // TODO(pmassey): Consider parsing from the serialized instead of the
-      // human readable proto to pass smaller messages.
-      status = ParseProto(text, &p);
-      if (!status.ok()) {
-        return status;
-      }
-      sub_ops.push_back(p);
+      OP_REQUIRES_OK(context, ParseProto(sum_specs(i, j), &p));
+      (*p_sums)[i][j] = p;
     }
-    p_sums->push_back(sub_ops);
-  }
+  };
+
+  // TODO(mbbrough): Determine if this is a good cycle estimate.
+  const int cycle_estimate = 1000;
+  context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
+      sum_specs.dimension(0) * sum_specs.dimension(1), cycle_estimate, DoWork);
 
   return Status::OK();
 }
 
 Status GetSymbolMaps(OpKernelContext* context, std::vector<SymbolMap>* maps) {
+  // 1. Convert to dictionary representation for param resolution.
   const Tensor* input_names;
   Status status = context->input("symbol_names", &input_names);
   if (!status.ok()) {
@@ -216,17 +224,24 @@ Status GetSymbolMaps(OpKernelContext* context, std::vector<SymbolMap>* maps) {
                   "Input symbol names and value sizes do not match.");
   }
 
-  maps->reserve(symbol_values.dimension(0));
-  for (int i = 0; i < symbol_values.dimension(0); i++) {
-    SymbolMap map;
-    for (int j = 0; j < symbol_values.dimension(1); j++) {
+  maps->assign(symbol_values.dimension(0), SymbolMap());
+
+  const int symbol_dim = symbol_values.dimension(1);
+  auto DoWork = [&](int start, int end) {
+    for (int ii = start; ii < end; ii++) {
+      const int i = ii / symbol_dim;
+      const int j = ii % symbol_dim;
       const std::string& name = symbol_names(j);
       const float value = symbol_values(i, j);
-      map[name] = {j, value};
+      (*maps)[i][name] = {j, value};
     }
+  };
 
-    maps->push_back(map);
-  }
+  // TODO(mbbrough): Determine if this is a good cycle estimate.
+  const int cycle_estimate = 1000;
+  context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
+      symbol_values.dimension(0) * symbol_values.dimension(1), cycle_estimate,
+      DoWork);
 
   return Status::OK();
 }
