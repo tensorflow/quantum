@@ -38,7 +38,6 @@ struct QsimFor {
       }
     };
     // estimated number of cpu cycles needed for one unit of work.
-    // TODO(mbbrough): figure out this number from here:
     //   https://github.com/quantumlib/qsim/issues/147
     const int cycle_estimate = 100;
     context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
