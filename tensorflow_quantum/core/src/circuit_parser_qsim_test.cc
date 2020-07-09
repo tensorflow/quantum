@@ -78,7 +78,7 @@ TEST_P(TwoQubitEigenFixture, TwoEigenGate) {
 
   // Get gate name and reference qsim gate.
   std::string name = std::get<0>(GetParam());
-  auto ref_gate = std::get<1>(GetParam())(0, 0, 1, exp, gs);
+  auto ref_gate = std::get<1>(GetParam())(0, 1, 0, exp, gs);
   Program program_proto;
   Circuit* circuit_proto = program_proto.mutable_circuit();
   circuit_proto->set_scheduling_strategy(circuit_proto->MOMENT_BY_MOMENT);
@@ -276,7 +276,7 @@ TEST(QsimCircuitParserTest, SingleConstantGate) {
 
 TEST(QsimCircuitParserTest, TwoConstantGate) {
   absl::flat_hash_map<std::string, QsimGate> reference = {
-      {"I2", qsim::Cirq::I2<float>::Create(0, 0, 1)}};
+      {"I2", qsim::Cirq::I2<float>::Create(0, 1, 0)}};
   for (auto kv : reference) {
     Program program_proto;
     Circuit* circuit_proto = program_proto.mutable_circuit();
@@ -385,7 +385,7 @@ TEST(QsimCircuitParserTest, PhasedISwapTest) {
   float exponent = 0.1234;
   float phase_exponent = 0.4567;
   auto reference = qsim::Cirq::PhasedISwapPowGate<float>::Create(
-      0, 0, 1, phase_exponent, exponent);
+      0, 1, 0, phase_exponent, exponent);
   Program program_proto;
   Circuit* circuit_proto = program_proto.mutable_circuit();
   circuit_proto->set_scheduling_strategy(circuit_proto->MOMENT_BY_MOMENT);

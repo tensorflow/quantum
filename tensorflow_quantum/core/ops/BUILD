@@ -116,6 +116,11 @@ cc_binary(
     deps = [
         ":parse_context",
         ":tfq_simulate_utils",
+
+        "//tensorflow_quantum/core/src:util_qsim",
+        "//tensorflow_quantum/core/src:circuit_parser_qsim",
+        "@qsim//lib:qsim_lib",
+
         "//tensorflow_quantum/core/proto:pauli_sum_cc_proto",
         "//tensorflow_quantum/core/proto:program_cc_proto",
         "//tensorflow_quantum/core/qsim",

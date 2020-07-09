@@ -53,8 +53,19 @@ cc_library(
         "@qsim//lib:circuit",
         "@qsim//lib:gates_cirq",
         "@qsim//lib:fuser",
-        "@qsim//lib:fuser_basic",   
+        "@qsim//lib:fuser_basic",
+        "@qsim//lib:io"  
     ],
+)
+
+cc_library(
+    name = "util_qsim",
+    srcs = [],
+    hdrs = ["util_qsim.h"],
+    deps = [
+        "@local_config_tf//:libtensorflow_framework",
+        "@local_config_tf//:tf_header_lib",
+    ]
 )
 
 cc_test(
