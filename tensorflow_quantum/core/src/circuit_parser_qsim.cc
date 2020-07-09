@@ -91,7 +91,8 @@ inline Status TwoConstantGate(
     const Operation& op, const SymbolMap& param_map,
     const std::function<QsimGate(unsigned int, unsigned int, unsigned int)>&
         create_f,
-    const unsigned int num_qubits, const unsigned time, QsimCircuit* circuit) {
+    const unsigned int num_qubits, const unsigned int time,
+    QsimCircuit* circuit) {
   unsigned int q0, q1;
   bool unused = absl::SimpleAtoi(op.qubits(0).id(), &q0);
   unused = absl::SimpleAtoi(op.qubits(1).id(), &q1);
@@ -135,7 +136,8 @@ inline Status TwoEigenGate(
     const Operation& op, const SymbolMap& param_map,
     const std::function<QsimGate(unsigned int, unsigned int, unsigned int,
                                  float, float)>& create_f,
-    const unsigned int num_qubits, const unsigned time, QsimCircuit* circuit) {
+    const unsigned int num_qubits, const unsigned int time,
+    QsimCircuit* circuit) {
   unsigned int q0, q1;
   float exp, exp_s, gs;
   bool unused;
