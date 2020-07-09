@@ -65,9 +65,9 @@ http_archive(
 
 http_archive(
     name = "qsim",
-    sha256 = "14d095c15268b7fbebaf4efebb9003a974025600f0018974bb743f32fa714aa1",
-    strip_prefix = "qsim-0.1.0",
-    urls = ["https://github.com/quantumlib/qsim/archive/v0.1.0.zip"],
+    # sha256 = "14d095c15268b7fbebaf4efebb9003a974025600f0018974bb743f32fa714aa1",
+    strip_prefix = "qsim-0.2.0",
+    urls = ["https://github.com/quantumlib/qsim/archive/v0.2.0.zip"],
 )
 
 # Added for crosstool in tensorflow.

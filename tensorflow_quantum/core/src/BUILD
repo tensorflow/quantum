@@ -53,7 +53,8 @@ cc_library(
         "@qsim//lib:circuit",
         "@qsim//lib:gates_cirq",
         "@qsim//lib:fuser",
-        "@qsim//lib:fuser_basic",   
+        "@qsim//lib:fuser_basic",
+        "@qsim//lib:io"  
     ],
 )
 
