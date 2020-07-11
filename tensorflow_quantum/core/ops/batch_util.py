@@ -20,7 +20,8 @@ import os
 
 import numpy as np
 import cirq
-import pathos
+import multiprocessing as mp
+from multiprocessing.pool import Pool as ProcessPool
 
 from tensorflow_quantum.core.serialize import serializer
 
@@ -117,7 +118,7 @@ def _make_complex_view(shape, init_val):
     flattened_size = 1
     for dim_size in shape:
         flattened_size *= dim_size
-    shared_mem_array = pathos.helpers.mp.RawArray('f', flattened_size)
+    shared_mem_array = mp.RawArray('f', flattened_size)
     np_view = np.frombuffer(shared_mem_array, dtype=np.float32).reshape(shape)
     np.copyto(np_view, data)
     return shared_mem_array
@@ -158,7 +159,7 @@ def _make_simple_view(shape, init_val, dtype, c_code):
     flattened_size = 1
     for dim_size in shape:
         flattened_size *= dim_size
-    shared_mem_array = pathos.helpers.mp.RawArray(c_code, flattened_size)
+    shared_mem_array = mp.RawArray(c_code, flattened_size)
     np_view = np.frombuffer(shared_mem_array, dtype=dtype).reshape(shape)
     np.copyto(np_view, data)
     return shared_mem_array
@@ -385,7 +386,7 @@ def batch_calculate_state(circuits, param_resolvers, simulator):
     shared_array = _make_complex_view(return_mem_shape, -2)
     input_args = _prep_pool_input_args(range(len(circuits)), circuits,
                                        param_resolvers)
-    with pathos.pools._ProcessPool(processes=None,
+    with ProcessPool(processes=None,
                                    initializer=_setup_dict,
                                    initargs=(shared_array, return_mem_shape,
                                              simulator, post_process)) as pool:
@@ -469,7 +470,7 @@ def batch_calculate_expectation(circuits, param_resolvers, ops, simulator):
                               ops,
                               slice_args=False))
 
-    with pathos.pools._ProcessPool(processes=None,
+    with ProcessPool(processes=None,
                                    initializer=_setup_dict,
                                    initargs=(shared_array, return_mem_shape,
                                              simulator, post_process)) as pool:
@@ -560,7 +561,7 @@ def batch_calculate_sampled_expectation(circuits, param_resolvers, ops,
                               n_samples,
                               slice_args=False))
 
-    with pathos.pools._ProcessPool(processes=None,
+    with ProcessPool(processes=None,
                                    initializer=_setup_dict,
                                    initargs=(shared_array, return_mem_shape,
                                              simulator, None)) as pool:
@@ -631,7 +632,7 @@ def batch_sample(circuits, param_resolvers, n_samples, simulator):
         _prep_pool_input_args(range(len(circuits)), circuits, param_resolvers,
                               [n_samples] * len(circuits)))
 
-    with pathos.pools._ProcessPool(processes=None,
+    with ProcessPool(processes=None,
                                    initializer=_setup_dict,
                                    initargs=(shared_array, return_mem_shape,
                                              simulator, post_process)) as pool:
