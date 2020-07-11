@@ -17,6 +17,7 @@
 import copy
 import numbers
 import sympy
+import numpy as np
 
 import cirq
 import cirq.google.api.v2 as v2
@@ -25,8 +26,10 @@ from tensorflow_quantum.core.proto import pauli_sum_pb2
 # Needed to allow autograph to crawl AST without erroring.
 _CONSTANT_TRUE = lambda x: True
 
+
 def _round(x):
     return np.round(x, 6) if isinstance(x, float) else x
+
 
 def _parse_mul(expr):
     """Returns the lhs and rhs of a sympy.Mul. This is written
