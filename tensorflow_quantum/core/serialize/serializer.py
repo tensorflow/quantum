@@ -17,6 +17,7 @@
 import copy
 import numbers
 import sympy
+import numpy as np
 
 import cirq
 import cirq.google.api.v2 as v2
@@ -24,6 +25,10 @@ from tensorflow_quantum.core.proto import pauli_sum_pb2
 
 # Needed to allow autograph to crawl AST without erroring.
 _CONSTANT_TRUE = lambda x: True
+
+
+def _round(x):
+    return np.round(x, 6) if isinstance(x, float) else x
 
 
 def _parse_mul(expr):
@@ -61,12 +66,12 @@ def _scalar_extractor(x):
         if isinstance(lhs_eval, sympy.Symbol) and isinstance(
                 rhs_eval, (sympy.numbers.Float, sympy.numbers.Integer)):
             # lhs contains symbol rhs contains number.
-            return float(rhs_eval)
+            return _round(float(rhs_eval))
 
         if isinstance(rhs_eval, sympy.Symbol) and isinstance(
                 lhs_eval, (sympy.numbers.Float, sympy.numbers.Integer)):
             # lhs contains number.
-            return float(lhs_eval)
+            return _round(float(lhs_eval))
 
     raise ValueError("Arithmetic expression outside of simple "
                      "scalar multiplication is currently not "
@@ -80,7 +85,7 @@ def _symbol_extractor(x):
         raise TypeError("Invalid input argument for exponent.")
 
     if isinstance(x, numbers.Real):
-        return float(x)
+        return _round(float(x))
     if isinstance(x, sympy.Symbol):
         return x
 
@@ -138,9 +143,10 @@ def _eigen_gate_deserializer(gate_type, serialized_id):
         like cirq.rx('alpha').
         """
         if exponent_scalar == 1.0:
-            return gate_type(exponent=exponent, global_shift=global_shift)
-        return gate_type(exponent=exponent * exponent_scalar,
-                         global_shift=global_shift)
+            return gate_type(exponent=_round(exponent),
+                             global_shift=_round(global_shift))
+        return gate_type(exponent=_round(exponent) * _round(exponent_scalar),
+                         global_shift=_round(global_shift))
 
     args = [
         cirq.google.DeserializingArg(serialized_name="exponent",
@@ -189,7 +195,8 @@ def _fsim_gate_deserializer():
         """This is a workaround to support symbol scalar multiplication.
         See `_eigen_gate_deserializer` for details.
         """
-        return cirq.FSimGate(theta=theta * theta_scalar, phi=phi * phi_scalar)
+        return cirq.FSimGate(theta=_round(theta) * _round(theta_scalar),
+                             phi=_round(phi) * _round(phi_scalar))
 
     args = [
         cirq.google.DeserializingArg(serialized_name="theta",
@@ -286,16 +293,17 @@ def _phased_eigen_gate_deserializer(gate_type, serialized_id):
         and cirq's program protobuf for details. This is needed for things
         like cirq.rx('alpha').
         """
-        # Do this to help with rounding. it's ugly.
+        exponent = _round(exponent)
+        phase_exponent = _round(phase_exponent)
         exponent = exponent if exponent_scalar == 1.0 \
-            else exponent * exponent_scalar
+            else exponent * _round(exponent_scalar)
         phase_exponent = phase_exponent if phase_exponent_scalar == 1.0 \
-            else phase_exponent * phase_exponent_scalar
+            else phase_exponent * _round(phase_exponent_scalar)
         if global_shift != 0:
             # needed in case this specific phasedeigengate doesn't
             # have a global_phase in constructor.
             return gate_type(exponent=exponent,
-                             global_shift=global_shift,
+                             global_shift=_round(global_shift),
                              phase_exponent=phase_exponent)
         return gate_type(exponent=exponent, phase_exponent=phase_exponent)
 
@@ -499,7 +507,8 @@ def deserialize_paulisum(proto):
 
     res = cirq.PauliSum()
     for term_proto in proto.terms:
-        coef = term_proto.coefficient_real + 1.0j * term_proto.coefficient_imag
+        coef = float(_round(term_proto.coefficient_real)) + \
+            1.0j * float(_round(term_proto.coefficient_imag))
         term = coef * cirq.PauliString()
         for pauli_qubit_pair in term_proto.paulis:
             op = _process_pauli_type(pauli_qubit_pair.pauli_type)
