@@ -387,9 +387,9 @@ def batch_calculate_state(circuits, param_resolvers, simulator):
     input_args = _prep_pool_input_args(range(len(circuits)), circuits,
                                        param_resolvers)
     with ProcessPool(processes=None,
-                                   initializer=_setup_dict,
-                                   initargs=(shared_array, return_mem_shape,
-                                             simulator, post_process)) as pool:
+                     initializer=_setup_dict,
+                     initargs=(shared_array, return_mem_shape, simulator,
+                               post_process)) as pool:
 
         pool.starmap(_state_worker_func, list(input_args))
 
@@ -471,9 +471,9 @@ def batch_calculate_expectation(circuits, param_resolvers, ops, simulator):
                               slice_args=False))
 
     with ProcessPool(processes=None,
-                                   initializer=_setup_dict,
-                                   initargs=(shared_array, return_mem_shape,
-                                             simulator, post_process)) as pool:
+                     initializer=_setup_dict,
+                     initargs=(shared_array, return_mem_shape, simulator,
+                               post_process)) as pool:
 
         pool.starmap(_analytical_expectation_worker_func, input_args)
 
@@ -562,9 +562,9 @@ def batch_calculate_sampled_expectation(circuits, param_resolvers, ops,
                               slice_args=False))
 
     with ProcessPool(processes=None,
-                                   initializer=_setup_dict,
-                                   initargs=(shared_array, return_mem_shape,
-                                             simulator, None)) as pool:
+                     initializer=_setup_dict,
+                     initargs=(shared_array, return_mem_shape, simulator,
+                               None)) as pool:
 
         pool.starmap(_sample_expectation_worker_func, input_args)
 
@@ -633,9 +633,9 @@ def batch_sample(circuits, param_resolvers, n_samples, simulator):
                               [n_samples] * len(circuits)))
 
     with ProcessPool(processes=None,
-                                   initializer=_setup_dict,
-                                   initargs=(shared_array, return_mem_shape,
-                                             simulator, post_process)) as pool:
+                     initializer=_setup_dict,
+                     initargs=(shared_array, return_mem_shape, simulator,
+                               post_process)) as pool:
 
         pool.starmap(_sample_worker_func, input_args)
 
