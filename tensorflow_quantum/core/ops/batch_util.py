@@ -19,9 +19,9 @@ import itertools
 import os
 
 import multiprocessing as mp
+from multiprocessing.pool import Pool as ProcessPool
 import numpy as np
 import cirq
-from multiprocessing.pool import Pool as ProcessPool
 
 from tensorflow_quantum.core.serialize import serializer
 
