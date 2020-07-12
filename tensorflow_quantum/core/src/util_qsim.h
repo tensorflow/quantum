@@ -19,9 +19,22 @@ limitations under the License.
 #include <cstdint>
 #include <vector>
 
+#include "../qsim/lib/circuit.h"
+#include "../qsim/lib/fuser.h"
+#include "../qsim/lib/gate_appl.h"
+#include "../qsim/lib/gates_cirq.h"
+#include "absl/container/flat_hash_map.h"
 #include "tensorflow/core/framework/op_kernel.h"
+#include "tensorflow/core/lib/core/status.h"
+#include "tensorflow/core/platform/threadpool.h"
+#include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
+#include "tensorflow_quantum/core/src/circuit_parser_qsim.h"
 
 namespace tfq {
+
+typedef absl::flat_hash_map<std::string, std::pair<int, float>> SymbolMap;
+typedef qsim::Cirq::GateCirq<float> QsimGate;
+typedef qsim::Circuit<QsimGate> QsimCircuit;
 
 // Custom FOR loop struct to use TF threadpool instead of native
 // qsim OpenMP or serial FOR implementations.
@@ -52,6 +65,56 @@ struct QsimFor {
     return 0;
   }
 };
+
+// bad style standards here that we are forced to follow from qsim.
+// computes the expectation value <state | p_sum | state > using
+// scratch to save on memory. Implementation does this:
+// 1. Copy state onto scratch
+// 2. Evolve scratch forward with p_sum terms
+// 3. Compute < state | scratch >
+// 4. Sum and repeat.
+// scratch is required to have memory initialized, but does not require
+// values in memory to be set.
+template <typename SimT, typename StateSpaceT, typename StateT>
+tensorflow::Status ComputeExpectationQsim(const tfq::proto::PauliSum& p_sum,
+                                          const SimT& sim,
+                                          const StateSpaceT& ss, StateT& state,
+                                          StateT& scratch,
+                                          float* expectation_value) {
+  // apply the  gates of the pauliterms to a copy of the wavefunction
+  // and add up expectation value term by term.
+  tensorflow::Status status = tensorflow::Status::OK();
+  for (const tfq::proto::PauliTerm& term : p_sum.terms()) {
+    // catch identity terms
+    if (term.paulis_size() == 0) {
+      *expectation_value += term.coefficient_real();
+      // TODO(zaqqwerty): error somewhere if identities have any imaginary part
+      continue;
+    }
+
+    QsimCircuit main_circuit;
+    std::vector<qsim::GateFused<QsimGate>> fused_circuit;
+
+    status = QsimCircuitFromPauliTerm(term, ss.num_qubits_, &main_circuit,
+                                      &fused_circuit);
+
+    if (!status.ok()) {
+      return status;
+    }
+    // copy from src to scratch.
+    ss.CopyState(state, scratch);
+    for (int j = 0; j < fused_circuit.size(); j++) {
+      qsim::ApplyFusedGate(sim, fused_circuit[j], scratch);
+    }
+
+    if (!status.ok()) {
+      return status;
+    }
+    *expectation_value +=
+        term.coefficient_real() * ss.RealInnerProduct(state, scratch);
+  }
+  return status;
+}
 
 }  // namespace tfq
 
