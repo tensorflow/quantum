@@ -63,8 +63,25 @@ cc_library(
     srcs = [],
     hdrs = ["util_qsim.h"],
     deps = [
+        ":circuit_parser_qsim",
         "@local_config_tf//:libtensorflow_framework",
         "@local_config_tf//:tf_header_lib",
+        "@com_google_absl//absl/container:inlined_vector",  # unclear why needed.
+        "//tensorflow_quantum/core/proto:pauli_sum_cc_proto",
+        "@qsim//lib:qsim_lib",
+    ]
+)
+
+cc_test(
+    name = "util_qsim_test",
+    size = "small",
+    srcs = ["util_qsim_test.cc"],
+    linkstatic = 0,
+    deps = [
+        ":util_qsim",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@qsim//lib:qsim_lib",
+        "@com_google_googletest//:gtest_main",
     ]
 )
 
