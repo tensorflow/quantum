@@ -16,6 +16,10 @@ limitations under the License.
 #include <memory>
 #include <vector>
 
+#include "../qsim/lib/circuit.h"
+#include "../qsim/lib/gate_appl.h"
+#include "../qsim/lib/gates_cirq.h"
+#include "../qsim/lib/simmux.h"
 #include "cirq/google/api/v2/program.pb.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/shape_inference.h"
@@ -24,21 +28,17 @@ limitations under the License.
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow/core/lib/core/threadpool.h"
 #include "tensorflow_quantum/core/ops/parse_context.h"
-#include "tensorflow_quantum/core/ops/tfq_simulate_utils.h"
 #include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
-#include "tensorflow_quantum/core/qsim/mux.h"
-#include "tensorflow_quantum/core/qsim/state_space.h"
-#include "tensorflow_quantum/core/src/circuit.h"
-#include "tensorflow_quantum/core/src/circuit_parser.h"
-#include "tensorflow_quantum/core/src/program_resolution.h"
+#include "tensorflow_quantum/core/src/util_qsim.h"
 
 namespace tfq {
 
 using ::cirq::google::api::v2::Program;
 using ::tensorflow::Status;
 using ::tfq::proto::PauliSum;
-using ::tfq::qsim_old::GetStateSpace;
-using ::tfq::qsim_old::StateSpace;
+
+typedef qsim::Cirq::GateCirq<float> QsimGate;
+typedef qsim::Circuit<QsimGate> QsimCircuit;
 
 class TfqSimulateExpectationOp : public tensorflow::OpKernel {
  public:
@@ -63,6 +63,7 @@ class TfqSimulateExpectationOp : public tensorflow::OpKernel {
     OP_REQUIRES_OK(context, context->allocate_output(0, output_shape, &output));
     auto output_tensor = output->matrix<float>();
 
+    // Parse program protos.
     std::vector<Program> programs;
     std::vector<int> num_qubits;
     std::vector<std::vector<PauliSum>> pauli_sums;
@@ -78,70 +79,76 @@ class TfqSimulateExpectationOp : public tensorflow::OpKernel {
                     programs.size(), " circuits and ", pauli_sums.size(),
                     " paulisums.")));
 
-    auto DoWork = [&](int start, int end) {
-      int old_batch_index = -2;
-      int cur_batch_index = -1;
-      int old_num_qubits = -2;
-      int cur_op_index;
-      std::unique_ptr<StateSpace> test_state = GetStateSpace(1, 1);
-      std::unique_ptr<StateSpace> scratch_state = GetStateSpace(1, 1);
+    // Construct qsim circuits.
+    std::vector<QsimCircuit> qsim_circuits(programs.size(), QsimCircuit());
+    std::vector<std::vector<qsim::GateFused<QsimGate>>> fused_circuits(
+        programs.size(), std::vector<qsim::GateFused<QsimGate>>({}));
+
+    auto construct_f = [&](int start, int end) {
       for (int i = start; i < end; i++) {
-        cur_batch_index = i / output_dim_op_size;
-        cur_op_index = i % output_dim_op_size;
-
-        // (#679) Just ignore empty program
-        if (programs[cur_batch_index].circuit().moments().empty()) {
-          output_tensor(cur_batch_index, cur_op_index) = -2.0;
-          continue;
-        }
-
-        if (cur_batch_index != old_batch_index) {
-          // We've run into a new wavefunction we must compute.
-          // Only compute a new wavefunction when we have to.
-          Program program = programs[cur_batch_index];
-          const int num = num_qubits[cur_batch_index];
-          OP_REQUIRES_OK(context,
-                         ResolveSymbols(maps[cur_batch_index], &program));
-
-          Circuit circuit;
-          OP_REQUIRES_OK(context, CircuitFromProgram(program, num, &circuit));
-
-          // TODO(mbbrough): Update this allocation hack so that a StateSpace
-          //  object can grow it's memory dynamically to larger and larger size
-          //  without ever having to call free (until very end). This is tricky
-          //  to implement because right now certain statespaces can't simulate
-          //  all states and we use StateSpaceSlow for smaller circuits.
-          if (num != old_num_qubits) {
-            test_state = GetStateSpace(num, 1);
-            test_state->CreateState();
-
-            // Also re-allocate scratch state for expectation calculations.
-            scratch_state = GetStateSpace(num, 1);
-            scratch_state->CreateState();
-          }
-          // no need to update scratch_state since ComputeExpectation
-          // will take care of things for us.
-          test_state->SetStateZero();
-          OP_REQUIRES_OK(context, test_state->Update(circuit));
-          old_num_qubits = num;
-        }
-
-        float expectation = 0.0;
-        OP_REQUIRES_OK(context, test_state->ComputeExpectation(
-                                    pauli_sums[cur_batch_index][cur_op_index],
-                                    scratch_state.get(), &expectation));
-
-        output_tensor(cur_batch_index, cur_op_index) = expectation;
-        old_batch_index = cur_batch_index;
+        OP_REQUIRES_OK(context, QsimCircuitFromProgram(
+                                    programs[i], maps[i], num_qubits[i],
+                                    &qsim_circuits[i], &fused_circuits[i]));
       }
     };
 
-    const int block_size =
-        GetBlockSize(context, output_dim_batch_size * output_dim_op_size);
-    context->device()
-        ->tensorflow_cpu_worker_threads()
-        ->workers->TransformRangeConcurrently(
-            block_size, output_dim_batch_size * output_dim_op_size, DoWork);
+    const int num_cycles = 1000;
+    context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
+        programs.size(), num_cycles, construct_f);
+
+    // Instantiate qsim objects.
+    const auto tfq_for = tfq::QsimFor(context);
+    using Simulator = qsim::Simulator<const tfq::QsimFor &>;
+    using StateSpace = Simulator::StateSpace;
+    using State = StateSpace::State;
+
+    // Begin simulation.
+    int largest_nq = 1;
+    State sv = StateSpace(largest_nq, tfq_for).CreateState();
+    State scratch = StateSpace(largest_nq, tfq_for).CreateState();
+
+    // Simulate programs one by one. Parallelizing over wavefunctions
+    // we no longer parallelize over circuits. Each time we encounter a
+    // a larger circuit we will grow the Statevector as nescessary.
+    for (int i = 0; i < programs.size(); i++) {
+      int nq = num_qubits[i];
+      Simulator sim = Simulator(nq, tfq_for);
+      StateSpace ss = StateSpace(nq, tfq_for);
+      if (nq > largest_nq) {
+        // need to switch to larger statespace.
+        largest_nq = nq;
+        sv = ss.CreateState();
+        scratch = ss.CreateState();
+      }
+      // TODO: add heuristic here so that we do not always recompute
+      //  the state if there is a possibility that circuit[i] and
+      //  circuit[i + 1] produce the same state.
+      ss.SetStateZero(sv);
+      for (int j = 0; j < fused_circuits[i].size(); j++) {
+        qsim::ApplyFusedGate(sim, fused_circuits[i][j], sv);
+      }
+      for (int j = 0; j < pauli_sums[i].size(); j++) {
+        // (#679) Just ignore empty program
+        if (programs[i].circuit().moments().empty()) {
+          output_tensor(i, j) = -2.0;
+          continue;
+        }
+        float exp_v = 0.0;
+        OP_REQUIRES_OK(context,
+                       ComputeExpectationQsim(pauli_sums[i][j], sim, ss, sv,
+                                              scratch, &exp_v));
+        output_tensor(i, j) = exp_v;
+      }
+    }
+    // just to be on the safe side.
+    sv.release();
+    scratch.release();
+    qsim_circuits.clear();
+    fused_circuits.clear();
+    num_qubits.clear();
+    maps.clear();
+    pauli_sums.clear();
+    programs.clear();
   }
 };
 

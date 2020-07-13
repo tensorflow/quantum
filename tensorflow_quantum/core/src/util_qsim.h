@@ -58,11 +58,39 @@ struct QsimFor {
   }
 
   template <typename Function, typename Op, typename... Args>
-  typename Op::result_type RunReduce(unsigned num_threads, uint64_t size,
-                                     Function&& func, Op&& op,
+  typename Op::result_type RunReduce(uint64_t size, Function&& func, Op&& op,
                                      Args&&... args) const {
     // TODO(mbbrough): implement the rest of this for Expectation functions.
-    return 0;
+    const int num_workers = context->device()
+                                ->tensorflow_cpu_worker_threads()
+                                ->workers->NumThreads();
+
+    std::vector<typename Op::result_type> partial_results(num_workers, 0);
+
+    auto worker_f = [&partial_results, &func, &op, &args...](
+                        int64_t start, int64_t end, int thread_id) {
+      typename Op::result_type value = partial_results[thread_id];
+      for (uint64_t i = start; i < end; i++) {
+        // First two arguments in RUN appear to be unused.
+        value = std::forward<Op>(op)(
+            value, std::forward<Function>(func)(-10, -10, i,
+                                                std::forward<Args>(args)...));
+      }
+      partial_results[thread_id] = value;
+    };
+
+    const int cycle_estimate = 100;
+    context->device()
+        ->tensorflow_cpu_worker_threads()
+        ->workers->ParallelForWithWorkerId(size, cycle_estimate, worker_f);
+
+    typename Op::result_type result = partial_results[0];
+
+    for (int i = 1; i < num_workers; ++i) {
+      result = op(result, partial_results[i]);
+    }
+
+    return result;
   }
 };
 
