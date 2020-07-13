@@ -109,7 +109,7 @@ class TfqSimulateExpectationOp : public tensorflow::OpKernel {
 
     // Simulate programs one by one. Parallelizing over wavefunctions
     // we no longer parallelize over circuits. Each time we encounter a
-    // a larger circuit we will grow the Statevector as nescessary.
+    // a larger circuit we will grow the Statevector as necessary.
     for (int i = 0; i < programs.size(); i++) {
       int nq = num_qubits[i];
       Simulator sim = Simulator(nq, tfq_for);
