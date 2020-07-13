@@ -57,37 +57,68 @@ struct QsimFor {
         size, cycle_estimate, worker_f);
   }
 
+  uint64_t GetIndex0(uint64_t size, unsigned thread_id) const {
+    unsigned int num_threads = context->device()
+                                   ->tensorflow_cpu_worker_threads()
+                                   ->workers->NumThreads();
+    return size * thread_id / num_threads;
+  }
+
+  uint64_t GetIndex1(uint64_t size, unsigned thread_id) const {
+    unsigned int num_threads = context->device()
+                                   ->tensorflow_cpu_worker_threads()
+                                   ->workers->NumThreads();
+    return size * (thread_id + 1) / num_threads;
+  }
+
+  template <typename Function, typename Op, typename... Args>
+  std::vector<typename Op::result_type> RunReduceP(uint64_t size,
+                                                   Function&& func, Op&& op,
+                                                   Args&&... args) const {
+    unsigned int num_threads = context->device()
+                                   ->tensorflow_cpu_worker_threads()
+                                   ->workers->NumThreads();
+
+    std::vector<typename Op::result_type> partial_results(num_threads, 0);
+
+    std::function<void(int64_t, int64_t)> fn =
+        [this, &size, &num_threads, &partial_results, &func, &op, &args...](
+            int64_t start, int64_t end) {
+          // Here we expect end = start + 1 because block_size = 1.
+          uint64_t i0 = GetIndex0(size, start);
+          uint64_t i1 = GetIndex1(size, start);
+
+          typename Op::result_type partial_result = 0;
+
+          for (uint64_t i = i0; i < i1; i++) {
+            partial_result =
+                op(partial_result, func(num_threads, start, i, args...));
+          }
+
+          partial_results[start] = partial_result;
+        };
+
+    // block_size = 1.
+    tensorflow::thread::ThreadPool::SchedulingParams scheduling_params(
+        tensorflow::thread::ThreadPool::SchedulingStrategy::kFixedBlockSize,
+        absl::nullopt, 1);
+
+    // Parallelize where num_threads = num_shards. Very important!
+    context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
+        num_threads, scheduling_params, fn);
+
+    return partial_results;
+  }
+
   template <typename Function, typename Op, typename... Args>
   typename Op::result_type RunReduce(uint64_t size, Function&& func, Op&& op,
                                      Args&&... args) const {
-    // TODO(mbbrough): implement the rest of this for Expectation functions.
-    const int num_workers = context->device()
-                                ->tensorflow_cpu_worker_threads()
-                                ->workers->NumThreads();
+    auto partial_results = RunReduceP(size, func, std::move(op), args...);
 
-    std::vector<typename Op::result_type> partial_results(num_workers, 0);
+    typename Op::result_type result = 0;
 
-    auto worker_f = [&partial_results, &func, &op, &args...](
-                        int64_t start, int64_t end, int thread_id) {
-      typename Op::result_type value = partial_results[thread_id];
-      for (uint64_t i = start; i < end; i++) {
-        // First two arguments in RUN appear to be unused.
-        value = std::forward<Op>(op)(
-            value, std::forward<Function>(func)(-10, -10, i,
-                                                std::forward<Args>(args)...));
-      }
-      partial_results[thread_id] = value;
-    };
-
-    const int cycle_estimate = 100;
-    context->device()
-        ->tensorflow_cpu_worker_threads()
-        ->workers->ParallelForWithWorkerId(size, cycle_estimate, worker_f);
-
-    typename Op::result_type result = partial_results[0];
-
-    for (int i = 1; i < num_workers; ++i) {
-      result = op(result, partial_results[i]);
+    for (auto partial_result : partial_results) {
+      result = op(result, partial_result);
     }
 
     return result;
