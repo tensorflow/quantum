@@ -389,6 +389,11 @@ tensorflow::Status QsimCircuitFromProgram(
   // Convert proto to qsim internal representation.
   circuit->num_qubits = num_qubits;
   int time = 0;
+  // Special case empty.
+  if (num_qubits <= 0) {
+    return Status::OK();
+  }
+
   for (const Moment& moment : program.circuit().moments()) {
     for (const Operation& op : moment.operations()) {
       Status status = ParseAppendGate(op, param_map, num_qubits, time, circuit);
@@ -401,7 +406,7 @@ tensorflow::Status QsimCircuitFromProgram(
 
   // Build fused circuit.
   *fused_circuit = qsim::BasicGateFuser<qsim::IO, QsimGate>().FuseGates(
-      circuit->num_qubits, circuit->gates, time);
+      circuit->num_qubits, circuit->gates, time + 1);
   return Status::OK();
 }
 
