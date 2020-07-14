@@ -243,7 +243,7 @@ tensorflow::Status ComputeSampledExpectationQsim(
       mask |= uint64_t(1) << uint64_t(parity_bits[i]);
     }
 
-    // Compute the runing parity.
+    // Compute the running parity.
     int parity_total(0);
     int count = 0;
     for (int i = 0; i < state_samples.size(); i++) {
