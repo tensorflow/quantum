@@ -590,5 +590,113 @@ TEST(QsimCircuitParserTest, CircuitFromPauliTermEmpty) {
   ASSERT_EQ(test_circuit.gates.size(), 0);
 }
 
+TEST(QsimCircuitParserTest, ZBasisCircuitFromPauliTermPauliX) {
+  tfq::proto::PauliTerm pauli_proto;
+  // The created circuit should not depend on the coefficient
+  pauli_proto.set_coefficient_real(3.14);
+  tfq::proto::PauliQubitPair* pair_proto = pauli_proto.add_paulis();
+  pair_proto->set_qubit_id("0");
+  pair_proto->set_pauli_type("X");
+
+  // Build the corresponding correct circuit
+  auto reference = qsim::Cirq::YPowGate<float>::Create(0, 0, -0.5, 0.0);
+  QsimCircuit test_circuit;
+  std::vector<qsim::GateFused<QsimGate>> fused_circuit;
+  tensorflow::Status status;
+
+  // Check conversion
+  status = QsimZBasisCircuitFromPauliTerm(pauli_proto, 1, &test_circuit,
+                                          &fused_circuit);
+  ASSERT_EQ(status, tensorflow::Status::OK());
+  ASSERT_EQ(test_circuit.num_qubits, 1);
+  ASSERT_EQ(test_circuit.gates.size(), 1);
+  AssertOneQubitEqual(test_circuit.gates[0], reference);
+}
+
+TEST(QsimCircuitParserTest, ZBasisCircuitFromPauliTermPauliY) {
+  tfq::proto::PauliTerm pauli_proto;
+  // The created circuit should not depend on the coefficient
+  pauli_proto.set_coefficient_real(3.14);
+  tfq::proto::PauliQubitPair* pair_proto = pauli_proto.add_paulis();
+  pair_proto->set_qubit_id("0");
+  pair_proto->set_pauli_type("Y");
+
+  // Build the corresponding correct circuit
+  auto reference = qsim::Cirq::XPowGate<float>::Create(0, 0, 0.5, 0.0);
+  QsimCircuit test_circuit;
+  std::vector<qsim::GateFused<QsimGate>> fused_circuit;
+  tensorflow::Status status;
+
+  // Check conversion
+  status = QsimZBasisCircuitFromPauliTerm(pauli_proto, 1, &test_circuit,
+                                          &fused_circuit);
+  ASSERT_EQ(status, tensorflow::Status::OK());
+  ASSERT_EQ(test_circuit.num_qubits, 1);
+  ASSERT_EQ(test_circuit.gates.size(), 1);
+  AssertOneQubitEqual(test_circuit.gates[0], reference);
+}
+
+TEST(QsimCircuitParserTest, ZBasisCircuitFromPauliTermPauliZ) {
+  tfq::proto::PauliTerm pauli_proto;
+  // The created circuit should not depend on the coefficient
+  pauli_proto.set_coefficient_real(3.14);
+  tfq::proto::PauliQubitPair* pair_proto = pauli_proto.add_paulis();
+  pair_proto->set_qubit_id("0");
+  pair_proto->set_pauli_type("Z");
+
+  // Build the corresponding correct circuit
+  QsimCircuit test_circuit;
+  std::vector<qsim::GateFused<QsimGate>> fused_circuit;
+  tensorflow::Status status;
+
+  // Check conversion
+  status = QsimZBasisCircuitFromPauliTerm(pauli_proto, 1, &test_circuit,
+                                          &fused_circuit);
+  ASSERT_EQ(status, tensorflow::Status::OK());
+  ASSERT_EQ(test_circuit.num_qubits, 1);
+  ASSERT_EQ(test_circuit.gates.size(), 0);
+}
+
+TEST(QsimCircuitParserTest, ZBasisCircuitFromPauliTermPauliCompound) {
+  tfq::proto::PauliTerm pauli_proto;
+  // The created circuit should not depend on the coefficient
+  pauli_proto.set_coefficient_real(3.14);
+  tfq::proto::PauliQubitPair* pair_proto = pauli_proto.add_paulis();
+  pair_proto->set_qubit_id("0");
+  pair_proto->set_pauli_type("X");
+  pair_proto = pauli_proto.add_paulis();
+  pair_proto->set_qubit_id("1");
+  pair_proto->set_pauli_type("Y");
+
+  auto reference1 = qsim::Cirq::YPowGate<float>::Create(0, 1, -0.5, 0.0);
+  auto reference2 = qsim::Cirq::XPowGate<float>::Create(0, 0, 0.5, 0.0);
+
+  // Build the corresponding correct circuit
+  QsimCircuit test_circuit;
+  std::vector<qsim::GateFused<QsimGate>> fused_circuit;
+  tensorflow::Status status;
+
+  // Check conversion
+  status = QsimZBasisCircuitFromPauliTerm(pauli_proto, 2, &test_circuit,
+                                          &fused_circuit);
+  ASSERT_EQ(status, tensorflow::Status::OK());
+  ASSERT_EQ(test_circuit.num_qubits, 2);
+  ASSERT_EQ(test_circuit.gates.size(), 2);
+  AssertOneQubitEqual(test_circuit.gates[0], reference1);
+  AssertOneQubitEqual(test_circuit.gates[1], reference2);
+}
+
+TEST(QsimCircuitParserTest, ZBasisCircuitFromPauliTermEmpty) {
+  tfq::proto::PauliTerm pauli_proto;
+  tensorflow::Status status;
+  QsimCircuit test_circuit;
+  std::vector<qsim::GateFused<QsimGate>> fused_circuit;
+  status = QsimZBasisCircuitFromPauliTerm(pauli_proto, 0, &test_circuit,
+                                          &fused_circuit);
+  ASSERT_EQ(status, tensorflow::Status::OK());
+  ASSERT_EQ(test_circuit.num_qubits, 0);
+  ASSERT_EQ(test_circuit.gates.size(), 0);
+}
+
 }  // namespace
 }  // namespace tfq

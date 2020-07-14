@@ -45,6 +45,14 @@ tensorflow::Status QsimCircuitFromPauliTerm(
     qsim::Circuit<qsim::Cirq::GateCirq<float>>* circuit,
     std::vector<qsim::GateFused<qsim::Cirq::GateCirq<float>>>* fused_circuit);
 
+// parse a serialized pauliTerm from a larger cirq.Paulisum proto
+// into a qsim Circuit and fused circuit that represents the transformation
+// to the z basis.
+tensorflow::Status QsimZBasisCircuitFromPauliTerm(
+    const tfq::proto::PauliTerm& term, const int num_qubits,
+    qsim::Circuit<qsim::Cirq::GateCirq<float>>* circuit,
+    std::vector<qsim::GateFused<qsim::Cirq::GateCirq<float>>>* fused_circuit);
+
 }  // namespace tfq
 
 #endif  // TFQ_CORE_SRC_CIRCUIT_PARSER_QSIM_H_
