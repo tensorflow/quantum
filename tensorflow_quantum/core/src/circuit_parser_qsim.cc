@@ -438,4 +438,48 @@ Status QsimCircuitFromPauliTerm(
                                 circuit, fused_circuit);
 }
 
+Status QsimZBasisCircuitFromPauliTerm(
+    const PauliTerm& term, const int num_qubits, QsimCircuit* circuit,
+    std::vector<qsim::GateFused<QsimGate>>* fused_circuit) {
+  Program measurement_program;
+  SymbolMap empty_map;
+  measurement_program.mutable_circuit()->set_scheduling_strategy(
+      cirq::google::api::v2::Circuit::MOMENT_BY_MOMENT);
+  Moment* term_moment = measurement_program.mutable_circuit()->add_moments();
+  float transform_exponent = 0.0;
+  std::string gate_type;
+  for (const tfq::proto::PauliQubitPair& pair : term.paulis()) {
+    if (pair.pauli_type() == "Z") {
+      // Z requires no transform.
+      continue;
+    }
+
+    // Assume it is X and the transform is Y^-0.5
+    transform_exponent = -0.5;
+    gate_type = "Y";
+    if (pair.pauli_type() == "Y") {
+      // Y regquires X**0.5 transform.
+      transform_exponent = 0.5;
+      gate_type = "X";
+    }
+
+    Operation* new_op = term_moment->add_operations();
+
+    // create corresponding eigen gate op.
+    new_op->add_qubits()->set_id(pair.qubit_id());
+    new_op->mutable_gate()->set_id(gate_type + "P");
+    (*new_op->mutable_args())["exponent"].mutable_arg_value()->set_float_value(
+        transform_exponent);
+    (*new_op->mutable_args())["global_shift"]
+        .mutable_arg_value()
+        ->set_float_value(0.0);
+    (*new_op->mutable_args())["exponent_scalar"]
+        .mutable_arg_value()
+        ->set_float_value(1.0);
+  }
+
+  return QsimCircuitFromProgram(measurement_program, empty_map, num_qubits,
+                                circuit, fused_circuit);
+}
+
 }  // namespace tfq
