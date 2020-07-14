@@ -458,7 +458,7 @@ Status QsimZBasisCircuitFromPauliTerm(
     transform_exponent = -0.5;
     gate_type = "Y";
     if (pair.pauli_type() == "Y") {
-      // Y regquires X**0.5 transform.
+      // Y requires X**0.5 transform.
       transform_exponent = 0.5;
       gate_type = "X";
     }
