@@ -330,9 +330,9 @@ def xxz_chain(qubits, boundary_condition="closed", data_dir=None):
     \Delta\sigma_i^z \sigma_{i+1}^z
     $$
 
-    Contains 81 circuit parameterizations corresponding to
-    the ground states of the 1D XXZ chain for g in [0.2,1.8].
-    This dataset contains 81 datapoints. Each datapoint is represented by a
+    Contains 76 circuit parameterizations corresponding to
+    the ground states of the 1D XXZ chain for g in [0.3,1.8].
+    This dataset contains 76 datapoints. Each datapoint is represented by a
     circuit (`cirq.Circuit`), a label (Python `float`) a Hamiltonian
     (`cirq.PauliSum`) and some additional metadata. Each Hamiltonian in a
     datapoint is a 1D XXZ chain with boundary condition `boundary_condition` on
@@ -341,7 +341,7 @@ def xxz_chain(qubits, boundary_condition="closed", data_dir=None):
     in the datapoint.
 
     Example usage:
-
+    #TODO check tutorial with new order value ranges
     >>> qbs = cirq.GridQubit.rect(4, 1)
     >>> circuits, labels, pauli_sums, addinfo  =
     ...     tfq.datasets.xxz_chain(qbs, "closed")
@@ -349,7 +349,7 @@ def xxz_chain(qubits, boundary_condition="closed", data_dir=None):
     You can print the available order parameters
 
     >>> [info.g for info in addinfo]
-    [0.20, 0.22, 0.24, ... ,1.76, 1.78, 1.8]
+    [0.30, 0.32, 0.34, ... ,1.76, 1.78, 1.8]
 
     and the circuit corresponding to the ground state for a certain order
     parameter
@@ -430,6 +430,7 @@ def xxz_chain(qubits, boundary_condition="closed", data_dir=None):
     Returns:
         A Python `lst` cirq.Circuit of depth len(qubits) / 2 with resolved
             parameters.
+        #TODO change phase descriptions.
         A Python `lst` of labels, 0, for the ferromagnetic phase (`g<1`), 1 for
             the critical point (`g==1`) and 2 for the paramagnetic phase
             (`g>1`).
@@ -490,24 +491,27 @@ def xxz_chain(qubits, boundary_condition="closed", data_dir=None):
             cirq.ZZ(qubits[j], qubits[j + 1])**(symbols[d])
             for j in range(0, nspins - 1, 2))
         circuit.append(
-            cirq.YY(qubits[j], qubits[j + 1])**(symbols[d + 2])
+            cirq.YY(qubits[j], qubits[j + 1])**(symbols[d + depth])
             for j in range(0, nspins - 1, 2))
         circuit.append(
-            cirq.XX(qubits[j], qubits[j + 1])**(symbols[d + 2])
+            cirq.XX(qubits[j], qubits[j + 1])**(symbols[d + depth])
             for j in range(0, nspins - 1, 2))
         circuit.append(
-            cirq.ZZ(qubits[j], qubits[j + 1])**(symbols[d + 4])
+            cirq.ZZ(qubits[j], qubits[j + 1])**(symbols[d + 2 * depth])
             for j in range(1, nspins - 1, 2))
         circuit.append(
-            cirq.YY(qubits[j], qubits[j + 1])**(symbols[d + 6])
+            cirq.YY(qubits[j], qubits[j + 1])**(symbols[d + 3 * depth])
             for j in range(1, nspins - 1, 2))
         circuit.append(
-            cirq.XX(qubits[j], qubits[j + 1])**(symbols[d + 6])
+            cirq.XX(qubits[j], qubits[j + 1])**(symbols[d + 3 * depth])
             for j in range(1, nspins - 1, 2))
         if boundary_condition == "closed":
-            circuit.append(cirq.ZZ(qubits[-1], qubits[0])**(symbols[d + 4]))
-            circuit.append(cirq.YY(qubits[-1], qubits[0])**(symbols[d + 6]))
-            circuit.append(cirq.XX(qubits[-1], qubits[0])**(symbols[d + 6]))
+            circuit.append(
+                cirq.ZZ(qubits[-1], qubits[0])**(symbols[d + 2 * depth]))
+            circuit.append(
+                cirq.YY(qubits[-1], qubits[0])**(symbols[d + 3 * depth]))
+            circuit.append(
+                cirq.XX(qubits[-1], qubits[0])**(symbols[d + 3 * depth]))
 
     # Initiate lists.
     resolved_circuits = []

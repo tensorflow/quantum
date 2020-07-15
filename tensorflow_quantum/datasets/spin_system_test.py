@@ -144,8 +144,8 @@ class XXZChainTest(tf.test.TestCase):
             qbs = cirq.GridQubit.rect(nspins, 1)
             circuits, _, _, addinfo = spin_system.xxz_chain(
                 qbs,
-                'closed',data_dir='/home/rooler/tfq-data-hosting/XXZ_chain'
-            )
+                'closed',
+                data_dir='/home/rooler/tfq-data-hosting/XXZ_chain')
             for n in range(len(addinfo)):
                 phi = cirq.Simulator().simulate(circuits[n]).final_state
                 gs = addinfo[n].gs
@@ -159,9 +159,11 @@ class XXZChainTest(tf.test.TestCase):
         for nspins in supported_nspins:
             qbs = cirq.GridQubit.rect(nspins, 1)
             circuits, _, pauli_sums, addinfo = spin_system.xxz_chain(
-                qbs, 'closed', data_dir='/home/rooler/tfq-data-hosting/XXZ_chain')
+                qbs,
+                'closed',
+                data_dir='/home/rooler/tfq-data-hosting/XXZ_chain')
             qubit_map = {qbs[i]: i for i in range(len(qbs))}
-            for n in range(len(pauli_sums)):
+            for n in range(76):
                 phi = cirq.Simulator().simulate(circuits[n]).final_state
                 e = pauli_sums[n].expectation_from_wavefunction(phi, qubit_map)
                 self.assertAllClose(e, addinfo[n].gs_energy, rtol=1e-4)
@@ -172,12 +174,14 @@ class XXZChainTest(tf.test.TestCase):
         for nspins in supported_nspins:
             qbs = cirq.GridQubit.rect(nspins, 1)
             circuits, labels, pauli_sums, addinfo = spin_system.xxz_chain(
-                qbs, 'closed', data_dir='/home/rooler/tfq-data-hosting/XXZ_chain')
-            self.assertLen(circuits, 81)
-            self.assertLen(labels, 81)
-            self.assertLen(pauli_sums, 81)
-            self.assertLen(addinfo, 81)
-            for n in range(81):
+                qbs,
+                'closed',
+                data_dir='/home/rooler/tfq-data-hosting/XXZ_chain')
+            self.assertLen(circuits, 76)
+            self.assertLen(labels, 76)
+            self.assertLen(pauli_sums, 76)
+            self.assertLen(addinfo, 76)
+            for n in range(76):
                 self.assertIsInstance(circuits[n], cirq.Circuit)
                 self.assertIsInstance(labels[n], int)
                 self.assertIsInstance(pauli_sums[n], cirq.PauliSum)
@@ -188,8 +192,11 @@ class XXZChainTest(tf.test.TestCase):
         supported_nspins = [4, 8, 12, 16]
         for nspins in supported_nspins:
             qbs = cirq.GridQubit.rect(nspins, 1)
-            circuits, _, _, addinfo = spin_system.xxz_chain(qbs, 'closed', data_dir='/home/rooler/tfq-data-hosting/XXZ_chain')
-            for n in range(81):
+            circuits, _, _, addinfo = spin_system.xxz_chain(
+                qbs,
+                'closed',
+                data_dir='/home/rooler/tfq-data-hosting/XXZ_chain')
+            for n in range(76):
                 resolved_circuit = cirq.resolve_parameters(
                     addinfo[n].var_circuit, addinfo[n].params)
                 state_circuit = cirq.Simulator().simulate(
