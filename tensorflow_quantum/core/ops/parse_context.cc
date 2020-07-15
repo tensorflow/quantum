@@ -238,7 +238,7 @@ Status GetSymbolMaps(OpKernelContext* context, std::vector<SymbolMap>* maps) {
   };
 
   // TODO(mbbrough): Determine if this is a good cycle estimate.
-  int cycle_estimate = 1000;
+  const int cycle_estimate = 1000;
   context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
       symbol_values.dimension(0), cycle_estimate, DoWork);
 
