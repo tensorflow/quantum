@@ -59,7 +59,7 @@ def test_imports():
     # Datasets.
     _ = tfq.datasets.excited_cluster_states
     _ = tfq.datasets.tfi_chain
-
+    _ = tfq.datasets.xxz_chain
 
 if __name__ == "__main__":
     test_imports()
