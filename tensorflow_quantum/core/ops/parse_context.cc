@@ -228,20 +228,19 @@ Status GetSymbolMaps(OpKernelContext* context, std::vector<SymbolMap>* maps) {
 
   const int symbol_dim = symbol_values.dimension(1);
   auto DoWork = [&](int start, int end) {
-    for (int ii = start; ii < end; ii++) {
-      const int i = ii / symbol_dim;
-      const int j = ii % symbol_dim;
-      const std::string& name = symbol_names(j);
-      const float value = symbol_values(i, j);
-      (*maps)[i][name] = {j, value};
+    for (int i = start; i < end; i++) {
+      for (int j = 0; j < symbol_dim; j++) {
+        const std::string& name = symbol_names(j);
+        const float value = symbol_values(i, j);
+        (*maps)[i][name] = {j, value};
+      }
     }
   };
 
   // TODO(mbbrough): Determine if this is a good cycle estimate.
-  const int cycle_estimate = 1000;
+  int cycle_estimate = 1000;
   context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
-      symbol_values.dimension(0) * symbol_values.dimension(1), cycle_estimate,
-      DoWork);
+      symbol_values.dimension(0), cycle_estimate, DoWork);
 
   return Status::OK();
 }
