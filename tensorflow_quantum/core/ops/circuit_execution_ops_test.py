@@ -230,15 +230,16 @@ class ExecutionOpsConsistentyTest(tf.test.TestCase, parameterized.TestCase):
                 **{
                     'op_and_sim': [(op, sim)
                                    for (op,
-                                        sim) in zip(STATE_OPS[:-1], SIMS[:-1])],
+                                        sim) in zip(STATE_OPS[:-2], SIMS[:-2])],
                 })))
     def test_simulate_state_large(self, op_and_sim):
-        """Test a reasonably large and complex circuit."""
+        """Test two reasonably large and complex circuits."""
         op, sim = op_and_sim
         symbol_names = []
+        # Trigger ComputeLarge in tfq_simulate_state.cc
         circuit_batch, resolver_batch = \
             util.random_circuit_resolver_batch(
-                cirq.GridQubit.rect(4, 4), 5)
+                cirq.GridQubit.rect(2, 13), 2, n_moments=5)
 
         symbol_values_array = np.array(
             [[resolver[symbol]
