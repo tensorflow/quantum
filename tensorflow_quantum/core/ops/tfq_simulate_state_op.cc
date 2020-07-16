@@ -41,10 +41,10 @@ typedef qsim::Circuit<QsimGate> QsimCircuit;
 
 class TfqSimulateStateOp : public tensorflow::OpKernel {
  public:
-  explicit TfqSimulateStateOp(tensorflow::OpKernelConstruction *context)
+  explicit TfqSimulateStateOp(tensorflow::OpKernelConstruction* context)
       : OpKernel(context) {}
 
-  void Compute(tensorflow::OpKernelContext *context) override {
+  void Compute(tensorflow::OpKernelContext* context) override {
     // TODO (mbbrough): add more dimension checks for other inputs here.
     DCHECK_EQ(3, context->num_inputs());
 
@@ -92,19 +92,21 @@ class TfqSimulateStateOp : public tensorflow::OpKernel {
     output_shape.AddDim(output_dim_size);
     output_shape.AddDim(1 << max_num_qubits);
 
-    tensorflow::Tensor *output = nullptr;
+    tensorflow::Tensor* output = nullptr;
     OP_REQUIRES_OK(context, context->allocate_output(0, output_shape, &output));
-    tensorflow::TTypes<std::complex<float>, 1, long int>::Matrix output_tensor = output->matrix<std::complex<float>>();
+    auto output_tensor = output->matrix<std::complex<float>>();
 
     // Cross reference with standard google cloud compute instances
     // Memory ~= 2 * num_threads * (2 * 64 * 2 ** num_qubits in circuits)
     // e2s2 = 2 CPU, 8GB -> Can safely do 25 since Memory = 4GB
     // e2s4 = 4 CPU, 16GB -> Can safely do 25 since Memory = 8GB
     // ...
-    if(max_num_qubits < 26) {
-      ComputeSmall(num_qubits, max_num_qubits, fused_circuits, context, &output_tensor);
+    if (max_num_qubits < 26) {
+      ComputeSmall(num_qubits, max_num_qubits, fused_circuits, context,
+                   &output_tensor);
     } else {
-      ComputeLarge(num_qubits, max_num_qubits, fused_circuits, context, &output_tensor);
+      ComputeLarge(num_qubits, max_num_qubits, fused_circuits, context,
+                   &output_tensor);
     }
 
     programs.clear();
@@ -113,15 +115,17 @@ class TfqSimulateStateOp : public tensorflow::OpKernel {
     qsim_circuits.clear();
     fused_circuits.clear();
   }
+
  private:
-  void ComputeLarge(const std::vector<int>& num_qubits,
-                    const int max_num_qubits,
-                    const std::vector<std::vector<qsim::GateFused<QsimGate>>>& fused_circuits,
-                    tensorflow::OpKernelContext *context,
-                    tensorflow::TTypes<std::complex<float>, 1, long int>::Matrix* output_tensor) {
+  void ComputeLarge(
+      const std::vector<int>& num_qubits, const int max_num_qubits,
+      const std::vector<std::vector<qsim::GateFused<QsimGate>>>& fused_circuits,
+      tensorflow::OpKernelContext* context,
+      tensorflow::TTypes<std::complex<float>, 1, long int>::Matrix*
+          output_tensor) {
     // Instantiate qsim objects.
     const auto tfq_for = tfq::QsimFor(context);
-    using Simulator = qsim::Simulator<const tfq::QsimFor &>;
+    using Simulator = qsim::Simulator<const tfq::QsimFor&>;
     using StateSpace = Simulator::StateSpace;
     using State = StateSpace::State;
 
@@ -169,14 +173,14 @@ class TfqSimulateStateOp : public tensorflow::OpKernel {
     sv.release();
   }
 
-  void ComputeSmall(const std::vector<int>& num_qubits,
-                    const int max_num_qubits,
-                    const std::vector<std::vector<qsim::GateFused<QsimGate>>>& fused_circuits,
-                    tensorflow::OpKernelContext *context,
-                    tensorflow::TTypes<std::complex<float>, 1, long int>::Matrix* output_tensor) {
-
+  void ComputeSmall(
+      const std::vector<int>& num_qubits, const int max_num_qubits,
+      const std::vector<std::vector<qsim::GateFused<QsimGate>>>& fused_circuits,
+      tensorflow::OpKernelContext* context,
+      tensorflow::TTypes<std::complex<float>, 1, long int>::Matrix*
+          output_tensor) {
     const auto tfq_for = qsim::SequentialFor(1);
-    using Simulator = qsim::Simulator<const qsim::SequentialFor& >;
+    using Simulator = qsim::Simulator<const qsim::SequentialFor&>;
     using StateSpace = Simulator::StateSpace;
     using State = StateSpace::State;
 
@@ -200,8 +204,8 @@ class TfqSimulateStateOp : public tensorflow::OpKernel {
         for (uint64_t j = 0; j < (uint64_t(1) << nq); j++) {
           (*output_tensor)(i, j) = ss.GetAmpl(sv, j);
         }
-        for (uint64_t j = (uint64_t(1) << nq); j < (uint64_t(1) << max_num_qubits);
-             j++) {
+        for (uint64_t j = (uint64_t(1) << nq);
+             j < (uint64_t(1) << max_num_qubits); j++) {
           (*output_tensor)(i, j) = std::complex<float>(-2, 0);
         }
       }
@@ -209,8 +213,8 @@ class TfqSimulateStateOp : public tensorflow::OpKernel {
     };
 
     const int num_cycles = 200 * (1 << max_num_qubits);
-      context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
-          fused_circuits.size(), num_cycles, DoWork);
+    context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
+        fused_circuits.size(), num_cycles, DoWork);
   }
 };
 
@@ -222,7 +226,7 @@ REGISTER_OP("TfqSimulateState")
     .Input("symbol_names: string")
     .Input("symbol_values: float")
     .Output("wavefunction: complex64")
-    .SetShapeFn([](tensorflow::shape_inference::InferenceContext *c) {
+    .SetShapeFn([](tensorflow::shape_inference::InferenceContext* c) {
       tensorflow::shape_inference::ShapeHandle programs_shape;
       TF_RETURN_IF_ERROR(c->WithRank(c->input(0), 1, &programs_shape));
 
