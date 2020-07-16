@@ -230,16 +230,15 @@ class ExecutionOpsConsistentyTest(tf.test.TestCase, parameterized.TestCase):
                 **{
                     'op_and_sim': [(op, sim)
                                    for (op,
-                                        sim) in zip(STATE_OPS[:-2], SIMS[:-2])],
+                                        sim) in zip(STATE_OPS[:-1], SIMS[:-1])],
                 })))
     def test_simulate_state_large(self, op_and_sim):
-        """Test two reasonably large and complex circuits."""
-        op, _ = op_and_sim
+        """Test a reasonably large and complex circuit."""
+        op, sim = op_and_sim
         symbol_names = []
-        # Trigger ComputeLarge in tfq_simulate_state.cc
         circuit_batch, resolver_batch = \
             util.random_circuit_resolver_batch(
-                cirq.GridQubit.rect(2, 13), 2)
+                cirq.GridQubit.rect(4, 4), 5)
 
         symbol_values_array = np.array(
             [[resolver[symbol]
@@ -249,12 +248,10 @@ class ExecutionOpsConsistentyTest(tf.test.TestCase, parameterized.TestCase):
         op_states = op(util.convert_to_tensor(circuit_batch), symbol_names,
                        symbol_values_array).to_list()
 
-        # Save memory, don't use batch_util.
-        for i, c in enumerate(circuit_batch):
-            c_res = cirq.resolve_parameters(c, resolver_batch[i])
-            cirq_state = cirq.Simulator().simulate(c_res).final_state
+        cirq_states = batch_util.batch_calculate_state(circuit_batch,
+                                                       resolver_batch, sim)
 
-            self.assertAllClose(cirq_state, op_states[i], atol=1e-5, rtol=1e-5)
+        self.assertAllClose(cirq_states, op_states, atol=1e-5, rtol=1e-5)
 
     @parameterized.parameters(
         list(
