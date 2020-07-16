@@ -6,20 +6,6 @@ licenses(["notice"])
 exports_files(["__init__.py"])
 
 py_library(
-    name = "utils",
-    srcs = ["utils.py"],
-)
-
-py_test(
-    name = "utils_test",
-    srcs = ["utils_test.py"],
-    python_version = "PY3",
-    deps = [
-        ":utils",
-    ],
-)
-
-py_library(
     name = "rotosolve_minimizer",
     srcs = ["rotosolve_minimizer.py"],
 )
