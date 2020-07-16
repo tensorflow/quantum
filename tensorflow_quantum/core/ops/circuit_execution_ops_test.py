@@ -234,7 +234,7 @@ class ExecutionOpsConsistentyTest(tf.test.TestCase, parameterized.TestCase):
                 })))
     def test_simulate_state_large(self, op_and_sim):
         """Test two reasonably large and complex circuits."""
-        op, sim = op_and_sim
+        op, _ = op_and_sim
         symbol_names = []
         # Trigger ComputeLarge in tfq_simulate_state.cc
         circuit_batch, resolver_batch = \
