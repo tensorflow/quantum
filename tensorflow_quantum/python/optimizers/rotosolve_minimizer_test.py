@@ -23,6 +23,7 @@ from tensorflow_quantum.python.layers.high_level import pqc
 from tensorflow_quantum.python import util
 from tensorflow_quantum.python.optimizers import rotosolve_minimizer
 
+
 def loss_function_with_model_parameters(model, loss, train_x, train_y):
     """Create a new function that assign the model parameter to the model
     and evaluate its value.
@@ -64,7 +65,8 @@ def loss_function_with_model_parameters(model, loss, train_x, train_y):
         # update the parameters of the model
         start = 0
         for i, size in enumerate(sizes):
-            model.trainable_variables[i].assign(tf.reshape(params[start:start + size], shape))
+            model.trainable_variables[i].assign(
+                tf.reshape(params[start:start + size], shape))
             start += size
 
         # evaluate the loss

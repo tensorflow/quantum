@@ -17,4 +17,3 @@
 # Quantum circuit specific optimizers.
 from tensorflow_quantum.python.optimizers.rotosolve_minimizer import (
     minimize as rotosolve_minimize)
-
