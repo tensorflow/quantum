@@ -50,6 +50,5 @@ sh_binary(
         "//tensorflow_quantum/python/layers/high_level:pqc",
         "//tensorflow_quantum/python:util",
 	"//tensorflow_quantum/python/optimizers:rotosolve_minimizer",
-	"//tensorflow_quantum/python/optimizers:utils",
     ],
 )
