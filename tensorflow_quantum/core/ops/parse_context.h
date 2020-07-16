@@ -71,10 +71,6 @@ tensorflow::Status GetPauliSums(
 tensorflow::Status GetSymbolMaps(tensorflow::OpKernelContext* context,
                                  std::vector<SymbolMap>* maps);
 
-// Parses gradients out of the 'grads' input Tensor.
-tensorflow::Status GetGradients(tensorflow::OpKernelContext* context,
-                                std::vector<std::vector<float>>* grads);
-
 // Parses the number of samples from the 'num_samples' input tensor.
 tensorflow::Status GetNumSamples(
     tensorflow::OpKernelContext* context,

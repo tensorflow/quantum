@@ -246,7 +246,7 @@ def from_tensor(tensor_to_convert):
     if isinstance(tensor_to_convert, tf.Tensor):
         tensor_to_convert = tensor_to_convert.numpy()
     if not isinstance(tensor_to_convert, (np.ndarray, list, tuple)):
-        raise TypeError("tensor_to_convert recieved bad "
+        raise TypeError("tensor_to_convert received bad "
                         "type {}".format(type(tensor_to_convert)))
     tensor_to_convert = np.array(tensor_to_convert)
     python_items = np.empty(tensor_to_convert.shape, dtype=object)

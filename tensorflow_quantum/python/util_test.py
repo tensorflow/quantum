@@ -133,7 +133,7 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
                         cirq.X(BITS[0]) + cirq.Y(BITS[1])).SerializeToString()
                 ]))
         with self.assertRaisesRegex(TypeError,
-                                    expected_regex='recieved bad type'):
+                                    expected_regex='received bad type'):
             util.from_tensor("junk")
 
     def test_cartesian_product(self):
