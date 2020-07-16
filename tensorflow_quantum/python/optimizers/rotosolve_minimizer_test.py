@@ -13,12 +13,13 @@
 # limitations under the License.
 # ==============================================================================
 """Test module for tfq.python.optimizers.rotosolve_minimizer optimizer."""
+from operator import mul
+from functools import reduce
 import numpy as np
 import tensorflow as tf
 from absl.testing import parameterized
 import cirq
 import sympy
-
 from tensorflow_quantum.python.layers.high_level import pqc
 from tensorflow_quantum.python import util
 from tensorflow_quantum.python.optimizers import rotosolve_minimizer
