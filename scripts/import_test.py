@@ -62,7 +62,6 @@ def test_imports():
 
     #Optimizers
     _ = tfq.optimizers.rotosolve_minimize
-    _ = tfq.optimizers.function_factory
 
 
 if __name__ == "__main__":

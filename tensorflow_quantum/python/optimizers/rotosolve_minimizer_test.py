@@ -22,7 +22,56 @@ import sympy
 from tensorflow_quantum.python.layers.high_level import pqc
 from tensorflow_quantum.python import util
 from tensorflow_quantum.python.optimizers import rotosolve_minimizer
-from tensorflow_quantum.python.optimizers.utils import function_factory
+
+def loss_function_with_model_parameters(model, loss, train_x, train_y):
+    """Create a new function that assign the model parameter to the model
+    and evaluate its value.
+
+    Args:
+        model : an instance of `tf.keras.Model` or its subclasses.
+        loss : a function with signature loss_value = loss(pred_y, true_y).
+        train_x : the input part of training data.
+        train_y : the output part of training data.
+
+    Returns:
+        A function that has a signature of:
+            loss_value = f(model_parameters).
+    """
+
+    # obtain the shapes of all trainable parameters in the model
+    shapes = tf.shape_n(model.trainable_variables)
+    count = 0
+    sizes = []
+
+    # Record the shape of each parameter
+    for shape in shapes:
+        n = reduce(mul, shape)
+        sizes.append(n)
+        count += n
+
+    # Function accept the parameter and evaluate model
+    @tf.function
+    def func(params):
+        """A function that can be used by tfq.optimizer.rotosolve_minimize.
+
+        Args:
+           params [in]: a 1D tf.Tensor.
+
+        Returns:
+            Loss function value
+        """
+
+        # update the parameters of the model
+        start = 0
+        for i, size in enumerate(sizes):
+            model.trainable_variables[i].assign(tf.reshape(params[start:start + size], shape))
+            start += size
+
+        # evaluate the loss
+        loss_value = loss(model(train_x, training=True), train_y)
+        return loss_value
+
+    return func
 
 
 class RotosolveMinimizerTest(tf.test.TestCase, parameterized.TestCase):
@@ -76,5 +125,5 @@ class RotosolveMinimizerTest(tf.test.TestCase, parameterized.TestCase):
 
         # Initial guess of the parameter from random number
         rotosolve_minimizer.minimize(
-            function_factory(model, hinge_loss, x_circ, y),
+            loss_function_with_model_parameters(model, hinge_loss, x_circ, y),
             np.random.random(2) * 2 * np.pi)

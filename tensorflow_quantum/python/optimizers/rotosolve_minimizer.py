@@ -170,11 +170,13 @@ def minimize(expectation_value_function,
     ...    tf.reduce_mean(tf.cast(1 - y_true * y_pred, tf.float32))
 
     Lastly, we expose the trainable parameter from our model with
-    `function_factory`, then run the minimize algorithm. The initial
-    parameter is guessed randomly.
+    `function_factory`[https://pychao.com/2019/11/02/optimize-\
+    tensorflow-keras-models-with-l-bfgs-from-tensorflow-probability/],
+    then run the minimize algorithm. The initial parameter is
+    guessed randomly.
 
     >>> rotosolve_minimizer.minimize(
-    ...    rotosolve_minimizer.function_factory(
+    ...    function_factory(
     ...        model,
     ...        hinge_loss,
     ...        x_circ,
