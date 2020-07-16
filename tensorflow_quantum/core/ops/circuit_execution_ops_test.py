@@ -239,7 +239,7 @@ class ExecutionOpsConsistentyTest(tf.test.TestCase, parameterized.TestCase):
         # Trigger ComputeLarge in tfq_simulate_state.cc
         circuit_batch, resolver_batch = \
             util.random_circuit_resolver_batch(
-                cirq.GridQubit.rect(2, 13), 2, n_moments=5)
+                cirq.GridQubit.rect(2, 13), 2)
 
         symbol_values_array = np.array(
             [[resolver[symbol]
@@ -249,10 +249,12 @@ class ExecutionOpsConsistentyTest(tf.test.TestCase, parameterized.TestCase):
         op_states = op(util.convert_to_tensor(circuit_batch), symbol_names,
                        symbol_values_array).to_list()
 
-        cirq_states = batch_util.batch_calculate_state(circuit_batch,
-                                                       resolver_batch, sim)
+        # Save memory, don't use batch_util.
+        for i, c in enumerate(circuit_batch):
+            c_res = cirq.resolve_parameters(c, resolver_batch[i])
+            cirq_state = cirq.Simulator().simulate(c_res).final_state
 
-        self.assertAllClose(cirq_states, op_states, atol=1e-5, rtol=1e-5)
+            self.assertAllClose(cirq_state, op_states[i], atol=1e-5, rtol=1e-5)
 
     @parameterized.parameters(
         list(
