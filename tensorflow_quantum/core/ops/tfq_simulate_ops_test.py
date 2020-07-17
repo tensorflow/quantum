@@ -325,31 +325,36 @@ class SimulateSamplesTest(tf.test.TestCase, parameterized.TestCase):
               for symbol in symbol_names]
              for resolver in resolver_batch])
 
-        with self.assertRaisesRegex(ValueError, 'rank 1 but is rank 2'):
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'rank 1. Got rank 2'):
             # programs tensor has the wrong shape.
             tfq_simulate_ops.tfq_simulate_samples(
                 util.convert_to_tensor([circuit_batch]), symbol_names,
                 symbol_values_array, [num_samples])
 
-        with self.assertRaisesRegex(ValueError, 'rank 1 but is rank 2'):
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'rank 1. Got rank 2'):
             # symbol_names tensor has the wrong shape.
             tfq_simulate_ops.tfq_simulate_samples(
                 util.convert_to_tensor(circuit_batch), np.array([symbol_names]),
                 symbol_values_array, [num_samples])
 
-        with self.assertRaisesRegex(ValueError, 'rank 2 but is rank 3'):
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'rank 2. Got rank 3'):
             # symbol_values tensor has the wrong shape.
             tfq_simulate_ops.tfq_simulate_samples(
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 np.array([symbol_values_array]), [num_samples])
 
-        with self.assertRaisesRegex(ValueError, 'rank 2 but is rank 1'):
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'rank 2. Got rank 1'):
             # symbol_values tensor has the wrong shape 2.
             tfq_simulate_ops.tfq_simulate_samples(
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 symbol_values_array[0], [num_samples])
 
-        with self.assertRaisesRegex(ValueError, 'rank 1 but is rank 2'):
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'rank 1. Got rank 2'):
             # num_samples tensor has the wrong shape.
             tfq_simulate_ops.tfq_simulate_samples(
                 util.convert_to_tensor(circuit_batch), symbol_names,
@@ -370,14 +375,14 @@ class SimulateSamplesTest(tf.test.TestCase, parameterized.TestCase):
                 util.convert_to_tensor(circuit_batch), ['junk'],
                 symbol_values_array, [num_samples])
 
-        with self.assertRaisesRegex(TypeError, 'Expected string'):
+        with self.assertRaisesRegex(TypeError, 'Cannot convert'):
             # programs tensor has the wrong type.
             tfq_simulate_ops.tfq_simulate_samples([1] * batch_size,
                                                   symbol_names,
                                                   symbol_values_array,
                                                   [num_samples])
 
-        with self.assertRaisesRegex(TypeError, 'Expected string'):
+        with self.assertRaisesRegex(TypeError, 'Cannot convert'):
             # programs tensor has the wrong type.
             tfq_simulate_ops.tfq_simulate_samples(
                 util.convert_to_tensor(circuit_batch), [1], symbol_values_array,
