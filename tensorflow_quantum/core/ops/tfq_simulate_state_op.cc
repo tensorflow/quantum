@@ -212,7 +212,8 @@ class TfqSimulateStateOp : public tensorflow::OpKernel {
       sv.release();
     };
 
-    const int num_cycles = 200 * (1 << max_num_qubits);
+    const int64_t num_cycles = 200 * (
+      int64_t(1) << static_cast<int64_t>(max_num_qubits));
     context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
         fused_circuits.size(), num_cycles, DoWork);
   }
