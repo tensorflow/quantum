@@ -394,6 +394,7 @@ tensorflow::Status QsimCircuitFromProgram(
     return Status::OK();
   }
 
+  circuit->gates.reserve(program.circuit().moments_size() * num_qubits);
   for (const Moment& moment : program.circuit().moments()) {
     for (const Operation& op : moment.operations()) {
       Status status = ParseAppendGate(op, param_map, num_qubits, time, circuit);
