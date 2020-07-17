@@ -349,7 +349,7 @@ class SimulateSamplesTest(tf.test.TestCase, parameterized.TestCase):
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 symbol_values_array[0], [num_samples])
 
-        with self.assertRaisesRegex(ValueError, 'rank 0 but is rank 1'):
+        with self.assertRaisesRegex(ValueError, 'rank 1 but is rank 2'):
             # num_samples tensor has the wrong shape.
             tfq_simulate_ops.tfq_simulate_samples(
                 util.convert_to_tensor(circuit_batch), symbol_names,
@@ -390,7 +390,7 @@ class SimulateSamplesTest(tf.test.TestCase, parameterized.TestCase):
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 [['junk']] * batch_size, [num_samples])
 
-        with self.assertRaisesRegex(Exception, 'not supported'):
+        with self.assertRaisesRegex(Exception, 'junk'):
             # num_samples tensor has the wrong shape.
             tfq_simulate_ops.tfq_simulate_samples(
                 util.convert_to_tensor(circuit_batch), symbol_names,
@@ -425,8 +425,8 @@ class SimulateSamplesTest(tf.test.TestCase, parameterized.TestCase):
             this_expected_output[:, :max(all_n_qubits) - n_qubits] = -2
             expected_outputs.append(this_expected_output)
             circuits.append(
-                cirq.Circuit(
-                    *cirq.X.on_each(*cirq.GridQubit.rect(1, n_qubits))))
+                cirq.Circuit(*cirq.X.on_each(
+                    *cirq.GridQubit.rect(1, n_qubits))))
         results = op(util.convert_to_tensor(circuits), [], [[]] * len(circuits),
                      [n_samples]).numpy()
         self.assertAllClose(expected_outputs, results)
