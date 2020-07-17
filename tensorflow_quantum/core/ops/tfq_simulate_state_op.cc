@@ -94,7 +94,8 @@ class TfqSimulateStateOp : public tensorflow::OpKernel {
 
     tensorflow::Tensor* output = nullptr;
     OP_REQUIRES_OK(context, context->allocate_output(0, output_shape, &output));
-    auto output_tensor = output->matrix<std::complex<float>>();
+    tensorflow::TTypes<std::complex<float>, 1>::Matrix output_tensor =
+        output->matrix<std::complex<float>>();
 
     // Cross reference with standard google cloud compute instances
     // Memory ~= 2 * num_threads * (2 * 64 * 2 ** num_qubits in circuits)
@@ -121,8 +122,7 @@ class TfqSimulateStateOp : public tensorflow::OpKernel {
       const std::vector<int>& num_qubits, const int max_num_qubits,
       const std::vector<std::vector<qsim::GateFused<QsimGate>>>& fused_circuits,
       tensorflow::OpKernelContext* context,
-      tensorflow::TTypes<std::complex<float>, 1, long int>::Matrix*
-          output_tensor) {
+      tensorflow::TTypes<std::complex<float>, 1>::Matrix* output_tensor) {
     // Instantiate qsim objects.
     const auto tfq_for = tfq::QsimFor(context);
     using Simulator = qsim::Simulator<const tfq::QsimFor&>;
@@ -177,8 +177,7 @@ class TfqSimulateStateOp : public tensorflow::OpKernel {
       const std::vector<int>& num_qubits, const int max_num_qubits,
       const std::vector<std::vector<qsim::GateFused<QsimGate>>>& fused_circuits,
       tensorflow::OpKernelContext* context,
-      tensorflow::TTypes<std::complex<float>, 1, long int>::Matrix*
-          output_tensor) {
+      tensorflow::TTypes<std::complex<float>, 1>::Matrix* output_tensor) {
     const auto tfq_for = qsim::SequentialFor(1);
     using Simulator = qsim::Simulator<const qsim::SequentialFor&>;
     using StateSpace = Simulator::StateSpace;
