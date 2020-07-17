@@ -241,8 +241,8 @@ class TfqSimulateExpectationOp : public tensorflow::OpKernel {
       scratch.release();
     };
 
-    const int64_t num_cycles = 200 * (
-      int64_t(1) << static_cast<int64_t>(max_num_qubits));
+    const int64_t num_cycles =
+        200 * (int64_t(1) << static_cast<int64_t>(max_num_qubits));
     context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
         fused_circuits.size() * output_dim_op_size, num_cycles, DoWork);
   }
