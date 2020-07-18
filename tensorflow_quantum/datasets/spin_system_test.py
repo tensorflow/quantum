@@ -58,7 +58,7 @@ class TFIChainTest(tf.test.TestCase):
             for n in range(len(addinfo)):
                 phi = cirq.Simulator().simulate(circuits[n]).final_state
                 gs = addinfo[n].gs
-                self.assertAllClose(np.abs(np.conj(np.dot(gs, phi))),
+                self.assertAllClose(np.abs(np.dot(np.conj(gs), phi)),
                                     1.0,
                                     rtol=1e-3)
 
@@ -106,7 +106,7 @@ class TFIChainTest(tf.test.TestCase):
                 state_resolved_circuit = cirq.Simulator().simulate(
                     resolved_circuit).final_state
                 self.assertAllClose(np.abs(
-                    np.conj(np.dot(state_circuit, state_resolved_circuit))),
+                    np.dot(np.conj(state_circuit), state_resolved_circuit)),
                                     1.0,
                                     rtol=1e-3)
 
@@ -149,9 +149,9 @@ class XXZChainTest(tf.test.TestCase):
             for n in range(len(addinfo)):
                 phi = cirq.Simulator().simulate(circuits[n]).final_state
                 gs = addinfo[n].gs
-                self.assertAllClose(np.abs(np.conj(np.dot(gs, phi))),
+                self.assertAllClose(np.abs(np.dot(np.conj(gs), phi)),
                                     1.0,
-                                    rtol=1e-3)
+                                    rtol=2e-3)
 
     def test_paulisum(self):
         """Test that the PauliSum Hamiltonians give the ground state energy."""
@@ -204,7 +204,7 @@ class XXZChainTest(tf.test.TestCase):
                 state_resolved_circuit = cirq.Simulator().simulate(
                     resolved_circuit).final_state
                 self.assertAllClose(np.abs(
-                    np.conj(np.dot(state_circuit, state_resolved_circuit))),
+                    np.dot(np.conj(state_circuit), state_resolved_circuit)),
                                     1.0,
                                     rtol=1e-3)
 
