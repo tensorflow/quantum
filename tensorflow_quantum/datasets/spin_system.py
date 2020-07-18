@@ -341,7 +341,6 @@ def xxz_chain(qubits, boundary_condition="closed", data_dir=None):
     in the datapoint.
 
     Example usage:
-    #TODO check tutorial with new order value ranges
     >>> qbs = cirq.GridQubit.rect(4, 1)
     >>> circuits, labels, pauli_sums, addinfo  =
     ...     tfq.datasets.xxz_chain(qbs, "closed")
@@ -355,15 +354,15 @@ def xxz_chain(qubits, boundary_condition="closed", data_dir=None):
     parameter
 
     >>> print(circuits[10])
-                                                    ┌────┐   ┌───────────── ...
-    (0, 0): ───X───H───ZZ───YY────────XX───────────ZZ─────────────YY─────── ...
-                       │    │         │            │              │
-    (1, 0): ───X───────ZZ───YY^0.87───XX^0.87────ZZ┼──────YY──────┼──────── ...
-                                                 │ │      │       │
-    (2, 0): ───X───H───ZZ───YY────────XX─────────ZZ┼──────YY^0.878┼──────── ...
-                       │    │         │            │              │
-    (3, 0): ───X───────ZZ───YY^0.87───XX^0.87──────ZZ─────────────YY^0.878─ ...
-                                                └────┘   └────────────────┘
+                           ┌──────────────────┐   ┌──────────────────┐
+    (0, 0): ───X───H───@─────────────ZZ─────────────────────YY────────── ...
+                       │             │                      │
+    (1, 0): ───X───────X────ZZ───────┼─────────────YY───────┼─────────── ...
+                            │        │             │        │
+    (2, 0): ───X───H───@────ZZ^-0.922┼─────────────YY^-0.915┼─────────── ...
+                       │             │                      │
+    (3, 0): ───X───────X─────────────ZZ^-0.922──────────────YY^-0.915─── ...
+                           └──────────────────┘   └──────────────────┘
 
     The labels indicate the phase of the system
     >>> labels[10]
@@ -384,21 +383,22 @@ def xxz_chain(qubits, boundary_condition="closed", data_dir=None):
     exact diagonalization
 
     >>> addinfo[10].gs
-    [-5.16323321e-17-2.56726809e-19j  9.66842334e-17-7.72190841e-18j
-      9.76610364e-17+3.57442716e-16j  4.89570892e-02+3.24190842e-01j
+    [-8.69032854e-18-6.58023246e-20j  4.54546402e-17+3.08736567e-17j
+     -9.51026525e-18+2.42638062e-17j  4.52284042e-02+3.18111120e-01j
                                     ...
-      4.89570892e-02+3.24190842e-01j  2.40064304e-16-6.28287459e-16j
-     -4.84059859e-17+3.67901201e-16j  1.63986296e-16-1.31688460e-16j]
+      4.52284042e-02+3.18111120e-01j -6.57974275e-18-3.84526414e-17j
+     -1.60673943e-17+5.79767820e-17j  2.86193021e-17-5.06694574e-17j]
+
 
     with corresponding ground state energy
 
     >>> addinfo[10].gs_energy
-    -6.513142756424462
+    -6.744562646538039
 
     You can also inspect the parameters
 
     >>> addinfo[10].params
-    {'theta_0': 0.9999999982895307, 'theta_1': 0.8700648715947377, ...
+    {'theta_0': 1.0780547, 'theta_1': 0.99271035, 'theta_2': 1.0854135, ...
 
     and change them to experiment with different parameter values by using
     the unresolved variational circuit returned by tfichain
@@ -406,19 +406,19 @@ def xxz_chain(qubits, boundary_condition="closed", data_dir=None):
     ... for symbol_name, value in addinfo[10].params.items():
     ...    new_params[symbol_name] = 0.5 * value
     >>> new_params
-    {'theta_0': 0.49999999914476534, 'theta_1': 0.43503243579736883, ...
+    {'theta_0': 0.5390273332595825, 'theta_1': 0.49635517597198486, ...
     >>> new_circuit = cirq.resolve_parameters(addinfo[10].var_circuit,
     ... new_params)
     >>> print(new_circuit)
-                                                          ┌────────────┐
-    (0, 0): ───X───H───ZZ───────YY─────────XX────────────────ZZ──────────── ...
-                       │        │          │                 │
-    (1, 0): ───X───────ZZ^0.5───YY^0.435───XX^0.435────ZZ────┼──────────YY─ ...
-                                                       │     │          │
-    (2, 0): ───X───H───ZZ───────YY─────────XX──────────ZZ^0.5┼──────────YY^ ...
-                       │        │          │                 │
-    (3, 0): ───X───────ZZ^0.5───YY^0.435───XX^0.435──────────ZZ^0.5──────── ...
-                                                      └────────────┘   └─── ...
+                           ┌──────────────────┐   ┌──────────────────┐
+    (0, 0): ───X───H───@─────────────ZZ─────────────────────YY────────── ...
+                       │             │                      │
+    (1, 0): ───X───────X────ZZ───────┼─────────────YY───────┼─────────── ...
+                            │        │             │        │
+    (2, 0): ───X───H───@────ZZ^(7/13)┼─────────────YY^0.543 ┼─────────── ...
+                       │             │                      │
+    (3, 0): ───X───────X─────────────ZZ^(7/13)──────────────YY^0.543 ─── ...
+                           └──────────────────┘   └──────────────────┘
 
     Args:
         qubits: Python `lst` of `cirq.GridQubit`s. Supported number of spins
@@ -430,10 +430,8 @@ def xxz_chain(qubits, boundary_condition="closed", data_dir=None):
     Returns:
         A Python `lst` cirq.Circuit of depth len(qubits) / 2 with resolved
             parameters.
-        #TODO change phase descriptions.
-        A Python `lst` of labels, 0, for the ferromagnetic phase (`g<1`), 1 for
-            the critical point (`g==1`) and 2 for the paramagnetic phase
-            (`g>1`).
+        A Python `lst` of labels, 0, for the critical metallic phase
+            (`Delta<=1`) and 1 for the insulating phase (`Delta>1`).
         A Python `lst` of `cirq.PauliSum`s.
         A Python `lst` of `namedtuple` instances containing the following
             fields:
@@ -489,30 +487,26 @@ def xxz_chain(qubits, boundary_condition="closed", data_dir=None):
     for d in range(depth):
         circuit.append(
             cirq.ZZ(qubits[j], qubits[j + 1])**(symbols[d])
-            for j in range(0, nspins - 1, 2))
+            for j in range(1, nspins - 1, 2))
         circuit.append(
             cirq.YY(qubits[j], qubits[j + 1])**(symbols[d + depth])
-            for j in range(0, nspins - 1, 2))
+            for j in range(1, nspins - 1, 2))
         circuit.append(
             cirq.XX(qubits[j], qubits[j + 1])**(symbols[d + depth])
-            for j in range(0, nspins - 1, 2))
-        circuit.append(
-            cirq.ZZ(qubits[j], qubits[j + 1])**(symbols[d + 2 * depth])
-            for j in range(1, nspins - 1, 2))
-        circuit.append(
-            cirq.YY(qubits[j], qubits[j + 1])**(symbols[d + 3 * depth])
-            for j in range(1, nspins - 1, 2))
-        circuit.append(
-            cirq.XX(qubits[j], qubits[j + 1])**(symbols[d + 3 * depth])
             for j in range(1, nspins - 1, 2))
         if boundary_condition == "closed":
-            circuit.append(
-                cirq.ZZ(qubits[-1], qubits[0])**(symbols[d + 2 * depth]))
-            circuit.append(
-                cirq.YY(qubits[-1], qubits[0])**(symbols[d + 3 * depth]))
-            circuit.append(
-                cirq.XX(qubits[-1], qubits[0])**(symbols[d + 3 * depth]))
-
+            circuit.append(cirq.ZZ(qubits[-1], qubits[0])**(symbols[d]))
+            circuit.append(cirq.YY(qubits[-1], qubits[0])**(symbols[d + depth]))
+            circuit.append(cirq.XX(qubits[-1], qubits[0])**(symbols[d + depth]))
+        circuit.append(
+            cirq.ZZ(qubits[j], qubits[j + 1])**(symbols[d + 2 * depth])
+            for j in range(0, nspins - 1, 2))
+        circuit.append(
+            cirq.YY(qubits[j], qubits[j + 1])**(symbols[d + 3 * depth])
+            for j in range(0, nspins - 1, 2))
+        circuit.append(
+            cirq.XX(qubits[j], qubits[j + 1])**(symbols[d + 3 * depth])
+            for j in range(0, nspins - 1, 2))
     # Initiate lists.
     resolved_circuits = []
     hamiltonians = []
@@ -543,7 +537,6 @@ def xxz_chain(qubits, boundary_condition="closed", data_dir=None):
                            fidelity=fidelity,
                            params=dict(zip(symbol_names, params.flatten())),
                            var_circuit=circuit))
-
         # Resolve the circuit parameters.
         param_resolver = cirq.resolve_parameters(circuit,
                                                  additional_info[i].params)
