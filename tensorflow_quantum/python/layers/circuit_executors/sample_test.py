@@ -58,15 +58,15 @@ class SampleTest(tf.test.TestCase, parameterized.TestCase):
                     symbol_names=[[]],
                     repetitions=10)
 
-        with self.assertRaisesRegex(ValueError,
-                                    expected_regex="rank 2 but is rank 1"):
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    expected_regex="rank 2. Got rank 1"):
             sampler(cirq.Circuit(),
                     symbol_values=[0.5],
                     symbol_names=['name'],
                     repetitions=10)
 
-        with self.assertRaisesRegex(ValueError,
-                                    expected_regex="rank 1 but is rank 2"):
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    expected_regex="rank 1. Got rank 2"):
             sampler([[cirq.Circuit()]],
                     symbol_values=[[0.5]],
                     symbol_names=['name'],
