@@ -128,7 +128,7 @@ class TfqSimulateSamplesOp : public tensorflow::OpKernel {
       const int num_samples,
       const std::vector<std::vector<qsim::GateFused<QsimGate>>>& fused_circuits,
       tensorflow::OpKernelContext* context,
-      tensorflow::TTypes<int8_t, 3, long int>::Tensor* output_tensor) {
+      tensorflow::TTypes<int8_t, 3>::Tensor* output_tensor) {
     // Instantiate qsim objects.
     const auto tfq_for = tfq::QsimFor(context);
     using Simulator = qsim::Simulator<const tfq::QsimFor&>;
@@ -181,7 +181,7 @@ class TfqSimulateSamplesOp : public tensorflow::OpKernel {
       const int num_samples,
       const std::vector<std::vector<qsim::GateFused<QsimGate>>>& fused_circuits,
       tensorflow::OpKernelContext* context,
-      tensorflow::TTypes<int8_t, 3, long int>::Tensor* output_tensor) {
+      tensorflow::TTypes<int8_t, 3>::Tensor* output_tensor) {
     const auto tfq_for = qsim::SequentialFor(1);
     using Simulator = qsim::Simulator<const qsim::SequentialFor&>;
     using StateSpace = Simulator::StateSpace;
