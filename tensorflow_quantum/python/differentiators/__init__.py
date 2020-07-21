@@ -23,6 +23,9 @@ from tensorflow_quantum.python.differentiators.linear_combination import (
 from tensorflow_quantum.python.differentiators.parameter_shift import (
     ParameterShift,)
 
+from tensorflow_quantum.python.differentiators.parameter_shift_util import (
+    PARAMETER_IMPURITY_NAME, parse_programs,)
+
 from tensorflow_quantum.python.differentiators.stochastic_differentiator \
     import (SGDifferentiator,)
 
