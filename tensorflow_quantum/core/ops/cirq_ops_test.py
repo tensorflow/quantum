@@ -423,8 +423,10 @@ class CirqSamplesTest(tf.test.TestCase, parameterized.TestCase):
 
     def test_get_cirq_samples_general(self):
         """Tests that a general cirq.Sampler is compatible with sampling."""
+        
         class DummySampler(cirq.Sampler):
             """Mock general cirq.Sampler."""
+            
             def run_sweep(self, program, params, repetitions):
                 """Returns all ones in the correct sample shape."""
                 return [
@@ -437,6 +439,7 @@ class CirqSamplesTest(tf.test.TestCase, parameterized.TestCase):
                                          dtype=np.bool),
                         }) for p in params
                 ]
+
         all_n_qubits = [2, 3, 4, 5]
         max_n_qubits = max(all_n_qubits)
         n_samples = 3
