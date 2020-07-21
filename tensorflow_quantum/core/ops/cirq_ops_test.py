@@ -326,8 +326,7 @@ class CirqSamplesTest(tf.test.TestCase, parameterized.TestCase):
 
     def test_get_cirq_sampling_op(self):
         """Input check the wrapper for the cirq sampling op."""
-        with self.assertRaisesRegex(TypeError,
-                                    "must inherit cirq.Sampler."):
+        with self.assertRaisesRegex(TypeError, "must inherit cirq.Sampler."):
             cirq_ops._get_cirq_samples("junk")
         cirq_ops._get_cirq_samples()
         cirq_ops._get_cirq_samples(cirq.sim.sparse_simulator.Simulator())
@@ -428,12 +427,16 @@ class CirqSamplesTest(tf.test.TestCase, parameterized.TestCase):
             """Mock general cirq.Sampler."""
             def run_sweep(self, program, params, repetitions):
                 """Returns all ones in the correct sample shape."""
-                return [cirq.TrialResult.from_single_parameter_set(
-                    params=p,
-                    measurements={'tfq': np.array(
-                        [[1]*len(program.all_qubits())]*repetitions,
-                        dtype=np.bool),
-                    }) for p in params]
+                return [
+                    cirq.TrialResult.from_single_parameter_set(
+                        params=p,
+                        measurements={
+                            'tfq':
+                                np.array([[1]*len(program.all_qubits())] *
+                                         repetitions,
+                                         dtype=np.bool),
+                    }) for p in params
+                ]
         all_n_qubits = [2, 3, 4, 5]
         max_n_qubits = max(all_n_qubits)
         n_samples = 3
@@ -449,8 +452,9 @@ class CirqSamplesTest(tf.test.TestCase, parameterized.TestCase):
 
         expected_results = []
         for n_qubits in all_n_qubits:
-            expected_results += [[[-2]*(max_n_qubits - n_qubits)
-                                  + [1]*n_qubits]*n_samples]
+            expected_results += [
+                [[-2] * (max_n_qubits - n_qubits) + [1] * n_qubits] * n_samples
+            ]
         self.assertAllClose(expected_results, test_results)
 
 
