@@ -396,11 +396,13 @@ def _get_cirq_samples(sampler=cirq.sim.sparse_simulator.Simulator()):
     the circuits.
 
     Args:
-        simulator: `cirq.Simulator` object to use for circuit execution.
+        sampler: Object inheriting `cirq.Sampler` to use for circuit execution.
 
     Returns:
         `callable` that is a Tensorflow op for taking samples.
     """
+    if not isinstance(sampler, cirq.Sampler):
+        raise TypeError("Passed sampler must inherit cirq.Sampler.")
 
     @tf.custom_gradient
     def cirq_sample(programs, symbol_names, symbol_values, num_samples):
@@ -470,16 +472,16 @@ def _get_cirq_samples(sampler=cirq.sim.sparse_simulator.Simulator()):
 
         num_samples = int(num_samples.numpy())
 
-        if not isinstance(sampler, cirq.google.QuantumEngineSampler):
+        if isinstance(sampler,
+                      (cirq.sim.density_matrix_simulator.DensityMatrixSimulator,
+                       cirq.sim.sparse_simulator.Simulator)):
             results = batch_util.batch_sample(programs, resolvers, num_samples,
                                               sampler)
-
         else:
-
             max_n_qubits = 0
             for p in programs:
                 if p.has_measurements():
-                    # should never hit this error because the seriazlizer
+                    # should never hit this error because the serializer
                     # does not support cirq.measurement yet
                     raise RuntimeError('TFQ does not support programs with '
                                        'pre-existing measurements.')
@@ -499,27 +501,40 @@ def _get_cirq_samples(sampler=cirq.sim.sparse_simulator.Simulator()):
             grouped = _group_tuples(to_be_grouped)
 
             # start all the necessary jobs
-            result_mapping = {}
+            results_mapping = []
             for key, value in grouped.items():
                 program = programs[value[0][1]]
                 resolvers = [x[0] for x in value]
                 orders = [x[1] for x in value]
 
-                # sampler.run_sweep blocks until results are in, so go around it
-                result = sampler._engine.run_sweep(
-                    program=program,
-                    params=resolvers,
-                    repetitions=num_samples,
-                    processor_ids=sampler._processor_ids,
-                    gate_set=sampler._gate_set)
+                if isinstance(sampler, cirq.google.QuantumEngineSampler):
+                    # sampler.run_sweep blocks until results are in,
+                    # so go around it
+                    # TODO(zaqqwerty): cirq.Samplers require a `run_sweep_async`
+                    #                  method, why not use that instead of the
+                    #                  private `_engine` member?
+                    results_raw = sampler._engine.run_sweep(
+                        program=program,
+                        params=resolvers,
+                        repetitions=num_samples,
+                        processor_ids=sampler._processor_ids,
+                        gate_set=sampler._gate_set
+                    )  # `results_raw` is `cirq.google.engine.engine_job.EngineJob`
+                    results = results_raw.results()
+                else:
+                    # TODO(zaqqwerty): can we set this up better using asyncio?
+                    results = sampler.run_sweep(
+                        program=program,
+                        params=resolvers,
+                        repetitions=num_samples
+                    )  # `results` is `List['cirq.TrialResult']`
 
-                result_mapping[result] = orders
+                results_mapping.append((results, orders))
 
             # get all results
             cirq_results = [None] * len(programs)
-            for key, value in result_mapping.items():
-                this_results = key.results()
-                for result, index in zip(this_results, value):
+            for (results, orders) in results_mapping:
+                for result, index in zip(results, orders):
                     cirq_results[index] = result
 
             results = []
@@ -533,9 +548,6 @@ def _get_cirq_samples(sampler=cirq.sim.sparse_simulator.Simulator()):
                         padding='pre'))
 
         return np.array(results, dtype=np.int8), _no_grad
-
-    if not isinstance(sampler, cirq.Sampler):
-        raise TypeError("simulator must inherit cirq.Sampler.")
 
     @_upgrade_inputs
     def sample_generator(circuit_spec, param_names, param_values, num_samples):
