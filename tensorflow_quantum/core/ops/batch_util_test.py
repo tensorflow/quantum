@@ -187,7 +187,7 @@ class BatchUtilTest(tf.test.TestCase, parameterized.TestCase):
             self.assertLess(stats.entropy(a + 1e-8, b + 1e-8), 0.005)
 
         self.assertDTypeEqual(results, np.int32)
-        
+
     @parameterized.parameters([{
         'sim': cirq.DensityMatrixSimulator()
     }, {
