@@ -502,7 +502,7 @@ def _get_cirq_samples(sampler=cirq.sim.sparse_simulator.Simulator()):
 
             # start all the necessary jobs
             results_mapping = []
-            for key, value in grouped.items():
+            for _, value in grouped.items():
                 program = programs[value[0][1]]
                 resolvers = [x[0] for x in value]
                 orders = [x[1] for x in value]
@@ -518,8 +518,8 @@ def _get_cirq_samples(sampler=cirq.sim.sparse_simulator.Simulator()):
                         params=resolvers,
                         repetitions=num_samples,
                         processor_ids=sampler._processor_ids,
-                        gate_set=sampler._gate_set
-                    )  # `results_raw` is `cirq.google.engine.engine_job.EngineJob`
+                        gate_set=sampler._gate_set)
+                    # `results_raw` is `cirq.google.engine.engine_job.EngineJob`
                     results = results_raw.results()
                 else:
                     # TODO(zaqqwerty): can we set this up better using asyncio?

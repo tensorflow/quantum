@@ -429,8 +429,9 @@ class CirqSamplesTest(tf.test.TestCase, parameterized.TestCase):
             def run_sweep(self, program, params, repetitions):
                 return [cirq.TrialResult.from_single_parameter_set(
                     params=p,
-                    measurements={'tfq': np.array([[1]*len(program.all_qubits())]*repetitions,
-                                                  dtype=np.bool),
+                    measurements={'tfq': np.array(
+                        [[1]*len(program.all_qubits())]*repetitions,
+                        dtype=np.bool),
                     }) for p in params]
         all_n_qubits = [2, 3, 4, 5]
         max_n_qubits = max(all_n_qubits)
@@ -442,12 +443,13 @@ class CirqSamplesTest(tf.test.TestCase, parameterized.TestCase):
             circuits.append(
                 cirq.Circuit(
                     *cirq.X.on_each(*cirq.GridQubit.rect(1, n_qubits))))
-        test_results = this_op(util.convert_to_tensor(circuits), [], [[]] * len(circuits),
-                     [n_samples]).numpy()
+        test_results = this_op(util.convert_to_tensor(circuits), [],
+                               [[]] * len(circuits), [n_samples]).numpy()
 
         expected_results = []
         for n_qubits in all_n_qubits:
-            expected_results += [[[-2]*(max_n_qubits - n_qubits) + [1]*n_qubits]*n_samples]
+            expected_results += [[[-2]*(max_n_qubits - n_qubits)
+                                  + [1]*n_qubits]*n_samples]
         self.assertAllClose(expected_results, test_results)
 
 
