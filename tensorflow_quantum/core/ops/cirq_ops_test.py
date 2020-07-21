@@ -432,10 +432,10 @@ class CirqSamplesTest(tf.test.TestCase, parameterized.TestCase):
                         params=p,
                         measurements={
                             'tfq':
-                                np.array([[1]*len(program.all_qubits())] *
+                                np.array([[1] * len(program.all_qubits())] *
                                          repetitions,
                                          dtype=np.bool),
-                    }) for p in params
+                        }) for p in params
                 ]
         all_n_qubits = [2, 3, 4, 5]
         max_n_qubits = max(all_n_qubits)
