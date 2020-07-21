@@ -284,7 +284,7 @@ class SGDifferentiatorUtilTest(tf.test.TestCase, parameterized.TestCase):
             _example_circuit_helper(n_qubits, n_programs)
 
         new_programs_before, weights_before, shifts_before, \
-        n_param_gates_before = parameter_shift_util.parse_programs(
+        n_param_gates_before = parameter_shift_util._parameter_shift_parse_programs(
             programs, symbol_names, symbol_values_tensor, n_symbols)
 
         new_programs, weights, shifts, n_param_gates = \
@@ -400,7 +400,7 @@ class SGDifferentiatorUtilTest(tf.test.TestCase, parameterized.TestCase):
         ops, psums, _ = _example_ops_helper(n_programs, n_ops)
 
         new_programs, weights_before, shifts, n_param_gates = \
-            parameter_shift_util.parse_programs(
+            parameter_shift_util._parameter_shift_parse_programs(
                 programs, symbol_names, symbol_values_tensor, n_symbols)
 
         # all inputs should be tensorflow tensors.

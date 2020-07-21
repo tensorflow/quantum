@@ -117,7 +117,7 @@ class ParameterShift(differentiator.Differentiator):
         # These new_programs has programs that parameter-shift rule is applied,
         # so those programs has
         (new_programs, weights, shifts,
-         n_param_gates) = parameter_shift_util.parse_programs(
+         n_param_gates) = parameter_shift_util._parameter_shift_parse_programs(
              programs, symbol_names, symbol_values, n_symbols)
 
         # Reshape & transpose new_programs, weights and shifts to fit into
@@ -259,7 +259,7 @@ class ParameterShift(differentiator.Differentiator):
         # These new_programs has programs that parameter-shift rule is applied,
         # so those programs has
         (new_programs, weights, shifts,
-         n_param_gates) = parameter_shift_util.parse_programs(
+         n_param_gates) = parameter_shift_util._parameter_shift_parse_programs(
              programs, symbol_names, symbol_values, n_symbols)
 
         # Reshape & transpose new_programs, weights and shifts to fit into

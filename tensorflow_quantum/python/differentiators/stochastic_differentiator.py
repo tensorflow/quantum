@@ -155,7 +155,7 @@ class SGDifferentiator(differentiator.Differentiator):
         # Deserialize programs and parse the whole parameterized gates
         # new_programs has [n_symbols, n_programs, n_param_gates, n_shifts].
         new_programs, weights, shifts, n_param_gates = \
-            parameter_shift_util.parse_programs(
+            parameter_shift_util._parameter_shift_parse_programs(
                 programs, symbol_names, symbol_values, n_symbols)
 
         if self.stochastic_generator:
@@ -327,7 +327,7 @@ class SGDifferentiator(differentiator.Differentiator):
         # Deserialize programs and parse the whole parameterized gates
         # new_programs has [n_symbols, n_programs, n_param_gates, n_shifts].
         new_programs, weights, shifts, n_param_gates = \
-            parameter_shift_util.parse_programs(
+            parameter_shift_util._parameter_shift_parse_programs(
                 programs, symbol_names, symbol_values, n_symbols)
 
         if self.stochastic_generator:

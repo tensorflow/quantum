@@ -26,8 +26,8 @@ from tensorflow_quantum.python.differentiators import parameter_shift_util
 class ParameterShiftUtilTest(tf.test.TestCase, parameterized.TestCase):
     """Test the parameter_shift_util module."""
 
-    def test_parse_programs(self):
-        """Input & output check for parse_programs()."""
+    def test_parameter_shift_parse_programs(self):
+        """Input & output check for _parameter_shift_parse_programs()."""
         n_qubits = 5
         n_programs = 3
         n_shifts = 2
@@ -61,7 +61,7 @@ class ParameterShiftUtilTest(tf.test.TestCase, parameterized.TestCase):
         programs = util.convert_to_tensor(circuit_batch)
 
         new_programs, weights, shifts, n_param_gates = \
-            parameter_shift_util.parse_programs(
+            parameter_shift_util._parameter_shift_parse_programs(
                 programs, symbol_names, symbol_values_tensor, n_symbols)
 
         # shape check
@@ -94,8 +94,9 @@ class ParameterShiftUtilTest(tf.test.TestCase, parameterized.TestCase):
                                                        [1, 0]),
                                           axis=-1),
                            axis=-1), [1, 1, 3, 2])
-        # All inf's should be 0.0. This happens inside parse_programs()
-        # with tf.math.divide_no_nan() without any warning.
+        # All inf's should be 0.0. This happens inside
+        # _parameter_shift_parse_programs() with tf.math.divide_no_nan()
+        # without any warning.
         ground_truth_shifts[np.where(np.isinf(ground_truth_shifts))] = 0.0
         ground_truth_shifts = new_symbol_values_array + ground_truth_shifts
         self.assertAllClose(ground_truth_shifts, shifts)
