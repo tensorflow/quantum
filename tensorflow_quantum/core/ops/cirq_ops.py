@@ -515,10 +515,10 @@ def _get_cirq_samples(sampler=cirq.sim.sparse_simulator.Simulator()):
                     processor_ids=sampler._processor_ids,
                     gate_set=sampler._gate_set)
                 results_mapping[result] = orders
-                
+
             # get all results
             cirq_results = [None] * len(programs)
-            for key, value in result_mapping.items():
+            for key, value in results_mapping.items():
                 this_results = key.results()
                 for result, index in zip(this_results, value):
                     cirq_results[index] = result

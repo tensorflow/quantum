@@ -620,7 +620,7 @@ def batch_sample(circuits, param_resolvers, n_samples, sampler):
                                'pre-existing measurements.')
         c.append(cirq.measure(*qubits, key=MEASURE_ALL_KEY))
         biggest_circuit = max([biggest_circuit, len(qubits)])
-    
+
     return_mem_shape = (len(circuits), n_samples, biggest_circuit)
     shared_array = _make_simple_view(return_mem_shape, -2, np.int32, 'i')
 
