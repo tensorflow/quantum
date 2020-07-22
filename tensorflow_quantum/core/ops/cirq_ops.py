@@ -472,7 +472,7 @@ def _get_cirq_samples(sampler=cirq.sim.sparse_simulator.Simulator()):
 
         num_samples = int(num_samples.numpy())
 
-        if (True):  # Add QuantumContext check here
+        if not isinstance(sampler, cirq.google.QuantumEngineSampler):
             results = batch_util.batch_sample(programs, resolvers, num_samples,
                                               sampler)
         else:
