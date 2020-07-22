@@ -162,16 +162,15 @@ class BatchUtilTest(tf.test.TestCase, parameterized.TestCase):
         n_samples = 1
         n_qubits = 8
         qubits = cirq.GridQubit.rect(1, n_qubits)
-        circuit = cirq.Circuit(*cirq.Z.on_each(*qubits[:n_qubits//2]),
-                               *cirq.X.on_each(*qubits[n_qubits//2:]))
+        circuit = cirq.Circuit(*cirq.Z.on_each(*qubits[:n_qubits // 2]),
+                               *cirq.X.on_each(*qubits[n_qubits // 2:]))
 
         test_results = batch_util.batch_sample([circuit],
                                                [cirq.ParamResolver({})],
                                                n_samples, sim)
 
         state = sim.simulate(circuit, cirq.ParamResolver({}))
-        expected_results = _sample_helper(sim, state, len(qubits),
-                                          n_samples)
+        expected_results = _sample_helper(sim, state, len(qubits), n_samples)
 
         self.assertAllEqual(expected_results, test_results[0])
         self.assertDTypeEqual(test_results, np.int32)
