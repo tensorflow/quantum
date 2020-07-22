@@ -163,12 +163,14 @@ class TfqSimulateSamplesOp : public tensorflow::OpKernel {
         bool val = 0;
         while (q_ind < nq) {
           val = samples[j] & mask;
-          (*output_tensor)(i, j, max_num_qubits - q_ind - 1) = val;
+          (*output_tensor)(
+              i, j, static_cast<ptrdiff_t>(max_num_qubits - q_ind - 1)) = val;
           q_ind++;
           mask <<= 1;
         }
         while (q_ind < max_num_qubits) {
-          (*output_tensor)(i, j, max_num_qubits - q_ind - 1) = -2;
+          (*output_tensor)(
+              i, j, static_cast<ptrdiff_t>(max_num_qubits - q_ind - 1)) = -2;
           q_ind++;
         }
       }
