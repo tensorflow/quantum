@@ -284,8 +284,9 @@ class SGDifferentiatorUtilTest(tf.test.TestCase, parameterized.TestCase):
             _example_circuit_helper(n_qubits, n_programs)
 
         new_programs_before, weights_before, shifts_before, \
-        n_param_gates_before = parameter_shift_util._parameter_shift_parse_programs(
-            programs, symbol_names, symbol_values_tensor, n_symbols)
+        n_param_gates_before = \
+            parameter_shift_util._parameter_shift_parse_programs(
+                programs, symbol_names, symbol_values_tensor, n_symbols)
 
         new_programs, weights, shifts, n_param_gates = \
             sd_util.stochastic_generator_preprocessor(
