@@ -475,11 +475,13 @@ def _get_cirq_samples(sampler=cirq.sim.sparse_simulator.Simulator()):
         if not isinstance(sampler, cirq.google.QuantumEngineSampler):
             results = batch_util.batch_sample(programs, resolvers, num_samples,
                                               sampler)
+
         else:
+
             max_n_qubits = 0
             for p in programs:
                 if p.has_measurements():
-                    # should never hit this error because the serializer
+                    # should never hit this error because the seriazlizer
                     # does not support cirq.measurement yet
                     raise RuntimeError('TFQ does not support programs with '
                                        'pre-existing measurements.')
@@ -499,25 +501,26 @@ def _get_cirq_samples(sampler=cirq.sim.sparse_simulator.Simulator()):
             grouped = _group_tuples(to_be_grouped)
 
             # start all the necessary jobs
-            results_mapping = []
-            for _, value in grouped.items():
+            results_mapping = {}
+            for key, value in grouped.items():
                 program = programs[value[0][1]]
                 resolvers = [x[0] for x in value]
                 orders = [x[1] for x in value]
-                results_raw = sampler._engine.run_sweep(
+
+                # sampler.run_sweep blocks until results are in, so go around it
+                result = sampler._engine.run_sweep(
                     program=program,
                     params=resolvers,
                     repetitions=num_samples,
                     processor_ids=sampler._processor_ids,
                     gate_set=sampler._gate_set)
-                # `results_raw` is `cirq.google.engine.engine_job.EngineJob`
-                results = results_raw.results()
-                results_mapping.append((results, orders))
+                results_mapping[result] = orders
                 
             # get all results
             cirq_results = [None] * len(programs)
-            for (results, orders) in results_mapping:
-                for result, index in zip(results, orders):
+            for key, value in result_mapping.items():
+                this_results = key.results()
+                for result, index in zip(this_results, value):
                     cirq_results[index] = result
 
             results = []
