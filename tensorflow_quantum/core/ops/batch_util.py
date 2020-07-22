@@ -287,20 +287,19 @@ def _sample_expectation_worker_func(indices, programs, params, ops, n_samples):
         _pointwise_update_simple_np(x_np, batch_index, op_index, result)
 
 
-def _sample_worker_func(indices, programs, params, n_samples):
+def _sample_worker_func(indices, programs, params, n_samples, measure_all_key):
     """Sample n_samples from progams[i] with params[i] placed in it."""
     x_np = _convert_simple_view_to_np(INFO_DICT['arr'], np.int32,
                                       INFO_DICT['shape'])
-    simulator = INFO_DICT['sim']
+    sampler = INFO_DICT['sim']
 
     for i, index in enumerate(indices):
         qubits = sorted(programs[i].all_qubits())
         # (#679) Just ignore empty programs.
         if len(qubits) == 0:
             continue
-        state = simulator.simulate(programs[i], params[i])
-        samples = INFO_DICT['post_process'](state, len(qubits),
-                                            n_samples[i]).astype(np.int32)
+        result = sampler.run(programs[i], params[i], n_samples[i])
+        samples = result.measurements[measure_all_key].astype(np.int32)
         _batch_update_simple_np(
             x_np, index,
             np.pad(samples, ((0, 0), (x_np.shape[2] - len(qubits), 0)),
@@ -572,7 +571,7 @@ def batch_calculate_sampled_expectation(circuits, param_resolvers, ops,
                                           return_mem_shape)
 
 
-def batch_sample(circuits, param_resolvers, n_samples, simulator):
+def batch_sample(circuits, param_resolvers, n_samples, sampler):
     """Sample from circuits using parallel processing.
 
     Returns a `np.ndarray` containing n_samples samples from all the circuits in
@@ -580,8 +579,6 @@ def batch_sample(circuits, param_resolvers, n_samples, simulator):
     `param_resolvers` was used to resolve any symbols. Specifically the
     returned array at index `i,j` will correspond to a `np.ndarray` of
     booleans representing bitstring `j` that was sampled from `circuits[i]`.
-    Samples are drawn using the provided simulator object (Currently supported
-    are `cirq.DensityMatrixSimulator` and `cirq.Simulator`).
 
     Note: In order to keep numpy shape consistent, smaller circuits will
         have sample bitstrings padded with -2 on "qubits that don't exist
@@ -593,49 +590,43 @@ def batch_sample(circuits, param_resolvers, n_samples, simulator):
             `param_resolvers[i]` is the resolver to be used with `circuits[i]`.
         n_samples: `int` describing number of samples to draw from each
             circuit.
-        simulator: Simulator object. Currently
-            supported are `cirq.DensityMatrixSimulator` and `cirq.Simulator`.
+        sampler: Object inheriting from `cirq.Sampler`.
 
     Returns:
         `np.ndarray` containing the samples with invalid qubits blanked out.
-        It's shape is
-        [len(circuits), n_samples, <# qubits in largest circuit>].
-        circuits that are smaller than #qubits in largest circuit have null
+        Its shape is [len(circuits), n_samples, <# qubits in largest circuit>].
+        Circuits that are smaller than #qubits in largest circuit have null
         qubits in bitstrings mapped to -2.
     """
-    _validate_inputs(circuits, param_resolvers, simulator, 'sample')
+    _validate_inputs(circuits, param_resolvers, sampler, 'sample')
     if not isinstance(n_samples, int):
         raise TypeError('n_samples must be an int.'
                         'Given: {}'.format(type(n_samples)))
-
     if n_samples <= 0:
         raise ValueError('n_samples must be > 0.')
 
-    biggest_circuit = max(len(circuit.all_qubits()) for circuit in circuits)
+    biggest_circuit = 0
+    measure_all_key = 'tfq'
+    for p in programs:
+        if p.has_measurements():
+            # should never hit this error because the seriazlizer
+            # does not support cirq.measurement yet
+            raise RuntimeError('TFQ does not support programs with '
+                               'pre-existing measurements.')
+        p.append(cirq.measure(*p.all_qubits(), key=measure_all_key))
+        biggest_circuit = max([max_n_qubits, len(p.all_qubits())])
+    
     return_mem_shape = (len(circuits), n_samples, biggest_circuit)
     shared_array = _make_simple_view(return_mem_shape, -2, np.int32, 'i')
 
-    if isinstance(simulator,
-                  cirq.sim.density_matrix_simulator.DensityMatrixSimulator):
-        post_process = lambda state, size, n_samples: \
-            cirq.sample_density_matrix(
-                state.final_density_matrix, [i for i in range(size)],
-                repetitions=n_samples)
-    elif isinstance(simulator, cirq.sim.sparse_simulator.Simulator):
-        post_process = lambda state, size, n_samples: cirq.sample_state_vector(
-            state.final_state, list(range(size)), repetitions=n_samples)
-    else:
-        raise TypeError('Simulator {} is not supported by batch_sample.'.format(
-            type(simulator)))
-
     input_args = list(
         _prep_pool_input_args(range(len(circuits)), circuits, param_resolvers,
-                              [n_samples] * len(circuits)))
+                              [n_samples] * len(circuits), measure_all_key))
 
     with ProcessPool(processes=None,
                      initializer=_setup_dict,
-                     initargs=(shared_array, return_mem_shape, simulator,
-                               post_process)) as pool:
+                     initargs=(shared_array, return_mem_shape, sampler,
+                               None)) as pool:
 
         pool.starmap(_sample_worker_func, input_args)
 
