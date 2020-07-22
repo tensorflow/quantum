@@ -26,6 +26,9 @@ import cirq
 from tensorflow_quantum.core.serialize import serializer
 
 
+MEASURE_ALL_KEY = "TFQ_MEASURE"
+
+
 # TODO (mbbrough): Remove this workaround class once cirq.PauliSumCollector can
 #   be used end to end with engine. This current issue is that
 #   cirq.PauliSumCollector does not produce serializable gates for basis
@@ -287,7 +290,7 @@ def _sample_expectation_worker_func(indices, programs, params, ops, n_samples):
         _pointwise_update_simple_np(x_np, batch_index, op_index, result)
 
 
-def _sample_worker_func(indices, programs, params, n_samples, measure_all_key):
+def _sample_worker_func(indices, programs, params, n_samples):
     """Sample n_samples from progams[i] with params[i] placed in it."""
     x_np = _convert_simple_view_to_np(INFO_DICT['arr'], np.int32,
                                       INFO_DICT['shape'])
@@ -299,7 +302,7 @@ def _sample_worker_func(indices, programs, params, n_samples, measure_all_key):
         if len(qubits) == 0:
             continue
         result = sampler.run(programs[i], params[i], n_samples[i])
-        samples = result.measurements[measure_all_key].astype(np.int32)
+        samples = result.measurements[MEASURE_ALL_KEY]
         _batch_update_simple_np(
             x_np, index,
             np.pad(samples, ((0, 0), (x_np.shape[2] - len(qubits), 0)),
@@ -606,22 +609,24 @@ def batch_sample(circuits, param_resolvers, n_samples, sampler):
         raise ValueError('n_samples must be > 0.')
 
     biggest_circuit = 0
-    measure_all_key = 'tfq'
-    for p in programs:
-        if p.has_measurements():
-            # should never hit this error because the seriazlizer
+    for c in circuits:
+        qubits = c.all_qubits()
+        if len(qubits) == 0:
+            continue
+        if c.has_measurements():
+            # should never hit this error because the serializer
             # does not support cirq.measurement yet
             raise RuntimeError('TFQ does not support programs with '
                                'pre-existing measurements.')
-        p.append(cirq.measure(*p.all_qubits(), key=measure_all_key))
-        biggest_circuit = max([max_n_qubits, len(p.all_qubits())])
+        c.append(cirq.measure(*qubits, key=MEASURE_ALL_KEY))
+        biggest_circuit = max([biggest_circuit, len(qubits)])
     
     return_mem_shape = (len(circuits), n_samples, biggest_circuit)
     shared_array = _make_simple_view(return_mem_shape, -2, np.int32, 'i')
 
     input_args = list(
         _prep_pool_input_args(range(len(circuits)), circuits, param_resolvers,
-                              [n_samples] * len(circuits), measure_all_key))
+                              [n_samples] * len(circuits)))
 
     with ProcessPool(processes=None,
                      initializer=_setup_dict,

@@ -472,9 +472,7 @@ def _get_cirq_samples(sampler=cirq.sim.sparse_simulator.Simulator()):
 
         num_samples = int(num_samples.numpy())
 
-        if isinstance(sampler,
-                      (cirq.sim.density_matrix_simulator.DensityMatrixSimulator,
-                       cirq.sim.sparse_simulator.Simulator)):
+        if (True):  # Add QuantumContext check here
             results = batch_util.batch_sample(programs, resolvers, num_samples,
                                               sampler)
         else:
@@ -506,31 +504,16 @@ def _get_cirq_samples(sampler=cirq.sim.sparse_simulator.Simulator()):
                 program = programs[value[0][1]]
                 resolvers = [x[0] for x in value]
                 orders = [x[1] for x in value]
-
-                if isinstance(sampler, cirq.google.QuantumEngineSampler):
-                    # sampler.run_sweep blocks until results are in,
-                    # so go around it
-                    # TODO(zaqqwerty): cirq.Samplers require a `run_sweep_async`
-                    #                  method, why not use that instead of the
-                    #                  private `_engine` member?
-                    results_raw = sampler._engine.run_sweep(
-                        program=program,
-                        params=resolvers,
-                        repetitions=num_samples,
-                        processor_ids=sampler._processor_ids,
-                        gate_set=sampler._gate_set)
-                    # `results_raw` is `cirq.google.engine.engine_job.EngineJob`
-                    results = results_raw.results()
-                else:
-                    # TODO(zaqqwerty): can we set this up better using asyncio?
-                    results = sampler.run_sweep(
-                        program=program,
-                        params=resolvers,
-                        repetitions=num_samples
-                    )  # `results` is `List['cirq.TrialResult']`
-
+                results_raw = sampler._engine.run_sweep(
+                    program=program,
+                    params=resolvers,
+                    repetitions=num_samples,
+                    processor_ids=sampler._processor_ids,
+                    gate_set=sampler._gate_set)
+                # `results_raw` is `cirq.google.engine.engine_job.EngineJob`
+                results = results_raw.results()
                 results_mapping.append((results, orders))
-
+                
             # get all results
             cirq_results = [None] * len(programs)
             for (results, orders) in results_mapping:
