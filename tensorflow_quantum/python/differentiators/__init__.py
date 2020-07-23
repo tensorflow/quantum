@@ -25,7 +25,7 @@ from tensorflow_quantum.python.differentiators.parameter_shift import (
 
 from tensorflow_quantum.python.differentiators.parameter_shift_util import (
     _PARAMETER_IMPURITY_NAME,
-    _parse_programs,
+    _parameter_shift_parse_programs,
 )
 
 from tensorflow_quantum.python.differentiators.stochastic_differentiator \
