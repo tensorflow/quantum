@@ -485,7 +485,7 @@ def _get_cirq_samples(sampler=cirq.sim.sparse_simulator.Simulator()):
                     # does not support cirq.measurement yet
                     raise RuntimeError('TFQ does not support programs with '
                                        'pre-existing measurements.')
-                p.append(cirq.measure(*p.all_qubits(), key='tfq'))
+                p.append(cirq.measure(*sorted(p.all_qubits()), key='tfq'))
                 max_n_qubits = max([max_n_qubits, len(p.all_qubits())])
 
             # group samples from identical circuits to reduce communication

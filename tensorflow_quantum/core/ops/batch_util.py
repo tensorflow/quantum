@@ -26,9 +26,6 @@ import cirq
 from tensorflow_quantum.core.serialize import serializer
 
 
-MEASURE_ALL_KEY = "TFQ_MEASURE"
-
-
 # TODO (mbbrough): Remove this workaround class once cirq.PauliSumCollector can
 #   be used end to end with engine. This current issue is that
 #   cirq.PauliSumCollector does not produce serializable gates for basis
@@ -302,7 +299,11 @@ def _sample_worker_func(indices, programs, params, n_samples):
         if len(qubits) == 0:
             continue
         result = sampler.run(programs[i], params[i], n_samples[i])
-        samples = result.measurements[MEASURE_ALL_KEY]
+        # should be safe to make the dict vals a list and subscript,
+        # since we expect exactly one measurement to have been taken.
+        # Tried to use the key from the measure gate but that led to
+        # sporadic errors in the pool.
+        samples = list(result.measurements.values())[0]
         _batch_update_simple_np(
             x_np, index,
             np.pad(samples, ((0, 0), (x_np.shape[2] - len(qubits), 0)),
@@ -618,7 +619,7 @@ def batch_sample(circuits, param_resolvers, n_samples, sampler):
             # does not support cirq.measurement yet
             raise RuntimeError('TFQ does not support programs with '
                                'pre-existing measurements.')
-        c.append(cirq.measure(*qubits, key=MEASURE_ALL_KEY))
+        c.append(cirq.measure(*sorted(qubits), key="tfq"))
         biggest_circuit = max([biggest_circuit, len(qubits)])
 
     return_mem_shape = (len(circuits), n_samples, biggest_circuit)

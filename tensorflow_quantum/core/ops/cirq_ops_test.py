@@ -431,18 +431,18 @@ class CirqSamplesTest(tf.test.TestCase, parameterized.TestCase):
                 """Returns all ones in the correct sample shape."""
                 return [
                     cirq.TrialResult.from_single_parameter_set(
-                        params=p,
+                        params=params,
                         measurements={
                             'tfq':
                                 np.array([[1] * len(program.all_qubits())] *
                                          repetitions,
                                          dtype=np.bool),
-                        }) for p in params
+                        })
                 ]
 
-        all_n_qubits = [2, 3, 4, 5]
+        all_n_qubits = [1, 2, 3, 4, 5]
         max_n_qubits = max(all_n_qubits)
-        n_samples = 3
+        n_samples = 2
         this_sampler = DummySampler()
         this_op = cirq_ops._get_cirq_samples(this_sampler)
         circuits = []
