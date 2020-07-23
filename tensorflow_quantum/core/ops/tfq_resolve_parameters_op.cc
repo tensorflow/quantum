@@ -39,9 +39,9 @@ using ::tensorflow::Status;
 typedef qsim::Cirq::GateCirq<float> QsimGate;
 typedef qsim::Circuit<QsimGate> QsimCircuit;
 
-class TfqSimulateStateOp : public tensorflow::OpKernel {
+class TfqResolveParametersOp : public tensorflow::OpKernel {
  public:
-  explicit TfqSimulateStateOp(tensorflow::OpKernelConstruction* context)
+  explicit TfqResolveParametersOp(tensorflow::OpKernelConstruction* context)
       : OpKernel(context) {}
 
   void Compute(tensorflow::OpKernelContext* context) override {
@@ -218,14 +218,14 @@ class TfqSimulateStateOp : public tensorflow::OpKernel {
   }
 };
 
-REGISTER_KERNEL_BUILDER(Name("TfqSimulateState").Device(tensorflow::DEVICE_CPU),
-                        TfqSimulateStateOp);
+REGISTER_KERNEL_BUILDER(Name("TfqResolveParameters").Device(tensorflow::DEVICE_CPU),
+                        TfqResolveParametersOp);
 
-REGISTER_OP("TfqSimulateState")
+REGISTER_OP("TfqResolveParameters")
     .Input("programs: string")
     .Input("symbol_names: string")
     .Input("symbol_values: float")
-    .Output("wavefunction: complex64")
+    .Output("resolved_programs: string")
     .SetShapeFn([](tensorflow::shape_inference::InferenceContext* c) {
       tensorflow::shape_inference::ShapeHandle programs_shape;
       TF_RETURN_IF_ERROR(c->WithRank(c->input(0), 1, &programs_shape));
