@@ -423,8 +423,7 @@ TEST(ProgramResolutionTest, ResolveSymbolsPartial) {
             .operations(0)
             .args()
             .at("exponent")
-            .arg_value()
-            .symbol_value(),
+            .symbol(),
             "v2");
 }
 

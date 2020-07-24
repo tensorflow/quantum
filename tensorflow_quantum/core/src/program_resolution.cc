@@ -122,13 +122,15 @@ Status ResolveSymbols(
         Arg& arg = kv.second;
         if (!arg.symbol().empty()) {
           auto iter = param_map.find(arg.symbol());
-          if (!partial && iter == param_map.end()) {
-            return Status(
-                tensorflow::error::INVALID_ARGUMENT,
-                "Could not find symbol in parameter map: " + arg.symbol());
+          if (iter == param_map.end()) {
+            if (!partial) {
+              return Status(
+                  tensorflow::error::INVALID_ARGUMENT,
+                  "Could not find symbol in parameter map: " + arg.symbol());
+            }
+          } else {
+            arg.mutable_arg_value()->set_float_value(iter->second.second);
           }
-
-          arg.mutable_arg_value()->set_float_value(iter->second.second);
         }
       }
     }
