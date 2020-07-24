@@ -51,9 +51,16 @@ def random_symbol_circuit(qubits,
                           n_moments=15,
                           p=0.9,
                           include_scalars=True):
-    """Generate a random circuit including some parameterized gates."""
+    """Generate a random circuit including some parameterized gates.
+
+    Symbols are randomly included in the gates of the first `n_moments` moments
+    of the resulting circuit.  Then, parameterized rx gates are added as
+    subsequent moments for any remaining unused symbols.
+    """
     supported_gates = get_supported_gates()
     circuit = cirq.testing.random_circuit(qubits, n_moments, p, supported_gates)
+    used_symbols = set()
+    all_symbols = set([sympy.Symbol(s) for s in symbols])
 
     for i in range(len(circuit)):
         if np.random.random() < p:
@@ -63,9 +70,16 @@ def random_symbol_circuit(qubits,
             if isinstance(op, cirq.IdentityGate):
                 circuit[:i] += op.on(*locs)
             else:
+                this_random_symbol = sympy.Symbol(np.random.choice(symbols))
+                used_symbols.add(this_random_symbol)
                 circuit[:i] += (
                     op**((np.random.random() if include_scalars else 1.0) *
-                         sympy.Symbol(np.random.choice(symbols)))).on(*locs)
+                         this_random_symbol)).on(*locs)
+
+    # Use the rest of the symbols
+    for s in all_symbols - used_symbols:
+        circuit += cirq.Circuit(cirq.rx(s)(qubits[0]))
+
     return circuit
 
 

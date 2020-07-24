@@ -116,6 +116,7 @@ Status ResolveQubitIds(Program* program, unsigned int* num_qubits,
 Status ResolveSymbols(
     const absl::flat_hash_map<std::string, std::pair<int, float>>& param_map,
     Program* program, bool partial /*=false*/) {
+  absl::flat_hash_set<std::string> used_symbols;
   for (Moment& moment : *program->mutable_circuit()->mutable_moments()) {
     for (Operation& operation : *moment.mutable_operations()) {
       for (auto& kv : *operation.mutable_args()) {
@@ -130,10 +131,17 @@ Status ResolveSymbols(
             }
           } else {
             arg.mutable_arg_value()->set_float_value(iter->second.second);
+            used_symbols.insert(arg.symbol());
           }
         }
       }
     }
+  }
+
+  if (used_symbols.size() != param_map.size()) {
+    return Status(
+        tensorflow::error::INVALID_ARGUMENT,
+        "Parameter map contains symbols not present in the program.");
   }
 
   return Status::OK();

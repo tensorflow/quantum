@@ -342,6 +342,35 @@ TEST(ProgramResolutionTest, ResolveSymbolsInvalidArg) {
                                "Could not find symbol in parameter map: v2"));
 }
 
+TEST(ProgramResolutionTest, ResolveSymbolsUnused) {
+  const std::string text = R"(
+    circuit {
+      scheduling_strategy: MOMENT_BY_MOMENT
+      moments {
+        operations {
+          args {
+            key: "exponent"
+            value {
+              symbol: "v1"
+            }
+          }
+        }
+      }
+    }
+  )";
+
+  Program program;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(text, &program));
+
+  const absl::flat_hash_map<std::string, std::pair<int, float>> param_map = {
+    {"v1", {0, 1.0}}, {"unused", {0, 1.0}}};
+
+  EXPECT_EQ(ResolveSymbols(param_map, &program),
+            tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
+                               "Parameter map contains symbols not present "
+                               "in the program."));
+}
+
 TEST(ProgramResolutionTest, ResolveSymbols) {
   const std::string text = R"(
     circuit {
