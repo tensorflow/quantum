@@ -411,19 +411,19 @@ TEST(ProgramResolutionTest, ResolveSymbolsPartial) {
 
   EXPECT_TRUE(ResolveSymbols(param_map, &program, true).ok());
   EXPECT_EQ(program.circuit()
-            .moments(0)
-            .operations(0)
-            .args()
-            .at("exponent")
-            .arg_value()
-            .float_value(),
+                .moments(0)
+                .operations(0)
+                .args()
+                .at("exponent")
+                .arg_value()
+                .float_value(),
             1.0);
   EXPECT_EQ(program.circuit()
-            .moments(1)
-            .operations(0)
-            .args()
-            .at("exponent")
-            .symbol(),
+                .moments(1)
+                .operations(0)
+                .args()
+                .at("exponent")
+                .symbol(),
             "v2");
 }
 

@@ -20,6 +20,7 @@ UTILITY_OP_MODULE = load_module("_tfq_utility_ops.so")
 
 # pylint: disable=invalid-name
 tfq_append_circuit = UTILITY_OP_MODULE.tfq_append_circuit
+tfq_resolve_parameters = UTILITY_OP_MODULE.tfq_resolve_parameters
 
 
 @tf.function
