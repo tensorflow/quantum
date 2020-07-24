@@ -313,7 +313,17 @@ TEST(ProgramResolutionTest, ResolveSymbolsInvalidArg) {
           args {
             key: "exponent"
             value {
-              symbol: "junk"
+              symbol: "v1"
+            }
+          }
+        }
+      }
+      moments {
+        operations {
+          args {
+            key: "exponent"
+            value {
+              symbol: "v2"
             }
           }
         }
@@ -329,7 +339,7 @@ TEST(ProgramResolutionTest, ResolveSymbolsInvalidArg) {
 
   EXPECT_EQ(ResolveSymbols(param_map, &program),
             tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
-                               "Could not find symbol in parameter map: junk"));
+                               "Could not find symbol in parameter map: v2"));
 }
 
 TEST(ProgramResolutionTest, ResolveSymbols) {
@@ -364,6 +374,58 @@ TEST(ProgramResolutionTest, ResolveSymbols) {
                 .arg_value()
                 .float_value(),
             1.0);
+}
+
+TEST(ProgramResolutionTest, ResolveSymbolsPartial) {
+  const std::string text = R"(
+    circuit {
+      scheduling_strategy: MOMENT_BY_MOMENT
+      moments {
+        operations {
+          args {
+            key: "exponent"
+            value {
+              symbol: "v1"
+            }
+          }
+        }
+      }
+      moments {
+        operations {
+          args {
+            key: "exponent"
+            value {
+              symbol: "v2"
+            }
+          }
+        }
+      }
+    }
+  )";
+
+  Program program;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(text, &program));
+
+  const absl::flat_hash_map<std::string, std::pair<int, float>> param_map = {
+      {"v1", {0, 1.0}}};
+
+  EXPECT_TRUE(ResolveSymbols(param_map, &program, true).ok());
+  EXPECT_EQ(program.circuit()
+            .moments(0)
+            .operations(0)
+            .args()
+            .at("exponent")
+            .arg_value()
+            .float_value(),
+            1.0);
+  EXPECT_EQ(program.circuit()
+            .moments(1)
+            .operations(0)
+            .args()
+            .at("exponent")
+            .arg_value()
+            .symbol_value(),
+            "v2");
 }
 
 }  // namespace
