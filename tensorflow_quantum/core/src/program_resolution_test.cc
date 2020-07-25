@@ -392,9 +392,8 @@ TEST(ProgramResolutionTest, ResolveSymbolsUnused) {
 
   // Test with non-strict parameter map usage
   Program program;
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(text, &program,
-                                                            true, false));
-  EXPECT_TRUE(ResolveSymbols(param_map, &program).ok());
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(text, &program));
+  EXPECT_TRUE(ResolveSymbols(param_map, &program, true, false).ok());
   EXPECT_EQ(program.circuit()
                 .moments(0)
                 .operations(0)
@@ -403,9 +402,6 @@ TEST(ProgramResolutionTest, ResolveSymbolsUnused) {
                 .arg_value()
                 .float_value(),
             1.0);
-
-}
-
 
 }
 

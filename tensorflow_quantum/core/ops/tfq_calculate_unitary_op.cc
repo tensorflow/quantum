@@ -84,7 +84,8 @@ class TfqSimulateStateOp : public tensorflow::OpKernel {
       for (int i = start; i < end; i++) {
         Program program = programs[i];
         const int num = num_qubits[i];
-        OP_REQUIRES_OK(context, ResolveSymbols(maps[i], &program));
+        OP_REQUIRES_OK(context, ResolveSymbols(maps[i], &program, true,
+                                               false));
 
         // QSim work below
         Circuit circuit;
