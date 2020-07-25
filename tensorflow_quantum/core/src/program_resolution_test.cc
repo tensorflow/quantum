@@ -331,15 +331,35 @@ TEST(ProgramResolutionTest, ResolveSymbolsInvalidArg) {
     }
   )";
 
-  Program program;
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(text, &program));
-
+  // Test with strict replacement
+  Program program_strict;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(text, &program_strict));
   const absl::flat_hash_map<std::string, std::pair<int, float>> param_map = {
       {"v1", {0, 1.0}}};
-
-  EXPECT_EQ(ResolveSymbols(param_map, &program),
+  EXPECT_EQ(ResolveSymbols(param_map, &program_strict),
             tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
                                "Could not find symbol in parameter map: v2"));
+
+  // Test with non-strict replacement
+  Program program;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(text, &program));
+  EXPECT_TRUE(ResolveSymbols(param_map, &program, false).ok());
+  EXPECT_EQ(program.circuit()
+                .moments(0)
+                .operations(0)
+                .args()
+                .at("exponent")
+                .arg_value()
+                .float_value(),
+            1.0);
+  EXPECT_EQ(program.circuit()
+                .moments(1)
+                .operations(0)
+                .args()
+                .at("exponent")
+                .symbol(),
+            "v2");
+  
 }
 
 TEST(ProgramResolutionTest, ResolveSymbolsUnused) {
@@ -359,41 +379,21 @@ TEST(ProgramResolutionTest, ResolveSymbolsUnused) {
     }
   )";
 
-  Program program;
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(text, &program));
-
+  // Test with strict parameter map usage
+  Program program_strict;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(text,
+                                                            &program_strict));
   const absl::flat_hash_map<std::string, std::pair<int, float>> param_map = {
     {"v1", {0, 1.0}}, {"unused", {0, 1.0}}};
-
-  EXPECT_EQ(ResolveSymbols(param_map, &program),
+  EXPECT_EQ(ResolveSymbols(param_map, &program_strict),
             tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
                                "Parameter map contains symbols not present "
                                "in the program."));
-}
 
-TEST(ProgramResolutionTest, ResolveSymbols) {
-  const std::string text = R"(
-    circuit {
-      scheduling_strategy: MOMENT_BY_MOMENT
-      moments {
-        operations {
-          args {
-            key: "exponent"
-            value {
-              symbol: "v1"
-            }
-          }
-        }
-      }
-    }
-  )";
-
+  // Test with non-strict parameter map usage
   Program program;
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(text, &program));
-
-  const absl::flat_hash_map<std::string, std::pair<int, float>> param_map = {
-      {"v1", {0, 1.0}}};
-
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(text, &program,
+                                                            true, false));
   EXPECT_TRUE(ResolveSymbols(param_map, &program).ok());
   EXPECT_EQ(program.circuit()
                 .moments(0)
@@ -403,58 +403,12 @@ TEST(ProgramResolutionTest, ResolveSymbols) {
                 .arg_value()
                 .float_value(),
             1.0);
+
 }
 
-TEST(ProgramResolutionTest, ResolveSymbolsPartial) {
-  const std::string text = R"(
-    circuit {
-      scheduling_strategy: MOMENT_BY_MOMENT
-      moments {
-        operations {
-          args {
-            key: "exponent"
-            value {
-              symbol: "v1"
-            }
-          }
-        }
-      }
-      moments {
-        operations {
-          args {
-            key: "exponent"
-            value {
-              symbol: "v2"
-            }
-          }
-        }
-      }
-    }
-  )";
 
-  Program program;
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(text, &program));
-
-  const absl::flat_hash_map<std::string, std::pair<int, float>> param_map = {
-      {"v1", {0, 1.0}}};
-
-  EXPECT_TRUE(ResolveSymbols(param_map, &program, true).ok());
-  EXPECT_EQ(program.circuit()
-                .moments(0)
-                .operations(0)
-                .args()
-                .at("exponent")
-                .arg_value()
-                .float_value(),
-            1.0);
-  EXPECT_EQ(program.circuit()
-                .moments(1)
-                .operations(0)
-                .args()
-                .at("exponent")
-                .symbol(),
-            "v2");
 }
+
 
 }  // namespace
 }  // namespace tfq
