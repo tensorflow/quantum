@@ -193,43 +193,35 @@ class ResolveParametersOpTest(tf.test.TestCase, parameterized.TestCase):
                                                 symbol_names,
                                                 symbol_values_array)
 
-        # with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
-        #                             'Could not find symbol in parameter map'):
-        #     # symbol_names tensor has the right type, but invalid value.
-        #     tfq_utility_ops.tfq_resolve_parameters(
-        #         util.convert_to_tensor(circuit_batch), ['junk'],
-        #         symbol_values_array)
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'Could not find symbol in parameter map'):
+            # symbol_names tensor has the right type, but invalid value.
+            tfq_utility_ops.tfq_resolve_parameters(
+                util.convert_to_tensor(circuit_batch), ['junk'],
+                symbol_values_array)
 
-        # with self.assertRaisesRegex(TypeError, 'Cannot convert'):
-        #     # programs tensor has the wrong type.
-        #     tfq_utility_ops.tfq_resolve_parameters([1] * batch_size, symbol_names,
-        #                                         symbol_values_array)
+        with self.assertRaisesRegex(TypeError, 'Cannot convert'):
+            # programs tensor has the wrong type.
+            tfq_utility_ops.tfq_resolve_parameters([1] * batch_size, symbol_names,
+                                                symbol_values_array)
 
-        # with self.assertRaisesRegex(TypeError, 'Cannot convert'):
-        #     # symbol_names tensor has the wrong type.
-        #     tfq_utility_ops.tfq_resolve_parameters(
-        #         util.convert_to_tensor(circuit_batch), [1], symbol_values_array)
+        with self.assertRaisesRegex(TypeError, 'Cannot convert'):
+            # symbol_names tensor has the wrong type.
+            tfq_utility_ops.tfq_resolve_parameters(
+                util.convert_to_tensor(circuit_batch), [1], symbol_values_array)
 
-        # with self.assertRaisesRegex(tf.errors.UnimplementedError, ''):
-        #     # symbol_values tensor has the wrong type.
-        #     tfq_utility_ops.tfq_resolve_parameters(
-        #         util.convert_to_tensor(circuit_batch), symbol_names,
-        #         [['junk']] * batch_size)
+        with self.assertRaisesRegex(TypeError, 'Cannot convert'):
+            # symbol_values tensor has the wrong type.
+            tfq_utility_ops.tfq_resolve_parameters(
+                util.convert_to_tensor(circuit_batch), symbol_names,
+                [['junk']] * batch_size)
 
-        # with self.assertRaisesRegex(TypeError, 'missing'):
-        #     # too few tensors.
-        #     # pylint: disable=no-value-for-parameter
-        #     tfq_utility_ops.tfq_resolve_parameters(
-        #         util.convert_to_tensor(circuit_batch), symbol_names)
-        #     # pylint: enable=no-value-for-parameter
-
-        # # TODO (mbbrough): determine if we should allow extra arguments ?
-        # with self.assertRaisesRegex(TypeError, 'positional arguments'):
-        #     # pylint: disable=too-many-function-args
-        #     tfq_utility_ops.tfq_resolve_parameters(
-        #         util.convert_to_tensor(circuit_batch), symbol_names,
-        #         symbol_values_array, [])
-
+        with self.assertRaisesRegex(TypeError, 'missing'):
+            # too few tensors.
+            # pylint: disable=no-value-for-parameter
+            tfq_utility_ops.tfq_resolve_parameters(
+                util.convert_to_tensor(circuit_batch), symbol_names)
+            # pylint: enable=no-value-for-parameter
 
 
 if __name__ == '__main__':
