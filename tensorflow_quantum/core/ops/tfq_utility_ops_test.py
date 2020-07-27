@@ -14,7 +14,9 @@
 # ==============================================================================
 """Tests for tfq utility ops."""
 import numpy as np
+import sympy
 import tensorflow as tf
+
 from absl.testing import parameterized
 import cirq
 
@@ -194,7 +196,8 @@ class ResolveParametersOpTest(tf.test.TestCase, parameterized.TestCase):
                                                 symbol_values_array)
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
-                                    'Could not find symbol in parameter map'):
+                                    "Parameter map contains symbols not "
+                                    "present in the program."):
             # symbol_names tensor has the right type, but invalid value.
             tfq_utility_ops.tfq_resolve_parameters(
                 util.convert_to_tensor(circuit_batch), ['junk'],
@@ -222,6 +225,94 @@ class ResolveParametersOpTest(tf.test.TestCase, parameterized.TestCase):
             tfq_utility_ops.tfq_resolve_parameters(
                 util.convert_to_tensor(circuit_batch), symbol_names)
             # pylint: enable=no-value-for-parameter
+
+    def test_resolve_parameters_consistency_basic(self):
+        """Compare tfq op to cirq resolving."""
+        qubits = cirq.GridQubit.rect(1, 4)
+        circuit = cirq.Circuit()
+        symbols = []
+        for n, q in enumerate(qubits):
+            new_bit = sympy.Symbol("bit_{}".format(n))
+            circuit += cirq.X(q) ** new_bit
+            symbols.append(new_bit)
+        symbol_names = [str(s) for s in symbols]
+
+        bitstring_list = [[0, 0, 0, 0], [0, 1, 0, 1], [1, 0, 1, 1]]
+        circuit_list = []
+        resolver_list = []
+        for bitstring in bitstring_list:
+            resolve_dict = {}
+            for s, b in zip(symbols, bitstring):
+                resolve_dict[s] = b
+            resolver_list.append(cirq.ParamResolver(resolve_dict))
+            circuit_list.append(circuit)
+        print(resolver_list)
+        print(circuit_list)
+        print(symbol_names)
+
+        test_resolved_circuits = util.from_tensor(
+            tfq_utility_ops.tfq_resolve_parameters(
+                util.convert_to_tensor(circuit_list), symbol_names,
+                np.asarray(bitstring_list)))
+
+        expected_resolved_circuits = []
+        for circuit, resolver in zip(circuit_list, resolver_list):
+            expected_resolved_circuits.append(cirq.resolve_parameters(circuit,
+                                                                      resolver))
+
+        self.assertAllEqual(util.convert_to_tensor(expected_resolved_circuits),
+                            util.convert_to_tensor(test_resolved_circuits))
+
+    # @parameterized.parameters(
+    #     list(
+    #         util.kwargs_cartesian_product(
+    #             **{
+    #                 'n_qubits': [3, 7],
+    #                 'symbol_names': [['a'], ['a', 'b'],
+    #                                  ['a', 'b', 'c', 'd', 'e']]
+    #             })))
+    # def test_resolve_parameters_consistency(self, n_qubits, symbol_names):
+    #     """Compare tfq op to cirq resolving for randomized circuits."""
+
+        
+    #     qubits = cirq.GridQubit.rect(1, 4)
+    #     circuit = cirq.Circuit()
+    #     symbols = []
+    #     for n, q in enumerate(qubits):
+    #         new_bit = sympy.Symbol("_bit_{}".format(n))
+    #         circuit += cirq.X(q) ** new_bit
+    #         symbols.append(new_bit)
+            
+    #     # Resolve circuit for a list of basis states
+    #     bitstring_list = [[0, 0, 0, 0], [0, 1, 0, 1], [1, 0, 1, 1]]
+    #     resolved_circuits = []
+    #     for bitstring in bitstring_list:
+    #         resolve_dict = {}
+    #         for s, b in zip(symbols, bitstring):
+    #             resolve_dict[s] = b
+
+    #     symbol_values_array = np.array(
+    #         [[resolver[symbol]
+    #           for symbol in symbol_names]
+    #          for resolver in resolver_batch])
+
+    #     test_resolved_circuits = tfq_utility_ops.tfq_resolve_parameters(
+    #         util.convert_to_tensor(circuit_batch), symbol_names,
+    #         symbol_values_array)
+
+    #     expected_resolved_circuits = []
+    #     for circuit, resolver in zip(circuit_list, resolver_list):
+            
+    #         final_state = cirq_simulator.simulate(circuit, resolver).final_state
+    #         cirq_results.append(
+    #             [z0.expectation_from_wavefunction(final_state, {
+    #                 q0: 0,
+    #                 q1: 1
+    #             }).real])
+    #         expected_resolved_circuits.append(cirq.resolve_parameters(circuit,
+    #                                                                   resolver))
+
+    #     self.assertAllEqual(expected_resolved_circuits, test_resolved_circuits)
 
 
 if __name__ == '__main__':

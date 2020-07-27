@@ -137,7 +137,6 @@ Status ResolveSymbols(
       }
     }
   }
-
   if (flag_unused && used_symbols.size() != param_map.size()) {
     return Status(
         tensorflow::error::INVALID_ARGUMENT,
