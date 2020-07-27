@@ -42,9 +42,9 @@ class TfqResolveParametersOp : public tensorflow::OpKernel {
                 tensorflow::errors::InvalidArgument(absl::StrCat(
                     "Expected 3 inputs, got ", num_inputs, " inputs.")));
 
-    tensorflow::Tensor *output = nullptr;
+    tensorflow::Tensor* output = nullptr;
     OP_REQUIRES_OK(context, context->allocate_output(
-        0, context->input(0).shape(), &output));
+                                0, context->input(0).shape(), &output));
     auto output_tensor = output->flat<tensorflow::tstring>();
 
     std::vector<Program> programs;
@@ -79,8 +79,9 @@ class TfqResolveParametersOp : public tensorflow::OpKernel {
   }
 };
 
-REGISTER_KERNEL_BUILDER(Name("TfqResolveParameters").Device(tensorflow::DEVICE_CPU),
-                        TfqResolveParametersOp);
+REGISTER_KERNEL_BUILDER(
+    Name("TfqResolveParameters").Device(tensorflow::DEVICE_CPU),
+    TfqResolveParametersOp);
 
 REGISTER_OP("TfqResolveParameters")
     .Input("programs: string")

@@ -209,7 +209,6 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
                                  sorted(expected_symbols))
 
 
-
 class ExponentialUtilFunctionsTest(tf.test.TestCase):
     """Test that Exponential utility functions work."""
 

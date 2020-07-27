@@ -333,7 +333,8 @@ TEST(ProgramResolutionTest, ResolveSymbolsInvalidArg) {
 
   // Test with strict replacement
   Program program_strict;
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(text, &program_strict));
+  ASSERT_TRUE(
+      google::protobuf::TextFormat::ParseFromString(text, &program_strict));
   const absl::flat_hash_map<std::string, std::pair<int, float>> param_map = {
       {"v1", {0, 1.0}}};
   EXPECT_EQ(ResolveSymbols(param_map, &program_strict, true, false),
@@ -352,14 +353,9 @@ TEST(ProgramResolutionTest, ResolveSymbolsInvalidArg) {
                 .arg_value()
                 .float_value(),
             1.0);
-  EXPECT_EQ(program.circuit()
-                .moments(1)
-                .operations(0)
-                .args()
-                .at("exponent")
-                .symbol(),
-            "v2");
-  
+  EXPECT_EQ(
+      program.circuit().moments(1).operations(0).args().at("exponent").symbol(),
+      "v2");
 }
 
 TEST(ProgramResolutionTest, ResolveSymbolsUnused) {
@@ -381,10 +377,10 @@ TEST(ProgramResolutionTest, ResolveSymbolsUnused) {
 
   // Test with strict parameter map usage
   Program program_strict;
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(text,
-                                                            &program_strict));
+  ASSERT_TRUE(
+      google::protobuf::TextFormat::ParseFromString(text, &program_strict));
   const absl::flat_hash_map<std::string, std::pair<int, float>> param_map = {
-    {"v1", {0, 1.0}}, {"unused", {0, 1.0}}};
+      {"v1", {0, 1.0}}, {"unused", {0, 1.0}}};
   EXPECT_EQ(ResolveSymbols(param_map, &program_strict, true, true),
             tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
                                "Parameter map contains symbols not present "
@@ -402,9 +398,7 @@ TEST(ProgramResolutionTest, ResolveSymbolsUnused) {
                 .arg_value()
                 .float_value(),
             1.0);
-
 }
-
 
 }  // namespace
 }  // namespace tfq

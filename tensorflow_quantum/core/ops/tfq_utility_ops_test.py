@@ -130,6 +130,7 @@ class CircuitAppendOpTest(tf.test.TestCase, parameterized.TestCase):
 
 class ResolveParametersOpTest(tf.test.TestCase, parameterized.TestCase):
     """Test the in-graph parameter resolving op."""
+
     def _compare_gate_parameters(self, tg_value, eg_value):
         rounding_digits = 3
         if isinstance(tg_value, int):
@@ -209,8 +210,8 @@ class ResolveParametersOpTest(tf.test.TestCase, parameterized.TestCase):
                                     'Unparseable proto'):
             # programs tensor has the right type, but invalid value.
             tfq_utility_ops.tfq_resolve_parameters(['junk'] * batch_size,
-                                                symbol_names,
-                                                symbol_values_array)
+                                                   symbol_names,
+                                                   symbol_values_array)
 
         # TODO(zaqqwerty): reapply test when ResolveSymbols defaults updated.
         # with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
@@ -223,8 +224,9 @@ class ResolveParametersOpTest(tf.test.TestCase, parameterized.TestCase):
 
         with self.assertRaisesRegex(TypeError, 'Cannot convert'):
             # programs tensor has the wrong type.
-            tfq_utility_ops.tfq_resolve_parameters([1] * batch_size, symbol_names,
-                                                symbol_values_array)
+            tfq_utility_ops.tfq_resolve_parameters([1] * batch_size,
+                                                   symbol_names,
+                                                   symbol_values_array)
 
         with self.assertRaisesRegex(TypeError, 'Cannot convert'):
             # symbol_names tensor has the wrong type.
@@ -251,7 +253,7 @@ class ResolveParametersOpTest(tf.test.TestCase, parameterized.TestCase):
         symbols = []
         for n, q in enumerate(qubits):
             new_bit = sympy.Symbol("bit_{}".format(n))
-            circuit += cirq.X(q) ** new_bit
+            circuit += cirq.X(q)**new_bit
             symbols.append(new_bit)
         symbol_names = [str(s) for s in symbols]
 
@@ -272,8 +274,8 @@ class ResolveParametersOpTest(tf.test.TestCase, parameterized.TestCase):
 
         expected_resolved_circuits = []
         for circuit, resolver in zip(circuit_list, resolver_list):
-            expected_resolved_circuits.append(cirq.resolve_parameters(circuit,
-                                                                      resolver))
+            expected_resolved_circuits.append(
+                cirq.resolve_parameters(circuit, resolver))
 
         self.assertAllEqual(util.convert_to_tensor(expected_resolved_circuits),
                             util.convert_to_tensor(test_resolved_circuits))
@@ -300,12 +302,15 @@ class ResolveParametersOpTest(tf.test.TestCase, parameterized.TestCase):
         # Remove one of the symbols from the resolvers
         symbol_names_partial = symbol_names[1:]
         symbol_values_array_partial = np.array(
-            [[resolver[symbol] for symbol in symbol_names_partial]
+            [[resolver[symbol]
+              for symbol in symbol_names_partial]
              for resolver in resolver_batch])
         resolver_batch_partial = [
             cirq.ParamResolver(
-                {symbol: resolver[symbol] for symbol in symbol_names_partial})
-            for resolver in resolver_batch]
+                {symbol: resolver[symbol]
+                 for symbol in symbol_names_partial})
+            for resolver in resolver_batch
+        ]
 
         # Resolve in two ways and compare results
         test_resolved_circuits = util.from_tensor(
@@ -314,9 +319,10 @@ class ResolveParametersOpTest(tf.test.TestCase, parameterized.TestCase):
                 symbol_values_array_partial))
         expected_resolved_circuits = []
         for circuit, resolver in zip(circuit_batch, resolver_batch_partial):
-            expected_resolved_circuits.append(cirq.resolve_parameters(circuit,
-                                                                      resolver))
-        for test_c, exp_c in zip(test_resolved_circuits, expected_resolved_circuits):
+            expected_resolved_circuits.append(
+                cirq.resolve_parameters(circuit, resolver))
+        for test_c, exp_c in zip(test_resolved_circuits,
+                                 expected_resolved_circuits):
             for test_m, exp_m in zip(test_c, exp_c):
                 for test_o, exp_o in zip(test_m, exp_m):
                     tg = test_o.gate
@@ -328,15 +334,21 @@ class ResolveParametersOpTest(tf.test.TestCase, parameterized.TestCase):
                         # all identity gates are the same
                         self.assertTrue(True)
                     elif isinstance(tg, cirq.EigenGate):
-                        self._compare_gate_parameters(tg._global_shift, eg._global_shift)
-                        self._compare_gate_parameters(tg._exponent, eg._exponent)
+                        self._compare_gate_parameters(tg._global_shift,
+                                                      eg._global_shift)
+                        self._compare_gate_parameters(tg._exponent,
+                                                      eg._exponent)
                     elif isinstance(tg, cirq.FSimGate):
                         self._compare_gate_parameters(tg.theta, eg.theta)
                         self._compare_gate_parameters(tg.phi, eg.phi)
-                    elif isinstance(tg, (cirq.PhasedXPowGate, cirq.PhasedISwapPowGate)):
-                        self._compare_gate_parameters(tg._global_shift, eg._global_shift)
-                        self._compare_gate_parameters(tg._exponent, eg._exponent)
-                        self._compare_gate_parameters(tg._phase_exponent, eg._phase_exponent)
+                    elif isinstance(
+                            tg, (cirq.PhasedXPowGate, cirq.PhasedISwapPowGate)):
+                        self._compare_gate_parameters(tg._global_shift,
+                                                      eg._global_shift)
+                        self._compare_gate_parameters(tg._exponent,
+                                                      eg._exponent)
+                        self._compare_gate_parameters(tg._phase_exponent,
+                                                      eg._phase_exponent)
                     else:
                         # Some gate in the randomizer is not being checked
                         print(type(tg))

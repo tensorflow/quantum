@@ -138,9 +138,8 @@ Status ResolveSymbols(
     }
   }
   if (flag_unused && used_symbols.size() != param_map.size()) {
-    return Status(
-        tensorflow::error::INVALID_ARGUMENT,
-        "Parameter map contains symbols not present in the program.");
+    return Status(tensorflow::error::INVALID_ARGUMENT,
+                  "Parameter map contains symbols not present in the program.");
   }
 
   return Status::OK();
