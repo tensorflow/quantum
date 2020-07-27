@@ -78,7 +78,7 @@ def random_symbol_circuit(qubits,
 
     # Use the rest of the symbols
     for s in all_symbols - used_symbols:
-        circuit += cirq.Circuit(cirq.rx(s)(qubits[0]))
+        circuit += cirq.Circuit(cirq.H(qubits[0])**s)
 
     return circuit
 

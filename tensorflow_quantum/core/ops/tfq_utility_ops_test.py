@@ -130,6 +130,23 @@ class CircuitAppendOpTest(tf.test.TestCase, parameterized.TestCase):
 
 class ResolveParametersOpTest(tf.test.TestCase, parameterized.TestCase):
     """Test the in-graph parameter resolving op."""
+    def _compare_gate_parameters(self, tg_value, eg_value):
+        rounding_digits = 3
+        if isinstance(tg_value, int):
+            self.assertAlmostEqual(tg_value, eg_value)
+        elif isinstance(tg_value, float):
+            self.assertAlmostEqual(round(tg_value, rounding_digits),
+                                   round(eg_value, rounding_digits))
+        else:
+            test_value = 1
+            exp_value = 1
+            for v in tg_value.args:
+                if not isinstance(v, sympy.Symbol):
+                    test_value *= sympy.N(v)
+            for v in eg_value.args:
+                if not isinstance(v, sympy.Symbol):
+                    exp_value *= sympy.N(v)
+            self.assertAlmostEqual(test_value, exp_value, delta=0.0001)
 
     def test_resolve_parameters_input_checking(self):
         """Check that the resolve parameters op has correct input checking."""
@@ -247,9 +264,6 @@ class ResolveParametersOpTest(tf.test.TestCase, parameterized.TestCase):
                 resolve_dict[s] = b
             resolver_list.append(cirq.ParamResolver(resolve_dict))
             circuit_list.append(circuit)
-        print(resolver_list)
-        print(circuit_list)
-        print(symbol_names)
 
         test_resolved_circuits = util.from_tensor(
             tfq_utility_ops.tfq_resolve_parameters(
@@ -264,56 +278,69 @@ class ResolveParametersOpTest(tf.test.TestCase, parameterized.TestCase):
         self.assertAllEqual(util.convert_to_tensor(expected_resolved_circuits),
                             util.convert_to_tensor(test_resolved_circuits))
 
-    # @parameterized.parameters(
-    #     list(
-    #         util.kwargs_cartesian_product(
-    #             **{
-    #                 'n_qubits': [3, 7],
-    #                 'symbol_names': [['a'], ['a', 'b'],
-    #                                  ['a', 'b', 'c', 'd', 'e']]
-    #             })))
-    # def test_resolve_parameters_consistency(self, n_qubits, symbol_names):
-    #     """Compare tfq op to cirq resolving for randomized circuits."""
+    @parameterized.parameters(
+        list(
+            util.kwargs_cartesian_product(
+                **{
+                    'n_qubits': [3, 7],
+                    'symbol_names': [['a'], ['a', 'b'],
+                                     ['a', 'b', 'c', 'd', 'e']]
+                })))
+    def test_resolve_parameters_consistency(self, n_qubits, symbol_names):
+        """Compare tfq op to cirq resolving for randomized circuits."""
 
-        
-    #     qubits = cirq.GridQubit.rect(1, 4)
-    #     circuit = cirq.Circuit()
-    #     symbols = []
-    #     for n, q in enumerate(qubits):
-    #         new_bit = sympy.Symbol("_bit_{}".format(n))
-    #         circuit += cirq.X(q) ** new_bit
-    #         symbols.append(new_bit)
-            
-    #     # Resolve circuit for a list of basis states
-    #     bitstring_list = [[0, 0, 0, 0], [0, 1, 0, 1], [1, 0, 1, 1]]
-    #     resolved_circuits = []
-    #     for bitstring in bitstring_list:
-    #         resolve_dict = {}
-    #         for s, b in zip(symbols, bitstring):
-    #             resolve_dict[s] = b
+        # Get random circuit batches
+        qubits = cirq.GridQubit.rect(1, n_qubits)
+        batch_size = 15
+        n_moments = 15
+        circuit_batch, resolver_batch = \
+            util.random_symbol_circuit_resolver_batch(
+                qubits, symbol_names, batch_size, n_moments)
 
-    #     symbol_values_array = np.array(
-    #         [[resolver[symbol]
-    #           for symbol in symbol_names]
-    #          for resolver in resolver_batch])
+        # Remove one of the symbols from the resolvers
+        symbol_names_partial = symbol_names[1:]
+        symbol_values_array_partial = np.array(
+            [[resolver[symbol] for symbol in symbol_names_partial]
+             for resolver in resolver_batch])
+        resolver_batch_partial = [
+            cirq.ParamResolver(
+                {symbol: resolver[symbol] for symbol in symbol_names_partial})
+            for resolver in resolver_batch]
 
-    #     test_resolved_circuits = tfq_utility_ops.tfq_resolve_parameters(
-    #         util.convert_to_tensor(circuit_batch), symbol_names,
-    #         symbol_values_array)
-
-    #     expected_resolved_circuits = []
-    #     for circuit, resolver in zip(circuit_list, resolver_list):
-            
-    #         final_state = cirq_simulator.simulate(circuit, resolver).final_state
-    #         cirq_results.append(
-    #             [z0.expectation_from_wavefunction(final_state, {
-    #                 q0: 0,
-    #                 q1: 1
-    #             }).real])
-    #         expected_resolved_circuits.append(cirq.resolve_parameters(circuit,
-    #                                                                   resolver))
-
-    #     self.assertAllEqual(expected_resolved_circuits, test_resolved_circuits)
+        # Resolve in two ways and compare results
+        test_resolved_circuits = util.from_tensor(
+            tfq_utility_ops.tfq_resolve_parameters(
+                util.convert_to_tensor(circuit_batch), symbol_names_partial,
+                symbol_values_array_partial))
+        expected_resolved_circuits = []
+        for circuit, resolver in zip(circuit_batch, resolver_batch_partial):
+            expected_resolved_circuits.append(cirq.resolve_parameters(circuit,
+                                                                      resolver))
+        for test_c, exp_c in zip(test_resolved_circuits, expected_resolved_circuits):
+            for test_m, exp_m in zip(test_c, exp_c):
+                for test_o, exp_o in zip(test_m, exp_m):
+                    tg = test_o.gate
+                    eg = exp_o.gate
+                    self.assertEqual(type(tg), type(eg))
+                    # TODO(zaqqwerty): simplify parsing when cirq build parser
+                    # see core/serialize/serializer.py
+                    if isinstance(tg, cirq.IdentityGate):
+                        # all identity gates are the same
+                        self.assertTrue(True)
+                    elif isinstance(tg, cirq.EigenGate):
+                        self._compare_gate_parameters(tg._global_shift, eg._global_shift)
+                        self._compare_gate_parameters(tg._exponent, eg._exponent)
+                    elif isinstance(tg, cirq.FSimGate):
+                        self._compare_gate_parameters(tg.theta, eg.theta)
+                        self._compare_gate_parameters(tg.phi, eg.phi)
+                    elif isinstance(tg, (cirq.PhasedXPowGate, cirq.PhasedISwapPowGate)):
+                        self._compare_gate_parameters(tg._global_shift, eg._global_shift)
+                        self._compare_gate_parameters(tg._exponent, eg._exponent)
+                        self._compare_gate_parameters(tg._phase_exponent, eg._phase_exponent)
+                    else:
+                        # Some gate in the randomizer is not being checked
+                        print(type(tg))
+                        self.assertTrue(False)
 
 
 if __name__ == '__main__':
