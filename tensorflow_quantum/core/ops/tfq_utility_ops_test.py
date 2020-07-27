@@ -195,13 +195,14 @@ class ResolveParametersOpTest(tf.test.TestCase, parameterized.TestCase):
                                                 symbol_names,
                                                 symbol_values_array)
 
-        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
-                                    "Parameter map contains symbols not "
-                                    "present in the program."):
-            # symbol_names tensor has the right type, but invalid value.
-            tfq_utility_ops.tfq_resolve_parameters(
-                util.convert_to_tensor(circuit_batch), ['junk'],
-                symbol_values_array)
+        # TODO(zaqqwerty): reapply test when ResolveSymbols defaults updated.
+        # with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+        #                             "Parameter map contains symbols not "
+        #                             "present in the program."):
+        #     # symbol_names tensor has the right type, but invalid value.
+        #     tfq_utility_ops.tfq_resolve_parameters(
+        #         util.convert_to_tensor(circuit_batch), ['junk'],
+        #         symbol_values_array)
 
         with self.assertRaisesRegex(TypeError, 'Cannot convert'):
             # programs tensor has the wrong type.

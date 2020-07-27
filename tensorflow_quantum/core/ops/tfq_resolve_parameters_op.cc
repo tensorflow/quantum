@@ -63,7 +63,7 @@ class TfqResolveParametersOp : public tensorflow::OpKernel {
       for (int i = start; i < end; i++) {
         Program program = programs[i];
         OP_REQUIRES_OK(context, ResolveSymbols(maps[i], &program, false));
-        programs.at(i).SerializeToString(&temp);
+        program.SerializeToString(&temp);
         output_tensor(i) = temp;
       }
     };

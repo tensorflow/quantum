@@ -84,9 +84,7 @@ class TfqSimulateStateOp : public tensorflow::OpKernel {
       for (int i = start; i < end; i++) {
         Program program = programs[i];
         const int num = num_qubits[i];
-        // TODO(zaqqwerty): why do the tests fail when `flag_unused` is true?
-        OP_REQUIRES_OK(context, ResolveSymbols(maps[i], &program, true,
-                                               false));
+        OP_REQUIRES_OK(context, ResolveSymbols(maps[i], &program));
 
         // QSim work below
         Circuit circuit;

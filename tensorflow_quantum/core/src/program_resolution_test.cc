@@ -336,14 +336,14 @@ TEST(ProgramResolutionTest, ResolveSymbolsInvalidArg) {
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(text, &program_strict));
   const absl::flat_hash_map<std::string, std::pair<int, float>> param_map = {
       {"v1", {0, 1.0}}};
-  EXPECT_EQ(ResolveSymbols(param_map, &program_strict),
+  EXPECT_EQ(ResolveSymbols(param_map, &program_strict, true, false),
             tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
                                "Could not find symbol in parameter map: v2"));
 
   // Test with non-strict replacement
   Program program;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(text, &program));
-  EXPECT_TRUE(ResolveSymbols(param_map, &program, false).ok());
+  EXPECT_TRUE(ResolveSymbols(param_map, &program, false, false).ok());
   EXPECT_EQ(program.circuit()
                 .moments(0)
                 .operations(0)
@@ -385,7 +385,7 @@ TEST(ProgramResolutionTest, ResolveSymbolsUnused) {
                                                             &program_strict));
   const absl::flat_hash_map<std::string, std::pair<int, float>> param_map = {
     {"v1", {0, 1.0}}, {"unused", {0, 1.0}}};
-  EXPECT_EQ(ResolveSymbols(param_map, &program_strict),
+  EXPECT_EQ(ResolveSymbols(param_map, &program_strict, true, true),
             tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
                                "Parameter map contains symbols not present "
                                "in the program."));

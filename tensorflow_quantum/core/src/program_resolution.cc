@@ -115,7 +115,7 @@ Status ResolveQubitIds(Program* program, unsigned int* num_qubits,
 
 Status ResolveSymbols(
     const absl::flat_hash_map<std::string, std::pair<int, float>>& param_map,
-    Program* program, bool resolve_all /*=true*/, bool flag_unused /*=true*/) {
+    Program* program, bool resolve_all /*=true*/, bool flag_unused /*=false*/) {
   absl::flat_hash_set<std::string> used_symbols;
   for (Moment& moment : *program->mutable_circuit()->mutable_moments()) {
     for (Operation& operation : *moment.mutable_operations()) {
