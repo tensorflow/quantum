@@ -35,6 +35,11 @@ py_library(
     ],
 )
 
+py_library(
+    name = "sampling_op_parameter_shift",
+    srcs = ["sampling_op_parameter_shift.py"],
+)
+
 py_test(
     name = "differentiator_test",
     srcs = ["differentiator_test.py"],
@@ -74,6 +79,21 @@ py_test(
     python_version = "PY3",
     deps = [
         ":parameter_shift_util",
+        "//tensorflow_quantum/python:util",
+    ],
+)
+
+py_test(
+    name = "sampling_op_parameter_shift_test",
+    timeout = "eternal",
+    srcs = ["sampling_op_parameter_shift_test.py"],
+    python_version = "PY3",
+    deps = [
+        ":linear_combination",
+        ":parameter_shift",
+        ":stochastic_differentiator",
+        "//tensorflow_quantum/core/ops:batch_util",
+        "//tensorflow_quantum/core/ops:circuit_execution_ops",
         "//tensorflow_quantum/python:util",
     ],
 )

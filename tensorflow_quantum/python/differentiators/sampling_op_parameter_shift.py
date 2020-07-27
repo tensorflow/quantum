@@ -50,14 +50,14 @@ def get_differentiable_sample_op_parameter_shift(backend=None,
         forward_pass_vals = sample_post_process(programs, symbol_names, symbol_values, num_samples)
         
         def gradient(grad):
-            # adapted from `parameter_shift.py`
             # these get used a lot
             n_symbols = tf.gather(tf.shape(symbol_names), 0)
             n_programs = tf.gather(tf.shape(programs), 0)
+            n_ops = tf.gather(tf.shape(pauli_sums), 1)
             # Assume cirq.decompose() generates gates with at most two distinct
             # eigenvalues, which results in two parameter shifts.
             n_shifts = 2
-            
+        
             # STEP 1: Generate required inputs for executor
             # Deserialize programs and parse the whole parameterized gates
             # new_programs has [n_symbols, n_param_gates, n_shifts, n_programs].
@@ -79,20 +79,19 @@ def get_differentiable_sample_op_parameter_shift(backend=None,
             # tile up and then reshape to order programs correctly
             flat_programs = tf.reshape(new_programs, [total_programs])
             flat_shifts = tf.reshape(shifts, [total_programs])
-            
+
             # tile up and then reshape to order ops correctly
             n_tile = n_shifts * n_param_gates * n_symbols
             flat_perturbations = tf.concat([
                 tf.reshape(
                     tf.tile(tf.expand_dims(symbol_values, 0),
-                            tf.stack([n_tile, 1, 1])),
-                    [total_programs, n_symbols]),
+                            tf.stack([n_tile, 1, 1])), [total_programs, n_symbols]),
                 tf.expand_dims(flat_shifts, axis=1)
             ],
                                            axis=1)
-            flat_num_samples = tf.reshape(
-                tf.tile(tf.expand_dims(num_samples, 0), tf.stack([n_tile, 1, 1])),
-                [total_programs, 1])
+            flat_ops = tf.reshape(
+                tf.tile(tf.expand_dims(pauli_sums, 0), tf.stack([n_tile, 1, 1])),
+                [total_programs, n_ops])
             # Append impurity symbol into symbol name
             new_symbol_names = tf.concat([
                 symbol_names,
@@ -103,9 +102,8 @@ def get_differentiable_sample_op_parameter_shift(backend=None,
                                          axis=0)
             
             # STEP 2: calculate the required expectation values
-            expectations = sample_post_process(flat_programs, new_symbol_names,
-                                               flat_perturbations,
-                                               flat_num_samples)
+            expectations = self.expectation_op(flat_programs, new_symbol_names,
+                                               flat_perturbations, flat_ops)
             
             # STEP 3: generate gradients according to the results
             
@@ -121,7 +119,7 @@ def get_differentiable_sample_op_parameter_shift(backend=None,
                 
                 def split_vertically(i):
                     return tf.slice(grouped, [i * n_programs, 0],
-                                    [n_programs, 1])
+                                    [n_programs, n_ops])
                 
                 return tf.map_fn(split_vertically,
                                  tf.range(n_param_gates * n_shifts),
@@ -142,7 +140,6 @@ def get_differentiable_sample_op_parameter_shift(backend=None,
             
             # now apply the chain rule
             this_grad_vec = tf.einsum('sco,co -> cs', partials, grad)
-
             return None, None, this_grad_vec, None
 
         return forward_pass_vals, gradient
