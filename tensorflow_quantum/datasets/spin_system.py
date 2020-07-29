@@ -363,7 +363,6 @@ def xxz_chain(qubits, boundary_condition="closed", data_dir=None):
                        │             │                      │
     (3, 0): ───X───────X─────────────ZZ^-0.922──────────────YY^-0.915─── ...
                            └──────────────────┘   └──────────────────┘
-
     The labels indicate the phase of the system
     >>> labels[10]
     0
@@ -419,7 +418,6 @@ def xxz_chain(qubits, boundary_condition="closed", data_dir=None):
                        │             │                      │
     (3, 0): ───X───────X─────────────ZZ^(7/13)──────────────YY^0.543 ─── ...
                            └──────────────────┘   └──────────────────┘
-
     Args:
         qubits: Python `lst` of `cirq.GridQubit`s. Supported number of spins
             are [4, 8, 12, 16].
@@ -484,29 +482,25 @@ def xxz_chain(qubits, boundary_condition="closed", data_dir=None):
     circuit.append(cirq.H(qubits[i]) for i in range(0, nspins, 2))
     circuit.append(
         cirq.CNOT(qubits[j], qubits[j + 1]) for j in range(0, nspins - 1, 2))
+
     for d in range(depth):
-        circuit.append(
-            cirq.ZZ(qubits[j], qubits[j + 1])**(symbols[d])
-            for j in range(1, nspins - 1, 2))
-        circuit.append(
-            cirq.YY(qubits[j], qubits[j + 1])**(symbols[d + depth])
-            for j in range(1, nspins - 1, 2))
-        circuit.append(
-            cirq.XX(qubits[j], qubits[j + 1])**(symbols[d + depth])
-            for j in range(1, nspins - 1, 2))
+        for j in range(1, nspins - 1, 2):
+            circuit.append(cirq.ZZ(qubits[j], qubits[j + 1])**(symbols[d]))
+            circuit.append(
+                cirq.YY(qubits[j], qubits[j + 1])**(symbols[d + depth]))
+            circuit.append(
+                cirq.XX(qubits[j], qubits[j + 1])**(symbols[d + depth]))
         if boundary_condition == "closed":
             circuit.append(cirq.ZZ(qubits[-1], qubits[0])**(symbols[d]))
             circuit.append(cirq.YY(qubits[-1], qubits[0])**(symbols[d + depth]))
             circuit.append(cirq.XX(qubits[-1], qubits[0])**(symbols[d + depth]))
-        circuit.append(
-            cirq.ZZ(qubits[j], qubits[j + 1])**(symbols[d + 2 * depth])
-            for j in range(0, nspins - 1, 2))
-        circuit.append(
-            cirq.YY(qubits[j], qubits[j + 1])**(symbols[d + 3 * depth])
-            for j in range(0, nspins - 1, 2))
-        circuit.append(
-            cirq.XX(qubits[j], qubits[j + 1])**(symbols[d + 3 * depth])
-            for j in range(0, nspins - 1, 2))
+        for j in range(0, nspins - 1, 2):
+            circuit.append(
+                cirq.ZZ(qubits[j], qubits[j + 1])**(symbols[d + 2 * depth]))
+            circuit.append(
+                cirq.YY(qubits[j], qubits[j + 1])**(symbols[d + 3 * depth]))
+            circuit.append(
+                cirq.XX(qubits[j], qubits[j + 1])**(symbols[d + 3 * depth]))
     # Initiate lists.
     resolved_circuits = []
     hamiltonians = []
