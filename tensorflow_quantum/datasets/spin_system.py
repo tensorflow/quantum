@@ -341,6 +341,7 @@ def xxz_chain(qubits, boundary_condition="closed", data_dir=None):
     in the datapoint.
 
     Example usage:
+
     >>> qbs = cirq.GridQubit.rect(4, 1)
     >>> circuits, labels, pauli_sums, addinfo  =
     ...     tfq.datasets.xxz_chain(qbs, "closed")
@@ -363,6 +364,7 @@ def xxz_chain(qubits, boundary_condition="closed", data_dir=None):
                        │             │                      │
     (3, 0): ───X───────X─────────────ZZ^-0.922──────────────YY^-0.915─── ...
                            └──────────────────┘   └──────────────────┘
+
     The labels indicate the phase of the system
     >>> labels[10]
     0
@@ -387,7 +389,6 @@ def xxz_chain(qubits, boundary_condition="closed", data_dir=None):
                                     ...
       4.52284042e-02+3.18111120e-01j -6.57974275e-18-3.84526414e-17j
      -1.60673943e-17+5.79767820e-17j  2.86193021e-17-5.06694574e-17j]
-
 
     with corresponding ground state energy
 
