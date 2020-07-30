@@ -103,8 +103,8 @@ def get_sample_op_postprocessor(backend=None, post_process_func=None):
                                          axis=0)
             
             # STEP 2: calculate the required expectation values
-            expectations = self.expectation_op(flat_programs, new_symbol_names,
-                                               flat_perturbations, flat_ops)
+            expectations = sample_post_process(flat_programs, new_symbol_names,
+                                               flat_perturbations, num_samples)
             
             # STEP 3: generate gradients according to the results
             

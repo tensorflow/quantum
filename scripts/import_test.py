@@ -55,6 +55,7 @@ def test_imports():
     _ = tfq.differentiators.ParameterShift
     _ = tfq.differentiators.SGDifferentiator
     _ = tfq.differentiators.Differentiator
+    _ = tfq.differentiators.get_sample_op_post_process
 
     # Datasets.
     _ = tfq.datasets.excited_cluster_states
