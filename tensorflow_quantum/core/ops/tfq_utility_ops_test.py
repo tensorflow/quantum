@@ -136,8 +136,7 @@ class ResolveParametersOpTest(tf.test.TestCase, parameterized.TestCase):
         if isinstance(tg_value, int):
             self.assertAlmostEqual(tg_value, eg_value)
         elif isinstance(tg_value, float):
-            self.assertAlmostEqual(round(tg_value, rounding_digits),
-                                   round(eg_value, rounding_digits))
+            self.assertAlmostEqual(tg_value, eg_value, places=rounding_digits)
         else:
             test_value = 1
             exp_value = 1
@@ -147,7 +146,7 @@ class ResolveParametersOpTest(tf.test.TestCase, parameterized.TestCase):
             for v in eg_value.args:
                 if not isinstance(v, sympy.Symbol):
                     exp_value *= sympy.N(v)
-            self.assertAlmostEqual(test_value, exp_value, delta=0.0001)
+            self.assertAlmostEqual(test_value, exp_value, delta=0.1**rounding_digits)
 
     def test_resolve_parameters_input_checking(self):
         """Check that the resolve parameters op has correct input checking."""
@@ -332,7 +331,7 @@ class ResolveParametersOpTest(tf.test.TestCase, parameterized.TestCase):
                     # see core/serialize/serializer.py
                     if isinstance(tg, cirq.IdentityGate):
                         # all identity gates are the same
-                        self.assertTrue(True)
+                        continue
                     elif isinstance(tg, cirq.EigenGate):
                         self._compare_gate_parameters(tg._global_shift,
                                                       eg._global_shift)
@@ -350,9 +349,8 @@ class ResolveParametersOpTest(tf.test.TestCase, parameterized.TestCase):
                         self._compare_gate_parameters(tg._phase_exponent,
                                                       eg._phase_exponent)
                     else:
-                        # Some gate in the randomizer is not being checked
-                        print(type(tg))
-                        self.assertTrue(False)
+                        self.assertTrue(False, msg="Some gate in the randomizer"
+                           " is not being checked: {}".format(type(tg)))
 
 
 if __name__ == '__main__':
