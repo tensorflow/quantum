@@ -16,6 +16,7 @@
 import tensorflow as tf
 
 from tensorflow_quantum.core.ops import circuit_execution_ops
+from tensorflow_quantum.python.differentiators import parameter_shift_util
 
 
 def get_sample_op_postprocessor(backend=None, post_process_func=None):
@@ -43,12 +44,14 @@ def get_sample_op_postprocessor(backend=None, post_process_func=None):
         for i in tf.range(tf.shape(programs)[0]):
             scalar_list = scalar_list.write(
                 i, post_process_func(ragged_samples[i].to_tensor()))
-        return scalar_list.stack()
+        scalar_list = scalar_list.stack()
+        return scalar_list
 
     @tf.custom_gradient
     def sample_post_process_wrapper(programs, symbol_names, symbol_values,
                                     num_samples):
-        forward_pass_vals = sample_post_process(programs, symbol_names, symbol_values, num_samples)
+        forward_pass_vals = sample_post_process(
+            programs, symbol_names, symbol_values, num_samples)
         
         def gradient(grad):
             # these get used a lot
@@ -90,9 +93,6 @@ def get_sample_op_postprocessor(backend=None, post_process_func=None):
                 tf.expand_dims(flat_shifts, axis=1)
             ],
                                            axis=1)
-            flat_ops = tf.reshape(
-                tf.tile(tf.expand_dims(pauli_sums, 0), tf.stack([n_tile, 1, 1])),
-                [total_programs, 1])  # 1 was n_ops
             # Append impurity symbol into symbol name
             new_symbol_names = tf.concat([
                 symbol_names,
@@ -119,8 +119,8 @@ def get_sample_op_postprocessor(backend=None, post_process_func=None):
             def rearrange_expectations(grouped):
                 
                 def split_vertically(i):
-                    return tf.slice(grouped, [i * n_programs, 0],
-                                    [n_programs, 1])  # 1 was n_ops
+                    return tf.slice(grouped, [i * n_programs],
+                                    [n_programs])
                 
                 return tf.map_fn(split_vertically,
                                  tf.range(n_param_gates * n_shifts),

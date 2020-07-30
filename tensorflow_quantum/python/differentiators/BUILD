@@ -38,6 +38,10 @@ py_library(
 py_library(
     name = "sampling_op_parameter_shift",
     srcs = ["sampling_op_parameter_shift.py"],
+    deps = [
+        ":parameter_shift_util",
+        "//tensorflow_quantum/core/ops:circuit_execution_ops",
+    ],
 )
 
 py_test(
@@ -91,6 +95,7 @@ py_test(
     deps = [
         ":linear_combination",
         ":parameter_shift",
+	":sampling_op_parameter_shift",
         ":stochastic_differentiator",
         "//tensorflow_quantum/core/ops:batch_util",
         "//tensorflow_quantum/core/ops:circuit_execution_ops",
