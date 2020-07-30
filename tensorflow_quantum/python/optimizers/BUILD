@@ -16,7 +16,7 @@ py_test(
     python_version = "PY3",
     deps = [
         ":rotosolve_minimizer",
-	"//tensorflow_quantum/python/layers/high_level:pqc",
-	"//tensorflow_quantum/core/ops:tfq_ps_util_ops_py"
+        "//tensorflow_quantum/python/layers/high_level:pqc",
+        "//tensorflow_quantum/core/ops:tfq_ps_util_ops_py"
     ],
 )

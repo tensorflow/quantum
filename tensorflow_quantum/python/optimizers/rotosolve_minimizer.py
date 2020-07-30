@@ -103,11 +103,14 @@ def minimize(expectation_value_function,
              tolerance=1e-8,
              max_iterations=50,
              name=None):
-    """Applies the rotosolve algorithm to minimize a linear combination
+    """Applies the rotosolve algorithm.
+    
+    The rotosolve algorithm can be used to minimize a linear combination
 
-     of quantum measurement expectation values. See arXiv:1903.12166,
-
-      arXiv:1905.09692
+    of quantum measurement expectation values. See the following paper:
+     
+    [arXiv:1903.12166](https://arxiv.org/abs/1903.12166), Ken M. Nakanishi.
+    [arXiv:1905.09692](https://arxiv.org/abs/1905.09692), Mateusz Ostaszewski.
 
     ### Usage:
 
@@ -115,7 +118,7 @@ def minimize(expectation_value_function,
      to find the minimum for two qubit ansatz expectation value.
 
     We first start by defining some variables for training dataset. In this
-    example we train a circuit perform an XOR operation
+    example you train a circuit perform an XOR operation
 
     >>> X = np.asarray([
     ...    [0, 0],
@@ -128,13 +131,12 @@ def minimize(expectation_value_function,
     ...    [-1], [1], [1], [-1]
     ...], dtype=float)
 
-    While we have classical dataset defined, it needs to be
+    While you have classical dataset defined, it needs to be
     converted into a quantum data before a quantum circuit
     can handle it. We here by encode the data as follow.
 
     >>> def convert_to_circuit(input_data):
     ...    # Encode into quantum datapoint.
-    ...    values = np.ndarray.flatten(input_data)
     ...    qubits = cirq.GridQubit.rect(1, 2)
     ...    circuit = cirq.Circuit()
     ...    for i, value in enumerate(values):
@@ -145,7 +147,7 @@ def minimize(expectation_value_function,
     >>> x_circ = tfq.convert_to_tensor([convert_to_circuit(x) for x in X])
 
 
-    Now we define our ansatz circuit
+    Now you define our ansatz circuit
 
     >>> q0, q1 = cirq.GridQubit.rect(1, 2)
     >>> a, b = sympy.symbols('a b') # parameters for the circuit
@@ -163,13 +165,13 @@ def minimize(expectation_value_function,
     ...])
 
     Rotosolve minimizer can only accept linear loss functions.
-    Here we define the hinge_loss as use it as the loss function.
+    Here you define the hinge_loss as use it as the loss function.
 
     >>> def hinge_loss(y_true, y_pred):
-    ...    # Here we use hinge loss as the cost function
+    ...    # Here you use hinge loss as the cost function
     ...    tf.reduce_mean(tf.cast(1 - y_true * y_pred, tf.float32))
 
-    Lastly, we expose the trainable parameter from our model with
+    Lastly, you expose the trainable parameter from our model with
     `function_factory`[https://pychao.com/2019/11/02/optimize-\
     tensorflow-keras-models-with-l-bfgs-from-tensorflow-probability/],
     then run the minimize algorithm. The initial parameter is
@@ -190,7 +192,7 @@ def minimize(expectation_value_function,
             of real dtype containing the value of the function.
             The function to be minimized. The input is of shape `[n]`,
             where `n` is the size of the trainable parameters.
-            The return value is a real `tf.Tensor` scala (matching shape
+            The return value is a real `tf.Tensor` Scala (matching shape
             `[1]`).  This must be a linear combination of quantum
             measurement expectation value, otherwise this algorithm cannot
             work.

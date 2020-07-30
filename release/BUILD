@@ -22,7 +22,7 @@ sh_binary(
         "//tensorflow_quantum/python/layers/circuit_construction:__init__.py",
         "//tensorflow_quantum/python/layers/circuit_executors:__init__.py",
         "//tensorflow_quantum/python/layers/high_level:__init__.py",
-	"//tensorflow_quantum/python/optimizers:__init__.py",
+        "//tensorflow_quantum/python/optimizers:__init__.py",
 
         # Datasets module.
         "//tensorflow_quantum/datasets:__init__.py",
@@ -49,6 +49,6 @@ sh_binary(
         "//tensorflow_quantum/python/layers/high_level:controlled_pqc",
         "//tensorflow_quantum/python/layers/high_level:pqc",
         "//tensorflow_quantum/python:util",
-	"//tensorflow_quantum/python/optimizers:rotosolve_minimizer",
+        "//tensorflow_quantum/python/optimizers:rotosolve_minimizer",
     ],
 )
