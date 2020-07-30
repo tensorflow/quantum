@@ -104,11 +104,11 @@ def minimize(expectation_value_function,
              max_iterations=50,
              name=None):
     """Applies the rotosolve algorithm.
-    
+
     The rotosolve algorithm can be used to minimize a linear combination
 
     of quantum measurement expectation values. See the following paper:
-     
+
     [arXiv:1903.12166](https://arxiv.org/abs/1903.12166), Ken M. Nakanishi.
     [arXiv:1905.09692](https://arxiv.org/abs/1905.09692), Mateusz Ostaszewski.
 
@@ -131,7 +131,7 @@ def minimize(expectation_value_function,
     ...    [-1], [1], [1], [-1]
     ...], dtype=float)
 
-    Using the classical data you defined above, it's now time to make 
+    Using the classical data you defined above, it's now time to make
     quantum circuit representations of the data. You can use the encoding
     scheme below to convert the datapoints into circuits.
 
@@ -173,7 +173,7 @@ def minimize(expectation_value_function,
 
     Now you need to expose the trainable parameter from our model.
     First obtain the shapes of all trainable parameters in the model.
-    
+
     >>>    shapes = tf.shape_n(model.trainable_variables)
     >>>    count = 0
     >>>    sizes = []
@@ -181,9 +181,9 @@ def minimize(expectation_value_function,
     ...        n = reduce(mul, shape)
     ...        sizes.append(n)
     ...        count += n
-    
+
     Then create a function which accepts the parameter and evaluate the model.
-    
+
     >>>    @tf.function
     ...    def model_func(params):
     ...        # update the parameters of the model
@@ -197,7 +197,7 @@ def minimize(expectation_value_function,
     ...        loss_value = hinge_loss(model(x_circ, training=True), Y)
     ...        return loss_value
 
-    Last you can run the minimize algorithm. The initial parameter is 
+    Last you can run the minimize algorithm. The initial parameter is
     guessed randomly.
 
     >>> rotosolve_minimizer.minimize(model_func,np.random.rand([2]))
