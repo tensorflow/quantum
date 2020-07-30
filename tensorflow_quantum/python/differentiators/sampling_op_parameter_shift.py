@@ -54,7 +54,7 @@ def get_sample_op_postprocessor(backend=None, post_process_func=None):
             # these get used a lot
             n_symbols = tf.gather(tf.shape(symbol_names), 0)
             n_programs = tf.gather(tf.shape(programs), 0)
-            n_ops = tf.gather(tf.shape(pauli_sums), 1)
+
             # Assume cirq.decompose() generates gates with at most two distinct
             # eigenvalues, which results in two parameter shifts.
             n_shifts = 2
@@ -92,7 +92,7 @@ def get_sample_op_postprocessor(backend=None, post_process_func=None):
                                            axis=1)
             flat_ops = tf.reshape(
                 tf.tile(tf.expand_dims(pauli_sums, 0), tf.stack([n_tile, 1, 1])),
-                [total_programs, n_ops])
+                [total_programs, 1])  # 1 was n_ops
             # Append impurity symbol into symbol name
             new_symbol_names = tf.concat([
                 symbol_names,
@@ -120,7 +120,7 @@ def get_sample_op_postprocessor(backend=None, post_process_func=None):
                 
                 def split_vertically(i):
                     return tf.slice(grouped, [i * n_programs, 0],
-                                    [n_programs, n_ops])
+                                    [n_programs, 1])  # 1 was n_ops
                 
                 return tf.map_fn(split_vertically,
                                  tf.range(n_param_gates * n_shifts),
