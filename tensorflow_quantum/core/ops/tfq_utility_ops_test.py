@@ -146,7 +146,8 @@ class ResolveParametersOpTest(tf.test.TestCase, parameterized.TestCase):
             for v in eg_value.args:
                 if not isinstance(v, sympy.Symbol):
                     exp_value *= sympy.N(v)
-            self.assertAlmostEqual(test_value, exp_value, delta=0.1**rounding_digits)
+            self.assertAlmostEqual(
+                test_value, exp_value, delta=0.1**rounding_digits)
 
     def test_resolve_parameters_input_checking(self):
         """Check that the resolve parameters op has correct input checking."""
