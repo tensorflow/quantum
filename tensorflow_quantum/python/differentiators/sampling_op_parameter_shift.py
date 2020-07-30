@@ -18,11 +18,10 @@ import tensorflow as tf
 from tensorflow_quantum.core.ops import circuit_execution_ops
 
 
-def get_differentiable_sample_op_parameter_shift(backend=None,
-                                                 post_process_func=None):
+def get_sample_op_postprocessor(backend=None, post_process_func=None):
     """Make bitstring post-processing differentiable.
 
-    Create a layer that will output bitstring samples taken from either a
+    Create an op that will post-process output bitstring samples taken from either a
     simulated quantum state or a real quantum computer
 
     Args:
@@ -36,14 +35,16 @@ def get_differentiable_sample_op_parameter_shift(backend=None,
     """
     sample_op = circuit_execution_ops.get_sampling_op(backend)
 
+    @tf.function
     def sample_post_process(programs, symbol_names, symbol_values, num_samples):
         ragged_samples = sample_op(programs, symbol_names, symbol_values,
                                    num_samples)
         scalar_list = tf.TensorArray(tf.dtypes.float32, tf.shape(programs)[0])
         for i in tf.range(tf.shape(programs)[0]):
-            scalar_list = scalar_list.write(i, post_process_func(ragged_samples[i]))
+            scalar_list = scalar_list.write(
+                i, post_process_func(ragged_samples[i].to_tensor()))
         return scalar_list.stack()
-    
+
     @tf.custom_gradient
     def sample_post_process_wrapper(programs, symbol_names, symbol_values,
                                     num_samples):
@@ -57,7 +58,7 @@ def get_differentiable_sample_op_parameter_shift(backend=None,
             # Assume cirq.decompose() generates gates with at most two distinct
             # eigenvalues, which results in two parameter shifts.
             n_shifts = 2
-        
+
             # STEP 1: Generate required inputs for executor
             # Deserialize programs and parse the whole parameterized gates
             # new_programs has [n_symbols, n_param_gates, n_shifts, n_programs].

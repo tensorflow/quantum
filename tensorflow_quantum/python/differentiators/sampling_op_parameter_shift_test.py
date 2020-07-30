@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""Testing for gradient calculation consistency in TFQ."""
+"""Test parameter shift gradients over the TFQ sampling op."""
 import copy
 
 import numpy as np
@@ -27,110 +27,80 @@ from tensorflow_quantum.python.differentiators import parameter_shift
 from tensorflow_quantum.python.differentiators import stochastic_differentiator
 from tensorflow_quantum.core.ops import circuit_execution_ops, batch_util
 
-DIFFS = [
-    linear_combination.ForwardDifference(grid_spacing=0.0001),
-    linear_combination.ForwardDifference(error_order=2, grid_spacing=0.0001),
-    linear_combination.CentralDifference(grid_spacing=0.0001),
-    linear_combination.CentralDifference(error_order=4, grid_spacing=0.0001),
-    parameter_shift.ParameterShift(),
-]
 
-STOCHASTIC_DIFFS = [
-    stochastic_differentiator.SGDifferentiator(stochastic_coordinate=False,
-                                               stochastic_generator=False,
-                                               stochastic_cost=False),
-    stochastic_differentiator.SGDifferentiator(stochastic_coordinate=True,
-                                               stochastic_generator=False,
-                                               stochastic_cost=False),
-    stochastic_differentiator.SGDifferentiator(stochastic_coordinate=False,
-                                               stochastic_generator=True,
-                                               stochastic_cost=False),
-    stochastic_differentiator.SGDifferentiator(stochastic_coordinate=True,
-                                               stochastic_generator=True,
-                                               stochastic_cost=False),
-]
-
-OPS = [
-    circuit_execution_ops.get_expectation_op(cirq.sim.Simulator()),  # WF
-    circuit_execution_ops.get_expectation_op(
-        cirq.DensityMatrixSimulator()),  # DM
-    circuit_execution_ops.get_expectation_op()  # C++
-]
+def _cirq_evaluate_post_process(circuit_batch, resolvers, n_samples,
+                                post_process_func):
+    simulator = cirq.sim.Simulator()
+    results = []
+    for circuit, resolver in zip(circuit_batch, resolvers):
+        state = simulator.simulate(circuit, resolver).final_state
+        qubits = sorted(circuit.all_qubits())
+        raw_results = cirq.sample_state_vector(
+            state, len(qubits), repetitions=n_samples).astype(np.int32)
+        results.append(post_process_func(raw_results))
+    return results
 
 
 def _cirq_simple_finite_difference(circuit_batch,
                                    resolvers,
                                    symbol_names,
-                                   op_batch,
+                                   n_samples,
+                                   post_process_func_list,
                                    grid_spacing=0.0001):
     """A simple finite difference code that calculates the gradient of a
     batch of circuits using cirq."""
-    simulator = cirq.sim.Simulator()
+    init_vals_list = _cirq_evaluate_post_process(
+        circuit_batch, resolvers, n_samples, post_process_func_list)
+    initial_values = np.asarray([[val for _, _ in enumerate(symbol_names)]
+                      for val in init_vals_list])
 
-    init_vals = batch_util.batch_calculate_expectation(circuit_batch, resolvers,
-                                                       op_batch, simulator)
-    grad_circuits = []
-    grad_resolvers = []
-    grad_pauli_sums = []
-    for this_program, this_pauli_sums, this_resolver in \
-        zip(circuit_batch, op_batch, resolvers):
+    perturbed_values = []
+    for this_program, this_resolver, this_func in zip(
+            circuit_batch, resolvers, post_process_func_list):
+        perturbed_values_circuit = []
         for symbol in symbol_names:
             perturbed_resolver = copy.deepcopy(this_resolver)
             perturbed_resolver.param_dict[symbol] += grid_spacing
-            grad_circuits.append(this_program)
-            grad_pauli_sums.append(this_pauli_sums)
-            grad_resolvers.append(perturbed_resolver)
+            perturbed_values_circuit.append(_cirq_evaluate_post_process(
+                this_program, perturbed_resolver, n_samples, this_func))
+        perturbed_values.append(perturbed_values_circuit)
+    perturbed_values = np.asarray(perturbed_values)
 
-    # shape: [n_programs * len(symbol_names), n_pauli_sums]
-    results = np.array(
-        batch_util.batch_calculate_expectation(circuits=grad_circuits,
-                                               param_resolvers=grad_resolvers,
-                                               ops=grad_pauli_sums,
-                                               simulator=simulator))
-
-    # shape: [n_pauli_sums, n_programs, len(symbol_names)]
-    gradient_generator = results.transpose().reshape(
-        (len(op_batch[0]), len(circuit_batch), len(symbol_names)))
-
-    # shape: [n_pauli_sums, n_programs, len(symbol_names)]
-    forward_pass_vals = np.transpose(
-        np.vstack([np.expand_dims(init_vals, axis=0)] * len(symbol_names)),
-        (2, 1, 0))
-
-    return np.sum(1 / grid_spacing * (gradient_generator - forward_pass_vals),
-                  axis=0)
+    return (1 / grid_spacing) * (perturbed_values - initial_values)
 
 
 class GradientCorrectnessTest(tf.test.TestCase, parameterized.TestCase):
     """Test correctness of the differentiators to reference cirq algorithm."""
 
-    @parameterized.parameters(
-        list(
-            util.kwargs_cartesian_product(
-                **{
-                    'differentiator': DIFFS + STOCHASTIC_DIFFS,
-                    'op': OPS,
-                    'stochastic_cost': [False, True]
-                })))
-    def test_backprop(self, differentiator, op, stochastic_cost):
-        """Test that gradients are correctly backpropagated through a quantum
-        circuit via comparison to analytical results.
-        """
-        # hack to add stoachastic cost. TODO (jaeyoo): remove this hack.
-        differentiator.stochastic_cost = stochastic_cost
-        differentiator.refresh()
-        op = differentiator.generate_differentiable_op(analytic_op=op)
+    @parameterized.parameters([{
+        'sim': sim
+    } for sim in [None, cirq.sim.sparse_simulator.Simulator(),
+                  cirq.sim.density_matrix_simulator.DensityMatrixSimulator()]])
+    def test_backprop(self, sim):
+        """Compare utility sample-op gradients to analytic gradien."""
 
         def exact_grad(theta):
             new_theta = 2 * np.pi * theta
             return -2 * np.pi * np.sin(new_theta) * np.exp(np.cos(new_theta))
 
+        @tf.function
+        def post_process_func(bitstrings):
+            """Emulate a Z measurement."""
+            total_spin = tf.constant(0, dtype=tf.dtypes.float32)
+            count = tf.cast(tf.math.multiply(
+                tf.shape(bitstrings)[0], tf.shape(bitstrings)[1]), tf.float32)
+            for i in tf.range(tf.shape(bitstrings)[0]):
+                for j in tf.range(tf.shape(bitstrings)[1]):
+                    total_spin = tf.add(
+                        total_spin, tf.cast(1 - bitstrings[i][j]*2, tf.float32))
+            return total_spin / count
+
+        op = sampling_op_parameter_shift.get_sample_op_postprocessor(
+            backend=None, post_process_func=post_process_func)
+
         bit = cirq.GridQubit(0, 0)
         circuits = util.convert_to_tensor(
             [cirq.Circuit(cirq.X(bit)**sympy.Symbol('rx')) for _ in range(2)])
-        pstring = util.convert_to_tensor([[
-            cirq.PauliSum.from_pauli_strings([cirq.PauliString({bit: cirq.Z})])
-        ] for _ in circuits])
         base_rot_angles = tf.constant([[0.25], [0.125]])
         with tf.GradientTape() as g:
             g.watch(base_rot_angles)
