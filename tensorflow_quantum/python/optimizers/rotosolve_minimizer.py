@@ -131,9 +131,9 @@ def minimize(expectation_value_function,
     ...    [-1], [1], [1], [-1]
     ...], dtype=float)
 
-    While you have classical dataset defined, it needs to be
-    converted into a quantum data before a quantum circuit
-    can handle it. We here by encode the data as follow.
+    Using the classical data you defined above, it's now time to make 
+    quantum circuit representations of the data. You can use the encoding
+    scheme below to convert the datapoints into circuits.
 
     >>> def convert_to_circuit(input_data):
     ...    # Encode into quantum datapoint.
@@ -171,20 +171,36 @@ def minimize(expectation_value_function,
     ...    # Here you use hinge loss as the cost function
     ...    tf.reduce_mean(tf.cast(1 - y_true * y_pred, tf.float32))
 
-    Lastly, you expose the trainable parameter from our model with
-    `function_factory`[https://pychao.com/2019/11/02/optimize-\
-    tensorflow-keras-models-with-l-bfgs-from-tensorflow-probability/],
-    then run the minimize algorithm. The initial parameter is
+    Now you need to expose the trainable parameter from our model.
+    First obtain the shapes of all trainable parameters in the model.
+    
+    >>>    shapes = tf.shape_n(model.trainable_variables)
+    >>>    count = 0
+    >>>    sizes = []
+    >>>    for shape in shapes:
+    ...        n = reduce(mul, shape)
+    ...        sizes.append(n)
+    ...        count += n
+    
+    Then create a function which accepts the parameter and evaluate the model.
+    
+    >>>    @tf.function
+    ...    def model_func(params):
+    ...        # update the parameters of the model
+    ...        start = 0
+    ...        for i, size in enumerate(sizes):
+    ...            model.trainable_variables[i].assign(
+    ...                   tf.reshape(params[start:start + size], shape))
+    ...            start += size
+    ...
+    ...        # evaluate the loss
+    ...        loss_value = hinge_loss(model(x_circ, training=True), Y)
+    ...        return loss_value
+
+    Last you can run the minimize algorithm. The initial parameter is 
     guessed randomly.
 
-    >>> rotosolve_minimizer.minimize(
-    ...    function_factory(
-    ...        model,
-    ...        hinge_loss,
-    ...        x_circ,
-    ...        Y),
-    ...     np.random.rand([2])
-    ...     )
+    >>> rotosolve_minimizer.minimize(model_func,np.random.rand([2]))
 
     Args:
         expectation_value_function:  A Python callable that accepts
