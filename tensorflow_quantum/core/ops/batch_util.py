@@ -303,7 +303,7 @@ def _sample_worker_func(indices, programs, params, n_samples):
         # since we expect exactly one measurement to have been taken.
         # Tried to use the key from the measure gate but that led to
         # sporadic errors in the pool.
-        samples = list(result.measurements.values())[0]
+        samples = list(result.measurements.values())[0].astype(np.int32)
         _batch_update_simple_np(
             x_np, index,
             np.pad(samples, ((0, 0), (x_np.shape[2] - len(qubits), 0)),
@@ -609,18 +609,9 @@ def batch_sample(circuits, param_resolvers, n_samples, sampler):
     if n_samples <= 0:
         raise ValueError('n_samples must be > 0.')
 
-    biggest_circuit = 0
-    for c in circuits:
-        qubits = c.all_qubits()
-        if len(qubits) == 0:
-            continue
-        if c.has_measurements():
-            # should never hit this error because the serializer
-            # does not support cirq.measurement yet
-            raise RuntimeError('TFQ does not support programs with '
-                               'pre-existing measurements.')
-        c.append(cirq.measure(*sorted(qubits), key="tfq"))
-        biggest_circuit = max([biggest_circuit, len(qubits)])
+    biggest_circuit = max(len(circuit.all_qubits()) for circuit in circuits)
+    circuits = [c + cirq.Circuit(cirq.measure(*sorted(c.all_qubits())))
+                for c in circuits]
 
     return_mem_shape = (len(circuits), n_samples, biggest_circuit)
     shared_array = _make_simple_view(return_mem_shape, -2, np.int32, 'i')

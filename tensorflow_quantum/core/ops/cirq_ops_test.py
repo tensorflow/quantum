@@ -436,7 +436,7 @@ class CirqSamplesTest(tf.test.TestCase, parameterized.TestCase):
                             'tfq':
                                 np.array([[1] * len(program.all_qubits())] *
                                          repetitions,
-                                         dtype=np.bool),
+                                         dtype=np.int32),
                         })
                 ]
 
