@@ -282,7 +282,6 @@ class ResolveParametersOpTest(tf.test.TestCase, parameterized.TestCase):
                                  test_resolved_circuits):
             self.assertAllEqual(exp_c, test_c)
 
-
     @parameterized.parameters(
         list(
             util.kwargs_cartesian_product(
