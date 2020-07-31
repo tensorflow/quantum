@@ -610,8 +610,10 @@ def batch_sample(circuits, param_resolvers, n_samples, sampler):
         raise ValueError('n_samples must be > 0.')
 
     biggest_circuit = max(len(circuit.all_qubits()) for circuit in circuits)
-    circuits = [c + cirq.Circuit(cirq.measure(*sorted(c.all_qubits())))
-                if c.all_qubits() else c for c in circuits]
+    circuits = [
+        c + cirq.Circuit(cirq.measure(*sorted(c.all_qubits())))
+        if c.all_qubits() else c for c in circuits
+    ]
 
     return_mem_shape = (len(circuits), n_samples, biggest_circuit)
     shared_array = _make_simple_view(return_mem_shape, -2, np.int32, 'i')
