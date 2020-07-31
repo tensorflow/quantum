@@ -174,7 +174,6 @@ cc_test(
         ":unitary_space",
         "//tensorflow_quantum/core/src:circuit",
         "@com_google_googletest//:gtest_main",
-        "@eigen//:eigen3",
     ]
 )
 

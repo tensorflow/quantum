@@ -97,22 +97,3 @@ tf_workspace(tf_repo_name = "@org_tensorflow")
 load("//third_party/tf:tf_configure.bzl", "tf_configure")
 
 tf_configure(name = "local_config_tf")
-
-http_archive(
-    name = "eigen",
-    # TODO(pmassey): Probably move this content in a third_party/eigen.BUILD file
-    build_file_content = """
-cc_library(
-  name = "eigen3",
-  textual_hdrs = glob(["Eigen/**", "unsupported/**"]),
-  visibility = ["//visibility:public"],
-)
-    """,
-    sha256 = "7e7a57e33c59280a17a66e521396cd8b1a55d0676c9f807078522fda52114b5c",
-    strip_prefix = "eigen-eigen-8071cda5714d",
-    urls = [
-        "https://storage.googleapis.com/mirror.tensorflow.org/bitbucket.org/eigen/eigen/get/8071cda5714d.tar.gz",
-        "https://bitbucket.org/eigen/eigen/get/8071cda5714d.tar.gz",
-    ],
-)
-
