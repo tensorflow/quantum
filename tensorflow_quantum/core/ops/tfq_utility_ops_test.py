@@ -278,8 +278,8 @@ class ResolveParametersOpTest(tf.test.TestCase, parameterized.TestCase):
             expected_resolved_circuits.append(
                 cirq.resolve_parameters(circuit, resolver))
 
-        for exp_c, test_c in zip(
-                expected_resolved_circuits, test_resolved_circuits):
+        for exp_c, test_c in zip(expected_resolved_circuits,
+                                 test_resolved_circuits):
             self.assertAllEqual(exp_c, test_c)
 
 
