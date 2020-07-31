@@ -120,7 +120,7 @@ Install the TensorFlow dependencies:
 
 <!-- common_typos_disable -->
 <pre class="devsite-click-to-copy">
-  <code class="devsite-terminal">python3 -m pip install -U pip six numpy wheel setuptools mock 'future>=0.17.1'</code>
+  <code class="devsite-terminal">python3 -m pip install -U pip numpy wheel setuptools mock 'future>=0.17.1'</code>
   <code class="devsite-terminal">python3 -m pip install -U keras_applications --no-deps</code>
   <code class="devsite-terminal">python3 -m pip install -U keras_preprocessing --no-deps</code>
 </pre>
