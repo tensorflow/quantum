@@ -166,28 +166,28 @@ class ResolveParametersOpTest(tf.test.TestCase, parameterized.TestCase):
              for resolver in resolver_batch])
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
-                                    'programs must be rank 1'):
+                                    'must be rank 1'):
             # programs tensor has the wrong shape (too many dims).
             tfq_utility_ops.resolve_parameters(
                 util.convert_to_tensor([circuit_batch]), symbol_names,
                 symbol_values_array)
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
-                                    'programs must be rank 1'):
+                                    'must be rank 1'):
             # programs tensor has the wrong shape (too few dims).
             tfq_utility_ops.resolve_parameters(
                 util.convert_to_tensor(circuit_batch)[0], symbol_names,
                 symbol_values_array)
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
-                                    'symbol_names must be rank 1'):
+                                    'must be rank 1'):
             # symbol_names tensor has the wrong shape (too many dims).
             tfq_utility_ops.resolve_parameters(
                 util.convert_to_tensor(circuit_batch), np.array([symbol_names]),
                 symbol_values_array)
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
-                                    'symbol_names must be rank 1'):
+                                    'must be rank 1'):
             # symbol_names tensor has the wrong shape (too few dims).
             tfq_utility_ops.resolve_parameters(
                 util.convert_to_tensor(circuit_batch), symbol_names[0],
@@ -225,8 +225,7 @@ class ResolveParametersOpTest(tf.test.TestCase, parameterized.TestCase):
 
         with self.assertRaisesRegex(TypeError, 'Cannot convert'):
             # programs tensor has the wrong type.
-            tfq_utility_ops.resolve_parameters([1] * batch_size,
-                                               symbol_names,
+            tfq_utility_ops.resolve_parameters([1] * batch_size, symbol_names,
                                                symbol_values_array)
 
         with self.assertRaisesRegex(TypeError, 'Cannot convert'):
