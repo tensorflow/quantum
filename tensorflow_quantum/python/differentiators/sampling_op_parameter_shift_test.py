@@ -38,7 +38,8 @@ def _cirq_evaluate_post_process(circuit_batch, resolvers, n_samples,
         state = simulator.simulate(circuit, resolver).final_state
         qubits = sorted(circuit.all_qubits())
         raw_results = cirq.sample_state_vector(
-            state, len(qubits), repetitions=n_samples).astype(np.int32)
+            state, list(range(len(qubits))), repetitions=n_samples
+        ).astype(np.int32)
         results.append(post_process_func(raw_results))
     return results
 

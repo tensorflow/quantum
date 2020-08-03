@@ -169,7 +169,8 @@ def get_sample_op_postprocessor(backend=None, post_process_func=None):
                 'spco,spc->sco', rearranged_expectations,
                 tf.cast(
                     tf.reshape(weights,
-                               [n_symbols, n_param_gates * n_shifts, n_programs]),
+                               [n_symbols,
+                                n_param_gates * n_shifts, n_programs]),
                     rearranged_expectations.dtype))
 
             # now apply the chain rule
