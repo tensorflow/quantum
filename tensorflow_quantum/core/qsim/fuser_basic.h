@@ -22,7 +22,7 @@ limitations under the License.
 #include "tensorflow_quantum/core/src/circuit.h"
 
 namespace tfq {
-namespace qsim {
+namespace qsim_old {
 
 class GateFused {
  public:
@@ -65,7 +65,7 @@ class GateFused {
 tensorflow::Status FuseGates(const Circuit& circuit,
                              std::vector<GateFused>* fused);
 
-}  // namespace qsim
+}  // namespace qsim_old
 }  // namespace tfq
 
 #endif  // TFQ_CORE_QSIM_FUSER_BASIC_H_

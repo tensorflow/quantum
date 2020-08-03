@@ -427,9 +427,9 @@ class PSSymbolReplaceTest(tf.test.TestCase):
         """Test that scalar multiples of trivial case work."""
         bit = cirq.GridQubit(0, 0)
         circuit = cirq.Circuit(
-            cirq.X(bit)**(sympy.Symbol('alpha') * 2.0),
-            cirq.Y(bit)**(sympy.Symbol('alpha') * 3.0),
-            cirq.Z(bit)**(sympy.Symbol('alpha') * 4.0),
+            cirq.X(bit)**(sympy.Symbol('alpha') * 2.4),
+            cirq.Y(bit)**(sympy.Symbol('alpha') * 3.4),
+            cirq.Z(bit)**(sympy.Symbol('alpha') * 4.4),
         )
         inputs = util.convert_to_tensor([circuit])
         symbols = tf.convert_to_tensor(['alpha'])
@@ -437,23 +437,34 @@ class PSSymbolReplaceTest(tf.test.TestCase):
         res = tfq_ps_util_ops.tfq_ps_symbol_replace(inputs, symbols, new)
         output = util.from_tensor(res)
         correct_00 = cirq.Circuit(
-            cirq.X(bit)**(sympy.Symbol('new') * 2.0),
-            cirq.Y(bit)**(sympy.Symbol('alpha') * 3.0),
-            cirq.Z(bit)**(sympy.Symbol('alpha') * 4.0),
+            cirq.X(bit)**(sympy.Symbol('new') * 2.4),
+            cirq.Y(bit)**(sympy.Symbol('alpha') * 3.4),
+            cirq.Z(bit)**(sympy.Symbol('alpha') * 4.4),
         )
         correct_01 = cirq.Circuit(
-            cirq.X(bit)**(sympy.Symbol('alpha') * 2.0),
-            cirq.Y(bit)**(sympy.Symbol('new') * 3.0),
-            cirq.Z(bit)**(sympy.Symbol('alpha') * 4.0),
+            cirq.X(bit)**(sympy.Symbol('alpha') * 2.4),
+            cirq.Y(bit)**(sympy.Symbol('new') * 3.4),
+            cirq.Z(bit)**(sympy.Symbol('alpha') * 4.4),
         )
         correct_02 = cirq.Circuit(
-            cirq.X(bit)**(sympy.Symbol('alpha') * 2.0),
-            cirq.Y(bit)**(sympy.Symbol('alpha') * 3.0),
-            cirq.Z(bit)**(sympy.Symbol('new') * 4.0),
+            cirq.X(bit)**(sympy.Symbol('alpha') * 2.4),
+            cirq.Y(bit)**(sympy.Symbol('alpha') * 3.4),
+            cirq.Z(bit)**(sympy.Symbol('new') * 4.4),
         )
-        self.assertEqual(correct_00, output[0][0][0])
-        self.assertEqual(correct_01, output[0][0][1])
-        self.assertEqual(correct_02, output[0][0][2])
+        for i, c in enumerate([correct_00, correct_01, correct_02]):
+            u1 = cirq.unitary(
+                cirq.resolve_parameters(c,
+                                        param_resolver={
+                                            'alpha': 1.23,
+                                            'new': 4.56
+                                        }))
+            u2 = cirq.unitary(
+                cirq.resolve_parameters(output[0][0][i],
+                                        param_resolver={
+                                            'alpha': 1.23,
+                                            'new': 4.56
+                                        }))
+            self.assertTrue(cirq.approx_eq(u1, u2, atol=1e-5))
 
     def test_simple_pad(self):
         """Test simple padding."""
@@ -671,7 +682,7 @@ class PSWeightsFromSymbolTest(tf.test.TestCase):
     def test_rotation_gates(self):
         """Test that rotation gates work."""
         bit = cirq.GridQubit(0, 0)
-        circuit = cirq.Circuit(cirq.Rx(sympy.Symbol('alpha') * 5.0)(bit))
+        circuit = cirq.Circuit(cirq.rx(sympy.Symbol('alpha') * 5.0)(bit))
         inputs = util.convert_to_tensor([circuit])
         symbols = tf.convert_to_tensor(['alpha'])
         res = tfq_ps_util_ops.tfq_ps_weights_from_symbols(inputs, symbols)

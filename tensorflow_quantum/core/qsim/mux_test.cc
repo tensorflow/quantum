@@ -21,15 +21,19 @@ limitations under the License.
 #include "tensorflow_quantum/core/qsim/state_space.h"
 
 namespace tfq {
-namespace qsim {
+namespace qsim_old {
 namespace {
 
 TEST(MuxTest, GetStateSpace) {
   auto simulator = GetStateSpace(1, 1);
-  EXPECT_FALSE(simulator == nullptr);
-  delete simulator;
+  EXPECT_FALSE(simulator.get() == nullptr);
+}
+
+TEST(MuxTest, GetUnitary) {
+  auto unitary = GetUnitarySpace(1, 1);
+  EXPECT_FALSE(unitary.get() == nullptr);
 }
 
 }  // namespace
-}  // namespace qsim
+}  // namespace qsim_old
 }  // namespace tfq

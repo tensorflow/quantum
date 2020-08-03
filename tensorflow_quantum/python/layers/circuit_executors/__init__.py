@@ -19,4 +19,5 @@ from tensorflow_quantum.python.layers.circuit_executors.expectation import Expec
 from tensorflow_quantum.python.layers.circuit_executors.sample import Sample
 from tensorflow_quantum.python.layers.circuit_executors.state import State
 from tensorflow_quantum.python.layers.circuit_executors.sampled_expectation import SampledExpectation
+from tensorflow_quantum.python.layers.circuit_executors.unitary import Unitary
 # pylint: enable=line-too-long

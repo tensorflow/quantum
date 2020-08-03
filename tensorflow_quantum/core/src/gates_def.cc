@@ -22,7 +22,7 @@ limitations under the License.
 
 #include "absl/container/flat_hash_map.h"
 #include "tensorflow/core/lib/core/status.h"
-#include "tensorflow_quantum/core/src/matrix.h"
+#include "tensorflow_quantum/core/qsim/matrix.h"
 
 namespace tfq {
 namespace {
@@ -82,6 +82,7 @@ Gate::Gate(const unsigned int time_in, const unsigned int qubit_in,
            const std::array<float, 8>& matrix_in)
     : time(time_in), num_qubits(1) {
   qubits[0] = qubit_in;
+  std::fill(matrix.begin(), matrix.end(), 0);
   std::copy(matrix_in.begin(), matrix_in.end(), matrix.begin());
 }
 
@@ -175,11 +176,8 @@ Status OneQubitConstantGateBuilder::Build(
     return Status(tensorflow::error::INVALID_ARGUMENT,
                   "Only one qubit location should be provided.");
   }
-  if (!args.empty()) {
-    return Status(tensorflow::error::INVALID_ARGUMENT,
-                  "Constant gates take no arguments, " +
-                      std::to_string(args.size()) + " were given.");
-  }
+  // Note we intentionally do not use any arguments that might be inside of
+  // constant gates.
   *gate = Gate(time, locations[0], GetMatrix());
   return Status::OK();
 }

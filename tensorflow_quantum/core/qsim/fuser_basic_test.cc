@@ -22,7 +22,7 @@ limitations under the License.
 #include "tensorflow_quantum/core/src/gates_def.h"
 
 namespace tfq {
-namespace qsim {
+namespace qsim_old {
 namespace {
 
 using ::tensorflow::Status;
@@ -328,5 +328,5 @@ TEST(FuserBasicTest, FuseGatesDisjoint) {
 }
 
 }  // namespace
-}  // namespace qsim
+}  // namespace qsim_old
 }  // namespace tfq

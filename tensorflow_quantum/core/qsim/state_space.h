@@ -24,7 +24,7 @@ limitations under the License.
 #include "tensorflow_quantum/core/src/circuit.h"
 
 namespace tfq {
-namespace qsim {
+namespace qsim_old {
 
 // Contains the allowed StateSpace labels
 enum StateSpaceType { AVX, SLOW, SSE };
@@ -54,7 +54,15 @@ class StateSpace {
   // Samples are stored as bit encoded integers.
   void SampleState(const int m, std::vector<uint64_t>* samples);
 
-  // Returns true if memory for the state has been succesfully allocated
+  // Computes the expectation value for a given state vector and PauliSum.
+  // Uses scratch StateSpace for evolving pauli terms forward and computing
+  // expectations using m samples. Assumes that scratch has memory allocated,
+  // but does not require scratch to initialize values.
+  tensorflow::Status ComputeSampledExpectation(
+      const tfq::proto::PauliSum& p_sum, StateSpace* scratch,
+      float* expectation_value, const int m);
+
+  // Returns true if memory for the state has been successfully allocated
   bool Valid() const;
 
   // Pointer to the raw state managed by this StateSpace
@@ -80,15 +88,16 @@ class StateSpace {
   // Free the memory associated with the state in this space
   virtual void DeleteState() = 0;
 
-  // Return a pointer to a clone of this StateSpace that is unitialized.
+  // Return a pointer to a clone of this StateSpace that is uninitialized.
   // NOTE: user is responsible for deleting the returned copy.
-  virtual StateSpace* Clone() const = 0;
+  virtual std::unique_ptr<StateSpace> Clone() const = 0;
 
   // Copy the contents of others state into this state. Will not
   // check if state has been initialized.
   virtual void CopyFrom(const StateSpace& other) const = 0;
 
   // Function to apply a two qubit gate to the state on indices q0 and q1.
+  // Must adhere to big-endian convention of Cirq.
   virtual void ApplyGate2(const unsigned int q0, const unsigned int q1,
                           const float* matrix) = 0;
 
@@ -102,7 +111,7 @@ class StateSpace {
   // Get the inner product between this state and the state in `other`
   virtual float GetRealInnerProduct(const StateSpace& other) const = 0;
 
-  // Get the amplitude at the given state index
+  // Get the amplitude at the given state index.
   virtual std::complex<float> GetAmpl(const uint64_t i) const = 0;
 
   // Set the amplitude at the given state index
@@ -115,7 +124,7 @@ class StateSpace {
   uint64_t num_threads_;
 };
 
-}  // namespace qsim
+}  // namespace qsim_old
 }  // namespace tfq
 
 #endif  // TFQ_CORE_QSIM_STATE_SPACE_H_

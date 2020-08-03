@@ -17,6 +17,7 @@
 import copy
 import numbers
 import sympy
+import numpy as np
 
 import cirq
 import cirq.google.api.v2 as v2
@@ -24,6 +25,10 @@ from tensorflow_quantum.core.proto import pauli_sum_pb2
 
 # Needed to allow autograph to crawl AST without erroring.
 _CONSTANT_TRUE = lambda x: True
+
+
+def _round(x):
+    return np.round(x, 6) if isinstance(x, float) else x
 
 
 def _parse_mul(expr):
@@ -46,7 +51,7 @@ def _scalar_extractor(x):
     In the future we should likely get rid of this in favor of proper
     expression parsing once cirq supports it. See cirq.op_serializer
     and cirq's program protobuf for details. This is needed for things
-    like cirq.Rx('alpha').
+    like cirq.rx('alpha').
     """
     if not isinstance(x, (numbers.Real, sympy.Expr)):
         raise TypeError("Invalid input argument for exponent.")
@@ -61,14 +66,14 @@ def _scalar_extractor(x):
         if isinstance(lhs_eval, sympy.Symbol) and isinstance(
                 rhs_eval, (sympy.numbers.Float, sympy.numbers.Integer)):
             # lhs contains symbol rhs contains number.
-            return float(rhs_eval)
+            return _round(float(rhs_eval))
 
         if isinstance(rhs_eval, sympy.Symbol) and isinstance(
                 lhs_eval, (sympy.numbers.Float, sympy.numbers.Integer)):
             # lhs contains number.
-            return float(lhs_eval)
+            return _round(float(lhs_eval))
 
-    raise ValueError("Arithmatic expression outside of simple "
+    raise ValueError("Arithmetic expression outside of simple "
                      "scalar multiplication is currently not "
                      "supported. See serializer.py for more "
                      "information.")
@@ -80,7 +85,7 @@ def _symbol_extractor(x):
         raise TypeError("Invalid input argument for exponent.")
 
     if isinstance(x, numbers.Real):
-        return float(x)
+        return _round(float(x))
     if isinstance(x, sympy.Symbol):
         return x
 
@@ -111,14 +116,15 @@ def _eigen_gate_serializer(gate_type, serialized_id):
         cirq.google.SerializingArg(
             serialized_name="exponent",
             serialized_type=float,
-            gate_getter=lambda x: _symbol_extractor(x.exponent)),
+            op_getter=lambda x: _symbol_extractor(x.gate.exponent)),
         cirq.google.SerializingArg(
             serialized_name="exponent_scalar",
             serialized_type=float,
-            gate_getter=lambda x: _scalar_extractor(x.exponent)),
-        cirq.google.SerializingArg(serialized_name="global_shift",
-                                   serialized_type=float,
-                                   gate_getter=lambda x: float(x._global_shift))
+            op_getter=lambda x: _scalar_extractor(x.gate.exponent)),
+        cirq.google.SerializingArg(
+            serialized_name="global_shift",
+            serialized_type=float,
+            op_getter=lambda x: float(x.gate._global_shift))
     ]
     return cirq.google.GateOpSerializer(gate_type=gate_type,
                                         serialized_gate_id=serialized_id,
@@ -134,12 +140,13 @@ def _eigen_gate_deserializer(gate_type, serialized_id):
         In the future we should likely get rid of this in favor of proper
         expression parsing once cirq supports it. See cirq.op_serializer
         and cirq's program protobuf for details. This is needed for things
-        like cirq.Rx('alpha').
+        like cirq.rx('alpha').
         """
         if exponent_scalar == 1.0:
-            return gate_type(exponent=exponent, global_shift=global_shift)
-        return gate_type(exponent=exponent * exponent_scalar,
-                         global_shift=global_shift)
+            return gate_type(exponent=_round(exponent),
+                             global_shift=_round(global_shift))
+        return gate_type(exponent=_round(exponent) * _round(exponent_scalar),
+                         global_shift=_round(global_shift))
 
     args = [
         cirq.google.DeserializingArg(serialized_name="exponent",
@@ -161,19 +168,19 @@ def _fsim_gate_serializer():
         cirq.google.SerializingArg(
             serialized_name="theta",
             serialized_type=float,
-            gate_getter=lambda x: _symbol_extractor(x.theta)),
+            op_getter=lambda x: _symbol_extractor(x.gate.theta)),
         cirq.google.SerializingArg(
             serialized_name="phi",
             serialized_type=float,
-            gate_getter=lambda x: _symbol_extractor(x.phi)),
+            op_getter=lambda x: _symbol_extractor(x.gate.phi)),
         cirq.google.SerializingArg(
             serialized_name="theta_scalar",
             serialized_type=float,
-            gate_getter=lambda x: _scalar_extractor(x.theta)),
+            op_getter=lambda x: _scalar_extractor(x.gate.theta)),
         cirq.google.SerializingArg(
             serialized_name="phi_scalar",
             serialized_type=float,
-            gate_getter=lambda x: _scalar_extractor(x.phi)),
+            op_getter=lambda x: _scalar_extractor(x.gate.phi)),
     ]
     return cirq.google.GateOpSerializer(gate_type=cirq.FSimGate,
                                         serialized_gate_id="FSIM",
@@ -188,7 +195,8 @@ def _fsim_gate_deserializer():
         """This is a workaround to support symbol scalar multiplication.
         See `_eigen_gate_deserializer` for details.
         """
-        return cirq.FSimGate(theta=theta * theta_scalar, phi=phi * phi_scalar)
+        return cirq.FSimGate(theta=_round(theta) * _round(theta_scalar),
+                             phi=_round(phi) * _round(phi_scalar))
 
     args = [
         cirq.google.DeserializingArg(serialized_name="theta",
@@ -205,6 +213,44 @@ def _fsim_gate_deserializer():
                                           args=args)
 
 
+def _identity_gate_serializer():
+    """Make a standard serializer for the single qubit identity."""
+
+    def _identity_check(x):
+        if x.gate.num_qubits() != 1:
+            raise ValueError("Multi-Qubit identity gate not supported."
+                             "Given: {}. To work around this, use "
+                             "cirq.I.on_each instead.".format(str(x)))
+        return True
+
+    # Here `args` is used for two reasons. 1. GateOpSerializer doesn't work well
+    # with empty arg lists. 2. It is a nice way to check identity gate size.
+    args = [
+        cirq.google.SerializingArg(serialized_name="unused",
+                                   serialized_type=bool,
+                                   op_getter=_identity_check)
+    ]
+    return cirq.google.GateOpSerializer(gate_type=cirq.IdentityGate,
+                                        serialized_gate_id="I",
+                                        args=args,
+                                        can_serialize_predicate=_CONSTANT_TRUE)
+
+
+def _identity_gate_deserializer():
+    """Make a standard deserializer for the single qubit identity."""
+    args = [
+        cirq.google.DeserializingArg(serialized_name="unused",
+                                     constructor_arg_name="unused")
+    ]
+
+    def _cirq_i_workaround(unused):
+        return cirq.I
+
+    return cirq.google.GateOpDeserializer(serialized_gate_id="I",
+                                          gate_constructor=_cirq_i_workaround,
+                                          args=args)
+
+
 def _phased_eigen_gate_serializer(gate_type, serialized_id):
     """Make a standard serializer for phased eigen gates."""
 
@@ -212,22 +258,23 @@ def _phased_eigen_gate_serializer(gate_type, serialized_id):
         cirq.google.SerializingArg(
             serialized_name="phase_exponent",
             serialized_type=float,
-            gate_getter=lambda x: _symbol_extractor(x.phase_exponent)),
+            op_getter=lambda x: _symbol_extractor(x.gate.phase_exponent)),
         cirq.google.SerializingArg(
             serialized_name="phase_exponent_scalar",
             serialized_type=float,
-            gate_getter=lambda x: _scalar_extractor(x.phase_exponent)),
+            op_getter=lambda x: _scalar_extractor(x.gate.phase_exponent)),
         cirq.google.SerializingArg(
             serialized_name="exponent",
             serialized_type=float,
-            gate_getter=lambda x: _symbol_extractor(x.exponent)),
+            op_getter=lambda x: _symbol_extractor(x.gate.exponent)),
         cirq.google.SerializingArg(
             serialized_name="exponent_scalar",
             serialized_type=float,
-            gate_getter=lambda x: _scalar_extractor(x.exponent)),
-        cirq.google.SerializingArg(serialized_name="global_shift",
-                                   serialized_type=float,
-                                   gate_getter=lambda x: float(x.global_shift))
+            op_getter=lambda x: _scalar_extractor(x.gate.exponent)),
+        cirq.google.SerializingArg(
+            serialized_name="global_shift",
+            serialized_type=float,
+            op_getter=lambda x: float(x.gate.global_shift))
     ]
     return cirq.google.GateOpSerializer(gate_type=gate_type,
                                         serialized_gate_id=serialized_id,
@@ -244,18 +291,19 @@ def _phased_eigen_gate_deserializer(gate_type, serialized_id):
         In the future we should likely get rid of this in favor of proper
         expression parsing once cirq supports it. See cirq.op_serializer
         and cirq's program protobuf for details. This is needed for things
-        like cirq.Rx('alpha').
+        like cirq.rx('alpha').
         """
-        # Do this to help with rounding. it's ugly.
+        exponent = _round(exponent)
+        phase_exponent = _round(phase_exponent)
         exponent = exponent if exponent_scalar == 1.0 \
-            else exponent * exponent_scalar
+            else exponent * _round(exponent_scalar)
         phase_exponent = phase_exponent if phase_exponent_scalar == 1.0 \
-            else phase_exponent * phase_exponent_scalar
+            else phase_exponent * _round(phase_exponent_scalar)
         if global_shift != 0:
             # needed in case this specific phasedeigengate doesn't
             # have a global_phase in constructor.
             return gate_type(exponent=exponent,
-                             global_shift=global_shift,
+                             global_shift=_round(global_shift),
                              phase_exponent=phase_exponent)
         return gate_type(exponent=exponent, phase_exponent=phase_exponent)
 
@@ -301,6 +349,8 @@ SERIALIZERS = [
 ] + [
     _fsim_gate_serializer(),
 ] + [
+    _identity_gate_serializer(),
+] + [
     _phased_eigen_gate_serializer(g, g_name)
     for g, g_name in PHASED_EIGEN_GATES_DICT.items()
 ]
@@ -310,6 +360,8 @@ DESERIALIZERS = [
     for g, g_name in EIGEN_GATES_DICT.items()
 ] + [
     _fsim_gate_deserializer(),
+] + [
+    _identity_gate_deserializer(),
 ] + [
     _phased_eigen_gate_deserializer(g, g_name)
     for g, g_name in PHASED_EIGEN_GATES_DICT.items()
@@ -343,10 +395,6 @@ def serialize_circuit(circuit_inp):
         raise TypeError("serialize requires cirq.Circuit objects."
                         " Given: " + str(type(circuit)))
 
-    # TODO(peterse): parsing circuits for Identity types is currently broken.
-    # see https://github.com/quantumlib/Cirq/issues/2520. This will be
-    # fixed in cirq 0.7.
-
     # This code is intentionally written to avoid using cirq functions
     # as this get analyzed by tensorflow-autograph.
 
@@ -358,10 +406,6 @@ def serialize_circuit(circuit_inp):
     for i, moment in enumerate(circuit.moments):
         measured_qubits = set()
         for op in moment:
-            if isinstance(op, cirq.IdentityGate):
-                raise TypeError(
-                    "Circuits containing cirq.I are currently not supported. "
-                    "Remove any instances of cirq.I and try again.")
             for qubit in op.qubits:
                 if not isinstance(qubit, cirq.GridQubit):
                     raise ValueError(
@@ -463,7 +507,8 @@ def deserialize_paulisum(proto):
 
     res = cirq.PauliSum()
     for term_proto in proto.terms:
-        coef = term_proto.coefficient_real + 1.0j * term_proto.coefficient_imag
+        coef = float(_round(term_proto.coefficient_real)) + \
+            1.0j * float(_round(term_proto.coefficient_imag))
         term = coef * cirq.PauliString()
         for pauli_qubit_pair in term_proto.paulis:
             op = _process_pauli_type(pauli_qubit_pair.pauli_type)

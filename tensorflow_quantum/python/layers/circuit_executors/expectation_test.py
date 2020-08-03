@@ -27,12 +27,12 @@ def _gen_single_bit_rotation_problem(bit, symbols):
     """Generate a toy problem on 1 qubit."""
     starting_state = np.random.uniform(0, 2 * np.pi, 3)
     circuit = cirq.Circuit(
-        cirq.Rx(starting_state[0])(bit),
-        cirq.Ry(starting_state[1])(bit),
-        cirq.Rz(starting_state[2])(bit),
-        cirq.Rz(symbols[2])(bit),
-        cirq.Ry(symbols[1])(bit),
-        cirq.Rx(symbols[0])(bit))
+        cirq.rx(starting_state[0])(bit),
+        cirq.ry(starting_state[1])(bit),
+        cirq.rz(starting_state[2])(bit),
+        cirq.rz(symbols[2])(bit),
+        cirq.ry(symbols[1])(bit),
+        cirq.rx(symbols[0])(bit))
 
     return circuit
 
@@ -73,49 +73,9 @@ class ExpectationTest(tf.test.TestCase):
         """Test that expectation errors within Keras call."""
 
         bit = cirq.GridQubit(0, 0)
-        symbol = sympy.Symbol('alpha')
         test_pstring = cirq.Z(bit)
         test_psum = cirq.PauliSum.from_pauli_strings([test_pstring])
-        symb_circuit = cirq.Circuit(cirq.H(bit)**symbol)
         reg_circuit = cirq.Circuit(cirq.H(bit))
-
-        with self.assertRaisesRegex(TypeError,
-                                    expected_regex="string or sympy.Symbol"):
-            expectation.Expectation()(symb_circuit,
-                                      symbol_names=[symbol, 5.0],
-                                      operators=test_psum)
-
-        with self.assertRaisesRegex(ValueError,
-                                    expected_regex="must be unique."):
-            expectation.Expectation()(symb_circuit,
-                                      symbol_names=[symbol, symbol],
-                                      operators=test_psum)
-
-        with self.assertRaisesRegex(TypeError,
-                                    expected_regex="cannot be parsed"):
-            expectation.Expectation()(symb_circuit,
-                                      symbol_names='junk',
-                                      operators=test_psum)
-
-        with self.assertRaisesRegex(TypeError,
-                                    expected_regex="cannot be parsed"):
-            expectation.Expectation()(symb_circuit,
-                                      symbol_names=[symbol],
-                                      symbol_values='junk',
-                                      operators=test_psum)
-
-        with self.assertRaisesRegex(TypeError,
-                                    expected_regex="cannot be parsed"):
-            expectation.Expectation()('junk',
-                                      symbol_names=[symbol],
-                                      symbol_values=[[0.5]],
-                                      operators=test_psum)
-
-        with self.assertRaisesRegex(RuntimeError,
-                                    expected_regex="operators not provided"):
-            expectation.Expectation()(symb_circuit,
-                                      symbol_names=[symbol],
-                                      symbol_values=[[0.5]])
 
         with self.assertRaisesRegex(Exception,
                                     expected_regex="Unknown initializer"):
@@ -210,7 +170,7 @@ class ExpectationTest(tf.test.TestCase):
         """
         bit = cirq.GridQubit(0, 0)
         circuit = \
-            cirq.Circuit(cirq.Rx(sympy.Symbol('theta'))(bit))
+            cirq.Circuit(cirq.rx(sympy.Symbol('theta'))(bit))
         op = cirq.Z(bit)
         layer = expectation.Expectation()
         optimizer = tf.optimizers.Adam(learning_rate=0.05)

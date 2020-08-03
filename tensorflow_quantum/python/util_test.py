@@ -32,6 +32,11 @@ def _single_to_tensor(item):
     return serializer.serialize_circuit(item).SerializeToString()
 
 
+def _exponential(theta, op):
+    op_mat = cirq.unitary(op)
+    return np.eye(op_mat.shape[0]) * np.cos(theta) - 1j * op_mat * np.sin(theta)
+
+
 BITS = list(cirq.GridQubit.rect(1, 10))
 
 
@@ -128,7 +133,7 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
                         cirq.X(BITS[0]) + cirq.Y(BITS[1])).SerializeToString()
                 ]))
         with self.assertRaisesRegex(TypeError,
-                                    expected_regex='recieved bad type'):
+                                    expected_regex='received bad type'):
             util.from_tensor("junk")
 
     def test_cartesian_product(self):
@@ -195,46 +200,12 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
 class ExponentialUtilFunctionsTest(tf.test.TestCase):
     """Test that Exponential utility functions work."""
 
-    def test_exponential_error(self):
-        """Test exponential failed when it should"""
-        test_paulistring = cirq.X(cirq.GridQubit(0, 0))
-        test_paulisum = cirq.X(cirq.GridQubit(0, 0)) + cirq.Z(
-            cirq.GridQubit(0, 1))
-
-        # operators
-        with self.assertRaisesRegex(TypeError, expected_regex='not a list'):
-            util.exponential(operators='junk')
-        with self.assertRaisesRegex(TypeError, expected_regex='PauliString'):
-            util.exponential(operators=['junk'])
-            util.exponential(operators=[test_paulistring, 'junk'])
-            util.exponential(
-                operators=[test_paulistring, test_paulisum, 'junk'])
-
-        util.exponential(operators=[test_paulistring, test_paulisum])
-
-        # coefficients
-        with self.assertRaisesRegex(TypeError, expected_regex='not a list'):
-            util.exponential(operators=[], coefficients='junk')
-
-        with self.assertRaisesRegex(TypeError, expected_regex='Each element'):
-            util.exponential(operators=[test_paulistring], coefficients=[None])
-            util.exponential(operators=[test_paulistring, test_paulisum],
-                             coefficients=[1.0, None])
-
-        util.exponential(
-            operators=[test_paulistring, test_paulisum, test_paulisum],
-            coefficients=[1.0, 'test', sympy.Symbol('test')])
-
-        with self.assertRaisesRegex(ValueError,
-                                    expected_regex='should be the same as'):
-            util.exponential(operators=[test_paulistring], coefficients=[])
-
     def test_many_clifford_to_many_z(self):
         """Confirm correct basis transformations of input PauliSums."""
         q = cirq.GridQubit.rect(1, 4)
         test_term = 0.2277 * cirq.Z(q[1]) * cirq.X(q[2]) * cirq.Y(q[3])
-        test_basis_gates = [cirq.H(q[2]), cirq.Rx(np.pi / 2)(q[3])]
-        test_conj_gates = [cirq.Rx(-np.pi / 2)(q[3]), cirq.H(q[2])]
+        test_basis_gates = [cirq.H(q[2]), cirq.rx(np.pi / 2)(q[3])]
+        test_conj_gates = [cirq.rx(-np.pi / 2)(q[3]), cirq.H(q[2])]
 
         gate_list, conj_gate_list = util._many_clifford_to_many_z(test_term)
         self.assertEqual(gate_list, test_basis_gates)
@@ -256,17 +227,55 @@ class ExponentialUtilFunctionsTest(tf.test.TestCase):
             benchmark_gates_indices.remove(qubits)
         self.assertEqual([], benchmark_gates_indices)
 
+    def test_exponential_error(self):
+        """Test exponential fails on bad inputs."""
+        test_paulistring = cirq.X(cirq.GridQubit(0, 0))
+        test_paulisum = cirq.X(cirq.GridQubit(0, 0)) + cirq.Z(
+            cirq.GridQubit(0, 1))
+
+        # bad operators
+        with self.assertRaisesRegex(TypeError, expected_regex='not a list'):
+            util.exponential('junk')
+        for bad_op_list in [['junk'], [test_paulistring, 'junk'],
+                            [test_paulistring, test_paulisum, 'junk']]:
+            with self.assertRaisesRegex(TypeError,
+                                        expected_regex='in operators'):
+                util.exponential(bad_op_list)
+        with self.assertRaisesRegex(TypeError,
+                                    expected_regex="only supports real"):
+            util.exponential([1j * test_paulistring])
+
+        # bad coefficients
+        with self.assertRaisesRegex(TypeError, expected_regex='not a list'):
+            util.exponential([test_paulisum], coefficients='junk')
+
+        for bad_coeff_list in [[None, 1.0], [['junk'], 1.0], [1.0, ['junk']],
+                               [1.0, 1j]]:
+            with self.assertRaisesRegex(TypeError,
+                                        expected_regex='in coefficients'):
+                util.exponential([test_paulistring, test_paulistring],
+                                 coefficients=bad_coeff_list)
+        with self.assertRaisesRegex(ValueError,
+                                    expected_regex='should be the same as'):
+            util.exponential([test_paulistring], coefficients=[1.0, 2.0])
+
     def test_exponential_simple(self):
         """Test exponential for a simple operator."""
         q = cirq.GridQubit(0, 0)
         for op in [cirq.X, cirq.Y, cirq.Z]:
             theta = np.random.random()
             circuit = util.exponential(operators=[theta * op(q)])
-
-            # TODO(jaeyoo) : remove factor 2 if cirq issue is resolved
-            # https://github.com/quantumlib/Cirq/issues/2710
-            ground_truth_unitary = cirq.unitary(np.exp(-1j * 2 * theta * op(q)))
+            ground_truth_unitary = _exponential(theta, op(q))
             self.assertAllClose(ground_truth_unitary, cirq.unitary(circuit))
+
+    def test_allowed_cases(self):
+        """Confirm all valid argument combinations are accepted."""
+        t_pstr = cirq.X(cirq.GridQubit(0, 0))
+        t_psum = cirq.X(cirq.GridQubit(0, 0)) + cirq.Z(cirq.GridQubit(0, 1))
+        for op_list in [[t_pstr], [t_psum], (t_pstr,), (t_psum,)]:
+            for coeff in ["test", sympy.Symbol("test"), 0.5]:
+                for coeff_inp in [[coeff], (coeff,), np.array([coeff])]:
+                    _ = util.exponential(op_list, coefficients=coeff_inp)
 
     def test_exponential_identity(self):
         """Test exponential for an identity."""
@@ -298,9 +307,9 @@ class ExponentialUtilFunctionsTest(tf.test.TestCase):
         theta1 = np.random.random()
         theta2 = np.random.random()
         identity = cirq.PauliString({None: cirq.I})
-        op1 = theta1 * cirq.Z(q[1]) * cirq.Z(q[2])
-        op2 = theta2 * identity
-        circuit = util.exponential(operators=[op1, op2])
+        op1 = cirq.Z(q[1]) * cirq.Z(q[2])
+        op2 = identity
+        circuit = util.exponential(operators=[theta1 * op1, theta2 * op2])
 
         result_gates = []
         for moment in circuit:
@@ -319,10 +328,7 @@ class ExponentialUtilFunctionsTest(tf.test.TestCase):
         for i in range(3, 7):
             self.assertEqual(result_gates[i].qubits, (q[1],))
 
-        # TODO(jaeyoo) : remove factor 2 if cirq issue is resolved
-        # https://github.com/quantumlib/Cirq/issues/2710
-        ground_truth_unitary = cirq.unitary(np.exp(-1j * 2 * op1))
-        ground_truth_unitary *= cirq.unitary(np.exp(-1j * op2))
+        ground_truth_unitary = _exponential(theta1, op1)
         result_unitary = cirq.unitary(circuit)
         global_phase = ground_truth_unitary[0][0] / result_unitary[0][0]
         result_unitary *= global_phase
@@ -348,14 +354,6 @@ class ExponentialUtilFunctionsTest(tf.test.TestCase):
         op2 = theta * identity
         circuit = util.exponential(operators=[op1, op2])
         util.convert_to_tensor([circuit])
-
-    def test_real_coefficients(self):
-        """Test exponential with complex coefficient."""
-        q = cirq.GridQubit.rect(1, 2)
-        theta = np.random.random()
-        op = 1j * theta * cirq.Z(q[0]) * cirq.Z(q[1])
-        with self.assertRaisesRegex(ValueError, expected_regex="supports real"):
-            util.exponential(operators=[op])
 
 
 if __name__ == "__main__":

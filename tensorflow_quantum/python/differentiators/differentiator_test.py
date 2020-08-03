@@ -37,7 +37,7 @@ class DifferentiatorTest(tf.test.TestCase):
         WorkingDifferentiator()
 
     def test_subclass_missing_differentiate(self):
-        """Test that BaseDifferentiator enforces abstract method existance."""
+        """Test that BaseDifferentiator enforces abstract method existence."""
 
         class BrokenDifferentiator(differentiator.Differentiator):
             """test."""

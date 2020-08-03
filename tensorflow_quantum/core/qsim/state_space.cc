@@ -22,12 +22,13 @@ limitations under the License.
 #include "tensorflow/core/lib/random/simple_philox.h"
 #include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
 #include "tensorflow_quantum/core/qsim/fuser_basic.h"
+#include "tensorflow_quantum/core/qsim/matrix.h"
+#include "tensorflow_quantum/core/qsim/util.h"
 #include "tensorflow_quantum/core/src/circuit.h"
 #include "tensorflow_quantum/core/src/circuit_parser.h"
-#include "tensorflow_quantum/core/src/matrix.h"
 
 namespace tfq {
-namespace qsim {
+namespace qsim_old {
 
 tensorflow::Status StateSpace::Update(const Circuit& circuit) {
   tensorflow::Status status;
@@ -149,6 +150,63 @@ void StateSpace::SampleState(const int m, std::vector<uint64_t>* samples) {
   }
 }
 
+tensorflow::Status StateSpace::ComputeSampledExpectation(
+    const tfq::proto::PauliSum& p_sum, StateSpace* scratch,
+    float* expectation_value, const int m) {
+  if (m == 0) {
+    return tensorflow::Status::OK();
+  }
+  // apply the  gates of the pauliterms to a copy of the wavefunction
+  // and add up expectation value term by term.
+  tensorflow::Status status = tensorflow::Status::OK();
+  for (const tfq::proto::PauliTerm& term : p_sum.terms()) {
+    // catch identity terms
+    if (term.paulis_size() == 0) {
+      *expectation_value += term.coefficient_real();
+      // TODO(zaqqwerty): error somewhere if identities have any imaginary part
+      continue;
+    }
+
+    // Transform state into the measurement basis and sample it
+    Circuit measurement_circuit;
+    status =
+        ZBasisCircuitFromPauliTerm(term, num_qubits_, &measurement_circuit);
+    if (!status.ok()) {
+      return status;
+    }
+    scratch->CopyFrom(*this);
+    status = scratch->Update(measurement_circuit);
+    if (!status.ok()) {
+      return status;
+    }
+    std::vector<uint64_t> state_samples;
+    scratch->SampleState(m, &state_samples);
+
+    // Find qubits on which to measure parity
+    std::vector<unsigned int> parity_bits;
+    for (const tfq::proto::PauliQubitPair& pair : term.paulis()) {
+      unsigned int location;
+      if (!absl::SimpleAtoi(pair.qubit_id(), &location)) {
+        return tensorflow::Status(
+            tensorflow::error::INVALID_ARGUMENT,
+            "Could not parse Pauli term qubit id: " + pair.ShortDebugString());
+      }
+      // Parity functions use little-endian indexing
+      parity_bits.push_back(num_qubits_ - location - 1);
+    }
+
+    // Compute the expectation value over the samples
+    int parity_total(0);
+    uint64_t parity_mask = ComputeBitmask(parity_bits);
+    for (const uint64_t& sample : state_samples) {
+      parity_total += ComputeParity(parity_mask, sample);
+    }
+    *expectation_value += static_cast<float>(parity_total) *
+                          term.coefficient_real() / static_cast<float>(m);
+  }
+  return status;
+}
+
 bool StateSpace::Valid() const {
   // TODO: more roubust test?
   return state_ != nullptr;
@@ -162,5 +220,5 @@ uint64_t StateSpace::GetNumQubits() const { return num_qubits_; }
 
 uint64_t StateSpace::GetNumThreads() const { return num_threads_; }
 
-}  // namespace qsim
+}  // namespace qsim_old
 }  // namespace tfq

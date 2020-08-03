@@ -23,11 +23,12 @@ limitations under the License.
 #include <cmath>
 #include <cstdint>
 
+#include "absl/memory/memory.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow_quantum/core/qsim/util.h"
 
 namespace tfq {
-namespace qsim {
+namespace qsim_old {
 
 StateSpaceSSE::StateSpaceSSE(const uint64_t num_qubits,
                              const uint64_t num_threads)
@@ -38,19 +39,19 @@ StateSpaceSSE::~StateSpaceSSE() { DeleteState(); }
 StateSpaceType StateSpaceSSE::GetType() const { return StateSpaceType::SSE; }
 
 void StateSpaceSSE::CreateState() {
-  state_ = (float*)qsim::_aligned_malloc(sizeof(float) * size_);
+  state_ = (float*)qsim_old::_aligned_malloc(sizeof(float) * size_);
 }
 
 void StateSpaceSSE::DeleteState() {
   if (GetRawState() != NULL) {
-    qsim::_aligned_free(state_);
+    qsim_old::_aligned_free(state_);
     state_ = NULL;
   }
 }
 
-StateSpace* StateSpaceSSE::Clone() const {
-  StateSpaceSSE* state_copy =
-      new StateSpaceSSE(GetNumQubits(), GetNumThreads());
+std::unique_ptr<StateSpace> StateSpaceSSE::Clone() const {
+  std::unique_ptr<StateSpace> state_copy =
+      absl::make_unique<StateSpaceSSE>(GetNumQubits(), GetNumThreads());
   return state_copy;
 }
 
@@ -73,15 +74,17 @@ void StateSpaceSSE::CopyFrom(const StateSpace& other) const {
   }
 }
 
-void StateSpaceSSE::ApplyGate2(const unsigned int q0, const unsigned int q1,
-                               const float* m) {
+void StateSpaceSSE::ApplyGate2(const unsigned int q0_be,
+                               const unsigned int q1_be, const float* m) {
   // Assume q0 < q1.
-  if (q0 > 2) {
-    ApplyGate2HH(q0, q1, m);
-  } else if (q1 > 2) {
-    ApplyGate2HL(q0, q1, m);
+  const unsigned int q0_le = GetNumQubits() - q1_be - 1;
+  const unsigned int q1_le = GetNumQubits() - q0_be - 1;
+  if (q0_le > 2) {
+    ApplyGate2HH(q0_le, q1_le, m);
+  } else if (q1_le > 2) {
+    ApplyGate2HL(q0_le, q1_le, m);
   } else {
-    ApplyGate2LL(q0, q1, m);
+    ApplyGate2LL(q0_le, q1_le, m);
   }
 }
 
@@ -112,10 +115,9 @@ void StateSpaceSSE::SetStateZero() {
 
 float StateSpaceSSE::GetRealInnerProduct(const StateSpace& other) const {
   uint64_t size2 = GetDimension() / 4;
-  __m128d expv_0 = _mm_setzero_pd();
-  __m128d expv_1 = _mm_setzero_pd();
-  __m128d temp = _mm_setzero_pd();
+  __m128d expv = _mm_setzero_pd();
   __m128d rs_0, rs_1, is_0, is_1;
+  __m128 load_reg;
 
   auto statea = GetRawState();
   auto stateb = other.GetRawState();
@@ -124,37 +126,40 @@ float StateSpaceSSE::GetRealInnerProduct(const StateSpace& other) const {
   // Currently not a thread safe implementation of inner product!
   for (uint64_t i = 0; i < size2; ++i) {
     // rs = _mm256_cvtps_pd(_mm_load_ps(statea + 8 * i));
-    rs_0 = _mm_cvtps_pd(_mm_load_ps(statea + 8 * i));
-    rs_1 = _mm_cvtps_pd(_mm_load_ps(statea + 8 * i + 2));
+    load_reg = _mm_load_ps(statea + 8 * i);
+    rs_0 = _mm_cvtps_pd(load_reg);
+    rs_1 = _mm_cvtps_pd(
+        _mm_shuffle_ps(load_reg, load_reg, _MM_SHUFFLE(3, 2, 3, 2)));
 
     // is = _mm256_cvtps_pd(_mm_load_ps(stateb + 8 * i));
-    is_0 = _mm_cvtps_pd(_mm_load_ps(stateb + 8 * i));
-    is_1 = _mm_cvtps_pd(_mm_load_ps(stateb + 8 * i + 2));
+    load_reg = _mm_load_ps(stateb + 8 * i);
+    is_0 = _mm_cvtps_pd(load_reg);
+    is_1 = _mm_cvtps_pd(
+        _mm_shuffle_ps(load_reg, load_reg, _MM_SHUFFLE(3, 2, 3, 2)));
 
     // expv = _mm256_fmadd_pd(rs, is, expv);
-    temp = _mm_mul_pd(rs_0, is_0);
-    expv_0 = _mm_add_pd(expv_0, temp);
-    temp = _mm_mul_pd(rs_1, is_1);
-    expv_1 = _mm_add_pd(expv_1, temp);
+    expv = _mm_add_pd(expv, _mm_mul_pd(rs_0, is_0));
+    expv = _mm_add_pd(expv, _mm_mul_pd(rs_1, is_1));
 
     // rs = _mm256_cvtps_pd(_mm_load_ps(statea + 8 * i + 4));
-    rs_0 = _mm_cvtps_pd(_mm_load_ps(statea + 8 * i + 4));
-    rs_1 = _mm_cvtps_pd(_mm_load_ps(statea + 8 * i + 6));
+    load_reg = _mm_load_ps(statea + 8 * i + 4);
+    rs_0 = _mm_cvtps_pd(load_reg);
+    rs_1 = _mm_cvtps_pd(
+        _mm_shuffle_ps(load_reg, load_reg, _MM_SHUFFLE(3, 2, 3, 2)));
 
     // is = _mm256_cvtps_pd(_mm_load_ps(stateb + 8 * i + 4));
-    is_0 = _mm_cvtps_pd(_mm_load_ps(stateb + 8 * i + 4));
-    is_1 = _mm_cvtps_pd(_mm_load_ps(stateb + 8 * i + 6));
+    load_reg = _mm_load_ps(stateb + 8 * i + 4);
+    is_0 = _mm_cvtps_pd(load_reg);
+    is_1 = _mm_cvtps_pd(
+        _mm_shuffle_ps(load_reg, load_reg, _MM_SHUFFLE(3, 2, 3, 2)));
 
     // expv = _mm256_fmadd_pd(rs, is, expv);
-    temp = _mm_mul_pd(rs_0, is_0);
-    expv_0 = _mm_add_pd(expv_0, temp);
-    temp = _mm_mul_pd(rs_1, is_1);
-    expv_1 = _mm_add_pd(expv_1, temp);
+    expv = _mm_add_pd(expv, _mm_mul_pd(rs_0, is_0));
+    expv = _mm_add_pd(expv, _mm_mul_pd(rs_1, is_1));
   }
-  double buffer[4];
-  _mm_storeu_pd(buffer, expv_0);
-  _mm_storeu_pd(buffer + 2, expv_1);
-  return (float)(buffer[0] + buffer[1] + buffer[2] + buffer[3]);
+  double buffer[2];
+  _mm_storeu_pd(buffer, expv);
+  return (float)(buffer[0] + buffer[1]);
 }
 
 std::complex<float> StateSpaceSSE::GetAmpl(const uint64_t i) const {
@@ -4470,7 +4475,7 @@ void StateSpaceSSE::ApplyGate2HL(const unsigned int q0, const unsigned int q1,
   }
 }
 
-}  // namespace qsim
+}  // namespace qsim_old
 }  // namespace tfq
 
 #endif

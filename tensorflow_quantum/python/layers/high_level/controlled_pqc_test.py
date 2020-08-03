@@ -142,7 +142,7 @@ class ControlledPQCTest(tf.test.TestCase, parameterized.TestCase):
         on many backends."""
         bit = cirq.GridQubit(0, 0)
         circuit = \
-            cirq.Circuit(cirq.Rx(sympy.Symbol('theta'))(bit))
+            cirq.Circuit(cirq.rx(sympy.Symbol('theta'))(bit))
 
         inputs = tf.keras.Input(shape=(1,), dtype=tf.dtypes.float32)
         quantum_datum = tf.keras.Input(shape=(), dtype=tf.dtypes.string)

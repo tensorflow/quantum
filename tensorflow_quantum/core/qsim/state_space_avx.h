@@ -24,7 +24,7 @@ limitations under the License.
 #include "tensorflow_quantum/core/qsim/state_space.h"
 
 namespace tfq {
-namespace qsim {
+namespace qsim_old {
 
 class StateSpaceAVX : public StateSpace {
  public:
@@ -32,7 +32,7 @@ class StateSpaceAVX : public StateSpace {
 
   virtual ~StateSpaceAVX();
 
-  StateSpaceType GetType() const override;
+  virtual StateSpaceType GetType() const override;
 
   // Reserve the memory associated with the state in this space
   virtual void CreateState() override;
@@ -42,7 +42,7 @@ class StateSpaceAVX : public StateSpace {
 
   // Return a pointer to a copy of this StateSpace.
   // NOTE: user is responsible for deleting the returned copy.
-  virtual StateSpace* Clone() const override;
+  virtual std::unique_ptr<StateSpace> Clone() const override;
 
   // Copy the state information from another statespace.
   // Assumes the state has been initialized/created.
@@ -80,7 +80,7 @@ class StateSpaceAVX : public StateSpace {
                     const float* matrix);
 };
 
-}  // namespace qsim
+}  // namespace qsim_old
 }  // namespace tfq
 
 #endif  // TFQ_CORE_QSIM_STATE_SPACE_AVX_H_

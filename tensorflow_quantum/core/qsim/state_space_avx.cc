@@ -22,11 +22,12 @@ limitations under the License.
 #include <cmath>
 #include <cstdint>
 
+#include "absl/memory/memory.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow_quantum/core/qsim/util.h"
 
 namespace tfq {
-namespace qsim {
+namespace qsim_old {
 
 StateSpaceAVX::StateSpaceAVX(const uint64_t num_qubits,
                              const uint64_t num_threads)
@@ -37,19 +38,19 @@ StateSpaceAVX::~StateSpaceAVX() { DeleteState(); }
 StateSpaceType StateSpaceAVX::GetType() const { return StateSpaceType::AVX; }
 
 void StateSpaceAVX::CreateState() {
-  state_ = (float*)qsim::_aligned_malloc(sizeof(float) * size_);
+  state_ = (float*)qsim_old::_aligned_malloc(sizeof(float) * size_);
 }
 
 void StateSpaceAVX::DeleteState() {
   if (GetRawState() != NULL) {
-    qsim::_aligned_free(state_);
+    qsim_old::_aligned_free(state_);
     state_ = NULL;
   }
 }
 
-StateSpace* StateSpaceAVX::Clone() const {
-  StateSpaceAVX* state_copy =
-      new StateSpaceAVX(GetNumQubits(), GetNumThreads());
+std::unique_ptr<StateSpace> StateSpaceAVX::Clone() const {
+  std::unique_ptr<StateSpace> state_copy =
+      absl::make_unique<StateSpaceAVX>(GetNumQubits(), GetNumThreads());
   return state_copy;
 }
 
@@ -68,15 +69,17 @@ void StateSpaceAVX::CopyFrom(const StateSpace& other) const {
   }
 }
 
-void StateSpaceAVX::ApplyGate2(const unsigned int q0, const unsigned int q1,
-                               const float* matrix) {
+void StateSpaceAVX::ApplyGate2(const unsigned int q0_be,
+                               const unsigned int q1_be, const float* matrix) {
   // Assume q0 < q1.
-  if (q0 > 2) {
-    ApplyGate2HH(q0, q1, matrix);
-  } else if (q1 > 2) {
-    ApplyGate2HL(q0, q1, matrix);
+  const unsigned int q0_le = GetNumQubits() - q1_be - 1;
+  const unsigned int q1_le = GetNumQubits() - q0_be - 1;
+  if (q0_le > 2) {
+    ApplyGate2HH(q0_le, q1_le, matrix);
+  } else if (q1_le > 2) {
+    ApplyGate2HL(q0_le, q1_le, matrix);
   } else {
-    ApplyGate2LL(q0, q1, matrix);
+    ApplyGate2LL(q0_le, q1_le, matrix);
   }
 }
 
@@ -614,7 +617,7 @@ void StateSpaceAVX::ApplyGate2LL(const unsigned int q0, const unsigned int q1,
   }
 }
 
-}  // namespace qsim
+}  // namespace qsim_old
 }  // namespace tfq
 
 #endif
