@@ -90,5 +90,5 @@ def resolve_parameters(programs, symbol_names, symbol_values):
             original circuit in `program` except with symbols listed in
             `symbol_names` replaced with their corresponding values.
     """
-    return UTILITY_OP_MODULE.tfq_resolve_parameters(
-        programs, symbol_names, symbol_values)
+    return UTILITY_OP_MODULE.tfq_resolve_parameters(programs, symbol_names,
+                                                    symbol_values)

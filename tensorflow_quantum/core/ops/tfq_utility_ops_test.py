@@ -211,8 +211,8 @@ class ResolveParametersOpTest(tf.test.TestCase, parameterized.TestCase):
                                     'Unparseable proto'):
             # programs tensor has the right type, but invalid value.
             tfq_utility_ops.resolve_parameters(['junk'] * batch_size,
-                                                   symbol_names,
-                                                   symbol_values_array)
+                                               symbol_names,
+                                               symbol_values_array)
 
         # TODO(zaqqwerty): reapply test when ResolveSymbols defaults updated.
         # with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
@@ -226,8 +226,8 @@ class ResolveParametersOpTest(tf.test.TestCase, parameterized.TestCase):
         with self.assertRaisesRegex(TypeError, 'Cannot convert'):
             # programs tensor has the wrong type.
             tfq_utility_ops.resolve_parameters([1] * batch_size,
-                                                   symbol_names,
-                                                   symbol_values_array)
+                                               symbol_names,
+                                               symbol_values_array)
 
         with self.assertRaisesRegex(TypeError, 'Cannot convert'):
             # symbol_names tensor has the wrong type.
