@@ -93,11 +93,7 @@ py_test(
     srcs = ["sampling_op_parameter_shift_test.py"],
     python_version = "PY3",
     deps = [
-        ":linear_combination",
-        ":parameter_shift",
-	":sampling_op_parameter_shift",
-        ":stochastic_differentiator",
-        "//tensorflow_quantum/core/ops:batch_util",
+        ":sampling_op_parameter_shift",
         "//tensorflow_quantum/core/ops:circuit_execution_ops",
         "//tensorflow_quantum/python:util",
     ],
