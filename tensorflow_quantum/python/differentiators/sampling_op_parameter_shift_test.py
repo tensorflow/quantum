@@ -89,31 +89,31 @@ class GradientCorrectnessTest(tf.test.TestCase, parameterized.TestCase):
                     total_spin, tf.cast(1 - bitstrings[i][j] * 2, tf.float32))
         return total_spin / count
 
-    # @parameterized.parameters([{'sim': sim} for sim in SIM_LIST])
-    # def test_backprop(self, sim):
-    #     """Compare utility sample-op gradients to analytic gradients."""
+    @parameterized.parameters([{'sim': sim} for sim in SIM_LIST])
+    def test_backprop(self, sim):
+        """Compare utility sample-op gradients to analytic gradients."""
 
-    #     def exact_grad(theta):
-    #         new_theta = 2 * np.pi * theta
-    #         return -2 * np.pi * np.sin(new_theta) * np.exp(np.cos(new_theta))
+        def exact_grad(theta):
+            new_theta = 2 * np.pi * theta
+            return -2 * np.pi * np.sin(new_theta) * np.exp(np.cos(new_theta))
 
-    #     op = sampling_op_parameter_shift.get_sample_op_postprocessor(
-    #         backend=sim, post_process_func=self.post_process_func)
+        op = sampling_op_parameter_shift.get_sample_op_postprocessor(
+            backend=sim, post_process_func=self.post_process_func)
 
-    #     bit = cirq.GridQubit(0, 0)
-    #     circuits = util.convert_to_tensor(
-    #         [cirq.Circuit(cirq.X(bit)**sympy.Symbol('rx')) for _ in range(2)])
-    #     base_rot_angles = tf.constant([[0.25], [0.125]])
-    #     repetitions = 10000
-    #     with tf.GradientTape() as g:
-    #         g.watch(base_rot_angles)
-    #         input_angles = 2 * base_rot_angles
-    #         exp_res = tf.exp(op(circuits, ['rx'], input_angles, [repetitions]))
+        bit = cirq.GridQubit(0, 0)
+        circuits = util.convert_to_tensor(
+            [cirq.Circuit(cirq.X(bit)**sympy.Symbol('rx')) for _ in range(2)])
+        base_rot_angles = tf.constant([[0.25], [0.125]])
+        repetitions = 10000
+        with tf.GradientTape() as g:
+            g.watch(base_rot_angles)
+            input_angles = 2 * base_rot_angles
+            exp_res = tf.exp(op(circuits, ['rx'], input_angles, [repetitions]))
 
-    #     grad = g.gradient(exp_res, base_rot_angles)
-    #     exact = [[exact_grad(0.25)], [exact_grad(0.125)]]
+        grad = g.gradient(exp_res, base_rot_angles)
+        exact = [[exact_grad(0.25)], [exact_grad(0.125)]]
 
-    #     self.assertAllClose(exact, grad.numpy(), rtol=0.025, atol=0.025)
+        self.assertAllClose(exact, grad.numpy(), rtol=0.025, atol=0.025)
 
     @parameterized.parameters(
         list(
