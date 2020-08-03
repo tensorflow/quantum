@@ -45,7 +45,7 @@ def get_sample_op_postprocessor(backend=None, post_process_func=None):
             scalar_list = scalar_list.write(
                 i, post_process_func(ragged_samples[i].to_tensor()))
         scalar_list = scalar_list.stack()
-        return scalar_list
+        return tf.expand_dims(scalar_list, axis=-1)
 
     @tf.custom_gradient
     def sample_post_process_wrapper(programs, symbol_names, symbol_values,
@@ -119,8 +119,8 @@ def get_sample_op_postprocessor(backend=None, post_process_func=None):
             def rearrange_expectations(grouped):
                 
                 def split_vertically(i):
-                    return tf.slice(grouped, [i * n_programs],
-                                    [n_programs])
+                    return tf.slice(grouped, [i * n_programs, 0],
+                                    [n_programs, 1])
                 
                 return tf.map_fn(split_vertically,
                                  tf.range(n_param_gates * n_shifts),

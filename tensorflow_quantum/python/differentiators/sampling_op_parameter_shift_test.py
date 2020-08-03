@@ -100,7 +100,7 @@ class GradientCorrectnessTest(tf.test.TestCase, parameterized.TestCase):
         circuits = util.convert_to_tensor(
             [cirq.Circuit(cirq.X(bit)**sympy.Symbol('rx')) for _ in range(2)])
         base_rot_angles = tf.constant([[0.25], [0.125]])
-        repetitions = 1000
+        repetitions = 100000
         with tf.GradientTape() as g:
             g.watch(base_rot_angles)
             input_angles = 2 * base_rot_angles
