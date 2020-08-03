@@ -214,15 +214,6 @@ class ResolveParametersOpTest(tf.test.TestCase, parameterized.TestCase):
                                                symbol_names,
                                                symbol_values_array)
 
-        # TODO(zaqqwerty): reapply test when ResolveSymbols defaults updated.
-        # with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
-        #                             "Parameter map contains symbols not "
-        #                             "present in the program."):
-        #     # symbol_names tensor has the right type, but invalid value.
-        #     tfq_utility_ops.resolve_parameters(
-        #         util.convert_to_tensor(circuit_batch), ['junk'],
-        #         symbol_values_array)
-
         with self.assertRaisesRegex(TypeError, 'Cannot convert'):
             # programs tensor has the wrong type.
             tfq_utility_ops.resolve_parameters([1] * batch_size, symbol_names,
@@ -295,8 +286,8 @@ class ResolveParametersOpTest(tf.test.TestCase, parameterized.TestCase):
 
         # Get random circuit batches
         qubits = cirq.GridQubit.rect(1, n_qubits)
-        batch_size = 15
-        n_moments = 15
+        batch_size = 2
+        n_moments = 2
         circuit_batch, resolver_batch = \
             util.random_symbol_circuit_resolver_batch(
                 qubits, symbol_names, batch_size, n_moments)
@@ -323,39 +314,9 @@ class ResolveParametersOpTest(tf.test.TestCase, parameterized.TestCase):
         for circuit, resolver in zip(circuit_batch, resolver_batch_partial):
             expected_resolved_circuits.append(
                 cirq.resolve_parameters(circuit, resolver))
-        for test_c, exp_c in zip(test_resolved_circuits,
-                                 expected_resolved_circuits):
-            for test_m, exp_m in zip(test_c, exp_c):
-                for test_o, exp_o in zip(test_m, exp_m):
-                    tg = test_o.gate
-                    eg = exp_o.gate
-                    self.assertEqual(type(tg), type(eg))
-                    # TODO(zaqqwerty): simplify parsing when cirq build parser
-                    # see core/serialize/serializer.py
-                    if isinstance(tg, cirq.IdentityGate):
-                        # all identity gates are the same
-                        continue
-                    elif isinstance(tg, cirq.EigenGate):
-                        self._compare_gate_parameters(tg._global_shift,
-                                                      eg._global_shift)
-                        self._compare_gate_parameters(tg._exponent,
-                                                      eg._exponent)
-                    elif isinstance(tg, cirq.FSimGate):
-                        self._compare_gate_parameters(tg.theta, eg.theta)
-                        self._compare_gate_parameters(tg.phi, eg.phi)
-                    elif isinstance(
-                            tg, (cirq.PhasedXPowGate, cirq.PhasedISwapPowGate)):
-                        self._compare_gate_parameters(tg._global_shift,
-                                                      eg._global_shift)
-                        self._compare_gate_parameters(tg._exponent,
-                                                      eg._exponent)
-                        self._compare_gate_parameters(tg._phase_exponent,
-                                                      eg._phase_exponent)
-                    else:
-                        self.assertTrue(False,
-                                        msg="Some gate in the randomizer "
-                                        "is not being checked: "
-                                        "{}".format(type(tg)))
+        tensor_test = util.from_tensor(util.convert_to_tensor(test_resolved_circuits))
+        tensor_expected = util.from_tensor(util.convert_to_tensor(expected_resolved_circuits))
+        self.assertAllEqual(tensor_test, tensor_expected)
 
 
 if __name__ == '__main__':

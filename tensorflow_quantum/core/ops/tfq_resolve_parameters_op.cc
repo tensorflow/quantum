@@ -68,12 +68,9 @@ class TfqResolveParametersOp : public tensorflow::OpKernel {
       }
     };
 
-    const int output_dim_size = programs.size();
-    const int block_size = GetBlockSize(context, output_dim_size);
-    context->device()
-        ->tensorflow_cpu_worker_threads()
-        ->workers->TransformRangeConcurrently(block_size, output_dim_size,
-                                              DoWork);
+    const int num_cycles = 1000;
+    context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
+        programs.size(), num_cycles, DoWork);
     programs.clear();
     maps.clear();
   }

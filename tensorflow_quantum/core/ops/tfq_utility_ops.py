@@ -63,6 +63,11 @@ def padded_to_ragged2d(masked_state):
 def resolve_parameters(programs, symbol_names, symbol_values):
     """Replace symbols in a batch of programs with concrete values.
 
+    This function has the ability to partially resolve parameters, so that
+    `symbol_names` can contain fewer symbols than `programs`; symbols not listed
+    remain unresolved in the output programs.  Note also that because the output
+    of this function has type string, the function is not differentiable.
+
 
     >>> qubit = cirq.GridQubit(0, 0)
     >>> symbol = sympy.Symbol('alpha')

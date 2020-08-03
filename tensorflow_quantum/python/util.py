@@ -112,7 +112,7 @@ def random_symbol_circuit_resolver_batch(qubits,
 
         return_resolvers.append(
             cirq.ParamResolver(
-                {symbol: np.random.random() for symbol in symbols}))
+                {symbol: round(np.random.random(), 4) for symbol in symbols}))
 
     return return_circuits, return_resolvers
 
