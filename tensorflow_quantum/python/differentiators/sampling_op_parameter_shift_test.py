@@ -25,7 +25,6 @@ from tensorflow_quantum.python import util
 from tensorflow_quantum.python.differentiators import \
     sampling_op_parameter_shift
 
-
 SIM_LIST = [
     None,
     cirq.sim.sparse_simulator.Simulator(),
