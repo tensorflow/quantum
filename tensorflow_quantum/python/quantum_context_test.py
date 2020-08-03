@@ -13,11 +13,16 @@
 # limitations under the License.
 # ==============================================================================
 """Tests for quantum_context functions."""
-import pathos
+
+import multiprocessing
 import tensorflow as tf
 from absl.testing import parameterized
 
 from tensorflow_quantum.python import quantum_context
+
+
+def _test_filler(i):
+    return quantum_context.q_context()
 
 
 class QContextTest(tf.test.TestCase, parameterized.TestCase):
@@ -26,21 +31,15 @@ class QContextTest(tf.test.TestCase, parameterized.TestCase):
     def test_global_singleton(self):
         """Test that context object is a true singleton."""
 
-        def filler(i):
-            return quantum_context.q_context()
-
-        pool = pathos.pools.ThreadPool()
-        results = pool.map(filler, range(500))
+        pool = multiprocessing.pool.ThreadPool()
+        results = pool.map(_test_filler, range(500))
         self.assertTrue(all(r is quantum_context.q_context() for r in results))
 
     def test_global_not_singleton(self):
         """In the case of Processes singleton objects will be reset."""
 
-        def filler(i):
-            return quantum_context.q_context()
-
-        pool = pathos.pools.ProcessPool()
-        results = pool.map(filler, range(500))
+        pool = multiprocessing.Pool()
+        results = pool.map(_test_filler, range(500))
         self.assertFalse(all(r is quantum_context.q_context() for r in results))
 
     def test_global_engine_mode(self):
@@ -50,6 +49,14 @@ class QContextTest(tf.test.TestCase, parameterized.TestCase):
         quantum_context.set_engine_mode(True)
         mode = quantum_context.get_engine_mode()
         self.assertTrue(mode)
+
+    def test_low_latency_op_mode(self):
+        """Test getter an setter behavior for low_latency_op_mode."""
+        mode = quantum_context.get_low_latency_op_mode()
+        self.assertTrue(mode)
+        quantum_context.set_low_latency_op_mode(False)
+        mode = quantum_context.get_low_latency_op_mode()
+        self.assertFalse(mode)
 
 
 if __name__ == "__main__":
