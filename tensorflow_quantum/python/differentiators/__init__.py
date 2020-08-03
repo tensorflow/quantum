@@ -23,8 +23,8 @@ from tensorflow_quantum.python.differentiators.linear_combination import (
 from tensorflow_quantum.python.differentiators.parameter_shift import (
     ParameterShift,)
 
-from tensorflow_quantum.python.differentiators.sampling_op_parameter_shift import (
-    get_sample_op_post_processor,)
+from tensorflow_quantum.python.differentiators.sampling_op_parameter_shift \
+    import (get_sample_op_post_processor,)
 
 from tensorflow_quantum.python.differentiators.stochastic_differentiator \
     import (SGDifferentiator,)

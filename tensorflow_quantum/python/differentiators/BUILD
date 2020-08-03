@@ -94,7 +94,6 @@ py_test(
     python_version = "PY3",
     deps = [
         ":sampling_op_parameter_shift",
-        "//tensorflow_quantum/core/ops:circuit_execution_ops",
         "//tensorflow_quantum/python:util",
     ],
 )

@@ -21,9 +21,9 @@ import tensorflow as tf
 from absl.testing import parameterized
 
 import cirq
-from tensorflow_quantum.core.ops import circuit_execution_ops
 from tensorflow_quantum.python import util
-from tensorflow_quantum.python.differentiators import sampling_op_parameter_shift
+from tensorflow_quantum.python.differentiators import \
+    sampling_op_parameter_shift
 
 
 SIM_LIST = [None, cirq.sim.sparse_simulator.Simulator(),
@@ -52,7 +52,7 @@ def _cirq_simple_finite_difference(circuit_batch,
     """A simple finite difference code that calculates the gradient of a
     batch of circuits using cirq."""
     init_vals_list = _cirq_evaluate_post_process(
-        circuit_batch, resolvers, n_samples, post_process_func_list)
+        circuit_batch, resolvers, n_samples, post_process_func)
     initial_values = np.asarray([[val for _, _ in enumerate(symbol_names)]
                       for val in init_vals_list])
 
@@ -83,7 +83,7 @@ class GradientCorrectnessTest(tf.test.TestCase, parameterized.TestCase):
             for j in tf.range(tf.shape(bitstrings)[1]):
                 total_spin = tf.add(
                     total_spin, tf.cast(1 - bitstrings[i][j]*2, tf.float32))
-        return total_spin / count    
+        return total_spin / count
 
     @parameterized.parameters([{
         'sim': sim
@@ -124,7 +124,6 @@ class GradientCorrectnessTest(tf.test.TestCase, parameterized.TestCase):
     def test_gradients_vs_cirq_finite_difference(self, n_qubits, n_programs,
                                                  symbol_names):
         """Compare post-process differentiation to cirq finite differencing."""
-        qubits = cirq.GridQubit.rect(1, n_qubits)
         circuit_batch, resolver_batch = \
             util.random_symbol_circuit_resolver_batch(
                 cirq.GridQubit.rect(1, n_qubits), symbol_names, n_programs)
@@ -137,14 +136,15 @@ class GradientCorrectnessTest(tf.test.TestCase, parameterized.TestCase):
 
         op = sampling_op_parameter_shift.get_sample_op_postprocessor(
             backend=None, post_process_func=self.post_process_func)
-        
+
         # Calculate tfq gradient and cirq gradient, then compare
         symbol_values_tensor = tf.convert_to_tensor(symbol_values_array)
         programs = util.convert_to_tensor(circuit_batch)
         repetitions = 10000
         with tf.GradientTape() as g:
             g.watch(symbol_values_tensor)
-            expectations = op(programs, symbol_names, symbol_values_tensor, [repetitions])
+            expectations = op(programs, symbol_names, symbol_values_tensor,
+                              [repetitions])
         tfq_grads = g.gradient(expectations, symbol_values_tensor)
         cirq_grads = _cirq_simple_finite_difference(circuit_batch,
                                                     resolver_batch,

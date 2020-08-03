@@ -82,7 +82,7 @@ def get_sample_op_postprocessor(backend=None, post_process_func=None):
         """
         forward_pass_vals = sample_post_process(
             programs, symbol_names, symbol_values, num_samples)
-        
+
         def gradient(grad):
             """Returns the gradient computed via parameter-shifting."""
             # The following code adapted from parameter_shift.py
@@ -97,19 +97,19 @@ def get_sample_op_postprocessor(backend=None, post_process_func=None):
             # STEP 1: Generate required inputs for executor
             # Deserialize programs and parse the whole parameterized gates
             # new_programs has [n_symbols, n_param_gates, n_shifts, n_programs].
-            # These new_programs has programs that parameter-shift rule is applied,
-            # so those programs has
+            # These new_programs has programs that parameter-shift rule is
+            # applied, so those programs has
             (new_programs, weights, shifts,
              n_param_gates) = parameter_shift_util.parse_programs(
                  programs, symbol_names, symbol_values, n_symbols)
-            
+
             # Reshape & transpose new_programs, weights and shifts to fit into
             # the input format of tensorflow_quantum simulator.
             # [n_symbols, n_param_gates, n_shifts, n_programs]
             new_programs = tf.transpose(new_programs, [0, 2, 3, 1])
             weights = tf.transpose(weights, [0, 2, 3, 1])
             shifts = tf.transpose(shifts, [0, 2, 3, 1])
-            
+
             # reshape everything to fit into expectation op correctly
             total_programs = n_programs * n_shifts * n_param_gates * n_symbols
             # tile up and then reshape to order programs correctly
@@ -121,7 +121,8 @@ def get_sample_op_postprocessor(backend=None, post_process_func=None):
             flat_perturbations = tf.concat([
                 tf.reshape(
                     tf.tile(tf.expand_dims(symbol_values, 0),
-                            tf.stack([n_tile, 1, 1])), [total_programs, n_symbols]),
+                            tf.stack([n_tile, 1, 1])),
+                    [total_programs, n_symbols]),
                 tf.expand_dims(flat_shifts, axis=1)
             ],
                                            axis=1)
@@ -133,36 +134,36 @@ def get_sample_op_postprocessor(backend=None, post_process_func=None):
                                axis=0)
             ],
                                          axis=0)
-            
+
             # STEP 2: calculate the required expectation values
             expectations = sample_post_process(flat_programs, new_symbol_names,
                                                flat_perturbations, num_samples)
-            
+
             # STEP 3: generate gradients according to the results
-            
+
             # we know the rows are grouped according to which parameter
             # was perturbed, so reshape to reflect that
             grouped_expectations = tf.reshape(
                 expectations,
                 [n_symbols, n_shifts * n_programs * n_param_gates, -1])
-            
+
             # now we can calculate the partial of the circuit output with
             # respect to each perturbed parameter
             def rearrange_expectations(grouped):
-                
+
                 def split_vertically(i):
                     return tf.slice(grouped, [i * n_programs, 0],
                                     [n_programs, 1])
-                
+
                 return tf.map_fn(split_vertically,
                                  tf.range(n_param_gates * n_shifts),
                                  dtype=tf.float32)
-            
+
             # reshape so that expectations calculated on different programs are
             # separated by a dimension
             rearranged_expectations = tf.map_fn(rearrange_expectations,
                                                 grouped_expectations)
-            
+
             # now we will calculate all of the partial derivatives
             partials = tf.einsum(
                 'spco,spc->sco', rearranged_expectations,
@@ -170,7 +171,7 @@ def get_sample_op_postprocessor(backend=None, post_process_func=None):
                     tf.reshape(weights,
                                [n_symbols, n_param_gates * n_shifts, n_programs]),
                     rearranged_expectations.dtype))
-            
+
             # now apply the chain rule
             this_grad_vec = tf.einsum('sco,co -> cs', partials, grad)
             return None, None, this_grad_vec, None
