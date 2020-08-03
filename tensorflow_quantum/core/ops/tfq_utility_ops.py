@@ -60,7 +60,6 @@ def padded_to_ragged2d(masked_state):
     return padded_to_ragged(masked)
 
 
-
 def resolve_parameters(programs, symbol_names, symbol_values):
     """Replace symbols in a batch of programs with concrete values.
 
