@@ -168,49 +168,49 @@ class ResolveParametersOpTest(tf.test.TestCase, parameterized.TestCase):
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'programs must be rank 1'):
             # programs tensor has the wrong shape (too many dims).
-            tfq_utility_ops.tfq_resolve_parameters(
+            tfq_utility_ops.resolve_parameters(
                 util.convert_to_tensor([circuit_batch]), symbol_names,
                 symbol_values_array)
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'programs must be rank 1'):
             # programs tensor has the wrong shape (too few dims).
-            tfq_utility_ops.tfq_resolve_parameters(
+            tfq_utility_ops.resolve_parameters(
                 util.convert_to_tensor(circuit_batch)[0], symbol_names,
                 symbol_values_array)
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'symbol_names must be rank 1'):
             # symbol_names tensor has the wrong shape (too many dims).
-            tfq_utility_ops.tfq_resolve_parameters(
+            tfq_utility_ops.resolve_parameters(
                 util.convert_to_tensor(circuit_batch), np.array([symbol_names]),
                 symbol_values_array)
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'symbol_names must be rank 1'):
             # symbol_names tensor has the wrong shape (too few dims).
-            tfq_utility_ops.tfq_resolve_parameters(
+            tfq_utility_ops.resolve_parameters(
                 util.convert_to_tensor(circuit_batch), symbol_names[0],
                 symbol_values_array)
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'symbol_values must be rank 2'):
             # symbol_values tensor has the wrong shape (too many dims).
-            tfq_utility_ops.tfq_resolve_parameters(
+            tfq_utility_ops.resolve_parameters(
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 np.array([symbol_values_array]))
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'symbol_values must be rank 2'):
             # symbol_values tensor has the wrong shape (too few dims).
-            tfq_utility_ops.tfq_resolve_parameters(
+            tfq_utility_ops.resolve_parameters(
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 symbol_values_array[0])
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'Unparseable proto'):
             # programs tensor has the right type, but invalid value.
-            tfq_utility_ops.tfq_resolve_parameters(['junk'] * batch_size,
+            tfq_utility_ops.resolve_parameters(['junk'] * batch_size,
                                                    symbol_names,
                                                    symbol_values_array)
 
@@ -219,31 +219,31 @@ class ResolveParametersOpTest(tf.test.TestCase, parameterized.TestCase):
         #                             "Parameter map contains symbols not "
         #                             "present in the program."):
         #     # symbol_names tensor has the right type, but invalid value.
-        #     tfq_utility_ops.tfq_resolve_parameters(
+        #     tfq_utility_ops.resolve_parameters(
         #         util.convert_to_tensor(circuit_batch), ['junk'],
         #         symbol_values_array)
 
         with self.assertRaisesRegex(TypeError, 'Cannot convert'):
             # programs tensor has the wrong type.
-            tfq_utility_ops.tfq_resolve_parameters([1] * batch_size,
+            tfq_utility_ops.resolve_parameters([1] * batch_size,
                                                    symbol_names,
                                                    symbol_values_array)
 
         with self.assertRaisesRegex(TypeError, 'Cannot convert'):
             # symbol_names tensor has the wrong type.
-            tfq_utility_ops.tfq_resolve_parameters(
+            tfq_utility_ops.resolve_parameters(
                 util.convert_to_tensor(circuit_batch), [1], symbol_values_array)
 
         with self.assertRaisesRegex(TypeError, 'Cannot convert'):
             # symbol_values tensor has the wrong type.
-            tfq_utility_ops.tfq_resolve_parameters(
+            tfq_utility_ops.resolve_parameters(
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 [['junk']] * batch_size)
 
         with self.assertRaisesRegex(TypeError, 'missing'):
             # too few tensors.
             # pylint: disable=no-value-for-parameter
-            tfq_utility_ops.tfq_resolve_parameters(
+            tfq_utility_ops.resolve_parameters(
                 util.convert_to_tensor(circuit_batch), symbol_names)
             # pylint: enable=no-value-for-parameter
 
@@ -269,7 +269,7 @@ class ResolveParametersOpTest(tf.test.TestCase, parameterized.TestCase):
             circuit_list.append(circuit)
 
         test_resolved_circuits = util.from_tensor(
-            tfq_utility_ops.tfq_resolve_parameters(
+            tfq_utility_ops.resolve_parameters(
                 util.convert_to_tensor(circuit_list), symbol_names,
                 np.asarray(bitstring_list)))
 
@@ -316,7 +316,7 @@ class ResolveParametersOpTest(tf.test.TestCase, parameterized.TestCase):
 
         # Resolve in two ways and compare results
         test_resolved_circuits = util.from_tensor(
-            tfq_utility_ops.tfq_resolve_parameters(
+            tfq_utility_ops.resolve_parameters(
                 util.convert_to_tensor(circuit_batch), symbol_names_partial,
                 symbol_values_array_partial))
         expected_resolved_circuits = []
