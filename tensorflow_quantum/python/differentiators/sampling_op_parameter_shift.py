@@ -35,27 +35,7 @@ def get_sample_op_postprocessor(backend=None, post_process_func=None):
             type `tf.float32`. Given function is applied to all circuits.
 
     Returns:
-        A `callable` with the following signature:
-
-        ```op(programs, symbol_names, symbol_values, num_samples)```
-
-        programs: `tf.Tensor` of strings with shape [batch_size] containing
-            the string representations of the circuits to be executed.
-        symbol_names: `tf.Tensor` of strings with shape [n_params], which
-            is used to specify the order in which the values in
-            `symbol_values` should be placed inside of the circuits in
-            `programs`.
-        symbol_values: `tf.Tensor` of real numbers with shape
-            [batch_size, n_params] specifying parameter values to resolve
-            into the circuits specified by programs, following the ordering
-            dictated by `symbol_names`.
-        num_samples: `tf.Tensor` with one element indicating the number of
-            samples to post-process per circuit.
-
-        Returns:
-            `tf.Tensor` of type `tf.float32` with shape [batch_size, 1], such
-                that each entry is the result of post-processing bitstrings
-                from the corresponding program in `programs`.
+        `callable` that is a tf.function returning post-processed samples.
     """
     sample_op = circuit_execution_ops.get_sampling_op(backend)
 
@@ -74,12 +54,39 @@ def get_sample_op_postprocessor(backend=None, post_process_func=None):
     @tf.custom_gradient
     def sample_post_process_wrapper(programs, symbol_names, symbol_values,
                                     num_samples):
-        """"""
+        """Differentiable sample op post-processing.
+
+        For the forward pass, this function samples bitstrings from the given
+        programs, then applies the post-processing function to the set of
+        samples from each program.  During the backward pass, gradients of the
+        sample post-processing are computed via the parameter shift rule.
+
+        Args:
+            programs: `tf.Tensor` of strings with shape [batch_size] containing
+                the string representations of the circuits to be executed.
+            symbol_names: `tf.Tensor` of strings with shape [n_params], which
+                is used to specify the order in which the values in
+                `symbol_values` should be placed inside of the circuits in
+                `programs`.
+            symbol_values: `tf.Tensor` of real numbers with shape
+                [batch_size, n_params] specifying parameter values to resolve
+                into the circuits specified by programs, following the ordering
+                dictated by `symbol_names`.
+            num_samples: `tf.Tensor` with one element indicating the number of
+                samples to post-process per circuit.
+
+        Returns:
+            `tf.Tensor` of type `tf.float32` with shape [batch_size, 1], such
+                that each entry is the result of post-processing bitstrings
+                from the corresponding program in `programs`.
+        """
         forward_pass_vals = sample_post_process(
             programs, symbol_names, symbol_values, num_samples)
         
         def gradient(grad):
-            # these get used a lot
+            """Returns the gradient computed via parameter-shifting."""
+            # The following code adapted from parameter_shift.py
+
             n_symbols = tf.gather(tf.shape(symbol_names), 0)
             n_programs = tf.gather(tf.shape(programs), 0)
 

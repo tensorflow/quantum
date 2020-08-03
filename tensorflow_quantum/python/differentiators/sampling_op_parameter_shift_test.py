@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""Test parameter shift gradients over the TFQ sampling op."""
+"""Test parameter shift gradients over the post-processed TFQ sampling op."""
 import copy
 
 import numpy as np
