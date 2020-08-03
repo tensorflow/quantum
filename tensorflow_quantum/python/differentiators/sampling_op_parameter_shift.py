@@ -80,8 +80,8 @@ def get_sample_op_postprocessor(backend=None, post_process_func=None):
                 that each entry is the result of post-processing bitstrings
                 from the corresponding program in `programs`.
         """
-        forward_pass_vals = sample_post_process(
-            programs, symbol_names, symbol_values, num_samples)
+        forward_pass_vals = sample_post_process(programs, symbol_names,
+                                                symbol_values, num_samples)
 
         def gradient(grad):
             """Returns the gradient computed via parameter-shifting."""
@@ -168,9 +168,9 @@ def get_sample_op_postprocessor(backend=None, post_process_func=None):
             partials = tf.einsum(
                 'spco,spc->sco', rearranged_expectations,
                 tf.cast(
-                    tf.reshape(weights,
-                               [n_symbols,
-                                n_param_gates * n_shifts, n_programs]),
+                    tf.reshape(
+                        weights,
+                        [n_symbols, n_param_gates * n_shifts, n_programs]),
                     rearranged_expectations.dtype))
 
             # now apply the chain rule
