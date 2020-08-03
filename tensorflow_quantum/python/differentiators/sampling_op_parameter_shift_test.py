@@ -26,6 +26,10 @@ from tensorflow_quantum.python import util
 from tensorflow_quantum.python.differentiators import sampling_op_parameter_shift
 
 
+SIM_LIST = [None, cirq.sim.sparse_simulator.Simulator(),
+            cirq.sim.density_matrix_simulator.DensityMatrixSimulator()]
+
+
 def _cirq_evaluate_post_process(circuit_batch, resolvers, n_samples,
                                 post_process_func):
     simulator = cirq.sim.Simulator()
@@ -69,10 +73,21 @@ def _cirq_simple_finite_difference(circuit_batch,
 class GradientCorrectnessTest(tf.test.TestCase, parameterized.TestCase):
     """Test correctness of the differentiators to reference cirq algorithm."""
 
+    @tf.function
+    def post_process_func(self, bitstrings):
+        """Emulate averaging over Z measurements."""
+        total_spin = tf.constant(0, dtype=tf.dtypes.float32)
+        count = tf.cast(tf.math.multiply(
+            tf.shape(bitstrings)[0], tf.shape(bitstrings)[1]), tf.float32)
+        for i in tf.range(tf.shape(bitstrings)[0]):
+            for j in tf.range(tf.shape(bitstrings)[1]):
+                total_spin = tf.add(
+                    total_spin, tf.cast(1 - bitstrings[i][j]*2, tf.float32))
+        return total_spin / count    
+
     @parameterized.parameters([{
         'sim': sim
-    } for sim in [None, cirq.sim.sparse_simulator.Simulator(),
-                  cirq.sim.density_matrix_simulator.DensityMatrixSimulator()]])
+    } for sim in SIM_LIST])
     def test_backprop(self, sim):
         """Compare utility sample-op gradients to analytic gradients."""
 
@@ -80,26 +95,14 @@ class GradientCorrectnessTest(tf.test.TestCase, parameterized.TestCase):
             new_theta = 2 * np.pi * theta
             return -2 * np.pi * np.sin(new_theta) * np.exp(np.cos(new_theta))
 
-        @tf.function
-        def post_process_func(bitstrings):
-            """Emulate a Z measurement."""
-            total_spin = tf.constant(0, dtype=tf.dtypes.float32)
-            count = tf.cast(tf.math.multiply(
-                tf.shape(bitstrings)[0], tf.shape(bitstrings)[1]), tf.float32)
-            for i in tf.range(tf.shape(bitstrings)[0]):
-                for j in tf.range(tf.shape(bitstrings)[1]):
-                    total_spin = tf.add(
-                        total_spin, tf.cast(1 - bitstrings[i][j]*2, tf.float32))
-            return total_spin / count
-
         op = sampling_op_parameter_shift.get_sample_op_postprocessor(
-            backend=None, post_process_func=post_process_func)
+            backend=sim, post_process_func=self.post_process_func)
 
         bit = cirq.GridQubit(0, 0)
         circuits = util.convert_to_tensor(
             [cirq.Circuit(cirq.X(bit)**sympy.Symbol('rx')) for _ in range(2)])
         base_rot_angles = tf.constant([[0.25], [0.125]])
-        repetitions = 100000
+        repetitions = 10000
         with tf.GradientTape() as g:
             g.watch(base_rot_angles)
             input_angles = 2 * base_rot_angles
@@ -108,61 +111,47 @@ class GradientCorrectnessTest(tf.test.TestCase, parameterized.TestCase):
         grad = g.gradient(exp_res, base_rot_angles)
         exact = [[exact_grad(0.25)], [exact_grad(0.125)]]
 
-        self.assertAllClose(exact, grad.numpy(), rtol=0.01, atol=0.01)
+        self.assertAllClose(exact, grad.numpy(), rtol=0.025, atol=0.025)
 
-    # @parameterized.parameters(
-    #     list(
-    #         util.kwargs_cartesian_product(
-    #             **{
-    #                 'n_qubits': [5],
-    #                 'n_programs': [3],
-    #                 'symbol_names': [['a', 'b']]
-    #             })))
-    # def test_gradients_vs_cirq_finite_difference(self, n_qubits, n_programs,
-    #                                              symbol_names):
-    #     """Compare TFQ differentiators to fine-grained noiseless cirq finite
-    #     differencing.
-    #     DISCLAIMER : the consistency of STOCHASTIC_DIFFS is hard to be checked.
-    #     Its expectation value should be checked, but it takes long time because
-    #     SGDifferentiator is not optimized. Until optimized, the consistency
-    #     will be performed in benchmarks/scripts/differentiators:convergence_test
-    #     TODO(jaeyoo) : move convergence_test here once SGDifferentiator is
-    #      optimized.
-    #     """
-    #     op = differentiator.generate_differentiable_op(analytic_op=op)
+    @parameterized.parameters(
+        list(
+            util.kwargs_cartesian_product(
+                **{
+                    'n_qubits': [5],
+                    'n_programs': [3],
+                    'symbol_names': [['a', 'b']]
+                })))
+    def test_gradients_vs_cirq_finite_difference(self, n_qubits, n_programs,
+                                                 symbol_names):
+        """Compare post-process differentiation to cirq finite differencing."""
+        qubits = cirq.GridQubit.rect(1, n_qubits)
+        circuit_batch, resolver_batch = \
+            util.random_symbol_circuit_resolver_batch(
+                cirq.GridQubit.rect(1, n_qubits), symbol_names, n_programs)
 
-    #     qubits = cirq.GridQubit.rect(1, n_qubits)
-    #     circuit_batch, resolver_batch = \
-    #         util.random_symbol_circuit_resolver_batch(
-    #             cirq.GridQubit.rect(1, n_qubits), symbol_names, n_programs)
+        symbol_values_array = np.array(
+            [[resolver[symbol]
+              for symbol in symbol_names]
+             for resolver in resolver_batch],
+            dtype=np.float32)
 
-    #     psums = [
-    #         util.random_pauli_sums(qubits, 1, n_ops) for _ in circuit_batch
-    #     ]
-
-    #     symbol_values_array = np.array(
-    #         [[resolver[symbol]
-    #           for symbol in symbol_names]
-    #          for resolver in resolver_batch],
-    #         dtype=np.float32)
-
-    #     # calculate tfq gradient
-    #     symbol_values_tensor = tf.convert_to_tensor(symbol_values_array)
-    #     programs = util.convert_to_tensor(circuit_batch)
-    #     ops = util.convert_to_tensor(psums)
-    #     with tf.GradientTape() as g:
-    #         g.watch(symbol_values_tensor)
-    #         expectations = op(programs, symbol_names, symbol_values_tensor, ops)
-    #     tfq_grads = g.gradient(expectations, symbol_values_tensor)
-
-    #     # calculate gradients in cirq using a very simple forward differencing
-    #     # scheme
-    #     cirq_grads = _cirq_simple_finite_difference(circuit_batch,
-    #                                                 resolver_batch,
-    #                                                 symbol_names, psums)
-
-    #     # will this be too tight? time will tell.
-    #     self.assertAllClose(cirq_grads, tfq_grads, rtol=1e-2, atol=1e-2)
+        op = sampling_op_parameter_shift.get_sample_op_postprocessor(
+            backend=None, post_process_func=self.post_process_func)
+        
+        # Calculate tfq gradient and cirq gradient, then compare
+        symbol_values_tensor = tf.convert_to_tensor(symbol_values_array)
+        programs = util.convert_to_tensor(circuit_batch)
+        repetitions = 10000
+        with tf.GradientTape() as g:
+            g.watch(symbol_values_tensor)
+            expectations = op(programs, symbol_names, symbol_values_tensor, [repetitions])
+        tfq_grads = g.gradient(expectations, symbol_values_tensor)
+        cirq_grads = _cirq_simple_finite_difference(circuit_batch,
+                                                    resolver_batch,
+                                                    symbol_names,
+                                                    repetitions,
+                                                    self.post_process_func)
+        self.assertAllClose(cirq_grads, tfq_grads, rtol=0.025, atol=0.025)
 
 
 if __name__ == '__main__':
