@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""Differentiation of Sample post-processing with the parameter shift rule."""
+"""Differentiation of sample post-processing using the parameter shift rule."""
 import tensorflow as tf
 
 from tensorflow_quantum.core.ops import circuit_execution_ops
@@ -22,8 +22,8 @@ from tensorflow_quantum.python.differentiators import parameter_shift_util
 def get_sample_op_postprocessor(backend=None, post_process_func=None):
     """Make bitstring post-processing differentiable.
 
-    Create an op that will post-process output bitstring samples taken from either a
-    simulated quantum state or a real quantum computer
+    Create an op that will post-process output bitstring samples taken from
+    either a simulated quantum state or a real quantum computer.
 
     Args:
         backend: Optional Backend to use. Defaults to the native TensorFlow
@@ -33,11 +33,35 @@ def get_sample_op_postprocessor(backend=None, post_process_func=None):
         post_process_func: Differentiable function from tensor of
             type `tf.int8` of shape [repetitions, num_qubits] to scalar of
             type `tf.float32`. Given function is applied to all circuits.
+
+    Returns:
+        A `callable` with the following signature:
+
+        ```op(programs, symbol_names, symbol_values, num_samples)```
+
+        programs: `tf.Tensor` of strings with shape [batch_size] containing
+            the string representations of the circuits to be executed.
+        symbol_names: `tf.Tensor` of strings with shape [n_params], which
+            is used to specify the order in which the values in
+            `symbol_values` should be placed inside of the circuits in
+            `programs`.
+        symbol_values: `tf.Tensor` of real numbers with shape
+            [batch_size, n_params] specifying parameter values to resolve
+            into the circuits specified by programs, following the ordering
+            dictated by `symbol_names`.
+        num_samples: `tf.Tensor` with one element indicating the number of
+            samples to post-process per circuit.
+
+        Returns:
+            `tf.Tensor` of type `tf.float32` with shape [batch_size, 1], such
+                that each entry is the result of post-processing bitstrings
+                from the corresponding program in `programs`.
     """
     sample_op = circuit_execution_ops.get_sampling_op(backend)
 
     @tf.function
     def sample_post_process(programs, symbol_names, symbol_values, num_samples):
+        """Samples bitstrings from programs and returns postprocessed values."""
         ragged_samples = sample_op(programs, symbol_names, symbol_values,
                                    num_samples)
         scalar_list = tf.TensorArray(tf.dtypes.float32, tf.shape(programs)[0])
@@ -50,6 +74,7 @@ def get_sample_op_postprocessor(backend=None, post_process_func=None):
     @tf.custom_gradient
     def sample_post_process_wrapper(programs, symbol_names, symbol_values,
                                     num_samples):
+        """"""
         forward_pass_vals = sample_post_process(
             programs, symbol_names, symbol_values, num_samples)
         
