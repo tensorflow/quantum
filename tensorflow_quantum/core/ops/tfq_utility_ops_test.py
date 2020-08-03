@@ -233,7 +233,8 @@ class ResolveParametersOpTest(tf.test.TestCase, parameterized.TestCase):
             tfq_utility_ops.resolve_parameters(
                 util.convert_to_tensor(circuit_batch), [1], symbol_values_array)
 
-        with self.assertRaisesRegex(TypeError, 'Cannot convert'):
+        with self.assertRaisesRegex(tf.errors.UnimplementedError,
+                                    'Cast string to float is not supported'):
             # symbol_values tensor has the wrong type.
             tfq_utility_ops.resolve_parameters(
                 util.convert_to_tensor(circuit_batch), symbol_names,
