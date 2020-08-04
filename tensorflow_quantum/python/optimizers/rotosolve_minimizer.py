@@ -208,7 +208,7 @@ def minimize(expectation_value_function,
             of real dtype containing the value of the function.
             The function to be minimized. The input is of shape `[n]`,
             where `n` is the size of the trainable parameters.
-            The return value is a real `tf.Tensor` Scala (matching shape
+            The return value is a real `tf.Tensor` Scalar (matching shape
             `[1]`).  This must be a linear combination of quantum
             measurement expectation value, otherwise this algorithm cannot
             work.
