@@ -107,12 +107,12 @@ class TfqSimulateExpectationOp : public tensorflow::OpKernel {
     // e2s2 = 2 CPU, 8GB -> Can safely do 25 since Memory = 4GB
     // e2s4 = 4 CPU, 16GB -> Can safely do 25 since Memory = 8GB
     // ...
-    if (max_num_qubits < 26) {
-      ComputeSmall(num_qubits, max_num_qubits, fused_circuits, pauli_sums,
-                   context, &output_tensor);
-    } else {
+    if (max_num_qubits >= 26 || programs.size() == 1) {
       ComputeLarge(num_qubits, fused_circuits, pauli_sums, context,
                    &output_tensor);
+    } else {
+      ComputeSmall(num_qubits, max_num_qubits, fused_circuits, pauli_sums,
+                   context, &output_tensor);
     }
 
     // just to be on the safe side.
