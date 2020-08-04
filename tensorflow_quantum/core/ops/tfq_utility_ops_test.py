@@ -286,8 +286,8 @@ class ResolveParametersOpTest(tf.test.TestCase, parameterized.TestCase):
 
         # Get random circuit batches
         qubits = cirq.GridQubit.rect(1, n_qubits)
-        batch_size = 2
-        n_moments = 2
+        batch_size = 1
+        n_moments = 5
         circuit_batch, resolver_batch = \
             util.random_symbol_circuit_resolver_batch(
                 qubits, symbol_names, batch_size, n_moments)
@@ -314,9 +314,40 @@ class ResolveParametersOpTest(tf.test.TestCase, parameterized.TestCase):
         for circuit, resolver in zip(circuit_batch, resolver_batch_partial):
             expected_resolved_circuits.append(
                 cirq.resolve_parameters(circuit, resolver))
-        tensor_test = util.from_tensor(util.convert_to_tensor(test_resolved_circuits))
-        tensor_expected = util.from_tensor(util.convert_to_tensor(expected_resolved_circuits))
-        self.assertAllEqual(tensor_test, tensor_expected)
+        # TODO(zaqqwerty): Find a way to eliminate parsing.
+        for test_c, exp_c in zip(test_resolved_circuits,
+                                 expected_resolved_circuits):
+            for test_m, exp_m in zip(test_c, exp_c):
+                for test_o, exp_o in zip(test_m, exp_m):
+                    tg = test_o.gate
+                    eg = exp_o.gate
+                    self.assertEqual(type(tg), type(eg))
+                    # TODO(zaqqwerty): simplify parsing when cirq build parser
+                    # see core/serialize/serializer.py
+                    if isinstance(tg, cirq.IdentityGate):
+                        # all identity gates are the same
+                        continue
+                    elif isinstance(tg, cirq.EigenGate):
+                        self._compare_gate_parameters(tg._global_shift,
+                                                      eg._global_shift)
+                        self._compare_gate_parameters(tg._exponent,
+                                                      eg._exponent)
+                    elif isinstance(tg, cirq.FSimGate):
+                        self._compare_gate_parameters(tg.theta, eg.theta)
+                        self._compare_gate_parameters(tg.phi, eg.phi)
+                    elif isinstance(
+                            tg, (cirq.PhasedXPowGate, cirq.PhasedISwapPowGate)):
+                        self._compare_gate_parameters(tg._global_shift,
+                                                      eg._global_shift)
+                        self._compare_gate_parameters(tg._exponent,
+                                                      eg._exponent)
+                        self._compare_gate_parameters(tg._phase_exponent,
+                                                      eg._phase_exponent)
+                    else:
+                        self.assertTrue(False,
+                                        msg="Some gate in the randomizer "
+                                        "is not being checked: "
+                                        "{}".format(type(tg)))
 
 
 if __name__ == '__main__':
