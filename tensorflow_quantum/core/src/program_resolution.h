@@ -43,13 +43,12 @@ tensorflow::Status ResolveQubitIds(
 // operations in all moments, and if any Args have a symbol, replaces the one-of
 // with an ArgValue representing the value in the parameter map keyed by the
 // symbol. When `resolve_all` is true, returns an error if a symbol does not
-// have a correponding value in `param_map`.  When `flag_unused` is true,
-// returns an error if a value in the parameter map isn't used.
-// TODO(zaqqwerty): Work to flip default of `flag_unused` to true.
+// have a correponding value in `param_map`.
+// TODO(pmassey): Consider returning an error if a value in the parameter map
+// isn't used.
 tensorflow::Status ResolveSymbols(
     const absl::flat_hash_map<std::string, std::pair<int, float>>& param_map,
-    cirq::google::api::v2::Program* program, bool resolve_all = true,
-    bool flag_unused = false);
+    cirq::google::api::v2::Program* program, bool resolve_all = true);
 
 }  // namespace tfq
 

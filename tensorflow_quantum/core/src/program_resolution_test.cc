@@ -337,14 +337,14 @@ TEST(ProgramResolutionTest, ResolveSymbolsInvalidArg) {
       google::protobuf::TextFormat::ParseFromString(text, &program_strict));
   const absl::flat_hash_map<std::string, std::pair<int, float>> param_map = {
       {"v1", {0, 1.0}}};
-  EXPECT_EQ(ResolveSymbols(param_map, &program_strict, true, false),
+  EXPECT_EQ(ResolveSymbols(param_map, &program_strict, true),
             tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
                                "Could not find symbol in parameter map: v2"));
 
   // Test with non-strict replacement
   Program program;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(text, &program));
-  EXPECT_TRUE(ResolveSymbols(param_map, &program, false, false).ok());
+  EXPECT_TRUE(ResolveSymbols(param_map, &program, false).ok());
   EXPECT_EQ(program.circuit()
                 .moments(0)
                 .operations(0)
@@ -356,48 +356,6 @@ TEST(ProgramResolutionTest, ResolveSymbolsInvalidArg) {
   EXPECT_EQ(
       program.circuit().moments(1).operations(0).args().at("exponent").symbol(),
       "v2");
-}
-
-TEST(ProgramResolutionTest, ResolveSymbolsUnused) {
-  const std::string text = R"(
-    circuit {
-      scheduling_strategy: MOMENT_BY_MOMENT
-      moments {
-        operations {
-          args {
-            key: "exponent"
-            value {
-              symbol: "v1"
-            }
-          }
-        }
-      }
-    }
-  )";
-
-  // Test with strict parameter map usage
-  Program program_strict;
-  ASSERT_TRUE(
-      google::protobuf::TextFormat::ParseFromString(text, &program_strict));
-  const absl::flat_hash_map<std::string, std::pair<int, float>> param_map = {
-      {"v1", {0, 1.0}}, {"unused", {0, 1.0}}};
-  EXPECT_EQ(ResolveSymbols(param_map, &program_strict, true, true),
-            tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
-                               "Parameter map contains symbols not present "
-                               "in the program."));
-
-  // Test with non-strict parameter map usage
-  Program program;
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(text, &program));
-  EXPECT_TRUE(ResolveSymbols(param_map, &program, true, false).ok());
-  EXPECT_EQ(program.circuit()
-                .moments(0)
-                .operations(0)
-                .args()
-                .at("exponent")
-                .arg_value()
-                .float_value(),
-            1.0);
 }
 
 }  // namespace
