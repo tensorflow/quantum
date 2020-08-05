@@ -42,12 +42,13 @@ tensorflow::Status ResolveQubitIds(
 // Resolves all of the symbols present in the Program. Iterates through all
 // operations in all moments, and if any Args have a symbol, replaces the one-of
 // with an ArgValue representing the value in the parameter map keyed by the
-// symbol. Returns an error if the parameter value cannot be found.
+// symbol. When `resolve_all` is true, returns an error if a symbol does not
+// have a correponding value in `param_map`.
 // TODO(pmassey): Consider returning an error if a value in the parameter map
 // isn't used.
 tensorflow::Status ResolveSymbols(
     const absl::flat_hash_map<std::string, std::pair<int, float>>& param_map,
-    cirq::google::api::v2::Program* program);
+    cirq::google::api::v2::Program* program, bool resolve_all = true);
 
 }  // namespace tfq
 
