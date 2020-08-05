@@ -54,7 +54,7 @@ def random_symbol_circuit(qubits,
     """Generate a random circuit including some parameterized gates.
 
     Symbols are randomly included in the gates of the first `n_moments` moments
-    of the resulting circuit.  Then, parameterized rx gates are added as
+    of the resulting circuit.  Then, parameterized H gates are added as
     subsequent moments for any remaining unused symbols.
     """
     supported_gates = get_supported_gates()
