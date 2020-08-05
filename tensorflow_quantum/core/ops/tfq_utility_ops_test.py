@@ -132,6 +132,8 @@ class ResolveParametersOpTest(tf.test.TestCase, parameterized.TestCase):
     """Test the in-graph parameter resolving op."""
 
     def _compare_gate_parameters(self, tg_value, eg_value):
+        """TODO(zaqqwerty): Remove this function and the gate-specific tests
+        below once https://github.com/quantumlib/Cirq/issues/3192 is resolved"""
         rounding_digits = 3
         if isinstance(tg_value, int):
             self.assertAlmostEqual(tg_value, eg_value)
