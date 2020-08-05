@@ -51,7 +51,11 @@ class InstallPlatlib(install):
 
 
 REQUIRED_PACKAGES = ['cirq == 0.8.0', 'pathos == 0.2.5', 'sympy == 1.4']
-CUR_VERSION = '0.3.0'
+CUR_VERSION = '0.3.1'
+
+# placed as extra to not have required overwrite existing nightly installs if
+# they exist.
+EXTRA_PACKAGES = ['tensorflow == 2.1.0']
 
 
 class BinaryDistribution(Distribution):
@@ -83,6 +87,7 @@ setup(
     url='https://github.com/tensorflow/quantum/',
     packages=find_packages(),
     install_requires=REQUIRED_PACKAGES,
+    extras_require={'extras': EXTRA_PACKAGES},
     # Add in any packaged data.
     include_package_data=True,
     #ext_modules=[Extension('_foo', ['stub.cc'])],
