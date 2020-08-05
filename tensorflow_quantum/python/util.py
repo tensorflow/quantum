@@ -59,8 +59,9 @@ def random_symbol_circuit(qubits,
     """
     supported_gates = get_supported_gates()
     circuit = cirq.testing.random_circuit(qubits, n_moments, p, supported_gates)
-    used_symbols = set()
-    all_symbols = set([sympy.Symbol(s) for s in symbols])
+    random_symbols = list(symbols)
+    random.shuffle(random_symbols)
+    location = 0
 
     for i in range(len(circuit)):
         if np.random.random() < p:
@@ -70,15 +71,17 @@ def random_symbol_circuit(qubits,
             if isinstance(op, cirq.IdentityGate):
                 circuit[:i] += op.on(*locs)
             else:
-                this_random_symbol = sympy.Symbol(np.random.choice(symbols))
-                used_symbols.add(this_random_symbol)
                 circuit[:i] += (
                     op**((np.random.random() if include_scalars else 1.0) *
-                         this_random_symbol)).on(*locs)
+                         sympy.Symbol(random_symbols[location
+                                                     % len(random_symbols)]
+                         ))).on(*locs)
+                location += 1
 
     # Use the rest of the symbols
-    for s in all_symbols - used_symbols:
-        circuit += cirq.Circuit(cirq.H(qubits[0])**s)
+    while location < len(random_symbols):
+        circuit += cirq.Circuit(cirq.H(qubits[0])**sympy.Symbol(random_symbols[location]))
+        location += 1
 
     return circuit
 

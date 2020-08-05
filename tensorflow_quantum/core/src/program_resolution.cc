@@ -116,7 +116,6 @@ Status ResolveQubitIds(Program* program, unsigned int* num_qubits,
 Status ResolveSymbols(
     const absl::flat_hash_map<std::string, std::pair<int, float>>& param_map,
     Program* program, bool resolve_all /*=true*/) {
-  absl::flat_hash_set<std::string> used_symbols;
   for (Moment& moment : *program->mutable_circuit()->mutable_moments()) {
     for (Operation& operation : *moment.mutable_operations()) {
       for (auto& kv : *operation.mutable_args()) {
@@ -129,10 +128,9 @@ Status ResolveSymbols(
                   tensorflow::error::INVALID_ARGUMENT,
                   "Could not find symbol in parameter map: " + arg.symbol());
             }
-          } else {
-            arg.mutable_arg_value()->set_float_value(iter->second.second);
-            used_symbols.insert(arg.symbol());
+            continue;
           }
+          arg.mutable_arg_value()->set_float_value(iter->second.second);
         }
       }
     }
