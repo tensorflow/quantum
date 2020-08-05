@@ -71,16 +71,16 @@ def random_symbol_circuit(qubits,
             if isinstance(op, cirq.IdentityGate):
                 circuit[:i] += op.on(*locs)
             else:
-                circuit[:i] += (
-                    op**((np.random.random() if include_scalars else 1.0) *
-                         sympy.Symbol(random_symbols[location
-                                                     % len(random_symbols)]
-                         ))).on(*locs)
+                circuit[:i] += (op**(
+                    (np.random.random() if include_scalars else 1.0) *
+                    sympy.Symbol(random_symbols[location % len(random_symbols)])
+                )).on(*locs)
                 location += 1
 
     # Use the rest of the symbols
     while location < len(random_symbols):
-        circuit += cirq.Circuit(cirq.H(qubits[0])**sympy.Symbol(random_symbols[location]))
+        circuit += cirq.Circuit(
+            cirq.H(qubits[0])**sympy.Symbol(random_symbols[location]))
         location += 1
 
     return circuit
