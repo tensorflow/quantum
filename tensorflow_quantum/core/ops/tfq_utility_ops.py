@@ -58,3 +58,41 @@ def padded_to_ragged2d(masked_state):
     col_mask = tf.abs(tf.cast(masked_state[:, 0], tf.float32)) < 1.1
     masked = tf.ragged.boolean_mask(masked_state, col_mask)
     return padded_to_ragged(masked)
+
+
+def resolve_parameters(programs, symbol_names, symbol_values):
+    """Replace symbols in a batch of programs with concrete values.
+
+    This function has the ability to partially resolve parameters, so that
+    `symbol_names` can contain fewer symbols than `programs`; symbols not listed
+    remain unresolved in the output programs.  Note also that because the output
+    of this function has type string, the function is not differentiable.
+
+
+    >>> qubit = cirq.GridQubit(0, 0)
+    >>> symbol = sympy.Symbol('alpha')
+    >>> my_c = cirq.Circuit(cirq.H(qubit) ** symbol)
+    >>> tensor_c = tfq.convert_to_tensor([my_c])
+    >>> tfq.from_tensor(tfq.resolve_parameters(tensor_c, ['alpha'], [[0.2]]))
+    [(0, 0): ───H^0.2───]
+
+
+    Args:
+        programs: `tf.Tensor` of strings with shape [batch_size] containing
+            the string representations of the circuits to be resolved.
+        symbol_names: `tf.Tensor` of strings with shape [n_params], which
+            is used to specify the order in which the values in
+            `symbol_values` should be placed inside of the circuits in
+            `programs`.
+        symbol_values: `tf.Tensor` of real numbers with shape
+            [batch_size, n_params] specifying parameter values to resolve
+            into the circuits specified by programs, following the ordering
+            dictated by `symbol_names`.
+
+    Returns:
+        `tf.Tensor` with shape [batch_size]. Each entry corresponds to the
+            original circuit in `program` except with symbols listed in
+            `symbol_names` replaced with their corresponding values.
+    """
+    return UTILITY_OP_MODULE.tfq_resolve_parameters(
+        programs, symbol_names, tf.cast(symbol_values, tf.float32))

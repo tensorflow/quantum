@@ -196,6 +196,18 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
             self.assertListEqual(sorted(extracted_symbols),
                                  sorted(expected_symbols))
 
+    def test_get_circuit_symbols_all(self):
+        """Confirm that circuits have all the requested symbols."""
+        expected_symbols = ['alpha', 'beta', 'gamma', 'omega']
+        qubits = cirq.GridQubit.rect(1, 2)
+        n_moments = 1
+        for _ in range(5):
+            test_circuit = util.random_symbol_circuit(qubits, expected_symbols,
+                                                      n_moments)
+            extracted_symbols = util.get_circuit_symbols(test_circuit)
+            self.assertListEqual(sorted(extracted_symbols),
+                                 sorted(expected_symbols))
+
 
 class ExponentialUtilFunctionsTest(tf.test.TestCase):
     """Test that Exponential utility functions work."""
