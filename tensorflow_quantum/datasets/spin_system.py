@@ -484,24 +484,25 @@ def xxz_chain(qubits, boundary_condition="closed", data_dir=None):
     circuit.append(
         cirq.CNOT(qubits[j], qubits[j + 1]) for j in range(0, nspins - 1, 2))
 
+    odd_qubits = list(
+        zip([qubits[j] for j in range(1, nspins - 1, 2)],
+            [qubits[j + 1] for j in range(1, nspins - 1, 2)]))
+    even_qubits = list(
+        zip([qubits[j] for j in range(0, nspins - 1, 2)],
+            [qubits[j + 1] for j in range(0, nspins - 1, 2)]))
     for d in range(depth):
-        for j in range(1, nspins - 1, 2):
-            circuit.append(cirq.ZZ(qubits[j], qubits[j + 1])**(symbols[d]))
-            circuit.append(
-                cirq.YY(qubits[j], qubits[j + 1])**(symbols[d + depth]))
-            circuit.append(
-                cirq.XX(qubits[j], qubits[j + 1])**(symbols[d + depth]))
+        for q1, q2 in odd_qubits:
+            circuit.append(cirq.ZZ(q1, q2)**(symbols[d]))
+            circuit.append(cirq.YY(q1, q2)**(symbols[d + depth]))
+            circuit.append(cirq.XX(q1, q2)**(symbols[d + depth]))
         if boundary_condition == "closed":
             circuit.append(cirq.ZZ(qubits[-1], qubits[0])**(symbols[d]))
             circuit.append(cirq.YY(qubits[-1], qubits[0])**(symbols[d + depth]))
             circuit.append(cirq.XX(qubits[-1], qubits[0])**(symbols[d + depth]))
-        for j in range(0, nspins - 1, 2):
-            circuit.append(
-                cirq.ZZ(qubits[j], qubits[j + 1])**(symbols[d + 2 * depth]))
-            circuit.append(
-                cirq.YY(qubits[j], qubits[j + 1])**(symbols[d + 3 * depth]))
-            circuit.append(
-                cirq.XX(qubits[j], qubits[j + 1])**(symbols[d + 3 * depth]))
+        for q1, q2 in even_qubits:
+            circuit.append(cirq.ZZ(q1, q2)**(symbols[d + 2 * depth]))
+            circuit.append(cirq.YY(q1, q2)**(symbols[d + 3 * depth]))
+            circuit.append(cirq.XX(q1, q2)**(symbols[d + 3 * depth]))
     # Initiate lists.
     resolved_circuits = []
     hamiltonians = []
