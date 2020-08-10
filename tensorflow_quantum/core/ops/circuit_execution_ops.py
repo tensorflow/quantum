@@ -86,10 +86,10 @@ def get_expectation_op(backend=None,
         low_latency: Optional Python `bool`. True indicates that the returned op
             should not block graph level parallelism on itself when executing.
             False indicates that graph level parallelism on itself should be
-            blocked. Defaults to value specified in `tfq.get_low_latency_op_mode`
-            which defaults to True (no blocking). This flag is only needed
-            for advanced users when using TFQ for very large simulations, or
-            when running on a real chip.
+            blocked. Defaults to value specified in
+            `tfq.get_low_latency_op_mode` which defaults to True (no blocking).
+            This flag is only needed for advanced users when using TFQ for very
+            large simulations, or when running on a real chip.
 
     Returns:
         A `callable` with the following signature:
@@ -181,10 +181,10 @@ def get_sampling_op(backend=None,
         low_latency: Optional Python `bool`. True indicates that the returned op
             should not block graph level parallelism on itself when executing.
             False indicates that graph level parallelism on itself should be
-            blocked. Defaults to value specified in `tfq.get_low_latency_op_mode`
-            which defaults to True (no blocking). This flag is only needed
-            for advanced users when using TFQ for very large simulations, or
-            when running on a real chip.
+            blocked. Defaults to value specified in
+            `tfq.get_low_latency_op_mode` which defaults to True (no blocking).
+            This flag is only needed for advanced users when using TFQ for very
+            large simulations, or when running on a real chip.
 
     Returns:
         A `callable` with the following signature:
@@ -270,10 +270,10 @@ def get_state_op(backend=None,
         low_latency: Optional Python `bool`. True indicates that the returned op
             should not block graph level parallelism on itself when executing.
             False indicates that graph level parallelism on itself should be
-            blocked. Defaults to value specified in `tfq.get_low_latency_op_mode`
-            which defaults to True (no blocking). This flag is only needed
-            for advanced users when using TFQ for very large simulations, or
-            when running on a real chip.
+            blocked. Defaults to value specified in
+            `tfq.get_low_latency_op_mode` which defaults to True (no blocking).
+            This flag is only needed for advanced users when using TFQ for very
+            large simulations, or when running on a real chip.
 
     Returns:
         A `callable` with the following signature:
@@ -322,8 +322,10 @@ def get_state_op(backend=None,
                     " or None.".format(backend))
 
 
-def get_sampled_expectation_op(
-        backend=None, *, low_latency=quantum_context.get_low_latency_op_mode()):
+def get_sampled_expectation_op(backend=None,
+                               *,
+                               low_latency=quantum_context.
+                               get_low_latency_op_mode()):
     """Get a TensorFlow op that will calculate sampled expectation values.
 
     This function produces a non-differentiable TF op that will calculate
@@ -370,10 +372,10 @@ def get_sampled_expectation_op(
         low_latency: Optional Python `bool`. True indicates that the returned op
             should not block graph level parallelism on itself when executing.
             False indicates that graph level parallelism on itself should be
-            blocked. Defaults to value specified in `tfq.get_low_latency_op_mode`
-            which defaults to True (no blocking). This flag is only needed
-            for advanced users when using TFQ for very large simulations, or
-            when running on a real chip.
+            blocked. Defaults to value specified in
+            `tfq.get_low_latency_op_mode` which defaults to True (no blocking).
+            This flag is only needed for advanced users when using TFQ for very
+            large simulations, or when running on a real chip.
 
     Returns:
         A `callable` with the following signature:
@@ -416,13 +418,20 @@ def get_sampled_expectation_op(
     if op is not None:
         if low_latency is True:
             # Return an op that does not block graph level parallelism.
-            return lambda programs, symbol_names, symbol_values, pauli_sums, num_samples: \
-                op(programs, symbol_names, symbol_values, pauli_sums, num_samples)
+            return lambda programs, symbol_names, symbol_values, pauli_sums, \
+                num_samples: op(programs,
+                                symbol_names,
+                                symbol_values,
+                                pauli_sums,
+                                num_samples)
 
         # Return an op that does block graph level parallelism.
-        return lambda programs, symbol_names, symbol_values, pauli_sums, num_samples: \
-            _GLOBAL_OP_LOCK.execute(lambda: op(
-                programs, symbol_names, symbol_values, pauli_sums, num_samples))
+        return lambda programs, symbol_names, symbol_values, pauli_sums, \
+            num_samples: _GLOBAL_OP_LOCK.execute(lambda: op(programs,
+                                                            symbol_names,
+                                                            symbol_values,
+                                                            pauli_sums,
+                                                            num_samples))
 
     raise TypeError(
         "Backend {} is invalid. Expected a Cirq.Sampler or None.".format(
