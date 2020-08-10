@@ -18,9 +18,3 @@ from tensorflow_quantum.python.util import (
     get_supported_gates,
     exponential,
 )
-
-from tensorflow_quantum.python.quantum_context import (
-    # Context setting functions.
-    get_low_latency_op_mode,
-    set_low_latency_op_mode,
-)

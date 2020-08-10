@@ -25,6 +25,13 @@ from tensorflow_quantum.core import (append_circuit, calculate_unitary,
 # Re-label python module as layers module.
 import tensorflow_quantum.python.layers as layers
 
+# Import quantum_context getters and setters
+from tensorflow_quantum.python.quantum_context import (
+    # Context setting functions.
+    get_low_latency_op_mode,
+    set_low_latency_op_mode,
+)
+
 # Import utility functions for tensor operations & conversions.
 from tensorflow_quantum.python.util import (
     # Utility functions
