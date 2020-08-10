@@ -322,10 +322,8 @@ def get_state_op(backend=None,
                     " or None.".format(backend))
 
 
-def get_sampled_expectation_op(backend=None,
-                               *,
-                               low_latency=quantum_context.
-                               get_low_latency_op_mode()):
+def get_sampled_expectation_op(
+        backend=None, *, low_latency=quantum_context.get_low_latency_op_mode()):
     """Get a TensorFlow op that will calculate sampled expectation values.
 
     This function produces a non-differentiable TF op that will calculate
