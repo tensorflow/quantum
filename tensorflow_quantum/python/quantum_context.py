@@ -84,6 +84,14 @@ def set_low_latency_op_mode(mode):
     cases. Namely if memory requirements on simulation are extremely large
     OR when executing against a true chip.
 
+    If you are going to make use of this function please call it at the top
+    of your module right after import:
+
+
+    >>> import tensorflow_quantum as tfq
+    >>> tfq.set_low_latency_op_mode(False)
+
+
     Args:
         mode: Python `bool` indicating whether or not circuit executing ops
             should block graph level parallelism. Advanced users should
