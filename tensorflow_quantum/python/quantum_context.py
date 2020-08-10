@@ -23,11 +23,10 @@ class QContext:
     def __init__(self):
         """Create quantum context."""
 
-        # Currently unused property.
+        # ***Currently unused property.***
         # Will control whether batch_util.py or engine_util.py will be hit.
         self._engine_mode = False
 
-        # Currently unused property.
         # Will control locking behavior on high latency ops.
         self._low_latency_op_mode = True
 
@@ -79,10 +78,27 @@ def get_engine_mode():
 
 
 def set_low_latency_op_mode(mode):
-    """Set the global op latency mode in execution context."""
+    """Set the global op latency mode in execution context.
+
+    This is advanced TFQ feature that should be used only in very specific
+    cases. Namely if memory requirements on simulation are extremely large
+    OR when executing against a true chip.
+
+    Args:
+        mode: Python `bool` indicating whether or not circuit executing ops
+            should block graph level parallelism. Advanced users should
+            set `mode=False` when executing very large simulation workloads
+            or when executing against a real quantum chip.
+
+    """
     q_context()._set_low_latency_op_mode(mode)
 
 
 def get_low_latency_op_mode():
-    """Get the global op latency mode from execution context."""
+    """Get the global op latency mode from execution context.
+
+    Returns:
+        Python `bool` indicating whether or not circuit execution ops
+        are blocking graph level parallelism with one another.
+    """
     return q_context()._get_low_latency_op_mode()

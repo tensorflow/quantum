@@ -36,7 +36,9 @@ def test_imports():
 
     # Util functions.
     _ = tfq.convert_to_tensor
+    _ = tfq.get_low_latency_op_mode
     _ = tfq.from_tensor
+    _ = tfq.set_low_latency_op_mode
     _ = tfq.util.get_supported_gates
     _ = tfq.util.exponential
 
