@@ -135,7 +135,9 @@ class GradientCorrectnessTest(tf.test.TestCase, parameterized.TestCase):
         with tf.GradientTape() as g:
             g.watch(base_rot_angles)
             input_angles = 2 * base_rot_angles
-            exp_res = tf.exp(op(circuits, ['rx'], input_angles, pstring))
+            exp_res = tf.exp(
+                op(circuits, tf.convert_to_tensor(['rx']), input_angles,
+                   pstring))
 
         grad = g.gradient(exp_res, base_rot_angles)
         exact = [[exact_grad(0.25)], [exact_grad(0.125)]]
@@ -190,7 +192,8 @@ class GradientCorrectnessTest(tf.test.TestCase, parameterized.TestCase):
         ops = util.convert_to_tensor(psums)
         with tf.GradientTape() as g:
             g.watch(symbol_values_tensor)
-            expectations = op(programs, symbol_names, symbol_values_tensor, ops)
+            expectations = op(programs, tf.convert_to_tensor(symbol_names),
+                              symbol_values_tensor, ops)
         tfq_grads = g.gradient(expectations, symbol_values_tensor)
 
         # calculate gradients in cirq using a very simple forward differencing
@@ -229,7 +232,8 @@ class GradientCorrectnessTest(tf.test.TestCase, parameterized.TestCase):
         symbol_values_tensor = tf.convert_to_tensor(symbol_values_array)
         with tf.GradientTape() as g:
             g.watch(symbol_values_tensor)
-            expectations = op(circuit, ['alpha'], symbol_values_tensor, psums)
+            expectations = op(circuit, tf.convert_to_tensor(['alpha']),
+                              symbol_values_tensor, psums)
         grads = g.gradient(expectations, symbol_values_tensor)
         ground_truth_grads = np.array([[-1.1839752]])
         self.assertAllClose(ground_truth_grads, grads, rtol=1e-2, atol=1e-2)
@@ -297,8 +301,8 @@ class StochasticDifferentiatorCorrectnessTest(tf.test.TestCase,
         def _get_gradient():
             with tf.GradientTape() as g:
                 g.watch(symbol_values_tensor)
-                expectations = op(programs, symbol_names, symbol_values_tensor,
-                                  ops)
+                expectations = op(programs, tf.convert_to_tesor(symbol_names),
+                                  symbol_values_tensor, ops)
             return g.gradient(expectations, symbol_values_tensor)
 
         def _abs_diff(grad, mask):

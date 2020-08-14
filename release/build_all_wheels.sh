@@ -24,7 +24,7 @@ cd ..
 
 # Upgrade existing 3.6 pip.
 python3 -m pip install --upgrade pip
-python3 -m pip install tensorflow==2.1.0
+python3 -m pip install tensorflow==2.3.0
 
 cp -r custom-op/third_party/toolchains quantum/third_party/
 cd /quantum
@@ -51,7 +51,7 @@ sudo make altinstall
 cd /quantum
 
 python3.7 -m pip install --upgrade pip setuptools
-python3.7 -m pip install tensorflow==2.1.0
+python3.7 -m pip install tensorflow==2.3.0
 sed -i 's/python3/python3.7/g' configure.sh
 sed -i 's/python3/python3.7/g' release/build_pip_package.sh
 
