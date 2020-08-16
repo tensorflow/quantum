@@ -17,7 +17,7 @@ TensorFlow Quantum is supported on Python 3.6, 3.7, and 3.8 and depends directly
 ### Requirements
 
 * pip 19.0 or later (requires `manylinux2010` support)
-* [TensorFlow == 2.1](https://www.tensorflow.org/install/pip)
+* [TensorFlow == 2.3](https://www.tensorflow.org/install/pip)
 
 See the [TensorFlow install guide](https://www.tensorflow.org/install/pip) to
 set up your Python development environment and an (optional) virtual environment.
