@@ -55,7 +55,7 @@ class ParameterShift(differentiator.Differentiator):
 
     """
 
-    def get_intermediate_logic(self, programs, symbol_names, n_ops):
+    def get_intermediate_logic(self, programs, symbol_names, symbol_values, n_ops):
         """Returns copies of the input programs for each perturbed symbol.
 
         Args:
@@ -90,6 +90,7 @@ class ParameterShift(differentiator.Differentiator):
         total_programs = n_param_gates * n_programs * n_shifts * n_symbols
         # tile up and then reshape to order programs correctly
         flat_programs = tf.reshape(new_programs, [total_programs])
+        flat_weights = tf.reshape(weights, [total_programs])
         flat_shifts = tf.reshape(shifts, [total_programs])
 
         # tile up and then reshape to order ops correctly
@@ -109,7 +110,7 @@ class ParameterShift(differentiator.Differentiator):
             tf.expand_dims(flat_shifts, axis=1)
         ],
                                        axis=1)
-        return flat_programs, new_symbol_names, flat_perturbations
+        return flat_programs, new_symbol_names, flat_weights, flat_perturbations, n_param_gates
 
     @tf.function
     def differentiate_analytic(self, programs, symbol_names, symbol_values,
@@ -159,13 +160,18 @@ class ParameterShift(differentiator.Differentiator):
             the shape of [batch_size, n_symbols].
         """
         n_ops = tf.gather(tf.shape(pauli_sums), 1)
+        n_symbols = tf.gather(tf.shape(symbol_names), 0)
+        n_programs = tf.gather(tf.shape(programs), 0)
+        # Assume cirq.decompose() generates gates with at most two distinct
+        # eigenvalues, which results in two parameter shifts.
+        n_shifts = 2
+        flat_programs, new_symbol_names, flat_weights, flat_perturbations, n_param_gates = self.get_intermediate_logic(
+            programs, symbol_names, symbol_values, n_ops)
+        total_programs = n_param_gates * n_programs * n_shifts * n_symbols
+        n_tile = n_shifts * n_param_gates * n_symbols
         flat_ops = tf.reshape(
             tf.tile(tf.expand_dims(pauli_sums, 0), tf.stack([n_tile, 1, 1])),
             [total_programs, n_ops])
-        # Append impurity symbol into symbol name
-
-        flat_programs, new_symbol_names, flat_perturbations = self.get_intermediate_logic(
-            programs, symbol_names, n_ops)
 
         # STEP 2: calculate the required expectation values
         expectations = self.expectation_op(flat_programs, new_symbol_names,
@@ -200,7 +206,7 @@ class ParameterShift(differentiator.Differentiator):
         partials = tf.einsum(
             'spco,spc->sco', rearranged_expectations,
             tf.cast(
-                tf.reshape(weights,
+                tf.reshape(flat_weights,
                            [n_symbols, n_param_gates * n_shifts, n_programs]),
                 rearranged_expectations.dtype))
 
@@ -258,15 +264,21 @@ class ParameterShift(differentiator.Differentiator):
             the shape of [batch_size, n_symbols].
         """
         n_ops = tf.gather(tf.shape(pauli_sums), 1)
+        n_symbols = tf.gather(tf.shape(symbol_names), 0)
+        n_programs = tf.gather(tf.shape(programs), 0)
+        # Assume cirq.decompose() generates gates with at most two distinct
+        # eigenvalues, which results in two parameter shifts.
+        n_shifts = 2
+        flat_programs, new_symbol_names, flat_weights, flat_perturbations, n_param_gates = self.get_intermediate_logic(
+            programs, symbol_names, symbol_values, n_ops)
+        total_programs = n_param_gates * n_programs * n_shifts * n_symbols
+        n_tile = n_shifts * n_param_gates * n_symbols
         flat_ops = tf.reshape(
             tf.tile(tf.expand_dims(pauli_sums, 0), tf.stack([n_tile, 1, 1])),
             [total_programs, n_ops])
         flat_num_samples = tf.reshape(
             tf.tile(tf.expand_dims(num_samples, 0), tf.stack([n_tile, 1, 1])),
             [total_programs, n_ops])
-
-        flat_programs, new_symbol_names, flat_perturbations = self.get_intermediate_logic(
-            programs, symbol_names, n_ops)
 
         # STEP 2: calculate the required expectation values
         expectations = self.expectation_op(flat_programs, new_symbol_names,
@@ -302,7 +314,7 @@ class ParameterShift(differentiator.Differentiator):
         partials = tf.einsum(
             'spco,spc->sco', rearranged_expectations,
             tf.cast(
-                tf.reshape(weights,
+                tf.reshape(flat_weights,
                            [n_symbols, n_param_gates * n_shifts, n_programs]),
                 rearranged_expectations.dtype))
 
