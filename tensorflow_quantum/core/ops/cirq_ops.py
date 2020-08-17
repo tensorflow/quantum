@@ -486,10 +486,9 @@ def _get_cirq_samples(sampler=cirq.sim.sparse_simulator.Simulator()):
             p + cirq.Circuit(cirq.measure(*sorted(p.all_qubits()), key='tfq'))
             for p in programs
         ]
+        max_n_qubits = max(len(p.all_qubits()) for p in programs)
 
         if isinstance(sampler, cirq.google.QuantumEngineSampler):
-            max_n_qubits = max(len(p.all_qubits()) for p in programs)
-
             # group samples from identical circuits to reduce communication
             # overhead. Have to keep track of the order in which things came
             # in to make sure the output is ordered correctly
@@ -545,9 +544,8 @@ def _get_cirq_samples(sampler=cirq.sim.sparse_simulator.Simulator()):
                 # Tried to use the key from the measure gate but that led to
                 # sporadic missing key errors.
                 this_result = list(raw_result.measurements.values())[0]
-                samples = np.pad(this_result, ((0, 0), (x_np.shape[2] - len(qubits), 0)),
-                   'constant',
-                   constant_values=-2)
+                samples = np.pad(this_result, ((0, 0), (max_n_qubits - this_result.shape[1], 0)),
+                   'constant', constant_values=-2)
                 results.append(samples)
 
         return np.array(results, dtype=np.int8), _no_grad
