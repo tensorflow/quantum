@@ -483,8 +483,7 @@ def _get_cirq_samples(sampler=cirq.sim.sparse_simulator.Simulator()):
 
         # All other samplers need terminal measurement gates.
         programs = [
-            p + cirq.Circuit(
-                cirq.measure(*sorted(p.all_qubits()), key='tfq'))
+            p + cirq.Circuit(cirq.measure(*sorted(p.all_qubits()), key='tfq'))
             for p in programs
         ]
 
@@ -540,12 +539,16 @@ def _get_cirq_samples(sampler=cirq.sim.sparse_simulator.Simulator()):
             #TODO(zaqqwerty): replace with run_batch once Cirq #3148 is resolved
             results = []
             for p, r in zip(programs, resolvers):
-                this_result = sampler.run(p, r, num_samples)
+                raw_result = sampler.run(p, r, num_samples)
                 # should be safe to make the dict vals a list and subscript,
                 # since we expect exactly one measurement to have been taken.
                 # Tried to use the key from the measure gate but that led to
                 # sporadic missing key errors.
-                results.append(list(result.measurements.values())[0])
+                this_result = list(raw_result.measurements.values())[0]
+                samples = np.pad(this_result, ((0, 0), (x_np.shape[2] - len(qubits), 0)),
+                   'constant',
+                   constant_values=-2)
+                results.append(samples)
 
         return np.array(results, dtype=np.int8), _no_grad
 

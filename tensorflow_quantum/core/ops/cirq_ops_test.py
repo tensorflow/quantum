@@ -427,17 +427,17 @@ class CirqSamplesTest(tf.test.TestCase, parameterized.TestCase):
         class DummySampler(cirq.Sampler):
             """Mock general cirq.Sampler."""
 
-            def run_sweep(self, program, params, repetitions):
+            def run_sweep(self, programs, params, repetitions):
                 """Returns all ones in the correct sample shape."""
                 return [
                     cirq.TrialResult.from_single_parameter_set(
-                        params=params,
+                        params=param,
                         measurements={
                             'tfq':
                                 np.array([[1] * len(program.all_qubits())] *
                                          repetitions,
                                          dtype=np.int32),
-                        })
+                        }) for program, param in zip(programs, params)
                 ]
 
         all_n_qubits = [1, 2, 3, 4, 5]
