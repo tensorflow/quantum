@@ -20,7 +20,8 @@ from tensorflow_quantum.python.differentiators import differentiator
 class WorkingDifferentiator(differentiator.Differentiator):
     """test."""
 
-    def get_intermediate_logic(self, programs, symbol_names, symbol_values, n_ops):
+    def get_intermediate_logic(self, programs, symbol_names, symbol_values,
+                               pauli_sums):
         """test."""
 
     def differentiate_analytic(self, programs, symbol_names, symbol_values,

@@ -109,7 +109,9 @@ class SGDifferentiator(differentiator.Differentiator):
         self.stochastic_cost = stochastic_cost
         self.uniform_sampling = uniform_sampling
 
-    def get_intermediate_logic(self, programs, symbol_names, symbol_values, pauli_sums):
+    @tf.function
+    def get_intermediate_logic(self, programs, symbol_names, symbol_values,
+                               pauli_sums):
         n_symbols = tf.gather(tf.shape(symbol_values), 1)
         n_ops = tf.gather(tf.shape(pauli_sums), 1)
         n_programs = tf.gather(tf.shape(programs), 0)
@@ -344,8 +346,8 @@ class SGDifferentiator(differentiator.Differentiator):
         total_programs = n_param_gates * n_programs * n_shifts * n_symbols
         n_tile = n_shifts * n_param_gates * n_symbols
         flat_num_samples = tf.reshape(
-            tf.tile(tf.expand_dims(num_samples, 0),
-                    tf.stack([n_tile, 1, 1])), [total_programs, n_ops])
+            tf.tile(tf.expand_dims(num_samples, 0), tf.stack([n_tile, 1, 1])),
+            [total_programs, n_ops])
 
         # STEP 2: calculate the required expectation values
         expectations = self.expectation_op(flat_programs, new_symbol_names,

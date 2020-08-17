@@ -180,8 +180,24 @@ class Differentiator(metaclass=abc.ABCMeta):
         return self
 
     @abc.abstractmethod
-    def get_intermediate_logic(self):
-        """Returns circuits and values which are used by both diff types."""
+    def get_intermediate_logic(self, programs, symbol_names, symbol_values, pauli_sums):
+        """Returns circuits and values which are used by both diff types.
+
+        Args:
+            programs: `tf.Tensor` of strings with shape [batch_size] containing
+                the string representations of the circuits to be executed.
+            symbol_names: `tf.Tensor` of strings with shape [n_params], which
+                is used to specify the order in which the values in
+                `symbol_values` should be placed inside of the circuits in
+                `programs`.
+            symbol_values: `tf.Tensor` of real numbers with shape
+                [batch_size, n_params] specifying parameter values to resolve
+                into the circuits specified by programs, following the ordering
+                dictated by `symbol_names`.
+            pauli_sums: `tf.Tensor` of strings with shape [batch_size, n_ops]
+                containing the string representation of the operators that will
+                be used on all of the circuits in the expectation calculations.
+        """
 
     @abc.abstractmethod
     def differentiate_analytic(self, programs, symbol_names, symbol_values,

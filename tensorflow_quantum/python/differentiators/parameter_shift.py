@@ -55,22 +55,12 @@ class ParameterShift(differentiator.Differentiator):
 
     """
 
-    def get_intermediate_logic(self, programs, symbol_names, symbol_values, n_ops):
+    @tf.function
+    def get_intermediate_logic(self, programs, symbol_names, symbol_values,
+                               pauli_sums):
         """Returns copies of the input programs for each perturbed symbol.
 
-        Args:
-            programs: `tf.Tensor` of strings with shape [batch_size] containing
-                the string representations of the circuits to be executed.
-            symbol_names: `tf.Tensor` of strings with shape [n_params], which
-                is used to specify the order in which the values in
-                `symbol_values` should be placed inside of the circuits in
-                `programs`.
-            symbol_values: `tf.Tensor` of real numbers with shape
-                [batch_size, n_params] specifying parameter values to resolve
-                into the circuits specified by programs, following the ordering
-                dictated by `symbol_names`.
-            n_ops: `tf.Tensor` containing the number of pauli sums over which
-                expectation values will be taken.
+        See base class for Args.
 
         Returns:
             flat_programs:
@@ -79,8 +69,9 @@ class ParameterShift(differentiator.Differentiator):
             flat_perturbations:
             n_param_gates:
         """
-        n_symbols = tf.gather(tf.shape(symbol_names), 0)
         n_programs = tf.gather(tf.shape(programs), 0)
+        n_symbols = tf.gather(tf.shape(symbol_names), 0)
+        n_ops = tf.gather(tf.shape(pauli_sums), 1)
 
         # Assume cirq.decompose() generates gates with at most two distinct
         # eigenvalues, which results in two parameter shifts.
