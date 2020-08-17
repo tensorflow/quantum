@@ -524,29 +524,22 @@ def _get_cirq_samples(sampler=cirq.sim.sparse_simulator.Simulator()):
                 for result, index in zip(this_results, value):
                     cirq_results[index] = result
 
-            results = []
-            for r in cirq_results:
-                results.append(
-                    tf.keras.preprocessing.sequence.pad_sequences(
-                        r.measurements['tfq'],
-                        maxlen=max_n_qubits,
-                        dtype=np.int8,
-                        value=-2,
-                        padding='pre'))
         else:
             # All other cirq.Samplers handled here.
             #TODO(zaqqwerty): replace with run_batch once Cirq #3148 is resolved
-            results = []
+            cirq_results = []
             for p, r in zip(programs, resolvers):
-                raw_result = sampler.run(p, r, num_samples)
-                # should be safe to make the dict vals a list and subscript,
-                # since we expect exactly one measurement to have been taken.
-                # Tried to use the key from the measure gate but that led to
-                # sporadic missing key errors.
-                this_result = list(raw_result.measurements.values())[0]
-                samples = np.pad(this_result, ((0, 0), (max_n_qubits - this_result.shape[1], 0)),
-                   'constant', constant_values=-2)
-                results.append(samples)
+                cirq_results.append(sampler.run(p, r, num_samples))
+
+        results = []
+        for r in cirq_results:
+            results.append(
+                tf.keras.preprocessing.sequence.pad_sequences(
+                    r.measurements['tfq'],
+                    maxlen=max_n_qubits,
+                    dtype=np.int8,
+                    value=-2,
+                    padding='pre'))
 
         return np.array(results, dtype=np.int8), _no_grad
 
