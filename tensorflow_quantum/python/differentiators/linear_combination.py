@@ -95,14 +95,33 @@ class LinearCombination(differentiator.Differentiator):
         self.n_perturbations = tf.constant(len(perturbations))
         self.perturbations = tf.constant(perturbations)
 
+    @tf.function
     def get_intermediate_logic(self, programs, symbol_names, symbol_values, n_ops):
-        """"""
-        # these get used a lot
+        """Returns copies of the input programs for each perturbed symbol.
+
+        Args:
+            programs: `tf.Tensor` of strings with shape [batch_size] containing
+                the string representations of the circuits to be executed.
+            symbol_names: `tf.Tensor` of strings with shape [n_params], which
+                is used to specify the order in which the values in
+                `symbol_values` should be placed inside of the circuits in
+                `programs`.
+            symbol_values: `tf.Tensor` of real numbers with shape
+                [batch_size, n_params] specifying parameter values to resolve
+                into the circuits specified by programs, following the ordering
+                dictated by `symbol_names`.
+            n_ops: `tf.Tensor` containing the number of pauli sums over which
+                expectation values will be taken.
+
+        Returns:
+            flat_programs:
+            symbol_names:
+            non_zero_weights:
+            flat_perturbations:
+            n_non_zero_perturbations:
+        """
         n_symbols = tf.gather(tf.shape(symbol_names), 0)
         n_programs = tf.gather(tf.shape(programs), 0)
-
-        # STEP 1: Generate required inputs for executor
-        # in this case I can do this with existing tensorflow ops if i'm clever
 
         # don't do any computation for a perturbation of zero, just use
         # forward pass values
@@ -157,14 +176,11 @@ class LinearCombination(differentiator.Differentiator):
                                       dtype=tf.float32)
 
         # reshape everything to fit into expectation op correctly
-        total_programs = tf.multiply(
-            tf.multiply(n_programs, n_non_zero_perturbations), n_symbols)
-        # tile up and then reshape to order programs correctly
         flat_programs = tf.reshape(
             tf.tile(
                 tf.expand_dims(programs, 0),
                 tf.stack([tf.multiply(n_symbols, n_non_zero_perturbations),
-                          1])), [total_programs])
+                          1])), [n_symbols * n_non_zero_perturbations * n_programs])
         flat_perturbations = tf.reshape(all_perturbations, [
             tf.multiply(tf.multiply(n_symbols, n_non_zero_perturbations),
                         n_programs), n_symbols

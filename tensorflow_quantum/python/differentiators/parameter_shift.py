@@ -69,20 +69,26 @@ class ParameterShift(differentiator.Differentiator):
                 [batch_size, n_params] specifying parameter values to resolve
                 into the circuits specified by programs, following the ordering
                 dictated by `symbol_names`.
-            n_ops:
+            n_ops: `tf.Tensor` containing the number of pauli sums over which
+                expectation values will be taken.
+
+        Returns:
+            flat_programs:
+            new_symbol_names:
+            flat_weights:
+            flat_perturbations:
+            n_param_gates:
         """
-        # these get used a lot
         n_symbols = tf.gather(tf.shape(symbol_names), 0)
         n_programs = tf.gather(tf.shape(programs), 0)
+
         # Assume cirq.decompose() generates gates with at most two distinct
         # eigenvalues, which results in two parameter shifts.
         n_shifts = 2
 
-        # STEP 1: Generate required inputs for executor
         # Deserialize programs and parse the whole parameterized gates
         # new_programs has [n_symbols, n_programs, n_param_gates, n_shifts]
-        # These new_programs has programs that parameter-shift rule is applied,
-        # so those programs has
+        # These new_programs are programs with parameter-shift rule applied.
         (new_programs, weights, shifts,
          n_param_gates) = parameter_shift_util.parse_programs(
              programs, symbol_names, symbol_values, n_symbols)
