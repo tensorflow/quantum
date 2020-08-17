@@ -180,6 +180,10 @@ class Differentiator(metaclass=abc.ABCMeta):
         return self
 
     @abc.abstractmethod
+    def get_intermediate_logic(self):
+        """Returns circuits and values which are used by both diff types."""
+
+    @abc.abstractmethod
     def differentiate_analytic(self, programs, symbol_names, symbol_values,
                                pauli_sums, forward_pass_vals, grad):
         """Specify how to differentiate a circuit with analytical expectation.

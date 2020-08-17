@@ -95,14 +95,11 @@ class LinearCombination(differentiator.Differentiator):
         self.n_perturbations = tf.constant(len(perturbations))
         self.perturbations = tf.constant(perturbations)
 
-    @tf.function
-    def differentiate_analytic(self, programs, symbol_names, symbol_values,
-                               pauli_sums, forward_pass_vals, grad):
-
+    def get_intermediate_logic(self, programs, symbol_names, symbol_values, n_ops):
+        """"""
         # these get used a lot
         n_symbols = tf.gather(tf.shape(symbol_names), 0)
         n_programs = tf.gather(tf.shape(programs), 0)
-        n_ops = tf.gather(tf.shape(pauli_sums), 1)
 
         # STEP 1: Generate required inputs for executor
         # in this case I can do this with existing tensorflow ops if i'm clever
@@ -172,6 +169,22 @@ class LinearCombination(differentiator.Differentiator):
             tf.multiply(tf.multiply(n_symbols, n_non_zero_perturbations),
                         n_programs), n_symbols
         ])
+        return flat_programs, symbol_names, non_zero_weights, flat_perturbations, n_non_zero_perturbations
+
+    @tf.function
+    def differentiate_analytic(self, programs, symbol_names, symbol_values,
+                               pauli_sums, forward_pass_vals, grad):
+
+        # these get used a lot
+        n_symbols = tf.gather(tf.shape(symbol_names), 0)
+        n_programs = tf.gather(tf.shape(programs), 0)
+        n_ops = tf.gather(tf.shape(pauli_sums), 1)
+
+        flat_programs, new_symbol_names, non_zero_weights, flat_perturbations, n_non_zero_perturbations = self.get_intermediate_logic(
+            programs, symbol_names, symbol_values, n_ops)
+
+        total_programs = tf.multiply(
+            tf.multiply(n_programs, n_non_zero_perturbations), n_symbols)
         # tile up and then reshape to order ops correctly
         flat_ops = tf.reshape(
             tf.tile(

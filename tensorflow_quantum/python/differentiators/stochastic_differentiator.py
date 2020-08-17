@@ -109,6 +109,9 @@ class SGDifferentiator(differentiator.Differentiator):
         self.stochastic_cost = stochastic_cost
         self.uniform_sampling = uniform_sampling
 
+    def get_intermediate_logic(self):
+        pass
+
     @tf.function
     def differentiate_analytic(self, programs, symbol_names, symbol_values,
                                pauli_sums, forward_pass_vals, grad):
