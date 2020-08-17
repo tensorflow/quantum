@@ -250,80 +250,17 @@ class LinearCombination(differentiator.Differentiator):
     @tf.function
     def differentiate_sampled(self, programs, symbol_names, symbol_values,
                               pauli_sums, num_samples, forward_pass_vals, grad):
-
         # these get used a lot
         n_symbols = tf.gather(tf.shape(symbol_names), 0)
         n_programs = tf.gather(tf.shape(programs), 0)
         n_ops = tf.gather(tf.shape(pauli_sums), 1)
 
-        # STEP 1: Generate required inputs for executor
-        # in this case I can do this with existing tensorflow ops if i'm clever
+        flat_programs, new_symbol_names, non_zero_weights, flat_perturbations, n_non_zero_perturbations = self.get_intermediate_logic(
+            programs, symbol_names, symbol_values, n_ops)
 
-        # don't do any computation for a perturbation of zero, just use
-        # forward pass values
-        mask = tf.not_equal(self.perturbations,
-                            tf.zeros_like(self.perturbations))
-        non_zero_perturbations = tf.boolean_mask(self.perturbations, mask)
-        non_zero_weights = tf.boolean_mask(self.weights, mask)
-        n_non_zero_perturbations = tf.gather(tf.shape(non_zero_perturbations),
-                                             0)
-
-        # tile up symbols to [n_non_zero_perturbations, n_programs, n_symbols]
-        perturbation_tiled_symbols = tf.tile(
-            tf.expand_dims(symbol_values, 0),
-            tf.stack([n_non_zero_perturbations, 1, 1]))
-
-        def create_3d_perturbation(i, perturbation_values):
-            """Generate a tensor the same shape as perturbation_tiled_symbols
-             containing the perturbations specified by perturbation_values."""
-            ones = tf.cast(
-                tf.concat([
-                    tf.zeros(tf.stack([n_non_zero_perturbations, n_programs, i
-                                      ])),
-                    tf.ones(tf.stack([n_non_zero_perturbations, n_programs, 1
-                                     ])),
-                    tf.zeros(
-                        tf.stack([
-                            n_non_zero_perturbations, n_programs,
-                            tf.subtract(n_symbols, tf.add(i, 1))
-                        ]))
-                ],
-                          axis=2), perturbation_values.dtype)
-            return tf.einsum('kij,k->kij', ones, perturbation_values)
-
-        def generate_perturbation(i):
-            """Perturb each value in the ith column of
-             perturbation_tiled_symbols.
-            """
-            return tf.add(
-                perturbation_tiled_symbols,
-                tf.cast(create_3d_perturbation(i, non_zero_perturbations),
-                        perturbation_tiled_symbols.dtype))
-
-        # create a 4d tensor with the following dimensions:
-        # [n_symbols, n_perturbations, n_programs, n_symbols]
-        # the zeroth dimension represents the fact that we have to apply
-        # a perturbation in the direction of every parameter individually.
-        # the first dimension represents the number of perturbations that we
-        # have to apply, and the inner 2 dimensions represent the standard
-        # input format to the expectation ops
-        all_perturbations = tf.map_fn(generate_perturbation,
-                                      tf.range(n_symbols),
-                                      dtype=tf.float32)
-
-        # reshape everything to fit into expectation op correctly
         total_programs = tf.multiply(
             tf.multiply(n_programs, n_non_zero_perturbations), n_symbols)
-        # tile up and then reshape to order programs correctly
-        flat_programs = tf.reshape(
-            tf.tile(
-                tf.expand_dims(programs, 0),
-                tf.stack([tf.multiply(n_symbols, n_non_zero_perturbations),
-                          1])), [total_programs])
-        flat_perturbations = tf.reshape(all_perturbations, [
-            tf.multiply(tf.multiply(n_symbols, n_non_zero_perturbations),
-                        n_programs), n_symbols
-        ])
+
         # tile up and then reshape to order ops correctly
         flat_ops = tf.reshape(
             tf.tile(
