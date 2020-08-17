@@ -139,6 +139,7 @@ cc_binary(
     name = "_tfq_utility_ops.so",
     srcs = [
         "tfq_circuit_append_op.cc",
+        "tfq_resolve_parameters_op.cc",
     ],
     copts = select({
         ":windows": [
