@@ -404,8 +404,6 @@ def _get_cirq_samples(sampler=cirq.sim.sparse_simulator.Simulator()):
     if not isinstance(sampler, cirq.Sampler):
         raise TypeError("Passed sampler must inherit cirq.Sampler.")
 
-    _measure_all_key = "_tfq_measure"
-
     @tf.custom_gradient
     def cirq_sample(programs, symbol_names, symbol_values, num_samples):
         """Draw samples from circuits.
@@ -486,7 +484,7 @@ def _get_cirq_samples(sampler=cirq.sim.sparse_simulator.Simulator()):
         # All other samplers need terminal measurement gates.
         programs = [
             p + cirq.Circuit(
-                cirq.measure(*sorted(p.all_qubits()), key=_measure_all_key))
+                cirq.measure(*sorted(p.all_qubits()), key='tfq'))
             for p in programs
         ]
 
@@ -543,7 +541,11 @@ def _get_cirq_samples(sampler=cirq.sim.sparse_simulator.Simulator()):
             results = []
             for p, r in zip(programs, resolvers):
                 this_result = sampler.run(p, r, num_samples)
-                results.append(this_result.measurements[_measure_all_key])
+                # should be safe to make the dict vals a list and subscript,
+                # since we expect exactly one measurement to have been taken.
+                # Tried to use the key from the measure gate but that led to
+                # sporadic missing key errors.
+                results.append(list(result.measurements.values())[0])
 
         return np.array(results, dtype=np.int8), _no_grad
 
