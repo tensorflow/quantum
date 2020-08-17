@@ -404,6 +404,8 @@ def _get_cirq_samples(sampler=cirq.sim.sparse_simulator.Simulator()):
     if not isinstance(sampler, cirq.Sampler):
         raise TypeError("Passed sampler must inherit cirq.Sampler.")
 
+    _MEASURE_ALL_KEY = "_tfq_measure"
+
     @tf.custom_gradient
     def cirq_sample(programs, symbol_names, symbol_values, num_samples):
         """Draw samples from circuits.
@@ -472,21 +474,19 @@ def _get_cirq_samples(sampler=cirq.sim.sparse_simulator.Simulator()):
 
         num_samples = int(num_samples.numpy())
 
-        if not isinstance(sampler, cirq.google.QuantumEngineSampler):
+        if isinstance(sampler,
+                      (cirq.sim.sparse_simulator.Simulator,
+                       cirq.sim.density_matrix_simulator.DensityMatrixSimulator)):
+            # Only local simulators can be handled by batch_sample
             results = batch_util.batch_sample(programs, resolvers, num_samples,
                                               sampler)
+            return np.array(results, dtype=np.int8), _no_grad
 
-        else:
+        # All other samplers need terminal measurement gates.
+        programs = [p + cirq.Circuit(cirq.measure(*sorted(p.all_qubits()), key=_MEASURE_ALL_KEY)) for p in programs]
 
-            max_n_qubits = 0
-            for p in programs:
-                if p.has_measurements():
-                    # should never hit this error because the seriazlizer
-                    # does not support cirq.measurement yet
-                    raise RuntimeError('TFQ does not support programs with '
-                                       'pre-existing measurements.')
-                p.append(cirq.measure(*sorted(p.all_qubits()), key='tfq'))
-                max_n_qubits = max([max_n_qubits, len(p.all_qubits())])
+        if isinstance(sampler, cirq.google.QuantumEngineSampler):
+            max_n_qubits = max(len(p.all_qubits()) for p in programs)
 
             # group samples from identical circuits to reduce communication
             # overhead. Have to keep track of the order in which things came
@@ -532,6 +532,13 @@ def _get_cirq_samples(sampler=cirq.sim.sparse_simulator.Simulator()):
                         dtype=np.int8,
                         value=-2,
                         padding='pre'))
+        else:
+            # All other cirq.Samplers handled here.
+            #TODO(zaqqwerty): replace with run_batch once Cirq #3148 is resolved
+            results = []
+            for p, r in zip(programs, resolvers):
+                this_result = sampler.run(p, r, num_samples)
+                samples = this_result.measurements[_MEASURE_ALL_KEY].astype(np.int8)
 
         return np.array(results, dtype=np.int8), _no_grad
 

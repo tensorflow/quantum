@@ -291,19 +291,16 @@ def _sample_worker_func(indices, programs, params, n_samples):
     """Sample n_samples from progams[i] with params[i] placed in it."""
     x_np = _convert_simple_view_to_np(INFO_DICT['arr'], np.int32,
                                       INFO_DICT['shape'])
-    sampler = INFO_DICT['sim']
+    simulator = INFO_DICT['sim']
 
     for i, index in enumerate(indices):
         qubits = sorted(programs[i].all_qubits())
         # (#679) Just ignore empty programs.
         if len(qubits) == 0:
             continue
-        result = sampler.run(programs[i], params[i], n_samples[i])
-        # should be safe to make the dict vals a list and subscript,
-        # since we expect exactly one measurement to have been taken.
-        # Tried to use the key from the measure gate but that led to
-        # sporadic errors in the pool.
-        samples = list(result.measurements.values())[0].astype(np.int32)
+        state = simulator.simulate(programs[i], params[i])
+        samples = INFO_DICT['post_process'](state, len(qubits),
+                                            n_samples[i]).astype(np.int32)
         _batch_update_simple_np(
             x_np, index,
             np.pad(samples, ((0, 0), (x_np.shape[2] - len(qubits), 0)),
@@ -575,7 +572,7 @@ def batch_calculate_sampled_expectation(circuits, param_resolvers, ops,
                                           return_mem_shape)
 
 
-def batch_sample(circuits, param_resolvers, n_samples, sampler):
+def batch_sample(circuits, param_resolvers, n_samples, simulator):
     """Sample from circuits using parallel processing.
 
     Returns a `np.ndarray` containing n_samples samples from all the circuits in
@@ -583,6 +580,8 @@ def batch_sample(circuits, param_resolvers, n_samples, sampler):
     `param_resolvers` was used to resolve any symbols. Specifically the
     returned array at index `i,j` will correspond to a `np.ndarray` of
     booleans representing bitstring `j` that was sampled from `circuits[i]`.
+    Samples are drawn using the provided simulator object (Currently supported
+    are `cirq.DensityMatrixSimulator` and `cirq.Simulator`).
 
     Note: In order to keep numpy shape consistent, smaller circuits will
         have sample bitstrings padded with -2 on "qubits that don't exist
@@ -594,29 +593,40 @@ def batch_sample(circuits, param_resolvers, n_samples, sampler):
             `param_resolvers[i]` is the resolver to be used with `circuits[i]`.
         n_samples: `int` describing number of samples to draw from each
             circuit.
-        sampler: Object inheriting from `cirq.Sampler`.
+        simulator: Simulator object. Currently
+            supported are `cirq.DensityMatrixSimulator` and `cirq.Simulator`.
 
     Returns:
         `np.ndarray` containing the samples with invalid qubits blanked out.
-        Its shape is [len(circuits), n_samples, <# qubits in largest circuit>].
-        Circuits that are smaller than #qubits in largest circuit have null
+        It's shape is
+        [len(circuits), n_samples, <# qubits in largest circuit>].
+        circuits that are smaller than #qubits in largest circuit have null
         qubits in bitstrings mapped to -2.
     """
-    _validate_inputs(circuits, param_resolvers, sampler, 'sample')
+    _validate_inputs(circuits, param_resolvers, simulator, 'sample')
     if not isinstance(n_samples, int):
         raise TypeError('n_samples must be an int.'
                         'Given: {}'.format(type(n_samples)))
+
     if n_samples <= 0:
         raise ValueError('n_samples must be > 0.')
 
     biggest_circuit = max(len(circuit.all_qubits()) for circuit in circuits)
-    circuits = [
-        c + cirq.Circuit(cirq.measure(*sorted(c.all_qubits())))
-        if c.all_qubits() else c for c in circuits
-    ]
-
     return_mem_shape = (len(circuits), n_samples, biggest_circuit)
     shared_array = _make_simple_view(return_mem_shape, -2, np.int32, 'i')
+
+    if isinstance(simulator,
+                  cirq.sim.density_matrix_simulator.DensityMatrixSimulator):
+        post_process = lambda state, size, n_samples: \
+            cirq.sample_density_matrix(
+                state.final_density_matrix, [i for i in range(size)],
+                repetitions=n_samples)
+    elif isinstance(simulator, cirq.sim.sparse_simulator.Simulator):
+        post_process = lambda state, size, n_samples: cirq.sample_state_vector(
+            state.final_state, list(range(size)), repetitions=n_samples)
+    else:
+        raise TypeError('Simulator {} is not supported by batch_sample.'.format(
+            type(simulator)))
 
     input_args = list(
         _prep_pool_input_args(range(len(circuits)), circuits, param_resolvers,
@@ -624,8 +634,8 @@ def batch_sample(circuits, param_resolvers, n_samples, sampler):
 
     with ProcessPool(processes=None,
                      initializer=_setup_dict,
-                     initargs=(shared_array, return_mem_shape, sampler,
-                               None)) as pool:
+                     initargs=(shared_array, return_mem_shape, simulator,
+                               post_process)) as pool:
 
         pool.starmap(_sample_worker_func, input_args)
 
