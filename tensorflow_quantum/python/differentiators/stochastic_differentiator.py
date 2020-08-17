@@ -109,8 +109,79 @@ class SGDifferentiator(differentiator.Differentiator):
         self.stochastic_cost = stochastic_cost
         self.uniform_sampling = uniform_sampling
 
-    def get_intermediate_logic(self):
-        pass
+    def get_intermediate_logic(self, programs, symbol_names, symbol_values, pauli_sums):
+        n_symbols = tf.gather(tf.shape(symbol_values), 1)
+        n_ops = tf.gather(tf.shape(pauli_sums), 1)
+        n_programs = tf.gather(tf.shape(programs), 0)
+        n_shifts = 2
+
+        # STEP 1: Generate required inputs for executor by using parsers
+
+        # Deserialize programs and parse the whole parameterized gates
+        # new_programs has [n_symbols, n_programs, n_param_gates, n_shifts].
+        new_programs, weights, shifts, n_param_gates = \
+            parameter_shift_util.parse_programs(
+                programs, symbol_names, symbol_values, n_symbols)
+
+        if self.stochastic_generator:
+            # Result : [n_symbols, n_programs, n_param_gates=1, n_shifts].
+            new_programs, weights, shifts, n_param_gates = \
+                sd_util.stochastic_generator_preprocessor(
+                    new_programs, weights, shifts, n_programs, n_symbols,
+                    n_param_gates, n_shifts, self.uniform_sampling)
+
+        # Reshape & transpose new_programs, weights and shifts to fit into
+        # the input format of tensorflow_quantum simulator.
+        # [n_symbols, n_param_gates, n_shifts, n_programs]
+        new_programs = tf.transpose(new_programs, [0, 2, 3, 1])
+        weights = tf.transpose(weights, [0, 2, 3, 1])
+        shifts = tf.transpose(shifts, [0, 2, 3, 1])
+
+        cost_relocator = None
+        if self.stochastic_cost:
+            # Result : pauli_sums [n_programs, n_ops] -> [n_programs, n_ops=1]
+            pauli_sums, cost_relocator, n_ops = \
+                sd_util.stochastic_cost_preprocessor(
+                    pauli_sums, n_programs, n_ops, self.uniform_sampling)
+
+        coordinate_relocator = None
+        if self.stochastic_coordinate:
+            flat_programs, flat_perturbations, flat_ops, _, weights, \
+            coordinate_relocator = sd_util.stochastic_coordinate_preprocessor(
+                new_programs, symbol_values, pauli_sums, weights, shifts,
+                n_programs, n_symbols, n_param_gates, n_shifts, n_ops,
+                self.uniform_sampling)
+        else:
+            # reshape everything to fit into expectation op correctly
+            total_programs = n_programs * n_shifts * n_symbols * n_param_gates
+            # tile up and then reshape to order programs correctly
+            flat_programs = tf.reshape(new_programs, [total_programs])
+            flat_shifts = tf.reshape(shifts, [total_programs])
+
+            # tile up and then reshape to order ops correctly
+            n_tile = n_shifts * n_symbols * n_param_gates
+            flat_perturbations = tf.concat([
+                tf.reshape(
+                    tf.tile(tf.expand_dims(symbol_values, 0),
+                            tf.stack([n_tile, 1, 1])),
+                    [total_programs, n_symbols]),
+                tf.expand_dims(flat_shifts, axis=1)
+            ],
+                                           axis=1)
+            flat_ops = tf.reshape(
+                tf.tile(tf.expand_dims(pauli_sums, 0),
+                        tf.stack([n_tile, 1, 1])), [total_programs, n_ops])
+
+        # Append impurity symbol into symbol name
+        new_symbol_names = tf.concat([
+            symbol_names,
+            tf.expand_dims(tf.constant(
+                parameter_shift_util._PARAMETER_IMPURITY_NAME),
+                           axis=0)
+        ],
+                                     axis=0)
+        return flat_programs, new_symbol_names, weights, flat_perturbations, flat_ops, cost_relocator, coordinate_relocator, n_param_gates
+
 
     @tf.function
     def differentiate_analytic(self, programs, symbol_names, symbol_values,
@@ -148,74 +219,16 @@ class SGDifferentiator(differentiator.Differentiator):
             A `tf.Tensor` of real numbers for sampled gradients from the above
             samplers with the shape of [n_programs, n_symbols]
         """
-        n_symbols = tf.gather(tf.shape(symbol_values), 1)
+        n_symbols = tf.gather(tf.shape(symbol_names), 0)
         n_programs = tf.gather(tf.shape(programs), 0)
         n_ops = tf.gather(tf.shape(pauli_sums), 1)
+        # Assume cirq.decompose() generates gates with at most two distinct
+        # eigenvalues, which results in two parameter shifts.
         n_shifts = 2
-
-        # STEP 1: Generate required inputs for executor by using parsers
-
-        # Deserialize programs and parse the whole parameterized gates
-        # new_programs has [n_symbols, n_programs, n_param_gates, n_shifts].
-        new_programs, weights, shifts, n_param_gates = \
-            parameter_shift_util.parse_programs(
-                programs, symbol_names, symbol_values, n_symbols)
-
-        if self.stochastic_generator:
-            # Result : [n_symbols, n_programs, n_param_gates=1, n_shifts].
-            new_programs, weights, shifts, n_param_gates = \
-                sd_util.stochastic_generator_preprocessor(
-                    new_programs, weights, shifts, n_programs, n_symbols,
-                    n_param_gates, n_shifts, self.uniform_sampling)
-
-        # Reshape & transpose new_programs, weights and shifts to fit into
-        # the input format of tensorflow_quantum simulator.
-        # [n_symbols, n_param_gates, n_shifts, n_programs]
-        new_programs = tf.transpose(new_programs, [0, 2, 3, 1])
-        weights = tf.transpose(weights, [0, 2, 3, 1])
-        shifts = tf.transpose(shifts, [0, 2, 3, 1])
-
-        if self.stochastic_cost:
-            # Result : pauli_sums [n_programs, n_ops] -> [n_programs, n_ops=1]
-            pauli_sums, cost_relocator, n_ops = \
-                sd_util.stochastic_cost_preprocessor(
-                    pauli_sums, n_programs, n_ops, self.uniform_sampling)
-
-        if self.stochastic_coordinate:
-            flat_programs, flat_perturbations, flat_ops, _, weights, \
-            coordinate_relocator = sd_util.stochastic_coordinate_preprocessor(
-                new_programs, symbol_values, pauli_sums, weights, shifts,
-                n_programs, n_symbols, n_param_gates, n_shifts, n_ops,
-                self.uniform_sampling)
-        else:
-            # reshape everything to fit into expectation op correctly
-            total_programs = n_programs * n_shifts * n_symbols * n_param_gates
-            # tile up and then reshape to order programs correctly
-            flat_programs = tf.reshape(new_programs, [total_programs])
-            flat_shifts = tf.reshape(shifts, [total_programs])
-
-            # tile up and then reshape to order ops correctly
-            n_tile = n_shifts * n_symbols * n_param_gates
-            flat_perturbations = tf.concat([
-                tf.reshape(
-                    tf.tile(tf.expand_dims(symbol_values, 0),
-                            tf.stack([n_tile, 1, 1])),
-                    [total_programs, n_symbols]),
-                tf.expand_dims(flat_shifts, axis=1)
-            ],
-                                           axis=1)
-            flat_ops = tf.reshape(
-                tf.tile(tf.expand_dims(pauli_sums, 0),
-                        tf.stack([n_tile, 1, 1])), [total_programs, n_ops])
-
-        # Append impurity symbol into symbol name
-        new_symbol_names = tf.concat([
-            symbol_names,
-            tf.expand_dims(tf.constant(
-                parameter_shift_util._PARAMETER_IMPURITY_NAME),
-                           axis=0)
-        ],
-                                     axis=0)
+        flat_programs, new_symbol_names, weights, flat_perturbations, flat_ops, cost_relocator, coordinate_relocator, n_param_gates = self.get_intermediate_logic(
+            programs, symbol_names, symbol_values, pauli_sums)
+        total_programs = n_param_gates * n_programs * n_shifts * n_symbols
+        n_tile = n_shifts * n_param_gates * n_symbols
 
         # STEP 2: calculate the required expectation values
         expectations = self.expectation_op(flat_programs, new_symbol_names,
@@ -320,78 +333,19 @@ class SGDifferentiator(differentiator.Differentiator):
             A `tf.Tensor` of real numbers for sampled gradients from the above
             samplers with the shape of [n_programs, n_symbols]
         """
-        n_symbols = tf.gather(tf.shape(symbol_values), 1)
+        n_symbols = tf.gather(tf.shape(symbol_names), 0)
         n_programs = tf.gather(tf.shape(programs), 0)
         n_ops = tf.gather(tf.shape(pauli_sums), 1)
+        # Assume cirq.decompose() generates gates with at most two distinct
+        # eigenvalues, which results in two parameter shifts.
         n_shifts = 2
-
-        # STEP 1: Generate required inputs for executor by using parsers
-
-        # Deserialize programs and parse the whole parameterized gates
-        # new_programs has [n_symbols, n_programs, n_param_gates, n_shifts].
-        new_programs, weights, shifts, n_param_gates = \
-            parameter_shift_util.parse_programs(
-                programs, symbol_names, symbol_values, n_symbols)
-
-        if self.stochastic_generator:
-            # Result : [n_symbols, n_programs, n_param_gates=1, n_shifts].
-            new_programs, weights, shifts, n_param_gates = \
-                sd_util.stochastic_generator_preprocessor(
-                    new_programs, weights, shifts, n_programs, n_symbols,
-                    n_param_gates, n_shifts, self.uniform_sampling)
-
-        # Reshape & transpose new_programs, weights and shifts to fit into
-        # the input format of tensorflow_quantum simulator.
-        # [n_symbols, n_param_gates, n_shifts, n_programs]
-        new_programs = tf.transpose(new_programs, [0, 2, 3, 1])
-        weights = tf.transpose(weights, [0, 2, 3, 1])
-        shifts = tf.transpose(shifts, [0, 2, 3, 1])
-
-        if self.stochastic_cost:
-            # Result : pauli_sums [n_programs, n_ops] -> [n_programs, n_ops=1]
-            pauli_sums, cost_relocator, n_ops = \
-                sd_util.stochastic_cost_preprocessor(
-                    pauli_sums, n_programs, n_ops, self.uniform_sampling)
-
-        if self.stochastic_coordinate:
-            flat_programs, flat_perturbations, flat_ops, flat_num_samples, \
-            weights, coordinate_relocator = \
-                sd_util.stochastic_coordinate_preprocessor(
-                    new_programs, symbol_values, pauli_sums, weights, shifts,
-                    n_programs, n_symbols, n_param_gates, n_shifts, n_ops,
-                    self.uniform_sampling, num_samples=num_samples)
-        else:
-            # reshape everything to fit into expectation op correctly
-            total_programs = n_programs * n_shifts * n_symbols * n_param_gates
-            # tile up and then reshape to order programs correctly
-            flat_programs = tf.reshape(new_programs, [total_programs])
-            flat_shifts = tf.reshape(shifts, [total_programs])
-
-            # tile up and then reshape to order ops correctly
-            n_tile = n_shifts * n_symbols * n_param_gates
-            flat_perturbations = tf.concat([
-                tf.reshape(
-                    tf.tile(tf.expand_dims(symbol_values, 0),
-                            tf.stack([n_tile, 1, 1])),
-                    [total_programs, n_symbols]),
-                tf.expand_dims(flat_shifts, axis=1)
-            ],
-                                           axis=1)
-            flat_ops = tf.reshape(
-                tf.tile(tf.expand_dims(pauli_sums, 0),
-                        tf.stack([n_tile, 1, 1])), [total_programs, n_ops])
-            flat_num_samples = tf.reshape(
-                tf.tile(tf.expand_dims(num_samples, 0),
-                        tf.stack([n_tile, 1, 1])), [total_programs, n_ops])
-
-        # Append impurity symbol into symbol name
-        new_symbol_names = tf.concat([
-            symbol_names,
-            tf.expand_dims(tf.constant(
-                parameter_shift_util._PARAMETER_IMPURITY_NAME),
-                           axis=0)
-        ],
-                                     axis=0)
+        flat_programs, new_symbol_names, weights, flat_perturbations, flat_ops, cost_relocator, coordinate_relocator, n_param_gates = self.get_intermediate_logic(
+            programs, symbol_names, symbol_values, pauli_sums)
+        total_programs = n_param_gates * n_programs * n_shifts * n_symbols
+        n_tile = n_shifts * n_param_gates * n_symbols
+        flat_num_samples = tf.reshape(
+            tf.tile(tf.expand_dims(num_samples, 0),
+                    tf.stack([n_tile, 1, 1])), [total_programs, n_ops])
 
         # STEP 2: calculate the required expectation values
         expectations = self.expectation_op(flat_programs, new_symbol_names,

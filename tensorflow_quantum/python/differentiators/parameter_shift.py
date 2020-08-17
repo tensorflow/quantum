@@ -59,8 +59,16 @@ class ParameterShift(differentiator.Differentiator):
         """Returns copies of the input programs for each perturbed symbol.
 
         Args:
-            programs:
-            symbols_names:
+            programs: `tf.Tensor` of strings with shape [batch_size] containing
+                the string representations of the circuits to be executed.
+            symbol_names: `tf.Tensor` of strings with shape [n_params], which
+                is used to specify the order in which the values in
+                `symbol_values` should be placed inside of the circuits in
+                `programs`.
+            symbol_values: `tf.Tensor` of real numbers with shape
+                [batch_size, n_params] specifying parameter values to resolve
+                into the circuits specified by programs, following the ordering
+                dictated by `symbol_names`.
             n_ops:
         """
         # these get used a lot
