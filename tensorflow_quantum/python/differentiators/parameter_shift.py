@@ -71,7 +71,6 @@ class ParameterShift(differentiator.Differentiator):
         """
         n_programs = tf.gather(tf.shape(programs), 0)
         n_symbols = tf.gather(tf.shape(symbol_names), 0)
-        n_ops = tf.gather(tf.shape(pauli_sums), 1)
 
         # Assume cirq.decompose() generates gates with at most two distinct
         # eigenvalues, which results in two parameter shifts.
@@ -115,7 +114,8 @@ class ParameterShift(differentiator.Differentiator):
             tf.expand_dims(flat_shifts, axis=1)
         ],
                                        axis=1)
-        return flat_programs, new_symbol_names, flat_weights, flat_perturbations, n_param_gates
+        return (flat_programs, new_symbol_names, flat_weights,
+                flat_perturbations, n_param_gates)
 
     @tf.function
     def differentiate_analytic(self, programs, symbol_names, symbol_values,
@@ -170,7 +170,8 @@ class ParameterShift(differentiator.Differentiator):
         # Assume cirq.decompose() generates gates with at most two distinct
         # eigenvalues, which results in two parameter shifts.
         n_shifts = 2
-        flat_programs, new_symbol_names, flat_weights, flat_perturbations, n_param_gates = self.get_intermediate_logic(
+        (flat_programs, new_symbol_names, flat_weights, flat_perturbations,
+         n_param_gates) = self.get_intermediate_logic(
             programs, symbol_names, symbol_values, n_ops)
         total_programs = n_param_gates * n_programs * n_shifts * n_symbols
         n_tile = n_shifts * n_param_gates * n_symbols
@@ -274,7 +275,8 @@ class ParameterShift(differentiator.Differentiator):
         # Assume cirq.decompose() generates gates with at most two distinct
         # eigenvalues, which results in two parameter shifts.
         n_shifts = 2
-        flat_programs, new_symbol_names, flat_weights, flat_perturbations, n_param_gates = self.get_intermediate_logic(
+        (flat_programs, new_symbol_names, flat_weights, flat_perturbations,
+         n_param_gates) = self.get_intermediate_logic(
             programs, symbol_names, symbol_values, n_ops)
         total_programs = n_param_gates * n_programs * n_shifts * n_symbols
         n_tile = n_shifts * n_param_gates * n_symbols

@@ -111,7 +111,6 @@ class LinearCombination(differentiator.Differentiator):
         """
         n_programs = tf.gather(tf.shape(programs), 0)
         n_symbols = tf.gather(tf.shape(symbol_names), 0)
-        n_ops = tf.gather(tf.shape(pauli_sums), 1)
 
         # don't do any computation for a perturbation of zero, just use
         # forward pass values
@@ -170,12 +169,14 @@ class LinearCombination(differentiator.Differentiator):
             tf.tile(
                 tf.expand_dims(programs, 0),
                 tf.stack([tf.multiply(n_symbols, n_non_zero_perturbations),
-                          1])), [n_symbols * n_non_zero_perturbations * n_programs])
+                          1])),
+            [n_symbols * n_non_zero_perturbations * n_programs])
         flat_perturbations = tf.reshape(all_perturbations, [
             tf.multiply(tf.multiply(n_symbols, n_non_zero_perturbations),
                         n_programs), n_symbols
         ])
-        return flat_programs, symbol_names, non_zero_weights, flat_perturbations, n_non_zero_perturbations
+        return (flat_programs, symbol_names, non_zero_weights,
+                flat_perturbations, n_non_zero_perturbations)
 
     @tf.function
     def differentiate_analytic(self, programs, symbol_names, symbol_values,
@@ -186,7 +187,8 @@ class LinearCombination(differentiator.Differentiator):
         n_programs = tf.gather(tf.shape(programs), 0)
         n_ops = tf.gather(tf.shape(pauli_sums), 1)
 
-        flat_programs, new_symbol_names, non_zero_weights, flat_perturbations, n_non_zero_perturbations = self.get_intermediate_logic(
+        (flat_programs, _, non_zero_weights, flat_perturbations,
+         n_non_zero_perturbations = self.get_intermediate_logic(
             programs, symbol_names, symbol_values, n_ops)
 
         total_programs = tf.multiply(
@@ -261,7 +263,8 @@ class LinearCombination(differentiator.Differentiator):
         n_programs = tf.gather(tf.shape(programs), 0)
         n_ops = tf.gather(tf.shape(pauli_sums), 1)
 
-        flat_programs, new_symbol_names, non_zero_weights, flat_perturbations, n_non_zero_perturbations = self.get_intermediate_logic(
+        (flat_programs, _, non_zero_weights, flat_perturbations,
+         n_non_zero_perturbations) = self.get_intermediate_logic(
             programs, symbol_names, symbol_values, n_ops)
 
         total_programs = tf.multiply(

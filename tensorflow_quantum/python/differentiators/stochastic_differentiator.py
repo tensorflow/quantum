@@ -182,7 +182,8 @@ class SGDifferentiator(differentiator.Differentiator):
                            axis=0)
         ],
                                      axis=0)
-        return flat_programs, new_symbol_names, weights, flat_perturbations, flat_ops, cost_relocator, coordinate_relocator, n_param_gates
+        return (flat_programs, new_symbol_names, weights, flat_perturbations,
+                flat_ops, cost_relocator, coordinate_relocator, n_param_gates)
 
 
     @tf.function
@@ -227,10 +228,10 @@ class SGDifferentiator(differentiator.Differentiator):
         # Assume cirq.decompose() generates gates with at most two distinct
         # eigenvalues, which results in two parameter shifts.
         n_shifts = 2
-        flat_programs, new_symbol_names, weights, flat_perturbations, flat_ops, cost_relocator, coordinate_relocator, n_param_gates = self.get_intermediate_logic(
-            programs, symbol_names, symbol_values, pauli_sums)
-        total_programs = n_param_gates * n_programs * n_shifts * n_symbols
-        n_tile = n_shifts * n_param_gates * n_symbols
+        (flat_programs, new_symbol_names, weights, flat_perturbations, flat_ops,
+         cost_relocator, coordinate_relocator, n_param_gates
+        ) = self.get_intermediate_logic(programs, symbol_names, symbol_values,
+                                        pauli_sums)
 
         # STEP 2: calculate the required expectation values
         expectations = self.expectation_op(flat_programs, new_symbol_names,
@@ -341,7 +342,9 @@ class SGDifferentiator(differentiator.Differentiator):
         # Assume cirq.decompose() generates gates with at most two distinct
         # eigenvalues, which results in two parameter shifts.
         n_shifts = 2
-        flat_programs, new_symbol_names, weights, flat_perturbations, flat_ops, cost_relocator, coordinate_relocator, n_param_gates = self.get_intermediate_logic(
+        (flat_programs, new_symbol_names, weights, flat_perturbations, flat_ops,
+         cost_relocator, coordinate_relocator, n_param_gates
+        ) = self.get_intermediate_logic(
             programs, symbol_names, symbol_values, pauli_sums)
         total_programs = n_param_gates * n_programs * n_shifts * n_symbols
         n_tile = n_shifts * n_param_gates * n_symbols
