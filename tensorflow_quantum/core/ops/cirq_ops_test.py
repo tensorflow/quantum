@@ -433,9 +433,9 @@ class CirqSamplesTest(tf.test.TestCase, parameterized.TestCase):
                         params=param,
                         measurements={
                             'tfq':
-                            np.array([[1] * len(program.all_qubits())] *
-                                     repetitions,
-                                     dtype=np.int32),
+                                np.array([[1] * len(program.all_qubits())] *
+                                         repetitions,
+                                         dtype=np.int32),
                         }) for param in cirq.to_resolvers(params)
                 ]
 
