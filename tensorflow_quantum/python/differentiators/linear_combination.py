@@ -101,13 +101,6 @@ class LinearCombination(differentiator.Differentiator):
         """Returns copies of the input programs for each perturbed symbol.
 
         See base class for Args.
-
-        Returns:
-            flat_programs:
-            symbol_names:
-            non_zero_weights:
-            flat_perturbations:
-            n_non_zero_perturbations:
         """
         n_programs = tf.gather(tf.shape(programs), 0)
         n_symbols = tf.gather(tf.shape(symbol_names), 0)
@@ -189,7 +182,7 @@ class LinearCombination(differentiator.Differentiator):
 
         (flat_programs, _, non_zero_weights, flat_perturbations,
          n_non_zero_perturbations) = self.get_intermediate_logic(
-             programs, symbol_names, symbol_values, n_ops)
+             programs, symbol_names, symbol_values, pauli_sums)
 
         total_programs = tf.multiply(
             tf.multiply(n_programs, n_non_zero_perturbations), n_symbols)
@@ -265,7 +258,7 @@ class LinearCombination(differentiator.Differentiator):
 
         (flat_programs, _, non_zero_weights, flat_perturbations,
          n_non_zero_perturbations) = self.get_intermediate_logic(
-            programs, symbol_names, symbol_values, n_ops)
+             programs, symbol_names, symbol_values, pauli_sums)
 
         total_programs = tf.multiply(
             tf.multiply(n_programs, n_non_zero_perturbations), n_symbols)

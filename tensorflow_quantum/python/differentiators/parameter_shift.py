@@ -61,13 +61,6 @@ class ParameterShift(differentiator.Differentiator):
         """Returns copies of the input programs for each perturbed symbol.
 
         See base class for Args.
-
-        Returns:
-            flat_programs:
-            new_symbol_names:
-            flat_weights:
-            flat_perturbations:
-            n_param_gates:
         """
         n_programs = tf.gather(tf.shape(programs), 0)
         n_symbols = tf.gather(tf.shape(symbol_names), 0)
