@@ -171,8 +171,8 @@ class ParameterShift(differentiator.Differentiator):
         # eigenvalues, which results in two parameter shifts.
         n_shifts = 2
         (flat_programs, new_symbol_names, flat_weights, flat_perturbations,
-         n_param_gates) = self.get_intermediate_logic(
-            programs, symbol_names, symbol_values, n_ops)
+         n_param_gates) = self.get_intermediate_logic(programs, symbol_names,
+                                                      symbol_values, pauli_sums)
         total_programs = n_param_gates * n_programs * n_shifts * n_symbols
         n_tile = n_shifts * n_param_gates * n_symbols
         flat_ops = tf.reshape(
@@ -276,8 +276,8 @@ class ParameterShift(differentiator.Differentiator):
         # eigenvalues, which results in two parameter shifts.
         n_shifts = 2
         (flat_programs, new_symbol_names, flat_weights, flat_perturbations,
-         n_param_gates) = self.get_intermediate_logic(
-            programs, symbol_names, symbol_values, n_ops)
+         n_param_gates) = self.get_intermediate_logic(programs, symbol_names,
+                                                      symbol_values, pauli_sums)
         total_programs = n_param_gates * n_programs * n_shifts * n_symbols
         n_tile = n_shifts * n_param_gates * n_symbols
         flat_ops = tf.reshape(

@@ -188,8 +188,8 @@ class LinearCombination(differentiator.Differentiator):
         n_ops = tf.gather(tf.shape(pauli_sums), 1)
 
         (flat_programs, _, non_zero_weights, flat_perturbations,
-         n_non_zero_perturbations = self.get_intermediate_logic(
-            programs, symbol_names, symbol_values, n_ops)
+         n_non_zero_perturbations) = self.get_intermediate_logic(
+             programs, symbol_names, symbol_values, n_ops)
 
         total_programs = tf.multiply(
             tf.multiply(n_programs, n_non_zero_perturbations), n_symbols)
