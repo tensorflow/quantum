@@ -430,8 +430,7 @@ class SimulateSamplesTest(tf.test.TestCase, parameterized.TestCase):
             this_expected_output[:, :max(all_n_qubits) - n_qubits] = -2
             expected_outputs.append(this_expected_output)
             circuits.append(
-                cirq.Circuit(*cirq.X.on_each(
-                    *cirq.GridQubit.rect(1, n_qubits))))
+                cirq.Circuit(*cirq.X.on_each(*cirq.GridQubit.rect(1, n_qubits))))
         results = op(util.convert_to_tensor(circuits), [], [[]] * len(circuits),
                      [n_samples] * len(circuits)).numpy()
         self.assertAllClose(expected_outputs, results)
