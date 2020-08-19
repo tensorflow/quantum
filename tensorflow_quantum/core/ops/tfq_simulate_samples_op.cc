@@ -165,29 +165,23 @@ class TfqSimulateSamplesOp : public tensorflow::OpKernel {
       }
       auto samples = ss.Sample(sv, num_samples[i], rand() % 123456);
       for (int j = 0; j < max_num_samples; j++) {
-        if (j < num_samples[i]) {
-          uint64_t q_ind = 0;
-          uint64_t mask = 1;
-          bool val = 0;
-          while (q_ind < nq) {
-            val = samples[j] & mask;
-            (*output_tensor)(
-                i, j, static_cast<ptrdiff_t>(max_num_qubits - q_ind - 1)) = val;
-            q_ind++;
-            mask <<= 1;
-          }
-          while (q_ind < max_num_qubits) {
-            (*output_tensor)(
-                i, j, static_cast<ptrdiff_t>(max_num_qubits - q_ind - 1)) = -2;
-            q_ind++;
-          }
-        } else {
-          uint64_t q_ind = 0;
-          while (q_ind < max_num_qubits) {
-            (*output_tensor)(
-                i, j, static_cast<ptrdiff_t>(max_num_qubits - q_ind - 1)) = -2;
-            q_ind++;
-          }
+        uint64_t q_ind = 0;
+        uint64_t mask = 1;
+        bool val = 0;
+        if (j >= num_samples[i]) {
+          nq = 0;
+        }
+        while (q_ind < nq) {
+          val = samples[j] & mask;
+          (*output_tensor)(
+              i, j, static_cast<ptrdiff_t>(max_num_qubits - q_ind - 1)) = val;
+          q_ind++;
+          mask <<= 1;
+        }
+        while (q_ind < max_num_qubits) {
+          (*output_tensor)(
+              i, j, static_cast<ptrdiff_t>(max_num_qubits - q_ind - 1)) = -2;
+          q_ind++;
         }
       }
     }
@@ -223,29 +217,23 @@ class TfqSimulateSamplesOp : public tensorflow::OpKernel {
         }
         auto samples = ss.Sample(sv, num_samples[i], rand() % 123456);
         for (int j = 0; j < max_num_samples; j++) {
-          if (j < num_samples[i]) {
-            uint64_t q_ind = 0;
-            uint64_t mask = 1;
-            bool val = 0;
-            while (q_ind < nq) {
-              val = samples[j] & mask;
-              (*output_tensor)(
-                  i, j, static_cast<ptrdiff_t>(max_num_qubits - q_ind - 1)) = val;
-              q_ind++;
-              mask <<= 1;
-            }
-            while (q_ind < max_num_qubits) {
-              (*output_tensor)(
-                  i, j, static_cast<ptrdiff_t>(max_num_qubits - q_ind - 1)) = -2;
-              q_ind++;
-            }
-          } else {
-            uint64_t q_ind = 0;
-            while (q_ind < max_num_qubits) {
-              (*output_tensor)(
-                  i, j, static_cast<ptrdiff_t>(max_num_qubits - q_ind - 1)) = -2;
-              q_ind++;
-            }
+          if (j >= num_samples[i]) {
+            nq = 0;
+          }
+          uint64_t q_ind = 0;
+          uint64_t mask = 1;
+          bool val = 0;
+          while (q_ind < nq) {
+            val = samples[j] & mask;
+            (*output_tensor)(
+                i, j, static_cast<ptrdiff_t>(max_num_qubits - q_ind - 1)) = val;
+            q_ind++;
+            mask <<= 1;
+          }
+          while (q_ind < max_num_qubits) {
+            (*output_tensor)(
+                i, j, static_cast<ptrdiff_t>(max_num_qubits - q_ind - 1)) = -2;
+            q_ind++;
           }
         }
       }
