@@ -191,7 +191,7 @@ class Sample(tf.keras.layers.Layer):
             raise TypeError("repetitions cannot be parsed to int32 tensor"
                             " tensor given input: ".format(repetitions))
 
-        if tf.shape(repetitions) != tf.shape(inputs):
+        if not all(tf.shape(repetitions) == tf.shape(inputs)):
             raise ValueError("repetitions must be the same shape as inputs")
 
         repetitions = tf.cast(repetitions, tf.int32)
