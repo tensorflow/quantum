@@ -158,12 +158,12 @@ def get_sampling_op(backend=None):
             [batch_size, n_params] specifying parameter values to resolve
             into the circuits specified by programs, following the ordering
             dictated by `symbol_names`.
-        num_samples: `tf.Tensor` with one element indicating the number of
-            samples to draw.
+        num_samples: `tf.Tensor` of positive integers of shape [batch_size]
+            indicating the number of samples to draw from each circuit.
 
         Returns:
             `tf.Tensor` with shape
-                [batch_size, num_samples, <ragged> n_qubits] that
+                [batch_size, <ragged> num_samples, <ragged> n_qubits] that
                 holds samples (as boolean values) for each circuit.
     """
 

@@ -368,8 +368,9 @@ class CirqSamplesTest(tf.test.TestCase, parameterized.TestCase):
                 tf.errors.InvalidArgumentError,
                 'num_samples tensor must be of integer type'):
             _ = test_op([test_circuit], ['rx'], [[1]], "junk")
-        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
-                                    'num_samples tensor must have size 1'):
+        with self.assertRaisesRegex(
+            tf.errors.InvalidArgumentError,
+            'num_samples tensor must have the same shape as programs.'):
             _ = test_op([test_circuit], ['rx'], [[1]], [10, 10])
 
         _ = test_op([test_circuit], ['rx'], [[1]], [10])
@@ -401,16 +402,18 @@ class CirqSamplesTest(tf.test.TestCase, parameterized.TestCase):
         """Check that the sampling ops pad outputs correctly"""
         circuits = []
         expected_outputs = []
+        all_n_samples = []
         for n_qubits in all_n_qubits:
             this_expected_output = np.zeros((n_samples, max(all_n_qubits)))
             this_expected_output[:, max(all_n_qubits) - n_qubits:] = 1
             this_expected_output[:, :max(all_n_qubits) - n_qubits] = -2
+            all_n_samples.append(n_samples)
             expected_outputs.append(this_expected_output)
             circuits.append(
                 cirq.Circuit(
                     *cirq.X.on_each(*cirq.GridQubit.rect(1, n_qubits))))
         results = op(util.convert_to_tensor(circuits), [], [[]] * len(circuits),
-                     [n_samples]).numpy()
+                     all_n_samples).numpy()
         self.assertAllClose(expected_outputs, results)
 
     def test_sample_empty_circuit(self):
@@ -446,12 +449,14 @@ class CirqSamplesTest(tf.test.TestCase, parameterized.TestCase):
         this_sampler = DummySampler()
         this_op = cirq_ops._get_cirq_samples(this_sampler)
         circuits = []
+        all_n_samples = []
         for n_qubits in all_n_qubits:
+            all_n_samples.append(n_samples)
             circuits.append(
                 cirq.Circuit(
                     *cirq.X.on_each(*cirq.GridQubit.rect(1, n_qubits))))
         test_results = this_op(util.convert_to_tensor(circuits), [],
-                               [[]] * len(circuits), [n_samples]).numpy()
+                               [[]] * len(circuits), all_n_samples).numpy()
 
         expected_results = []
         for n_qubits in all_n_qubits:
