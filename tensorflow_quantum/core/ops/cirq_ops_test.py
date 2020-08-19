@@ -369,8 +369,8 @@ class CirqSamplesTest(tf.test.TestCase, parameterized.TestCase):
                 'num_samples tensor must be of integer type'):
             _ = test_op([test_circuit], ['rx'], [[1]], "junk")
         with self.assertRaisesRegex(
-            tf.errors.InvalidArgumentError,
-            'num_samples tensor must have the same shape as programs.'):
+                tf.errors.InvalidArgumentError,
+                'num_samples tensor must have the same shape as programs.'):
             _ = test_op([test_circuit], ['rx'], [[1]], [10, 10])
 
         _ = test_op([test_circuit], ['rx'], [[1]], [10])

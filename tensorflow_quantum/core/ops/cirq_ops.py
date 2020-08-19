@@ -449,7 +449,7 @@ def _get_cirq_samples(sampler=cirq.sim.sparse_simulator.Simulator()):
                                                         symbol_values)
 
         num_samples = list(num_samples.numpy())
-        max_num_samples = max(num_samples)
+        max_num_samples = int(max(num_samples))
         max_n_qubits = max(len(p.all_qubits()) for p in programs)
 
         if isinstance(
@@ -458,8 +458,7 @@ def _get_cirq_samples(sampler=cirq.sim.sparse_simulator.Simulator()):
              cirq.sim.density_matrix_simulator.DensityMatrixSimulator)):
             # Only local simulators can be handled by batch_sample
             padded_results = batch_util.batch_sample(programs, resolvers,
-                                                     max_num_samples,
-                                                     sampler)
+                                                     max_num_samples, sampler)
             # TODO(zaqqwerty): remove once batch_sample is deprecated.
             results = []
             for i in range(len(programs)):

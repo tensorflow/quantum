@@ -184,7 +184,8 @@ class Sample(tf.keras.layers.Layer):
         if isinstance(repetitions, numbers.Integral):
             if not repetitions > 0:
                 raise ValueError("Repetitions must be greater than zero.")
-            repetitions = tf.fill(tf.shape(inputs)[0], tf.constant(repetitions, dtype=tf.int32))
+            repetitions = tf.fill(
+                tf.shape(inputs)[0], tf.constant(repetitions, dtype=tf.int32))
 
         if not tf.is_tensor(repetitions):
             raise TypeError("repetitions cannot be parsed to int32 tensor"
