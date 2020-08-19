@@ -23,7 +23,7 @@ tfq_append_circuit = UTILITY_OP_MODULE.tfq_append_circuit
 
 
 @tf.function
-def padded_to_ragged(masked_state):
+def padded_to_ragged(masked_state, num_samples=None):
     """Utility `tf.function` that converts a padded tensor to ragged.
 
     Convert a state `tf.Tensor` padded with the value -2 to a `tf.RaggedTensor`
@@ -31,6 +31,8 @@ def padded_to_ragged(masked_state):
 
     Args:
         masked_state: `tf.State` tensor with -2 padding.
+        num_samples: If not None, 1-D `tf.Tensor` of integers specifying the
+            number of samples to keep for each program in the batch dimension.
     Returns:
         state_ragged: State tensor without padding as a `tf.RaggedTensor`.
     """
@@ -38,6 +40,10 @@ def padded_to_ragged(masked_state):
     abs_state = tf.abs(tf.cast(masked_state, tf.float32))
     mask = tf.math.less(abs_state, tf.constant(1.1, dtype=abs_state.dtype))
     state_ragged = tf.ragged.boolean_mask(masked_state, mask)
+    if num_samples is not None:
+        num_samples_mask = tf.cast(
+            (tf.ragged.range(num_samples) + 1).to_tensor(), tf.bool)
+        state_ragged = tf.ragged.boolean_mask(state_ragged, num_samples_mask)
     return state_ragged
 
 
