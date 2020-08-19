@@ -365,29 +365,6 @@ def _get_cirq_sampled_expectation(
     return sampled_expectation_generator
 
 
-# TODO(trevormccrt): should this be removed when differentiators come in ?
-def _group_tuples(inputs):
-    """Helper that groups a `list` of `tuple`s based on the elements at index 0.
-
-    Given a `list` of `tuple`s, return a `dict` mapping from every unique first
-    element in the list to the lists containing the rest of the elements.
-    Example:
-        [(a,2,3),(b,1,1),(b,1,2),(a,1,1)] -> {a:[(2,3),(1,1)], b:[(1,1),(1,2)]}
-
-    Args:
-        input: Python `list` of tuples to group.
-
-    Returns:
-        Python `dict` containing groups.
-    """
-    groups = {}
-    for item in inputs:
-        current_groups = groups.get(item[0], [])
-        current_groups.append(item[1:])
-        groups[item[0]] = current_groups
-    return groups
-
-
 def _get_cirq_samples(sampler=cirq.sim.sparse_simulator.Simulator()):
     """Get a `callable` that is a TensorFlow op that outputs circuit samples.
 
@@ -496,48 +473,19 @@ def _get_cirq_samples(sampler=cirq.sim.sparse_simulator.Simulator()):
         ]
         max_n_qubits = max(len(p.all_qubits()) for p in programs)
 
-        if isinstance(sampler, cirq.google.QuantumEngineSampler):
-            # group samples from identical circuits to reduce communication
-            # overhead. Have to keep track of the order in which things came
-            # in to make sure the output is ordered correctly
-            to_be_grouped = [
-                (ser_prog.numpy(), resolver, index)
-                for index, (
-                    ser_prog,
-                    resolver) in enumerate(zip(serialized_programs, resolvers))
-            ]
-
-            grouped = _group_tuples(to_be_grouped)
-
-            # start all the necessary jobs
-            results_mapping = {}
-            for key, value in grouped.items():
-                program = programs[value[0][1]]
-                resolvers = [x[0] for x in value]
-                orders = [x[1] for x in value]
-
-                # sampler.run_sweep blocks until results are in, so go around it
+        #TODO(zaqqwerty): replace with run_batch once Cirq #3148 is resolved
+        cirq_results = []
+        for p, r, n in zip(programs, resolvers, num_samples):
+            if isinstance(sampler, cirq.google.QuantumEngineSampler):
                 result = sampler._engine.run_sweep(
-                    program=program,
-                    params=resolvers,
-                    repetitions=num_samples,
+                    program=p,
+                    params=r,
+                    repetitions=n,
                     processor_ids=sampler._processor_ids,
                     gate_set=sampler._gate_set)
-                results_mapping[result] = orders
-
-            # get all results
-            cirq_results = [None] * len(programs)
-            for key, value in results_mapping.items():
-                this_results = key.results()
-                for result, index in zip(this_results, value):
-                    cirq_results[index] = result
-
-        else:
-            # All other cirq.Samplers handled here.
-            #TODO(zaqqwerty): replace with run_batch once Cirq #3148 is resolved
-            cirq_results = []
-            for p, r, n in zip(programs, resolvers, num_samples):
-                cirq_results.append(sampler.run(p, r, n))
+            else:
+                result = sampler.run(p, r, n)
+            cirq_results.append(result)
 
         results = []
         for r in cirq_results:
