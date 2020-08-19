@@ -44,3 +44,7 @@ tensorflow/*
 
 # virtual enviroments
 venv/*
+
+# ignore emacs temp files
+*#
+*~
