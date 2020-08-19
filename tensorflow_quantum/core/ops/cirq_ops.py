@@ -444,7 +444,6 @@ def _get_cirq_samples(sampler=cirq.sim.sparse_simulator.Simulator()):
             raise ValueError(
                 "num_samples tensor must have the same shape as programs.")
 
-        serialized_programs = programs
         programs, resolvers = _batch_deserialize_helper(programs, symbol_names,
                                                         symbol_values)
 
@@ -467,7 +466,7 @@ def _get_cirq_samples(sampler=cirq.sim.sparse_simulator.Simulator()):
                     if j < num_samples[i]:
                         results[-1].append(padded_results[i][j])
                     else:
-                        results[-1].append(np.full(max_num_qubits, -2))
+                        results[-1].append(np.full(max_n_qubits, -2))
             return np.array(results, dtype=np.int8), _no_grad
 
         # All other samplers need terminal measurement gates.
@@ -500,8 +499,7 @@ def _get_cirq_samples(sampler=cirq.sim.sparse_simulator.Simulator()):
                     value=-2,
                     padding='pre'))
             for _ in range(max_num_samples - n):
-                results[-1].append(np.full(max_num_qubits, -2))
-
+                results[-1].append(np.full(max_n_qubits, -2))
 
         return np.array(results, dtype=np.int8), _no_grad
 

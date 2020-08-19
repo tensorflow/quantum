@@ -170,9 +170,9 @@ class Sample(tf.keras.layers.Layer):
 
         Output shape:
             `tf.RaggedTensor` with shape:
-                [batch size of symbol_values, <ragged repetitions>, <ragged string size>]
+                [batchsize symbol_values, <ragged repetitions>, <ragged qubits>]
                     or
-                [number of circuits, <ragged repetitions>, <ragged string size>]
+                [number of circuits, <ragged repetitions>, <ragged qubits>]
         """
         if repetitions is None:
             raise ValueError("Number of repetitions not specified.")
