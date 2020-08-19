@@ -131,13 +131,6 @@ class TfqSimulateSamplesOp : public tensorflow::OpKernel {
   }
 
  private:
-  inline void PlaceSamples(
-      const int i, const State sv, const int max_num_qubits,
-      const std::vector<int>& num_samples, const int max_num_samples,
-      tensorflow::TTypes<int8_t, 3>::Tensor* output_tensor) {
-
-  }
-
   void ComputeLarge(
       const std::vector<int>& num_qubits, const int max_num_qubits,
       const std::vector<int>& num_samples, const int max_num_samples,
