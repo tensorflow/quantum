@@ -171,7 +171,7 @@ def get_sampling_op(backend=None):
     if backend is None:
         return lambda programs, symbol_names, symbol_values, num_samples: \
         tfq_utility_ops.padded_to_ragged(TFQWavefunctionSimulator.samples(
-            programs, symbol_names, symbol_values, num_samples))
+            programs, symbol_names, symbol_values, num_samples), num_samples)
 
     if isinstance(backend, (cirq.Sampler)):
         return lambda programs, symbol_names, symbol_values, num_samples: \

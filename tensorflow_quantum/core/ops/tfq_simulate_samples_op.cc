@@ -66,7 +66,7 @@ class TfqSimulateSamplesOp : public tensorflow::OpKernel {
             " circuits and ", maps.size(), " values.")));
 
     std::vector<int> num_samples;
-    OP_REQUIRES_OK(context, GetIndividualSample(context, &num_samples));
+    OP_REQUIRES_OK(context, GetNumSamples(context, &num_samples));
 
     // Construct qsim circuits.
     std::vector<QsimCircuit> qsim_circuits(programs.size(), QsimCircuit());

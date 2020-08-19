@@ -295,7 +295,7 @@ Status GetNumSamples(tensorflow::OpKernelContext* context,
                                input_num_samples->dims(), "."));
   }
 
-  const auto vector_num_samples = input_num_samples->vector<int>();
+  const auto vector_num_samples = input_num_samples->vec<int>();
   parsed_num_samples->reserve(vector_num_samples.dimension(0));
   for (unsigned int i = 0; i < vector_num_samples.dimension(0); i++) {
     const int num_samples = vector_num_samples(i);

@@ -438,11 +438,11 @@ def _get_cirq_samples(sampler=cirq.sim.sparse_simulator.Simulator()):
 
         _input_check_helper(programs, symbol_names, symbol_values)
 
+        if not isinstance(num_samples.dtype.as_numpy_dtype(), numbers.Integral):
+            raise TypeError("num_samples tensor must be of integer type")
         if not tf.shape(num_samples) == tf.shape(programs):
             raise ValueError(
                 "num_samples tensor must have the same shape as programs.")
-        if not isinstance(num_samples.dtype.as_numpy_dtype(), numbers.Integral):
-            raise TypeError("num_samples tensor must be of integer type")
 
         serialized_programs = programs
         programs, resolvers = _batch_deserialize_helper(programs, symbol_names,

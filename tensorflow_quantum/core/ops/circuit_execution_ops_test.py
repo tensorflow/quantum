@@ -472,7 +472,7 @@ class ExecutionOpsConsistentyTest(tf.test.TestCase, parameterized.TestCase):
 
         op_samples = np.array(
             op(util.convert_to_tensor(circuit_batch), symbol_names,
-               symbol_values_array, [n_samples]).to_list())
+               symbol_values_array, [n_samples]*len(circuit_batch)).to_list())
 
         op_histograms = [
             np.histogram(
@@ -519,7 +519,7 @@ class ExecutionOpsConsistentyTest(tf.test.TestCase, parameterized.TestCase):
 
         op_samples = np.array(
             op(util.convert_to_tensor(circuit_batch), symbol_names,
-               symbol_values_array, [n_samples]).to_list())
+               symbol_values_array, [n_samples]*len(circuit_batch)).to_list())
 
         op_histograms = [
             np.histogram(

@@ -165,28 +165,34 @@ class Sample(tf.keras.layers.Layer):
             `inputs`, `symbol_names`, `symbol_values`:
                 see `input_checks.expand_circuits`
             `repetitions`: a Python `int` or a pre-converted
-                `tf.Tensor` containing a single `int` entry.
+                `tf.Tensor` containing a single `int` entry or is of shape
+                [batch_size].
 
         Output shape:
             `tf.RaggedTensor` with shape:
-                [batch size of symbol_values, repetitions, <ragged string size>]
+                [batch size of symbol_values, <ragged repetitions>, <ragged string size>]
                     or
-                [number of circuits, repetitions, <ragged string size>]
+                [number of circuits, <ragged repetitions>, <ragged string size>]
         """
         if repetitions is None:
             raise ValueError("Number of repetitions not specified.")
+
+        inputs, symbol_names, symbol_values = input_checks.expand_circuits(
+            inputs, symbol_names, symbol_values)
 
         # Ingest and promote repetitions.
         if isinstance(repetitions, numbers.Integral):
             if not repetitions > 0:
                 raise ValueError("Repetitions must be greater than zero.")
-            repetitions = tf.convert_to_tensor([repetitions], dtype=tf.int32)
+            repetitions = tf.fill(tf.shape(inputs)[0], tf.constant(repetitions, dtype=tf.int32))
 
         if not tf.is_tensor(repetitions):
             raise TypeError("repetitions cannot be parsed to int32 tensor"
                             " tensor given input: ".format(repetitions))
 
-        inputs, symbol_names, symbol_values = input_checks.expand_circuits(
-            inputs, symbol_names, symbol_values)
+        if tf.shape(repetitions) != tf.shape(inputs):
+            raise ValueError("repetitions must be the same shape as inputs")
+
+        repetitions = tf.cast(repetitions, tf.int32)
 
         return self.sample_op(inputs, symbol_names, symbol_values, repetitions)
