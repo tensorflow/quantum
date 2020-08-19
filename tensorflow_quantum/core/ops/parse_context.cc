@@ -245,7 +245,8 @@ Status GetSymbolMaps(OpKernelContext* context, std::vector<SymbolMap>* maps) {
   return Status::OK();
 }
 
-tensorflow::Status GetNumSamples(
+// used by tfq_simulate_sampled_expectation
+tensorflow::Status GetNumSamples2d(
     tensorflow::OpKernelContext* context,
     std::vector<std::vector<int>>* parsed_num_samples) {
   const Tensor* input_num_samples;
@@ -280,8 +281,8 @@ tensorflow::Status GetNumSamples(
 }
 
 // used by tfq_simulate_samples.
-Status GetIndividualSample(tensorflow::OpKernelContext* context,
-                           int* n_samples) {
+Status GetNumSamples(tensorflow::OpKernelContext* context,
+                     std::vector<int>* parsed_num_samples) {
   const Tensor* input_num_samples;
   Status status = context->input("num_samples", &input_num_samples);
   if (!status.ok()) {
@@ -294,15 +295,16 @@ Status GetIndividualSample(tensorflow::OpKernelContext* context,
                                input_num_samples->dims(), "."));
   }
 
-  const auto vector_num_samples = input_num_samples->vec<int>();
-
-  if (vector_num_samples.dimension(0) != 1) {
-    return Status(tensorflow::error::INVALID_ARGUMENT,
-                  absl::StrCat("num_samples must contain 1 element. Got ",
-                               vector_num_samples.dimension(0), "."));
+  const auto vector_num_samples = input_num_samples->vector<int>();
+  parsed_num_samples->reserve(vector_num_samples.dimension(0));
+  for (unsigned int i = 0; i < vector_num_samples.dimension(0); i++) {
+    const int num_samples = vector_num_samples(i);
+    if (num_samples < 1) {
+      return Status(tensorflow::error::INVALID_ARGUMENT,
+                    "Each element of num_samples must be greater than 0.");
+    }
+    parsed_num_samples->push_back(num_samples);
   }
-
-  (*n_samples) = vector_num_samples(0);
   return Status::OK();
 }
 

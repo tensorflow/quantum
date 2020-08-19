@@ -81,7 +81,7 @@ class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
                     " paulisums.")));
 
     std::vector<std::vector<int>> num_samples;
-    OP_REQUIRES_OK(context, GetNumSamples(context, &num_samples));
+    OP_REQUIRES_OK(context, GetNumSamples2d(context, &num_samples));
 
     OP_REQUIRES(context, num_samples.size() == pauli_sums.size(),
                 tensorflow::errors::InvalidArgument(absl::StrCat(

@@ -72,14 +72,12 @@ tensorflow::Status GetSymbolMaps(tensorflow::OpKernelContext* context,
                                  std::vector<SymbolMap>* maps);
 
 // Parses the number of samples from the 'num_samples' input tensor.
-tensorflow::Status GetNumSamples(
+tensorflow::Status GetNumSamples2d(
     tensorflow::OpKernelContext* context,
     std::vector<std::vector<int>>* parsed_num_samples);
 
-// Parses the 'num_samples' input tensor when it is expected to only
-//   contain one element.
-tensorflow::Status GetIndividualSample(tensorflow::OpKernelContext* context,
-                                       int* n_samples);
+tensorflow::Status GetNumSamples(
+    tensorflow::OpKernelContext* context, std::vector<int>* parsed_n_samples);
 
 }  // namespace tfq
 
