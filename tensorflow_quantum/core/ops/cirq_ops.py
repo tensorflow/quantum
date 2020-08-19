@@ -445,8 +445,8 @@ def _get_cirq_samples(sampler=cirq.sim.sparse_simulator.Simulator()):
                 [batch_size, n_params] specifying parameter values to resolve
                 into the circuits specified by programs, following the ordering
                 dictated by `symbol_names`.
-            num_samples: `tf.Tensor` with one element indicating the number of
-                samples to draw.
+            num_samples: `tf.Tensor` of positive integers of shape [batch_size]
+                indicating the number of samples to draw from each circuit.
 
         Returns:
             `tf.Tensor` with shape
@@ -461,8 +461,9 @@ def _get_cirq_samples(sampler=cirq.sim.sparse_simulator.Simulator()):
 
         _input_check_helper(programs, symbol_names, symbol_values)
 
-        if not (int(tf.size(num_samples)) == 1):
-            raise ValueError("num_samples tensor must have size 1")
+        if not tf.shape(num_samples) == tf.shape(programs):
+            raise ValueError(
+                "num_samples tensor must have the same shape as programs.")
         if not isinstance(num_samples.dtype.as_numpy_dtype(), numbers.Integral):
             raise TypeError("num_samples tensor must be of integer type")
 
@@ -470,15 +471,22 @@ def _get_cirq_samples(sampler=cirq.sim.sparse_simulator.Simulator()):
         programs, resolvers = _batch_deserialize_helper(programs, symbol_names,
                                                         symbol_values)
 
-        num_samples = int(num_samples.numpy())
+        num_samples = list(num_samples.numpy())
 
         if isinstance(
                 sampler,
             (cirq.sim.sparse_simulator.Simulator,
              cirq.sim.density_matrix_simulator.DensityMatrixSimulator)):
             # Only local simulators can be handled by batch_sample
-            results = batch_util.batch_sample(programs, resolvers, num_samples,
-                                              sampler)
+            padded_results = batch_util.batch_sample(programs, resolvers,
+                                                     max(num_samples),
+                                                     sampler)
+            # TODO(zaqqwerty): remove once batch_sample is deprecated.
+            results = []
+            for i in range(len(programs)):
+                results.append([])
+                for j in range(num_samples[i]):
+                    results[-1].append(padded_results[i][j])
             return np.array(results, dtype=np.int8), _no_grad
 
         # All other samplers need terminal measurement gates.
@@ -528,8 +536,8 @@ def _get_cirq_samples(sampler=cirq.sim.sparse_simulator.Simulator()):
             # All other cirq.Samplers handled here.
             #TODO(zaqqwerty): replace with run_batch once Cirq #3148 is resolved
             cirq_results = []
-            for p, r in zip(programs, resolvers):
-                cirq_results.append(sampler.run(p, r, num_samples))
+            for p, r, n in zip(programs, resolvers, num_samples):
+                cirq_results.append(sampler.run(p, r, n))
 
         results = []
         for r in cirq_results:
