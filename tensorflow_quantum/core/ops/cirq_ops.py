@@ -449,6 +449,8 @@ def _get_cirq_samples(sampler=cirq.sim.sparse_simulator.Simulator()):
                                                         symbol_values)
 
         num_samples = list(num_samples.numpy())
+        max_num_samples = max(num_samples)
+        max_n_qubits = max(len(p.all_qubits()) for p in programs)
 
         if isinstance(
                 sampler,
@@ -456,14 +458,17 @@ def _get_cirq_samples(sampler=cirq.sim.sparse_simulator.Simulator()):
              cirq.sim.density_matrix_simulator.DensityMatrixSimulator)):
             # Only local simulators can be handled by batch_sample
             padded_results = batch_util.batch_sample(programs, resolvers,
-                                                     max(num_samples),
+                                                     max_num_samples,
                                                      sampler)
             # TODO(zaqqwerty): remove once batch_sample is deprecated.
             results = []
             for i in range(len(programs)):
                 results.append([])
-                for j in range(num_samples[i]):
-                    results[-1].append(padded_results[i][j])
+                for j in range(max_num_samples):
+                    if j < num_samples[i]:
+                        results[-1].append(padded_results[i][j])
+                    else:
+                        results[-1].append(np.full(max_num_qubits, -2))
             return np.array(results, dtype=np.int8), _no_grad
 
         # All other samplers need terminal measurement gates.
@@ -471,7 +476,6 @@ def _get_cirq_samples(sampler=cirq.sim.sparse_simulator.Simulator()):
             p + cirq.Circuit(cirq.measure(*sorted(p.all_qubits()), key='tfq'))
             for p in programs
         ]
-        max_n_qubits = max(len(p.all_qubits()) for p in programs)
 
         #TODO(zaqqwerty): replace with run_batch once Cirq #3148 is resolved
         cirq_results = []
@@ -482,10 +486,12 @@ def _get_cirq_samples(sampler=cirq.sim.sparse_simulator.Simulator()):
                     params=r,
                     repetitions=n,
                     processor_ids=sampler._processor_ids,
-                    gate_set=sampler._gate_set)
+                    gate_set=sampler._gate_set).measurements['tfq']
             else:
-                result = sampler.run(p, r, n)
+                result = sampler.run(p, r, n).measurements['tfq']
             cirq_results.append(result)
+            for _ in range(max_num_samples - n):
+                cirq_results[-1].append(np.full(max_num_qubits, -2))
 
         results = []
         for r in cirq_results:

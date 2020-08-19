@@ -65,7 +65,7 @@ class TfqSimulateSamplesOp : public tensorflow::OpKernel {
             "Number of circuits and values do not match. Got ", programs.size(),
             " circuits and ", maps.size(), " values.")));
 
-    int num_samples = 0;
+    std::vector<int> num_samples;
     OP_REQUIRES_OK(context, GetIndividualSample(context, &num_samples));
 
     // Construct qsim circuits.
@@ -125,7 +125,7 @@ class TfqSimulateSamplesOp : public tensorflow::OpKernel {
  private:
   void ComputeLarge(
       const std::vector<int>& num_qubits, const int max_num_qubits,
-      const int num_samples,
+      const std::vector<int>& num_samples,
       const std::vector<std::vector<qsim::GateFused<QsimGate>>>& fused_circuits,
       tensorflow::OpKernelContext* context,
       tensorflow::TTypes<int8_t, 3>::Tensor* output_tensor) {
@@ -156,8 +156,8 @@ class TfqSimulateSamplesOp : public tensorflow::OpKernel {
         qsim::ApplyFusedGate(sim, fused_circuits[i][j], sv);
       }
 
-      auto samples = ss.Sample(sv, num_samples, rand() % 123456);
-      for (int j = 0; j < num_samples; j++) {
+      auto samples = ss.Sample(sv, num_samples[i], rand() % 123456);
+      for (int j = 0; j < num_samples[i]; j++) {
         uint64_t q_ind = 0;
         uint64_t mask = 1;
         bool val = 0;
@@ -180,7 +180,7 @@ class TfqSimulateSamplesOp : public tensorflow::OpKernel {
 
   void ComputeSmall(
       const std::vector<int>& num_qubits, const int max_num_qubits,
-      const int num_samples,
+      const std::vector<int>& num_samples,
       const std::vector<std::vector<qsim::GateFused<QsimGate>>>& fused_circuits,
       tensorflow::OpKernelContext* context,
       tensorflow::TTypes<int8_t, 3>::Tensor* output_tensor) {
@@ -206,8 +206,8 @@ class TfqSimulateSamplesOp : public tensorflow::OpKernel {
           qsim::ApplyFusedGate(sim, fused_circuits[i][j], sv);
         }
 
-        auto samples = ss.Sample(sv, num_samples, rand() % 123456);
-        for (int j = 0; j < num_samples; j++) {
+        auto samples = ss.Sample(sv, num_samples[i], rand() % 123456);
+        for (int j = 0; j < num_samples[i]; j++) {
           uint64_t q_ind = 0;
           uint64_t mask = 1;
           bool val = 0;
