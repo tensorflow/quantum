@@ -410,8 +410,8 @@ class CirqSamplesTest(tf.test.TestCase, parameterized.TestCase):
             all_n_samples.append(n_samples)
             expected_outputs.append(this_expected_output)
             circuits.append(
-                cirq.Circuit(
-                    *cirq.X.on_each(*cirq.GridQubit.rect(1, n_qubits))))
+                cirq.Circuit(*cirq.X.on_each(
+                    *cirq.GridQubit.rect(1, n_qubits))))
         results = op(util.convert_to_tensor(circuits), [], [[]] * len(circuits),
                      all_n_samples).numpy()
         self.assertAllClose(expected_outputs, results)
@@ -453,8 +453,8 @@ class CirqSamplesTest(tf.test.TestCase, parameterized.TestCase):
         for n_qubits in all_n_qubits:
             all_n_samples.append(n_samples)
             circuits.append(
-                cirq.Circuit(
-                    *cirq.X.on_each(*cirq.GridQubit.rect(1, n_qubits))))
+                cirq.Circuit(*cirq.X.on_each(
+                    *cirq.GridQubit.rect(1, n_qubits))))
         test_results = this_op(util.convert_to_tensor(circuits), [],
                                [[]] * len(circuits), all_n_samples).numpy()
 

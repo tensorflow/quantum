@@ -76,8 +76,8 @@ tensorflow::Status GetNumSamples2d(
     tensorflow::OpKernelContext* context,
     std::vector<std::vector<int>>* parsed_num_samples);
 
-tensorflow::Status GetNumSamples(
-    tensorflow::OpKernelContext* context, std::vector<int>* parsed_n_samples);
+tensorflow::Status GetNumSamples(tensorflow::OpKernelContext* context,
+                                 std::vector<int>* parsed_n_samples);
 
 }  // namespace tfq
 
