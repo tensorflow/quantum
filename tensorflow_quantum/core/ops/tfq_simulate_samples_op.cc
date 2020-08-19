@@ -92,10 +92,17 @@ class TfqSimulateSamplesOp : public tensorflow::OpKernel {
       max_num_qubits = std::max(max_num_qubits, num);
     }
 
+    // Find largest sample number tensor size padding and allocate
+    // the output tensor.
+    int max_num_samples = 0;
+    for (const int num : num_samples) {
+      max_num_samples = std::max(max_num_samples, num);
+    }
+
     const int output_dim_size = maps.size();
     tensorflow::TensorShape output_shape;
     output_shape.AddDim(output_dim_size);
-    output_shape.AddDim(num_samples);
+    output_shape.AddDim(max_num_samples);
     output_shape.AddDim(max_num_qubits);
 
     tensorflow::Tensor* output = nullptr;
@@ -108,24 +115,58 @@ class TfqSimulateSamplesOp : public tensorflow::OpKernel {
     // e2s4 = 4 CPU, 16GB -> Can safely do 25 since Memory = 8GB
     // ...
     if (max_num_qubits >= 26 || programs.size() == 1) {
-      ComputeLarge(num_qubits, max_num_qubits, num_samples, fused_circuits,
-                   context, &output_tensor);
+      ComputeLarge(num_qubits, max_num_qubits, num_samples, max_num_samples,
+                   fused_circuits, context, &output_tensor);
     } else {
-      ComputeSmall(num_qubits, max_num_qubits, num_samples, fused_circuits,
-                   context, &output_tensor);
+      ComputeSmall(num_qubits, max_num_qubits, num_samples, max_num_samples,
+                   fused_circuits, context, &output_tensor);
     }
 
     programs.clear();
     num_qubits.clear();
+    num_samples.clear();
     maps.clear();
     qsim_circuits.clear();
     fused_circuits.clear();
   }
 
  private:
+  inline void PlaceSamples(
+      const int i, const State sv, const int max_num_qubits,
+      const std::vector<int>& num_samples, const int max_num_samples,
+      tensorflow::TTypes<int8_t, 3>::Tensor* output_tensor) {
+    auto samples = ss.Sample(sv, num_samples[i], rand() % 123456);
+    for (int j = 0; j < max_num_samples; j++) {
+      if (j < num_samples[i]) {
+        uint64_t q_ind = 0;
+        uint64_t mask = 1;
+        bool val = 0;
+        while (q_ind < nq) {
+          val = samples[j] & mask;
+          (*output_tensor)(
+              i, j, static_cast<ptrdiff_t>(max_num_qubits - q_ind - 1)) = val;
+          q_ind++;
+          mask <<= 1;
+        }
+        while (q_ind < max_num_qubits) {
+          (*output_tensor)(
+              i, j, static_cast<ptrdiff_t>(max_num_qubits - q_ind - 1)) = -2;
+          q_ind++;
+        }
+      } else {
+        uint64_t q_ind = 0;
+        while (q_ind < max_num_qubits) {
+          (*output_tensor)(
+              i, j, static_cast<ptrdiff_t>(max_num_qubits - q_ind - 1)) = -2;
+          q_ind++;
+        }
+      }
+    }
+  }
+
   void ComputeLarge(
       const std::vector<int>& num_qubits, const int max_num_qubits,
-      const std::vector<int>& num_samples,
+      const std::vector<int>& num_samples, const int max_num_samples,
       const std::vector<std::vector<qsim::GateFused<QsimGate>>>& fused_circuits,
       tensorflow::OpKernelContext* context,
       tensorflow::TTypes<int8_t, 3>::Tensor* output_tensor) {
@@ -155,32 +196,15 @@ class TfqSimulateSamplesOp : public tensorflow::OpKernel {
       for (int j = 0; j < fused_circuits[i].size(); j++) {
         qsim::ApplyFusedGate(sim, fused_circuits[i][j], sv);
       }
-
-      auto samples = ss.Sample(sv, num_samples[i], rand() % 123456);
-      for (int j = 0; j < num_samples[i]; j++) {
-        uint64_t q_ind = 0;
-        uint64_t mask = 1;
-        bool val = 0;
-        while (q_ind < nq) {
-          val = samples[j] & mask;
-          (*output_tensor)(
-              i, j, static_cast<ptrdiff_t>(max_num_qubits - q_ind - 1)) = val;
-          q_ind++;
-          mask <<= 1;
-        }
-        while (q_ind < max_num_qubits) {
-          (*output_tensor)(
-              i, j, static_cast<ptrdiff_t>(max_num_qubits - q_ind - 1)) = -2;
-          q_ind++;
-        }
-      }
+      PlaceSamples(
+          i, sv, max_num_qubits, num_samples, max_num_samples, output_tensor);
     }
     sv.release();
   }
 
   void ComputeSmall(
       const std::vector<int>& num_qubits, const int max_num_qubits,
-      const std::vector<int>& num_samples,
+      const std::vector<int>& num_samples, const int max_num_samples,
       const std::vector<std::vector<qsim::GateFused<QsimGate>>>& fused_circuits,
       tensorflow::OpKernelContext* context,
       tensorflow::TTypes<int8_t, 3>::Tensor* output_tensor) {
@@ -205,25 +229,8 @@ class TfqSimulateSamplesOp : public tensorflow::OpKernel {
         for (int j = 0; j < fused_circuits[i].size(); j++) {
           qsim::ApplyFusedGate(sim, fused_circuits[i][j], sv);
         }
-
-        auto samples = ss.Sample(sv, num_samples[i], rand() % 123456);
-        for (int j = 0; j < num_samples[i]; j++) {
-          uint64_t q_ind = 0;
-          uint64_t mask = 1;
-          bool val = 0;
-          while (q_ind < nq) {
-            val = samples[j] & mask;
-            (*output_tensor)(
-                i, j, static_cast<ptrdiff_t>(max_num_qubits - q_ind - 1)) = val;
-            q_ind++;
-            mask <<= 1;
-          }
-          while (q_ind < max_num_qubits) {
-            (*output_tensor)(
-                i, j, static_cast<ptrdiff_t>(max_num_qubits - q_ind - 1)) = -2;
-            q_ind++;
-          }
-        }
+        PlaceSamples(
+          i, sv, max_num_qubits, num_samples, max_num_samples, output_tensor);
       }
       sv.release();
     };
