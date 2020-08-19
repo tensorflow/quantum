@@ -604,7 +604,7 @@ def batch_sample(circuits, param_resolvers, n_samples, simulator):
         qubits in bitstrings mapped to -2.
     """
     _validate_inputs(circuits, param_resolvers, simulator, 'sample')
-    if not isinstance(n_samples, int):
+    if not isinstance(n_samples, (int, np.int32)):
         raise TypeError('n_samples must be an int.'
                         'Given: {}'.format(type(n_samples)))
 

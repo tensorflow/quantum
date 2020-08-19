@@ -490,18 +490,19 @@ def _get_cirq_samples(sampler=cirq.sim.sparse_simulator.Simulator()):
             else:
                 result = sampler.run(p, r, n).measurements['tfq']
             cirq_results.append(result)
-            for _ in range(max_num_samples - n):
-                cirq_results[-1].append(np.full(max_num_qubits, -2))
 
         results = []
-        for r in cirq_results:
+        for r, n in zip(cirq_results, num_samples):
             results.append(
                 tf.keras.preprocessing.sequence.pad_sequences(
-                    r.measurements['tfq'],
+                    r,
                     maxlen=max_n_qubits,
                     dtype=np.int8,
                     value=-2,
                     padding='pre'))
+            for _ in range(max_num_samples - n):
+                results[-1].append(np.full(max_num_qubits, -2))
+
 
         return np.array(results, dtype=np.int8), _no_grad
 

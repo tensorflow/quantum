@@ -433,7 +433,7 @@ class SimulateSamplesTest(tf.test.TestCase, parameterized.TestCase):
                 cirq.Circuit(
                     *cirq.X.on_each(*cirq.GridQubit.rect(1, n_qubits))))
         results = op(util.convert_to_tensor(circuits), [], [[]] * len(circuits),
-                     [n_samples]).numpy()
+                     [n_samples] * len(circuits)).numpy()
         self.assertAllClose(expected_outputs, results)
 
 
