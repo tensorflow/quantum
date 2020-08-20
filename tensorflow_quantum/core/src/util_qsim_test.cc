@@ -56,7 +56,7 @@ TEST_P(TwoTermSampledExpectationFixture, CorrectnessTest) {
       qsim::Cirq::YPowGate<float>::Create(2, 0, 0.5, 0.0));
 
   auto fused_circuit = qsim::BasicGateFuser<qsim::IO, QsimGate>().FuseGates(
-      simple_circuit.num_qubits, simple_circuit.gates, 3);
+      simple_circuit.num_qubits, simple_circuit.gates);
 
   // Instantiate qsim objects.
   qsim::Simulator<qsim::SequentialFor> sim(2, 1);
@@ -121,7 +121,7 @@ TEST_P(TwoTermExpectationFixture, CorrectnessTest) {
       qsim::Cirq::YPowGate<float>::Create(2, 0, 0.5, 0.0));
 
   auto fused_circuit = qsim::BasicGateFuser<qsim::IO, QsimGate>().FuseGates(
-      simple_circuit.num_qubits, simple_circuit.gates, 3);
+      simple_circuit.num_qubits, simple_circuit.gates);
 
   // Instantiate qsim objects.
   qsim::Simulator<qsim::SequentialFor> sim(2, 1);
@@ -230,7 +230,7 @@ TEST(UtilQsimTest, SampledCompoundCase) {
       qsim::Cirq::YPowGate<float>::Create(2, 0, 0.5, 0.0));
 
   auto fused_circuit = qsim::BasicGateFuser<qsim::IO, QsimGate>().FuseGates(
-      simple_circuit.num_qubits, simple_circuit.gates, 3);
+      simple_circuit.num_qubits, simple_circuit.gates);
 
   // Instantiate qsim objects.
   qsim::Simulator<qsim::SequentialFor> sim(2, 1);
@@ -288,7 +288,7 @@ TEST(UtilQsimTest, CompoundCase) {
       qsim::Cirq::YPowGate<float>::Create(2, 0, 0.5, 0.0));
 
   auto fused_circuit = qsim::BasicGateFuser<qsim::IO, QsimGate>().FuseGates(
-      simple_circuit.num_qubits, simple_circuit.gates, 3);
+      simple_circuit.num_qubits, simple_circuit.gates);
 
   // Instantiate qsim objects.
   qsim::Simulator<qsim::SequentialFor> sim(2, 1);

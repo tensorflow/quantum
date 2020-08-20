@@ -217,7 +217,7 @@ def get_sampling_op(backend=None,
     if backend is None:
         op = TFQWavefunctionSimulator.samples
 
-    if isinstance(backend, (cirq.SimulatesSamples, cirq.Sampler)):
+    if isinstance(backend,  cirq.Sampler):
         op = cirq_ops._get_cirq_samples(backend)
 
     if op is not None:
