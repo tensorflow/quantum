@@ -87,8 +87,7 @@ def _download_spin_data(system_name, boundary_condition, nspins, data_dir):
 
     file_path = os.path.splitext(file_path)[0]
 
-    data_path = os.path.join(file_path + "-master", boundary_condition,
-                             str(nspins))
+    data_path = os.path.join(file_path, boundary_condition, str(nspins))
     return data_path
 
 

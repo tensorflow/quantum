@@ -19,7 +19,8 @@ from tensorflow_quantum.core import (append_circuit, calculate_unitary,
                                      get_expectation_op,
                                      get_sampled_expectation_op,
                                      get_sampling_op, get_state_op,
-                                     padded_to_ragged, padded_to_ragged2d)
+                                     padded_to_ragged, padded_to_ragged2d,
+                                     resolve_parameters)
 
 # Re-label python module as layers module.
 import tensorflow_quantum.python.layers as layers

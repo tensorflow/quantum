@@ -32,6 +32,7 @@ def test_imports():
     _ = tfq.padded_to_ragged
     _ = tfq.padded_to_ragged2d
     _ = tfq.calculate_unitary
+    _ = tfq.resolve_parameters
 
     # Util functions.
     _ = tfq.convert_to_tensor
