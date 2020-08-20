@@ -432,6 +432,7 @@ TEST(UtilQsimTest, AccumulateOperatorsBasic) {
   auto sv = ss.CreateState();
   ss.SetStateZero(sv);
   auto scratch = ss.CreateState();
+  auto dest = ss.CreateState();
 
   // Prepare initial state.
   ss.SetStateZero(sv);
@@ -468,19 +469,19 @@ TEST(UtilQsimTest, AccumulateOperatorsBasic) {
   PauliTerm* p_term_scratch2 = p_sum2.add_terms();
   p_term_scratch2->set_coefficient_real(-5.0);
 
-  AccumulateOperators({p_sum, p_sum2}, {0.5, 0.25}, sim, ss, sv, scratch);
+  AccumulateOperators({p_sum, p_sum2}, {0.5, 0.25}, sim, ss, sv, scratch, dest);
 
-  // Check that scratch got accumulated onto.
-  EXPECT_NEAR(ss.GetAmpl(scratch, 0).real(), 0.577925, 1e-5);
-  EXPECT_NEAR(ss.GetAmpl(scratch, 0).imag(), 0.334574, 1e-5);
-  EXPECT_NEAR(ss.GetAmpl(scratch, 1).real(), -0.172075, 1e-5);
-  EXPECT_NEAR(ss.GetAmpl(scratch, 1).imag(), 0.645234, 1e-5);
-  EXPECT_NEAR(ss.GetAmpl(scratch, 2).real(), -0.577925, 1e-5);
-  EXPECT_NEAR(ss.GetAmpl(scratch, 2).imag(), -0.821275, 1e-5);
-  EXPECT_NEAR(ss.GetAmpl(scratch, 3).real(), -0.172075, 1e-5);
-  EXPECT_NEAR(ss.GetAmpl(scratch, 3).imag(), -0.989384, 1e-5);
+  // Check that dest got accumulated onto.
+  EXPECT_NEAR(ss.GetAmpl(dest, 0).real(), 0.577925, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(dest, 0).imag(), 0.334574, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(dest, 1).real(), -0.172075, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(dest, 1).imag(), 0.645234, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(dest, 2).real(), -0.577925, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(dest, 2).imag(), -0.821275, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(dest, 3).real(), -0.172075, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(dest, 3).imag(), -0.989384, 1e-5);
 
-  // Check that sv remains (up to rounding) unchanged.
+  // Check that sv remains unchanged.
   EXPECT_NEAR(ss.GetAmpl(sv, 0).real(), 0.25, 1e-5);
   EXPECT_NEAR(ss.GetAmpl(sv, 0).imag(), 0.60355, 1e-5);
   EXPECT_NEAR(ss.GetAmpl(sv, 1).real(), 0.25, 1e-5);
@@ -489,6 +490,16 @@ TEST(UtilQsimTest, AccumulateOperatorsBasic) {
   EXPECT_NEAR(ss.GetAmpl(sv, 2).imag(), 0.10355, 1e-5);
   EXPECT_NEAR(ss.GetAmpl(sv, 3).real(), 0.25, 1e-5);
   EXPECT_NEAR(ss.GetAmpl(sv, 3).imag(), -0.10355, 1e-5);
+
+  // Check that as a consequence of running scratch is a copy of sv.
+  EXPECT_NEAR(ss.GetAmpl(scratch, 0).real(), 0.25, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(scratch, 0).imag(), 0.60355, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(scratch, 1).real(), 0.25, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(scratch, 1).imag(), 0.60355, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(scratch, 2).real(), -0.25, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(scratch, 2).imag(), 0.10355, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(scratch, 3).real(), 0.25, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(scratch, 3).imag(), -0.10355, 1e-5);
 }
 
 TEST(UtilQsimTest, AccumulateOperatorsEmpty) {
@@ -498,8 +509,9 @@ TEST(UtilQsimTest, AccumulateOperatorsEmpty) {
   auto sv = ss.CreateState();
   ss.SetStateZero(sv);
   auto scratch = ss.CreateState();
+  auto dest = ss.CreateState();
 
-  AccumulateOperators({}, {}, sim, ss, sv, scratch);
+  AccumulateOperators({}, {}, sim, ss, sv, scratch, dest);
 
   // Check sv is still in zero state.
   EXPECT_NEAR(ss.GetAmpl(sv, 0).real(), 1.0, 1e-5);
@@ -511,14 +523,24 @@ TEST(UtilQsimTest, AccumulateOperatorsEmpty) {
   EXPECT_NEAR(ss.GetAmpl(sv, 3).real(), 0.0, 1e-5);
   EXPECT_NEAR(ss.GetAmpl(sv, 3).imag(), 0.0, 1e-5);
 
-  // Check scratch is still in zero state.
-  EXPECT_NEAR(ss.GetAmpl(scratch, 0).real(), 0.0, 1e-5);
+  // Check scratch is a copy of sv.
+  EXPECT_NEAR(ss.GetAmpl(scratch, 0).real(), 1.0, 1e-5);
   EXPECT_NEAR(ss.GetAmpl(scratch, 0).imag(), 0.0, 1e-5);
   EXPECT_NEAR(ss.GetAmpl(scratch, 1).real(), 0.0, 1e-5);
   EXPECT_NEAR(ss.GetAmpl(scratch, 1).imag(), 0.0, 1e-5);
   EXPECT_NEAR(ss.GetAmpl(scratch, 2).real(), 0.0, 1e-5);
   EXPECT_NEAR(ss.GetAmpl(scratch, 2).imag(), 0.0, 1e-5);
   EXPECT_NEAR(ss.GetAmpl(scratch, 3).real(), 0.0, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(scratch, 3).imag(), 0.0, 1e-5);
+
+  // Check that dest contains all zeros.
+  EXPECT_NEAR(ss.GetAmpl(dest, 0).real(), 0.0, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(dest, 0).imag(), 0.0, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(dest, 1).real(), 0.0, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(dest, 1).imag(), 0.0, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(dest, 2).real(), 0.0, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(dest, 2).imag(), 0.0, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(dest, 3).real(), 0.0, 1e-5);
   EXPECT_NEAR(ss.GetAmpl(scratch, 3).imag(), 0.0, 1e-5);
 }
 

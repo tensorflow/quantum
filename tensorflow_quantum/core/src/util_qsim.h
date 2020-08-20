@@ -293,17 +293,20 @@ inline void ApplyFusedGateDagger(const Simulator& simulator, const Gate& gate,
 
 // Assumes p_sums.size() == op_coeffs.size()
 // state stores |psi>. scratch has been created, but does not
-// require initialization.
+// require initialization. dest has been created, but does not require
+// initialization.
+// After termination scratch will contain a copy of source.
 template <typename SimT, typename StateSpaceT, typename StateT>
 tensorflow::Status AccumulateOperators(
     const std::vector<tfq::proto::PauliSum>& p_sums,
     const std::vector<float>& op_coeffs, const SimT& sim, const StateSpaceT& ss,
-    StateT& state, StateT& scratch) {
+    StateT& source, StateT& scratch, StateT& dest) {
   // apply the  gates of the pauliterms to a copy of the wavefunction
   // accumulating results as we go. Effectively doing O|psi> for an arbitrary
   // O. Result is stored on scratch.
   tensorflow::Status status = tensorflow::Status::OK();
-  ss.SetAllZeros(scratch);
+  ss.CopyState(source, scratch);
+  ss.SetAllZeros(dest);
 
   for (int i = 0; i < p_sums.size(); i++) {
     for (const tfq::proto::PauliTerm& term : p_sums[i].terms()) {
@@ -315,9 +318,9 @@ tensorflow::Status AccumulateOperators(
       }
       if (term.paulis_size() == 0) {
         // identity term. Scalar multiply, add, then revert.
-        ss.Multiply(leading_coeff, state);
-        ss.AddState(state, scratch);
-        ss.Multiply(1. / leading_coeff, state);
+        ss.Multiply(leading_coeff, scratch);
+        ss.AddState(scratch, dest);
+        ss.CopyState(source, scratch);
         continue;
       }
 
@@ -332,16 +335,13 @@ tensorflow::Status AccumulateOperators(
 
       // Apply scaled gates, accumulate, undo.
       for (int j = 0; j < fused_circuit.size(); j++) {
-        qsim::ApplyFusedGate(sim, fused_circuit[j], state);
+        qsim::ApplyFusedGate(sim, fused_circuit[j], scratch);
       }
 
-      ss.Multiply(leading_coeff, state);
-      ss.AddState(state, scratch);
-      ss.Multiply(1. / leading_coeff, state);
-      for (int j = fused_circuit.size() - 1; j >= 0; j--) {
-        ApplyFusedGateDagger(sim, fused_circuit[j], state);
-      }
-      // state should now be reverted back to original state.
+      ss.Multiply(leading_coeff, scratch);
+      ss.AddState(scratch, dest);
+      ss.CopyState(source, scratch);
+      // scratch should now be reverted back to original source.
     }
   }
 
