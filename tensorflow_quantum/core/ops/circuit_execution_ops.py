@@ -33,15 +33,16 @@ class TFQWavefunctionSimulator(enum.Enum):
     sampled_expectation = tfq_simulate_ops.tfq_simulate_sampled_expectation
 
 
-def _check_low_latency(low_latency):
-    if not isinstance(low_latency, bool):
-        raise TypeError("low_latency must be type bool."
-                        " Given: {}".format(str(type(low_latency))))
+def _check_quantum_concurrent(quantum_concurrent):
+    if not isinstance(quantum_concurrent, bool):
+        raise TypeError("quantum_concurrent must be type bool."
+                        " Given: {}".format(str(type(quantum_concurrent))))
 
 
-def get_expectation_op(backend=None,
-                       *,
-                       low_latency=quantum_context.get_low_latency_op_mode()):
+def get_expectation_op(
+        backend=None,
+        *,
+        quantum_concurrent=quantum_context.get_quantum_concurrent_op_mode()):
     """Get a TensorFlow op that will calculate batches of expectation values.
 
     This function produces a non-differentiable TF op that will calculate
@@ -83,13 +84,14 @@ def get_expectation_op(backend=None,
             should use when evaluating circuits. Can be any
             `cirq.SimulatesFinalState`. If not provided the default C++
             analytical expectation calculation op is returned.
-        low_latency: Optional Python `bool`. True indicates that the returned op
-            should not block graph level parallelism on itself when executing.
-            False indicates that graph level parallelism on itself should be
-            blocked. Defaults to value specified in
-            `tfq.get_low_latency_op_mode` which defaults to True (no blocking).
-            This flag is only needed for advanced users when using TFQ for very
-            large simulations, or when running on a real chip.
+        quantum_concurrent: Optional Python `bool`. True indicates that the
+            returned op should not block graph level parallelism on itself when
+            executing. False indicates that graph level parallelism on itself
+            should be blocked. Defaults to value specified in
+            `tfq.get_quantum_concurrent_op_mode` which defaults to True
+            (no blocking). This flag is only needed for advanced users when
+            using TFQ for very large simulations, or when running on a real
+            chip.
 
     Returns:
         A `callable` with the following signature:
@@ -117,7 +119,7 @@ def get_expectation_op(backend=None,
     """
 
     # TODO (mbbrough): investigate how the above docstring renders.
-    _check_low_latency(low_latency)
+    _check_quantum_concurrent(quantum_concurrent)
 
     op = None
     if backend is None:
@@ -127,7 +129,7 @@ def get_expectation_op(backend=None,
         op = cirq_ops._get_cirq_analytical_expectation(backend)
 
     if op is not None:
-        if low_latency is True:
+        if quantum_concurrent is True:
             # Return an op that does not block graph level parallelism.
             return lambda programs, symbol_names, symbol_values, pauli_sums: \
                 op(programs, symbol_names, symbol_values, pauli_sums)
@@ -146,9 +148,10 @@ def get_expectation_op(backend=None,
                     " or None.".format(backend))
 
 
-def get_sampling_op(backend=None,
-                    *,
-                    low_latency=quantum_context.get_low_latency_op_mode()):
+def get_sampling_op(
+        backend=None,
+        *,
+        quantum_concurrent=quantum_context.get_quantum_concurrent_op_mode()):
     """Get a Tensorflow op that produces samples from given quantum circuits.
 
     This function produces a non-differentiable op that will calculate
@@ -178,13 +181,14 @@ def get_sampling_op(backend=None,
         backend: Optional Python `object` that specifies what backend this op
             should use when evaluating circuits. Can be any `cirq.Sampler`. If
             not provided the default C++ sampling op is returned.
-        low_latency: Optional Python `bool`. True indicates that the returned op
-            should not block graph level parallelism on itself when executing.
-            False indicates that graph level parallelism on itself should be
-            blocked. Defaults to value specified in
-            `tfq.get_low_latency_op_mode` which defaults to True (no blocking).
-            This flag is only needed for advanced users when using TFQ for very
-            large simulations, or when running on a real chip.
+        quantum_concurrent: Optional Python `bool`. True indicates that the
+            returned op should not block graph level parallelism on itself when
+            executing. False indicates that graph level parallelism on itself
+            should be blocked. Defaults to value specified in
+            `tfq.get_quantum_concurrent_op_mode` which defaults to True
+            (no blocking). This flag is only needed for advanced users when
+            using TFQ for very large simulations, or when running on a real
+            chip.
 
     Returns:
         A `callable` with the following signature:
@@ -211,17 +215,17 @@ def get_sampling_op(backend=None,
     """
 
     # TODO (mbbrough): investigate how the above docstring renders.
-    _check_low_latency(low_latency)
+    _check_quantum_concurrent(quantum_concurrent)
 
     op = None
     if backend is None:
         op = TFQWavefunctionSimulator.samples
 
-    if isinstance(backend,  cirq.Sampler):
+    if isinstance(backend, cirq.Sampler):
         op = cirq_ops._get_cirq_samples(backend)
 
     if op is not None:
-        if low_latency is True:
+        if quantum_concurrent is True:
             # Return an op that does not block graph level parallelism.
             return lambda programs, symbol_names, symbol_values, num_samples: \
                 tfq_utility_ops.padded_to_ragged(
@@ -235,9 +239,10 @@ def get_sampling_op(backend=None,
                     "or None.".format(backend))
 
 
-def get_state_op(backend=None,
-                 *,
-                 low_latency=quantum_context.get_low_latency_op_mode()):
+def get_state_op(
+        backend=None,
+        *,
+        quantum_concurrent=quantum_context.get_quantum_concurrent_op_mode()):
     """Get a TensorFlow op that produces states from given quantum circuits.
 
     This function produces a non-differentiable op that will calculate
@@ -267,13 +272,14 @@ def get_state_op(backend=None,
             should use when evaluating circuits. Can be any
             `cirq.SimulatesFinalState`. If not provided, the default C++
             wavefunction simulator will be used.
-        low_latency: Optional Python `bool`. True indicates that the returned op
-            should not block graph level parallelism on itself when executing.
-            False indicates that graph level parallelism on itself should be
-            blocked. Defaults to value specified in
-            `tfq.get_low_latency_op_mode` which defaults to True (no blocking).
-            This flag is only needed for advanced users when using TFQ for very
-            large simulations, or when running on a real chip.
+        quantum_concurrent: Optional Python `bool`. True indicates that the
+            returned op should not block graph level parallelism on itself when
+            executing. False indicates that graph level parallelism on itself
+            should be blocked. Defaults to value specified in
+            `tfq.get_quantum_concurrent_op_mode` which defaults to True
+            (no blocking). This flag is only needed for advanced users when
+            using TFQ for very large simulations, or when running on a real
+            chip.
 
     Returns:
         A `callable` with the following signature:
@@ -297,7 +303,7 @@ def get_state_op(backend=None,
     """
 
     # TODO (mbbrough): investigate how the above docstring renders.
-    _check_low_latency(low_latency)
+    _check_quantum_concurrent(quantum_concurrent)
 
     op = None
     if backend is None:
@@ -307,7 +313,7 @@ def get_state_op(backend=None,
         op = cirq_ops._get_cirq_simulate_state(backend)
 
     if op is not None:
-        if low_latency is True:
+        if quantum_concurrent is True:
             # Return an op that does not block graph level parallelism.
             return lambda programs, symbol_names, symbol_values: \
                 tfq_utility_ops.padded_to_ragged(
@@ -323,7 +329,9 @@ def get_state_op(backend=None,
 
 
 def get_sampled_expectation_op(
-        backend=None, *, low_latency=quantum_context.get_low_latency_op_mode()):
+        backend=None,
+        *,
+        quantum_concurrent=quantum_context.get_quantum_concurrent_op_mode()):
     """Get a TensorFlow op that will calculate sampled expectation values.
 
     This function produces a non-differentiable TF op that will calculate
@@ -367,13 +375,14 @@ def get_sampled_expectation_op(
         backend: Optional Python `object` that specifies what backend this op
             should use when evaluating circuits. Can be any `cirq.Sampler`. If
             not provided the default C++ sampled expectation op is returned.
-        low_latency: Optional Python `bool`. True indicates that the returned op
-            should not block graph level parallelism on itself when executing.
-            False indicates that graph level parallelism on itself should be
-            blocked. Defaults to value specified in
-            `tfq.get_low_latency_op_mode` which defaults to True (no blocking).
-            This flag is only needed for advanced users when using TFQ for very
-            large simulations, or when running on a real chip.
+        quantum_concurrent: Optional Python `bool`. True indicates that the
+            returned op should not block graph level parallelism on itself when
+            executing. False indicates that graph level parallelism on itself
+            should be blocked. Defaults to value specified in
+            `tfq.get_quantum_concurrent_op_mode` which defaults to True
+            (no blocking). This flag is only needed for advanced users when
+            using TFQ for very large simulations, or when running on a real
+            chip.
 
     Returns:
         A `callable` with the following signature:
@@ -404,7 +413,7 @@ def get_sampled_expectation_op(
                 (after resolving the corresponding parameters in).
     """
     # TODO (mbbrough): investigate how the above docstring renders.
-    _check_low_latency(low_latency)
+    _check_quantum_concurrent(quantum_concurrent)
 
     op = None
     if backend is None:
@@ -414,7 +423,7 @@ def get_sampled_expectation_op(
         op = cirq_ops._get_cirq_sampled_expectation(backend)
 
     if op is not None:
-        if low_latency is True:
+        if quantum_concurrent is True:
             # Return an op that does not block graph level parallelism.
             return lambda programs, symbol_names, symbol_values, pauli_sums, \
                 num_samples: op(programs,

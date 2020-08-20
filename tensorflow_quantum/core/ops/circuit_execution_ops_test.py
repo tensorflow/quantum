@@ -31,39 +31,47 @@ WF_SIM = cirq.sim.sparse_simulator.Simulator()
 DM_SIM = cirq.sim.density_matrix_simulator.DensityMatrixSimulator()
 
 EXPECTATION_OPS = [
-    circuit_execution_ops.get_expectation_op(backend=None, low_latency=True),
-    circuit_execution_ops.get_expectation_op(backend=WF_SIM, low_latency=True),
-    circuit_execution_ops.get_expectation_op(backend=DM_SIM, low_latency=True),
-    # For timing interests only C++ backend is tested in low_latency mode.
-    circuit_execution_ops.get_expectation_op(backend=None, low_latency=False)
+    circuit_execution_ops.get_expectation_op(backend=None,
+                                             quantum_concurrent=True),
+    circuit_execution_ops.get_expectation_op(backend=WF_SIM,
+                                             quantum_concurrent=True),
+    circuit_execution_ops.get_expectation_op(backend=DM_SIM,
+                                             quantum_concurrent=True),
+    # For timing interests C++ backend is tested in quantum_concurrent mode.
+    circuit_execution_ops.get_expectation_op(backend=None,
+                                             quantum_concurrent=False)
 ]
 
 SAMPLING_OPS = [
-    circuit_execution_ops.get_sampling_op(backend=None, low_latency=True),
-    circuit_execution_ops.get_sampling_op(backend=WF_SIM, low_latency=True),
-    circuit_execution_ops.get_sampling_op(backend=DM_SIM, low_latency=True),
-    # For timing interests only C++ backend is tested in low_latency mode.
-    circuit_execution_ops.get_sampling_op(backend=None, low_latency=False)
+    circuit_execution_ops.get_sampling_op(backend=None,
+                                          quantum_concurrent=True),
+    circuit_execution_ops.get_sampling_op(backend=WF_SIM,
+                                          quantum_concurrent=True),
+    circuit_execution_ops.get_sampling_op(backend=DM_SIM,
+                                          quantum_concurrent=True),
+    # For timing interests C++ backend is tested in quantum_concurrent mode.
+    circuit_execution_ops.get_sampling_op(backend=None,
+                                          quantum_concurrent=False)
 ]
 
 STATE_OPS = [
-    circuit_execution_ops.get_state_op(backend=None, low_latency=True),
-    circuit_execution_ops.get_state_op(backend=WF_SIM, low_latency=True),
-    circuit_execution_ops.get_state_op(backend=DM_SIM, low_latency=True),
-    # For timing interests only C++ backend is tested in low_latency mode.
-    circuit_execution_ops.get_state_op(backend=None, low_latency=False)
+    circuit_execution_ops.get_state_op(backend=None, quantum_concurrent=True),
+    circuit_execution_ops.get_state_op(backend=WF_SIM, quantum_concurrent=True),
+    circuit_execution_ops.get_state_op(backend=DM_SIM, quantum_concurrent=True),
+    # For timing interests C++ backend is tested in quantum_concurrent mode.
+    circuit_execution_ops.get_state_op(backend=None, quantum_concurrent=False)
 ]
 
 SAMPLED_EXPECTATION_OPS = [
     circuit_execution_ops.get_sampled_expectation_op(backend=None,
-                                                     low_latency=True),
+                                                     quantum_concurrent=True),
     circuit_execution_ops.get_sampled_expectation_op(backend=WF_SIM,
-                                                     low_latency=True),
+                                                     quantum_concurrent=True),
     circuit_execution_ops.get_sampled_expectation_op(backend=DM_SIM,
-                                                     low_latency=True),
-    # For timing interests only C++ backend is tested in low_latency mode.
+                                                     quantum_concurrent=True),
+    # For timing interests C++ backend is tested in quantum_concurrent mode.
     circuit_execution_ops.get_sampled_expectation_op(backend=None,
-                                                     low_latency=False),
+                                                     quantum_concurrent=False),
 ]
 
 SIMS = [WF_SIM, WF_SIM, DM_SIM, WF_SIM]
@@ -92,7 +100,7 @@ class OpGetterInputChecks(tf.test.TestCase):
 
         with self.assertRaisesRegex(TypeError,
                                     expected_regex="must be type bool."):
-            circuit_execution_ops.get_expectation_op(low_latency='junk')
+            circuit_execution_ops.get_expectation_op(quantum_concurrent='junk')
 
     def test_get_sampled_expectation_inputs(self):
         """Test that get expectation only accepts inputs it should."""
@@ -111,7 +119,8 @@ class OpGetterInputChecks(tf.test.TestCase):
 
         with self.assertRaisesRegex(TypeError,
                                     expected_regex="must be type bool."):
-            circuit_execution_ops.get_sampled_expectation_op(low_latency='junk')
+            circuit_execution_ops.get_sampled_expectation_op(
+                quantum_concurrent='junk')
 
     def test_get_samples_inputs(self):
         """Test that get_samples only accepts inputs it should."""
@@ -130,7 +139,7 @@ class OpGetterInputChecks(tf.test.TestCase):
 
         with self.assertRaisesRegex(TypeError,
                                     expected_regex="must be type bool."):
-            circuit_execution_ops.get_sampling_op(low_latency='junk')
+            circuit_execution_ops.get_sampling_op(quantum_concurrent='junk')
 
     def test_get_state_inputs(self):
         """Test that get_states only accepts inputs it should."""
@@ -152,7 +161,7 @@ class OpGetterInputChecks(tf.test.TestCase):
 
         with self.assertRaisesRegex(TypeError,
                                     expected_regex="must be type bool."):
-            circuit_execution_ops.get_state_op(low_latency='junk')
+            circuit_execution_ops.get_state_op(quantum_concurrent='junk')
 
 
 class ExecutionOpsConsistentyTest(tf.test.TestCase, parameterized.TestCase):
