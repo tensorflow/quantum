@@ -28,8 +28,8 @@ import tensorflow_quantum.python.layers as layers
 # Import quantum_context getters and setters
 from tensorflow_quantum.python.quantum_context import (
     # Context setting functions.
-    get_low_latency_op_mode,
-    set_low_latency_op_mode,
+    get_quantum_concurrent_op_mode,
+    set_quantum_concurrent_op_mode,
 )
 
 # Import utility functions for tensor operations & conversions.
