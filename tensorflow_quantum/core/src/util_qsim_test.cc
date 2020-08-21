@@ -469,6 +469,7 @@ TEST(UtilQsimTest, AccumulateOperatorsBasic) {
   PauliTerm* p_term_scratch2 = p_sum2.add_terms();
   p_term_scratch2->set_coefficient_real(-5.0);
 
+  // 0.5 * (0.123ZX -3X + 4I) + 0.25 * (-5I) applied onto psi.
   AccumulateOperators({p_sum, p_sum2}, {0.5, 0.25}, sim, ss, sv, scratch, dest);
 
   // Check that dest got accumulated onto.
