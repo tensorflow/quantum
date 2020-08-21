@@ -23,13 +23,12 @@ class QContext:
     def __init__(self):
         """Create quantum context."""
 
-        # Currently unused property.
+        # ***Currently unused property.***
         # Will control whether batch_util.py or engine_util.py will be hit.
         self._engine_mode = False
 
-        # Currently unused property.
         # Will control locking behavior on high latency ops.
-        self._low_latency_op_mode = True
+        self._quantum_concurrent_op_mode = True
 
     def _get_engine_mode(self):
         return self._engine_mode
@@ -37,11 +36,11 @@ class QContext:
     def _set_engine_mode(self, mode):
         self._engine_mode = mode
 
-    def _get_low_latency_op_mode(self):
-        return self._low_latency_op_mode
+    def _get_quantum_concurrent_op_mode(self):
+        return self._quantum_concurrent_op_mode
 
-    def _set_low_latency_op_mode(self, mode):
-        self._low_latency_op_mode = mode
+    def _set_quantum_concurrent_op_mode(self, mode):
+        self._quantum_concurrent_op_mode = mode
 
 
 _Q_CONTEXT = None
@@ -78,11 +77,36 @@ def get_engine_mode():
     return q_context()._get_engine_mode()
 
 
-def set_low_latency_op_mode(mode):
-    """Set the global op latency mode in execution context."""
-    q_context()._set_low_latency_op_mode(mode)
+def set_quantum_concurrent_op_mode(mode):
+    """Set the global op latency mode in execution context.
+
+    This is advanced TFQ feature that should be used only in very specific
+    cases. Namely if memory requirements on simulation are extremely large
+    OR when executing against a true chip.
+
+    If you are going to make use of this function please call it at the top
+    of your module right after import:
 
 
-def get_low_latency_op_mode():
-    """Get the global op latency mode from execution context."""
-    return q_context()._get_low_latency_op_mode()
+    >>> import tensorflow_quantum as tfq
+    >>> tfq.set_quantum_concurrent_op_mode(False)
+
+
+    Args:
+        mode: Python `bool` indicating whether or not circuit executing ops
+            should block graph level parallelism. Advanced users should
+            set `mode=False` when executing very large simulation workloads
+            or when executing against a real quantum chip.
+
+    """
+    q_context()._set_quantum_concurrent_op_mode(mode)
+
+
+def get_quantum_concurrent_op_mode():
+    """Get the global op latency mode from execution context.
+
+    Returns:
+        Python `bool` indicating whether or not circuit execution ops
+        are blocking graph level parallelism with one another.
+    """
+    return q_context()._get_quantum_concurrent_op_mode()
