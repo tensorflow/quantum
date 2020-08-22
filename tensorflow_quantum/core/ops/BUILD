@@ -327,6 +327,7 @@ py_library(
         "tfq_utility_ops_py",
         ":cirq_ops",
         ":tfq_simulate_ops_py",
+        "//tensorflow_quantum/python:quantum_context",
     ],
 )
 
