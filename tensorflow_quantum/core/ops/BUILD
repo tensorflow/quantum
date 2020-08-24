@@ -70,8 +70,9 @@ cc_binary(
     name = "_tfq_simulate_ops.so",
     srcs = [
         "tfq_simulate_expectation_op.cc",
+        "tfq_simulate_samples_op.cc",
         "tfq_simulate_sampled_expectation_op.cc",
-        "tfq_simulate_state_op.cc",
+        "tfq_simulate_state_op.cc"
     ],
     copts = select({
         ":windows": [
@@ -138,6 +139,7 @@ cc_binary(
     name = "_tfq_utility_ops.so",
     srcs = [
         "tfq_circuit_append_op.cc",
+        "tfq_resolve_parameters_op.cc",
     ],
     copts = select({
         ":windows": [
@@ -325,6 +327,7 @@ py_library(
         "tfq_utility_ops_py",
         ":cirq_ops",
         ":tfq_simulate_ops_py",
+        "//tensorflow_quantum/python:quantum_context",
     ],
 )
 

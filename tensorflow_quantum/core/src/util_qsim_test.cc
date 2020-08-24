@@ -56,7 +56,7 @@ TEST_P(TwoTermSampledExpectationFixture, CorrectnessTest) {
       qsim::Cirq::YPowGate<float>::Create(2, 0, 0.5, 0.0));
 
   auto fused_circuit = qsim::BasicGateFuser<qsim::IO, QsimGate>().FuseGates(
-      simple_circuit.num_qubits, simple_circuit.gates, 3);
+      simple_circuit.num_qubits, simple_circuit.gates);
 
   // Instantiate qsim objects.
   qsim::Simulator<qsim::SequentialFor> sim(2, 1);
@@ -121,7 +121,7 @@ TEST_P(TwoTermExpectationFixture, CorrectnessTest) {
       qsim::Cirq::YPowGate<float>::Create(2, 0, 0.5, 0.0));
 
   auto fused_circuit = qsim::BasicGateFuser<qsim::IO, QsimGate>().FuseGates(
-      simple_circuit.num_qubits, simple_circuit.gates, 3);
+      simple_circuit.num_qubits, simple_circuit.gates);
 
   // Instantiate qsim objects.
   qsim::Simulator<qsim::SequentialFor> sim(2, 1);
@@ -230,7 +230,7 @@ TEST(UtilQsimTest, SampledCompoundCase) {
       qsim::Cirq::YPowGate<float>::Create(2, 0, 0.5, 0.0));
 
   auto fused_circuit = qsim::BasicGateFuser<qsim::IO, QsimGate>().FuseGates(
-      simple_circuit.num_qubits, simple_circuit.gates, 3);
+      simple_circuit.num_qubits, simple_circuit.gates);
 
   // Instantiate qsim objects.
   qsim::Simulator<qsim::SequentialFor> sim(2, 1);
@@ -288,7 +288,7 @@ TEST(UtilQsimTest, CompoundCase) {
       qsim::Cirq::YPowGate<float>::Create(2, 0, 0.5, 0.0));
 
   auto fused_circuit = qsim::BasicGateFuser<qsim::IO, QsimGate>().FuseGates(
-      simple_circuit.num_qubits, simple_circuit.gates, 3);
+      simple_circuit.num_qubits, simple_circuit.gates);
 
   // Instantiate qsim objects.
   qsim::Simulator<qsim::SequentialFor> sim(2, 1);
@@ -331,6 +331,218 @@ TEST(UtilQsimTest, CompoundCase) {
   Status s = tfq::ComputeExpectationQsim(p_sum, sim, ss, sv, scratch, &exp_v);
 
   EXPECT_NEAR(exp_v, 4.1234, 1e-5);
+}
+
+TEST(UtilQsimTest, ApplyGateDagger) {
+  // Create circuit to prepare initial state.
+  QsimCircuit simple_circuit;
+  simple_circuit.num_qubits = 2;
+  simple_circuit.gates.push_back(
+      qsim::Cirq::XPowGate<float>::Create(0, 1, 0.25, 0.0));
+  simple_circuit.gates.push_back(
+      qsim::Cirq::CXPowGate<float>::Create(1, 1, 0, 1.0, 0.0));
+  simple_circuit.gates.push_back(
+      qsim::Cirq::YPowGate<float>::Create(2, 0, 0.5, 0.0));
+  // Instantiate qsim objects.
+  qsim::Simulator<qsim::SequentialFor> sim(2, 1);
+  qsim::Simulator<qsim::SequentialFor>::StateSpace ss(2, 1);
+  auto sv = ss.CreateState();
+  ss.SetStateZero(sv);
+  auto scratch = ss.CreateState();
+
+  // Prepare initial state.
+  ss.SetStateZero(sv);
+  for (int i = 0; i < simple_circuit.gates.size(); i++) {
+    qsim::ApplyGate(sim, simple_circuit.gates[i], sv);
+  }
+  for (int i = simple_circuit.gates.size() - 1; i >= 0; i--) {
+    ApplyGateDagger(sim, simple_circuit.gates[i], sv);
+  }
+
+  // Test that we reverted back to zero.
+  EXPECT_NEAR(ss.GetAmpl(sv, 0).real(), 1.0, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(sv, 0).imag(), 0.0, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(sv, 1).real(), 0.0, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(sv, 1).imag(), 0.0, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(sv, 2).real(), 0.0, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(sv, 2).imag(), 0.0, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(sv, 3).real(), 0.0, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(sv, 3).imag(), 0.0, 1e-5);
+}
+
+TEST(UtilQsimTest, ApplyFusedGateDagger) {
+  // Create circuit to prepare initial state.
+  QsimCircuit simple_circuit;
+  simple_circuit.num_qubits = 2;
+  simple_circuit.gates.push_back(
+      qsim::Cirq::XPowGate<float>::Create(0, 1, 0.25, 0.0));
+  simple_circuit.gates.push_back(
+      qsim::Cirq::CXPowGate<float>::Create(1, 1, 0, 1.0, 0.0));
+  simple_circuit.gates.push_back(
+      qsim::Cirq::YPowGate<float>::Create(2, 0, 0.5, 0.0));
+  // Instantiate qsim objects.
+  qsim::Simulator<qsim::SequentialFor> sim(2, 1);
+  qsim::Simulator<qsim::SequentialFor>::StateSpace ss(2, 1);
+  auto sv = ss.CreateState();
+  ss.SetStateZero(sv);
+  auto scratch = ss.CreateState();
+
+  // Prepare initial state.
+  ss.SetStateZero(sv);
+  auto fused_circuit = qsim::BasicGateFuser<qsim::IO, QsimGate>().FuseGates(
+      simple_circuit.num_qubits, simple_circuit.gates);
+
+  // Prepare initial state.
+  ss.SetStateZero(sv);
+  for (int j = 0; j < fused_circuit.size(); j++) {
+    qsim::ApplyFusedGate(sim, fused_circuit[j], sv);
+  }
+  for (int i = fused_circuit.size() - 1; i >= 0; i--) {
+    ApplyFusedGateDagger(sim, fused_circuit[i], sv);
+  }
+
+  // Test that we reverted back to zero.
+  EXPECT_NEAR(ss.GetAmpl(sv, 0).real(), 1.0, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(sv, 0).imag(), 0.0, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(sv, 1).real(), 0.0, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(sv, 1).imag(), 0.0, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(sv, 2).real(), 0.0, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(sv, 2).imag(), 0.0, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(sv, 3).real(), 0.0, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(sv, 3).imag(), 0.0, 1e-5);
+}
+
+TEST(UtilQsimTest, AccumulateOperatorsBasic) {
+  // Create circuit to prepare initial state.
+  QsimCircuit simple_circuit;
+  simple_circuit.num_qubits = 2;
+  simple_circuit.gates.push_back(
+      qsim::Cirq::XPowGate<float>::Create(0, 1, 0.25, 0.0));
+  simple_circuit.gates.push_back(
+      qsim::Cirq::CXPowGate<float>::Create(1, 1, 0, 1.0, 0.0));
+  simple_circuit.gates.push_back(
+      qsim::Cirq::YPowGate<float>::Create(2, 0, 0.5, 0.0));
+
+  auto fused_circuit = qsim::BasicGateFuser<qsim::IO, QsimGate>().FuseGates(
+      simple_circuit.num_qubits, simple_circuit.gates);
+
+  // Instantiate qsim objects.
+  qsim::Simulator<qsim::SequentialFor> sim(2, 1);
+  qsim::Simulator<qsim::SequentialFor>::StateSpace ss(2, 1);
+  auto sv = ss.CreateState();
+  ss.SetStateZero(sv);
+  auto scratch = ss.CreateState();
+  auto dest = ss.CreateState();
+
+  // Prepare initial state.
+  ss.SetStateZero(sv);
+  for (int j = 0; j < fused_circuit.size(); j++) {
+    qsim::ApplyFusedGate(sim, fused_circuit[j], sv);
+  }
+
+  PauliSum p_sum;
+
+  // Initialize pauli sum.
+  // 0.1234 ZX
+  PauliTerm* p_term_scratch = p_sum.add_terms();
+  p_term_scratch->set_coefficient_real(0.1234);
+  PauliQubitPair* pair_proto = p_term_scratch->add_paulis();
+  pair_proto->set_qubit_id(std::to_string(0));
+  pair_proto->set_pauli_type("Z");
+  pair_proto = p_term_scratch->add_paulis();
+  pair_proto->set_qubit_id(std::to_string(1));
+  pair_proto->set_pauli_type("X");
+
+  // -3.0 X
+  p_term_scratch = p_sum.add_terms();
+  p_term_scratch->set_coefficient_real(-3.0);
+  pair_proto = p_term_scratch->add_paulis();
+  pair_proto->set_qubit_id(std::to_string(0));
+  pair_proto->set_pauli_type("X");
+
+  // 4.0 I
+  p_term_scratch = p_sum.add_terms();
+  p_term_scratch->set_coefficient_real(4.0);
+
+  // A second sum.
+  PauliSum p_sum2;
+  PauliTerm* p_term_scratch2 = p_sum2.add_terms();
+  p_term_scratch2->set_coefficient_real(-5.0);
+
+  // 0.5 * (0.123ZX -3X + 4I) + 0.25 * (-5I) applied onto psi.
+  AccumulateOperators({p_sum, p_sum2}, {0.5, 0.25}, sim, ss, sv, scratch, dest);
+
+  // Check that dest got accumulated onto.
+  EXPECT_NEAR(ss.GetAmpl(dest, 0).real(), 0.577925, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(dest, 0).imag(), 0.334574, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(dest, 1).real(), -0.172075, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(dest, 1).imag(), 0.645234, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(dest, 2).real(), -0.577925, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(dest, 2).imag(), -0.821275, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(dest, 3).real(), -0.172075, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(dest, 3).imag(), -0.989384, 1e-5);
+
+  // Check that sv remains unchanged.
+  EXPECT_NEAR(ss.GetAmpl(sv, 0).real(), 0.25, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(sv, 0).imag(), 0.60355, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(sv, 1).real(), 0.25, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(sv, 1).imag(), 0.60355, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(sv, 2).real(), -0.25, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(sv, 2).imag(), 0.10355, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(sv, 3).real(), 0.25, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(sv, 3).imag(), -0.10355, 1e-5);
+
+  // Check that as a consequence of running scratch is a copy of sv.
+  EXPECT_NEAR(ss.GetAmpl(scratch, 0).real(), 0.25, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(scratch, 0).imag(), 0.60355, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(scratch, 1).real(), 0.25, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(scratch, 1).imag(), 0.60355, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(scratch, 2).real(), -0.25, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(scratch, 2).imag(), 0.10355, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(scratch, 3).real(), 0.25, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(scratch, 3).imag(), -0.10355, 1e-5);
+}
+
+TEST(UtilQsimTest, AccumulateOperatorsEmpty) {
+  // Instantiate qsim objects.
+  qsim::Simulator<qsim::SequentialFor> sim(2, 1);
+  qsim::Simulator<qsim::SequentialFor>::StateSpace ss(2, 1);
+  auto sv = ss.CreateState();
+  ss.SetStateZero(sv);
+  auto scratch = ss.CreateState();
+  auto dest = ss.CreateState();
+
+  AccumulateOperators({}, {}, sim, ss, sv, scratch, dest);
+
+  // Check sv is still in zero state.
+  EXPECT_NEAR(ss.GetAmpl(sv, 0).real(), 1.0, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(sv, 0).imag(), 0.0, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(sv, 1).real(), 0.0, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(sv, 1).imag(), 0.0, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(sv, 2).real(), 0.0, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(sv, 2).imag(), 0.0, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(sv, 3).real(), 0.0, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(sv, 3).imag(), 0.0, 1e-5);
+
+  // Check scratch is a copy of sv.
+  EXPECT_NEAR(ss.GetAmpl(scratch, 0).real(), 1.0, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(scratch, 0).imag(), 0.0, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(scratch, 1).real(), 0.0, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(scratch, 1).imag(), 0.0, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(scratch, 2).real(), 0.0, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(scratch, 2).imag(), 0.0, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(scratch, 3).real(), 0.0, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(scratch, 3).imag(), 0.0, 1e-5);
+
+  // Check that dest contains all zeros.
+  EXPECT_NEAR(ss.GetAmpl(dest, 0).real(), 0.0, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(dest, 0).imag(), 0.0, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(dest, 1).real(), 0.0, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(dest, 1).imag(), 0.0, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(dest, 2).real(), 0.0, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(dest, 2).imag(), 0.0, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(dest, 3).real(), 0.0, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(scratch, 3).imag(), 0.0, 1e-5);
 }
 
 }  // namespace

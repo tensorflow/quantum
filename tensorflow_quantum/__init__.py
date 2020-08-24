@@ -19,10 +19,18 @@ from tensorflow_quantum.core import (append_circuit, calculate_unitary,
                                      get_expectation_op,
                                      get_sampled_expectation_op,
                                      get_sampling_op, get_state_op,
-                                     padded_to_ragged, padded_to_ragged2d)
+                                     padded_to_ragged, padded_to_ragged2d,
+                                     resolve_parameters)
 
 # Re-label python module as layers module.
 import tensorflow_quantum.python.layers as layers
+
+# Import quantum_context getters and setters
+from tensorflow_quantum.python.quantum_context import (
+    # Context setting functions.
+    get_quantum_concurrent_op_mode,
+    set_quantum_concurrent_op_mode,
+)
 
 # Import utility functions for tensor operations & conversions.
 from tensorflow_quantum.python.util import (

@@ -69,7 +69,6 @@ def tfq_simulate_state(programs, symbol_names, symbol_values):
                                             tf.cast(symbol_values, tf.float32))
 
 
-@tf.function
 def tfq_simulate_samples(programs, symbol_names, symbol_values, num_samples):
     """Generate samples using the C++ wavefunction simulator.
 
@@ -95,61 +94,8 @@ def tfq_simulate_samples(programs, symbol_names, symbol_values, num_samples):
         A `tf.Tensor` containing the samples taken from each circuit in
         `programs`.
     """
-    # get the state from the simulator
-    state = tfq_simulate_state(programs, symbol_names,
-                               tf.cast(symbol_values, tf.float32))
-
-    # sample from the state
-    real_state = tf.math.real(state)
-    state_mask = tf.cast(tf.math.greater(real_state, -1.5), dtype=state.dtype)
-    state_zeroed = tf.multiply(state, state_mask)
-    log_probs = tf.math.log(
-        tf.cast(tf.square(tf.abs(state_zeroed)), tf.float64) -
-        tf.constant(10**-9, dtype=tf.float64))
-    samples = tf.random.categorical(log_probs,
-                                    tf.gather(
-                                        tf.cast(num_samples, dtype=tf.int32),
-                                        0),
-                                    dtype=tf.int64)
-
-    # determine how many qubits make up each state
-    individual_sizes = tf.cast(
-        tf.reduce_sum(tf.cast(state_mask, tf.int32), axis=1), tf.float64)
-    n_qubits = tf.cast(
-        tf.math.round(
-            tf.math.log((individual_sizes)) /
-            tf.math.log(tf.constant(2.0, dtype=tf.float64))), tf.int32)
-    max_n_qubits = tf.reduce_max(n_qubits)
-
-    # convert samples to binary
-    def gen_binary_mask(x):
-        return tf.bitwise.left_shift(tf.constant(1, dtype=x.dtype), x)
-
-    binary_conversion_mask = tf.reverse(
-        tf.vectorized_map(gen_binary_mask, tf.range(0, max_n_qubits)), [0])
-
-    def num_to_bin(x):
-        return tf.cast(tf.cast(
-            tf.bitwise.bitwise_and(x, tf.cast(binary_conversion_mask, x.dtype)),
-            tf.bool),
-                       dtype=tf.int8)
-
-    def row_to_num(y):
-        return tf.vectorized_map(num_to_bin, y)
-
-    binary_samples = tf.vectorized_map(row_to_num, samples)
-
-    #create the padded output tensor
-    vertical_dim = tf.gather(tf.shape(binary_samples), tf.constant(1))
-
-    def create_pad_mask(x):
-        right = tf.zeros([vertical_dim, x], dtype=tf.int8)
-        left = tf.ones([vertical_dim, max_n_qubits - x], dtype=tf.int8)* \
-               tf.constant(2, dtype=tf.int8)
-        return tf.concat([left, right], axis=1)
-
-    padding_mask = tf.map_fn(create_pad_mask, n_qubits, dtype=tf.int8)
-    return binary_samples - padding_mask
+    return SIM_OP_MODULE.tfq_simulate_samples(
+        programs, symbol_names, tf.cast(symbol_values, tf.float32), num_samples)
 
 
 def tfq_simulate_sampled_expectation(programs, symbol_names, symbol_values,
