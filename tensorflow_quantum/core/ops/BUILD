@@ -350,8 +350,8 @@ py_library(
     srcs = ["tfq_unitary_op.py"],
     data = [":_tfq_calculate_unitary_op.so"],
     deps = [
-        ":tfq_utility_ops_py",
         ":load_module",
+        ":tfq_utility_ops_py",
     ],
 )
 

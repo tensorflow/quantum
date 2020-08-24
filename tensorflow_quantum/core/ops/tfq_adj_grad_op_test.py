@@ -231,6 +231,7 @@ class ADJGradTest(tf.test.TestCase, parameterized.TestCase):
             tf.convert_to_tensor([[]]),
             tf.convert_to_tensor([[]], dtype=tf.dtypes.string),
             tf.convert_to_tensor([[]]))
+        self.assertShapeEqual(np.zeros((1, 0)), out)
 
     def test_calculate_adj_grad_simple_case(self):
         """Make sure that adjoint gradient works on simple input case."""
@@ -306,7 +307,9 @@ class ADJGradTest(tf.test.TestCase, parameterized.TestCase):
         [cirq.Circuit(cirq.X(qubits[0]) ** sympy.Symbol('alpha'),
             cirq.Y(qubits[1]) ** sympy.Symbol('beta'),
             cirq.CNOT(qubits[0], qubits[1]),
-            cirq.FSimGate(sympy.Symbol('gamma'), sympy.Symbol('gamma'))(qubits[0], qubits[1]))
+            cirq.FSimGate(
+                sympy.Symbol('gamma'),
+                sympy.Symbol('gamma'))(qubits[0], qubits[1]))
         ], [{'alpha': 0.123, 'beta': 0.456, 'gamma': 0.789}]
 
         op_batch = [
