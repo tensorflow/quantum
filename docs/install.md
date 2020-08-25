@@ -82,7 +82,7 @@ See the TensorFlow
 guide to install the <a href="https://bazel.build/" class="external">Bazel</a>
 build system.
 
-To ensure compatibility with TensorFlow, `bazel` version 0.26.1 or lower is
+To ensure compatibility with TensorFlow, `bazel` version 0.29.1 is
 required. To remove any existing version of Bazel:
 
 <!-- common_typos_disable -->
@@ -91,12 +91,12 @@ required. To remove any existing version of Bazel:
 </pre>
 <!-- common_typos_enable -->
 
-Then install Bazel version 0.26.0:
+Then install Bazel version 0.29.1:
 
 <!-- common_typos_disable -->
 <pre class="devsite-click-to-copy">
-  <code class="devsite-terminal">wget https://github.com/bazelbuild/bazel/releases/download/0.26.0/bazel_0.26.0-linux-x86_64.deb</code>
-  <code class="devsite-terminal">sudo dpkg -i bazel_0.26.0-linux-x86_64.deb</code>
+  <code class="devsite-terminal">wget https://github.com/bazelbuild/bazel/releases/download/0.29.1/bazel_0.29.1-linux-x86_64.deb</code>
+  <code class="devsite-terminal">sudo dpkg -i bazel_0.29.1-linux-x86_64.deb</code>
 </pre>
 <!-- common_typos_enable -->
 
