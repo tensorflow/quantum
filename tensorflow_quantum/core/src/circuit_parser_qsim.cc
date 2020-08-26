@@ -506,6 +506,9 @@ tensorflow::Status QsimCircuitFromProgram(
   }
 
   circuit->gates.reserve(program.circuit().moments_size() * num_qubits);
+  if (metadata != nullptr) {
+    metadata->reserve(program.circuit().moments_size() * num_qubits);
+  }
   for (const Moment& moment : program.circuit().moments()) {
     for (const Operation& op : moment.operations()) {
       Status status =

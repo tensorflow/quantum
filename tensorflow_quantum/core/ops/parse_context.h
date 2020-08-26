@@ -81,6 +81,11 @@ tensorflow::Status GetNumSamples(
 tensorflow::Status GetIndividualSample(tensorflow::OpKernelContext* context,
                                        int* n_samples);
 
+// Parses the downstream gradients tensor. Used by adjoint op.
+tensorflow::Status GetPrevGrads(
+    tensorflow::OpKernelContext* context,
+    std::vector<std::vector<float>>* parsed_prev_grads);
+
 }  // namespace tfq
 
 #endif  // TFQ_CORE_OPS_PARSE_CONTEXT

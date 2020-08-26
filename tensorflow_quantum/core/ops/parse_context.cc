@@ -306,4 +306,35 @@ Status GetIndividualSample(tensorflow::OpKernelContext* context,
   return Status::OK();
 }
 
+// used by adj_grad_op.
+tensorflow::Status GetPrevGrads(
+    tensorflow::OpKernelContext* context,
+    std::vector<std::vector<float>>* parsed_prev_grads) {
+  const Tensor* input_grads;
+  Status status = context->input("downstream_grads", &input_grads);
+  if (!status.ok()) {
+    return status;
+  }
+
+  if (input_grads->dims() != 2) {
+    return Status(tensorflow::error::INVALID_ARGUMENT,
+                  absl::StrCat("downstream_grads must be rank 2. Got rank ",
+                               input_grads->dims(), "."));
+  }
+
+  const auto matrix_grads = input_grads->matrix<float>();
+  parsed_prev_grads->reserve(matrix_grads.dimension(0));
+  for (unsigned int i = 0; i < matrix_grads.dimension(0); i++) {
+    std::vector<float> sub_parsed_grads;
+    sub_parsed_grads.reserve(matrix_grads.dimension(1));
+    for (unsigned int j = 0; j < matrix_grads.dimension(1); j++) {
+      const float grad_v = matrix_grads(i, j);
+      sub_parsed_grads.push_back(grad_v);
+    }
+    parsed_prev_grads->push_back(sub_parsed_grads);
+  }
+
+  return Status::OK();
+}
+
 }  // namespace tfq
