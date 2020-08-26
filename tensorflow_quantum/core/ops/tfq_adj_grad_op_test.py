@@ -297,8 +297,8 @@ class ADJGradTest(tf.test.TestCase, parameterized.TestCase):
                             np.array([[-2.100, -1.7412, -1.5120]]),
                             atol=1e-3)
 
-    def test_calculate_adj_grad_simple_case3(self):
-        """Make sure the adjoint gradient works on ANOTHER simple input case."""
+    def test_calculate_adj_grad_simple_case_shared(self):
+        """Make sure the adjoint gradient works on a shared symbol gate."""
         n_qubits = 2
         batch_size = 1
         symbol_names = ['alpha', 'beta', 'gamma']
@@ -332,6 +332,40 @@ class ADJGradTest(tf.test.TestCase, parameterized.TestCase):
         self.assertAllClose(out,
                             np.array([[-2.3484, -1.7532, -1.64264]]),
                             atol=1e-3)
+
+    def test_calculate_adj_grad_simple_case_single(self):
+        """Make sure the adjoint gradient works on a one symbol for all gate."""
+        n_qubits = 2
+        batch_size = 1
+        symbol_names = ['alpha', 'beta', 'gamma']
+        qubits = cirq.GridQubit.rect(1, n_qubits)
+        circuit_batch, resolver_batch = \
+        [cirq.Circuit(cirq.X(qubits[0]) ** sympy.Symbol('alpha'),
+            cirq.Y(qubits[1]) ** sympy.Symbol('alpha'),
+            cirq.CNOT(qubits[0], qubits[1]),
+            cirq.FSimGate(
+                -0.56,
+                sympy.Symbol('alpha'))(qubits[0], qubits[1]))
+        ], [{'alpha': 0.123, 'beta': 0.456, 'gamma': 0.789}]
+
+        op_batch = [
+            [cirq.Z(qubits[0]), cirq.X(qubits[1])] for _ in range(batch_size)
+        ]
+
+        symbol_values_array = np.array(
+            [[resolver[symbol]
+              for symbol in symbol_names]
+             for resolver in resolver_batch])
+
+        prev_grads = tf.ones([batch_size, len(op_batch[0])])
+
+        out = tfq_adj_grad_op.tfq_adj_grad(
+            util.convert_to_tensor(circuit_batch),
+            tf.convert_to_tensor(symbol_names),
+            tf.convert_to_tensor(symbol_values_array),
+            util.convert_to_tensor(op_batch), prev_grads)
+
+        self.assertAllClose(out, np.array([[1.2993, 0, 0]]), atol=1e-3)
 
 
 if __name__ == "__main__":

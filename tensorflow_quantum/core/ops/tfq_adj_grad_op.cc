@@ -56,10 +56,10 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
 
     // Create the output Tensor.
     const int output_dim_batch_size = context->input(0).dim_size(0);
-    const int output_dim_op_size = context->input(2).dim_size(1);
+    const int output_dim_param_size = context->input(2).dim_size(1);
     tensorflow::TensorShape output_shape;
     output_shape.AddDim(output_dim_batch_size);
-    output_shape.AddDim(output_dim_op_size);
+    output_shape.AddDim(output_dim_param_size);
 
     tensorflow::Tensor* output = nullptr;
     OP_REQUIRES_OK(context, context->allocate_output(0, output_shape, &output));
@@ -215,12 +215,14 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
           if (j == partial_fused_circuits[i].size() - 1) {
             break;
           }
+          // Apply the original gate of the gradient_gate,
+          // not the gradient_gate itself.
           qsim::ApplyGate(
               sim, qsim_circuits[i].gates[gradient_gates[i][j].index], sv);
         }
 
         // sv now contains psi
-        // scratch contains (sum_i paulis_sums[i] * downstream_grads[i])|psi>
+        // scratch contains (sum_j paulis_sums[i][j] * downstream_grads[j])|psi>
         // scratch2 now contains psi as well.
         AccumulateOperators(pauli_sums[i], downstream_grads[i], sim, ss, sv,
                             scratch2, scratch);
@@ -247,6 +249,11 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
             // don't need not-found check since this is done upstream already.
             const auto it = maps[i].find(gradient_gates[i][j - 1].params[k]);
             const int loc = it->second.first;
+            // Apply finite differencing for adjoint gradients.
+            // Finite differencing enables applying multiple `gradient_gate`
+            // of a symbol at the same circuit. For analytic methods like
+            // parameter-shift we need to apply a single `gradient_gate`
+            // per a symbol.
             (*output_tensor)(i, loc) += ss.RealInnerProduct(sv, scratch) +
                                         ss.RealInnerProduct(scratch, sv);
 
@@ -316,12 +323,14 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
         if (j == partial_fused_circuits[i].size() - 1) {
           break;
         }
+        // Apply the original gate of the gradient_gate,
+        // not the gradient_gate itself.
         qsim::ApplyGate(sim, qsim_circuits[i].gates[gradient_gates[i][j].index],
                         sv);
       }
 
       // sv now contains psi
-      // scratch contains (sum_i paulis_sums[i] * downstream_grads[i])|psi>
+      // scratch contains (sum_j paulis_sums[i][j] * downstream_grads[j])|psi>
       // scratch2 now contains psi as well.
       AccumulateOperators(pauli_sums[i], downstream_grads[i], sim, ss, sv,
                           scratch2, scratch);
@@ -348,6 +357,11 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
           // don't need not-found check since this is done upstream already.
           const auto it = maps[i].find(gradient_gates[i][j - 1].params[k]);
           const int loc = it->second.first;
+          // Apply finite differencing for adjoint gradients.
+          // Finite differencing enables applying multiple `gradient_gate`
+          // of a symbol at the same circuit. For analytic methods like
+          // parameter-shift we need to apply a single `gradient_gate`
+          // per a symbol.
           (*output_tensor)(i, loc) += ss.RealInnerProduct(sv, scratch) +
                                       ss.RealInnerProduct(scratch, sv);
 
