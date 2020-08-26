@@ -52,6 +52,7 @@ def test_imports():
     _ = tfq.layers.PQC
 
     # Differentiators.
+    _ = tfq.differentiators.Adjoint
     _ = tfq.differentiators.ForwardDifference
     _ = tfq.differentiators.CentralDifference
     _ = tfq.differentiators.LinearCombination
