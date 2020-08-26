@@ -24,7 +24,7 @@ limitations under the License.
 #include "../qsim/lib/fuser.h"
 #include "../qsim/lib/gate_appl.h"
 #include "../qsim/lib/gates_cirq.h"
-#include "absl/container/flat_hash_map.h"
+#include "../qsim/lib/matrix.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow/core/platform/threadpool.h"
@@ -33,7 +33,6 @@ limitations under the License.
 
 namespace tfq {
 
-typedef absl::flat_hash_map<std::string, std::pair<int, float>> SymbolMap;
 typedef qsim::Cirq::GateCirq<float> QsimGate;
 typedef qsim::Circuit<QsimGate> QsimCircuit;
 
@@ -254,6 +253,98 @@ tensorflow::Status ComputeSampledExpectationQsim(
                           term.coefficient_real() /
                           static_cast<float>(num_samples);
   }
+  return status;
+}
+
+template <typename Gate, typename Simulator, typename State>
+inline void ApplyGateDagger(const Simulator& simulator, const Gate& gate,
+                            State& state) {
+  typename Simulator::fp_type matrix[32];
+
+  if (gate.num_qubits == 1 && gate.matrix.size() == 8) {
+    std::copy(gate.matrix.begin(), gate.matrix.begin() + 8, matrix);
+    qsim::Matrix2Dagger(matrix);
+    simulator.ApplyGate1(gate.qubits[0], matrix, state);
+  } else if (gate.num_qubits == 2 && gate.matrix.size() == 32) {
+    std::copy(gate.matrix.begin(), gate.matrix.begin() + 32, matrix);
+    qsim::Matrix4Dagger(matrix);
+    // Here we should have gate.qubits[0] < gate.qubits[1].
+    simulator.ApplyGate2(gate.qubits[0], gate.qubits[1], matrix, state);
+  }
+}
+
+// Fuse gates. Dagger. Then apply. Slight modification from qsim.
+template <typename Gate, typename Simulator, typename State>
+inline void ApplyFusedGateDagger(const Simulator& simulator, const Gate& gate,
+                                 State& state) {
+  typename Simulator::fp_type matrix[32];
+
+  if (gate.num_qubits == 1 && gate.pmaster->matrix.size() == 8) {
+    qsim::CalcMatrix2(gate.gates, matrix);
+    qsim::Matrix2Dagger(matrix);
+    simulator.ApplyGate1(gate.qubits[0], matrix, state);
+  } else if (gate.num_qubits == 2 && gate.pmaster->matrix.size() == 32) {
+    // Here we should have gate.qubits[0] < gate.qubits[1].
+    qsim::CalcMatrix4(gate.qubits[0], gate.qubits[1], gate.gates, matrix);
+    qsim::Matrix4Dagger(matrix);
+    simulator.ApplyGate2(gate.qubits[0], gate.qubits[1], matrix, state);
+  }
+}
+
+// Assumes p_sums.size() == op_coeffs.size()
+// state stores |psi>. scratch has been created, but does not
+// require initialization. dest has been created, but does not require
+// initialization.
+// After termination scratch will contain a copy of source.
+template <typename SimT, typename StateSpaceT, typename StateT>
+tensorflow::Status AccumulateOperators(
+    const std::vector<tfq::proto::PauliSum>& p_sums,
+    const std::vector<float>& op_coeffs, const SimT& sim, const StateSpaceT& ss,
+    StateT& source, StateT& scratch, StateT& dest) {
+  // apply the  gates of the pauliterms to a copy of the wavefunction
+  // accumulating results as we go. Effectively doing O|psi> for an arbitrary
+  // O. Result is stored on scratch.
+  tensorflow::Status status = tensorflow::Status::OK();
+  ss.CopyState(source, scratch);
+  ss.SetAllZeros(dest);
+
+  for (int i = 0; i < p_sums.size(); i++) {
+    for (const tfq::proto::PauliTerm& term : p_sums[i].terms()) {
+      const float leading_coeff = op_coeffs[i] * term.coefficient_real();
+      if (std::fabs(leading_coeff) < 1e-5) {
+        // skip really small terms that will just induce more rounding
+        // errors.
+        continue;
+      }
+      if (term.paulis_size() == 0) {
+        // identity term. Scalar multiply, add, then revert.
+        ss.Multiply(leading_coeff, scratch);
+        ss.AddState(scratch, dest);
+        ss.CopyState(source, scratch);
+        continue;
+      }
+
+      QsimCircuit main_circuit;
+      std::vector<qsim::GateFused<QsimGate>> fused_circuit;
+
+      status = QsimCircuitFromPauliTerm(term, ss.num_qubits_, &main_circuit,
+                                        &fused_circuit);
+      if (!status.ok()) {
+        return status;
+      }
+
+      // Apply scaled gates, accumulate, undo.
+      for (int j = 0; j < fused_circuit.size(); j++) {
+        qsim::ApplyFusedGate(sim, fused_circuit[j], scratch);
+      }
+
+      ss.Multiply(leading_coeff, scratch);
+      ss.AddState(scratch, dest);
+      ss.CopyState(source, scratch);
+      // scratch should now be reverted back to original source.
+    }
+  }
+
   return status;
 }
 

@@ -279,4 +279,31 @@ tensorflow::Status GetNumSamples(
   return Status::OK();
 }
 
+// used by tfq_simulate_samples.
+Status GetIndividualSample(tensorflow::OpKernelContext* context,
+                           int* n_samples) {
+  const Tensor* input_num_samples;
+  Status status = context->input("num_samples", &input_num_samples);
+  if (!status.ok()) {
+    return status;
+  }
+
+  if (input_num_samples->dims() != 1) {
+    return Status(tensorflow::error::INVALID_ARGUMENT,
+                  absl::StrCat("num_samples must be rank 1. Got rank ",
+                               input_num_samples->dims(), "."));
+  }
+
+  const auto vector_num_samples = input_num_samples->vec<int>();
+
+  if (vector_num_samples.dimension(0) != 1) {
+    return Status(tensorflow::error::INVALID_ARGUMENT,
+                  absl::StrCat("num_samples must contain 1 element. Got ",
+                               vector_num_samples.dimension(0), "."));
+  }
+
+  (*n_samples) = vector_num_samples(0);
+  return Status::OK();
+}
+
 }  // namespace tfq

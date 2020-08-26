@@ -22,4 +22,5 @@ from tensorflow_quantum.core.ops.circuit_execution_ops import (
 from tensorflow_quantum.core.ops.tfq_unitary_op import calculate_unitary
 from tensorflow_quantum.core.ops.tfq_utility_ops import (padded_to_ragged,
                                                          padded_to_ragged2d,
+                                                         resolve_parameters,
                                                          tfq_append_circuit)

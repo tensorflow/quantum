@@ -148,8 +148,7 @@ class Sample(tf.keras.layers.Layer):
             backend: Optional Backend to use to simulate this state. Defaults
                 to the native Tensorflow simulator (None), however users may
                 also specify a preconfigured cirq execution object to use
-                instead, which must inherit `cirq.SimulatesSamples` or a
-                `cirq.Sampler`.
+                instead, which must inherit `cirq.Sampler`.
         """
         super().__init__(**kwargs)
         self.sample_op = circuit_execution_ops.get_sampling_op(backend)

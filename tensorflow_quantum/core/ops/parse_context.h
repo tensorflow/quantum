@@ -76,6 +76,11 @@ tensorflow::Status GetNumSamples(
     tensorflow::OpKernelContext* context,
     std::vector<std::vector<int>>* parsed_num_samples);
 
+// Parses the 'num_samples' input tensor when it is expected to only
+//   contain one element.
+tensorflow::Status GetIndividualSample(tensorflow::OpKernelContext* context,
+                                       int* n_samples);
+
 }  // namespace tfq
 
 #endif  // TFQ_CORE_OPS_PARSE_CONTEXT

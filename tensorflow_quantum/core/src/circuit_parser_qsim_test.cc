@@ -105,24 +105,44 @@ TEST_P(TwoQubitEigenFixture, TwoEigenGate) {
   QsimCircuit test_circuit;
   std::vector<qsim::GateFused<QsimGate>> fused_circuit;
   SymbolMap symbol_map = {{"placeholder", std::pair<int, float>(1, 2 * exp)}};
+  std::vector<GateMetaData> metadata;
 
   // Test case where we have a placeholder.
   ASSERT_EQ(QsimCircuitFromProgram(program_proto, symbol_map, 2, &test_circuit,
-                                   &fused_circuit),
+                                   &fused_circuit, &metadata),
             tensorflow::Status::OK());
   AssertTwoQubitEqual(test_circuit.gates[0], ref_gate);
+  EXPECT_EQ(metadata[0].index, 0);
+  EXPECT_EQ(metadata[0].symbol_values[0], "placeholder");
+  EXPECT_EQ(metadata[0].placeholder_names[0], GateParamNames::kExponent);
+  EXPECT_NEAR(metadata[0].gate_params[0], 2 * exp, 1e-5);
+  EXPECT_NEAR(metadata[0].gate_params[1], 0.5, 1e-5);
+  EXPECT_NEAR(metadata[0].gate_params[2], gs, 1e-5);
+  EXPECT_EQ(metadata.size(), 1);
+  EXPECT_EQ(metadata[0].gate_params.size(), 3);
+  EXPECT_EQ(metadata[0].symbol_values.size(), 1);
+  EXPECT_EQ(metadata[0].placeholder_names.size(), 1);
 
   test_circuit.gates.clear();
   fused_circuit.clear();
+  metadata.clear();
   (*args_proto)["exponent"] = MakeArg(exp);
   (*args_proto)["exponent_scalar"] = MakeArg(1.0);
   symbol_map.clear();
 
   // Test case where we have all float values.
   ASSERT_EQ(QsimCircuitFromProgram(program_proto, symbol_map, 2, &test_circuit,
-                                   &fused_circuit),
+                                   &fused_circuit, &metadata),
             tensorflow::Status::OK());
   AssertTwoQubitEqual(test_circuit.gates[0], ref_gate);
+  EXPECT_EQ(metadata[0].index, 0);
+  EXPECT_NEAR(metadata[0].gate_params[0], exp, 1e-5);
+  EXPECT_NEAR(metadata[0].gate_params[1], 1.0, 1e-5);
+  EXPECT_NEAR(metadata[0].gate_params[2], gs, 1e-5);
+  EXPECT_EQ(metadata.size(), 1);
+  EXPECT_EQ(metadata[0].gate_params.size(), 3);
+  EXPECT_EQ(metadata[0].symbol_values.size(), 0);
+  EXPECT_EQ(metadata[0].placeholder_names.size(), 0);
 
   test_circuit.gates.clear();
   fused_circuit.clear();
@@ -195,23 +215,43 @@ TEST_P(SingleQubitEigenFixture, SingleEigenGate) {
   QsimCircuit test_circuit;
   std::vector<qsim::GateFused<QsimGate>> fused_circuit;
   SymbolMap symbol_map = {{"placeholder", std::pair<int, float>(1, 2 * exp)}};
+  std::vector<GateMetaData> metadata;
 
   ASSERT_EQ(QsimCircuitFromProgram(program_proto, symbol_map, 1, &test_circuit,
-                                   &fused_circuit),
+                                   &fused_circuit, &metadata),
             tensorflow::Status::OK());
   AssertOneQubitEqual(test_circuit.gates[0], ref_gate);
+  EXPECT_EQ(metadata[0].index, 0);
+  EXPECT_EQ(metadata[0].symbol_values[0], "placeholder");
+  EXPECT_EQ(metadata[0].placeholder_names[0], GateParamNames::kExponent);
+  EXPECT_NEAR(metadata[0].gate_params[0], 2 * exp, 1e-5);
+  EXPECT_NEAR(metadata[0].gate_params[1], 0.5, 1e-5);
+  EXPECT_NEAR(metadata[0].gate_params[2], gs, 1e-5);
+  EXPECT_EQ(metadata.size(), 1);
+  EXPECT_EQ(metadata[0].gate_params.size(), 3);
+  EXPECT_EQ(metadata[0].symbol_values.size(), 1);
+  EXPECT_EQ(metadata[0].placeholder_names.size(), 1);
 
   test_circuit.gates.clear();
   fused_circuit.clear();
   (*args_proto)["exponent"] = MakeArg(exp);
   (*args_proto)["exponent_scalar"] = MakeArg(1.0);
   symbol_map.clear();
+  metadata.clear();
 
   // Test case where we have all float values.
   ASSERT_EQ(QsimCircuitFromProgram(program_proto, symbol_map, 1, &test_circuit,
-                                   &fused_circuit),
+                                   &fused_circuit, &metadata),
             tensorflow::Status::OK());
   AssertOneQubitEqual(test_circuit.gates[0], ref_gate);
+  EXPECT_EQ(metadata[0].index, 0);
+  EXPECT_NEAR(metadata[0].gate_params[0], exp, 1e-5);
+  EXPECT_NEAR(metadata[0].gate_params[1], 1.0, 1e-5);
+  EXPECT_NEAR(metadata[0].gate_params[2], gs, 1e-5);
+  EXPECT_EQ(metadata.size(), 1);
+  EXPECT_EQ(metadata[0].gate_params.size(), 3);
+  EXPECT_EQ(metadata[0].symbol_values.size(), 0);
+  EXPECT_EQ(metadata[0].placeholder_names.size(), 0);
 
   test_circuit.gates.clear();
   fused_circuit.clear();
@@ -266,11 +306,16 @@ TEST(QsimCircuitParserTest, SingleConstantGate) {
     QsimCircuit test_circuit;
     std::vector<qsim::GateFused<QsimGate>> fused_circuit;
     SymbolMap empty_map;
+    std::vector<GateMetaData> metadata;
 
     ASSERT_EQ(QsimCircuitFromProgram(program_proto, empty_map, 1, &test_circuit,
-                                     &fused_circuit),
+                                     &fused_circuit, &metadata),
               tensorflow::Status::OK());
     AssertOneQubitEqual(test_circuit.gates[0], kv.second);
+    EXPECT_EQ(metadata.size(), 1);
+    EXPECT_EQ(metadata[0].placeholder_names.size(), 0);
+    EXPECT_EQ(metadata[0].symbol_values.size(), 0);
+    EXPECT_EQ(metadata[0].gate_params.size(), 0);
   }
 }
 
@@ -297,11 +342,16 @@ TEST(QsimCircuitParserTest, TwoConstantGate) {
     QsimCircuit test_circuit;
     std::vector<qsim::GateFused<QsimGate>> fused_circuit;
     SymbolMap empty_map;
+    std::vector<GateMetaData> metadata;
 
     ASSERT_EQ(QsimCircuitFromProgram(program_proto, empty_map, 2, &test_circuit,
-                                     &fused_circuit),
+                                     &fused_circuit, &metadata),
               tensorflow::Status::OK());
     AssertTwoQubitEqual(test_circuit.gates[0], kv.second);
+    EXPECT_EQ(metadata.size(), 1);
+    EXPECT_EQ(metadata[0].placeholder_names.size(), 0);
+    EXPECT_EQ(metadata[0].symbol_values.size(), 0);
+    EXPECT_EQ(metadata[0].gate_params.size(), 0);
   }
 }
 
@@ -337,16 +387,30 @@ TEST(QsimCircuitParserTest, FsimGateTest) {
   std::vector<qsim::GateFused<QsimGate>> fused_circuit;
   SymbolMap symbol_map = {{"alpha", std::pair<int, float>(0, 2 * theta)},
                           {"beta", std::pair<int, float>(1, 5 * phi)}};
+  std::vector<GateMetaData> metadata;
 
   // Test symbol resolution.
   ASSERT_EQ(QsimCircuitFromProgram(program_proto, symbol_map, 2, &test_circuit,
-                                   &fused_circuit),
+                                   &fused_circuit, &metadata),
             tensorflow::Status::OK());
   AssertTwoQubitEqual(test_circuit.gates[0], reference);
+  EXPECT_EQ(metadata.size(), 1);
+  EXPECT_EQ(metadata[0].placeholder_names.size(), 2);
+  EXPECT_EQ(metadata[0].symbol_values.size(), 2);
+  EXPECT_EQ(metadata[0].gate_params.size(), 4);
+  EXPECT_NEAR(metadata[0].gate_params[0], 2 * theta, 1e-5);
+  EXPECT_NEAR(metadata[0].gate_params[1], 0.5, 1e-5);
+  EXPECT_NEAR(metadata[0].gate_params[2], 5 * phi, 1e-5);
+  EXPECT_NEAR(metadata[0].gate_params[3], 0.2, 1e-5);
+  EXPECT_EQ(metadata[0].symbol_values[0], "alpha");
+  EXPECT_EQ(metadata[0].symbol_values[1], "beta");
+  EXPECT_EQ(metadata[0].placeholder_names[0], GateParamNames::kTheta);
+  EXPECT_EQ(metadata[0].placeholder_names[1], GateParamNames::kPhi);
 
   symbol_map.clear();
   test_circuit.gates.clear();
   fused_circuit.clear();
+  metadata.clear();
   (*args_proto)["theta"] = MakeArg(theta);
   (*args_proto)["theta_scalar"] = MakeArg(1.0);
   (*args_proto)["phi"] = MakeArg(phi);
@@ -354,9 +418,17 @@ TEST(QsimCircuitParserTest, FsimGateTest) {
 
   // Test float values only.
   ASSERT_EQ(QsimCircuitFromProgram(program_proto, symbol_map, 2, &test_circuit,
-                                   &fused_circuit),
+                                   &fused_circuit, &metadata),
             tensorflow::Status::OK());
   AssertTwoQubitEqual(test_circuit.gates[0], reference);
+  EXPECT_EQ(metadata.size(), 1);
+  EXPECT_EQ(metadata[0].placeholder_names.size(), 0);
+  EXPECT_EQ(metadata[0].symbol_values.size(), 0);
+  EXPECT_EQ(metadata[0].gate_params.size(), 4);
+  EXPECT_NEAR(metadata[0].gate_params[0], theta, 1e-5);
+  EXPECT_NEAR(metadata[0].gate_params[1], 1.0, 1e-5);
+  EXPECT_NEAR(metadata[0].gate_params[2], phi, 1e-5);
+  EXPECT_NEAR(metadata[0].gate_params[3], 1.0, 1e-5);
 
   test_circuit.gates.clear();
   fused_circuit.clear();
@@ -415,16 +487,30 @@ TEST(QsimCircuitParserTest, PhasedISwapTest) {
   SymbolMap symbol_map = {
       {"alpha", std::pair<int, float>(0, 2 * phase_exponent)},
       {"beta", std::pair<int, float>(1, 5 * exponent)}};
+  std::vector<GateMetaData> metadata;
 
   // Test symbol resolution.
   ASSERT_EQ(QsimCircuitFromProgram(program_proto, symbol_map, 2, &test_circuit,
-                                   &fused_circuit),
+                                   &fused_circuit, &metadata),
             tensorflow::Status::OK());
   AssertTwoQubitEqual(test_circuit.gates[0], reference);
+  EXPECT_EQ(metadata.size(), 1);
+  EXPECT_EQ(metadata[0].placeholder_names.size(), 2);
+  EXPECT_EQ(metadata[0].symbol_values.size(), 2);
+  EXPECT_EQ(metadata[0].gate_params.size(), 4);
+  EXPECT_NEAR(metadata[0].gate_params[0], 2 * phase_exponent, 1e-5);
+  EXPECT_NEAR(metadata[0].gate_params[1], 0.5, 1e-5);
+  EXPECT_NEAR(metadata[0].gate_params[2], 5 * exponent, 1e-5);
+  EXPECT_NEAR(metadata[0].gate_params[3], 0.2, 1e-5);
+  EXPECT_EQ(metadata[0].symbol_values[0], "alpha");
+  EXPECT_EQ(metadata[0].symbol_values[1], "beta");
+  EXPECT_EQ(metadata[0].placeholder_names[0], GateParamNames::kPhaseExponent);
+  EXPECT_EQ(metadata[0].placeholder_names[1], GateParamNames::kExponent);
 
   symbol_map.clear();
   test_circuit.gates.clear();
   fused_circuit.clear();
+  metadata.clear();
   (*args_proto)["phase_exponent"] = MakeArg(phase_exponent);
   (*args_proto)["phase_exponent_scalar"] = MakeArg(1.0);
   (*args_proto)["exponent"] = MakeArg(exponent);
@@ -432,9 +518,17 @@ TEST(QsimCircuitParserTest, PhasedISwapTest) {
 
   // Test float values only.
   ASSERT_EQ(QsimCircuitFromProgram(program_proto, symbol_map, 2, &test_circuit,
-                                   &fused_circuit),
+                                   &fused_circuit, &metadata),
             tensorflow::Status::OK());
   AssertTwoQubitEqual(test_circuit.gates[0], reference);
+  EXPECT_EQ(metadata.size(), 1);
+  EXPECT_EQ(metadata[0].placeholder_names.size(), 0);
+  EXPECT_EQ(metadata[0].symbol_values.size(), 0);
+  EXPECT_EQ(metadata[0].gate_params.size(), 4);
+  EXPECT_NEAR(metadata[0].gate_params[0], phase_exponent, 1e-5);
+  EXPECT_NEAR(metadata[0].gate_params[1], 1.0, 1e-5);
+  EXPECT_NEAR(metadata[0].gate_params[2], exponent, 1e-5);
+  EXPECT_NEAR(metadata[0].gate_params[3], 1.0, 1e-5);
 
   test_circuit.gates.clear();
   fused_circuit.clear();
@@ -493,16 +587,31 @@ TEST(QsimCircuitParserTest, PhasedXPowTest) {
   SymbolMap symbol_map = {
       {"alpha", std::pair<int, float>(0, 2 * phase_exponent)},
       {"beta", std::pair<int, float>(1, 5 * exponent)}};
+  std::vector<GateMetaData> metadata;
 
   // Test symbol resolution.
   ASSERT_EQ(QsimCircuitFromProgram(program_proto, symbol_map, 1, &test_circuit,
-                                   &fused_circuit),
+                                   &fused_circuit, &metadata),
             tensorflow::Status::OK());
   AssertOneQubitEqual(test_circuit.gates[0], reference);
+  EXPECT_EQ(metadata.size(), 1);
+  EXPECT_EQ(metadata[0].placeholder_names.size(), 2);
+  EXPECT_EQ(metadata[0].symbol_values.size(), 2);
+  EXPECT_EQ(metadata[0].gate_params.size(), 5);
+  EXPECT_NEAR(metadata[0].gate_params[0], 2 * phase_exponent, 1e-5);
+  EXPECT_NEAR(metadata[0].gate_params[1], 0.5, 1e-5);
+  EXPECT_NEAR(metadata[0].gate_params[2], 5 * exponent, 1e-5);
+  EXPECT_NEAR(metadata[0].gate_params[3], 0.2, 1e-5);
+  EXPECT_NEAR(metadata[0].gate_params[4], gs, 1e-5);
+  EXPECT_EQ(metadata[0].symbol_values[0], "alpha");
+  EXPECT_EQ(metadata[0].symbol_values[1], "beta");
+  EXPECT_EQ(metadata[0].placeholder_names[0], GateParamNames::kPhaseExponent);
+  EXPECT_EQ(metadata[0].placeholder_names[1], GateParamNames::kExponent);
 
   symbol_map.clear();
   test_circuit.gates.clear();
   fused_circuit.clear();
+  metadata.clear();
   (*args_proto)["phase_exponent"] = MakeArg(phase_exponent);
   (*args_proto)["phase_exponent_scalar"] = MakeArg(1.0);
   (*args_proto)["exponent"] = MakeArg(exponent);
@@ -511,9 +620,17 @@ TEST(QsimCircuitParserTest, PhasedXPowTest) {
 
   // Test float values only.
   ASSERT_EQ(QsimCircuitFromProgram(program_proto, symbol_map, 1, &test_circuit,
-                                   &fused_circuit),
+                                   &fused_circuit, &metadata),
             tensorflow::Status::OK());
   AssertOneQubitEqual(test_circuit.gates[0], reference);
+  EXPECT_EQ(metadata.size(), 1);
+  EXPECT_EQ(metadata[0].placeholder_names.size(), 0);
+  EXPECT_EQ(metadata[0].symbol_values.size(), 0);
+  EXPECT_EQ(metadata[0].gate_params.size(), 5);
+  EXPECT_NEAR(metadata[0].gate_params[0], phase_exponent, 1e-5);
+  EXPECT_NEAR(metadata[0].gate_params[1], 1.0, 1e-5);
+  EXPECT_NEAR(metadata[0].gate_params[2], exponent, 1e-5);
+  EXPECT_NEAR(metadata[0].gate_params[3], 1.0, 1e-5);
 
   test_circuit.gates.clear();
   fused_circuit.clear();
@@ -546,13 +663,15 @@ TEST(QsimCircuitParserTest, EmptyTest) {
   QsimCircuit test_circuit;
   std::vector<qsim::GateFused<QsimGate>> fused_circuit;
   SymbolMap empty_map;
+  std::vector<GateMetaData> metadata;
 
   // Ensure that nothing bad happens with an empty circuit.
   ASSERT_EQ(QsimCircuitFromProgram(program_proto, empty_map, 2, &test_circuit,
-                                   &fused_circuit),
+                                   &fused_circuit, &metadata),
             tensorflow::Status::OK());
   ASSERT_EQ(test_circuit.gates.size(), 0);
   ASSERT_EQ(fused_circuit.size(), 0);
+  ASSERT_EQ(metadata.size(), 0);
 }
 
 TEST(QsimCircuitParserTest, CircuitFromPauliTermPauli) {
