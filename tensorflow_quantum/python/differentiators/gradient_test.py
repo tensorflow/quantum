@@ -22,6 +22,7 @@ from absl.testing import parameterized
 
 import cirq
 from tensorflow_quantum.python import util
+from tensorflow_quantum.python.differentiators import adjoint
 from tensorflow_quantum.python.differentiators import linear_combination
 from tensorflow_quantum.python.differentiators import parameter_shift
 from tensorflow_quantum.python.differentiators import stochastic_differentiator
@@ -111,7 +112,11 @@ class GradientCorrectnessTest(tf.test.TestCase, parameterized.TestCase):
                     'differentiator': DIFFS + STOCHASTIC_DIFFS,
                     'op': OPS,
                     'stochastic_cost': [False, True]
-                })))
+                })) + [{
+                    'differentiator': adjoint.Adjoint(),
+                    'op': circuit_execution_ops.get_expectation_op(),
+                    'stochastic_cost': False
+                }])
     def test_backprop(self, differentiator, op, stochastic_cost):
         """Test that gradients are correctly backpropagated through a quantum
         circuit via comparison to analytical results.
@@ -155,7 +160,14 @@ class GradientCorrectnessTest(tf.test.TestCase, parameterized.TestCase):
                     'n_programs': [3],
                     'n_ops': [3],
                     'symbol_names': [['a', 'b']]
-                })))
+                })) + [{
+                    'differentiator': adjoint.Adjoint(),
+                    'op': circuit_execution_ops.get_expectation_op(),
+                    'n_qubits': 5,
+                    'n_programs': 5,
+                    'n_ops': 3,
+                    'symbol_names': ['a', 'b']
+                }])
     def test_gradients_vs_cirq_finite_difference(self, differentiator, op,
                                                  n_qubits, n_programs, n_ops,
                                                  symbol_names):
@@ -212,7 +224,11 @@ class GradientCorrectnessTest(tf.test.TestCase, parameterized.TestCase):
                     'differentiator': DIFFS + STOCHASTIC_DIFFS,
                     'op': OPS,
                     'stochastic_cost': [False, True]
-                })))
+                })) + [{
+                    'differentiator': adjoint.Adjoint(),
+                    'op': circuit_execution_ops.get_expectation_op(),
+                    'stochastic_cost': False
+                }])
     def test_analytic_value_with_simple_circuit(self, differentiator, op,
                                                 stochastic_cost):
         """Test the value of differentiator with simple circuit.
