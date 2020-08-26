@@ -244,7 +244,8 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
             // Copy sv onto scratch2 in anticipation of non-unitary "gradient
             // gate".
             ss.CopyState(sv, scratch2);
-            qsim::ApplyGate(sim, gradient_gates[i][j - 1].grad_gates[k], sv);
+            qsim::ApplyGate(sim, gradient_gates[i][j - 1].grad_gates[k],
+                            scratch2);
 
             // don't need not-found check since this is done upstream already.
             const auto it = maps[i].find(gradient_gates[i][j - 1].params[k]);
@@ -254,10 +255,8 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
             // of a symbol at the same circuit. For analytic methods like
             // parameter-shift we need to apply a single `gradient_gate`
             // per a symbol.
-            (*output_tensor)(i, loc) += ss.RealInnerProduct(sv, scratch) +
-                                        ss.RealInnerProduct(scratch, sv);
-
-            ss.CopyState(scratch2, sv);
+            (*output_tensor)(i, loc) += ss.RealInnerProduct(scratch2, scratch) +
+                                        ss.RealInnerProduct(scratch, scratch2);
           }
           ApplyGateDagger(
               sim, qsim_circuits[i].gates[gradient_gates[i][j - 1].index],
@@ -352,7 +351,8 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
           // Copy sv onto scratch2 in anticipation of non-unitary "gradient
           // gate".
           ss.CopyState(sv, scratch2);
-          qsim::ApplyGate(sim, gradient_gates[i][j - 1].grad_gates[k], sv);
+          qsim::ApplyGate(sim, gradient_gates[i][j - 1].grad_gates[k],
+                          scratch2);
 
           // don't need not-found check since this is done upstream already.
           const auto it = maps[i].find(gradient_gates[i][j - 1].params[k]);
@@ -362,10 +362,8 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
           // of a symbol at the same circuit. For analytic methods like
           // parameter-shift we need to apply a single `gradient_gate`
           // per a symbol.
-          (*output_tensor)(i, loc) += ss.RealInnerProduct(sv, scratch) +
-                                      ss.RealInnerProduct(scratch, sv);
-
-          ss.CopyState(scratch2, sv);
+          (*output_tensor)(i, loc) += ss.RealInnerProduct(scratch2, scratch) +
+                                      ss.RealInnerProduct(scratch, scratch2);
         }
         ApplyGateDagger(sim,
                         qsim_circuits[i].gates[gradient_gates[i][j - 1].index],
