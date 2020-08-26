@@ -50,12 +50,12 @@ class QContextTest(tf.test.TestCase, parameterized.TestCase):
         mode = quantum_context.get_engine_mode()
         self.assertTrue(mode)
 
-    def test_low_latency_op_mode(self):
-        """Test getter an setter behavior for low_latency_op_mode."""
-        mode = quantum_context.get_low_latency_op_mode()
+    def test_quantum_concurrent_op_mode(self):
+        """Test getter an setter behavior for quantum_concurrent_op_mode."""
+        mode = quantum_context.get_quantum_concurrent_op_mode()
         self.assertTrue(mode)
-        quantum_context.set_low_latency_op_mode(False)
-        mode = quantum_context.get_low_latency_op_mode()
+        quantum_context.set_quantum_concurrent_op_mode(False)
+        mode = quantum_context.get_quantum_concurrent_op_mode()
         self.assertFalse(mode)
 
 
