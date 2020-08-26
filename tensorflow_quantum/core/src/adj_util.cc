@@ -65,9 +65,11 @@ void CreateGradientCircuit(
              circuit.gates[i].kind == qsim::Cirq::GateKind::kZZPowGate ||
              circuit.gates[i].kind == qsim::Cirq::GateKind::kISwapPowGate ||
              circuit.gates[i].kind == qsim::Cirq::GateKind::kSwapPowGate) {
+      bool swapq = circuit.gates[i].inverse;
       PopulateGradientTwoEigen(
           metadata[i].create_f2, metadata[i].symbol_values[0], i,
-          circuit.gates[i].qubits[0], circuit.gates[i].qubits[1],
+          swapq ? circuit.gates[i].qubits[1] : circuit.gates[i].qubits[0],
+          swapq ? circuit.gates[i].qubits[0] : circuit.gates[i].qubits[1],
           metadata[i].gate_params[0], metadata[i].gate_params[1],
           metadata[i].gate_params[2], &grad);
       grad_gates->push_back(grad);
@@ -99,19 +101,23 @@ void CreateGradientCircuit(
     // Fsim
     else if (circuit.gates[i].kind == qsim::Cirq::GateKind::kFSimGate) {
       // Process potentially several symbols.
+
+      bool swapq = circuit.gates[i].inverse;
       for (int j = 0; j < metadata[i].symbol_values.size(); j++) {
         if (metadata[i].placeholder_names[j] == GateParamNames::kTheta) {
           PopulateGradientFsimTheta(
-              metadata[i].symbol_values[j], i, circuit.gates[i].qubits[0],
-              circuit.gates[i].qubits[1], metadata[i].gate_params[0],
-              metadata[i].gate_params[1], metadata[i].gate_params[2],
-              metadata[i].gate_params[3], &grad);
+              metadata[i].symbol_values[j], i,
+              swapq ? circuit.gates[i].qubits[1] : circuit.gates[i].qubits[0],
+              swapq ? circuit.gates[i].qubits[0] : circuit.gates[i].qubits[1],
+              metadata[i].gate_params[0], metadata[i].gate_params[1],
+              metadata[i].gate_params[2], metadata[i].gate_params[3], &grad);
         } else if (metadata[i].placeholder_names[j] == GateParamNames::kPhi) {
           PopulateGradientFsimPhi(
-              metadata[i].symbol_values[j], i, circuit.gates[i].qubits[0],
-              circuit.gates[i].qubits[1], metadata[i].gate_params[0],
-              metadata[i].gate_params[1], metadata[i].gate_params[2],
-              metadata[i].gate_params[3], &grad);
+              metadata[i].symbol_values[j], i,
+              swapq ? circuit.gates[i].qubits[1] : circuit.gates[i].qubits[0],
+              swapq ? circuit.gates[i].qubits[0] : circuit.gates[i].qubits[1],
+              metadata[i].gate_params[0], metadata[i].gate_params[1],
+              metadata[i].gate_params[2], metadata[i].gate_params[3], &grad);
         }
       }
       grad_gates->push_back(grad);
@@ -121,21 +127,25 @@ void CreateGradientCircuit(
     else if (circuit.gates[i].kind ==
              qsim::Cirq::GateKind::kPhasedISwapPowGate) {
       // Process potentially several symbols.
+      bool swapq = circuit.gates[i].inverse;
       for (int j = 0; j < metadata[i].symbol_values.size(); j++) {
         if (metadata[i].placeholder_names[j] ==
             GateParamNames::kPhaseExponent) {
           PopulateGradientPhasedISwapPhasedExponent(
-              metadata[i].symbol_values[j], i, circuit.gates[i].qubits[0],
-              circuit.gates[i].qubits[1], metadata[i].gate_params[0],
-              metadata[i].gate_params[1], metadata[i].gate_params[2],
-              metadata[i].gate_params[3], &grad);
+              metadata[i].symbol_values[j], i,
+              swapq ? circuit.gates[i].qubits[1] : circuit.gates[i].qubits[0],
+              swapq ? circuit.gates[i].qubits[0] : circuit.gates[i].qubits[1],
+              metadata[i].gate_params[0], metadata[i].gate_params[1],
+              metadata[i].gate_params[2], metadata[i].gate_params[3], &grad);
+
         } else if (metadata[i].placeholder_names[j] ==
                    GateParamNames::kExponent) {
           PopulateGradientPhasedISwapExponent(
-              metadata[i].symbol_values[j], i, circuit.gates[i].qubits[0],
-              circuit.gates[i].qubits[1], metadata[i].gate_params[0],
-              metadata[i].gate_params[1], metadata[i].gate_params[2],
-              metadata[i].gate_params[3], &grad);
+              metadata[i].symbol_values[j], i,
+              swapq ? circuit.gates[i].qubits[1] : circuit.gates[i].qubits[0],
+              swapq ? circuit.gates[i].qubits[0] : circuit.gates[i].qubits[1],
+              metadata[i].gate_params[0], metadata[i].gate_params[1],
+              metadata[i].gate_params[2], metadata[i].gate_params[3], &grad);
         }
       }
       grad_gates->push_back(grad);
