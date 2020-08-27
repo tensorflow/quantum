@@ -249,12 +249,9 @@ def minimize(expectation_value_function,
             Returns:
                 states: A list which the first element is the new state
             """
-            delta_shift = tf.reshape(
-                tf.cast(tf.sparse.to_dense(
-                    tf.sparse.SparseTensor(
-                        [[state.solve_param_i, 0]], [math.pi / 2],
-                        [prefer_static_shape(state.position)[0], 1])),
-                        dtype=dtype), prefer_static_shape(state.position))
+            delta_shift = tf.scatter_nd(tf.constant([[state.solve_param_i]]),
+                                        [tf.constant(math.pi / 2,dtype=dtype)],
+                                        prefer_static_shape(state.position))
 
             # Evaluate three different point for curve fitting
             v_l, v_n, v_r = expectation_value_function(
@@ -266,12 +263,16 @@ def minimize(expectation_value_function,
             delta_update = -math.pi / 2 - \
                 tf.math.atan2(2 * v_n - v_l - v_r, v_r - v_l)
 
-            delta_update_tensor = tf.reshape(
-                tf.cast(tf.sparse.to_dense(
-                    tf.sparse.SparseTensor(
-                        [[state.solve_param_i, 0]], [delta_update],
-                        [prefer_static_shape(state.position)[0], 1])),
-                        dtype=dtype), prefer_static_shape(state.position))
+            #delta_update_tensor = tf.reshape(
+            #    tf.cast(tf.sparse.to_dense(
+            #        tf.sparse.SparseTensor(
+            #            [[state.solve_param_i, 0]], [delta_update],
+            #            [prefer_static_shape(state.position)[0], 1])),
+            #            dtype=dtype), prefer_static_shape(state.position))
+
+            delta_update_tensor = tf.scatter_nd(tf.constant([[state.solve_param_i]]),
+                                        [delta_update],
+                                        prefer_static_shape(state.position))
 
             state.solve_param_i.assign_add(1)
             state.position.assign(
