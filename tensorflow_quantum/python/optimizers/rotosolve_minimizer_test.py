@@ -87,9 +87,7 @@ class RotosolveMinimizerTest(tf.test.TestCase, parameterized.TestCase):
         coefficient = tf.random.uniform(shape=[n])
         min_value = -tf.sum(tf.abs(coefficient))
 
-        def func(x):
-            """The sinusoid function to optimize"""
-            return tf.sum(tf.sin(x) * coefficient)
+        func = lambda x:tf.sum(tf.sin(x) * coefficient)
 
         result = rotosolve_minimizer.minimize(func, np.random.random(n))
 

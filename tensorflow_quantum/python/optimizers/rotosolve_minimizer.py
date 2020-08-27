@@ -117,90 +117,15 @@ def minimize(expectation_value_function,
     The following example demonstrates the Rotosolve optimizer attempting
      to find the minimum for two qubit ansatz expectation value.
 
-    We first start by defining some variables for training dataset. In this
-    example you train a circuit perform an XOR operation
+    Here we show an example of optimize a function which consists summation of
+    a few sinusoids.
 
-    >>> X = np.asarray([
-    ...    [0, 0],
-    ...    [0, 1],
-    ...    [1, 0],
-    ...    [1, 1],
-    ...], dtype=float)
-
-    >>> Y = np.asarray([
-    ...    [-1], [1], [1], [-1]
-    ...], dtype=float)
-
-    Using the classical data you defined above, it's now time to make
-    quantum circuit representations of the data. You can use the encoding
-    scheme below to convert the datapoints into circuits.
-
-    >>> def convert_to_circuit(input_data):
-    ...    # Encode into quantum datapoint.
-    ...    qubits = cirq.GridQubit.rect(1, 2)
-    ...    circuit = cirq.Circuit()
-    ...    for i, value in enumerate(values):
-    ...        if value:
-    ...            circuit.append(cirq.X(qubits[i]))
-    ...    return circuit
-
-    >>> x_circ = tfq.convert_to_tensor([convert_to_circuit(x) for x in X])
-
-
-    Now you define our ansatz circuit
-
-    >>> q0, q1 = cirq.GridQubit.rect(1, 2)
-    >>> a, b = sympy.symbols('a b') # parameters for the circuit
-    >>> circuit = cirq.Circuit(
-    ...    cirq.rx(a).on(q0),
-    ...    cirq.ry(b).on(q1), cirq.CNOT(control=q0, target=q1))
-
-    And embed our circuit into a keras model
-    >>> model = tf.keras.Sequential([
-    ...    # The input is the data-circuit, encoded as a tf.string
-    ...    tf.keras.layers.Input(shape=(), dtype=tf.string),
-    ...    # The PQC layer returns the expected value of the
-    ...    # readout gate, range [-1,1].
-    ...    tfq.layers.PQC(circuit, cirq.Z(q1)),
-    ...])
-
-    Rotosolve minimizer can only accept linear loss functions.
-    Here you define the hinge_loss as use it as the loss function.
-
-    >>> def hinge_loss(y_true, y_pred):
-    ...    # Here you use hinge loss as the cost function
-    ...    tf.reduce_mean(tf.cast(1 - y_true * y_pred, tf.float32))
-
-    Now you need to expose the trainable parameter from our model.
-    First obtain the shapes of all trainable parameters in the model.
-
-    >>>    shapes = tf.shape_n(model.trainable_variables)
-    >>>    count = 0
-    >>>    sizes = []
-    >>>    for shape in shapes:
-    ...        n = reduce(mul, shape)
-    ...        sizes.append(n)
-    ...        count += n
-
-    Then create a function which accepts the parameter and evaluate the model.
-
-    >>>    @tf.function
-    ...    def model_func(params):
-    ...        # update the parameters of the model
-    ...        start = 0
-    ...        for i, size in enumerate(sizes):
-    ...            model.trainable_variables[i].assign(
-    ...                   tf.reshape(params[start:start + size], shape))
-    ...            start += size
-    ...
-    ...        # evaluate the loss
-    ...        loss_value = hinge_loss(model(x_circ, training=True), Y)
-    ...        return loss_value
-
-    Last you can run the minimize algorithm. The initial parameter is
-    guessed randomly.
-
-    >>> rotosolve_minimizer.minimize(model_func,np.random.rand([2]))
+    >>> n = 10  # Number of sinusoids
+    >>> coefficient = tf.random.uniform(shape=[n]) # Coefficents for each sinusoids
+    >>> min_value = -tf.sum(tf.abs(coefficient)) # The min value
+    >>> func = lambda x:tf.sum(tf.sin(x) * coefficient) # Define the function
+    >>> # Optimize the function with rotosolve, start with random parameters
+    >>> result =  rotosolve_minimizer.minimize(func, np.random.random(n)) # Get the result
 
     Args:
         expectation_value_function:  A Python callable that accepts
