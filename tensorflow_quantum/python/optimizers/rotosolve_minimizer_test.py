@@ -80,8 +80,27 @@ def loss_function_with_model_parameters(model, loss, train_x, train_y):
 class RotosolveMinimizerTest(tf.test.TestCase, parameterized.TestCase):
     """Tests for the rotosolve optimization algorithm."""
 
-    def test_optimization(self):
-        """Optimization test."""
+    def test_function_optimization(self):
+        """Optimize a simple sinusoid function."""
+
+        n = 10  # Number of parameters to be optimized
+        coefficient = tf.random.uniform(shape=[n])
+        min_value = -tf.sum(tf.abs(coefficient))
+
+        def func(x):
+            """The sinusoid function to optimize"""
+            return tf.sum(tf.sin(x) * coefficient)
+
+        result = rotosolve_minimizer.minimize(
+            func,
+            np.random.random(n))
+
+        self.assertAlmostEqual(func(result['position']), min_value)
+        self.assertAlmostEqual(result['objective_value'], min_value)
+        self.assertTrue(result['converged'])
+
+    def test_keras_model_optimization(self):
+        """Optimizate a PQC based keras model."""
 
         x = np.asarray([
             [0, 0],
@@ -127,6 +146,9 @@ class RotosolveMinimizerTest(tf.test.TestCase, parameterized.TestCase):
             return tf.reduce_mean(tf.cast(1 - y_true * y_pred, tf.float32))
 
         # Initial guess of the parameter from random number
-        rotosolve_minimizer.minimize(
+        result = rotosolve_minimizer.minimize(
             loss_function_with_model_parameters(model, hinge_loss, x_circ, y),
             np.random.random(2) * 2 * np.pi)
+
+        self.assertAlmostEqual(result['objective_value'], 0)
+        self.assertTrue(result['converged'])
