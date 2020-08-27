@@ -121,11 +121,11 @@ def minimize(expectation_value_function,
     a few sinusoids.
 
     >>> n = 10  # Number of sinusoids
-    >>> coefficient = tf.random.uniform(shape=[n]) # Coefficents for each sinusoids
+    >>> coefficient = tf.random.uniform(shape=[n]) 
     >>> min_value = -tf.sum(tf.abs(coefficient)) # The min value
     >>> func = lambda x:tf.sum(tf.sin(x) * coefficient) # Define the function
     >>> # Optimize the function with rotosolve, start with random parameters
-    >>> result =  rotosolve_minimizer.minimize(func, np.random.random(n)) # Get the result
+    >>> result =  rotosolve_minimizer.minimize(func, np.random.random(n)) 
 
     Args:
         expectation_value_function:  A Python callable that accepts
@@ -187,13 +187,6 @@ def minimize(expectation_value_function,
             # Use the analytical solution to find the optimized position
             delta_update = -math.pi / 2 - \
                 tf.math.atan2(2 * v_n - v_l - v_r, v_r - v_l)
-
-            #delta_update_tensor = tf.reshape(
-            #    tf.cast(tf.sparse.to_dense(
-            #        tf.sparse.SparseTensor(
-            #            [[state.solve_param_i, 0]], [delta_update],
-            #            [prefer_static_shape(state.position)[0], 1])),
-            #            dtype=dtype), prefer_static_shape(state.position))
 
             delta_update_tensor = tf.scatter_nd(
                 tf.constant([[state.solve_param_i]]), [delta_update],
