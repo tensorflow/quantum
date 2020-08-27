@@ -91,9 +91,7 @@ class RotosolveMinimizerTest(tf.test.TestCase, parameterized.TestCase):
             """The sinusoid function to optimize"""
             return tf.sum(tf.sin(x) * coefficient)
 
-        result = rotosolve_minimizer.minimize(
-            func,
-            np.random.random(n))
+        result = rotosolve_minimizer.minimize(func, np.random.random(n))
 
         self.assertAlmostEqual(func(result['position']), min_value)
         self.assertAlmostEqual(result['objective_value'], min_value)

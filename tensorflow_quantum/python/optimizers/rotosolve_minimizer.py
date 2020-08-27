@@ -250,7 +250,7 @@ def minimize(expectation_value_function,
                 states: A list which the first element is the new state
             """
             delta_shift = tf.scatter_nd(tf.constant([[state.solve_param_i]]),
-                                        [tf.constant(math.pi / 2,dtype=dtype)],
+                                        [tf.constant(math.pi / 2, dtype=dtype)],
                                         prefer_static_shape(state.position))
 
             # Evaluate three different point for curve fitting
@@ -270,9 +270,9 @@ def minimize(expectation_value_function,
             #            [prefer_static_shape(state.position)[0], 1])),
             #            dtype=dtype), prefer_static_shape(state.position))
 
-            delta_update_tensor = tf.scatter_nd(tf.constant([[state.solve_param_i]]),
-                                        [delta_update],
-                                        prefer_static_shape(state.position))
+            delta_update_tensor = tf.scatter_nd(
+                tf.constant([[state.solve_param_i]]), [delta_update],
+                prefer_static_shape(state.position))
 
             state.solve_param_i.assign_add(1)
             state.position.assign(
