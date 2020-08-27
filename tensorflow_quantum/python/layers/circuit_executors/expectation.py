@@ -18,6 +18,7 @@ import tensorflow as tf
 
 import cirq
 from tensorflow_quantum.core.ops import circuit_execution_ops
+from tensorflow_quantum.python.differentiators import adjoint
 from tensorflow_quantum.python.differentiators import linear_combination
 from tensorflow_quantum.python.differentiators import differentiator as diff
 from tensorflow_quantum.python.layers.circuit_executors import input_checks
@@ -216,7 +217,9 @@ class Expectation(tf.keras.layers.Layer):
                 derivative values of given operators_to_measure and circuit,
                 which must inherit `tfq.differentiators.Differentiator` and
                 implements `differentiate_analytic` method. Defaults to None,
-                which uses `linear_combination.ForwardDifference()`.
+                which uses `linear_combination.ForwardDifference()`. If
+                `backend` is also None then default is
+                `tfq.differentiators.Adjoint`.
 
         """
         super().__init__(**kwargs)
@@ -231,6 +234,8 @@ class Expectation(tf.keras.layers.Layer):
         # Ingest differentiator.
         if differentiator is None:
             differentiator = linear_combination.ForwardDifference()
+            if backend is None:
+                differentiator = adjoint.Adjoint()
 
         if not isinstance(differentiator, diff.Differentiator):
             raise TypeError("Differentiator must inherit from "

@@ -6,6 +6,25 @@ licenses(["notice"])
 exports_files(["__init__.py"])
 
 py_library(
+    name = "adjoint",
+    srcs = ["adjoint.py"],
+    deps = [
+        ":differentiator",
+        "//tensorflow_quantum/core/ops:tfq_adj_grad_op_py",
+    ],
+)
+
+py_test(
+    name = "adjoint_test",
+    srcs = ["adjoint_test.py"],
+    deps = [
+        ":adjoint",
+        "//tensorflow_quantum/core/ops:circuit_execution_ops",
+    ],
+)
+
+
+py_library(
     name = "differentiator",
     srcs = ["differentiator.py"],
 )
@@ -84,6 +103,7 @@ py_test(
     srcs = ["gradient_test.py"],
     python_version = "PY3",
     deps = [
+        ":adjoint",
         ":linear_combination",
         ":parameter_shift",
         ":stochastic_differentiator",
