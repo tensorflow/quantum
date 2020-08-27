@@ -121,11 +121,11 @@ def minimize(expectation_value_function,
     a few sinusoids.
 
     >>> n = 10  # Number of sinusoids
-    >>> coefficient = tf.random.uniform(shape=[n]) 
+    >>> coefficient = tf.random.uniform(shape=[n])
     >>> min_value = -tf.sum(tf.abs(coefficient)) # The min value
     >>> func = lambda x:tf.sum(tf.sin(x) * coefficient) # Define the function
     >>> # Optimize the function with rotosolve, start with random parameters
-    >>> result =  rotosolve_minimizer.minimize(func, np.random.random(n)) 
+    >>> result =  rotosolve_minimizer.minimize(func, np.random.random(n))
 
     Args:
         expectation_value_function:  A Python callable that accepts
