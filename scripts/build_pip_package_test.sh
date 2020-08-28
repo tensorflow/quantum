@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-pip install tensorflow==2.3.0 cirq==0.8.0
+pip install tensorflow==2.3.0 cirq==0.8.2
 
 # cd tensorflow_quantum
 echo "Y\n" | ./configure.sh
