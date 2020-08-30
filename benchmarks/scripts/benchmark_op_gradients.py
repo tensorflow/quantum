@@ -29,7 +29,6 @@ import flags
 from tensorflow_quantum.python import util
 from tensorflow_quantum.python.differentiators import (linear_combination,
                                                        parameter_shift,
-                                                       stochastic_differentiator
                                                       )
 
 SRC = os.path.dirname(os.path.realpath(__file__))
@@ -55,7 +54,6 @@ class GradientBenchmarksTest(tf.test.TestCase, parameterized.TestCase):
                         linear_combination.ForwardDifference(),
                         linear_combination.CentralDifference(),
                         parameter_shift.ParameterShift(),
-                        stochastic_differentiator.SGDifferentiator(),
                     ],
                     'params': [TEST_PARAMS_1, TEST_PARAMS_2]
                 })))
@@ -192,11 +190,6 @@ class GradientBenchmarks(tf.test.Benchmark):
     def benchmark_parameter_shift(self):
         """Benchmark the parameter shift gradient method."""
         diff = parameter_shift.ParameterShift()
-        self._benchmark_tfq_differentiator(diff, self.params)
-
-    def benchmark_stochastic_differentiator(self):
-        """Benchmark the default stochastic differentiator."""
-        diff = stochastic_differentiator.SGDifferentiator()
         self._benchmark_tfq_differentiator(diff, self.params)
 
 
