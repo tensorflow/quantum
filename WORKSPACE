@@ -67,9 +67,9 @@ http_archive(
 
 http_archive(
     name = "qsim",
-    sha256 = "60bb22766decd63c800e99ce1cd8eff2c9bede4f922ae967fbb67d7af1000096",
-    strip_prefix = "qsim-0.3.0",
-    urls = ["https://github.com/quantumlib/qsim/archive/v0.3.0.zip"],
+    sha256 = "7e5fe6c909d0007488f910d57ed765729133437f5c5f88085fa6deb544cb97dc",
+    strip_prefix = "qsim-0.3.1",
+    urls = ["https://github.com/quantumlib/qsim/archive/v0.3.1.zip"],
 )
 
 # Added for crosstool in tensorflow.
@@ -110,12 +110,12 @@ cc_library(
   visibility = ["//visibility:public"],
 )
     """,
-    sha256 = "7e7a57e33c59280a17a66e521396cd8b1a55d0676c9f807078522fda52114b5c",
-    strip_prefix = "eigen-eigen-8071cda5714d",
-    urls = [
-        "https://storage.googleapis.com/mirror.tensorflow.org/bitbucket.org/eigen/eigen/get/8071cda5714d.tar.gz",
-        "https://bitbucket.org/eigen/eigen/get/8071cda5714d.tar.gz",
-    ],
+    sha256 = "a3c10a8c14f55e9f09f98b0a0ac6874c21bda91f65b7469d9b1f6925990e867b",  # SHARED_EIGEN_SHA
+        strip_prefix = "eigen-d10b27fe37736d2944630ecd7557cefa95cf87c9",
+        urls = [
+            "https://storage.googleapis.com/mirror.tensorflow.org/gitlab.com/libeigen/eigen/-/archive/d10b27fe37736d2944630ecd7557cefa95cf87c9/eigen-d10b27fe37736d2944630ecd7557cefa95cf87c9.tar.gz",
+            "https://gitlab.com/libeigen/eigen/-/archive/d10b27fe37736d2944630ecd7557cefa95cf87c9/eigen-d10b27fe37736d2944630ecd7557cefa95cf87c9.tar.gz",
+        ],
 )
 
 http_archive(

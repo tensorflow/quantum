@@ -65,7 +65,7 @@ def main(unused_argv):
             "tfq.differentiators": [
                 "linear_combination", "differentiator", "parameter_shift",
                 "stochastic_differentiator", "parameter_shift_util",
-                "stochastic_differentiator_util"
+                "stochastic_differentiator_util", "adjoint"
             ],
             "tfq.datasets": ["cluster_state"],
             "tfq.util": [
