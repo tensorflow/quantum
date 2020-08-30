@@ -91,14 +91,13 @@ class GradientCorrectnessTest(tf.test.TestCase, parameterized.TestCase):
 
     @parameterized.parameters(
         list(
-            util.kwargs_cartesian_product(
-                **{
-                    'differentiator': DIFFS,
-                    'op': OPS
-                })) + [{
-                    'differentiator': adjoint.Adjoint(),
-                    'op': circuit_execution_ops.get_expectation_op()
-                }])
+            util.kwargs_cartesian_product(**{
+                'differentiator': DIFFS,
+                'op': OPS
+            })) + [{
+                'differentiator': adjoint.Adjoint(),
+                'op': circuit_execution_ops.get_expectation_op()
+            }])
     def test_backprop(self, differentiator, op):
         """Test that gradients are correctly backpropagated through a quantum
         circuit via comparison to analytical results.
@@ -193,14 +192,13 @@ class GradientCorrectnessTest(tf.test.TestCase, parameterized.TestCase):
 
     @parameterized.parameters(
         list(
-            util.kwargs_cartesian_product(
-                **{
-                    'differentiator': DIFFS,
-                    'op': OPS,
-                })) + [{
-                    'differentiator': adjoint.Adjoint(),
-                    'op': circuit_execution_ops.get_expectation_op(),
-                }])
+            util.kwargs_cartesian_product(**{
+                'differentiator': DIFFS,
+                'op': OPS,
+            })) + [{
+                'differentiator': adjoint.Adjoint(),
+                'op': circuit_execution_ops.get_expectation_op(),
+            }])
     def test_analytic_value_with_simple_circuit(self, differentiator, op):
         """Test the value of differentiator with simple circuit."""
         # Get an expectation op, with this differentiator attached.

@@ -27,9 +27,10 @@ import benchmark_util
 import flags
 
 from tensorflow_quantum.python import util
-from tensorflow_quantum.python.differentiators import (linear_combination,
-                                                       parameter_shift,
-                                                      )
+from tensorflow_quantum.python.differentiators import (
+    linear_combination,
+    parameter_shift,
+)
 
 SRC = os.path.dirname(os.path.realpath(__file__))
 os.environ['TEST_REPORT_FILE_PREFIX'] = os.path.join(SRC, 'reports/')
