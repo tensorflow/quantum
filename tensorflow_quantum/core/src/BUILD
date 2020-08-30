@@ -6,6 +6,34 @@ licenses(["notice"])
 exports_files(["__init__.py"])
 
 cc_library(
+    name = "adj_util",
+    srcs = ["adj_util.cc"],
+    hdrs = ["adj_util.h"],
+    deps = [
+        "@qsim//lib:circuit",
+        "@qsim//lib:gates_cirq",
+        "@qsim//lib:gate",
+        "@qsim//lib:fuser",
+        "@qsim//lib:fuser_basic",
+        "@qsim//lib:io",
+        "@qsim//lib:matrix",
+        ":circuit_parser_qsim",
+    ],
+)
+
+cc_test(
+    name = "adj_util_test",
+    srcs = ["adj_util_test.cc"],
+    deps = [
+        ":adj_util",
+        "@qsim//lib:gates_cirq",
+        "@qsim//lib:matrix",
+        "@com_google_googletest//:gtest_main",
+        ":circuit_parser_qsim",
+    ]
+)
+
+cc_library(
     name = "circuit",
     srcs = ["circuit.cc"],
     hdrs = ["circuit.h"],
