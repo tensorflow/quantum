@@ -352,6 +352,7 @@ py_library(
     deps = [
         ":load_module",
         ":tfq_utility_ops_py",
+        "//tensorflow_quantum/python:quantum_context",
     ],
 )
 
