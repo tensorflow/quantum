@@ -398,9 +398,9 @@ py_library(
     name = "circuit_execution_ops",
     srcs = ["circuit_execution_ops.py"],
     deps = [
-        ":tfq_utility_ops_py",
         ":cirq_ops",
         ":tfq_simulate_ops_py",
+        ":tfq_utility_ops_py",
         "//tensorflow_quantum/python:quantum_context",
     ],
 )

@@ -16,13 +16,10 @@
 import enum
 
 import cirq
-import tensorflow as tf
 
 from tensorflow_quantum.core.ops import (cirq_ops, tfq_simulate_ops,
                                          tfq_utility_ops)
 from tensorflow_quantum.python import quantum_context
-
-_GLOBAL_OP_LOCK = tf.CriticalSection()
 
 
 class TFQWavefunctionSimulator(enum.Enum):
@@ -136,7 +133,7 @@ def get_expectation_op(
 
         # Return an op that does block graph level parallelism.
         return lambda programs, symbol_names, symbol_values, pauli_sums: \
-            _GLOBAL_OP_LOCK.execute(lambda: op(
+            quantum_context._GLOBAL_OP_LOCK.execute(lambda: op(
                 programs, symbol_names, symbol_values, pauli_sums))
 
     if isinstance(backend, (cirq.SimulatesSamples, cirq.Sampler)):
@@ -232,8 +229,9 @@ def get_sampling_op(
                     op(programs, symbol_names, symbol_values, num_samples))
 
         return lambda programs, symbol_names, symbol_values, num_samples: \
-            _GLOBAL_OP_LOCK.execute(lambda: tfq_utility_ops.padded_to_ragged(
-                op(programs, symbol_names, symbol_values, num_samples)))
+            quantum_context._GLOBAL_OP_LOCK.execute(
+                lambda: tfq_utility_ops.padded_to_ragged(op(
+                    programs, symbol_names, symbol_values, num_samples)))
 
     raise TypeError("Backend {} is invalid. Expected a Cirq.Sampler "
                     "or None.".format(backend))
@@ -321,8 +319,9 @@ def get_state_op(
 
         # Return an op that does block graph level parallelism.
         return lambda programs, symbol_names, symbol_values: \
-            _GLOBAL_OP_LOCK.execute(lambda: tfq_utility_ops.padded_to_ragged(
-                op(programs, symbol_names, symbol_values)))
+            quantum_context._GLOBAL_OP_LOCK.execute(
+                lambda: tfq_utility_ops.padded_to_ragged(op(
+                    programs, symbol_names, symbol_values)))
 
     raise TypeError("Backend {} is invalid. Expected a Cirq.SimulatesFinalState"
                     " or None.".format(backend))
@@ -434,11 +433,12 @@ def get_sampled_expectation_op(
 
         # Return an op that does block graph level parallelism.
         return lambda programs, symbol_names, symbol_values, pauli_sums, \
-            num_samples: _GLOBAL_OP_LOCK.execute(lambda: op(programs,
-                                                            symbol_names,
-                                                            symbol_values,
-                                                            pauli_sums,
-                                                            num_samples))
+            num_samples: quantum_context._GLOBAL_OP_LOCK.execute(
+                lambda: op(programs,
+                           symbol_names,
+                           symbol_values,
+                           pauli_sums,
+                           num_samples))
 
     raise TypeError(
         "Backend {} is invalid. Expected a Cirq.Sampler or None.".format(
