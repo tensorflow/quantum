@@ -11,6 +11,61 @@ config_setting(
 )
 
 cc_binary(
+    name = "_tfq_adj_grad.so",
+    srcs = [
+        "tfq_adj_grad_op.cc",
+    ],
+    copts = select({
+        ":windows": [
+            "/D__CLANG_SUPPORT_DYN_ANNOTATION__",
+            "/D_USE_MATH_DEFINES",
+            "/DEIGEN_MPL2_ONLY",
+            "/DEIGEN_MAX_ALIGN_BYTES=64",
+            "/DEIGEN_HAS_TYPE_TRAITS=0",
+            "/DTF_USE_SNAPPY",
+            "/showIncludes",
+            "/MD",
+            "/O2",
+            "/DNDEBUG",
+            "/w",
+            "-DWIN32_LEAN_AND_MEAN",
+            "-DNOGDI",
+            "/d2ReducedOptimizeHugeFunctions",
+            "/arch:AVX",
+            "/std:c++14",
+            "-DTENSORFLOW_MONOLITHIC_BUILD",
+            "/DPLATFORM_WINDOWS",
+            "/DEIGEN_HAS_C99_MATH",
+            "/DTENSORFLOW_USE_EIGEN_THREADPOOL",
+            "/DEIGEN_AVOID_STL_ARRAY",
+            "/Iexternal/gemmlowp",
+            "/wd4018",
+            "/wd4577",
+            "/DNOGDI",
+            "/UTF_COMPILE_LIBRARY",
+        ],
+        "//conditions:default": [
+            "-pthread",
+            "-std=c++11",
+            "-D_GLIBCXX_USE_CXX11_ABI=0",
+        ],
+    }),
+    features = select({
+        ":windows": ["windows_export_all_symbols"],
+        "//conditions:default": [],
+    }),
+    linkshared = 1,
+    deps = [
+        ":parse_context",
+        ":tfq_simulate_utils",
+        "//tensorflow_quantum/core/src:util_qsim",
+        "//tensorflow_quantum/core/src:circuit_parser_qsim",
+        "//tensorflow_quantum/core/src:adj_util",
+        "@qsim//lib:qsim_lib",
+    ],
+)
+
+cc_binary(
     name = "_tfq_ps_utils.so",
     srcs = [
         "tfq_ps_decompose_op.cc",
@@ -282,6 +337,15 @@ cc_library(
 )
 
 py_library(
+    name = "tfq_adj_grad_op_py",
+    srcs = ["tfq_adj_grad_op.py"],
+    data = [":_tfq_adj_grad.so"],
+    deps = [
+        ":load_module",
+    ]
+)
+
+py_library(
     name = "tfq_unitary_op_py",
     srcs = ["tfq_unitary_op.py"],
     data = [":_tfq_calculate_unitary_op.so"],
@@ -289,6 +353,16 @@ py_library(
         ":load_module",
         ":tfq_utility_ops_py",
     ],
+)
+
+py_test(
+    name = "tfq_adj_grad_op_test",
+    srcs = ["tfq_adj_grad_op_test.py"],
+    python_version = "PY3",
+    deps = [
+        ":tfq_adj_grad_op_py",
+        "//tensorflow_quantum/python:util",
+    ]
 )
 
 py_test(
@@ -324,9 +398,10 @@ py_library(
     name = "circuit_execution_ops",
     srcs = ["circuit_execution_ops.py"],
     deps = [
-        "tfq_utility_ops_py",
         ":cirq_ops",
         ":tfq_simulate_ops_py",
+        ":tfq_utility_ops_py",
+        "//tensorflow_quantum/python:quantum_context",
     ],
 )
 

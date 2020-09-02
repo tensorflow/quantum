@@ -21,6 +21,7 @@ py_library(
         ":input_checks",
         "//tensorflow_quantum/core/ops:circuit_execution_ops",
         "//tensorflow_quantum/python:util",
+        "//tensorflow_quantum/python/differentiators:adjoint",
         "//tensorflow_quantum/python/differentiators:differentiator",
         "//tensorflow_quantum/python/differentiators:linear_combination",
     ],
