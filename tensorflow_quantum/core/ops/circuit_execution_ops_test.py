@@ -494,7 +494,7 @@ class ExecutionOpsConsistentyTest(tf.test.TestCase, parameterized.TestCase):
         op = op_and_sim[0]
         sim = op_and_sim[1]
         qubits = cirq.GridQubit.rect(1, n_qubits)
-        n_samples = int((2**n_qubits) * 500)
+        n_samples = int((2**n_qubits) * 1000)
 
         circuit_batch, resolver_batch = \
             util.random_symbol_circuit_resolver_batch(
@@ -601,7 +601,7 @@ class ExecutionOpsConsistentyTest(tf.test.TestCase, parameterized.TestCase):
         for i in range(BATCH_SIZE):
             circuit_batch[i] += cirq.Circuit(
                 *[cirq.H(qubit) for qubit in qubits])
-        n_samples = [(2**n_qubits) * n * 500 for n in range(1, BATCH_SIZE + 1)]
+        n_samples = [(2**n_qubits) * n * 1000 for n in range(1, BATCH_SIZE + 1)]
 
         symbol_values_array = np.array(
             [[resolver[symbol]
