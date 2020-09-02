@@ -458,15 +458,15 @@ def _get_cirq_samples(sampler=cirq.sim.sparse_simulator.Simulator()):
             # Only local simulators can be handled by batch_sample
             padded_results = batch_util.batch_sample(programs, resolvers,
                                                      max_num_samples, sampler)
-            # TODO(zaqqwerty): remove once batch_sample is deprecated.
             results = []
-            for i in range(len(programs)):
-                results.append([])
-                for j in range(max_num_samples):
-                    if j < num_samples[i]:
-                        results[-1].append(padded_results[i][j])
-                    else:
-                        results[-1].append(np.full(max_n_qubits, -2))
+            for i in range(len(circuits)):
+              results.append([])
+              for j in range(max_num_samples):
+                if j < n_samples[i]:
+                  results[-1].append(padded_results[i][j])
+                else:
+                  results[-1].append(np.full(biggest_circuit, -2))
+
             return np.array(results, dtype=np.int8), _no_grad
 
         # All other samplers need terminal measurement gates.
