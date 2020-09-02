@@ -574,6 +574,7 @@ def batch_calculate_sampled_expectation(circuits, param_resolvers, ops,
 
 def batch_sample(circuits, param_resolvers, n_samples, simulator):
     """Sample from circuits using parallel processing.
+
     Returns a `np.ndarray` containing n_samples samples from all the circuits in
     circuits given that the corresponding `cirq.ParamResolver` in
     `param_resolvers` was used to resolve any symbols. Specifically the
@@ -581,9 +582,11 @@ def batch_sample(circuits, param_resolvers, n_samples, simulator):
     booleans representing bitstring `j` that was sampled from `circuits[i]`.
     Samples are drawn using the provided simulator object (Currently supported
     are `cirq.DensityMatrixSimulator` and `cirq.Simulator`).
+
     Note: In order to keep numpy shape consistent, smaller circuits will
         have sample bitstrings padded with -2 on "qubits that don't exist
         in the circuit".
+
     Args:
         circuits: Python `list` of `cirq.Circuit`s.
         param_resolvers: Python `list` of `cirq.ParamResolver`s, where
@@ -592,6 +595,7 @@ def batch_sample(circuits, param_resolvers, n_samples, simulator):
             circuit.
         simulator: Simulator object. Currently
             supported are `cirq.DensityMatrixSimulator` and `cirq.Simulator`.
+
     Returns:
         `np.ndarray` containing the samples with invalid qubits blanked out.
         It's shape is
