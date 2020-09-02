@@ -47,8 +47,23 @@ def get_unitary_op(
             chip.
 
     Returns:
-        An op that calculates the unitary matrix for the given programs symbol
-        names and symbol values input tensors.
+        A `callable` with the following signature:
+        ```op(programs, symbol_names, symbol_values)```
+        programs: `tf.Tensor` of strings with shape [batch_size] containing
+            the string representations of the circuits to be executed.
+        symbol_names: `tf.Tensor` of strings with shape [n_params], which
+            is used to specify the order in which the values in
+            `symbol_values` should be placed inside of the circuits in
+            `programs`.
+        symbol_values: `tf.Tensor` of real numbers with shape
+            [batch_size, n_params] specifying parameter values to resolve
+            into the circuits specified by programs, following the ordering
+            dictated by `symbol_names`.
+        Returns:
+            `tf.Tensor` with shape
+                [batch_size, <ragged 2**max_qubits>, <ragged 2**max_qubits>]
+                that holds the unitary matrix for each circuit (after resolving
+                the corresponding parameters in).
     """
     if quantum_concurrent is True:
         # Do not block graph level parallelism.
