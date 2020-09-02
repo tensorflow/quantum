@@ -19,7 +19,7 @@ from tensorflow_quantum.core.ops.circuit_execution_ops import (
     get_expectation_op, get_sampled_expectation_op, get_sampling_op,
     get_state_op)
 
-from tensorflow_quantum.core.ops.tfq_unitary_op import calculate_unitary
+from tensorflow_quantum.core.ops.tfq_unitary_op import get_unitary_op
 from tensorflow_quantum.core.ops.tfq_utility_ops import (padded_to_ragged,
                                                          padded_to_ragged2d,
                                                          resolve_parameters,
