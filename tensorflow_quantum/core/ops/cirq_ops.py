@@ -462,12 +462,12 @@ def _get_cirq_samples(sampler=cirq.sim.sparse_simulator.Simulator()):
                                                      max_num_samples, sampler)
             results = []
             for i in range(len(programs)):
-              results.append([])
-              for j in range(max_num_samples):
-                if j < num_samples[i]:
-                  results[-1].append(padded_results[i][j])
-                else:
-                  results[-1].append(np.full(max_n_qubits, -2))
+                results.append([])
+                for j in range(max_num_samples):
+                    if j < num_samples[i]:
+                        results[-1].append(padded_results[i][j])
+                    else:
+                        results[-1].append(np.full(max_n_qubits, -2))
 
             return np.array(results, dtype=np.int8), _no_grad
 

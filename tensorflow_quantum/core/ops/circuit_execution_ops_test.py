@@ -619,16 +619,19 @@ class ExecutionOpsConsistentyTest(tf.test.TestCase, parameterized.TestCase):
                 bins=2**len(qubits))[0] for sample in op_samples
         ]
 
-        cirq_samples_padded = batch_util.batch_sample(circuit_batch, resolver_batch,
-                                                      n_samples, sim)
+        cirq_samples_padded = batch_util.batch_sample(circuit_batch,
+                                                      resolver_batch,
+                                                      int(max(n_samples)),
+                                                      sim)
         cirq_samples_downsampled = []
         for i in range(len(circuit_batch)):
-          cirq_samples_downsampled.append([])
-          for j in range(max_num_samples):
-            if j < n_samples[i]:
-              cirq_samples_downsampled[-1].append(cirq_samples_padded[i][j])
-            else:
-              pass
+            cirq_samples_downsampled.append([])
+            for j in range(max_num_samples):
+                if j < n_samples[i]:
+                    cirq_samples_downsampled[-1].append(
+                        cirq_samples_padded[i][j])
+                else:
+                    pass
 
         cirq_histograms = [
             np.histogram(
