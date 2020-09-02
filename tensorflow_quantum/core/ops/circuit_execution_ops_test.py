@@ -622,7 +622,7 @@ class ExecutionOpsConsistentyTest(tf.test.TestCase, parameterized.TestCase):
         cirq_samples_padded = batch_util.batch_sample(circuit_batch, resolver_batch,
                                                       n_samples, sim)
         cirq_samples_downsampled = []
-        for i in range(len(circuits)):
+        for i in range(len(circuit_batch)):
           cirq_samples_downsampled.append([])
           for j in range(max_num_samples):
             if j < n_samples[i]:
