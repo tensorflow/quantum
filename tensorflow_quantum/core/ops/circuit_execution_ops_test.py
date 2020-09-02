@@ -74,12 +74,7 @@ SAMPLED_EXPECTATION_OPS = [
                                                      quantum_concurrent=False),
 ]
 
-SIMS = [
-    WF_SIM,
-    WF_SIM,
-    DM_SIM,
-    WF_SIM,
-]
+SIMS = [WF_SIM, WF_SIM, DM_SIM, WF_SIM]
 
 
 class OpGetterInputChecks(tf.test.TestCase):
@@ -606,7 +601,7 @@ class ExecutionOpsConsistentyTest(tf.test.TestCase, parameterized.TestCase):
         for i in range(BATCH_SIZE):
             circuit_batch[i] += cirq.Circuit(
                 *[cirq.H(qubit) for qubit in qubits])
-        n_samples = [(2**n_qubits) * n * 1000 for n in range(1, BATCH_SIZE + 1)]
+        n_samples = [(2**n_qubits) * n * 500 for n in range(1, BATCH_SIZE + 1)]
 
         symbol_values_array = np.array(
             [[resolver[symbol]
@@ -618,6 +613,7 @@ class ExecutionOpsConsistentyTest(tf.test.TestCase, parameterized.TestCase):
         op_samples = []
         for i in range(len(circuit_batch)):
           this_raw_samples = op_samples_raw[i].to_tensor().numpy()
+          self.assertEqual(len(this_raw_samples), n_samples[i])
           op_samples.append(this_raw_samples)
 
         op_histograms = [
