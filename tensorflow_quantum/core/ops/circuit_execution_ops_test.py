@@ -74,7 +74,12 @@ SAMPLED_EXPECTATION_OPS = [
                                                      quantum_concurrent=False),
 ]
 
-SIMS = [WF_SIM, WF_SIM, DM_SIM, WF_SIM]
+SIMS = [
+    WF_SIM,
+    WF_SIM,
+    DM_SIM,
+    WF_SIM,
+]
 
 
 class OpGetterInputChecks(tf.test.TestCase):
@@ -594,7 +599,6 @@ class ExecutionOpsConsistentyTest(tf.test.TestCase, parameterized.TestCase):
         op = op_and_sim[0]
         sim = op_and_sim[1]
         qubits = cirq.GridQubit.rect(1, n_qubits)
-        n_samples = [(2**n) for n in range(n_qubits)]
 
         circuit_batch, resolver_batch = \
             util.random_symbol_circuit_resolver_batch(
@@ -602,16 +606,20 @@ class ExecutionOpsConsistentyTest(tf.test.TestCase, parameterized.TestCase):
         for i in range(BATCH_SIZE):
             circuit_batch[i] += cirq.Circuit(
                 *[cirq.H(qubit) for qubit in qubits])
+        n_samples = [(2**n_qubits) * n * 1000 for n in range(1, BATCH_SIZE + 1)]
 
         symbol_values_array = np.array(
             [[resolver[symbol]
               for symbol in symbol_names]
              for resolver in resolver_batch])
 
-        op_samples = np.array(
-            op(util.convert_to_tensor(circuit_batch), symbol_names,
-               symbol_values_array, n_samples).to_list())
-        print(op_samples)
+        op_samples_raw = op(util.convert_to_tensor(circuit_batch), symbol_names,
+                            symbol_values_array, n_samples)
+        op_samples = []
+        for i in range(len(circuit_batch)):
+          this_raw_samples = op_samples_raw[i].to_tensor().numpy()
+          op_samples.append(this_raw_samples)
+
         op_histograms = [
             np.histogram(
                 sample.dot(1 << np.arange(sample.shape[-1] - 1, -1, -1)),
@@ -622,21 +630,21 @@ class ExecutionOpsConsistentyTest(tf.test.TestCase, parameterized.TestCase):
         cirq_samples_padded = batch_util.batch_sample(circuit_batch,
                                                       resolver_batch,
                                                       int(max(n_samples)), sim)
-        cirq_samples_downsampled = []
+        cirq_samples = []
         for i in range(len(circuit_batch)):
-            cirq_samples_downsampled.append([])
+            this_samples = []
             for j in range(int(max(n_samples))):
                 if j < n_samples[i]:
-                    cirq_samples_downsampled[-1].append(
-                        cirq_samples_padded[i][j])
+                    this_samples.append(cirq_samples_padded[i][j])
                 else:
                     continue
+            cirq_samples.append(np.array(this_samples, dtype=np.int8))
 
         cirq_histograms = [
             np.histogram(
                 sample.dot(1 << np.arange(sample.shape[-1] - 1, -1, -1)),
                 range=(0, 2**len(qubits)),
-                bins=2**len(qubits))[0] for sample in cirq_samples_downsampled
+                bins=2**len(qubits))[0] for sample in cirq_samples
         ]
 
         for a, b in zip(op_histograms, cirq_histograms):
