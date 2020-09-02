@@ -91,6 +91,9 @@ class LinearCombination(differentiator.Differentiator):
                              "length.")
         if not len(list(set(perturbations))) == len(perturbations):
             raise ValueError("All values in perturbations must be unique.")
+        if len(perturbations) < 2:
+            # This is so that tensor squeezing does not cause a problem later.
+            raise ValueError("Must specify at least two perturbations.")
         self.weights = tf.constant(weights)
         self.n_perturbations = tf.constant(len(perturbations))
         self.perturbations = tf.constant(perturbations)
@@ -98,12 +101,12 @@ class LinearCombination(differentiator.Differentiator):
     @tf.function
     def get_intermediate_logic(self, programs, symbol_names, symbol_values,
                                pauli_sums):
-        """Returns copies of the input programs for each perturbed symbol.
 
-        See base class for Args.
-        """
+        """See base class description."""
+
         n_programs = tf.gather(tf.shape(programs), 0)
         n_symbols = tf.gather(tf.shape(symbol_names), 0)
+        n_pauli_sums = tf.gather(tf.shape(pauli_sums), 1)
 
         # don't do any computation for a perturbation of zero, just use
         # forward pass values
@@ -114,136 +117,71 @@ class LinearCombination(differentiator.Differentiator):
         n_non_zero_perturbations = tf.gather(tf.shape(non_zero_perturbations),
                                              0)
 
-        # tile up symbols to [n_non_zero_perturbations, n_programs, n_symbols]
-        perturbation_tiled_symbols = tf.tile(
-            tf.expand_dims(symbol_values, 0),
-            tf.stack([n_non_zero_perturbations, 1, 1]))
+        # For each program, create a new program for each symbol; for each
+        # symbol, create a new circuit for each nonzero perturbation, plus one
+        # for the forward pass value.
+        expanded_programs = tf.expand_dims(programs, 1)
+        tiled_programs = tf.tile(expanded_programs,
+                                 [1, n_symbols * n_non_zero_perturbations + 1])
+        flat_programs = tf.reshape(tiled_programs,
+                                   [n_programs * (n_symbols * n_non_zero_perturbations + 1)])
 
-        def create_3d_perturbation(i, perturbation_values):
-            """Generate a tensor the same shape as perturbation_tiled_symbols
-             containing the perturbations specified by perturbation_values."""
-            ones = tf.cast(
-                tf.concat([
-                    tf.zeros(tf.stack([n_non_zero_perturbations, n_programs, i
-                                      ])),
-                    tf.ones(tf.stack([n_non_zero_perturbations, n_programs, 1
-                                     ])),
-                    tf.zeros(
-                        tf.stack([
-                            n_non_zero_perturbations, n_programs,
-                            tf.subtract(n_symbols, tf.add(i, 1))
-                        ]))
-                ],
-                          axis=2), perturbation_values.dtype)
-            return tf.einsum('kij,k->kij', ones, perturbation_values)
+        # Symbol names are not updated for LinearCombination.
+        flat_symbol_names = symbol_names
 
-        def generate_perturbation(i):
-            """Perturb each value in the ith column of
-             perturbation_tiled_symbols.
-            """
-            return tf.add(
-                perturbation_tiled_symbols,
-                tf.cast(create_3d_perturbation(i, non_zero_perturbations),
-                        perturbation_tiled_symbols.dtype))
+        # Tile up the given parameter values to the correct shape.
+        expanded_symbol_values = tf.expand_dims(symbol_values, 1)
+        tiled_symbol_values = tf.tile(expanded_symbol_values,
+                                      [1, n_symbols * n_non_zero_perturbations + 1, 1])
+        flat_symbol_values_original = tf.reshape(tiled_symbol_values,
+                                                 [n_programs * (n_symbols * n_non_zero_perturbations + 1), n_symbols])
 
-        # create a 4d tensor with the following dimensions:
-        # [n_symbols, n_perturbations, n_programs, n_symbols]
-        # the zeroth dimension represents the fact that we have to apply
-        # a perturbation in the direction of every parameter individually.
-        # the first dimension represents the number of perturbations that we
-        # have to apply, and the inner 2 dimensions represent the standard
-        # input format to the expectation ops
-        all_perturbations = tf.map_fn(generate_perturbation,
-                                      tf.range(n_symbols),
-                                      dtype=tf.float32)
+        # Generate the perturbations tensor.
+        perturbation_zeros = tf.zeros([n_non_zero_perturbations])
+        symbol_zeros = tf.zeros([1, n_symbols])
+        stacked_perturbations = tf.stack([perturbation_zeros, non_zero_perturbations])
+        gathered_perturbations = tf.gather(stacked_perturbations, tf.eye(n_symbols, dtype=tf.int32))
+        transposed_perturbations = tf.transpose(gathered_perturbations, [0, 2, 1])
+        reshaped_perturbations = tf.reshape(transposed_perturbations,
+                                           [n_non_zero_perturbations * n_symbols, n_symbols])
+        with_zero = tf.concat([symbol_zeros, reshaped_perturbations], 0)
+        flat_perturbations = tf.tile(with_zero, [n_programs, 1])
 
-        # reshape everything to fit into expectation op correctly
-        flat_programs = tf.reshape(
-            tf.tile(
-                tf.expand_dims(programs, 0),
-                tf.stack([tf.multiply(n_symbols, n_non_zero_perturbations),
-                          1])),
-            [n_symbols * n_non_zero_perturbations * n_programs])
-        flat_perturbations = tf.reshape(all_perturbations, [
-            tf.multiply(tf.multiply(n_symbols, n_non_zero_perturbations),
-                        n_programs), n_symbols
-        ])
-        return (flat_programs, symbol_names, non_zero_weights,
-                flat_perturbations, n_non_zero_perturbations)
+        # Apply the perturbations to the parameter values.
+        flat_symbol_values = flat_symbol_values_original + flat_perturbations
+
+        # Output pauli sums are the same as the input, just tile them up.
+        expanded_pauli_sums = tf.expand_dims(pauli_sums, 1)
+        tiled_pauli_sums = tf.tile(expanded_pauli_sums,
+                                   [1, n_symbols * n_non_zero_perturbations + 1, 1])
+        flat_pauli_sums = tf.reshape(tiled_pauli_sums,
+                                     [n_programs * (n_symbols * n_non_zero_perturbations + 1), n_pauli_sums])
+
+        # The LinearCombination weights are entered into the mapper.
+
+
+        return (flat_programs, flat_symbol_names, flat_symbol_values,
+                flat_pauli_sums, flat_mapper)
 
     @tf.function
     def differentiate_analytic(self, programs, symbol_names, symbol_values,
                                pauli_sums, forward_pass_vals, grad):
 
-        # these get used a lot
-        n_symbols = tf.gather(tf.shape(symbol_names), 0)
-        n_programs = tf.gather(tf.shape(programs), 0)
-        n_ops = tf.gather(tf.shape(pauli_sums), 1)
+        (
+            flat_programs, flat_symbol_names, flat_symbol_values,
+            flat_pauli_sums, flat_mapper
+        ) = self.get_intermediate_logic(programs, symbol_names, symbol_values,
+                                        pauli_sums)
 
-        (flat_programs, _, non_zero_weights, flat_perturbations,
-         n_non_zero_perturbations) = self.get_intermediate_logic(
-             programs, symbol_names, symbol_values, pauli_sums)
+        flat_expectations = self.expectation_op(flat_programs, flat_symbol_names,
+                                                flat_symbol_values,
+                                                flat_pauli_sums)
 
-        total_programs = tf.multiply(
-            tf.multiply(n_programs, n_non_zero_perturbations), n_symbols)
-        # tile up and then reshape to order ops correctly
-        flat_ops = tf.reshape(
-            tf.tile(
-                tf.expand_dims(pauli_sums, 0),
-                tf.stack(
-                    [tf.multiply(n_symbols, n_non_zero_perturbations), 1, 1])),
-            [total_programs, n_ops])
-
-        # STEP 2: calculate the required expectation values
-        expectations = self.expectation_op(flat_programs, symbol_names,
-                                           flat_perturbations, flat_ops)
-
-        # STEP 3: generate gradients according to the results
-
-        # we know the rows are grouped according to which parameter
-        # was perturbed, so reshape to reflect that
-        grouped_expectations = tf.reshape(
-            expectations,
-            [n_symbols,
-             tf.multiply(n_non_zero_perturbations, n_programs), -1])
-
-        # now we can calculate the partial of the circuit output with
-        # respect to each perturbed parameter
-        def rearrange_expectations(grouped):
-
-            def split_vertically(i):
-                return tf.slice(grouped, [tf.multiply(i, n_programs), 0],
-                                [n_programs, n_ops])
-
-            return tf.map_fn(split_vertically,
-                             tf.range(n_non_zero_perturbations),
-                             dtype=tf.float32)
-
-        # reshape so that expectations calculated on different programs are
-        # separated by a dimension
-        rearranged_expectations = tf.map_fn(rearrange_expectations,
-                                            grouped_expectations)
-
-        # now we will calculate all of the partial derivatives
-
-        nonzero_partials = tf.einsum(
-            'spco,p->sco', rearranged_expectations,
-            tf.cast(non_zero_weights, rearranged_expectations.dtype))
-
-        # now add the contribution of a zero term if required
-
-        # find any zero terms
-        mask = tf.equal(self.perturbations, tf.zeros_like(self.perturbations))
-        zero_weight = tf.boolean_mask(self.weights, mask)
-        n_zero_perturbations = tf.gather(tf.shape(zero_weight), 0)
-
-        # this will have shape [n_symbols, n_programs, n_ops]
-        partials = tf.cond(
-            tf.equal(n_zero_perturbations, 0), lambda: nonzero_partials,
-            lambda: nonzero_partials + tf.multiply(
-                tf.tile(tf.expand_dims(forward_pass_vals, axis=0),
-                        tf.stack([n_symbols, 1, 1])),
-                tf.cast(tf.gather(zero_weight, 0), forward_pass_vals.dtype)))
+        # Apply the mapper to build the partial derivates
+        partials = tf.reduce_sum(tf.reduce_sum(
+            flat_mapper * flat_expectations, -1), -1)
+        # Change order to [n_symbols, n_programs, n_ops]
+        partials = tf.transpose(partials, [2, 0, 1])
 
         # now apply the chain rule
         return tf.einsum('sco,co -> cs', partials, grad)
@@ -251,83 +189,22 @@ class LinearCombination(differentiator.Differentiator):
     @tf.function
     def differentiate_sampled(self, programs, symbol_names, symbol_values,
                               pauli_sums, num_samples, forward_pass_vals, grad):
-        # these get used a lot
-        n_symbols = tf.gather(tf.shape(symbol_names), 0)
-        n_programs = tf.gather(tf.shape(programs), 0)
-        n_ops = tf.gather(tf.shape(pauli_sums), 1)
 
-        (flat_programs, _, non_zero_weights, flat_perturbations,
-         n_non_zero_perturbations) = self.get_intermediate_logic(
-             programs, symbol_names, symbol_values, pauli_sums)
+        (
+            flat_programs, flat_symbol_names, flat_symbol_values,
+            flat_pauli_sums, flat_mapper
+        ) = self.get_intermediate_logic(programs, symbol_names, symbol_values,
+                                        pauli_sums)
 
-        total_programs = tf.multiply(
-            tf.multiply(n_programs, n_non_zero_perturbations), n_symbols)
+        flat_expectations = self.expectation_op(flat_programs, flat_symbol_names,
+                                                flat_symbol_values,
+                                                flat_pauli_sums, num_samples)
 
-        # tile up and then reshape to order ops correctly
-        flat_ops = tf.reshape(
-            tf.tile(
-                tf.expand_dims(pauli_sums, 0),
-                tf.stack(
-                    [tf.multiply(n_symbols, n_non_zero_perturbations), 1, 1])),
-            [total_programs, n_ops])
-        flat_num_samples = tf.reshape(
-            tf.tile(
-                tf.expand_dims(num_samples, 0),
-                tf.stack(
-                    [tf.multiply(n_symbols, n_non_zero_perturbations), 1, 1])),
-            [total_programs, n_ops])
-
-        # STEP 2: calculate the required expectation values
-        expectations = self.expectation_op(flat_programs, symbol_names,
-                                           flat_perturbations, flat_ops,
-                                           flat_num_samples)
-
-        # STEP 3: generate gradients according to the results
-
-        # we know the rows are grouped according to which parameter
-        # was perturbed, so reshape to reflect that
-        grouped_expectations = tf.reshape(
-            expectations,
-            [n_symbols,
-             tf.multiply(n_non_zero_perturbations, n_programs), -1])
-
-        # now we can calculate the partial of the circuit output with
-        # respect to each perturbed parameter
-        def rearrange_expectations(grouped):
-
-            def split_vertically(i):
-                return tf.slice(grouped, [tf.multiply(i, n_programs), 0],
-                                [n_programs, n_ops])
-
-            return tf.map_fn(split_vertically,
-                             tf.range(n_non_zero_perturbations),
-                             dtype=tf.float32)
-
-        # reshape so that expectations calculated on different programs are
-        # separated by a dimension
-        rearranged_expectations = tf.map_fn(rearrange_expectations,
-                                            grouped_expectations)
-
-        # now we will calculate all of the partial derivatives
-
-        nonzero_partials = tf.einsum(
-            'spco,p->sco', rearranged_expectations,
-            tf.cast(non_zero_weights, rearranged_expectations.dtype))
-
-        # now add the contribution of a zero term if required
-
-        # find any zero terms
-        mask = tf.equal(self.perturbations, tf.zeros_like(self.perturbations))
-        zero_weight = tf.boolean_mask(self.weights, mask)
-        n_zero_perturbations = tf.gather(tf.shape(zero_weight), 0)
-
-        # this will have shape [n_symbols, n_programs, n_ops]
-        partials = tf.cond(
-            tf.equal(n_zero_perturbations, 0), lambda: nonzero_partials,
-            lambda: nonzero_partials + tf.multiply(
-                tf.tile(tf.expand_dims(forward_pass_vals, axis=0),
-                        tf.stack([n_symbols, 1, 1])),
-                tf.cast(tf.gather(zero_weight, 0), forward_pass_vals.dtype)))
+        # Apply the mapper to build the partial derivates
+        partials = tf.reduce_sum(tf.reduce_sum(
+            flat_mapper * flat_expectations, -1), -1)
+        # Change order to [n_symbols, n_programs, n_ops]
+        partials = tf.transpose(partials, [2, 0, 1])
 
         # now apply the chain rule
         return tf.einsum('sco,co -> cs', partials, grad)

@@ -217,13 +217,16 @@ class Differentiator(metaclass=abc.ABCMeta):
                 First dimension is the length of `flat_program`, but the
                 second dimension is determined by the specifics of the
                 derived differentiator.
-            flat_mapper: 4-D `tf.Tensor` of DType `tf.float32`.
-                The first two dimensions are the same shape as the input
-                `symbol_values`.  The last two dimensions are the same shape
-                as the output `flat_pauli_sums`.  The value at index `ijkl`
-                is the amount of weight to give the measurement result `kl`
-                when averaging measurement results to obtain the gradient
-                of the symbol value at index `ij`.
+            flat_mapper: 5-D `tf.Tensor` of DType `tf.float32`.
+                The first dimension is the length of the input `programs`, the
+                second dimension is the length of the second dimension of the
+                input `pauli_sum`, the third dimension is the length of the
+                input `symbol_names`, and the last two dimensions are the same
+                shape as the output `flat_pauli_sums`.  The value at index
+                `ijkmn` is the amount of weight to give the measurement result
+                at `mn` when summing over expectation values to obtain the
+                gradient of the symbol `k` with respect to pauli sum `j` of
+                program `i`.
         """
 
     @abc.abstractmethod
