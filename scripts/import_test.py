@@ -28,10 +28,10 @@ def test_imports():
     _ = tfq.get_sampled_expectation_op
     _ = tfq.get_sampling_op
     _ = tfq.get_state_op
+    _ = tfq.get_unitary_op
     _ = tfq.append_circuit
     _ = tfq.padded_to_ragged
     _ = tfq.padded_to_ragged2d
-    _ = tfq.calculate_unitary
     _ = tfq.resolve_parameters
 
     # Util functions.
