@@ -612,9 +612,9 @@ class ExecutionOpsConsistentyTest(tf.test.TestCase, parameterized.TestCase):
                             symbol_values_array, n_samples)
         op_samples = []
         for i in range(len(circuit_batch)):
-          this_raw_samples = op_samples_raw[i].to_tensor().numpy()
-          self.assertEqual(len(this_raw_samples), n_samples[i])
-          op_samples.append(this_raw_samples)
+            this_raw_samples = op_samples_raw[i].to_tensor().numpy()
+            self.assertEqual(len(this_raw_samples), n_samples[i])
+            op_samples.append(this_raw_samples)
 
         op_histograms = [
             np.histogram(
