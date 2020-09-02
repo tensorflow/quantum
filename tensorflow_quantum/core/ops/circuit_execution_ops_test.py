@@ -589,48 +589,56 @@ class ExecutionOpsConsistentyTest(tf.test.TestCase, parameterized.TestCase):
                     'n_qubits': [6],
                     'symbol_names': [['a', 'b', 'c', 'd', 'e']]
                 })))
-    # def test_sampling_unique_n(self, op_and_sim, n_qubits, symbol_names):
-    #     """Compare sampling with tfq ops and Cirq."""
-    #     op = op_and_sim[0]
-    #     sim = op_and_sim[1]
-    #     qubits = cirq.GridQubit.rect(1, n_qubits)
-    #     n_samples = [(2**n) * 1000 for n in range(n_qubits)]
+    def test_sampling_unique_n(self, op_and_sim, n_qubits, symbol_names):
+        """Compare sampling with tfq ops and Cirq."""
+        op = op_and_sim[0]
+        sim = op_and_sim[1]
+        qubits = cirq.GridQubit.rect(1, n_qubits)
+        n_samples = [(2**n) * 1000 for n in range(n_qubits)]
 
-    #     circuit_batch, resolver_batch = \
-    #         util.random_symbol_circuit_resolver_batch(
-    #             qubits, symbol_names, BATCH_SIZE, 30)
-    #     for i in range(BATCH_SIZE):
-    #         circuit_batch[i] += cirq.Circuit(
-    #             *[cirq.H(qubit) for qubit in qubits])
+        circuit_batch, resolver_batch = \
+            util.random_symbol_circuit_resolver_batch(
+                qubits, symbol_names, BATCH_SIZE, 30)
+        for i in range(BATCH_SIZE):
+            circuit_batch[i] += cirq.Circuit(
+                *[cirq.H(qubit) for qubit in qubits])
 
-    #     symbol_values_array = np.array(
-    #         [[resolver[symbol]
-    #           for symbol in symbol_names]
-    #          for resolver in resolver_batch])
+        symbol_values_array = np.array(
+            [[resolver[symbol]
+              for symbol in symbol_names]
+             for resolver in resolver_batch])
 
-    #     op_samples = np.array(
-    #         op(util.convert_to_tensor(circuit_batch), symbol_names,
-    #            symbol_values_array, n_samples).to_list())
+        op_samples = np.array(
+            op(util.convert_to_tensor(circuit_batch), symbol_names,
+               symbol_values_array, n_samples).to_list())
 
-    #     op_histograms = [
-    #         np.histogram(
-    #             sample.dot(1 << np.arange(sample.shape[-1] - 1, -1, -1)),
-    #             range=(0, 2**len(qubits)),
-    #             bins=2**len(qubits))[0] for sample in op_samples
-    #     ]
+        op_histograms = [
+            np.histogram(
+                sample.dot(1 << np.arange(sample.shape[-1] - 1, -1, -1)),
+                range=(0, 2**len(qubits)),
+                bins=2**len(qubits))[0] for sample in op_samples
+        ]
 
-    #     cirq_samples = batch_util.batch_sample(circuit_batch, resolver_batch,
-    #                                            n_samples, sim)
+        cirq_samples_padded = batch_util.batch_sample(circuit_batch, resolver_batch,
+                                                      n_samples, sim)
+        cirq_samples_downsampled = []
+        for i in range(len(circuits)):
+          cirq_samples_downsampled.append([])
+          for j in range(max_num_samples):
+            if j < n_samples[i]:
+              cirq_samples_downsampled[-1].append(cirq_samples_padded[i][j])
+            else:
+              pass
 
-    #     cirq_histograms = [
-    #         np.histogram(
-    #             sample.dot(1 << np.arange(sample.shape[-1] - 1, -1, -1)),
-    #             range=(0, 2**len(qubits)),
-    #             bins=2**len(qubits))[0] for sample in cirq_samples
-    #     ]
+        cirq_histograms = [
+            np.histogram(
+                sample.dot(1 << np.arange(sample.shape[-1] - 1, -1, -1)),
+                range=(0, 2**len(qubits)),
+                bins=2**len(qubits))[0] for sample in cirq_samples
+        ]
 
-    #     for a, b in zip(op_histograms, cirq_histograms):
-    #         self.assertLess(stats.entropy(a + 1e-8, b + 1e-8), 0.005)
+        for a, b in zip(op_histograms, cirq_histograms):
+            self.assertLess(stats.entropy(a + 1e-8, b + 1e-8), 0.005)
 
 
 if __name__ == '__main__':

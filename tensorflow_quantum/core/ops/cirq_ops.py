@@ -456,6 +456,8 @@ def _get_cirq_samples(sampler=cirq.sim.sparse_simulator.Simulator()):
             (cirq.sim.sparse_simulator.Simulator,
              cirq.sim.density_matrix_simulator.DensityMatrixSimulator)):
             # Only local simulators can be handled by batch_sample
+            # TODO (zaqqwerty): change to direct RaggedTensor initialization
+            # once cirq.Sampler supports specifying samples circuit-wise.
             padded_results = batch_util.batch_sample(programs, resolvers,
                                                      max_num_samples, sampler)
             results = []
