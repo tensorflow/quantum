@@ -198,6 +198,32 @@ class Differentiator(metaclass=abc.ABCMeta):
             pauli_sums: `tf.Tensor` of strings with shape [batch_size, n_ops]
                 containing the string representation of the operators that will
                 be used on all of the circuits in the expectation calculations.
+
+        Returns:
+            flat_programs: 1-D `tf.Tensor` of strings representing all the
+                circuits required to be run to evaluate the gradient under the
+                derived differentiator.  The length is determined by the
+                specifics of the derived differentiator.
+            flat_symbol_names: 1-D `tf.Tensor` of of strings, containing the
+                name of every symbol used in every circuit in `flat_programs`.
+                The length is determined by the specifics of the derived
+                differentiator.
+            flat_symbol_values: 2-D `tf.Tensor` of DType `tf.float32` containing
+                values to fill in to every parameter in every circuit.
+                The first dimension is the length of `flat_programs` and the
+                second is the length of `flat_symbol_names`.
+            flat_pauli_sums: 2-D `tf.Tensor` of strings representing the
+                operators to measure against each circuit of `flat_programs`.
+                First dimension is the length of `flat_program`, but the
+                second dimension is determined by the specifics of the
+                derived differentiator.
+            flat_mapper: 4-D `tf.Tensor` of DType `tf.float32`.
+                The first two dimensions are the same shape as the input
+                `symbol_values`.  The last two dimensions are the same shape
+                as the output `flat_pauli_sums`.  The value at index `ijkl`
+                is the amount of weight to give the measurement result `kl`
+                when averaging measurement results to obtain the gradient
+                of the symbol value at index `ij`.
         """
 
     @abc.abstractmethod
