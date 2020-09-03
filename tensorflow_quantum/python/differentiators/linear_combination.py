@@ -99,9 +99,70 @@ class LinearCombination(differentiator.Differentiator):
         self.perturbations = tf.constant(perturbations)
 
     @tf.function
+    def _flat_mapper_gen_inner(
+        program_ind, total_input_programs, op_ind, total_input_ops, symbol_ind, total_input_symbols,
+        all_weights, n_non_zero_weights):
+
+        # The last entry of `all_weights` is the weight of the forward pass.
+        # Build the map components for a single symbol.
+        w_zeros = tf.zeros([n_non_zero_weights + 1])
+        stacked_weights = tf.stack([w_zeros, all_weights])
+        gathered_weights = tf.gather(stacked_weights, tf.one_hot(op_ind, total_input_ops, dtype=tf.int32))
+        transposed_weights = tf.transpose(gathered_weights, [1, 0])
+        op_zeros = tf.zeros([1, total_input_ops])
+        single_symbol_map = tf.concat([op_zeros, transposed_weights], 0)
+
+        # Build the gather indices for placing weights correctly for a given program.
+        range_tile = tf.tile(tf.expand_dims(tf.range(n_non_zero_weights) + 1, 0), [total_input_symbols, 1])
+        range_zero = range_tile * tf.expand_dims(tf.one_hot(symbol_ind, total_input_symbols, dtype=tf.int32), 1)
+        range_unroll = tf.reshape(range_zero, [n_non_zero_weights * total_input_symbols])
+        single_program_map_indices = tf.concat([tf.expand_dims(total_input_symbols, 0), range_unroll], 0)
+
+        # Now build the full map at these indices.
+        single_program_map = tf.gather(single_symbol_map, single_program_map_indices)
+        prog_zero = tf.zeros([total_input_symbols * n_non_zero_weights + 1, total_input_ops])
+        big_stack = tf.stack([prog_zero, single_program_map])
+        big_gather = tf.gather(big_stack, tf.one_hot(program_ind, total_input_programs, dtype=tf.int32))
+        return tf.reshape(
+            big_gather,
+            [total_input_programs * (total_input_symbols * n_non_zero_weights + 1), total_input_ops])
+
+    @tf.function
+    def _flat_mapper_gen_symb(
+        self, program_ind, total_input_programs, op_ind, total_input_ops,
+        total_input_symbols, all_weights, n_non_zero_weights):
+        return tf.map_fn(
+            lambda x: self._flat_mapper_gen_inner(
+                program_ind, total_input_programs, op_ind, total_input_ops, x,
+                total_input_symbols, all_weights, n_non_zero_weights),
+            tf.range(total_input_symbols),
+            fn_output_signature=tf.float32)
+
+    @tf.function
+    def _flat_mapper_gen_op(
+        self, program_ind, total_input_programs, total_input_ops,
+        total_input_symbols, all_weights, n_non_zero_weights):
+        return tf.map_fn(
+            lambda x: self._flat_mapper_gen_symb(
+                program_ind, total_input_programs, x, total_input_ops,
+                total_input_symbols, all_weights, n_non_zero_weights),
+            tf.range(total_input_ops),
+            fn_output_signature=tf.float32)
+
+    @tf.function
+    def _flat_mapper_gen(
+        self, total_input_programs, total_input_ops,
+        total_input_symbols, all_weights, n_non_zero_weights):
+        return tf.map_fn(
+            lambda x: self._flat_mapper_gen_op(
+                x, total_input_programs, total_input_ops,
+                total_input_symbols, all_weights, n_non_zero_weights),
+            tf.range(total_input_programs),
+            fn_output_signature=tf.float32)
+
+    @tf.function
     def get_intermediate_logic(self, programs, symbol_names, symbol_values,
                                pauli_sums):
-
         """See base class description."""
 
         n_programs = tf.gather(tf.shape(programs), 0)
@@ -116,6 +177,12 @@ class LinearCombination(differentiator.Differentiator):
         non_zero_weights = tf.boolean_mask(self.weights, mask)
         n_non_zero_perturbations = tf.gather(tf.shape(non_zero_perturbations),
                                              0)
+        # Since perturbations are unique, zero_weight can only be len 0 or 1.
+        mask = tf.equal(self.perturbations, tf.zeros_like(self.perturbations))
+        zero_weight_raw = tf.boolean_mask(self.weights, mask)
+        n_zero_perturbations = tf.gather(tf.shape(zero_weight_raw), 0)
+        zero_weight = tf.pad(zero_weight_raw, [[0, 1 - n_zero_perturbations]])
+        all_weights = tf.concat([non_zero_weights, zero_weight], 0)
 
         # For each program, create a new program for each symbol; for each
         # symbol, create a new circuit for each nonzero perturbation, plus one
@@ -133,8 +200,9 @@ class LinearCombination(differentiator.Differentiator):
         expanded_symbol_values = tf.expand_dims(symbol_values, 1)
         tiled_symbol_values = tf.tile(expanded_symbol_values,
                                       [1, n_symbols * n_non_zero_perturbations + 1, 1])
-        flat_symbol_values_original = tf.reshape(tiled_symbol_values,
-                                                 [n_programs * (n_symbols * n_non_zero_perturbations + 1), n_symbols])
+        flat_symbol_values_original = tf.reshape(
+            tiled_symbol_values,
+            [n_programs * (n_symbols * n_non_zero_perturbations + 1), n_symbols])
 
         # Generate the perturbations tensor.
         perturbation_zeros = tf.zeros([n_non_zero_perturbations])
@@ -154,11 +222,13 @@ class LinearCombination(differentiator.Differentiator):
         expanded_pauli_sums = tf.expand_dims(pauli_sums, 1)
         tiled_pauli_sums = tf.tile(expanded_pauli_sums,
                                    [1, n_symbols * n_non_zero_perturbations + 1, 1])
-        flat_pauli_sums = tf.reshape(tiled_pauli_sums,
-                                     [n_programs * (n_symbols * n_non_zero_perturbations + 1), n_pauli_sums])
+        flat_pauli_sums = tf.reshape(
+            tiled_pauli_sums,
+            [n_programs * (n_symbols * n_non_zero_perturbations + 1), n_pauli_sums])
 
         # The LinearCombination weights are entered into the mapper.
-
+        flat_mapper = self._flat_mapper_gen(
+            n_programs, n_pauli_sums, n_symbols, all_weights, n_non_zero_perturbations))
 
         return (flat_programs, flat_symbol_names, flat_symbol_values,
                 flat_pauli_sums, flat_mapper)
