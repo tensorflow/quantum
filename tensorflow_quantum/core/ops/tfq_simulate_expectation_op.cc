@@ -217,7 +217,7 @@ class TfqSimulateExpectationOp : public tensorflow::OpKernel {
         if (cur_batch_index != old_batch_index) {
           // We've run into a new wavefunction we must compute.
           // Only compute a new wavefunction when we have to.
-          if (nq >= largest_nq) {
+          if (nq > largest_nq) {
             sv = ss.CreateState();
             scratch = ss.CreateState();
             largest_nq = nq;
