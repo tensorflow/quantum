@@ -88,6 +88,14 @@ class Adjoint(differentiator.Differentiator):
         return super().generate_differentiable_op(analytic_op=analytic_op)
 
     @tf.function
+    def get_intermediate_logic(self, programs, symbol_names, symbol_values,
+                               pauli_sums):
+        """See base class description."""
+        raise NotImplementedError(
+            "Adjoint differentiator cannot run on a real QPU, "
+            "therefore it has no accessible intermediate logic.")
+
+    @tf.function
     def differentiate_analytic(self, programs, symbol_names, symbol_values,
                                pauli_sums, forward_pass_vals, grad):
         return tfq_adj_grad_op.tfq_adj_grad(programs, symbol_names,

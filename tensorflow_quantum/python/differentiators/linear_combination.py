@@ -94,13 +94,13 @@ class LinearCombination(differentiator.Differentiator):
         if len(perturbations) < 2:
             # This is so that tensor squeezing does not cause a problem later.
             raise ValueError("Must specify at least two perturbations.")
-        self.weights = tf.constant(weights)
+        self.weights = tf.constant(weights, dtype=tf.float32)
         self.n_perturbations = tf.constant(len(perturbations))
-        self.perturbations = tf.constant(perturbations)
+        self.perturbations = tf.constant(perturbations, dtype=tf.float32)
 
     @tf.function
     def _flat_mapper_gen_inner(
-        program_ind, total_input_programs, op_ind, total_input_ops, symbol_ind, total_input_symbols,
+        self, program_ind, total_input_programs, op_ind, total_input_ops, symbol_ind, total_input_symbols,
         all_weights, n_non_zero_weights):
 
         # The last entry of `all_weights` is the weight of the forward pass.
@@ -205,7 +205,7 @@ class LinearCombination(differentiator.Differentiator):
             [n_programs * (n_symbols * n_non_zero_perturbations + 1), n_symbols])
 
         # Generate the perturbations tensor.
-        perturbation_zeros = tf.zeros([n_non_zero_perturbations])
+        perturbation_zeros = tf.zeros([n_non_zero_perturbations], dtype=tf.float32)
         symbol_zeros = tf.zeros([1, n_symbols])
         stacked_perturbations = tf.stack([perturbation_zeros, non_zero_perturbations])
         gathered_perturbations = tf.gather(stacked_perturbations, tf.eye(n_symbols, dtype=tf.int32))
@@ -228,7 +228,7 @@ class LinearCombination(differentiator.Differentiator):
 
         # The LinearCombination weights are entered into the mapper.
         flat_mapper = self._flat_mapper_gen(
-            n_programs, n_pauli_sums, n_symbols, all_weights, n_non_zero_perturbations))
+            n_programs, n_pauli_sums, n_symbols, all_weights, n_non_zero_perturbations)
 
         return (flat_programs, flat_symbol_names, flat_symbol_values,
                 flat_pauli_sums, flat_mapper)
@@ -248,11 +248,11 @@ class LinearCombination(differentiator.Differentiator):
                                                 flat_pauli_sums)
 
         # Apply the mapper to build the partial derivates
-        partials = tf.reduce_sum(tf.reduce_sum(
+        partials_raw = tf.reduce_sum(tf.reduce_sum(
             flat_mapper * flat_expectations, -1), -1)
         # Change order to [n_symbols, n_programs, n_ops]
-        partials = tf.transpose(partials, [2, 0, 1])
-
+        partials = tf.transpose(partials_raw, [2, 0, 1])
+        tf.print(partials)
         # now apply the chain rule
         return tf.einsum('sco,co -> cs', partials, grad)
 
@@ -271,10 +271,11 @@ class LinearCombination(differentiator.Differentiator):
                                                 flat_pauli_sums, num_samples)
 
         # Apply the mapper to build the partial derivates
-        partials = tf.reduce_sum(tf.reduce_sum(
+        partials_raw = tf.reduce_sum(tf.reduce_sum(
             flat_mapper * flat_expectations, -1), -1)
         # Change order to [n_symbols, n_programs, n_ops]
-        partials = tf.transpose(partials, [2, 0, 1])
+        partials = tf.transpose(partials_raw, [2, 0, 1])
+        tf.print(partials)
 
         # now apply the chain rule
         return tf.einsum('sco,co -> cs', partials, grad)
