@@ -94,6 +94,21 @@ class RotosolveMinimizerTest(tf.test.TestCase, parameterized.TestCase):
         self.assertAlmostEqual(func(result['position']), min_value)
         self.assertAlmostEqual(result['objective_value'], min_value)
         self.assertTrue(result['converged'])
+        self.assertLessEqual(result['num_iterations'],
+                             50)  # 50 is the default max iteration
+
+    def test_nonlinear_function_optimization(self):
+        """Optimize a non-linear function.
+        A non-linear function which cannot be optimized by rotosolve and can never con
+         never converge
+        """
+        func = lambda x: x**2
+
+        result = rotosolve_minimizer.minimize(func, np.random.random(1))
+
+        self.assertFalse(result['converged'])
+        self.assertEqual(result['num_iterations'],
+                         50)  # 50 is the default max iteration
 
     def test_keras_model_optimization(self):
         """Optimizate a PQC based keras model."""
