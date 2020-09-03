@@ -99,8 +99,8 @@ class RotosolveMinimizerTest(tf.test.TestCase, parameterized.TestCase):
 
     def test_nonlinear_function_optimization(self):
         """Optimize a non-linear function.
-        A non-linear function which cannot be optimized by rotosolve and can never con
-         never converge
+        A non-linear function which cannot be optimized by rotosolve
+        and can never con never converge
         """
         func = lambda x: x**2
 

@@ -125,10 +125,11 @@ def minimize(expectation_value_function,
     >>> import tensorflow as tf
     >>> n = 10  # Number of sinusoids
     >>> coefficient = tf.random.uniform(shape=[n])
-    >>> min_value = -tf.math.reduce_sum(tf.abs(coefficient)) # The min value
-    >>> func = lambda x:tf.math.reduce_sum(tf.sin(x) * coefficient) # Define the function
+    >>> min_value = -tf.math.reduce_sum(tf.abs(coefficient))
+    >>> func = lambda x:tf.math.reduce_sum(tf.sin(x) * coefficient)
     >>> # Optimize the function with rotosolve, start with random parameters
-    >>> result =  tfq.optimizers.rotosolve_minimizer.minimize(func, np.random.random(n))
+    >>> result = tfq.optimizers.rotosolve_minimizer.minimize( \
+    ...              func, np.random.random(n))
     >>> print(result.converged)
     tf.Tensor(True, shape=(), dtype=bool)
     >>> print(result.objective_value)
