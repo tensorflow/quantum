@@ -57,7 +57,6 @@ def test_imports():
     _ = tfq.differentiators.CentralDifference
     _ = tfq.differentiators.LinearCombination
     _ = tfq.differentiators.ParameterShift
-    _ = tfq.differentiators.SGDifferentiator
     _ = tfq.differentiators.Differentiator
 
     # Datasets.
