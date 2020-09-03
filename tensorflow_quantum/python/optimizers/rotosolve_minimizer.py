@@ -100,7 +100,7 @@ def _get_initial_state(initial_position, tolerance, expectation_value_function):
 
 def minimize(expectation_value_function,
              initial_position,
-             tolerance=1e-8,
+             tolerance=1e-5,
              max_iterations=50,
              name=None):
     """Applies the rotosolve algorithm.
@@ -117,7 +117,7 @@ def minimize(expectation_value_function,
     The following example demonstrates the Rotosolve optimizer attempting
      to find the minimum for two qubit ansatz expectation value.
 
-    Here we show an example of optimize a function which consists summation of
+    Here is an example of optimize a function which consists summation of
     a few sinusoids.
 
     >>> n = 10  # Number of sinusoids

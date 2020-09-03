@@ -137,13 +137,10 @@ class RotosolveMinimizerTest(tf.test.TestCase, parameterized.TestCase):
             pqc.PQC(circuit, cirq.Z(q1)),
         ])
 
-        def hinge_loss(y_true, y_pred):
-            # Here we use hinge loss as the cost function
-            return tf.reduce_mean(tf.cast(1 - y_true * y_pred, tf.float32))
-
         # Initial guess of the parameter from random number
         result = rotosolve_minimizer.minimize(
-            loss_function_with_model_parameters(model, hinge_loss, x_circ, y),
+            loss_function_with_model_parameters(model, tf.keras.losses.hinge,
+                                                x_circ, y),
             np.random.random(2) * 2 * np.pi)
 
         self.assertAlmostEqual(result['objective_value'], 0)
