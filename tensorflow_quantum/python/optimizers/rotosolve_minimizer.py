@@ -65,9 +65,9 @@ RotosolveOptimizerResults = collections.namedtuple(
         # this value is the argmin of the objective function.
         # A tensor containing the value of the objective from
         # previous iteration
-        'last_objective_value',
-        # Save the latest evalued value of the
-        # objective function
+        'objective_value_previous_iteration',
+        # Save the evaluated value of the objective function
+        # from the previous iteration
         'objective_value',
         # A tensor containing the value of the objective
         # function at the `position`. If the search
@@ -91,7 +91,7 @@ def _get_initial_state(initial_position, tolerance, expectation_value_function):
         "num_objective_evaluations": expectation_value_function.iter,
         "position": tf.Variable(initial_position),
         "objective_value": tf.Variable(0.),
-        "last_objective_value": tf.Variable(0.),
+        "objective_value_previous_iteration": tf.Variable(0.),
         "tolerance": tolerance,
         "solve_param_i": tf.Variable(0)
     }
@@ -197,7 +197,8 @@ def minimize(expectation_value_function,
                 tf.math.floormod(state.position + delta_update_tensor,
                                  math.pi * 2))
 
-            state.last_objective_value.assign(state.objective_value)
+            state.objective_value_previous_iteration.assign(
+                state.objective_value)
             state.objective_value.assign(
                 expectation_value_function(state.position))
 
@@ -245,7 +246,8 @@ def minimize(expectation_value_function,
             state.num_iterations.assign_add(1)
             state.converged.assign(
                 tf.abs(state.objective_value -
-                       state.last_objective_value) < state.tolerance)
+                       state.objective_value_previous_iteration) <
+                state.tolerance)
 
             return [state]
 
