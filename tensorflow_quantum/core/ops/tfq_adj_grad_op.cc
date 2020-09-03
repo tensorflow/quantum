@@ -145,9 +145,9 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
     // This method creates 3 big state vectors per thread so reducing size
     // here slightly.
     if (max_num_qubits >= 25 || programs.size() == 1) {
-      ComputeLarge(num_qubits, qsim_circuits, maps, full_fuse, partial_fused_circuits,
-                   pauli_sums, gradient_gates, downstream_grads, context,
-                   &output_tensor);
+      ComputeLarge(num_qubits, qsim_circuits, maps, full_fuse,
+                   partial_fused_circuits, pauli_sums, gradient_gates,
+                   downstream_grads, context, &output_tensor);
     } else {
       ComputeSmall(num_qubits, max_num_qubits, qsim_circuits, maps, full_fuse,
                    partial_fused_circuits, pauli_sums, gradient_gates,
