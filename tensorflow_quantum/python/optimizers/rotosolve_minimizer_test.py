@@ -85,9 +85,9 @@ class RotosolveMinimizerTest(tf.test.TestCase, parameterized.TestCase):
 
         n = 10  # Number of parameters to be optimized
         coefficient = tf.random.uniform(shape=[n])
-        min_value = -tf.sum(tf.abs(coefficient))
+        min_value = -tf.math.reduce_sum(tf.abs(coefficient))
 
-        func = lambda x: tf.sum(tf.sin(x) * coefficient)
+        func = lambda x: tf.math.reduce_sum(tf.sin(x) * coefficient)
 
         result = rotosolve_minimizer.minimize(func, np.random.random(n))
 

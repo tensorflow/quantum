@@ -88,7 +88,7 @@ def _get_initial_state(initial_position, tolerance, expectation_value_function):
     init_args = {
         "converged": tf.Variable(False),
         "num_iterations": tf.Variable(0),
-        "num_objective_evaluations": expectation_value_function.iter,
+        "num_objective_evaluations": tf.Variable(0),
         "position": tf.Variable(initial_position),
         "objective_value": tf.Variable(0.),
         "objective_value_previous_iteration": tf.Variable(0.),
@@ -120,12 +120,19 @@ def minimize(expectation_value_function,
     Here is an example of optimize a function which consists summation of
     a few sinusoids.
 
+    >>> import tensorflow_quantum as tfq
+    >>> import numpy as np
+    >>> import tensorflow as tf
     >>> n = 10  # Number of sinusoids
     >>> coefficient = tf.random.uniform(shape=[n])
-    >>> min_value = -tf.sum(tf.abs(coefficient)) # The min value
-    >>> func = lambda x:tf.sum(tf.sin(x) * coefficient) # Define the function
+    >>> min_value = -tf.math.reduce_sum(tf.abs(coefficient)) # The min value
+    >>> func = lambda x:tf.math.reduce_sum(tf.sin(x) * coefficient) # Define the function
     >>> # Optimize the function with rotosolve, start with random parameters
-    >>> result =  rotosolve_minimizer.minimize(func, np.random.random(n))
+    >>> result =  tfq.optimizers.rotosolve_minimizer.minimize(func, np.random.random(n))
+    >>> print(result.converged)
+    tf.Tensor(True, shape=(), dtype=bool)
+    >>> print(result.objective_value)
+    tf.Tensor(-4.7045116, shape=(), dtype=float32)
 
     Args:
         expectation_value_function:  A Python callable that accepts
@@ -174,7 +181,7 @@ def minimize(expectation_value_function,
             Returns:
                 states: A list which the first element is the new state
             """
-            delta_shift = tf.scatter_nd(tf.constant([[state.solve_param_i]]),
+            delta_shift = tf.scatter_nd([[state.solve_param_i]],
                                         [tf.constant(math.pi / 2, dtype=dtype)],
                                         prefer_static_shape(state.position))
 
@@ -189,7 +196,7 @@ def minimize(expectation_value_function,
                 tf.math.atan2(2 * v_n - v_l - v_r, v_r - v_l)
 
             delta_update_tensor = tf.scatter_nd(
-                tf.constant([[state.solve_param_i]]), [delta_update],
+                [[state.solve_param_i]], [delta_update],
                 prefer_static_shape(state.position))
 
             state.solve_param_i.assign_add(1)
@@ -220,6 +227,8 @@ def minimize(expectation_value_function,
             def _cond_internal(state_cond):
                 return state_cond.solve_param_i < \
                        prefer_static_shape(state_cond.position)[0]
+
+            state.num_objective_evaluations.assign_add(1)
 
             return tf.while_loop(
                 cond=_cond_internal,
