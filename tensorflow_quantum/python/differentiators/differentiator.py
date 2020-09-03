@@ -184,6 +184,23 @@ class Differentiator(metaclass=abc.ABCMeta):
                                pauli_sums):
         """Returns circuits and values which are used by both diff types.
 
+        In order to compute gradients on quantum computers, one must
+        decompose gradient calculations into circuits to run and measurements
+        to take.  Then, some linear combination of the measurement results
+        can be used to recover estimates of circuit parameter derivates. This
+        function is intended to encapsulate the decomposition and recombination
+        steps, so that the same logic can be used for both analytic and sample
+        based expectations.  Additionally, centralizing this logic allows
+        advanced users to access the decompositions directly.
+
+        In order to allow maximum flexibility when defining gradient routines,
+        the recombination map allows any output of any returned circuit to
+        be used for estimating the gradient of any parameter.  For some
+        differentiators (such as finite difference) this is luxurious, but
+        for advanced differentiators (such as stochastic cost) it becomes useful
+        to allow the same measurement to participate in the estimation of many
+        different parameter derivatives.
+
         Args:
             programs: `tf.Tensor` of strings with shape [batch_size] containing
                 the string representations of the circuits to be executed.
