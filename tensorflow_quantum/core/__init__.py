@@ -16,10 +16,11 @@
 # Import getters for constructing ops.
 from tensorflow_quantum.core.ops import (get_expectation_op,
                                          get_sampled_expectation_op,
-                                         get_sampling_op, get_state_op)
+                                         get_sampling_op, get_state_op,
+                                         get_unitary_op)
 # Import regular ops.
-from tensorflow_quantum.core.ops import (calculate_unitary, padded_to_ragged,
-                                         padded_to_ragged2d, resolve_parameters)
+from tensorflow_quantum.core.ops import (padded_to_ragged, padded_to_ragged2d,
+                                         resolve_parameters)
 # Special case for append op which we didn't name well.
 from tensorflow_quantum.core.ops import \
     tfq_append_circuit as append_circuit
