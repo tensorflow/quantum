@@ -83,7 +83,7 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
 
     // Construct qsim circuits.
     std::vector<QsimCircuit> qsim_circuits(programs.size(), QsimCircuit());
-    std::vector<std::vector<qsim::GateFused<QsimGate>>> unused_fuse(
+    std::vector<std::vector<qsim::GateFused<QsimGate>>> full_fuse(
         programs.size(), std::vector<qsim::GateFused<QsimGate>>({}));
     std::vector<std::vector<std::vector<qsim::GateFused<QsimGate>>>>
         partial_fused_circuits(
@@ -102,7 +102,7 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
       for (int i = start; i < end; i++) {
         OP_REQUIRES_OK(
             context, QsimCircuitFromProgram(programs[i], maps[i], num_qubits[i],
-                                            &qsim_circuits[i], &unused_fuse[i],
+                                            &qsim_circuits[i], &full_fuse[i],
                                             &gate_meta[i]));
         CreateGradientCircuit(qsim_circuits[i], gate_meta[i],
                               &partial_fused_circuits[i], &gradient_gates[i]);
@@ -145,17 +145,17 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
     // This method creates 3 big state vectors per thread so reducing size
     // here slightly.
     if (max_num_qubits >= 25 || programs.size() == 1) {
-      ComputeLarge(num_qubits, qsim_circuits, maps, partial_fused_circuits,
-                   pauli_sums, gradient_gates, downstream_grads, context,
-                   &output_tensor);
+      ComputeLarge(num_qubits, qsim_circuits, maps, full_fuse,
+                   partial_fused_circuits, pauli_sums, gradient_gates,
+                   downstream_grads, context, &output_tensor);
     } else {
-      ComputeSmall(num_qubits, max_num_qubits, qsim_circuits, maps,
+      ComputeSmall(num_qubits, max_num_qubits, qsim_circuits, maps, full_fuse,
                    partial_fused_circuits, pauli_sums, gradient_gates,
                    downstream_grads, context, &output_tensor);
     }
     // just to be on the safe side.
     qsim_circuits.clear();
-    unused_fuse.clear();
+    full_fuse.clear();
     gate_meta.clear();
     gradient_gates.clear();
     num_qubits.clear();
@@ -170,6 +170,7 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
       const std::vector<int>& num_qubits, const int max_num_qubits,
       const std::vector<QsimCircuit>& qsim_circuits,
       const std::vector<SymbolMap>& maps,
+      const std::vector<std::vector<qsim::GateFused<QsimGate>>>& full_fuse,
       const std::vector<std::vector<std::vector<qsim::GateFused<QsimGate>>>>&
           partial_fused_circuits,
       const std::vector<std::vector<PauliSum>>& pauli_sums,
@@ -208,17 +209,8 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
         }
 
         ss.SetStateZero(sv);
-        for (int j = 0; j < partial_fused_circuits[i].size(); j++) {
-          for (int k = 0; k < partial_fused_circuits[i][j].size(); k++) {
-            qsim::ApplyFusedGate(sim, partial_fused_circuits[i][j][k], sv);
-          }
-          if (j == partial_fused_circuits[i].size() - 1) {
-            break;
-          }
-          // Apply the original gate of the gradient_gate,
-          // not the gradient_gate itself.
-          qsim::ApplyGate(
-              sim, qsim_circuits[i].gates[gradient_gates[i][j].index], sv);
+        for (int j = 0; j < full_fuse[i].size(); j++) {
+          qsim::ApplyFusedGate(sim, full_fuse[i][j], sv);
         }
 
         // sv now contains psi
@@ -271,13 +263,14 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
     const int64_t num_cycles =
         200 * (int64_t(1) << static_cast<int64_t>(max_num_qubits));
     context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
-        partial_fused_circuits.size(), num_cycles, DoWork);
+        qsim_circuits.size(), num_cycles, DoWork);
   }
 
   void ComputeLarge(
       const std::vector<int>& num_qubits,
       const std::vector<QsimCircuit>& qsim_circuits,
       const std::vector<SymbolMap>& maps,
+      const std::vector<std::vector<qsim::GateFused<QsimGate>>>& full_fuse,
       const std::vector<std::vector<std::vector<qsim::GateFused<QsimGate>>>>&
           partial_fused_circuits,
       const std::vector<std::vector<PauliSum>>& pauli_sums,
@@ -315,17 +308,8 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
       }
 
       ss.SetStateZero(sv);
-      for (int j = 0; j < partial_fused_circuits[i].size(); j++) {
-        for (int k = 0; k < partial_fused_circuits[i][j].size(); k++) {
-          qsim::ApplyFusedGate(sim, partial_fused_circuits[i][j][k], sv);
-        }
-        if (j == partial_fused_circuits[i].size() - 1) {
-          break;
-        }
-        // Apply the original gate of the gradient_gate,
-        // not the gradient_gate itself.
-        qsim::ApplyGate(sim, qsim_circuits[i].gates[gradient_gates[i][j].index],
-                        sv);
+      for (int j = 0; j < full_fuse[i].size(); j++) {
+        qsim::ApplyFusedGate(sim, full_fuse[i][j], sv);
       }
 
       // sv now contains psi
