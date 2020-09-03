@@ -68,7 +68,7 @@ def main(unused_argv):
                 "stochastic_differentiator_util", "adjoint"
             ],
             "tfq.datasets": ["cluster_state"],
-            "tfq.optimizers":["rotosolve_minimizer"],
+            "tfq.optimizers": ["rotosolve_minimizer"],
             "tfq.util": [
                 "from_tensor", "convert_to_tensor", "exp_identity",
                 "check_commutability", "kwargs_cartesian_product",
