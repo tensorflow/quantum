@@ -116,7 +116,7 @@ class LinearCombination(differentiator.Differentiator):
         range_tile = tf.tile(tf.expand_dims(tf.range(n_non_zero_weights) + 1, 0), [total_input_symbols, 1])
         range_zero = range_tile * tf.expand_dims(tf.one_hot(symbol_ind, total_input_symbols, dtype=tf.int32), 1)
         range_unroll = tf.reshape(range_zero, [n_non_zero_weights * total_input_symbols])
-        single_program_map_indices = tf.concat([tf.expand_dims(total_input_symbols, 0), range_unroll], 0)
+        single_program_map_indices = tf.concat([tf.expand_dims(n_non_zero_weights + 1, 0), range_unroll], 0)
 
         # Now build the full map at these indices.
         single_program_map = tf.gather(single_symbol_map, single_program_map_indices)
@@ -177,6 +177,7 @@ class LinearCombination(differentiator.Differentiator):
         non_zero_weights = tf.boolean_mask(self.weights, mask)
         n_non_zero_perturbations = tf.gather(tf.shape(non_zero_perturbations),
                                              0)
+
         # Since perturbations are unique, zero_weight can only be len 0 or 1.
         mask = tf.equal(self.perturbations, tf.zeros_like(self.perturbations))
         zero_weight_raw = tf.boolean_mask(self.weights, mask)
@@ -266,9 +267,27 @@ class LinearCombination(differentiator.Differentiator):
         ) = self.get_intermediate_logic(programs, symbol_names, symbol_values,
                                         pauli_sums)
 
+        n_programs = tf.gather(tf.shape(programs), 0)
+        n_symbols = tf.gather(tf.shape(symbol_names), 0)
+        n_pauli_sums = tf.gather(tf.shape(pauli_sums), 1)
+        mask = tf.not_equal(self.perturbations,
+                            tf.zeros_like(self.perturbations))
+        non_zero_perturbations = tf.boolean_mask(self.perturbations, mask)
+        n_non_zero_perturbations = tf.gather(tf.shape(non_zero_perturbations),
+                                             0)
+
+        # pauli_sums and num_samples should be tiled identically.
+        expanded_num_samples = tf.expand_dims(num_samples, 1)
+        tiled_num_samples = tf.tile(expanded_num_samples,
+                                    [1, n_symbols * n_non_zero_perturbations + 1, 1])
+        flat_num_samples = tf.reshape(
+            tiled_num_samples,
+            [n_programs * (n_symbols * n_non_zero_perturbations + 1), n_pauli_sums])
+
         flat_expectations = self.expectation_op(flat_programs, flat_symbol_names,
                                                 flat_symbol_values,
-                                                flat_pauli_sums, num_samples)
+                                                flat_pauli_sums,
+                                                flat_num_samples)
 
         # Apply the mapper to build the partial derivates
         partials_raw = tf.reduce_sum(tf.reduce_sum(
