@@ -114,7 +114,7 @@ class LinearCombination(differentiator.Differentiator):
         op_zeros = tf.zeros([1, total_input_ops])
         single_symbol_map = tf.concat([op_zeros, transposed_weights], 0)
 
-        # Build the gather indices for placing weights correctly for a given program.
+        # Build the gather indices to place weights for a given program.
         range_tile = tf.tile(
             tf.expand_dims(tf.range(n_non_zero_weights) + 1, 0),
             [total_input_symbols, 1])
