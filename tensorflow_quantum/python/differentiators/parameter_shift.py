@@ -56,61 +56,6 @@ class ParameterShift(differentiator.Differentiator):
     """
 
     @tf.function
-    def get_intermediate_logic(self, programs, symbol_names, symbol_values,
-                               pauli_sums):
-        """Returns copies of the input programs for each perturbed symbol.
-
-        See base class for Args.
-        """
-        n_programs = tf.gather(tf.shape(programs), 0)
-        n_symbols = tf.gather(tf.shape(symbol_names), 0)
-
-        # Assume cirq.decompose() generates gates with at most two distinct
-        # eigenvalues, which results in two parameter shifts.
-        n_shifts = 2
-
-        # Deserialize programs and parse the whole parameterized gates
-        # new_programs has [n_symbols, n_programs, n_param_gates, n_shifts]
-        # These new_programs are programs with parameter-shift rule applied.
-        (new_programs, weights, shifts,
-         n_param_gates) = parameter_shift_util.parse_programs(
-             programs, symbol_names, symbol_values, n_symbols)
-
-        # Reshape & transpose new_programs, weights and shifts to fit into
-        # the input format of tensorflow_quantum simulator.
-        # [n_symbols, n_param_gates, n_shifts, n_programs]
-        new_programs = tf.transpose(new_programs, [0, 2, 3, 1])
-        weights = tf.transpose(weights, [0, 2, 3, 1])
-        shifts = tf.transpose(shifts, [0, 2, 3, 1])
-
-        # reshape everything to fit into expectation op correctly
-        total_programs = n_param_gates * n_programs * n_shifts * n_symbols
-        # tile up and then reshape to order programs correctly
-        flat_programs = tf.reshape(new_programs, [total_programs])
-        flat_weights = tf.reshape(weights, [total_programs])
-        flat_shifts = tf.reshape(shifts, [total_programs])
-
-        # tile up and then reshape to order ops correctly
-        n_tile = n_shifts * n_param_gates * n_symbols
-        # Append impurity symbol into symbol name
-        new_symbol_names = tf.concat([
-            symbol_names,
-            tf.expand_dims(tf.constant(
-                parameter_shift_util._PARAMETER_IMPURITY_NAME),
-                           axis=0)
-        ],
-                                     axis=0)
-        flat_perturbations = tf.concat([
-            tf.reshape(
-                tf.tile(tf.expand_dims(symbol_values, 0),
-                        tf.stack([n_tile, 1, 1])), [total_programs, n_symbols]),
-            tf.expand_dims(flat_shifts, axis=1)
-        ],
-                                       axis=1)
-        return (flat_programs, new_symbol_names, flat_weights,
-                flat_perturbations, n_param_gates)
-
-    @tf.function
     def differentiate_analytic(self, programs, symbol_names, symbol_values,
                                pauli_sums, forward_pass_vals, grad):
         """Calculate the gradient.
@@ -157,20 +102,57 @@ class ParameterShift(differentiator.Differentiator):
             Backward gradient values for each program & each pauli sum. It has
             the shape of [batch_size, n_symbols].
         """
-        n_ops = tf.gather(tf.shape(pauli_sums), 1)
+
+        # these get used a lot
         n_symbols = tf.gather(tf.shape(symbol_names), 0)
         n_programs = tf.gather(tf.shape(programs), 0)
+        n_ops = tf.gather(tf.shape(pauli_sums), 1)
         # Assume cirq.decompose() generates gates with at most two distinct
         # eigenvalues, which results in two parameter shifts.
         n_shifts = 2
-        (flat_programs, new_symbol_names, flat_weights, flat_perturbations,
-         n_param_gates) = self.get_intermediate_logic(programs, symbol_names,
-                                                      symbol_values, pauli_sums)
-        total_programs = n_param_gates * n_programs * n_shifts * n_symbols
+
+        # STEP 1: Generate required inputs for executor
+        # Deserialize programs and parse the whole parameterized gates
+        # new_programs has [n_symbols, n_param_gates, n_shifts, n_programs].
+        # These new_programs has programs that parameter-shift rule is applied,
+        # so those programs has
+        (new_programs, weights, shifts,
+         n_param_gates) = parameter_shift_util.parse_programs(
+             programs, symbol_names, symbol_values, n_symbols)
+
+        # Reshape & transpose new_programs, weights and shifts to fit into
+        # the input format of tensorflow_quantum simulator.
+        # [n_symbols, n_param_gates, n_shifts, n_programs]
+        new_programs = tf.transpose(new_programs, [0, 2, 3, 1])
+        weights = tf.transpose(weights, [0, 2, 3, 1])
+        shifts = tf.transpose(shifts, [0, 2, 3, 1])
+
+        # reshape everything to fit into expectation op correctly
+        total_programs = n_programs * n_shifts * n_param_gates * n_symbols
+        # tile up and then reshape to order programs correctly
+        flat_programs = tf.reshape(new_programs, [total_programs])
+        flat_shifts = tf.reshape(shifts, [total_programs])
+
+        # tile up and then reshape to order ops correctly
         n_tile = n_shifts * n_param_gates * n_symbols
+        flat_perturbations = tf.concat([
+            tf.reshape(
+                tf.tile(tf.expand_dims(symbol_values, 0),
+                        tf.stack([n_tile, 1, 1])), [total_programs, n_symbols]),
+            tf.expand_dims(flat_shifts, axis=1)
+        ],
+                                       axis=1)
         flat_ops = tf.reshape(
             tf.tile(tf.expand_dims(pauli_sums, 0), tf.stack([n_tile, 1, 1])),
             [total_programs, n_ops])
+        # Append impurity symbol into symbol name
+        new_symbol_names = tf.concat([
+            symbol_names,
+            tf.expand_dims(tf.constant(
+                parameter_shift_util._PARAMETER_IMPURITY_NAME),
+                           axis=0)
+        ],
+                                     axis=0)
 
         # STEP 2: calculate the required expectation values
         expectations = self.expectation_op(flat_programs, new_symbol_names,
@@ -205,7 +187,7 @@ class ParameterShift(differentiator.Differentiator):
         partials = tf.einsum(
             'spco,spc->sco', rearranged_expectations,
             tf.cast(
-                tf.reshape(flat_weights,
+                tf.reshape(weights,
                            [n_symbols, n_param_gates * n_shifts, n_programs]),
                 rearranged_expectations.dtype))
 
@@ -262,23 +244,60 @@ class ParameterShift(differentiator.Differentiator):
             Backward gradient values for each program & each pauli sum. It has
             the shape of [batch_size, n_symbols].
         """
-        n_ops = tf.gather(tf.shape(pauli_sums), 1)
+
+        # these get used a lot
         n_symbols = tf.gather(tf.shape(symbol_names), 0)
         n_programs = tf.gather(tf.shape(programs), 0)
+        n_ops = tf.gather(tf.shape(pauli_sums), 1)
         # Assume cirq.decompose() generates gates with at most two distinct
         # eigenvalues, which results in two parameter shifts.
         n_shifts = 2
-        (flat_programs, new_symbol_names, flat_weights, flat_perturbations,
-         n_param_gates) = self.get_intermediate_logic(programs, symbol_names,
-                                                      symbol_values, pauli_sums)
-        total_programs = n_param_gates * n_programs * n_shifts * n_symbols
+
+        # STEP 1: Generate required inputs for executor
+        # Deserialize programs and parse the whole parameterized gates
+        # new_programs has [n_symbols, n_param_gates, n_shifts, n_programs].
+        # These new_programs has programs that parameter-shift rule is applied,
+        # so those programs has
+        (new_programs, weights, shifts,
+         n_param_gates) = parameter_shift_util.parse_programs(
+             programs, symbol_names, symbol_values, n_symbols)
+
+        # Reshape & transpose new_programs, weights and shifts to fit into
+        # the input format of tensorflow_quantum simulator.
+        # [n_symbols, n_param_gates, n_shifts, n_programs]
+        new_programs = tf.transpose(new_programs, [0, 2, 3, 1])
+        weights = tf.transpose(weights, [0, 2, 3, 1])
+        shifts = tf.transpose(shifts, [0, 2, 3, 1])
+
+        # reshape everything to fit into expectation op correctly
+        total_programs = n_programs * n_shifts * n_param_gates * n_symbols
+        # tile up and then reshape to order programs correctly
+        flat_programs = tf.reshape(new_programs, [total_programs])
+        flat_shifts = tf.reshape(shifts, [total_programs])
+
+        # tile up and then reshape to order ops correctly
         n_tile = n_shifts * n_param_gates * n_symbols
+        flat_perturbations = tf.concat([
+            tf.reshape(
+                tf.tile(tf.expand_dims(symbol_values, 0),
+                        tf.stack([n_tile, 1, 1])), [total_programs, n_symbols]),
+            tf.expand_dims(flat_shifts, axis=1)
+        ],
+                                       axis=1)
         flat_ops = tf.reshape(
             tf.tile(tf.expand_dims(pauli_sums, 0), tf.stack([n_tile, 1, 1])),
             [total_programs, n_ops])
         flat_num_samples = tf.reshape(
             tf.tile(tf.expand_dims(num_samples, 0), tf.stack([n_tile, 1, 1])),
             [total_programs, n_ops])
+        # Append impurity symbol into symbol name
+        new_symbol_names = tf.concat([
+            symbol_names,
+            tf.expand_dims(tf.constant(
+                parameter_shift_util._PARAMETER_IMPURITY_NAME),
+                           axis=0)
+        ],
+                                     axis=0)
 
         # STEP 2: calculate the required expectation values
         expectations = self.expectation_op(flat_programs, new_symbol_names,
@@ -314,7 +333,7 @@ class ParameterShift(differentiator.Differentiator):
         partials = tf.einsum(
             'spco,spc->sco', rearranged_expectations,
             tf.cast(
-                tf.reshape(flat_weights,
+                tf.reshape(weights,
                            [n_symbols, n_param_gates * n_shifts, n_programs]),
                 rearranged_expectations.dtype))
 

@@ -180,56 +180,6 @@ class Differentiator(metaclass=abc.ABCMeta):
         return self
 
     @abc.abstractmethod
-    def get_intermediate_logic(self, programs, symbol_names, symbol_values,
-                               pauli_sums):
-        """Returns circuits and values which are used by both diff types.
-
-        Args:
-            programs: `tf.Tensor` of strings with shape [batch_size] containing
-                the string representations of the circuits to be executed.
-            symbol_names: `tf.Tensor` of strings with shape [n_params], which
-                is used to specify the order in which the values in
-                `symbol_values` should be placed inside of the circuits in
-                `programs`.
-            symbol_values: `tf.Tensor` of real numbers with shape
-                [batch_size, n_params] specifying parameter values to resolve
-                into the circuits specified by programs, following the ordering
-                dictated by `symbol_names`.
-            pauli_sums: `tf.Tensor` of strings with shape [batch_size, n_ops]
-                containing the string representation of the operators that will
-                be used on all of the circuits in the expectation calculations.
-
-        Returns:
-            flat_programs: 1-D `tf.Tensor` of strings representing all the
-                circuits required to be run to evaluate the gradient under the
-                derived differentiator.  The length is determined by the
-                specifics of the derived differentiator.
-            flat_symbol_names: 1-D `tf.Tensor` of of strings, containing the
-                name of every symbol used in every circuit in `flat_programs`.
-                The length is determined by the specifics of the derived
-                differentiator.
-            flat_symbol_values: 2-D `tf.Tensor` of DType `tf.float32` containing
-                values to fill in to every parameter in every circuit.
-                The first dimension is the length of `flat_programs` and the
-                second is the length of `flat_symbol_names`.
-            flat_pauli_sums: 2-D `tf.Tensor` of strings representing the
-                operators to measure against each circuit of `flat_programs`.
-                First dimension is the length of `flat_program`, but the
-                second dimension is determined by the specifics of the
-                derived differentiator.
-            flat_mapper: 5-D `tf.Tensor` of DType `tf.float32`.
-                The first dimension is the length of the input `programs`, the
-                second dimension is the length of the second dimension of the
-                input `pauli_sum`, the third dimension is the length of the
-                input `symbol_names`, and the last two dimensions are the same
-                shape as the output `flat_pauli_sums`.  The value at index
-                `ijkmn` is the amount of weight to give the measurement result
-                at `mn` when summing over expectation values to obtain the
-                gradient of the symbol `k` with respect to pauli sum `j` of
-                program `i`.
-        """
-
-    @abc.abstractmethod
     def differentiate_analytic(self, programs, symbol_names, symbol_values,
                                pauli_sums, forward_pass_vals, grad):
         """Specify how to differentiate a circuit with analytical expectation.
