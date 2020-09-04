@@ -246,7 +246,7 @@ class LinearCombination(differentiator.Differentiator):
             batch_expectations)
         # Change order to [n_symbols, n_programs, n_ops]
         partials = tf.transpose(partials_raw, [2, 0, 1])
-        tf.print(partials)
+
         # now apply the chain rule
         return tf.einsum('sco,co -> cs', partials, grad)
 
@@ -285,7 +285,6 @@ class LinearCombination(differentiator.Differentiator):
             batch_expectations)
         # Change order to [n_symbols, n_programs, n_ops]
         partials = tf.transpose(partials_raw, [2, 0, 1])
-        tf.print(partials)
 
         # now apply the chain rule
         return tf.einsum('sco,co -> cs', partials, grad)

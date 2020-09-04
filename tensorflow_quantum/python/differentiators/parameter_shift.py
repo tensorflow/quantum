@@ -157,57 +157,24 @@ class ParameterShift(differentiator.Differentiator):
             Backward gradient values for each program & each pauli sum. It has
             the shape of [batch_size, n_symbols].
         """
-        n_ops = tf.gather(tf.shape(pauli_sums), 1)
-        n_symbols = tf.gather(tf.shape(symbol_names), 0)
-        n_programs = tf.gather(tf.shape(programs), 0)
-        # Assume cirq.decompose() generates gates with at most two distinct
-        # eigenvalues, which results in two parameter shifts.
-        n_shifts = 2
-        (flat_programs, new_symbol_names, flat_weights, flat_perturbations,
-         n_param_gates) = self.get_intermediate_logic(programs, symbol_names,
-                                                      symbol_values, pauli_sums)
-        total_programs = n_param_gates * n_programs * n_shifts * n_symbols
-        n_tile = n_shifts * n_param_gates * n_symbols
-        flat_ops = tf.reshape(
-            tf.tile(tf.expand_dims(pauli_sums, 0), tf.stack([n_tile, 1, 1])),
-            [total_programs, n_ops])
+        (batch_programs, batch_symbol_names, batch_symbol_values,
+         batch_pauli_sums,
+         batch_mapper) = self.get_intermediate_logic(programs, symbol_names,
+                                                     symbol_values, pauli_sums)
 
-        # STEP 2: calculate the required expectation values
-        expectations = self.expectation_op(flat_programs, new_symbol_names,
-                                           flat_perturbations, flat_ops)
+        batch_expectations = tf.map_fn(
+            lambda x: self.expectation_op(x[0], x[1], x[2], x[3]),
+            (batch_programs, batch_symbol_names, batch_symbol_values,
+             batch_pauli_sums),
+            fn_output_signature=tf.float32)
 
-        # STEP 3: generate gradients according to the results
-
-        # we know the rows are grouped according to which parameter
-        # was perturbed, so reshape to reflect that
-        grouped_expectations = tf.reshape(
-            expectations,
-            [n_symbols, n_shifts * n_programs * n_param_gates, -1])
-
-        # now we can calculate the partial of the circuit output with
-        # respect to each perturbed parameter
-        def rearrange_expectations(grouped):
-
-            def split_vertically(i):
-                return tf.slice(grouped, [i * n_programs, 0],
-                                [n_programs, n_ops])
-
-            return tf.map_fn(split_vertically,
-                             tf.range(n_param_gates * n_shifts),
-                             dtype=tf.float32)
-
-        # reshape so that expectations calculated on different programs are
-        # separated by a dimension
-        rearranged_expectations = tf.map_fn(rearrange_expectations,
-                                            grouped_expectations)
-
-        # now we will calculate all of the partial derivatives
-        partials = tf.einsum(
-            'spco,spc->sco', rearranged_expectations,
-            tf.cast(
-                tf.reshape(flat_weights,
-                           [n_symbols, n_param_gates * n_shifts, n_programs]),
-                rearranged_expectations.dtype))
+        # Apply the mapper to build the partial derivates
+        partials_raw = tf.map_fn(
+            lambda this_exps: tf.reduce_sum(
+                tf.reduce_sum(batch_mapper * this_exps, -1), -1),
+            batch_expectations)
+        # Change order to [n_symbols, n_programs, n_ops]
+        partials = tf.transpose(partials_raw, [2, 0, 1])
 
         # now apply the chain rule
         return tf.einsum('sco,co -> cs', partials, grad)
