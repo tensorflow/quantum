@@ -227,19 +227,19 @@ class Differentiator(metaclass=abc.ABCMeta):
                 name of every symbol used in every circuit in `batch_programs`.
                 The length is determined by the specifics of the inheriting
                 differentiator.
-            batch_symbol_values: 3-D `tf.Tensor` of DType `tf.float32` containing
-                values to fill in to every parameter in every circuit.
-                The first dimension is the length of the input `programs`. At
-                each index `i` in the first dimension is the 2-D tensor of
-                parameter values to fill in to `batch_programs[i]`.
+            batch_symbol_values: 3-D `tf.Tensor` of DType `tf.float32`
+                containing values to fill in to every parameter in every
+                circuit. The first dimension is the length of the input
+                `programs`. At each index `i` in the first dimension is the 2-D
+                tensor of parameter values to fill in to `batch_programs[i]`.
             batch_pauli_sums: 3-D `tf.Tensor` of strings representing all the
                 operators to measure to evaluate the gradient. The first
                 dimension is the length of the input `programs`. At each index
                 `i` in the first dimension is 2-D tensor of PauliSums that are
                 to be measured against the circuits `batch_programs[i]` in order
                 to evaluate the gradients.
-            batch_mapper: 4-D `tf.Tensor` of DType `tf.float32` which defines how
-                to map expectation values to parameter gradients.
+            batch_mapper: 4-D `tf.Tensor` of DType `tf.float32` which defines
+                how to map expectation values to parameter gradients.
                 The first dimension is the length of the second dimension of the
                 input `pauli_sums`, the second dimension is the length of the
                 input `symbol_names`, and the last two dimensions are the same
