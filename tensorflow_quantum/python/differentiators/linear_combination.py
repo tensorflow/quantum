@@ -235,7 +235,8 @@ class LinearCombination(differentiator.Differentiator):
         batch_expectations = tf.map_fn(
             lambda x: self.expectation_op(x[0], x[1], x[2], x[3]),
             (batch_programs, batch_symbol_names, batch_symbol_values,
-             batch_pauli_sums)
+             batch_pauli_sums),
+            fn_output_signature=tf.float32
         )
 
         # Apply the mapper to build the partial derivates
@@ -273,7 +274,8 @@ class LinearCombination(differentiator.Differentiator):
         batch_expectations = tf.map_fn(
             lambda x: self.expectation_op(x[0], x[1], x[2], x[3], x[4]),
             (batch_programs, batch_symbol_names, batch_symbol_values,
-             batch_pauli_sums, batch_num_samples)
+             batch_pauli_sums, batch_num_samples),
+            fn_output_signature=tf.float32
         )
 
         # Apply the mapper to build the partial derivates
