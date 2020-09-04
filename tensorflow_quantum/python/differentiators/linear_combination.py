@@ -229,21 +229,21 @@ class LinearCombination(differentiator.Differentiator):
                                pauli_sums, forward_pass_vals, grad):
 
         (batch_programs, batch_symbol_names, batch_symbol_values,
-         batch_pauli_sums, batch_mapper) = self.get_intermediate_logic(
-             programs, symbol_names, symbol_values, pauli_sums)
+         batch_pauli_sums,
+         batch_mapper) = self.get_intermediate_logic(programs, symbol_names,
+                                                     symbol_values, pauli_sums)
 
         batch_expectations = tf.map_fn(
             lambda x: self.expectation_op(x[0], x[1], x[2], x[3]),
             (batch_programs, batch_symbol_names, batch_symbol_values,
              batch_pauli_sums),
-            fn_output_signature=tf.float32
-        )
+            fn_output_signature=tf.float32)
 
         # Apply the mapper to build the partial derivates
-        partials_raw = tf.map_fn(lambda this_exps: tf.reduce_sum(
+        partials_raw = tf.map_fn(
+            lambda this_exps: tf.reduce_sum(
                 tf.reduce_sum(batch_mapper * this_exps, -1), -1),
-                                 batch_expectations
-        )
+            batch_expectations)
         # Change order to [n_symbols, n_programs, n_ops]
         partials = tf.transpose(partials_raw, [2, 0, 1])
         tf.print(partials)
@@ -255,8 +255,9 @@ class LinearCombination(differentiator.Differentiator):
                               pauli_sums, num_samples, forward_pass_vals, grad):
 
         (batch_programs, batch_symbol_names, batch_symbol_values,
-         batch_pauli_sums, batch_mapper) = self.get_intermediate_logic(
-             programs, symbol_names, symbol_values, pauli_sums)
+         batch_pauli_sums,
+         batch_mapper) = self.get_intermediate_logic(programs, symbol_names,
+                                                     symbol_values, pauli_sums)
 
         n_symbols = tf.gather(tf.shape(symbol_names), 0)
         mask = tf.not_equal(self.perturbations,
@@ -275,14 +276,13 @@ class LinearCombination(differentiator.Differentiator):
             lambda x: self.expectation_op(x[0], x[1], x[2], x[3], x[4]),
             (batch_programs, batch_symbol_names, batch_symbol_values,
              batch_pauli_sums, batch_num_samples),
-            fn_output_signature=tf.float32
-        )
+            fn_output_signature=tf.float32)
 
         # Apply the mapper to build the partial derivates
-        partials_raw = tf.map_fn(lambda this_exps: tf.reduce_sum(
+        partials_raw = tf.map_fn(
+            lambda this_exps: tf.reduce_sum(
                 tf.reduce_sum(batch_mapper * this_exps, -1), -1),
-                                 batch_expectations
-        )
+            batch_expectations)
         # Change order to [n_symbols, n_programs, n_ops]
         partials = tf.transpose(partials_raw, [2, 0, 1])
         tf.print(partials)
