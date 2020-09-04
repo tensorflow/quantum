@@ -223,7 +223,7 @@ class Differentiator(metaclass=abc.ABCMeta):
                 dimension is the tensor of circuits required to evaluate the
                 gradient of the input circuit `programs[i]`.  The size of the
                 second dimension is determined by the inheriting differentiator.
-            batch_symbol_names: 1-D `tf.Tensor` of strings, containing the
+            batch_symbol_names: 2-D `tf.Tensor` of strings, containing the
                 name of every symbol used in every circuit in `batch_programs`.
                 The length is determined by the specifics of the inheriting
                 differentiator.
