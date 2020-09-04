@@ -217,33 +217,39 @@ class Differentiator(metaclass=abc.ABCMeta):
                 be used on all of the circuits in the expectation calculations.
 
         Returns:
-            flat_programs: 1-D `tf.Tensor` of strings representing all the
-                circuits required to be run to evaluate the gradient under the
-                derived differentiator.  The length is determined by the
-                specifics of the derived differentiator.
-            flat_symbol_names: 1-D `tf.Tensor` of of strings, containing the
-                name of every symbol used in every circuit in `flat_programs`.
-                The length is determined by the specifics of the derived
+            batch_programs: 2-D `tf.Tensor` of strings representing circuits to
+                run to evaluate the gradients. The first dimension is the length
+                of the input `programs`. At each index `i` in the first
+                dimension is the tensor of circuits required to evaluate the
+                gradient of the input circuit `programs[i]`.  The size of the
+                second dimension is determined by the inheriting differentiator.
+            batch_symbol_names: 1-D `tf.Tensor` of strings, containing the
+                name of every symbol used in every circuit in `batch_programs`.
+                The length is determined by the specifics of the inheriting
                 differentiator.
-            flat_symbol_values: 2-D `tf.Tensor` of DType `tf.float32` containing
+            batch_symbol_values: 3-D `tf.Tensor` of DType `tf.float32` containing
                 values to fill in to every parameter in every circuit.
-                The first dimension is the length of `flat_programs` and the
-                second is the length of `flat_symbol_names`.
-            flat_pauli_sums: 2-D `tf.Tensor` of strings representing the
-                operators to measure against each circuit of `flat_programs`.
-                First dimension is the length of `flat_program`, but the
-                second dimension is determined by the specifics of the
-                derived differentiator.
-            flat_mapper: 5-D `tf.Tensor` of DType `tf.float32`.
-                The first dimension is the length of the input `programs`, the
-                second dimension is the length of the second dimension of the
-                input `pauli_sum`, the third dimension is the length of the
+                The first dimension is the length of the input `programs`. At
+                each index `i` in the first dimension is the 2-D tensor of
+                parameter values to fill in to `batch_programs[i]`.
+            batch_pauli_sums: 3-D `tf.Tensor` of strings representing all the
+                operators to measure to evaluate the gradient. The first
+                dimension is the length of the input `programs`. At each index
+                `i` in the first dimension is 2-D tensor of PauliSums that are
+                to be measured against the circuits `batch_programs[i]` in order
+                to evaluate the gradients.
+            batch_mapper: 4-D `tf.Tensor` of DType `tf.float32` which defines how
+                to map expectation values to parameter gradients.
+                The first dimension is the length of the second dimension of the
+                input `pauli_sums`, the second dimension is the length of the
                 input `symbol_names`, and the last two dimensions are the same
-                shape as the output `flat_pauli_sums`.  The value at index
-                `ijkmn` is the amount of weight to give the measurement result
-                at `mn` when summing over expectation values to obtain the
-                gradient of the symbol `k` with respect to pauli sum `j` of
-                program `i`.
+                shape as the last two dimensions of `batch_pauli_sums`.  For
+                any input program index `i`, the value of `batch_mapper` at
+                index `jkmn` is the amount of weight to give the expectation
+                value of `batch_pauli_sums[i, m, n]` in the linear combination
+                of measurement results which defines the gradient of
+                `symbol_names[k]` with respect to the expectation of
+                `pauli_sums[i, j]` against `programs[i]`.
         """
 
     @abc.abstractmethod
