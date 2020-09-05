@@ -68,8 +68,7 @@ def parse_programs(programs, symbol_names, symbol_values, n_symbols,
     delta_eig = 2.0
 
     # Make an impurity symbol for every input symbol.
-    impurity = tf.tile(tf.constant([_PARAMETER_IMPURITY_NAME]),
-                       [n_symbols])
+    impurity = tf.tile(tf.constant([_PARAMETER_IMPURITY_NAME]), [n_symbols])
     symbols = symbol_names
 
     # Doping impurity sympy.Symbol into programs per gate per symbol.
