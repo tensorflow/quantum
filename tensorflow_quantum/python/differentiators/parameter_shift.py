@@ -98,7 +98,6 @@ class ParameterShift(differentiator.Differentiator):
             new_programs, [n_programs, n_symbols * n_param_gates * n_shifts])
 
         # Append impurity symbol into symbol_names and tile.
-        n_tile = n_shifts * n_param_gates * n_symbols
         new_symbol_names = tf.concat([
             symbol_names,
             tf.expand_dims(tf.constant(
