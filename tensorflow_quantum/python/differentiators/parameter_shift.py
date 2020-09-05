@@ -128,14 +128,15 @@ class ParameterShift(differentiator.Differentiator):
         reshaped_weights = tf.map_fn(lambda x: self._get_padded_weights(shaped_weights, x, n_symbols),
                                      tf.range(n_symbols),
                                      fn_output_signature=tf.float32)
-        transposed_weights = tf.transpose(test_reshape, [1, 0, 2, 3])
+        transposed_weights = tf.transpose(reshaped_weights, [1, 0, 2, 3])
         outer_reshaped_weights = tf.reshape(
             transposed_weights, [n_programs, n_symbols, n_symbols * n_param_gates * n_shifts])
         expanded_weights = tf.expand_dims(tf.expand_dims(outer_reshaped_weights, -1), 0)
         tiled_expanded_weights = tf.tile(expanded_weights, [n_pauli_sums, 1, 1, 1, 1])
-        batch_mapper = tf.map_fn(lambda x: self._get_padded_expanded_weights(x[0], x[1], n_pauli_sums),
+        padded_weights = tf.map_fn(lambda x: self._get_padded_expanded_weights(x[0], x[1], n_pauli_sums),
                                    (tiled_expanded_weights, tf.range(n_pauli_sums)),
                                    fn_output_signature=tf.float32)
+        batch_mapper = tf.transpose(padded_weights, [1, 0, 2, 3, 4])
 
         return (batch_programs, batch_symbol_names, batch_symbol_values,
                 batch_pauli_sums, batch_mapper)
@@ -259,20 +260,18 @@ class ParameterShift(differentiator.Differentiator):
             Backward gradient values for each program & each pauli sum. It has
             the shape of [batch_size, n_symbols].
         """
-        n_symbols = tf.gather(tf.shape(symbol_names), 0)
-        n_shifts = 2
-        n_tile = n_shifts * n_param_gates * n_symbols
-        batch_num_samples = tf.tile(tf.expand_dims(num_samples, 0), tf.stack([n_tile, 1, 1]))
-
         (batch_programs, batch_symbol_names, batch_symbol_values,
          batch_pauli_sums,
          batch_mapper) = self.get_intermediate_logic(programs, symbol_names,
                                                      symbol_values, pauli_sums)
 
+        n_tile = tf.cast(tf.gather(tf.shape(batch_programs), 1), dtype=tf.int32)
+        batch_num_samples = tf.tile(tf.expand_dims(num_samples, 1), tf.stack([1, n_tile, 1]))
+
         batch_expectations = tf.map_fn(
-            lambda x: self.expectation_op(x[0], x[1], x[2], x[3]),
+            lambda x: self.expectation_op(x[0], x[1], x[2], x[3], x[4]),
             (batch_programs, batch_symbol_names, batch_symbol_values,
-             batch_pauli_sums),
+             batch_pauli_sums, batch_num_samples),
             fn_output_signature=tf.float32)
 
         partials_raw = tf.map_fn(
