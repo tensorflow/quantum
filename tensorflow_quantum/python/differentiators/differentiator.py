@@ -261,6 +261,13 @@ class Differentiator(metaclass=abc.ABCMeta):
                 linear combination of measurement results which defines the
                 gradient of `symbol_names[k]` with respect to the expectation of
                 `pauli_sums[i, j]` against `programs[i]`.
+
+            As an explicit equation, the return values are defined such that:
+
+            d(<programs[i]|pauli_sums[i, j]|programs[i]>)/d(symbol_names[k]) =
+                sum_mn batch_mapper[i, j, k, m, n]
+                    <batch_programs[i][m]|
+                        batch_pauli_sums[i, m, n]|batch_programs[i][m]>
         """
 
     @abc.abstractmethod
