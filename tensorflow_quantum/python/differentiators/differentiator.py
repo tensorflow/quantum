@@ -238,14 +238,15 @@ class Differentiator(metaclass=abc.ABCMeta):
                 `i` in the first dimension is 2-D tensor of PauliSums that are
                 to be measured against the circuits `batch_programs[i]` in order
                 to evaluate the gradients.
-            batch_mapper: 4-D `tf.Tensor` of DType `tf.float32` which defines
+            batch_mapper: 5-D `tf.Tensor` of DType `tf.float32` which defines
                 how to map expectation values to parameter gradients.
-                The first dimension is the length of the second dimension of the
-                input `pauli_sums`, the second dimension is the length of the
+                The first dimension is the length of the input `programs`,
+                the second dimension is the length of the second dimension of the
+                input `pauli_sums`, the third dimension is the length of the
                 input `symbol_names`, and the last two dimensions are the same
                 shape as the last two dimensions of `batch_pauli_sums`.  For
                 any input program index `i`, the value of `batch_mapper` at
-                index `jkmn` is the amount of weight to give the expectation
+                index `ijkmn` is the amount of weight to give the expectation
                 value of `batch_pauli_sums[i, m, n]` in the linear combination
                 of measurement results which defines the gradient of
                 `symbol_names[k]` with respect to the expectation of

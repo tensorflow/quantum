@@ -60,16 +60,22 @@ def parse_programs(programs, symbol_names, symbol_values, n_symbols,
             [n_symbols, n_programs, n_param_gates, n_shifts]
         n_param_gates: bypass of input n_param_gates to export it outside
     """
+    # This call searches each program and replaces any complex gates
+    # with a decomposition for which we know how to do perform the PS rule.
+    # (Thus at this stage every program performs the same unitary as
+    # the corresponding input program, and has the same symbols.)
     decomposed_programs = tfq_ps_util_ops.tfq_ps_decompose(programs)
     delta_eig = 2.0
 
-    # Collecting doped programs with impurity sympy.Symbol from all programs
-    # with parameterized gates.
-    impurity = tf.tile(tf.convert_to_tensor([_PARAMETER_IMPURITY_NAME]),
+    # Make an impurity symbol for every input symbol.
+    impurity = tf.tile(tf.constant([_PARAMETER_IMPURITY_NAME]),
                        [n_symbols])
-    symbols = tf.convert_to_tensor(symbol_names)
+    symbols = symbol_names
 
     # Doping impurity sympy.Symbol into programs per gate per symbol.
+    # The third dimension is padded with empty programs to match the
+    # maximum over all programs over all symbols of the number of gates
+    # associated with that symbol.
     new_programs = tf.tile(
         tf.expand_dims(tf.transpose(
             tfq_ps_util_ops.tfq_ps_symbol_replace(decomposed_programs, symbols,

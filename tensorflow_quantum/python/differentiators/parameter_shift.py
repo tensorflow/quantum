@@ -55,6 +55,18 @@ class ParameterShift(differentiator.Differentiator):
 
     """
 
+    def _get_padded_weights(self, weights, symbol_ind, total_symbols):
+        return tf.map_fn(
+            lambda x: tf.pad(
+                tf.gather(x, [symbol_ind]),
+                [[symbol_ind, total_symbols - symbol_ind - 1], [0, 0]]),
+            weights)
+
+    def _get_padded_expanded_weights(self, expanded_weights, op_ind, total_ops):
+        return tf.pad(
+            expanded_weights,
+            [[0, 0], [0, 0], [0, 0], [op_ind, total_ops - op_ind - 1]])
+
     @tf.function
     def get_intermediate_logic(self, programs, symbol_names, symbol_values,
                                pauli_sums):
@@ -64,6 +76,7 @@ class ParameterShift(differentiator.Differentiator):
         """
         n_programs = tf.gather(tf.shape(programs), 0)
         n_symbols = tf.gather(tf.shape(symbol_names), 0)
+        n_pauli_sums = tf.gather(tf.shape(pauli_sums), 1)
 
         # Assume cirq.decompose() generates gates with at most two distinct
         # eigenvalues, which results in two parameter shifts.
@@ -76,23 +89,16 @@ class ParameterShift(differentiator.Differentiator):
          n_param_gates) = parameter_shift_util.parse_programs(
              programs, symbol_names, symbol_values, n_symbols)
 
-        # Reshape & transpose new_programs, weights and shifts to fit into
-        # the input format of tensorflow_quantum simulator.
-        # [n_symbols, n_param_gates, n_shifts, n_programs]
-        new_programs = tf.transpose(new_programs, [0, 2, 3, 1])
-        weights = tf.transpose(weights, [0, 2, 3, 1])
-        shifts = tf.transpose(shifts, [0, 2, 3, 1])
+        # Transpose and reshape new_programs to the new shape
+        # [n_programs, n_symbols, n_param_gates, n_shifts].
+        # Also, the weights and shifts should be the same for every program.
+        new_programs = tf.transpose(new_programs, [1, 0, 2, 3])
+        weights = tf.transpose(weights, [1, 0, 2, 3])
+        shifts = tf.transpose(shifts, [1, 0, 2, 3])
+        batch_programs = tf.reshape(new_programs, [n_programs, n_symbols * n_param_gates * n_shifts])
 
-        # reshape everything to fit into expectation op correctly
-        total_programs = n_param_gates * n_programs * n_shifts * n_symbols
-        # tile up and then reshape to order programs correctly
-        flat_programs = tf.reshape(new_programs, [total_programs])
-        flat_weights = tf.reshape(weights, [total_programs])
-        flat_shifts = tf.reshape(shifts, [total_programs])
-
-        # tile up and then reshape to order ops correctly
+        # Append impurity symbol into symbol_names and tile.
         n_tile = n_shifts * n_param_gates * n_symbols
-        # Append impurity symbol into symbol name
         new_symbol_names = tf.concat([
             symbol_names,
             tf.expand_dims(tf.constant(
@@ -100,15 +106,39 @@ class ParameterShift(differentiator.Differentiator):
                            axis=0)
         ],
                                      axis=0)
-        flat_perturbations = tf.concat([
-            tf.reshape(
-                tf.tile(tf.expand_dims(symbol_values, 0),
-                        tf.stack([n_tile, 1, 1])), [total_programs, n_symbols]),
-            tf.expand_dims(flat_shifts, axis=1)
-        ],
-                                       axis=1)
-        return (flat_programs, new_symbol_names, flat_weights,
-                flat_perturbations, n_param_gates)
+        batch_symbol_names = tf.tile(tf.expand_dims(new_symbol_names, 0),
+                                     [n_programs, 1])
+
+        # Construct the new parameter values.
+        expanded_symbol_values = tf.expand_dims(symbol_values, 1)
+        tiled_symbol_values = tf.tile(
+            expanded_symbol_values,
+            [1, n_symbols * n_param_gates * n_shifts, 1])
+        tiled_shifts = tf.reshape(shifts, [n_programs, n_symbols * n_param_gates * n_shifts, 1])
+        batch_symbol_values = tf.concat([tiled_symbol_values, tiled_shifts], -1)
+
+        # Construct the new measurements.
+        expanded_pauli_sums = tf.expand_dims(pauli_sums, 1)
+        batch_pauli_sums = tf.tile(
+            expanded_pauli_sums,
+            [1, n_symbols * n_param_gates * n_shifts, 1])
+
+        # Reshape the weights.
+        shaped_weights = tf.reshape(weights, [n_programs, n_symbols, n_param_gates * n_shifts])
+        reshaped_weights = tf.map_fn(lambda x: self._get_padded_weights(shaped_weights, x, n_symbols),
+                                     tf.range(n_symbols),
+                                     fn_output_signature=tf.float32)
+        transposed_weights = tf.transpose(test_reshape, [1, 0, 2, 3])
+        outer_reshaped_weights = tf.reshape(
+            transposed_weights, [n_programs, n_symbols, n_symbols * n_param_gates * n_shifts])
+        expanded_weights = tf.expand_dims(tf.expand_dims(outer_reshaped_weights, -1), 0)
+        tiled_expanded_weights = tf.tile(expanded_weights, [n_pauli_sums, 1, 1, 1, 1])
+        batch_mapper = tf.map_fn(lambda x: self._get_padded_expanded_weights(x[0], x[1], n_pauli_sums),
+                                   (tiled_expanded_weights, tf.range(n_pauli_sums)),
+                                   fn_output_signature=tf.float32)
+
+        return (batch_programs, batch_symbol_names, batch_symbol_values,
+                batch_pauli_sums, batch_mapper)
 
     @tf.function
     def differentiate_analytic(self, programs, symbol_names, symbol_values,
@@ -158,9 +188,8 @@ class ParameterShift(differentiator.Differentiator):
             the shape of [batch_size, n_symbols].
         """
         (batch_programs, batch_symbol_names, batch_symbol_values,
-         batch_pauli_sums,
-         batch_mapper) = self.get_intermediate_logic(programs, symbol_names,
-                                                     symbol_values, pauli_sums)
+         batch_pauli_sums, batch_mapper) = self.get_intermediate_logic(
+             programs, symbol_names, symbol_values, pauli_sums)
 
         batch_expectations = tf.map_fn(
             lambda x: self.expectation_op(x[0], x[1], x[2], x[3]),
@@ -170,9 +199,10 @@ class ParameterShift(differentiator.Differentiator):
 
         # Apply the mapper to build the partial derivates
         partials_raw = tf.map_fn(
-            lambda this_exps: tf.reduce_sum(
-                tf.reduce_sum(batch_mapper * this_exps, -1), -1),
-            batch_expectations)
+            lambda x: tf.reduce_sum(
+                tf.reduce_sum(x[0] * x[1], -1), -1),
+            (batch_mapper, batch_expectations),
+            fn_output_signature=tf.float32)
         # Change order to [n_symbols, n_programs, n_ops]
         partials = tf.transpose(partials_raw, [2, 0, 1])
 
@@ -229,61 +259,29 @@ class ParameterShift(differentiator.Differentiator):
             Backward gradient values for each program & each pauli sum. It has
             the shape of [batch_size, n_symbols].
         """
-        n_ops = tf.gather(tf.shape(pauli_sums), 1)
         n_symbols = tf.gather(tf.shape(symbol_names), 0)
-        n_programs = tf.gather(tf.shape(programs), 0)
-        # Assume cirq.decompose() generates gates with at most two distinct
-        # eigenvalues, which results in two parameter shifts.
         n_shifts = 2
-        (flat_programs, new_symbol_names, flat_weights, flat_perturbations,
-         n_param_gates) = self.get_intermediate_logic(programs, symbol_names,
-                                                      symbol_values, pauli_sums)
-        total_programs = n_param_gates * n_programs * n_shifts * n_symbols
         n_tile = n_shifts * n_param_gates * n_symbols
-        flat_ops = tf.reshape(
-            tf.tile(tf.expand_dims(pauli_sums, 0), tf.stack([n_tile, 1, 1])),
-            [total_programs, n_ops])
-        flat_num_samples = tf.reshape(
-            tf.tile(tf.expand_dims(num_samples, 0), tf.stack([n_tile, 1, 1])),
-            [total_programs, n_ops])
+        batch_num_samples = tf.tile(tf.expand_dims(num_samples, 0), tf.stack([n_tile, 1, 1]))
 
-        # STEP 2: calculate the required expectation values
-        expectations = self.expectation_op(flat_programs, new_symbol_names,
-                                           flat_perturbations, flat_ops,
-                                           flat_num_samples)
+        (batch_programs, batch_symbol_names, batch_symbol_values,
+         batch_pauli_sums,
+         batch_mapper) = self.get_intermediate_logic(programs, symbol_names,
+                                                     symbol_values, pauli_sums)
 
-        # STEP 3: generate gradients according to the results
+        batch_expectations = tf.map_fn(
+            lambda x: self.expectation_op(x[0], x[1], x[2], x[3]),
+            (batch_programs, batch_symbol_names, batch_symbol_values,
+             batch_pauli_sums),
+            fn_output_signature=tf.float32)
 
-        # we know the rows are grouped according to which parameter
-        # was perturbed, so reshape to reflect that
-        grouped_expectations = tf.reshape(
-            expectations,
-            [n_symbols, n_shifts * n_programs * n_param_gates, -1])
-
-        # now we can calculate the partial of the circuit output with
-        # respect to each perturbed parameter
-        def rearrange_expectations(grouped):
-
-            def split_vertically(i):
-                return tf.slice(grouped, [i * n_programs, 0],
-                                [n_programs, n_ops])
-
-            return tf.map_fn(split_vertically,
-                             tf.range(n_param_gates * n_shifts),
-                             dtype=tf.float32)
-
-        # reshape so that expectations calculated on different programs are
-        # separated by a dimension
-        rearranged_expectations = tf.map_fn(rearrange_expectations,
-                                            grouped_expectations)
-
-        # now we will calculate all of the partial derivatives
-        partials = tf.einsum(
-            'spco,spc->sco', rearranged_expectations,
-            tf.cast(
-                tf.reshape(flat_weights,
-                           [n_symbols, n_param_gates * n_shifts, n_programs]),
-                rearranged_expectations.dtype))
+        partials_raw = tf.map_fn(
+            lambda x: tf.reduce_sum(
+                tf.reduce_sum(x[0] * x[1], -1), -1),
+            (batch_mapper, batch_expectations),
+            fn_output_signature=tf.float32)
+        # Change order to [n_symbols, n_programs, n_ops]
+        partials = tf.transpose(partials_raw, [2, 0, 1])
 
         # now apply the chain rule
         return tf.einsum('sco,co -> cs', partials, grad)
