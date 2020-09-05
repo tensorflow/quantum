@@ -234,20 +234,18 @@ class Differentiator(metaclass=abc.ABCMeta):
                 differentiator.
             batch_symbol_values: 3-D `tf.Tensor` of DType `tf.float32`
                 containing values to fill in to every parameter in every
-                circuit. The first dimension is the length of the input
-                `programs`, the second dimension is the length of the second
-                dimension of `batch_programs`, and the last dimension is the
-                length of the second dimension of `batch_symbol_names`.
-                Thus, at each index `i` in the first dimension is the 2-D
-                tensor of parameter values to fill in to `batch_programs[i]`.
+                circuit. The first two dimensions are the same shape as
+                `batch_programs`; the last dimension is the length of the
+                second dimension of `batch_symbol_names`. Thus, at each index
+                `i` in the first dimension is the 2-D tensor of parameter values
+                to fill in to `batch_programs[i]`.
             batch_pauli_sums: 3-D `tf.Tensor` of strings representing all the
                 operators to measure to evaluate the derivatives. The first
-                dimension is the length of the input `programs`, the second
-                dimension is the length of the second dimension of
-                `batch_programs`, and the last dimension is set by the specifics
-                of the inheriting differentiator. At each index `i` in the first
-                dimension is 2-D tensor of PauliSums that are to be measured
-                against the circuits in `batch_programs[i]`.
+                two dimensions are the same shape as `batch_programs`; the last
+                dimension is set by the specifics of the inheriting
+                differentiator. At each index `i` in the first dimension is 2-D
+                tensor of PauliSums that are to be measured against the circuits
+                in `batch_programs[i]`.
             batch_mapper: 5-D `tf.Tensor` of DType `tf.float32` which defines
                 how to map expectation values of the ops in `batch_pauli_sums`
                 to parameter derivatives. The first dimension is the length of
@@ -262,12 +260,15 @@ class Differentiator(metaclass=abc.ABCMeta):
                 gradient of `symbol_names[k]` with respect to the expectation of
                 `pauli_sums[i, j]` against `programs[i]`.
 
-            As an explicit equation, the return values are defined such that:
+            As an explicit equation, the return values are defined in terms of
+            the argument values such that:
 
-            d(<programs[i]|pauli_sums[i, j]|programs[i]>)/d(symbol_names[k]) =
-                sum_mn (batch_mapper[i, j, k, m, n] *
-                    <batch_programs[i][m]|
-                        batch_pauli_sums[i, m, n]|batch_programs[i][m]>)
+            d(<programs[i](symbol_values[i])|
+                pauli_sums[i, j]|programs[i](symbol_values[i])>)
+            / d(symbol_names[k]) = sum_mn (batch_mapper[i, j, k, m, n] *
+                <batch_programs[i][m](batch_symbol_values[i][m])|
+                    batch_pauli_sums[i, m, n]
+                        |batch_programs[i][m](batch_symbol_values[i][m])>)
         """
 
     @abc.abstractmethod
