@@ -187,19 +187,24 @@ class Differentiator(metaclass=abc.ABCMeta):
         In order to compute gradients on quantum computers, one must
         decompose gradient calculations into circuits to run and measurements
         to take.  Then, some linear combination of the measurement results
-        can be used to recover estimates of circuit parameter derivates. This
+        can be used to recover estimates of circuit parameter derivatives. This
         function is intended to encapsulate the decomposition and recombination
         steps, so that the same logic can be used for both analytic and sample
         based expectations.  Additionally, centralizing this logic allows
         advanced users to access the decompositions directly.
 
-        In order to allow maximum flexibility when defining gradient routines,
-        the recombination map allows any output of any returned circuit to
-        be used for estimating the gradient of any parameter.  For some
-        differentiators (such as finite difference) this is luxurious, but
-        for advanced differentiators (such as stochastic cost) it becomes useful
-        to allow the same measurement to participate in the estimation of many
-        different parameter derivatives.
+        This function defines a batch interface for decomposing circuits
+        into their derivative components: it is assumed that each circuit in
+        the input batch will have the same gradient procedure applied to it.
+        Thus the outer dimension of all returned components is the same as the
+        input `programs` batch dimension.
+
+        For each entry in the batch dimension of the returned values,
+        inheriting differentiators are free to generate new circuits, symbols,
+        and measurement ops as needed. To combine these outputs into the
+        required derivatives, the last return value is a map specifying the
+        linear combination of batched expectation values to use to calculate the
+        derivative of each input parameter.
 
         Args:
             programs: `tf.Tensor` of strings with shape [batch_size] containing
@@ -230,26 +235,31 @@ class Differentiator(metaclass=abc.ABCMeta):
             batch_symbol_values: 3-D `tf.Tensor` of DType `tf.float32`
                 containing values to fill in to every parameter in every
                 circuit. The first dimension is the length of the input
-                `programs`. At each index `i` in the first dimension is the 2-D
+                `programs`, the second dimension is the length of the second
+                dimension of `batch_programs`, and the last dimension is the
+                length of the second dimension of `batch_symbol_names`.
+                Thus, at each index `i` in the first dimension is the 2-D
                 tensor of parameter values to fill in to `batch_programs[i]`.
             batch_pauli_sums: 3-D `tf.Tensor` of strings representing all the
-                operators to measure to evaluate the gradient. The first
-                dimension is the length of the input `programs`. At each index
-                `i` in the first dimension is 2-D tensor of PauliSums that are
-                to be measured against the circuits `batch_programs[i]` in order
-                to evaluate the gradients.
+                operators to measure to evaluate the derivatives. The first
+                dimension is the length of the input `programs`, the second
+                dimension is the length of the second dimension of
+                `batch_programs`, and the last dimension is set by the specifics
+                of the inheriting differentiator. At each index `i` in the first
+                dimension is 2-D tensor of PauliSums that are to be measured
+                against the circuits in `batch_programs[i]`.
             batch_mapper: 5-D `tf.Tensor` of DType `tf.float32` which defines
-                how to map expectation values to parameter gradients.
-                The first dimension is the length of the input `programs`,
-                the second dimension is the length of the second dimension of the
-                input `pauli_sums`, the third dimension is the length of the
-                input `symbol_names`, and the last two dimensions are the same
-                shape as the last two dimensions of `batch_pauli_sums`.  For
-                any input program index `i`, the value of `batch_mapper` at
-                index `ijkmn` is the amount of weight to give the expectation
-                value of `batch_pauli_sums[i, m, n]` in the linear combination
-                of measurement results which defines the gradient of
-                `symbol_names[k]` with respect to the expectation of
+                how to map expectation values of the ops in `batch_pauli_sums`
+                to parameter derivatives. The first dimension is the length of
+                the input `programs`, the second dimension is the length of the
+                second dimension of the input `pauli_sums`, the third dimension
+                is the length of the input `symbol_names`, and the last two
+                dimensions are the same shape as the last two dimensions of
+                `batch_pauli_sums`.  For any input program index `i`, the value
+                of `batch_mapper` at index `ijkmn` is the amount of weight to
+                give the expectation value of `batch_pauli_sums[i, m, n]` in the
+                linear combination of measurement results which defines the
+                gradient of `symbol_names[k]` with respect to the expectation of
                 `pauli_sums[i, j]` against `programs[i]`.
         """
 
