@@ -217,9 +217,10 @@ class LinearCombination(differentiator.Differentiator):
             [1, n_symbols * n_non_zero_perturbations + 1, 1])
 
         # The LinearCombination weights are entered into the mapper.
-        batch_mapper = self._measurement_mapper_gen(n_pauli_sums, n_symbols,
-                                                    all_weights,
-                                                    n_non_zero_perturbations)
+        single_program_mapper = self._measurement_mapper_gen(n_pauli_sums, n_symbols,
+                                                             all_weights,
+                                                             n_non_zero_perturbations)
+        batch_mapper = tf.tile(tf.expand_dims(single_program_mapper, 0), [n_programs, 1, 1, 1, 1])
 
         return (batch_programs, batch_symbol_names, batch_symbol_values,
                 batch_pauli_sums, batch_mapper)
@@ -241,9 +242,10 @@ class LinearCombination(differentiator.Differentiator):
 
         # Apply the mapper to build the partial derivates
         partials_raw = tf.map_fn(
-            lambda this_exps: tf.reduce_sum(
-                tf.reduce_sum(batch_mapper * this_exps, -1), -1),
-            batch_expectations)
+            lambda x: tf.reduce_sum(
+                tf.reduce_sum(x[0] * x[1], -1), -1),
+            (batch_mapper, batch_expectations),
+            fn_output_signature=tf.float32)
         # Change order to [n_symbols, n_programs, n_ops]
         partials = tf.transpose(partials_raw, [2, 0, 1])
 
@@ -278,11 +280,11 @@ class LinearCombination(differentiator.Differentiator):
              batch_pauli_sums, batch_num_samples),
             fn_output_signature=tf.float32)
 
-        # Apply the mapper to build the partial derivates
         partials_raw = tf.map_fn(
-            lambda this_exps: tf.reduce_sum(
-                tf.reduce_sum(batch_mapper * this_exps, -1), -1),
-            batch_expectations)
+            lambda x: tf.reduce_sum(
+                tf.reduce_sum(x[0] * x[1], -1), -1),
+            (batch_mapper, batch_expectations),
+            fn_output_signature=tf.float32)
         # Change order to [n_symbols, n_programs, n_ops]
         partials = tf.transpose(partials_raw, [2, 0, 1])
 
