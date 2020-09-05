@@ -265,9 +265,9 @@ class Differentiator(metaclass=abc.ABCMeta):
             As an explicit equation, the return values are defined such that:
 
             d(<programs[i]|pauli_sums[i, j]|programs[i]>)/d(symbol_names[k]) =
-                sum_mn batch_mapper[i, j, k, m, n]
+                sum_mn (batch_mapper[i, j, k, m, n] *
                     <batch_programs[i][m]|
-                        batch_pauli_sums[i, m, n]|batch_programs[i][m]>
+                        batch_pauli_sums[i, m, n]|batch_programs[i][m]>)
         """
 
     @abc.abstractmethod
