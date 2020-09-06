@@ -182,7 +182,7 @@ class Differentiator(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def get_intermediate_logic(self, programs, symbol_names, symbol_values,
                                pauli_sums):
-        """Returns circuits and values which are used by both diff types.
+        """Returns components that can be used to build the gradient.
 
         In order to compute gradients on quantum computers, one must
         decompose gradient calculations into circuits to run and measurements
