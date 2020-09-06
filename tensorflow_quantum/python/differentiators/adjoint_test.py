@@ -34,6 +34,15 @@ class AdjointTest(tf.test.TestCase):
         with self.assertRaisesRegex(ValueError, expected_regex='not supported'):
             dif.generate_differentiable_op(sampled_op=op)
 
+    def test_no_intermediate_logic(self):
+        """Confirm the adjoint differentiator has no intermediate logic."""
+
+        dif = adjoint.Adjoint()
+        with self.assertRaisesRegex(NotImplementedError,
+                                    expected_regex="no accessible "
+                                    "intermediate logic"):
+            _ = dif.get_intermediate_logic(None, None, None, None)
+
 
 if __name__ == '__main__':
     tf.test.main()
