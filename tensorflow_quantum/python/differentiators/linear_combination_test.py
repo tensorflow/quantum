@@ -196,25 +196,24 @@ class LinearCombinationTest(tf.test.TestCase, parameterized.TestCase):
         symbols = [sympy.Symbol("s0"), sympy.Symbol("s1")]
         q0 = cirq.GridQubit(0, 0)
         q1 = cirq.GridQubit(1, 2)
-        test_programs = tfq.convert_to_tensor([
-            cirq.Circuit(cirq.X(q0) ** symbols[0], cirq.Ry(symbols[1])(q1)),
-            cirq.Circuit(cirq.Rx(symbols[0](q0)), cirq.Y(q1) ** symbols[1]),
+        test_programs = util.convert_to_tensor([
+            cirq.Circuit(cirq.X(q0) ** symbols[0], cirq.ry(symbols[1])(q1)),
+            cirq.Circuit(cirq.rx(symbols[0])(q0), cirq.Y(q1) ** symbols[1]),
         ])
         test_symbol_names = tf.constant([str(s) for s in symbols])
         test_symbol_values = tf.constant([
             [1.5, -2.7],
             [-0.3, 0.9],
         ])
-        test_pauli_sums = tfq.convert_to_tensor([
+        test_pauli_sums = util.convert_to_tensor([
             [cirq.X(q0), cirq.Z(q1)],
             [cirq.X(q1), cirq.Y(q0)],
         ])
 
-        test_weights = tf.constant([1.0, -0.5])
-        test_perturbations = tf.constant([1.0, -1.5])
+        weights = [1.0, -0.5]
+        perturbations = [1.0, -1.5]
         test_linear_combination = linear_combination.LinearCombination(
-            test_weights, test_perturbations)
-        expected_batch_programs
+            weights, perturbations)
 
         # For each program in the input batch: LinearCombination creates a copy
         # of that program for each symbol in the batch; then for each symbol,
@@ -222,19 +221,20 @@ class LinearCombinationTest(tf.test.TestCase, parameterized.TestCase):
         # single copy is added for the zero perturbation.
         expected_programs_0 = tf.tile(
             tf.expand_dims(test_programs[0], 0),
-            [len(symbols) * len(test_perturbations) + 1, 1]
+            [len(symbols) * len(perturbations) + 1]
         )
         expected_programs_1 = tf.tile(
             tf.expand_dims(test_programs[1], 0),
-            [len(symbols) * len(test_perturbations) + 1, 1]
+            [len(symbols) * len(perturbations) + 1]
         )
-        expected_programs = tf.concat([
+        expected_batch_programs = tf.concat([
             tf.expand_dims(expected_programs_0, 0),
             tf.expand_dims(expected_programs_1, 0),
         ], 0)
 
-        # No new symbols are added to gradient circuits.
-        expected_batch_symbol_names = test_symbol_names
+        # No new symbols are added to gradient circuits; just need to tile.
+        expected_batch_symbol_names = tf.tile(tf.expand_dims(
+            test_symbol_names, 0), [2, 1])
 
         # For each program in the input batch: first, the input symbol_values
         # for the program are tiled to the number of copies in the output, here
@@ -246,11 +246,11 @@ class LinearCombinationTest(tf.test.TestCase, parameterized.TestCase):
         # to the original symbol values.
         temp_symbol_values_0 = tf.tile(
             tf.expand_dims(test_symbol_values[0], 0),
-            [len(symbols) * len(test_perturbations) + 1, 1]
+            [len(symbols) * len(perturbations) + 1, 1]
         )
         temp_symbol_values_1 = tf.tile(
             tf.expand_dims(test_symbol_values[1], 0),
-            [len(symbols) * len(test_perturbations) + 1, 1]
+            [len(symbols) * len(perturbations) + 1, 1]
         )
         # For LinearCombination, the perturbations are the same for every
         # program in the input batch.
@@ -266,8 +266,12 @@ class LinearCombinationTest(tf.test.TestCase, parameterized.TestCase):
             tf.expand_dims(temp_symbol_values_1 + temp_perturbations, 0),
         ], 0)
 
-        # Gradient measurement ops are the same as the input ops.
-        expected_batch_pauli_sums = test_pauli_sums
+        # Gradient measurement ops are the same as the input ops; just need
+        # to tile them up to match the second dim of `batch_programs`.
+        expected_batch_pauli_sums = tf.tile(
+            tf.expand_dims(test_pauli_sums, 1),
+            [1, len(symbols) * len(perturbations) + 1, 1]
+        )
 
         # The map for LinearCombination is the same for every program `i` in the
         # input batch.  Since LinearCombination also uses the input `pauli_sums`
@@ -304,11 +308,11 @@ class LinearCombinationTest(tf.test.TestCase, parameterized.TestCase):
          ) = test_linear_combination.get_intermediate_logic(
              test_programs, test_symbol_names, test_symbol_values,
              test_pauli_sums)
-        self.assertEqual(expected_batch_programs, test_batch_programs)
-        self.assertEqual(expected_batch_symbol_names, test_batch_symbol_names)
+        self.assertAllEqual(expected_batch_programs, test_batch_programs)
+        self.assertAllEqual(expected_batch_symbol_names, test_batch_symbol_names)
         self.assertAllClose(expected_batch_symbol_values,
                             test_batch_symbol_values, atol=1e-6)
-        self.assertEqual(expected_batch_pauli_sums, test_batch_pauli_sums)
+        self.assertAllEqual(expected_batch_pauli_sums, test_batch_pauli_sums)
         self.assertAllClose(expected_batch_mapper, test_batch_mapper, atol=1e-6)
 
 
