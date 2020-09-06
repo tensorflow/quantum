@@ -197,8 +197,10 @@ class LinearCombinationTest(tf.test.TestCase, parameterized.TestCase):
         q0 = cirq.GridQubit(0, 0)
         q1 = cirq.GridQubit(1, 2)
         test_programs = util.convert_to_tensor([
-            cirq.Circuit(cirq.X(q0) ** symbols[0], cirq.ry(symbols[1])(q1)),
-            cirq.Circuit(cirq.rx(symbols[0])(q0), cirq.Y(q1) ** symbols[1]),
+            cirq.Circuit(cirq.X(q0)**symbols[0],
+                         cirq.ry(symbols[1])(q1)),
+            cirq.Circuit(cirq.rx(symbols[0])(q0),
+                         cirq.Y(q1)**symbols[1]),
         ])
         test_symbol_names = tf.constant([str(s) for s in symbols])
         test_symbol_values = tf.constant([
@@ -219,22 +221,18 @@ class LinearCombinationTest(tf.test.TestCase, parameterized.TestCase):
         # of that program for each symbol in the batch; then for each symbol,
         # the program is copied for each non-zero perturbation; finally, a
         # single copy is added for the zero perturbation.
-        expected_programs_0 = tf.tile(
-            tf.expand_dims(test_programs[0], 0),
-            [len(symbols) * len(perturbations) + 1]
-        )
-        expected_programs_1 = tf.tile(
-            tf.expand_dims(test_programs[1], 0),
-            [len(symbols) * len(perturbations) + 1]
-        )
+        expected_programs_0 = tf.tile(tf.expand_dims(test_programs[0], 0),
+                                      [len(symbols) * len(perturbations) + 1])
+        expected_programs_1 = tf.tile(tf.expand_dims(test_programs[1], 0),
+                                      [len(symbols) * len(perturbations) + 1])
         expected_batch_programs = tf.concat([
             tf.expand_dims(expected_programs_0, 0),
             tf.expand_dims(expected_programs_1, 0),
         ], 0)
 
         # No new symbols are added to gradient circuits; just need to tile.
-        expected_batch_symbol_names = tf.tile(tf.expand_dims(
-            test_symbol_names, 0), [2, 1])
+        expected_batch_symbol_names = tf.tile(
+            tf.expand_dims(test_symbol_names, 0), [2, 1])
 
         # For each program in the input batch: first, the input symbol_values
         # for the program are tiled to the number of copies in the output, here
@@ -245,13 +243,11 @@ class LinearCombinationTest(tf.test.TestCase, parameterized.TestCase):
         # other symbol perturbations at zero.  Finally we add the perturbations
         # to the original symbol values.
         temp_symbol_values_0 = tf.tile(
-            tf.expand_dims(test_symbol_values[0], 0),
-            [len(symbols) * len(perturbations) + 1, 1]
-        )
+            tf.expand_dims(test_symbol_values[0],
+                           0), [len(symbols) * len(perturbations) + 1, 1])
         temp_symbol_values_1 = tf.tile(
-            tf.expand_dims(test_symbol_values[1], 0),
-            [len(symbols) * len(perturbations) + 1, 1]
-        )
+            tf.expand_dims(test_symbol_values[1],
+                           0), [len(symbols) * len(perturbations) + 1, 1])
         # For LinearCombination, the perturbations are the same for every
         # program in the input batch.
         temp_perturbations = tf.constant([
@@ -269,9 +265,8 @@ class LinearCombinationTest(tf.test.TestCase, parameterized.TestCase):
         # Gradient measurement ops are the same as the input ops; just need
         # to tile them up to match the second dim of `batch_programs`.
         expected_batch_pauli_sums = tf.tile(
-            tf.expand_dims(test_pauli_sums, 1),
-            [1, len(symbols) * len(perturbations) + 1, 1]
-        )
+            tf.expand_dims(test_pauli_sums,
+                           1), [1, len(symbols) * len(perturbations) + 1, 1])
 
         # The map for LinearCombination is the same for every program `i` in the
         # input batch.  Since LinearCombination also uses the input `pauli_sums`
@@ -289,8 +284,8 @@ class LinearCombinationTest(tf.test.TestCase, parameterized.TestCase):
             [0.0, 0.0, 0.0, weights[0], weights[1]],
         ])
         # Expand the mapper tensor to allow padding along indices `j` and `n`.
-        expanded_single_batch_mapper = tf.expand_dims(tf.expand_dims(
-            single_batch_mapper, 0), -1)
+        expanded_single_batch_mapper = tf.expand_dims(
+            tf.expand_dims(single_batch_mapper, 0), -1)
         # For a given input measurement index `j`, the tensor at index `n` is
         # all zeros unless `j == n`.
         op_mapper_0 = tf.pad(expanded_single_batch_mapper,
@@ -302,16 +297,17 @@ class LinearCombinationTest(tf.test.TestCase, parameterized.TestCase):
         expected_batch_mapper = tf.tile(tf.expand_dims(op_mapper_all, 0),
                                         [2, 1, 1, 1, 1])
 
-        (
-            test_batch_programs, test_batch_symbol_names,
-            test_batch_symbol_values, test_batch_pauli_sums, test_batch_mapper
-         ) = test_linear_combination.get_intermediate_logic(
+        (test_batch_programs, test_batch_symbol_names, test_batch_symbol_values,
+         test_batch_pauli_sums,
+         test_batch_mapper) = test_linear_combination.get_intermediate_logic(
              test_programs, test_symbol_names, test_symbol_values,
              test_pauli_sums)
         self.assertAllEqual(expected_batch_programs, test_batch_programs)
-        self.assertAllEqual(expected_batch_symbol_names, test_batch_symbol_names)
+        self.assertAllEqual(expected_batch_symbol_names,
+                            test_batch_symbol_names)
         self.assertAllClose(expected_batch_symbol_values,
-                            test_batch_symbol_values, atol=1e-6)
+                            test_batch_symbol_values,
+                            atol=1e-6)
         self.assertAllEqual(expected_batch_pauli_sums, test_batch_pauli_sums)
         self.assertAllClose(expected_batch_mapper, test_batch_mapper, atol=1e-6)
 
