@@ -192,7 +192,7 @@ class LinearCombinationTest(tf.test.TestCase, parameterized.TestCase):
                             rtol=1e-1)
 
     def test_get_intermediate_logic(self):
-        """Confirm returns have the expected values."""
+        """Confirm get_intermediate_logic returns the expected values."""
         symbols = [sympy.Symbol("s0"), sympy.Symbol("s1")]
         q0 = cirq.GridQubit(0, 0)
         q1 = cirq.GridQubit(1, 2)

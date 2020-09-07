@@ -69,10 +69,7 @@ class ParameterShift(differentiator.Differentiator):
     @tf.function
     def get_intermediate_logic(self, programs, symbol_names, symbol_values,
                                pauli_sums):
-        """Returns copies of the input programs for each perturbed symbol.
-
-        See base class for Args.
-        """
+        """See base class description."""
         n_programs = tf.gather(tf.shape(programs), 0)
         n_symbols = tf.gather(tf.shape(symbol_names), 0)
         n_pauli_sums = tf.gather(tf.shape(pauli_sums), 1)

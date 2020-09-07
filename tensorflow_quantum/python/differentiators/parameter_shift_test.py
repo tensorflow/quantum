@@ -79,6 +79,43 @@ class ParameterShiftTest(tf.test.TestCase, parameterized.TestCase):
         self.assertAllClose(expectations, true_f, atol=1e-1, rtol=1e-1)
         self.assertAllClose(grads, true_g, atol=1e-1, rtol=1e-1)
 
+    def test_get_intermediate_logic(self):
+        """Confirm get_intermediate_logic returns the expected values."""
+        symbols = [sympy.Symbol("s0"), sympy.Symbol("s1")]
+        q0 = cirq.GridQubit(0, 0)
+        q1 = cirq.GridQubit(1, 2)
+        test_programs = util.convert_to_tensor([
+            cirq.Circuit(cirq.X(q0)**symbols[0], cirq.Y(q1)**symbols[0], cirq.Z(q0)**symbols[1]),
+            cirq.Circuit(cirq.X(q0)**symbols[0], cirq.Z(q1)**symbols[1]),
+        ])
+        test_symbol_names = tf.constant([str(s) for s in symbols])
+        test_symbol_values = tf.constant([
+            [1.5, -2.7],
+            [-0.3, 0.9],
+        ])
+        test_pauli_sums = util.convert_to_tensor([
+            [cirq.X(q0), cirq.Z(q1)],
+            [cirq.X(q1), cirq.Y(q0)],
+        ])
+
+        test_parameter_shift = parameter_shift.ParameterShift()
+
+
+        (test_batch_programs, test_batch_symbol_names, test_batch_symbol_values,
+         test_batch_pauli_sums,
+         test_batch_mapper) = test_linear_combination.get_intermediate_logic(
+             test_programs, test_symbol_names, test_symbol_values,
+             test_pauli_sums)
+        print(util.from_tensor(test_batch_programs))
+        self.assertTrue(False)
+        self.assertAllEqual(expected_batch_programs, test_batch_programs)
+        self.assertAllEqual(expected_batch_symbol_names,
+                            test_batch_symbol_names)
+        self.assertAllClose(expected_batch_symbol_values,
+                            test_batch_symbol_values,
+                            atol=1e-6)
+        self.assertAllEqual(expected_batch_pauli_sums, test_batch_pauli_sums)
+        self.assertAllClose(expected_batch_mapper, test_batch_mapper, atol=1e-6)
 
 if __name__ == "__main__":
     tf.test.main()
