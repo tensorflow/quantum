@@ -13,6 +13,8 @@
 # limitations under the License.
 # ==============================================================================
 """Basic tests for the ParameterShift differentiator"""
+import math
+
 import numpy as np
 from absl.testing import parameterized
 import tensorflow as tf
@@ -100,14 +102,101 @@ class ParameterShiftTest(tf.test.TestCase, parameterized.TestCase):
 
         test_parameter_shift = parameter_shift.ParameterShift()
 
+        # For each program in the batch, we need to make two copies of that
+        # program for each parameterized gate, where the parameter is replaced
+        # by the special parameter name `_param_shift`.
+        # When an input program has fewer parameterized gates than another,
+        # the end of the tensor is padded with empty programs.
+        special = sympy.Symbol("_param_shift")
+        expected_batch_programs_0 = util.convert_to_tensor([
+            cirq.Circuit(cirq.X(q0)**special, cirq.Y(q1)**symbols[0], cirq.Z(q0)**symbols[1]),
+            cirq.Circuit(cirq.X(q0)**special, cirq.Y(q1)**symbols[0], cirq.Z(q0)**symbols[1]),
+            cirq.Circuit(cirq.X(q0)**symbols[0], cirq.Y(q1)**special, cirq.Z(q0)**symbols[1]),
+            cirq.Circuit(cirq.X(q0)**symbols[0], cirq.Y(q1)**special, cirq.Z(q0)**symbols[1]),
+            cirq.Circuit(cirq.X(q0)**symbols[0], cirq.Y(q1)**symbols[0], cirq.Z(q0)**special),
+            cirq.Circuit(cirq.X(q0)**symbols[0], cirq.Y(q1)**symbols[0], cirq.Z(q0)**special),
+        ])
+        expected_batch_programs_1 = util.convert_to_tensor([
+            cirq.Circuit(cirq.X(q0)**special, cirq.Z(q1)**symbols[1]),
+            cirq.Circuit(cirq.X(q0)**special, cirq.Z(q1)**symbols[1]),
+            cirq.Circuit(cirq.X(q0)**symbols[0], cirq.Z(q1)**special),
+            cirq.Circuit(cirq.X(q0)**symbols[0], cirq.Z(q1)**special),
+            cirq.Circuit(),
+            cirq.Circuit(),
+        ])
+        expected_batch_programs = tf.concat([
+            tf.expand_dims(expected_programs_0, 0),
+            tf.expand_dims(expected_programs_1, 0),
+        ], 0)
+
+        # Symbol names have the special parameter appended.
+        out_symbol_names = tf.constant([["s0", "s1", "_param_shift"]])
+        expected_batch_symbol_names = tf.tile(out_symbol_names, [2, 1])
+
+        # Symbol values are the original values perturbed symmetrically by an
+        # amount that depends on the gate.
+        # For loss function f(x) = <s|w**x|s>, where w is a Pauli matrix, we
+        # have from equations 8 and 10 of https://arxiv.org/abs/1905.13311 that
+        # df(x)/dx = (pi/2) * [f(x + 1/2) - f(x - 1/2)].
+        # In the test circuit here all circuits are exponentials of Paulis.
+        # Thus all values for the input symbols are just the input; the special
+        # parameter takes on the value of the symbol it has replaced, plus 0.5
+        # in the first copy and minus 0.5 in the second.
+        expected_batch_symbol_values = tf.constant([
+            [[1.5, -2.7, 1.5 + 0.5],
+             [1.5, -2.7, 1.5 - 0.5],
+             [1.5, -2.7, 1.5 + 0.5],
+             [1.5, -2.7, 1.5 - 0,5],
+             [1.5, -2.7, -2.7 + 0.5],
+             [1.5, -2.7, -2.7 - 0.5]],
+            [[-0.3, 0.9, -0.3 + 0.5],
+             [-0.3, 0.9, -0.3 - 0.5],
+             [-0.3, 0.9, 0.9 + 0.5],
+             [-0.3, 0.9, 0.9 - 0.5],
+             [-0.3, 0.9, 0.0],  # Last two circuits are empty.
+             [-0.3, 0.9, 0.0]]])
+
+        # The same paulis are measured as the input, tiled up.
+        max_param_gates = 3
+        n_shifts = 2
+        expected_batch_pauli_sums = tf.tile(
+            tf.expand_dims(test_pauli_sums,
+                           1), [1, max_param_gates * n_shifts, 1])
+
+
+        # Note that we can also write the derivative equation as
+        # df(x)/dx = (pi/2) * f(x + 1/2) - (pi/2) * f(x - 1/2)],
+        # so +-pi/2 are the weights we need in the linear combination
+        # of measurement results defining our gradients.
+        # For a given program index `i`, the tensor of values is non-zero
+        # only when `j == n`, since the input pauli sums are the same as the
+        # gradient pauli sums.  This we can build a 2-D map for a given
+        # circuit, pad it with zeros, then concatenate the maps for the
+        # individual input programs.
+        single_batch_mapper_0 = tf.expand_dims(tf.expand_dims(tf.constant([
+            [math.pi/2.0, -math.pi/2.0, math.pi/2.0, -math.pi/2.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 0.0, math.pi/2.0, math.pi/2.0]]), 0), -1)
+        single_batch_mapper_1 = tf.expand_dims(tf.expand_dims(tf.constant([
+            [math.pi/2.0, -math.pi/2.0, 0.0, 0.0, 0.0, 0.0],
+            [0.0, 0.0, math.pi/2.0, math.pi/2.0, 0.0, 0.0]]), 0), -1)
+        op_mapper_0_0 = tf.pad(single_batch_mapper_0,
+                               [[0, 0], [0, 0], [0, 0], [0, 1]])
+        op_mapper_0_1 = tf.pad(single_batch_mapper_0,
+                               [[0, 0], [0, 0], [0, 0], [1, 0]])
+        op_mapper_0 = tf.concat([op_mapper_0_0, op_mapper_0_1], 0)
+        op_mapper_1_0 = tf.pad(single_batch_mapper_1,
+                               [[0, 0], [0, 0], [0, 0], [0, 1]])
+        op_mapper_1_1 = tf.pad(single_batch_mapper_1,
+                               [[0, 0], [0, 0], [0, 0], [1, 0]])
+        op_mapper_1 = tf.concat([op_mapper_1_0, op_mapper_1_1], 0)
+        expected_batch_mapper = tf.concat([
+            tf.expand_dims(op_mapper_0, 0), tf.expand_dims(op_mapper_1, 0)], 0)
 
         (test_batch_programs, test_batch_symbol_names, test_batch_symbol_values,
          test_batch_pauli_sums,
-         test_batch_mapper) = test_linear_combination.get_intermediate_logic(
+         test_batch_mapper) = test_parameter_shift.get_intermediate_logic(
              test_programs, test_symbol_names, test_symbol_values,
              test_pauli_sums)
-        print(util.from_tensor(test_batch_programs))
-        self.assertTrue(False)
         self.assertAllEqual(expected_batch_programs, test_batch_programs)
         self.assertAllEqual(expected_batch_symbol_names,
                             test_batch_symbol_names)
