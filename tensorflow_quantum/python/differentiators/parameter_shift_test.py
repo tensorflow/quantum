@@ -87,8 +87,12 @@ class ParameterShiftTest(tf.test.TestCase, parameterized.TestCase):
         q0 = cirq.GridQubit(0, 0)
         q1 = cirq.GridQubit(1, 2)
         test_programs = util.convert_to_tensor([
-            cirq.Circuit(cirq.X(q0)**symbols[0], cirq.Y(q1)**symbols[0], cirq.Z(q0)**symbols[1]),
-            cirq.Circuit(cirq.X(q0)**symbols[0], cirq.Z(q1)**symbols[1]),
+            cirq.Circuit(
+                cirq.X(q0)**symbols[0],
+                cirq.Y(q1)**symbols[0],
+                cirq.Z(q0)**symbols[1]),
+            cirq.Circuit(cirq.X(q0)**symbols[0],
+                         cirq.Z(q1)**symbols[1]),
         ])
         test_symbol_names = tf.constant([str(s) for s in symbols])
         test_symbol_values = tf.constant([
@@ -110,22 +114,44 @@ class ParameterShiftTest(tf.test.TestCase, parameterized.TestCase):
         # symbols, then empty circuits are padded in to compensate.
         special = sympy.Symbol("_param_shift")
         expected_programs_0 = util.convert_to_tensor([
-            cirq.Circuit(cirq.X(q0)**special, cirq.Y(q1)**symbols[0], cirq.Z(q0)**symbols[1]),
-            cirq.Circuit(cirq.X(q0)**special, cirq.Y(q1)**symbols[0], cirq.Z(q0)**symbols[1]),
-            cirq.Circuit(cirq.X(q0)**symbols[0], cirq.Y(q1)**special, cirq.Z(q0)**symbols[1]),
-            cirq.Circuit(cirq.X(q0)**symbols[0], cirq.Y(q1)**special, cirq.Z(q0)**symbols[1]),
-            cirq.Circuit(cirq.X(q0)**symbols[0], cirq.Y(q1)**symbols[0], cirq.Z(q0)**special),
-            cirq.Circuit(cirq.X(q0)**symbols[0], cirq.Y(q1)**symbols[0], cirq.Z(q0)**special),
+            cirq.Circuit(
+                cirq.X(q0)**special,
+                cirq.Y(q1)**symbols[0],
+                cirq.Z(q0)**symbols[1]),
+            cirq.Circuit(
+                cirq.X(q0)**special,
+                cirq.Y(q1)**symbols[0],
+                cirq.Z(q0)**symbols[1]),
+            cirq.Circuit(
+                cirq.X(q0)**symbols[0],
+                cirq.Y(q1)**special,
+                cirq.Z(q0)**symbols[1]),
+            cirq.Circuit(
+                cirq.X(q0)**symbols[0],
+                cirq.Y(q1)**special,
+                cirq.Z(q0)**symbols[1]),
+            cirq.Circuit(
+                cirq.X(q0)**symbols[0],
+                cirq.Y(q1)**symbols[0],
+                cirq.Z(q0)**special),
+            cirq.Circuit(
+                cirq.X(q0)**symbols[0],
+                cirq.Y(q1)**symbols[0],
+                cirq.Z(q0)**special),
             cirq.Circuit(),
             cirq.Circuit(),
         ])
         expected_programs_1 = util.convert_to_tensor([
-            cirq.Circuit(cirq.X(q0)**special, cirq.Z(q1)**symbols[1]),
-            cirq.Circuit(cirq.X(q0)**special, cirq.Z(q1)**symbols[1]),
+            cirq.Circuit(cirq.X(q0)**special,
+                         cirq.Z(q1)**symbols[1]),
+            cirq.Circuit(cirq.X(q0)**special,
+                         cirq.Z(q1)**symbols[1]),
             cirq.Circuit(),
             cirq.Circuit(),
-            cirq.Circuit(cirq.X(q0)**symbols[0], cirq.Z(q1)**special),
-            cirq.Circuit(cirq.X(q0)**symbols[0], cirq.Z(q1)**special),
+            cirq.Circuit(cirq.X(q0)**symbols[0],
+                         cirq.Z(q1)**special),
+            cirq.Circuit(cirq.X(q0)**symbols[0],
+                         cirq.Z(q1)**special),
             cirq.Circuit(),
             cirq.Circuit(),
         ])
@@ -148,31 +174,29 @@ class ParameterShiftTest(tf.test.TestCase, parameterized.TestCase):
         # parameter takes on the value of the symbol it has replaced, plus 0.5
         # in the first copy and minus 0.5 in the second.
         # Unused rows have the special value filled with the original value.
-        expected_batch_symbol_values = tf.constant([
-            [[1.5, -2.7, 1.5 + 0.5],
-             [1.5, -2.7, 1.5 - 0.5],
-             [1.5, -2.7, 1.5 + 0.5],
-             [1.5, -2.7, 1.5 - 0.5],
-             [1.5, -2.7, -2.7 + 0.5],
-             [1.5, -2.7, -2.7 - 0.5],
-             [1.5, -2.7, -2.7],
-             [1.5, -2.7, -2.7]],
-            [[-0.3, 0.9, -0.3 + 0.5],
-             [-0.3, 0.9, -0.3 - 0.5],
-             [-0.3, 0.9, -0.3],
-             [-0.3, 0.9, -0.3],
-             [-0.3, 0.9, 0.9 + 0.5],
-             [-0.3, 0.9, 0.9 - 0.5],
-             [-0.3, 0.9, 0.9],
-             [-0.3, 0.9, 0.9]]])
+        expected_batch_symbol_values = tf.constant([[[1.5, -2.7, 1.5 + 0.5],
+                                                     [1.5, -2.7, 1.5 - 0.5],
+                                                     [1.5, -2.7, 1.5 + 0.5],
+                                                     [1.5, -2.7, 1.5 - 0.5],
+                                                     [1.5, -2.7, -2.7 + 0.5],
+                                                     [1.5, -2.7, -2.7 - 0.5],
+                                                     [1.5, -2.7, -2.7],
+                                                     [1.5, -2.7, -2.7]],
+                                                    [[-0.3, 0.9, -0.3 + 0.5],
+                                                     [-0.3, 0.9, -0.3 - 0.5],
+                                                     [-0.3, 0.9, -0.3],
+                                                     [-0.3, 0.9, -0.3],
+                                                     [-0.3, 0.9, 0.9 + 0.5],
+                                                     [-0.3, 0.9, 0.9 - 0.5],
+                                                     [-0.3, 0.9, 0.9],
+                                                     [-0.3, 0.9, 0.9]]])
 
         # The same paulis are measured as the input, tiled up.
         max_param_gates = 2
         n_symbols = 2
         n_shifts = 2
-        expected_batch_pauli_sums = tf.tile(
-            tf.expand_dims(test_pauli_sums,
-                           1), [1, max_param_gates * n_symbols * n_shifts, 1])
+        expected_batch_pauli_sums = tf.tile(tf.expand_dims(
+            test_pauli_sums, 1), [1, max_param_gates * n_symbols * n_shifts, 1])
 
         # Note that we can also write the derivative equation as
         # df(x)/dx = (pi/2) * f(x + 1/2) - (pi/2) * f(x - 1/2)],
@@ -183,12 +207,21 @@ class ParameterShiftTest(tf.test.TestCase, parameterized.TestCase):
         # gradient pauli sums.  This we can build a 2-D map for a given
         # circuit, pad it with zeros, then concatenate the maps for the
         # individual input programs.
-        single_batch_mapper_0 = tf.expand_dims(tf.expand_dims(tf.constant([
-            [math.pi/2.0, -math.pi/2.0, math.pi/2.0, -math.pi/2.0, 0.0, 0.0, 0.0, 0.0],
-            [0.0, 0.0, 0.0, 0.0, math.pi/2.0, -math.pi/2.0, 0.0, 0.0]]), 0), -1)
-        single_batch_mapper_1 = tf.expand_dims(tf.expand_dims(tf.constant([
-            [math.pi/2.0, -math.pi/2.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-            [0.0, 0.0, 0.0, 0.0, math.pi/2.0, -math.pi/2.0, 0.0, 0.0]]), 0), -1)
+        single_batch_mapper_0 = tf.expand_dims(
+            tf.expand_dims(
+                tf.constant([[
+                    math.pi / 2.0, -math.pi / 2.0, math.pi / 2.0,
+                    -math.pi / 2.0, 0.0, 0.0, 0.0, 0.0
+                ], [
+                    0.0, 0.0, 0.0, 0.0, math.pi / 2.0, -math.pi / 2.0, 0.0, 0.0
+                ]]), 0), -1)
+        single_batch_mapper_1 = tf.expand_dims(
+            tf.expand_dims(
+                tf.constant([[
+                    math.pi / 2.0, -math.pi / 2.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
+                ], [
+                    0.0, 0.0, 0.0, 0.0, math.pi / 2.0, -math.pi / 2.0, 0.0, 0.0
+                ]]), 0), -1)
         op_mapper_0_0 = tf.pad(single_batch_mapper_0,
                                [[0, 0], [0, 0], [0, 0], [0, 1]])
         op_mapper_0_1 = tf.pad(single_batch_mapper_0,
@@ -199,8 +232,9 @@ class ParameterShiftTest(tf.test.TestCase, parameterized.TestCase):
         op_mapper_1_1 = tf.pad(single_batch_mapper_1,
                                [[0, 0], [0, 0], [0, 0], [1, 0]])
         op_mapper_1 = tf.concat([op_mapper_1_0, op_mapper_1_1], 0)
-        expected_batch_mapper = tf.concat([
-            tf.expand_dims(op_mapper_0, 0), tf.expand_dims(op_mapper_1, 0)], 0)
+        expected_batch_mapper = tf.concat(
+            [tf.expand_dims(op_mapper_0, 0),
+             tf.expand_dims(op_mapper_1, 0)], 0)
 
         (test_batch_programs, test_batch_symbol_names, test_batch_symbol_values,
          test_batch_pauli_sums,
