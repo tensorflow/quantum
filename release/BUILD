@@ -43,7 +43,6 @@ sh_binary(
         "//tensorflow_quantum/python/differentiators:adjoint",
         "//tensorflow_quantum/python/differentiators:differentiator",
         "//tensorflow_quantum/python/differentiators:parameter_shift",
-        "//tensorflow_quantum/python/differentiators:stochastic_differentiator",
         "//tensorflow_quantum/python/differentiators:linear_combination",
         "//tensorflow_quantum/python/layers/circuit_construction:elementary",
         "//tensorflow_quantum/python/layers/circuit_executors:expectation",

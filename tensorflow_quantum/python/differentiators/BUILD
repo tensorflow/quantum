@@ -106,48 +106,8 @@ py_test(
         ":adjoint",
         ":linear_combination",
         ":parameter_shift",
-        ":stochastic_differentiator",
         "//tensorflow_quantum/core/ops:batch_util",
         "//tensorflow_quantum/core/ops:circuit_execution_ops",
         "//tensorflow_quantum/python:util",
-    ],
-)
-
-py_library(
-    name = "stochastic_differentiator",
-    srcs = ["stochastic_differentiator.py"],
-    deps = [
-        ":differentiator",
-        ":stochastic_differentiator_util",
-    ],
-)
-
-py_test(
-    name = "stochastic_differentiator_test",
-    srcs = ["stochastic_differentiator_test.py"],
-    python_version = "PY3",
-    deps = [
-        ":stochastic_differentiator",
-        "//tensorflow_quantum/core/ops:circuit_execution_ops",
-        "//tensorflow_quantum/python:util",
-    ],
-)
-
-py_library(
-    name = "stochastic_differentiator_util",
-    srcs = ["stochastic_differentiator_util.py"],
-    deps = [
-        ":parameter_shift_util",
-        "//tensorflow_quantum/core/ops:cirq_ops",
-        "//tensorflow_quantum/python:util",
-    ],
-)
-
-py_test(
-    name = "stochastic_differentiator_util_test",
-    srcs = ["stochastic_differentiator_util_test.py"],
-    python_version = "PY3",
-    deps = [
-        ":stochastic_differentiator_util",
     ],
 )
