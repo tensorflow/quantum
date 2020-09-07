@@ -94,7 +94,7 @@ class RotosolveMinimizerTest(tf.test.TestCase, parameterized.TestCase):
         self.assertAlmostEqual(func(result['position']), min_value)
         self.assertAlmostEqual(result['objective_value'], min_value)
         self.assertTrue(result['converged'])
-        self.assertLessEqual(result['num_iterations'],
+        self.assertLess(result['num_iterations'],
                              50)  # 50 is the default max iteration
 
     def test_nonlinear_function_optimization(self):
