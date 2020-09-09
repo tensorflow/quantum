@@ -233,13 +233,15 @@ class LinearCombination(differentiator.Differentiator):
          batch_mapper) = self.get_intermediate_logic(programs, symbol_names,
                                                      symbol_values, pauli_sums)
 
-        batch_expectations = tf.map_fn(
-            lambda x: self.expectation_op(x[0], x[1], x[2], x[3]),
-            (batch_programs, batch_symbol_names, batch_symbol_values,
-             batch_pauli_sums),
-            fn_output_signature=tf.float32)
+        flat_programs = tf.concat(batch_programs, 0)
+        flat_symbol_names = batch_symbol_names[0]
+        flat_symbol_values = tf.concat(batch_symbol_values, 0)
+        flat_pauli_sums = tf.concat(batch_pauli_sums, 0)
+        flat_expectations = self.expectation_op(
+            flat_programs, flat_symbol_names, flat_symbol_values, flat_pauli_sums)
 
         # Apply the mapper to build the partial derivates
+        batch_expectations = tf.reshape(flat_expectations, tf.shape(batch_pauli_sums))
         partials_raw = tf.map_fn(
             lambda x: tf.reduce_sum(tf.reduce_sum(x[0] * x[1], -1), -1),
             (batch_mapper, batch_expectations),
@@ -272,12 +274,15 @@ class LinearCombination(differentiator.Differentiator):
             expanded_num_samples,
             [1, n_symbols * n_non_zero_perturbations + 1, 1])
 
-        batch_expectations = tf.map_fn(
-            lambda x: self.expectation_op(x[0], x[1], x[2], x[3], x[4]),
-            (batch_programs, batch_symbol_names, batch_symbol_values,
-             batch_pauli_sums, batch_num_samples),
-            fn_output_signature=tf.float32)
+        flat_programs = tf.concat(batch_programs, 0)
+        flat_symbol_names = batch_symbol_names[0]
+        flat_symbol_values = tf.concat(batch_symbol_values, 0)
+        flat_pauli_sums = tf.concat(batch_pauli_sums, 0)
+        flat_num_samples = tf.concat(batch_num_samples, 0))
+        flat_expectations = self.expectation_op(
+            flat_programs, flat_symbol_names, flat_symbol_values, flat_pauli_sums, flat_num_samples)
 
+        batch_expectations = tf.reshape(flat_expectations, tf.shape(batch_pauli_sums))
         partials_raw = tf.map_fn(
             lambda x: tf.reduce_sum(tf.reduce_sum(x[0] * x[1], -1), -1),
             (batch_mapper, batch_expectations),
