@@ -195,16 +195,20 @@ class ParameterShift(differentiator.Differentiator):
          batch_pauli_sums,
          batch_mapper) = self.get_intermediate_logic(programs, symbol_names,
                                                      symbol_values, pauli_sums)
-
-        batch_expectations = tf.map_fn(
-            lambda x: self.expectation_op(x[0], x[1], x[2], x[3]),
-            (batch_programs, batch_symbol_names, batch_symbol_values,
-             batch_pauli_sums),
-            fn_output_signature=tf.float32)
+        bps = tf.shape(batch_programs)
+        flat_programs = tf.reshape(batch_programs, [bps[0] * bps[1]])
+        flat_symbol_names = batch_symbol_names[0]
+        bsvs = tf.shape(batch_symbol_values)
+        flat_symbol_values = tf.reshape(batch_symbol_values, [bsvs[0] * bsvs[1], bsvs[2]])
+        bpss = tf.shape(batch_pauli_sums)
+        flat_pauli_sums = tf.reshape(batch_pauli_sums, [bpss[0] * bpss[1], bpss[2]])
+        flat_expectations = self.expectation_op(
+            flat_programs, flat_symbol_names, flat_symbol_values, flat_pauli_sums)
 
         # Apply the mapper to build the partial derivates
+        batch_expectations = tf.reshape(flat_expectations, tf.shape(batch_pauli_sums))
         partials_raw = tf.map_fn(
-            lambda x: tf.reduce_sum(tf.reduce_sum(x[0] * x[1], -1), -1),
+            lambda x: tf.reduce_sum(x[0] * x[1], [2, 3]),
             (batch_mapper, batch_expectations),
             fn_output_signature=tf.float32)
         # Change order to [n_symbols, n_programs, n_ops]
@@ -272,14 +276,20 @@ class ParameterShift(differentiator.Differentiator):
         batch_num_samples = tf.tile(tf.expand_dims(num_samples, 1),
                                     tf.stack([1, n_tile, 1]))
 
-        batch_expectations = tf.map_fn(
-            lambda x: self.expectation_op(x[0], x[1], x[2], x[3], x[4]),
-            (batch_programs, batch_symbol_names, batch_symbol_values,
-             batch_pauli_sums, batch_num_samples),
-            fn_output_signature=tf.float32)
+        bps = tf.shape(batch_programs)
+        flat_programs = tf.reshape(batch_programs, [bps[0] * bps[1]])
+        flat_symbol_names = batch_symbol_names[0]
+        bsvs = tf.shape(batch_symbol_values)
+        flat_symbol_values = tf.reshape(batch_symbol_values, [bsvs[0] * bsvs[1], bsvs[2]])
+        bpss = tf.shape(batch_pauli_sums)
+        flat_pauli_sums = tf.reshape(batch_pauli_sums, [bpss[0] * bpss[1], bpss[2]])
+        flat_num_samples = tf.reshape(batch_num_samples, tf.shape(flat_pauli_sums))
+        flat_expectations = self.expectation_op(
+            flat_programs, flat_symbol_names, flat_symbol_values, flat_pauli_sums, flat_num_samples)
 
+        batch_expectations = tf.reshape(flat_expectations, tf.shape(batch_pauli_sums))
         partials_raw = tf.map_fn(
-            lambda x: tf.reduce_sum(tf.reduce_sum(x[0] * x[1], -1), -1),
+            lambda x: tf.reduce_sum(x[0] * x[1], [2, 3]),
             (batch_mapper, batch_expectations),
             fn_output_signature=tf.float32)
         # Change order to [n_symbols, n_programs, n_ops]
