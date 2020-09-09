@@ -245,7 +245,7 @@ class SampledGradientCorrectnessTest(tf.test.TestCase, parameterized.TestCase):
                 **{
                     'differentiator': SAMPLED_DIFFS,
                     'op': SAMPLED_OPS,
-                    'num_samples': [10000]
+                    'num_samples': [20000]
                 })))
     def test_sampled_value_with_simple_circuit(self, differentiator, op,
                                                num_samples):
@@ -279,7 +279,7 @@ class SampledGradientCorrectnessTest(tf.test.TestCase, parameterized.TestCase):
                     'n_programs': [5],
                     'n_ops': [2],
                     'symbol_names': [['a', 'b']],
-                    'num_samples': [30000]
+                    'num_samples': [60000]
                 })))
     def test_approx_equality_shallow(self, diff_and_tol, op, n_qubits,
                                      symbol_names, n_ops, n_programs,
