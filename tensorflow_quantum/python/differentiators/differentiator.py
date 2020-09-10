@@ -220,6 +220,7 @@ class Differentiator(metaclass=abc.ABCMeta):
             pauli_sums: `tf.Tensor` of strings with shape [batch_size, n_ops]
                 containing the string representation of the operators that will
                 be used on all of the circuits in the expectation calculations.
+            num_samples:
 
         Returns:
             batch_programs: 2-D `tf.Tensor` of strings representing circuits to
@@ -271,15 +272,14 @@ class Differentiator(metaclass=abc.ABCMeta):
                         |batch_programs[i][m](batch_symbol_values[i][m])>)
         """
 
-    @abc.abstractmethod
+    @tf.function
     def differentiate_analytic(self, programs, symbol_names, symbol_values,
                                pauli_sums, forward_pass_vals, grad):
         """Specify how to differentiate a circuit with analytical expectation.
 
-        This is called at graph runtime by TensorFlow. `differentiate_analytic`
-        should calculate the gradient of a batch of circuits and return it
-        formatted as indicated below. See
-        `tfq.differentiators.ForwardDifference` for an example.
+        This is called at graph runtime by TensorFlow.
+        Inheriting differentiators should override this function only if they
+        cannot define `get_intermediate_logic`.
 
         Args:
             programs: `tf.Tensor` of strings with shape [batch_size] containing
@@ -307,6 +307,36 @@ class Differentiator(metaclass=abc.ABCMeta):
             the gradient backpropageted to the `symbol_values` input of the op
             you are differentiating through.
         """
+        (batch_programs, batch_symbol_names, batch_symbol_values,
+         batch_pauli_sums,
+         batch_mapper) = self.get_intermediate_logic(programs, symbol_names,
+                                                     symbol_values, pauli_sums)
+
+        bps = tf.shape(batch_programs)
+        flat_programs = tf.reshape(batch_programs, [bps[0] * bps[1]])
+        flat_symbol_names = batch_symbol_names[0]
+        bsvs = tf.shape(batch_symbol_values)
+        flat_symbol_values = tf.reshape(batch_symbol_values,
+                                        [bsvs[0] * bsvs[1], bsvs[2]])
+        bpss = tf.shape(batch_pauli_sums)
+        flat_pauli_sums = tf.reshape(batch_pauli_sums,
+                                     [bpss[0] * bpss[1], bpss[2]])
+        flat_expectations = self.expectation_op(flat_programs,
+                                                flat_symbol_names,
+                                                flat_symbol_values,
+                                                flat_pauli_sums)
+
+        # Apply the mapper to build the partial derivates
+        batch_expectations = tf.reshape(flat_expectations,
+                                        tf.shape(batch_pauli_sums))
+        partials_raw = tf.map_fn(lambda x: tf.reduce_sum(x[0] * x[1], [2, 3]),
+                                 (batch_mapper, batch_expectations),
+                                 fn_output_signature=tf.float32)
+        # Change order to [n_symbols, n_programs, n_ops]
+        partials = tf.transpose(partials_raw, [2, 0, 1])
+
+        # now apply the chain rule
+        return tf.einsum('sco,co -> cs', partials, grad)
 
     @abc.abstractmethod
     def differentiate_sampled(self, programs, symbol_names, symbol_values,
