@@ -102,9 +102,10 @@ class RotosolveMinimizerTest(tf.test.TestCase, parameterized.TestCase):
         A non-linear function which cannot be optimized by rotosolve
         and can never con never converge
         """
-        func = lambda x: x**2
+        func = lambda x: x[0]**2 + x[1]**2
 
-        result = rotosolve_minimizer.minimize(func, [np.random.random(1)])
+        result = rotosolve_minimizer.minimize(func,
+                                              tf.random.uniform(shape=[2]))
 
         self.assertFalse(result['converged'])
         self.assertEqual(result['num_iterations'],
