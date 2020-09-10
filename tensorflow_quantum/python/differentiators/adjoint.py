@@ -89,7 +89,7 @@ class Adjoint(differentiator.Differentiator):
 
     @tf.function
     def get_intermediate_logic(self, programs, symbol_names, symbol_values,
-                               pauli_sums):
+                               pauli_sums, num_samples):
         """See base class description."""
         raise NotImplementedError(
             "Adjoint differentiator cannot run on a real QPU, "

@@ -41,7 +41,7 @@ class AdjointTest(tf.test.TestCase):
         with self.assertRaisesRegex(NotImplementedError,
                                     expected_regex="no accessible "
                                     "intermediate logic"):
-            _ = dif.get_intermediate_logic(None, None, None, None)
+            _ = dif.get_intermediate_logic(None, None, None, None, None)
 
 
 if __name__ == '__main__':
