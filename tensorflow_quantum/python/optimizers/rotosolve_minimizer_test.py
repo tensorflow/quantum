@@ -98,9 +98,9 @@ class RotosolveMinimizerTest(tf.test.TestCase, parameterized.TestCase):
                         50)  # 50 is the default max iteration
 
     def test_nonlinear_function_optimization(self):
-        """Optimize a non-linear function.
-        A non-linear function which cannot be optimized by rotosolve
-        and can never con never converge
+        """Test to optimize a non-linear function.
+        A non-linear function cannot be optimized by rotosolve,
+        therefore the optimization must never converge.
         """
         func = lambda x: x[0]**2 + x[1]**2
 
