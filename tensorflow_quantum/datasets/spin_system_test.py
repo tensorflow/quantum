@@ -23,7 +23,7 @@ from tensorflow_quantum.datasets.spin_system import SpinSystemInfo
 class TFIChainTest(tf.test.TestCase):
     """Testing tfi_chain."""
 
-    def __init__(self, **kwargs):
+    def __init__(self, method):
         self.supported_nspins = [4, 8, 12, 16]
         self.data_dict = {}
         self.qbs_dict = {}
@@ -35,7 +35,7 @@ class TFIChainTest(tf.test.TestCase):
             )
             self.qbs_dict[nspins] = qbs
         self.random_subset = np.random.permutation(list(range(81)))[:10]
-        super(TFIChainTest, self).__init__(**kwargs)
+        super(TFIChainTest, self).__init__(method)
 
     def test_errors(self):
         """Test that it errors on invalid arguments."""
@@ -113,7 +113,7 @@ class TFIChainTest(tf.test.TestCase):
 class XXZChainTest(tf.test.TestCase):
     """Testing tfi_chain."""
 
-    def __init__(self, **kwargs):
+    def __init__(self, method):
         self.supported_nspins = [4, 8, 12, 16]
         self.data_dict = {}
         self.qbs_dict = {}
@@ -125,7 +125,7 @@ class XXZChainTest(tf.test.TestCase):
             )
             self.qbs_dict[nspins] = qbs
         self.random_subset = np.random.permutation(list(range(76)))[:10]
-        super(XXZChainTest, self).__init__(**kwargs)
+        super(XXZChainTest, self).__init__(method)
 
     def test_errors(self):
         """Test that it errors on invalid arguments."""
