@@ -160,3 +160,6 @@ class RotosolveMinimizerTest(tf.test.TestCase, parameterized.TestCase):
 
         self.assertAlmostEqual(result['objective_value'], 0)
         self.assertTrue(result['converged'])
+
+if __name__ == "__main__":
+    tf.test.main()
