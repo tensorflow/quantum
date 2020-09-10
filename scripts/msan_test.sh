@@ -21,33 +21,16 @@ test_outputs=$(bazel test -c opt --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=0" \
   --notest_keep_going --test_output=errors \
   //tensorflow_quantum/core/src:all && \
   bazel test -c opt --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=0" \
-  --cxxopt="-msse2" --cxxopt="-msse3" --cxxopt="-msse4" \
-  --cxxopt="-fsanitize=address" --linkopt="-fsanitize=address" \
-  --cxxopt="-g" --cxxopt="-O0" \
-  --notest_keep_going --test_output=errors \
-  //tensorflow_quantum/core/qsim:all && \
-  bazel test -c opt --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=0" \
   --cxxopt="-mavx2" --cxxopt="-mavx" --cxxopt="-mfma" \
   --cxxopt="-fsanitize=address" --linkopt="-fsanitize=address" \
   --cxxopt="-g" --cxxopt="-O0" \
   --notest_keep_going --test_output=errors \
   //tensorflow_quantum/core/src:all && \
   bazel test -c opt --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=0" \
-  --cxxopt="-mavx2" --cxxopt="-mavx" --cxxopt="-mfma" \
   --cxxopt="-fsanitize=address" --linkopt="-fsanitize=address" \
   --cxxopt="-g" --cxxopt="-O0" \
   --notest_keep_going --test_output=errors \
-  //tensorflow_quantum/core/qsim:all && \
-  bazel test -c opt --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=0" \
-  --cxxopt="-fsanitize=address" --linkopt="-fsanitize=address" \
-  --cxxopt="-g" --cxxopt="-O0" \
-  --notest_keep_going --test_output=errors \
-  //tensorflow_quantum/core/src:all && \
-  bazel test -c opt --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=0" \
-  --cxxopt="-fsanitize=address" --linkopt="-fsanitize=address" \
-  --cxxopt="-g" --cxxopt="-O0" \
-  --notest_keep_going --test_output=errors \
-  //tensorflow_quantum/core/qsim:all)
+  //tensorflow_quantum/core/src:all)
 exit_code=$?
 if [ "$exit_code" == "0" ]; then
 	echo "Testing Complete!";
