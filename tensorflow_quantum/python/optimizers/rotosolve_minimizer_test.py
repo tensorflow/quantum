@@ -104,7 +104,7 @@ class RotosolveMinimizerTest(tf.test.TestCase, parameterized.TestCase):
         """
         func = lambda x: x**2
 
-        result = rotosolve_minimizer.minimize(func, np.random.random(1))
+        result = rotosolve_minimizer.minimize(func, [np.random.random(1)])
 
         self.assertFalse(result['converged'])
         self.assertEqual(result['num_iterations'],
