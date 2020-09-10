@@ -310,7 +310,7 @@ class LinearCombinationTest(tf.test.TestCase, parameterized.TestCase):
          test_batch_pauli_sums, test_batch_num_samples,
          test_batch_mapper) = test_linear_combination.get_intermediate_logic(
              test_programs, test_symbol_names, test_symbol_values,
-             test_pauli_sums)
+             test_pauli_sums, test_num_samples)
         self.assertAllEqual(expected_batch_programs, test_batch_programs)
         self.assertAllEqual(expected_batch_symbol_names,
                             test_batch_symbol_names)

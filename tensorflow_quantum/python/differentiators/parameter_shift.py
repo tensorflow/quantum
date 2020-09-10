@@ -68,7 +68,7 @@ class ParameterShift(differentiator.Differentiator):
 
     @tf.function
     def get_intermediate_logic(self, programs, symbol_names, symbol_values,
-                               pauli_sums):
+                               pauli_sums, num_samples):
         """See base class description for args and returns.
 
         The gradient calculations follows the following steps:

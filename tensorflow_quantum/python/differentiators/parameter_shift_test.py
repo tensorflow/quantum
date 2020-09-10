@@ -205,7 +205,7 @@ class ParameterShiftTest(tf.test.TestCase, parameterized.TestCase):
         # the tiled up input num_samples.
         expected_batch_num_samples = tf.tile(
             tf.expand_dims(test_num_samples,
-                           1), [1, len(symbols) * len(perturbations) + 1, 1])
+                           1), [1, max_param_gates * n_symbols * n_shifts, 1])
 
         # Note that we can also write the derivative equation as
         # df(x)/dx = (pi/2) * f(x + 1/2) - (pi/2) * f(x - 1/2)],
@@ -249,7 +249,7 @@ class ParameterShiftTest(tf.test.TestCase, parameterized.TestCase):
          test_batch_pauli_sums, test_batch_num_samples,
          test_batch_mapper) = test_parameter_shift.get_intermediate_logic(
              test_programs, test_symbol_names, test_symbol_values,
-             test_pauli_sums)
+             test_pauli_sums, test_num_samples)
         self.assertAllEqual(util.from_tensor(expected_batch_programs),
                             util.from_tensor(test_batch_programs))
         self.assertAllEqual(expected_batch_symbol_names,
