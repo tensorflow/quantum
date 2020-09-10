@@ -87,7 +87,7 @@ class Unitary(tf.keras.layers.Layer):
         them into the TensorFlow graph given a correct set of inputs.
         """
         super().__init__(**kwargs)
-        self.unitary_op = tfq_unitary_op.calculate_unitary
+        self.unitary_op = tfq_unitary_op.get_unitary_op()
 
     def call(self, inputs, *, symbol_names=None, symbol_values=None):
         """Keras call function.

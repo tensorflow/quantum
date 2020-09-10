@@ -16,6 +16,8 @@
 
 import multiprocessing
 
+import tensorflow as tf
+
 
 class QContext:
     """Class for storing quantum execution information."""
@@ -110,3 +112,6 @@ def get_quantum_concurrent_op_mode():
         are blocking graph level parallelism with one another.
     """
     return q_context()._get_quantum_concurrent_op_mode()
+
+
+_GLOBAL_OP_LOCK = tf.CriticalSection()
