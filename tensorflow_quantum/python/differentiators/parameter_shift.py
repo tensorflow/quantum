@@ -69,7 +69,25 @@ class ParameterShift(differentiator.Differentiator):
     @tf.function
     def get_intermediate_logic(self, programs, symbol_names, symbol_values,
                                pauli_sums):
-        """See base class description."""
+        """See base class description for args and returns.
+
+        The gradient calculations follows the following steps:
+
+        1. Compute the decomposition of the incoming circuits so that we have
+            their generator information (done using cirq in a tf.py_function)
+        2. Use formula (31) from paper inside of TensorFlow to calculate
+            gradients from all the decomposed circuits.
+        3. Sum up terms and reshape for the total gradient that is compatible
+            with TensorFlow.
+
+        **CAUTION**
+        Analytic gradient measurements based on this ParameterShift generally
+        run at least K(=2) times SLOW than the original circuit.
+        On top of it, since all parameters of gates are shifted individually,
+        the time complexity is linear in the number of parameterized gates L.
+        So, you will see O(KL) slower time & space complexity than the original
+        forward pass measurements.
+        """
         n_programs = tf.gather(tf.shape(programs), 0)
         n_symbols = tf.gather(tf.shape(symbol_names), 0)
         n_pauli_sums = tf.gather(tf.shape(pauli_sums), 1)
@@ -119,6 +137,10 @@ class ParameterShift(differentiator.Differentiator):
         batch_pauli_sums = tf.tile(expanded_pauli_sums,
                                    [1, n_symbols * n_param_gates * n_shifts, 1])
 
+        n_tile = tf.cast(tf.gather(tf.shape(batch_programs), 1), dtype=tf.int32)
+        batch_num_samples = tf.tile(tf.expand_dims(num_samples, 1),
+                                    tf.stack([1, n_tile, 1]))
+
         # Reshape the weights.
         shaped_weights = tf.reshape(
             weights, [n_programs, n_symbols, n_param_gates * n_shifts])
@@ -142,91 +164,4 @@ class ParameterShift(differentiator.Differentiator):
         batch_mapper = tf.transpose(padded_weights, [1, 0, 2, 3, 4])
 
         return (batch_programs, batch_symbol_names, batch_symbol_values,
-                batch_pauli_sums, batch_mapper)
-
-    @tf.function
-    def differentiate_sampled(self, programs, symbol_names, symbol_values,
-                              pauli_sums, num_samples, forward_pass_vals, grad):
-        """Calculate the gradient.
-
-        The gradient calculations follows the following steps:
-
-        1. Compute the decomposition of the incoming circuits so that we have
-            their generator information (done using cirq in a tf.py_function)
-        2. Use formula (31) from paper inside of TensorFlow to calculate
-            gradients from all the decomposed circuits.
-        3. Sum up terms and reshape for the total gradient that is compatible
-            with TensorFlow.
-
-        **CAUTION**
-        Analytic gradient measurements based on this ParameterShift generally
-        run at least K(=2) times SLOW than the original circuit.
-        On top of it, since all parameters of gates are shifted individually,
-        the time complexity is linear in the number of parameterized gates L.
-        So, you will see O(KL) slower time & space complexity than the original
-        forward pass measurements.
-
-        Args:
-            programs: `tf.Tensor` of strings with shape [batch_size] containing
-                the string representations of the circuits to be executed.
-            symbol_names: `tf.Tensor` of strings with shape [n_params], which
-                is used to specify the order in which the values in
-                `symbol_values` should be placed inside of the circuits in
-                `programs`.
-            symbol_values: `tf.Tensor` of real numbers with shape
-                [batch_size, n_params] specifying parameter values to resolve
-                into the circuits specified by programs, following the ordering
-                dictated by `symbol_names`.
-            pauli_sums: `tf.Tensor` of strings with shape [batch_size, n_ops]
-                containing the string representation of the operators that will
-                be used on all of the circuits in the expectation calculations.
-            num_samples: `tf.Tensor` of positiver integers indicating the number
-                of samples used per term to calculate the expectation value
-                in the forward pass.
-            forward_pass_vals: `tf.Tensor` of real numbers with shape
-                [batch_size, n_ops] containing the output of the forward pass
-                through the op you are differentiating.
-            grad: `tf.Tensor` of real numbers with shape [batch_size, n_ops]
-                representing the gradient backpropagated to the output of the
-                op you are differentiating through.
-
-        Returns:
-            Backward gradient values for each program & each pauli sum. It has
-            the shape of [batch_size, n_symbols].
-        """
-        (batch_programs, batch_symbol_names, batch_symbol_values,
-         batch_pauli_sums,
-         batch_mapper) = self.get_intermediate_logic(programs, symbol_names,
-                                                     symbol_values, pauli_sums)
-
-        n_tile = tf.cast(tf.gather(tf.shape(batch_programs), 1), dtype=tf.int32)
-        batch_num_samples = tf.tile(tf.expand_dims(num_samples, 1),
-                                    tf.stack([1, n_tile, 1]))
-
-        bps = tf.shape(batch_programs)
-        flat_programs = tf.reshape(batch_programs, [bps[0] * bps[1]])
-        flat_symbol_names = batch_symbol_names[0]
-        bsvs = tf.shape(batch_symbol_values)
-        flat_symbol_values = tf.reshape(batch_symbol_values,
-                                        [bsvs[0] * bsvs[1], bsvs[2]])
-        bpss = tf.shape(batch_pauli_sums)
-        flat_pauli_sums = tf.reshape(batch_pauli_sums,
-                                     [bpss[0] * bpss[1], bpss[2]])
-        flat_num_samples = tf.reshape(batch_num_samples,
-                                      tf.shape(flat_pauli_sums))
-        flat_expectations = self.expectation_op(flat_programs,
-                                                flat_symbol_names,
-                                                flat_symbol_values,
-                                                flat_pauli_sums,
-                                                flat_num_samples)
-
-        batch_expectations = tf.reshape(flat_expectations,
-                                        tf.shape(batch_pauli_sums))
-        partials_raw = tf.map_fn(lambda x: tf.reduce_sum(x[0] * x[1], [2, 3]),
-                                 (batch_mapper, batch_expectations),
-                                 fn_output_signature=tf.float32)
-        # Change order to [n_symbols, n_programs, n_ops]
-        partials = tf.transpose(partials_raw, [2, 0, 1])
-
-        # now apply the chain rule
-        return tf.einsum('sco,co -> cs', partials, grad)
+                batch_pauli_sums, batch_num_samples, batch_mapper)

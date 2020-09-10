@@ -103,7 +103,10 @@ class ParameterShiftTest(tf.test.TestCase, parameterized.TestCase):
             [cirq.X(q0), cirq.Z(q1)],
             [cirq.X(q1), cirq.Y(q0)],
         ])
-
+        test_num_samples = tf.constant([
+            [100, 200],
+            [300, 400]
+        ])
         test_parameter_shift = parameter_shift.ParameterShift()
 
         # For each program in the batch, we need to make two copies of that
@@ -198,6 +201,12 @@ class ParameterShiftTest(tf.test.TestCase, parameterized.TestCase):
         expected_batch_pauli_sums = tf.tile(tf.expand_dims(
             test_pauli_sums, 1), [1, max_param_gates * n_symbols * n_shifts, 1])
 
+        # For ParameterShift, the number of samples per measurement is
+        # the tiled up input num_samples.
+        expected_batch_num_samples = tf.tile(
+            tf.expand_dims(test_num_samples,
+                           1), [1, len(symbols) * len(perturbations) + 1, 1])
+
         # Note that we can also write the derivative equation as
         # df(x)/dx = (pi/2) * f(x + 1/2) - (pi/2) * f(x - 1/2)],
         # so +-pi/2 are the weights we need in the linear combination
@@ -237,7 +246,7 @@ class ParameterShiftTest(tf.test.TestCase, parameterized.TestCase):
              tf.expand_dims(op_mapper_1, 0)], 0)
 
         (test_batch_programs, test_batch_symbol_names, test_batch_symbol_values,
-         test_batch_pauli_sums,
+         test_batch_pauli_sums, test_batch_num_samples,
          test_batch_mapper) = test_parameter_shift.get_intermediate_logic(
              test_programs, test_symbol_names, test_symbol_values,
              test_pauli_sums)
@@ -249,6 +258,7 @@ class ParameterShiftTest(tf.test.TestCase, parameterized.TestCase):
                             test_batch_symbol_values,
                             atol=1e-6)
         self.assertAllEqual(expected_batch_pauli_sums, test_batch_pauli_sums)
+        self.assertAllEqual(expected_batch_num_samples, test_batch_num_samples)
         self.assertAllClose(expected_batch_mapper, test_batch_mapper, atol=1e-6)
 
 

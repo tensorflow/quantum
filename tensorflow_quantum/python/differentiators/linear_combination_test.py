@@ -211,7 +211,10 @@ class LinearCombinationTest(tf.test.TestCase, parameterized.TestCase):
             [cirq.X(q0), cirq.Z(q1)],
             [cirq.X(q1), cirq.Y(q0)],
         ])
-
+        test_num_samples = tf.constant([
+            [100, 200],
+            [300, 400]
+        ])
         weights = [1.0, -0.5]
         perturbations = [1.0, -1.5]
         test_linear_combination = linear_combination.LinearCombination(
@@ -268,6 +271,12 @@ class LinearCombinationTest(tf.test.TestCase, parameterized.TestCase):
             tf.expand_dims(test_pauli_sums,
                            1), [1, len(symbols) * len(perturbations) + 1, 1])
 
+        # For LinearCombination, the number of samples per measurement is
+        # the tiled up input num_samples.
+        expected_batch_num_samples = tf.tile(
+            tf.expand_dims(test_num_samples,
+                           1), [1, len(symbols) * len(perturbations) + 1, 1])
+
         # The map for LinearCombination is the same for every program `i` in the
         # input batch.  Since LinearCombination also uses the input `pauli_sums`
         # for its measurements, we have that `batch_mapper[i, j, k, m, n]` is
@@ -298,7 +307,7 @@ class LinearCombinationTest(tf.test.TestCase, parameterized.TestCase):
                                         [2, 1, 1, 1, 1])
 
         (test_batch_programs, test_batch_symbol_names, test_batch_symbol_values,
-         test_batch_pauli_sums,
+         test_batch_pauli_sums, test_batch_num_samples,
          test_batch_mapper) = test_linear_combination.get_intermediate_logic(
              test_programs, test_symbol_names, test_symbol_values,
              test_pauli_sums)
@@ -309,6 +318,7 @@ class LinearCombinationTest(tf.test.TestCase, parameterized.TestCase):
                             test_batch_symbol_values,
                             atol=1e-6)
         self.assertAllEqual(expected_batch_pauli_sums, test_batch_pauli_sums)
+        self.assertAllEqual(expected_batch_num_samples, test_batch_num_samples)
         self.assertAllClose(expected_batch_mapper, test_batch_mapper, atol=1e-6)
 
 
