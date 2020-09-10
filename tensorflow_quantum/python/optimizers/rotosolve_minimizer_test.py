@@ -91,10 +91,10 @@ class RotosolveMinimizerTest(tf.test.TestCase, parameterized.TestCase):
 
         result = rotosolve_minimizer.minimize(func, np.random.random(n))
 
-        self.assertAlmostEqual(func(result['position']), min_value)
-        self.assertAlmostEqual(result['objective_value'], min_value)
-        self.assertTrue(result['converged'])
-        self.assertLess(result['num_iterations'],
+        self.assertAlmostEqual(func(result.position), min_value)
+        self.assertAlmostEqual(result.objective_value, min_value)
+        self.assertTrue(result.converged)
+        self.assertLess(result.num_iterations,
                         50)  # 50 is the default max iteration
 
     def test_nonlinear_function_optimization(self):
@@ -107,8 +107,8 @@ class RotosolveMinimizerTest(tf.test.TestCase, parameterized.TestCase):
         result = rotosolve_minimizer.minimize(func,
                                               tf.random.uniform(shape=[2]))
 
-        self.assertFalse(result['converged'])
-        self.assertEqual(result['num_iterations'],
+        self.assertFalse(result.converged)
+        self.assertEqual(result.num_iterations,
                          50)  # 50 is the default max iteration
 
     def test_keras_model_optimization(self):
@@ -121,7 +121,7 @@ class RotosolveMinimizerTest(tf.test.TestCase, parameterized.TestCase):
             [1, 1],
         ], dtype=float)
 
-        y = np.asarray([[-1], [1], [1], [-1]], dtype=float)
+        y = np.asarray([[-1], [1], [1], [-1]], dtype=np.float32)
 
         def convert_to_circuit(input_data):
             """Encode into quantum datapoint."""
@@ -155,12 +155,12 @@ class RotosolveMinimizerTest(tf.test.TestCase, parameterized.TestCase):
 
         # Initial guess of the parameter from random number
         result = rotosolve_minimizer.minimize(
-            loss_function_with_model_parameters(model, tf.keras.losses.hinge,
+            loss_function_with_model_parameters(model, tf.keras.losses.Hinge(),
                                                 x_circ, y),
-            np.random.random(2) * 2 * np.pi)
+            tf.random.uniform(shape=[2]) * 2 * np.pi)
 
-        self.assertAlmostEqual(result['objective_value'], 0)
-        self.assertTrue(result['converged'])
+        self.assertAlmostEqual(result.objective_value, 0)
+        self.assertTrue(result.converged)
 
 
 if __name__ == "__main__":
