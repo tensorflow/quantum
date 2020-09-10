@@ -103,10 +103,7 @@ class ParameterShiftTest(tf.test.TestCase, parameterized.TestCase):
             [cirq.X(q0), cirq.Z(q1)],
             [cirq.X(q1), cirq.Y(q0)],
         ])
-        test_num_samples = tf.constant([
-            [100, 200],
-            [300, 400]
-        ])
+        test_num_samples = tf.constant([[100, 200], [300, 400]])
         test_parameter_shift = parameter_shift.ParameterShift()
 
         # For each program in the batch, we need to make two copies of that
@@ -204,8 +201,8 @@ class ParameterShiftTest(tf.test.TestCase, parameterized.TestCase):
         # For ParameterShift, the number of samples per measurement is
         # the tiled up input num_samples.
         expected_batch_num_samples = tf.tile(
-            tf.expand_dims(test_num_samples,
-                           1), [1, max_param_gates * n_symbols * n_shifts, 1])
+            tf.expand_dims(test_num_samples, 1),
+            [1, max_param_gates * n_symbols * n_shifts, 1])
 
         # Note that we can also write the derivative equation as
         # df(x)/dx = (pi/2) * f(x + 1/2) - (pi/2) * f(x - 1/2)],

@@ -211,10 +211,7 @@ class LinearCombinationTest(tf.test.TestCase, parameterized.TestCase):
             [cirq.X(q0), cirq.Z(q1)],
             [cirq.X(q1), cirq.Y(q0)],
         ])
-        test_num_samples = tf.constant([
-            [100, 200],
-            [300, 400]
-        ])
+        test_num_samples = tf.constant([[100, 200], [300, 400]])
         weights = [1.0, -0.5]
         perturbations = [1.0, -1.5]
         test_linear_combination = linear_combination.LinearCombination(
@@ -274,8 +271,8 @@ class LinearCombinationTest(tf.test.TestCase, parameterized.TestCase):
         # For LinearCombination, the number of samples per measurement is
         # the tiled up input num_samples.
         expected_batch_num_samples = tf.tile(
-            tf.expand_dims(test_num_samples,
-                           1), [1, len(symbols) * len(perturbations) + 1, 1])
+            tf.expand_dims(test_num_samples, 1),
+            [1, len(symbols) * len(perturbations) + 1, 1])
 
         # The map for LinearCombination is the same for every program `i` in the
         # input batch.  Since LinearCombination also uses the input `pauli_sums`

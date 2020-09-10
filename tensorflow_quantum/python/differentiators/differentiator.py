@@ -312,10 +312,8 @@ class Differentiator(metaclass=abc.ABCMeta):
             the gradient backpropageted to the `symbol_values` input of the op
             you are differentiating through.
         """
-        (
-            batch_programs, batch_symbol_names, batch_symbol_values,
-            batch_pauli_sums, _, batch_mapper
-        ) = self.get_intermediate_logic(
+        (batch_programs, batch_symbol_names, batch_symbol_values,
+         batch_pauli_sums, _, batch_mapper) = self.get_intermediate_logic(
              programs, symbol_names, symbol_values, pauli_sums,
              tf.ones(tf.shape(pauli_sums), dtype=tf.int32))
 
@@ -383,11 +381,11 @@ class Differentiator(metaclass=abc.ABCMeta):
             the gradient backpropageted to the `symbol_values` input of the op
             you are differentiating through.
         """
-        (
-            batch_programs, batch_symbol_names, batch_symbol_values,
-            batch_pauli_sums, batch_num_samples, batch_mapper
-        ) = self.get_intermediate_logic(
-             programs, symbol_names, symbol_values, pauli_sums, num_samples)
+        (batch_programs, batch_symbol_names, batch_symbol_values,
+         batch_pauli_sums, batch_num_samples,
+         batch_mapper) = self.get_intermediate_logic(programs, symbol_names,
+                                                     symbol_values, pauli_sums,
+                                                     num_samples)
 
         bps = tf.shape(batch_programs)
         flat_programs = tf.reshape(batch_programs, [bps[0] * bps[1]])
