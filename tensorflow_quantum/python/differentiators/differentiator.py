@@ -191,9 +191,9 @@ class Differentiator(metaclass=abc.ABCMeta):
         procedure is in contrast to classical automatic differentiation: in
         quantum computing, we must treat the execution of the circuit as a
         black box.  Thus black-box differentiators must be used instead.
-
-        This function is intended to encapsulate the decomposition and recombination
-        steps, so that the same logic can be used for both analytic and sample
+        This function is intended to encapsulate the decomposition and
+        recombination steps required of any such black-box differentiator.
+        This allows the same logic to be used for both analytic and sample
         based expectations.  Additionally, centralizing this logic allows
         advanced users to access the decompositions directly.
 
@@ -212,7 +212,7 @@ class Differentiator(metaclass=abc.ABCMeta):
         executor of their choice (for example, see the docs for
         `tfq.layers.Expectation`, which accepts a `differentiator` initializer).
         This function is intended for advanced users who need more flexibility
-        than the standard workflow.
+        than the standard workflow allows.
 
         Args:
             programs: `tf.Tensor` of strings with shape [batch_size] containing
