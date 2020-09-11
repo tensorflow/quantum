@@ -285,7 +285,7 @@ class Differentiator(metaclass=abc.ABCMeta):
                         |batch_programs[i][m](batch_symbol_values[i][m])>)
         """
 
-    @abc.abstracmethod
+    @abc.abstractmethod
     def differentiate_analytic(self, programs, symbol_names, symbol_values,
                                pauli_sums, forward_pass_vals, grad):
         """Specify how to differentiate a circuit with analytical expectation.
