@@ -182,13 +182,17 @@ class Differentiator(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def get_intermediate_logic(self, programs, symbol_names, symbol_values,
                                pauli_sums, num_samples):
-        """Returns components that can be used to build the gradient.
+        """Return tensors and metadata necessary for running the differentiator.
 
         In order to compute gradients on quantum computers, one must
         decompose gradient calculations into circuits to run and measurements
         to take.  Then, some linear combination of the measurement results
-        can be used to recover estimates of circuit parameter derivatives. This
-        function is intended to encapsulate the decomposition and recombination
+        is used to recover estimates of circuit parameter derivatives. This
+        procedure is in contrast to classical automatic differentiation: in
+        quantum computing, we must treat the execution of the circuit as a
+        black box.  Thus black-box differentiators must be used instead.
+
+        This function is intended to encapsulate the decomposition and recombination
         steps, so that the same logic can be used for both analytic and sample
         based expectations.  Additionally, centralizing this logic allows
         advanced users to access the decompositions directly.
@@ -197,14 +201,18 @@ class Differentiator(metaclass=abc.ABCMeta):
         into their derivative components: it is assumed that each circuit in
         the input batch will have the same gradient procedure applied to it.
         Thus the outer dimension of all returned components is the same as the
-        input `programs` batch dimension.
+        input `programs` batch dimension. For each entry in the batch dimension
+        of the returned values, inheriting differentiators are free to generate
+        new circuits, symbols, and measurement ops as needed. To combine these
+        outputs into the required derivatives, the last return value is a map
+        specifying the linear combination of batched expectation values to use
+        to calculate the derivative of each input parameter.
 
-        For each entry in the batch dimension of the returned values,
-        inheriting differentiators are free to generate new circuits, symbols,
-        and measurement ops as needed. To combine these outputs into the
-        required derivatives, the last return value is a map specifying the
-        linear combination of batched expectation values to use to calculate the
-        derivative of each input parameter.
+        NOTE: most users should simply hand a differentiator to the circuit
+        executor of their choice (for example, see the docs for
+        `tfq.layers.Expectation`, which accepts a `differentiator` initializer).
+        This function is intended for advanced users who need more flexibility
+        than the standard workflow.
 
         Args:
             programs: `tf.Tensor` of strings with shape [batch_size] containing
@@ -222,7 +230,7 @@ class Differentiator(metaclass=abc.ABCMeta):
                 be used on all of the circuits in the expectation calculations.
             num_samples: `tf.Tensor` of positive integers representing the
                 number of samples per term in each term of pauli_sums used
-                during the forward pass.
+                during the forward pass.  Has shape [batch_size, n_ops].
 
         Returns:
             batch_programs: 2-D `tf.Tensor` of strings representing circuits to
