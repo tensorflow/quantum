@@ -109,7 +109,7 @@ def minimize(expectation_value_function,
     [arXiv:1903.12166](https://arxiv.org/abs/1903.12166), Ken M. Nakanishi.
     [arXiv:1905.09692](https://arxiv.org/abs/1905.09692), Mateusz Ostaszewski.
 
-    ### Usage:
+    Usage:
 
     Here is an example of optimize a function which consists summation of
     a few sinusoids.
