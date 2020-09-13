@@ -16,7 +16,7 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
-import math
+import numpy as np
 import collections
 import tensorflow as tf
 
@@ -114,25 +114,18 @@ def minimize(expectation_value_function,
 
     ### Usage:
 
-    The following example demonstrates the Rotosolve optimizer attempting
-     to find the minimum for two qubit ansatz expectation value.
-
     Here is an example of optimize a function which consists summation of
     a few sinusoids.
 
-    >>> import tensorflow_quantum as tfq
-    >>> import numpy as np
-    >>> import tensorflow as tf
     >>> n = 10  # Number of sinusoids
     >>> coefficient = tf.random.uniform(shape=[n])
     >>> min_value = -tf.math.reduce_sum(tf.abs(coefficient))
     >>> func = lambda x:tf.math.reduce_sum(tf.sin(x) * coefficient)
     >>> # Optimize the function with rotosolve, start with random parameters
-    >>> result = tfq.optimizers.rotosolve_minimizer.minimize( \
-    ...              func, np.random.random(n))
-    >>> print(result.converged)
+    >>> result = tfq.optimizers.rotosolve_minimize(func, np.random.random(n))
+    >>> result.converged
     tf.Tensor(True, shape=(), dtype=bool)
-    >>> print(result.objective_value)
+    >>> result.objective_value
     tf.Tensor(-4.7045116, shape=(), dtype=float32)
 
     Args:
@@ -183,7 +176,7 @@ def minimize(expectation_value_function,
                 states: A list which the first element is the new state
             """
             delta_shift = tf.scatter_nd([[state.solve_param_i]],
-                                        [tf.constant(math.pi / 2, dtype=dtype)],
+                                        [tf.constant(np.pi / 2, dtype=dtype)],
                                         prefer_static_shape(state.position))
 
             # Evaluate three different point for curve fitting
@@ -193,7 +186,7 @@ def minimize(expectation_value_function,
                 expectation_value_function(state.position + delta_shift)
 
             # Use the analytical solution to find the optimized position
-            delta_update = -math.pi / 2 - \
+            delta_update = -np.pi / 2 - \
                 tf.math.atan2(2 * v_n - v_l - v_r, v_r - v_l)
 
             delta_update_tensor = tf.scatter_nd(
@@ -203,7 +196,7 @@ def minimize(expectation_value_function,
             state.solve_param_i.assign_add(1)
             state.position.assign(
                 tf.math.floormod(state.position + delta_update_tensor,
-                                 math.pi * 2))
+                                 np.pi * 2))
 
             state.objective_value_previous_iteration.assign(
                 state.objective_value)
