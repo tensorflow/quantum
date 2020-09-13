@@ -179,7 +179,6 @@ cc_binary(
 
         "//tensorflow_quantum/core/proto:pauli_sum_cc_proto",
         "//tensorflow_quantum/core/proto:program_cc_proto",
-        "//tensorflow_quantum/core/qsim",
         "//tensorflow_quantum/core/src:program_resolution",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/container:inlined_vector",
