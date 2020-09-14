@@ -64,6 +64,9 @@ def test_imports():
     _ = tfq.datasets.tfi_chain
     _ = tfq.datasets.xxz_chain
 
+    #Optimizers
+    _ = tfq.optimizers.rotosolve_minimize
+
 
 if __name__ == "__main__":
     test_imports()
