@@ -63,6 +63,9 @@ def test_imports():
     _ = tfq.datasets.excited_cluster_states
     _ = tfq.datasets.tfi_chain
 
+    #Optimizers
+    _ = tfq.optimizers.rotosolve_minimize
+
 
 if __name__ == "__main__":
     test_imports()
