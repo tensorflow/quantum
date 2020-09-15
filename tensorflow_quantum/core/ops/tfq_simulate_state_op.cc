@@ -109,12 +109,6 @@ class TfqSimulateStateOp : public tensorflow::OpKernel {
       ComputeSmall(num_qubits, max_num_qubits, fused_circuits, context,
                    &output_tensor);
     }
-
-    programs.clear();
-    num_qubits.clear();
-    maps.clear();
-    qsim_circuits.clear();
-    fused_circuits.clear();
   }
 
  private:
@@ -170,7 +164,6 @@ class TfqSimulateStateOp : public tensorflow::OpKernel {
       context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
           uint64_t(1) << max_num_qubits, num_cycles_copy, copy_f);
     }
-    sv.release();
   }
 
   void ComputeSmall(
@@ -208,7 +201,6 @@ class TfqSimulateStateOp : public tensorflow::OpKernel {
           (*output_tensor)(i, j) = std::complex<float>(-2, 0);
         }
       }
-      sv.release();
     };
 
     const int64_t num_cycles =

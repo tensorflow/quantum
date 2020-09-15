@@ -153,16 +153,6 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
                    partial_fused_circuits, pauli_sums, gradient_gates,
                    downstream_grads, context, &output_tensor);
     }
-    // just to be on the safe side.
-    qsim_circuits.clear();
-    full_fuse.clear();
-    gate_meta.clear();
-    gradient_gates.clear();
-    num_qubits.clear();
-    maps.clear();
-    pauli_sums.clear();
-    programs.clear();
-    downstream_grads.clear();
   }
 
  private:
@@ -255,9 +245,6 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
               scratch);
         }
       }
-      sv.release();
-      scratch.release();
-      scratch2.release();
     };
 
     const int64_t num_cycles =
@@ -354,9 +341,6 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
                         scratch);
       }
     }
-    sv.release();
-    scratch.release();
-    scratch2.release();
   }
 };
 
