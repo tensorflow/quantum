@@ -360,12 +360,12 @@ TEST(ProgramResolutionTest, ResolveQubitIdsPrograms) {
     }
   )";
 
-  Program program, program_copy;
+  Program program, program_copy, empty_program;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(text, &program));
   ASSERT_TRUE(
       google::protobuf::TextFormat::ParseFromString(text, &program_copy));
 
-  unsigned int num_qubits, num_qubits_copy;
+  unsigned int num_qubits, num_qubits_empty;
   std::vector<Program> vec({program_copy});
   EXPECT_TRUE(ResolveQubitIds(&program, &num_qubits, &vec).ok());
 
@@ -410,6 +410,11 @@ TEST(ProgramResolutionTest, ResolveQubitIdsPrograms) {
       tensorflow::Status(
           tensorflow::error::INVALID_ARGUMENT,
           "A reference circuit contains qubits not found in paired circuit."));
+
+  // Ensure empty case is consistent.
+  std::vector<Program> vec4;
+  EXPECT_TRUE(ResolveQubitIds(&empty_program, &num_qubits_empty, &vec4).ok());
+  EXPECT_EQ(num_qubits_empty, 0);
 }
 
 TEST(ProgramResolutionTest, ResolveSymbolsInvalidArg) {
