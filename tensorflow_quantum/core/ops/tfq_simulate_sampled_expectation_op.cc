@@ -130,15 +130,6 @@ class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
       ComputeSmall(num_qubits, max_num_qubits, fused_circuits, pauli_sums,
                    num_samples, context, &output_tensor);
     }
-
-    // just to be on the safe side.
-    qsim_circuits.clear();
-    fused_circuits.clear();
-    num_qubits.clear();
-    maps.clear();
-    pauli_sums.clear();
-    num_samples.clear();
-    programs.clear();
   }
 
  private:
@@ -193,8 +184,6 @@ class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
         (*output_tensor)(i, j) = exp_v;
       }
     }
-    sv.release();
-    scratch.release();
   }
 
   void ComputeSmall(
@@ -258,8 +247,6 @@ class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
         (*output_tensor)(cur_batch_index, cur_op_index) = exp_v;
         old_batch_index = cur_batch_index;
       }
-      sv.release();
-      scratch.release();
     };
 
     const int64_t num_cycles =
