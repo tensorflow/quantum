@@ -149,7 +149,6 @@ class TfqCalculateUnitaryOp : public tensorflow::OpKernel {
           (uint64_t(1) << max_num_qubits) * (uint64_t(1) << max_num_qubits),
           num_cycles_copy, copy_f);
     }
-    u.release();
   }
 };
 

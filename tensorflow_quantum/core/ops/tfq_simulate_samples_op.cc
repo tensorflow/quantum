@@ -114,12 +114,6 @@ class TfqSimulateSamplesOp : public tensorflow::OpKernel {
       ComputeSmall(num_qubits, max_num_qubits, num_samples, fused_circuits,
                    context, &output_tensor);
     }
-
-    programs.clear();
-    num_qubits.clear();
-    maps.clear();
-    qsim_circuits.clear();
-    fused_circuits.clear();
   }
 
  private:
@@ -175,7 +169,6 @@ class TfqSimulateSamplesOp : public tensorflow::OpKernel {
         }
       }
     }
-    sv.release();
   }
 
   void ComputeSmall(
@@ -225,7 +218,6 @@ class TfqSimulateSamplesOp : public tensorflow::OpKernel {
           }
         }
       }
-      sv.release();
     };
 
     const int64_t num_cycles =
