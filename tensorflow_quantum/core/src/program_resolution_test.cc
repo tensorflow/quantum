@@ -304,6 +304,114 @@ TEST(ProgramResolutionTest, ResolveQubitIds) {
   EXPECT_EQ(num_qubits_alphabet, 4);
 }
 
+TEST(ProgramResolutionTest, ResolveQubitIdsPrograms) {
+  const std::string text = R"(
+    circuit {
+      moments {
+        operations {
+          qubits {
+            id: "0_0"
+          }
+          qubits {
+            id: "1_0"
+          }
+        }
+      }
+      moments {
+        operations {
+          qubits {
+            id: "0_0"
+          }
+          qubits {
+            id: "0_1"
+          }
+        }
+      }
+    }
+  )";
+
+  const std::string text_alphabet = R"(
+    circuit {
+      moments {
+        operations {
+          qubits {
+            id: "0_0"
+          }
+          qubits {
+            id: "1_0"
+          }
+        }
+      }
+      moments {
+        operations {
+          qubits {
+            id: "0_1"
+          }
+          qubits {
+            id: "0_3"
+          }
+        }
+      }
+    }
+  )";
+
+  const std::string text_empty = R"(
+    circuit {
+    }
+  )";
+
+  Program program, program_copy;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(text, &program));
+  ASSERT_TRUE(
+      google::protobuf::TextFormat::ParseFromString(text, &program_copy));
+
+  unsigned int num_qubits, num_qubits_copy;
+  std::vector<Program> vec({program_copy});
+  EXPECT_TRUE(ResolveQubitIds(&program, &num_qubits, &vec).ok());
+
+  // Test case where circuits are aligned.
+  EXPECT_EQ(program.circuit().moments(0).operations(0).qubits(0).id(), "0");
+  EXPECT_EQ(program.circuit().moments(0).operations(0).qubits(1).id(), "2");
+  EXPECT_EQ(program.circuit().moments(1).operations(0).qubits(0).id(), "0");
+  EXPECT_EQ(program.circuit().moments(1).operations(0).qubits(1).id(), "1");
+
+  EXPECT_EQ(vec[0].circuit().moments(0).operations(0).qubits(0).id(), "0");
+  EXPECT_EQ(vec[0].circuit().moments(0).operations(0).qubits(1).id(), "2");
+  EXPECT_EQ(vec[0].circuit().moments(1).operations(0).qubits(0).id(), "0");
+  EXPECT_EQ(vec[0].circuit().moments(1).operations(0).qubits(1).id(), "1");
+
+  // Test case where source circuit is smaller than paired circuit:
+  program.Clear();
+  program_copy.Clear();
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(text, &program));
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(text_alphabet,
+                                                            &program_copy));
+
+  std::vector<Program> vec2({program_copy});
+
+  EXPECT_EQ(
+      ResolveQubitIds(&program, &num_qubits, &vec2),
+      tensorflow::Status(
+          tensorflow::error::INVALID_ARGUMENT,
+          "A paired circuit contains qubits not found in reference circuit."));
+
+  // Test case where paired circuit is smaller than source circuit:
+  program.Clear();
+  program_copy.Clear();
+  ASSERT_TRUE(
+      google::protobuf::TextFormat::ParseFromString(text_alphabet, &program));
+  ASSERT_TRUE(
+      google::protobuf::TextFormat::ParseFromString(text, &program_copy));
+
+  std::vector<Program> vec3({program_copy});
+
+  EXPECT_EQ(
+      ResolveQubitIds(&program, &num_qubits, &vec3),
+      tensorflow::Status(
+          tensorflow::error::INVALID_ARGUMENT,
+          "A reference circuit contains qubits not found in paired circuit."));
+}
+
 TEST(ProgramResolutionTest, ResolveSymbolsInvalidArg) {
   const std::string text = R"(
     circuit {
