@@ -24,7 +24,6 @@ from tensorflow_quantum.core.serialize import serializer
 from tensorflow_quantum.python import util
 
 MOMENT_DEPTH = 25
-
 WF_SIM = cirq.sim.sparse_simulator.Simulator()
 DM_SIM = cirq.sim.density_matrix_simulator.DensityMatrixSimulator()
 
@@ -278,7 +277,7 @@ class CirqSimulateStateTest(tf.test.TestCase, parameterized.TestCase):
         tfq_results = op(util.convert_to_tensor(circuit_batch), [],
                          [[]] * len(circuit_batch))
 
-        # dont use batch_util here to enforce consistant padding everywhere
+        # don't use batch_util here to enforce consistent padding everywhere
         # without extra tests
         manual_padded_results = []
         for circuit in circuit_batch:
@@ -327,8 +326,7 @@ class CirqSamplesTest(tf.test.TestCase, parameterized.TestCase):
 
     def test_get_cirq_sampling_op(self):
         """Input check the wrapper for the cirq sampling op."""
-        with self.assertRaisesRegex(TypeError,
-                                    "simulator must inherit cirq.Sampler."):
+        with self.assertRaisesRegex(TypeError, "must inherit cirq.Sampler."):
             cirq_ops._get_cirq_samples("junk")
         cirq_ops._get_cirq_samples()
         cirq_ops._get_cirq_samples(cirq.sim.sparse_simulator.Simulator())
@@ -422,6 +420,45 @@ class CirqSamplesTest(tf.test.TestCase, parameterized.TestCase):
         test_empty_circuit = serializer.serialize_circuit(
             cirq.Circuit()).SerializeToString()
         _ = test_op([test_empty_circuit], [], [[]], [10])
+
+    def test_get_cirq_samples_general(self):
+        """Tests that a general cirq.Sampler is compatible with sampling."""
+
+        class DummySampler(cirq.Sampler):
+            """Mock general cirq.Sampler."""
+
+            def run_sweep(self, program, params, repetitions):
+                """Returns all ones in the correct sample shape."""
+                return [
+                    cirq.TrialResult.from_single_parameter_set(
+                        params=param,
+                        measurements={
+                            'tfq':
+                                np.array([[1] * len(program.all_qubits())] *
+                                         repetitions,
+                                         dtype=np.int32),
+                        }) for param in cirq.to_resolvers(params)
+                ]
+
+        all_n_qubits = [1, 2, 3, 4, 5]
+        max_n_qubits = max(all_n_qubits)
+        n_samples = 2
+        this_sampler = DummySampler()
+        this_op = cirq_ops._get_cirq_samples(this_sampler)
+        circuits = []
+        for n_qubits in all_n_qubits:
+            circuits.append(
+                cirq.Circuit(
+                    *cirq.X.on_each(*cirq.GridQubit.rect(1, n_qubits))))
+        test_results = this_op(util.convert_to_tensor(circuits), [],
+                               [[]] * len(circuits), [n_samples]).numpy()
+
+        expected_results = []
+        for n_qubits in all_n_qubits:
+            expected_results += [
+                [[-2] * (max_n_qubits - n_qubits) + [1] * n_qubits] * n_samples
+            ]
+        self.assertAllClose(expected_results, test_results)
 
 
 if __name__ == "__main__":

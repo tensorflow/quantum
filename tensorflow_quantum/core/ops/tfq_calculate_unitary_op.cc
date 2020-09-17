@@ -15,6 +15,10 @@ limitations under the License.
 
 #include <string>
 
+#include "../qsim/lib/circuit.h"
+#include "../qsim/lib/gate_appl.h"
+#include "../qsim/lib/gates_cirq.h"
+#include "../qsim/lib/umux.h"
 #include "cirq/google/api/v2/program.pb.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/shape_inference.h"
@@ -23,43 +27,60 @@ limitations under the License.
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow/core/lib/core/threadpool.h"
 #include "tensorflow_quantum/core/ops/parse_context.h"
-#include "tensorflow_quantum/core/ops/tfq_simulate_utils.h"
-#include "tensorflow_quantum/core/qsim/mux.h"
-#include "tensorflow_quantum/core/qsim/unitary_space.h"
-#include "tensorflow_quantum/core/src/circuit_parser.h"
-#include "tensorflow_quantum/core/src/program_resolution.h"
+#include "tensorflow_quantum/core/src/circuit_parser_qsim.h"
+#include "tensorflow_quantum/core/src/util_qsim.h"
 
 namespace tfq {
 
 using ::cirq::google::api::v2::Program;
 using ::tensorflow::Status;
-using ::tfq::Circuit;
-using ::tfq::CircuitFromProgram;
-using ::tfq::qsim::GetUnitarySpace;
-using ::tfq::qsim::UnitarySpace;
 
-class TfqSimulateStateOp : public tensorflow::OpKernel {
+typedef qsim::Cirq::GateCirq<float> QsimGate;
+typedef qsim::Circuit<QsimGate> QsimCircuit;
+
+class TfqCalculateUnitaryOp : public tensorflow::OpKernel {
  public:
-  explicit TfqSimulateStateOp(tensorflow::OpKernelConstruction *context)
+  explicit TfqCalculateUnitaryOp(tensorflow::OpKernelConstruction *context)
       : OpKernel(context) {}
 
   void Compute(tensorflow::OpKernelContext *context) override {
     // TODO (mbbrough): add more dimension checks for other inputs here.
     DCHECK_EQ(3, context->num_inputs());
 
+    // Parse to Program Proto and num_qubits.
     std::vector<Program> programs;
     std::vector<int> num_qubits;
     OP_REQUIRES_OK(context,
                    GetProgramsAndNumQubits(context, &programs, &num_qubits));
+
+    // Parse symbol maps for parameter resolution in the circuits.
     std::vector<SymbolMap> maps;
     OP_REQUIRES_OK(context, GetSymbolMaps(context, &maps));
-
     OP_REQUIRES(
         context, maps.size() == programs.size(),
         tensorflow::errors::InvalidArgument(absl::StrCat(
             "Number of circuits and values do not match. Got ", programs.size(),
             " circuits and ", maps.size(), " values.")));
 
+    // Construct qsim circuits.
+    std::vector<QsimCircuit> qsim_circuits(programs.size(), QsimCircuit());
+    std::vector<std::vector<qsim::GateFused<QsimGate>>> fused_circuits(
+        programs.size(), std::vector<qsim::GateFused<QsimGate>>({}));
+
+    auto construct_f = [&](int start, int end) {
+      for (int i = start; i < end; i++) {
+        OP_REQUIRES_OK(context, QsimCircuitFromProgram(
+                                    programs[i], maps[i], num_qubits[i],
+                                    &qsim_circuits[i], &fused_circuits[i]));
+      }
+    };
+
+    const int num_cycles = 1000;
+    context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
+        programs.size(), num_cycles, construct_f);
+
+    // Find largest circuit for tensor size padding and allocate
+    // the output tensor.
     int max_num_qubits = 0;
     for (const int num : num_qubits) {
       max_num_qubits = std::max(max_num_qubits, num);
@@ -77,71 +98,63 @@ class TfqSimulateStateOp : public tensorflow::OpKernel {
     OP_REQUIRES_OK(context, context->allocate_output(0, output_shape, &output));
     auto output_tensor = output->tensor<std::complex<float>, 3>();
 
-    auto DoWork = [&](int start, int end) {
-      std::unique_ptr<UnitarySpace> state = GetUnitarySpace(1, 1);
-      int old_num_qubits = -1;
-      auto pad = std::complex<float>(-2, 0);
-      for (int i = start; i < end; i++) {
-        Program program = programs[i];
-        const int num = num_qubits[i];
-        OP_REQUIRES_OK(context, ResolveSymbols(maps[i], &program));
+    // Instantiate qsim objects.
+    const auto tfq_for = tfq::QsimFor(context);
+    using UCalculator = qsim::unitary::UnitaryCalculator<const tfq::QsimFor &>;
+    using UnitarySpace = UCalculator::UnitarySpace;
+    using Unitary = UnitarySpace::Unitary;
 
-        // QSim work below
-        Circuit circuit;
-        OP_REQUIRES_OK(context, CircuitFromProgram(program, num, &circuit));
+    // Begin simulation.
+    int largest_nq = 1;
+    Unitary u = UnitarySpace(largest_nq, tfq_for).CreateUnitary();
 
-        // TODO(mbbrough): Update this allocation hack so that a StateSpace
-        //  object can grow it's memory dynamically to larger and larger size
-        //  without ever having to call free (until the very end). This is
-        //  tricky to implement because right now certain statespaces can't
-        //  simulate all states and we use StateSpaceSlow for smaller circuits.
-        if (num != old_num_qubits) {
-          state = GetUnitarySpace(num, 1);
-          state->CreateUnitary();
-        }
-        state->SetIdentity();
-        OP_REQUIRES_OK(context, state->Update(circuit));
-        uint64_t state_size = uint64_t(1) << state->GetNumQubits();
-        for (uint64_t j = 0; j < state_size; j++) {
-          for (uint64_t k = 0; k < state_size; k++) {
-            // Cast to size_t to keep windows compiler happy.
-            // We run less of a risk of overflowing size_t since
-            // this is a unitary and not a state.
-            output_tensor(static_cast<ptrdiff_t>(i), static_cast<ptrdiff_t>(j),
-                          static_cast<ptrdiff_t>(k)) = state->GetEntry(j, k);
-          }
-        }
-        // -2 padding for lower portion.
-        for (uint64_t j = state_size; j < (uint64_t(1) << max_num_qubits);
-             j++) {
-          for (uint64_t k = 0; k < (uint64_t(1) << max_num_qubits); k++) {
-            output_tensor(static_cast<ptrdiff_t>(i), static_cast<ptrdiff_t>(j),
-                          static_cast<ptrdiff_t>(k)) = pad;
-          }
-        }
-        // -2 padding for right portion.
-        for (uint64_t j = 0; j < state_size; j++) {
-          for (uint64_t k = state_size; k < (uint64_t(1) << max_num_qubits);
-               k++) {
-            output_tensor(static_cast<ptrdiff_t>(i), static_cast<ptrdiff_t>(j),
-                          static_cast<ptrdiff_t>(k)) = pad;
-          }
-        }
-        old_num_qubits = num;
+    // Simulate programs one by one. Parallelizing over wavefunctions
+    // we no longer parallelize over circuits. Each time we encounter a
+    // a larger circuit we will grow the unitary as nescessary.
+    for (int i = 0; i < fused_circuits.size(); i++) {
+      int nq = num_qubits[i];
+      UCalculator sim = UCalculator(nq, tfq_for);
+      UnitarySpace us = UnitarySpace(nq, tfq_for);
+      if (nq > largest_nq) {
+        // need to switch to larger unitaryspace.
+        largest_nq = nq;
+        u = us.CreateUnitary();
       }
-    };
+      us.SetIdentity(u);
+      for (int j = 0; j < fused_circuits[i].size(); j++) {
+        qsim::ApplyFusedGate(sim, fused_circuits[i][j], u);
+      }
 
-    const int block_size = GetBlockSize(context, output_dim_size);
-    context->device()
-        ->tensorflow_cpu_worker_threads()
-        ->workers->TransformRangeConcurrently(block_size, output_dim_size,
-                                              DoWork);
+      // Parallel copy unitary information from qsim into tensorflow
+      // tensors.
+      auto copy_f = [i, nq, max_num_qubits, &output_tensor, &us, &u](
+                        uint64_t start, uint64_t end) {
+        uint64_t crossover = uint64_t(1) << nq;
+
+        for (uint64_t l = start; l < end; l++) {
+          uint64_t j = l / (1 << max_num_qubits);
+          uint64_t k = l % (1 << max_num_qubits);
+          if (k < crossover && j < crossover) {
+            output_tensor(static_cast<ptrdiff_t>(i), static_cast<ptrdiff_t>(j),
+                          static_cast<ptrdiff_t>(k)) = us.GetEntry(u, j, k);
+          } else {
+            output_tensor(static_cast<ptrdiff_t>(i), static_cast<ptrdiff_t>(j),
+                          static_cast<ptrdiff_t>(k)) =
+                std::complex<float>(-2, 0);
+          }
+        }
+      };
+      const uint64_t num_cycles_copy = 10 * (1 << max_num_qubits);
+      context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
+          (uint64_t(1) << max_num_qubits) * (uint64_t(1) << max_num_qubits),
+          num_cycles_copy, copy_f);
+    }
   }
 };
 
 REGISTER_KERNEL_BUILDER(
     Name("TfqCalculateUnitary").Device(tensorflow::DEVICE_CPU),
-    TfqSimulateStateOp);
+    TfqCalculateUnitaryOp);
 
 REGISTER_OP("TfqCalculateUnitary")
     .Input("programs: string")

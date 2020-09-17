@@ -81,10 +81,10 @@ Status ParsePrograms(OpKernelContext* context, const std::string& input_name,
     }
   };
 
-  const int block_size = GetBlockSize(context, num_programs);
-  context->device()
-      ->tensorflow_cpu_worker_threads()
-      ->workers->TransformRangeConcurrently(block_size, num_programs, DoWork);
+  // TODO(mbbrough): Determine if this is a good cycle estimate.
+  const int cycle_estimate = 1000;
+  context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
+      num_programs, cycle_estimate, DoWork);
 
   return Status::OK();
 }
@@ -110,12 +110,13 @@ Status GetProgramsAndProgramsToAppend(
   return Status::OK();
 }
 
-// TODO(pmassey): Add a getter for the case where there is only 1 input program.
-
 Status GetProgramsAndNumQubits(
     OpKernelContext* context, std::vector<Program>* programs,
     std::vector<int>* num_qubits,
     std::vector<std::vector<PauliSum>>* p_sums /*=nullptr*/) {
+  // 1. Parse input programs
+  // 2. (Optional) Parse input PauliSums
+  // 3. Convert GridQubit locations to integers.
   Status status = ParsePrograms(context, "programs", programs);
   if (!status.ok()) {
     return status;
@@ -128,27 +129,33 @@ Status GetProgramsAndNumQubits(
     }
   }
 
-  num_qubits->reserve(programs->size());
-  for (size_t i = 0; i < programs->size(); i++) {
-    Program& program = (*programs)[i];
-    Status status = Status::OK();
-    unsigned int this_num_qubits;
-    if (p_sums) {
-      status = ResolveQubitIds(&program, &this_num_qubits, &(p_sums->at(i)));
-    } else {
-      status = ResolveQubitIds(&program, &this_num_qubits);
+  // Resolve qubit ID's in parallel.
+  num_qubits->assign(programs->size(), -1);
+  auto DoWork = [&](int start, int end) {
+    for (int i = start; i < end; i++) {
+      Program& program = (*programs)[i];
+      unsigned int this_num_qubits;
+      if (p_sums) {
+        OP_REQUIRES_OK(context, ResolveQubitIds(&program, &this_num_qubits,
+                                                &(p_sums->at(i))));
+      } else {
+        OP_REQUIRES_OK(context, ResolveQubitIds(&program, &this_num_qubits));
+      }
+      (*num_qubits)[i] = this_num_qubits;
     }
-    if (!status.ok()) {
-      return status;
-    }
-    num_qubits->push_back(this_num_qubits);
-  }
+  };
+
+  // TODO(mbbrough): Determine if this is a good cycle estimate.
+  const int cycle_estimate = 1000;
+  context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
+      num_qubits->size(), cycle_estimate, DoWork);
 
   return Status::OK();
 }
 
 Status GetPauliSums(OpKernelContext* context,
                     std::vector<std::vector<PauliSum>>* p_sums) {
+  // 1. Parses PauliSum proto.
   const Tensor* input;
   Status status = context->input("pauli_sums", &input);
   if (!status.ok()) {
@@ -162,28 +169,29 @@ Status GetPauliSums(OpKernelContext* context,
   }
 
   const auto sum_specs = input->matrix<tensorflow::tstring>();
-  p_sums->reserve(sum_specs.dimension(0));
-  for (int i = 0; i < sum_specs.dimension(0); i++) {
-    std::vector<PauliSum> sub_ops;
-    sub_ops.reserve(sum_specs.dimension(1));
-    for (int j = 0; j < sum_specs.dimension(1); j++) {
-      const std::string& text = sum_specs(i, j);
+  p_sums->assign(sum_specs.dimension(0),
+                 std::vector<PauliSum>(sum_specs.dimension(1), PauliSum()));
+  const int op_dim = sum_specs.dimension(1);
+  auto DoWork = [&](int start, int end) {
+    for (int ii = start; ii < end; ii++) {
+      const int i = ii / op_dim;
+      const int j = ii % op_dim;
       PauliSum p;
-      // TODO(pmassey): Consider parsing from the serialized instead of the
-      // human readable proto to pass smaller messages.
-      status = ParseProto(text, &p);
-      if (!status.ok()) {
-        return status;
-      }
-      sub_ops.push_back(p);
+      OP_REQUIRES_OK(context, ParseProto(sum_specs(i, j), &p));
+      (*p_sums)[i][j] = p;
     }
-    p_sums->push_back(sub_ops);
-  }
+  };
+
+  // TODO(mbbrough): Determine if this is a good cycle estimate.
+  const int cycle_estimate = 1000;
+  context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
+      sum_specs.dimension(0) * sum_specs.dimension(1), cycle_estimate, DoWork);
 
   return Status::OK();
 }
 
 Status GetSymbolMaps(OpKernelContext* context, std::vector<SymbolMap>* maps) {
+  // 1. Convert to dictionary representation for param resolution.
   const Tensor* input_names;
   Status status = context->input("symbol_names", &input_names);
   if (!status.ok()) {
@@ -216,41 +224,23 @@ Status GetSymbolMaps(OpKernelContext* context, std::vector<SymbolMap>* maps) {
                   "Input symbol names and value sizes do not match.");
   }
 
-  maps->reserve(symbol_values.dimension(0));
-  for (int i = 0; i < symbol_values.dimension(0); i++) {
-    SymbolMap map;
-    for (int j = 0; j < symbol_values.dimension(1); j++) {
-      const std::string& name = symbol_names(j);
-      const float value = symbol_values(i, j);
-      map[name] = {j, value};
+  maps->assign(symbol_values.dimension(0), SymbolMap());
+
+  const int symbol_dim = symbol_values.dimension(1);
+  auto DoWork = [&](int start, int end) {
+    for (int i = start; i < end; i++) {
+      for (int j = 0; j < symbol_dim; j++) {
+        const std::string& name = symbol_names(j);
+        const float value = symbol_values(i, j);
+        (*maps)[i][name] = {j, value};
+      }
     }
+  };
 
-    maps->push_back(map);
-  }
-
-  return Status::OK();
-}
-
-// TODO (mbbrough/pmassey/jaeyoo): Should grads return an EigenMatrixXd instead
-// of a vector of vectors ?
-Status GetGradients(OpKernelContext* context,
-                    std::vector<std::vector<float>>* grads) {
-  const Tensor* input;
-  const Status status = context->input("grad", &input);
-  if (!status.ok()) {
-    return status;
-  }
-
-  const auto input_grads = input->matrix<float>();
-  grads->reserve(input_grads.dimension(0));
-  for (int i = 0; i < input_grads.dimension(0); i++) {
-    std::vector<float> sub_grads;
-    sub_grads.reserve(input_grads.dimension(1));
-    for (int j = 0; j < input_grads.dimension(1); j++) {
-      sub_grads.push_back(input_grads(i, j));
-    }
-    grads->push_back(sub_grads);
-  }
+  // TODO(mbbrough): Determine if this is a good cycle estimate.
+  const int cycle_estimate = 1000;
+  context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
+      symbol_values.dimension(0), cycle_estimate, DoWork);
 
   return Status::OK();
 }
@@ -284,6 +274,64 @@ tensorflow::Status GetNumSamples(
       sub_parsed_num_samples.push_back(num_samples);
     }
     parsed_num_samples->push_back(sub_parsed_num_samples);
+  }
+
+  return Status::OK();
+}
+
+// used by tfq_simulate_samples.
+Status GetIndividualSample(tensorflow::OpKernelContext* context,
+                           int* n_samples) {
+  const Tensor* input_num_samples;
+  Status status = context->input("num_samples", &input_num_samples);
+  if (!status.ok()) {
+    return status;
+  }
+
+  if (input_num_samples->dims() != 1) {
+    return Status(tensorflow::error::INVALID_ARGUMENT,
+                  absl::StrCat("num_samples must be rank 1. Got rank ",
+                               input_num_samples->dims(), "."));
+  }
+
+  const auto vector_num_samples = input_num_samples->vec<int>();
+
+  if (vector_num_samples.dimension(0) != 1) {
+    return Status(tensorflow::error::INVALID_ARGUMENT,
+                  absl::StrCat("num_samples must contain 1 element. Got ",
+                               vector_num_samples.dimension(0), "."));
+  }
+
+  (*n_samples) = vector_num_samples(0);
+  return Status::OK();
+}
+
+// used by adj_grad_op.
+tensorflow::Status GetPrevGrads(
+    tensorflow::OpKernelContext* context,
+    std::vector<std::vector<float>>* parsed_prev_grads) {
+  const Tensor* input_grads;
+  Status status = context->input("downstream_grads", &input_grads);
+  if (!status.ok()) {
+    return status;
+  }
+
+  if (input_grads->dims() != 2) {
+    return Status(tensorflow::error::INVALID_ARGUMENT,
+                  absl::StrCat("downstream_grads must be rank 2. Got rank ",
+                               input_grads->dims(), "."));
+  }
+
+  const auto matrix_grads = input_grads->matrix<float>();
+  parsed_prev_grads->reserve(matrix_grads.dimension(0));
+  for (unsigned int i = 0; i < matrix_grads.dimension(0); i++) {
+    std::vector<float> sub_parsed_grads;
+    sub_parsed_grads.reserve(matrix_grads.dimension(1));
+    for (unsigned int j = 0; j < matrix_grads.dimension(1); j++) {
+      const float grad_v = matrix_grads(i, j);
+      sub_parsed_grads.push_back(grad_v);
+    }
+    parsed_prev_grads->push_back(sub_parsed_grads);
   }
 
   return Status::OK();

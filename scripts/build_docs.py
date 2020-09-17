@@ -64,10 +64,10 @@ def main(unused_argv):
             ],
             "tfq.differentiators": [
                 "linear_combination", "differentiator", "parameter_shift",
-                "stochastic_differentiator", "parameter_shift_util",
-                "stochastic_differentiator_util"
+                "parameter_shift_util", "adjoint"
             ],
             "tfq.datasets": ["cluster_state"],
+            "tfq.optimizers": ["rotosolve_minimizer"],
             "tfq.util": [
                 "from_tensor", "convert_to_tensor", "exp_identity",
                 "check_commutability", "kwargs_cartesian_product",

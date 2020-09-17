@@ -15,3 +15,4 @@
 """Experimental location for interesting quantum datasets."""
 # Import to the tensorflow_quantum.datasets.* level."""
 from tensorflow_quantum.datasets.cluster_state import excited_cluster_states
+from tensorflow_quantum.datasets.spin_system import tfi_chain
