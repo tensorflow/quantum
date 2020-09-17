@@ -21,7 +21,7 @@ from tensorflow.python.framework import load_library
 from tensorflow.python.platform import resource_loader
 
 
-def load_module(name, subpath=""):
+def load_module(name):
     """Loads the module with the given name.
 
     First attempts to load the module as though it was embedded into the binary
@@ -38,9 +38,9 @@ def load_module(name, subpath=""):
         RuntimeError: If the library cannot be found.
     """
     try:
-        path = resource_loader.get_path_to_datafile(os.path.join(subpath, name))
+        path = resource_loader.get_path_to_datafile(name)
         return load_library.load_op_library(path)
     except:
         path = os.path.join(get_python_lib(), "tensorflow_quantum/core/ops",
-                            subpath, name)
+                            name)
         return load_library.load_op_library(path)
