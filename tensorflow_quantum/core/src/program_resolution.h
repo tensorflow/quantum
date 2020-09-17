@@ -39,6 +39,14 @@ tensorflow::Status ResolveQubitIds(
     cirq::google::api::v2::Program* program, unsigned int* num_qubits,
     std::vector<tfq::proto::PauliSum>* p_sums = nullptr);
 
+// Overload which allows for strict resolution of multiple programs.
+// Will resolve GridQubits in `program` and then double check that
+// all qubits in `other_programs` match and resolve them.
+// Note: no nullptr default is done here to avoid signature resolutions issues.
+tensorflow::Status ResolveQubitIds(
+    cirq::google::api::v2::Program* program, unsigned int* num_qubits,
+    std::vector<cirq::google::api::v2::Program>* other_programs);
+
 // Resolves all of the symbols present in the Program. Iterates through all
 // operations in all moments, and if any Args have a symbol, replaces the one-of
 // with an ArgValue representing the value in the parameter map keyed by the
