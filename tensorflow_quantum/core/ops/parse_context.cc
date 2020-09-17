@@ -127,6 +127,12 @@ Status GetProgramsAndNumQubits(
     if (!status.ok()) {
       return status;
     }
+    if (programs->size() != p_sums->size()){
+      return Status(tensorflow::error::INVALID_ARGUMENT, absl::StrCat(
+                    "Number of circuits and PauliSums do not match. Got ",
+                    programs->size(), " circuits and ", p_sums->size(),
+                    " paulisums."));
+    }
   }
 
   // Resolve qubit ID's in parallel.

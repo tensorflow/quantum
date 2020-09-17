@@ -167,8 +167,16 @@ class SimulateExpectationTest(tf.test.TestCase):
                                     expected_regex='do not match'):
             # wrong op size.
             tfq_simulate_ops.tfq_simulate_expectation(
-                util.convert_to_tensor([cirq.Circuit()]), symbol_names,
-                symbol_values_array.astype(np.float64),
+                util.convert_to_tensor(circuit_batch), symbol_names,
+                symbol_values_array,
+                util.convert_to_tensor([[x] for x in pauli_sums][:int(batch_size * 0.5)]))
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    expected_regex='do not match'):
+            # wrong symbol_values size.
+            tfq_simulate_ops.tfq_simulate_expectation(
+                util.convert_to_tensor(circuit_batch), symbol_names,
+                symbol_values_array[:int(batch_size * 0.5)],
                 util.convert_to_tensor([[x] for x in pauli_sums]))
 
         res = tfq_simulate_ops.tfq_simulate_expectation(
@@ -267,6 +275,13 @@ class SimulateStateTest(tf.test.TestCase, parameterized.TestCase):
             tfq_simulate_ops.tfq_simulate_state(
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 symbol_values_array, [])
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    expected_regex='do not match'):
+            # wrong symbol_values size.
+            tfq_simulate_ops.tfq_simulate_state(
+                util.convert_to_tensor(circuit_batch), symbol_names,
+                symbol_values_array[:int(batch_size * 0.5)])
 
     @parameterized.parameters([
         {
@@ -409,6 +424,13 @@ class SimulateSamplesTest(tf.test.TestCase, parameterized.TestCase):
                 symbol_values_array)
             # pylint: enable=no-value-for-parameter
 
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    expected_regex='do not match'):
+            # wrong symbol_values size.
+            tfq_simulate_ops.tfq_simulate_samples(
+                util.convert_to_tensor(circuit_batch), symbol_names,
+                symbol_values_array[:int(batch_size * 0.5)], num_samples)
+
     @parameterized.parameters([
         {
             'all_n_qubits': [2, 3],
@@ -430,8 +452,8 @@ class SimulateSamplesTest(tf.test.TestCase, parameterized.TestCase):
             this_expected_output[:, :max(all_n_qubits) - n_qubits] = -2
             expected_outputs.append(this_expected_output)
             circuits.append(
-                cirq.Circuit(
-                    *cirq.X.on_each(*cirq.GridQubit.rect(1, n_qubits))))
+                cirq.Circuit(*cirq.X.on_each(
+                    *cirq.GridQubit.rect(1, n_qubits))))
         results = op(util.convert_to_tensor(circuits), [], [[]] * len(circuits),
                      [n_samples]).numpy()
         self.assertAllClose(expected_outputs, results)
@@ -616,6 +638,15 @@ class SimulateSampledExpectationTest(tf.test.TestCase):
                 symbol_values_array,
                 util.convert_to_tensor([[x] for x in pauli_sums]),
                 [[-1]] * batch_size)
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    expected_regex='do not match'):
+            # wrong symbol_values size.
+            tfq_simulate_ops.tfq_simulate_sampled_expectation(
+                util.convert_to_tensor(circuit_batch), symbol_names,
+                symbol_values_array[:int(batch_size * 0.5)],
+                util.convert_to_tensor([[x] for x in pauli_sums]),
+                num_samples)
 
 
 class InputTypesTest(tf.test.TestCase, parameterized.TestCase):
