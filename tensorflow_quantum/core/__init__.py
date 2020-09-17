@@ -26,4 +26,4 @@ from tensorflow_quantum.core.ops import \
     tfq_append_circuit as append_circuit
 
 # Import math ops.
-from tensorflow_quantum.core.ops import math
+from tensorflow_quantum.core.ops import math_ops

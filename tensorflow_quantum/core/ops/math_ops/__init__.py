@@ -12,6 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""Module for tfq.core.ops.math.*"""
+"""Module for tfq.core.ops.math_ops.*"""
 
-from tensorflow_quantum.core.ops.math.inner_product_op import inner_product
+from tensorflow_quantum.core.ops.math_ops.inner_product_op import inner_product

@@ -22,7 +22,7 @@ from tensorflow_quantum.core import (append_circuit, get_expectation_op,
                                      padded_to_ragged2d, resolve_parameters)
 
 # Import math ops.
-from tensorflow_quantum.core import math
+from tensorflow_quantum.core import math_ops as math
 
 # Re-label python module as layers module.
 import tensorflow_quantum.python.layers as layers

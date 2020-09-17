@@ -17,7 +17,7 @@ import os
 import tensorflow as tf
 from tensorflow_quantum.core.ops.load_module import load_module
 
-MATH_OP_MODULE = load_module(os.path.join("math", "_tfq_math_ops.so"))
+MATH_OP_MODULE = load_module(os.path.join("math_ops", "_tfq_math_ops.so"))
 
 
 def inner_product(programs, symbol_names, symbol_values, other_programs):

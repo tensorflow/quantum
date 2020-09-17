@@ -18,7 +18,7 @@ from absl.testing import parameterized
 import tensorflow as tf
 import cirq
 
-from tensorflow_quantum.core.ops.math import inner_product_op
+from tensorflow_quantum.core.ops.math_ops import inner_product_op
 from tensorflow_quantum.python import util
 
 
