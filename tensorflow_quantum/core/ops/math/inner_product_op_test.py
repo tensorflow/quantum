@@ -181,6 +181,15 @@ class InnerProductTest(tf.test.TestCase, parameterized.TestCase):
                 symbol_values_array[::int(batch_size * 0.5)],
                 util.convert_to_tensor(other_batch))
 
+        with self.assertRaisesRegex(
+                tf.errors.InvalidArgumentError,
+                expected_regex='Found symbols in other_programs'):
+            # other_programs has symbols.
+            inner_product_op.inner_product(
+                util.convert_to_tensor(circuit_batch), symbol_names,
+                symbol_values_array,
+                util.convert_to_tensor([[x] for x in circuit_batch]))
+
         res = inner_product_op.inner_product(
             util.convert_to_tensor(circuit_batch), symbol_names,
             symbol_values_array.astype(np.float64),
