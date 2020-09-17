@@ -160,6 +160,15 @@ class SampledExpectationTest(tf.test.TestCase):
                                                      operators=test_psum,
                                                      repetitions=[5, 4, 3])
 
+        with self.assertRaisesRegex(Exception, expected_regex="do not match."):
+            # Wrong batch_size for symbol values.
+            sampled_expectation.SampledExpectation()([reg_circuit],
+                                                     symbol_names=[symbol],
+                                                     symbol_values=np.zeros(
+                                                         (3, 1)),
+                                                     operators=test_psum,
+                                                     repetitions=5)
+
     def test_static_cases(self):
         """Run inputs through in complex cases."""
 
