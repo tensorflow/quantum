@@ -6,3 +6,4 @@ pylint==2.4.4
 yapf==0.28.0
 tensorflow==2.3.0
 google-api-python-client==1.8.0
+numpy==1.18.5
