@@ -26,7 +26,7 @@ class InnerProductTest(tf.test.TestCase, parameterized.TestCase):
     """Tests tfq_inner_product."""
 
     def test_inner_product_inputs(self):
-        """Make sure that the expectation op fails gracefully on bad inputs."""
+        """Make sure that inner_product fails gracefully on bad inputs."""
         n_qubits = 5
         batch_size = 5
         symbol_names = ['alpha']
@@ -50,16 +50,14 @@ class InnerProductTest(tf.test.TestCase, parameterized.TestCase):
             # Circuit tensor has too many dimensions.
             inner_product_op.inner_product(
                 util.convert_to_tensor([circuit_batch]), symbol_names,
-                symbol_values_array,
-                util.convert_to_tensor(other_batch))
+                symbol_values_array, util.convert_to_tensor(other_batch))
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'symbol_names must be rank 1.'):
             # symbol_names tensor has too many dimensions.
             inner_product_op.inner_product(
                 util.convert_to_tensor(circuit_batch), np.array([symbol_names]),
-                symbol_values_array,
-                util.convert_to_tensor(other_batch))
+                symbol_values_array, util.convert_to_tensor(other_batch))
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'symbol_values must be rank 2.'):
@@ -74,16 +72,14 @@ class InnerProductTest(tf.test.TestCase, parameterized.TestCase):
             # symbol_values_array tensor has too few dimensions.
             inner_product_op.inner_product(
                 util.convert_to_tensor(circuit_batch), symbol_names,
-                symbol_values_array[0],
-                util.convert_to_tensor(other_batch))
+                symbol_values_array[0], util.convert_to_tensor(other_batch))
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'other_programs must be rank 2.'):
             # other_programs tensor has too few dimensions.
             inner_product_op.inner_product(
                 util.convert_to_tensor(circuit_batch), symbol_names,
-                symbol_values_array,
-                util.convert_to_tensor(circuit_batch))
+                symbol_values_array, util.convert_to_tensor(circuit_batch))
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'other_programs must be rank 2.'):
@@ -96,24 +92,24 @@ class InnerProductTest(tf.test.TestCase, parameterized.TestCase):
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'Unparseable proto'):
             # circuit tensor has the right type but invalid values.
-            inner_product_op.inner_product(
-                ['junk'] * batch_size, symbol_names, symbol_values_array,
-                util.convert_to_tensor(other_batch))
+            inner_product_op.inner_product(['junk'] * batch_size, symbol_names,
+                                           symbol_values_array,
+                                           util.convert_to_tensor(other_batch))
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'Could not find symbol in parameter map'):
             # symbol_names tensor has the right type but invalid values.
             inner_product_op.inner_product(
                 util.convert_to_tensor(circuit_batch), ['junk'],
-                symbol_values_array,
-                util.convert_to_tensor(other_batch))
+                symbol_values_array, util.convert_to_tensor(other_batch))
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'not found in reference circuit'):
-            # other_programs tensor has the right type but operates on 
+            # other_programs tensor has the right type but operates on
             # qubits that the reference ciruit doesn't have.
             new_qubits = [cirq.GridQubit(5, 5), cirq.GridQubit(9, 9)]
-            new_circuits, _ = util.random_circuit_resolver_batch(new_qubits, batch_size)
+            new_circuits, _ = util.random_circuit_resolver_batch(
+                new_qubits, batch_size)
             inner_product_op.inner_product(
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 symbol_values_array,
@@ -121,10 +117,11 @@ class InnerProductTest(tf.test.TestCase, parameterized.TestCase):
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'not found in paired circuit'):
-            # other_programs tensor has the right type but operates on 
+            # other_programs tensor has the right type but operates on
             # qubits that the reference ciruit doesn't have.
             new_qubits = cirq.GridQubit.rect(1, n_qubits - 1)
-            new_circuits, _ = util.random_circuit_resolver_batch(new_qubits, batch_size)
+            new_circuits, _ = util.random_circuit_resolver_batch(
+                new_qubits, batch_size)
             inner_product_op.inner_product(
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 symbol_values_array,
@@ -132,23 +129,21 @@ class InnerProductTest(tf.test.TestCase, parameterized.TestCase):
 
         with self.assertRaisesRegex(TypeError, 'Cannot convert'):
             # circuits tensor has the wrong type.
-            inner_product_op.inner_product(
-                [1.0] * batch_size, symbol_names, symbol_values_array,
-                util.convert_to_tensor(other_batch))
+            inner_product_op.inner_product([1.0] * batch_size, symbol_names,
+                                           symbol_values_array,
+                                           util.convert_to_tensor(other_batch))
 
         with self.assertRaisesRegex(TypeError, 'Cannot convert'):
             # symbol_names tensor has the wrong type.
             inner_product_op.inner_product(
                 util.convert_to_tensor(circuit_batch), [0.1234],
-                symbol_values_array,
-                util.convert_to_tensor(other_batch))
+                symbol_values_array, util.convert_to_tensor(other_batch))
 
         with self.assertRaisesRegex(tf.errors.UnimplementedError, ''):
             # symbol_values tensor has the wrong type.
             inner_product_op.inner_product(
                 util.convert_to_tensor(circuit_batch), symbol_names,
-                [['junk']] * batch_size,
-                util.convert_to_tensor(other_batch))
+                [['junk']] * batch_size, util.convert_to_tensor(other_batch))
 
         with self.assertRaisesRegex(TypeError, 'Cannot convert'):
             # other_programs tensor has the wrong type.
@@ -168,8 +163,7 @@ class InnerProductTest(tf.test.TestCase, parameterized.TestCase):
             # pylint: disable=too-many-function-args
             inner_product_op.inner_product(
                 util.convert_to_tensor(circuit_batch), symbol_names,
-                symbol_values_array,
-                util.convert_to_tensor(other_batch), [])
+                symbol_values_array, util.convert_to_tensor(other_batch), [])
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     expected_regex='do not match'):
@@ -188,8 +182,8 @@ class InnerProductTest(tf.test.TestCase, parameterized.TestCase):
                 util.convert_to_tensor(other_batch))
 
         res = inner_product_op.inner_product(
-            util.convert_to_tensor(circuit_batch),
-            symbol_names, symbol_values_array.astype(np.float64),
+            util.convert_to_tensor(circuit_batch), symbol_names,
+            symbol_values_array.astype(np.float64),
             util.convert_to_tensor(other_batch))
         self.assertDTypeEqual(res, np.complex64)
 
@@ -270,7 +264,7 @@ class InnerProductTest(tf.test.TestCase, parameterized.TestCase):
                                          inner_dim_size):
         """Test that inner_product works with symbols."""
         qubits = cirq.GridQubit.rect(1, n_qubits)
-        circuit_batch, resolver_batch = \
+        circuit_batch, _ = \
             util.random_circuit_resolver_batch(
                 qubits, batch_size)
 

@@ -82,7 +82,7 @@ class TfqInnerProductOp : public tensorflow::OpKernel {
                     " circuits to pair with.")));
 
     OP_REQUIRES(context, programs.size() == maps.size(),
-      tensorflow::errors::InvalidArgument(absl::StrCat(
+                tensorflow::errors::InvalidArgument(absl::StrCat(
                     "Number of circuits and symbol_values do not match. Got ",
                     programs.size(), " circuits and ", maps.size(),
                     " symbol values.")));
