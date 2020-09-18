@@ -74,11 +74,11 @@ class TfqSimulateExpectationOp : public tensorflow::OpKernel {
     std::vector<SymbolMap> maps;
     OP_REQUIRES_OK(context, GetSymbolMaps(context, &maps));
 
-    OP_REQUIRES(context, pauli_sums.size() == programs.size(),
+    OP_REQUIRES(context, programs.size() == maps.size(),
                 tensorflow::errors::InvalidArgument(absl::StrCat(
-                    "Number of circuits and PauliSums do not match. Got ",
-                    programs.size(), " circuits and ", pauli_sums.size(),
-                    " paulisums.")));
+                    "Number of circuits and symbol_values do not match. Got ",
+                    programs.size(), " circuits and ", maps.size(),
+                    " symbol values.")));
 
     // Construct qsim circuits.
     std::vector<QsimCircuit> qsim_circuits(programs.size(), QsimCircuit());
