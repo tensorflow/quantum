@@ -120,6 +120,13 @@ class SampleTest(tf.test.TestCase, parameterized.TestCase):
                     symbol_values=[[2.0, 4.0], [3.0, 5.0]],
                     repetitions=5)
 
+        with self.assertRaisesRegex(Exception, expected_regex=""):
+            # Wrong batch_size for symbol values.
+            sampler([circuit],
+                    symbol_names=['alpha'],
+                    symbol_values=np.zeros((3, 1)),
+                    repetitions=5)
+
     def test_sample_basic_inputs(self):
         """Test that sample ingests inputs correctly in simple settings."""
         sampler = sample.Sample()
