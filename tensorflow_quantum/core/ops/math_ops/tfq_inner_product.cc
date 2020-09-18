@@ -75,12 +75,6 @@ class TfqInnerProductOp : public tensorflow::OpKernel {
     std::vector<SymbolMap> maps;
     OP_REQUIRES_OK(context, GetSymbolMaps(context, &maps));
 
-    OP_REQUIRES(context, other_programs.size() == programs.size(),
-                tensorflow::errors::InvalidArgument(absl::StrCat(
-                    "Number of circuits and other_circuits do not match. Got ",
-                    programs.size(), " circuits and ", other_programs.size(),
-                    " circuits to pair with.")));
-
     OP_REQUIRES(context, programs.size() == maps.size(),
                 tensorflow::errors::InvalidArgument(absl::StrCat(
                     "Number of circuits and symbol_values do not match. Got ",
