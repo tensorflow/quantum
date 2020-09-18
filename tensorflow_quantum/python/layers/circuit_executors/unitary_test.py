@@ -112,6 +112,12 @@ class UnitaryTest(parameterized.TestCase, tf.test.TestCase):
                    symbol_names=['alpha'],
                    symbol_values=[[2.0, 4.0], [3.0, 5.0]])
 
+        with self.assertRaisesRegex(Exception, expected_regex=""):
+            # Wrong batch_size for symbol values.
+            u_calc([circuit],
+                   symbol_names=['alpha'],
+                   symbol_values=np.zeros((3, 1)))
+
 
 if __name__ == '__main__':
     tf.test.main()

@@ -77,6 +77,12 @@ class StateTest(parameterized.TestCase, tf.test.TestCase):
                        symbol_names=['alpha'],
                        symbol_values=[[2.0, 4.0], [3.0, 5.0]])
 
+        with self.assertRaisesRegex(Exception, expected_regex=""):
+            # Wrong batch_size for symbol values.
+            state_calc([circuit],
+                       symbol_names=['alpha'],
+                       symbol_values=np.zeros((3, 1)))
+
     def test_state_basic_inputs(self):
         """Test that state ingests inputs correctly in simple settings."""
         state_calc = state.State()
