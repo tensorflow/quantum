@@ -12,6 +12,7 @@ sh_binary(
         # Core module.
         "//tensorflow_quantum/core:__init__.py",
         "//tensorflow_quantum/core/ops:__init__.py",
+        "//tensorflow_quantum/core/ops/math_ops:__init__.py",
         "//tensorflow_quantum/core/proto:__init__.py",
         "//tensorflow_quantum/core/serialize:__init__.py",
 
@@ -37,6 +38,7 @@ sh_binary(
         "//tensorflow_quantum/core/ops:tfq_unitary_op_py",
         "//tensorflow_quantum/core/ops:tfq_utility_ops_py",
         "//tensorflow_quantum/core/ops:tfq_simulate_ops_py",
+        "//tensorflow_quantum/core/ops/math_ops:inner_product_op_py",
         "//tensorflow_quantum/core/serialize:serializer",
         "//tensorflow_quantum/datasets:cluster_state",
         "//tensorflow_quantum/datasets:spin_system",

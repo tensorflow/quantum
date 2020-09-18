@@ -34,6 +34,9 @@ def test_imports():
     _ = tfq.padded_to_ragged2d
     _ = tfq.resolve_parameters
 
+    # Math ops.
+    _ = tfq.math.inner_product
+
     # Util functions.
     _ = tfq.convert_to_tensor
     _ = tfq.get_quantum_concurrent_op_mode
