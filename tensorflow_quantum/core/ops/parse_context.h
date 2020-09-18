@@ -32,6 +32,11 @@ tensorflow::Status ParsePrograms(
     tensorflow::OpKernelContext* context, const std::string& input_name,
     std::vector<cirq::google::api::v2::Program>* programs);
 
+// Simplest Program proto parsing in 2D.
+tensorflow::Status ParsePrograms2D(
+    tensorflow::OpKernelContext* context, const std::string& input_name,
+    std::vector<std::vector<cirq::google::api::v2::Program>>* programs);
+
 // Parses a vector of programs along with another vector of programs to append
 tensorflow::Status GetProgramsAndProgramsToAppend(
     tensorflow::OpKernelContext* context,
@@ -52,6 +57,16 @@ tensorflow::Status GetProgramsAndNumQubits(
     std::vector<cirq::google::api::v2::Program>* programs,
     std::vector<int>* num_qubits,
     std::vector<std::vector<tfq::proto::PauliSum>>* p_sums = nullptr);
+
+// Parses Cirq Program protos out of the 'circuit_specs' input Tensor. Also
+// resolves the QubitIds inside of the Program. This override also parses and
+// resolves other_programs. Ensuring all qubits found in programs[i] are also
+// found in all programs[i][j] for all j.
+tensorflow::Status GetProgramsAndNumQubits(
+    tensorflow::OpKernelContext* context,
+    std::vector<cirq::google::api::v2::Program>* programs,
+    std::vector<int>* num_qubits,
+    std::vector<std::vector<cirq::google::api::v2::Program>>* other_programs);
 
 // Parses PauliSum protos out of the 'pauli_sums' input tensor. Note this
 // function does NOT resolve QubitID's as any paulisum needs a reference
