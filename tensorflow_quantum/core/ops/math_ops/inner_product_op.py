@@ -55,7 +55,7 @@ def inner_product(programs, symbol_names, symbol_values, other_programs):
          [ 0+0.j, 7.3223300e-02-0.17677669j,
            0-0.5j]],shape=(2, 3), dtype=complex64)
 
-    
+
 
     Note: `other_programs` must not contain any free symbols. These can resolved
         beforehand with `tfq.resolve_parameters`.
