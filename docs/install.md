@@ -27,7 +27,7 @@ Upgrade `pip` and install TensorFlow
 <!-- common_typos_disable -->
 <pre class="devsite-click-to-copy">
   <code class="devsite-terminal">pip3 install --upgrade pip</code>
-  <code class="devsite-terminal">pip3 install tensorflow==2.1.0</code>
+  <code class="devsite-terminal">pip3 install tensorflow==2.3.0</code>
 </pre>
 <!-- common_typos_enable -->
 
