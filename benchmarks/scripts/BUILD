@@ -39,7 +39,6 @@ py_test(
         "//tensorflow_quantum/python:util",
         "//tensorflow_quantum/python/differentiators:linear_combination",
         "//tensorflow_quantum/python/differentiators:parameter_shift",
-        "//tensorflow_quantum/python/differentiators:stochastic_differentiator",
         "@local_config_tf//:test_log_pb2",
     ],
 )

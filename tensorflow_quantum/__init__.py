@@ -15,12 +15,14 @@
 """Module functions for tensorflow_quantum.*"""
 
 # Import basic ops and op getters.
-from tensorflow_quantum.core import (append_circuit, calculate_unitary,
-                                     get_expectation_op,
+from tensorflow_quantum.core import (append_circuit, get_expectation_op,
                                      get_sampled_expectation_op,
                                      get_sampling_op, get_state_op,
-                                     padded_to_ragged, padded_to_ragged2d,
-                                     resolve_parameters)
+                                     get_unitary_op, padded_to_ragged,
+                                     padded_to_ragged2d, resolve_parameters)
+
+# Import math ops.
+from tensorflow_quantum.core import math_ops as math
 
 # Re-label python module as layers module.
 import tensorflow_quantum.python.layers as layers
@@ -47,6 +49,9 @@ import tensorflow_quantum.datasets as datasets
 
 # Import differentiators.
 import tensorflow_quantum.python.differentiators as differentiators
+
+# Import optimizers.
+import tensorflow_quantum.python.optimizers as optimizers
 
 # Python adds these symbols for resolution of above imports to
 # work. We get rid of them so that we don't have two paths to

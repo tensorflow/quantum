@@ -179,7 +179,6 @@ cc_binary(
 
         "//tensorflow_quantum/core/proto:pauli_sum_cc_proto",
         "//tensorflow_quantum/core/proto:program_cc_proto",
-        "//tensorflow_quantum/core/qsim",
         "//tensorflow_quantum/core/src:program_resolution",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/container:inlined_vector",
@@ -312,17 +311,17 @@ cc_binary(
     linkshared = 1,
     deps = [
         ":parse_context",
-        ":tfq_simulate_utils",
         "//tensorflow_quantum/core/proto:pauli_sum_cc_proto",
         "//tensorflow_quantum/core/proto:program_cc_proto",
-        "//tensorflow_quantum/core/qsim",
-        "//tensorflow_quantum/core/src:program_resolution",
+        "//tensorflow_quantum/core/src:util_qsim",
+        "//tensorflow_quantum/core/src:circuit_parser_qsim",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/container:inlined_vector",
         "@com_google_absl//absl/types:optional",
         "@com_google_absl//absl/types:span",
         "@local_config_tf//:libtensorflow_framework",
         "@local_config_tf//:tf_header_lib",
+        "@qsim//lib:qsim_lib",
     ],
 )
 
@@ -352,6 +351,7 @@ py_library(
     deps = [
         ":load_module",
         ":tfq_utility_ops_py",
+        "//tensorflow_quantum/python:quantum_context",
     ],
 )
 
@@ -398,9 +398,9 @@ py_library(
     name = "circuit_execution_ops",
     srcs = ["circuit_execution_ops.py"],
     deps = [
-        ":tfq_utility_ops_py",
         ":cirq_ops",
         ":tfq_simulate_ops_py",
+        ":tfq_utility_ops_py",
         "//tensorflow_quantum/python:quantum_context",
     ],
 )

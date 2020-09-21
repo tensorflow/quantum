@@ -12,6 +12,7 @@ sh_binary(
         # Core module.
         "//tensorflow_quantum/core:__init__.py",
         "//tensorflow_quantum/core/ops:__init__.py",
+        "//tensorflow_quantum/core/ops/math_ops:__init__.py",
         "//tensorflow_quantum/core/proto:__init__.py",
         "//tensorflow_quantum/core/serialize:__init__.py",
 
@@ -22,6 +23,7 @@ sh_binary(
         "//tensorflow_quantum/python/layers/circuit_construction:__init__.py",
         "//tensorflow_quantum/python/layers/circuit_executors:__init__.py",
         "//tensorflow_quantum/python/layers/high_level:__init__.py",
+        "//tensorflow_quantum/python/optimizers:__init__.py",
 
         # Datasets module.
         "//tensorflow_quantum/datasets:__init__.py",
@@ -36,13 +38,13 @@ sh_binary(
         "//tensorflow_quantum/core/ops:tfq_unitary_op_py",
         "//tensorflow_quantum/core/ops:tfq_utility_ops_py",
         "//tensorflow_quantum/core/ops:tfq_simulate_ops_py",
+        "//tensorflow_quantum/core/ops/math_ops:inner_product_op_py",
         "//tensorflow_quantum/core/serialize:serializer",
         "//tensorflow_quantum/datasets:cluster_state",
         "//tensorflow_quantum/datasets:spin_system",
         "//tensorflow_quantum/python/differentiators:adjoint",
         "//tensorflow_quantum/python/differentiators:differentiator",
         "//tensorflow_quantum/python/differentiators:parameter_shift",
-        "//tensorflow_quantum/python/differentiators:stochastic_differentiator",
         "//tensorflow_quantum/python/differentiators:linear_combination",
         "//tensorflow_quantum/python/layers/circuit_construction:elementary",
         "//tensorflow_quantum/python/layers/circuit_executors:expectation",
@@ -54,5 +56,6 @@ sh_binary(
         "//tensorflow_quantum/python/layers/high_level:pqc",
         "//tensorflow_quantum/python:quantum_context",
         "//tensorflow_quantum/python:util",
+        "//tensorflow_quantum/python/optimizers:rotosolve_minimizer",
     ],
 )

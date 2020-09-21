@@ -74,11 +74,11 @@ class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
     std::vector<SymbolMap> maps;
     OP_REQUIRES_OK(context, GetSymbolMaps(context, &maps));
 
-    OP_REQUIRES(context, pauli_sums.size() == programs.size(),
+    OP_REQUIRES(context, programs.size() == maps.size(),
                 tensorflow::errors::InvalidArgument(absl::StrCat(
-                    "Number of circuits and PauliSums do not match. Got ",
-                    programs.size(), " circuits and ", pauli_sums.size(),
-                    " paulisums.")));
+                    "Number of circuits and symbol_values do not match. Got ",
+                    programs.size(), " circuits and ", maps.size(),
+                    " symbol values.")));
 
     std::vector<std::vector<int>> num_samples;
     OP_REQUIRES_OK(context, GetNumSamples(context, &num_samples));
@@ -130,15 +130,6 @@ class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
       ComputeSmall(num_qubits, max_num_qubits, fused_circuits, pauli_sums,
                    num_samples, context, &output_tensor);
     }
-
-    // just to be on the safe side.
-    qsim_circuits.clear();
-    fused_circuits.clear();
-    num_qubits.clear();
-    maps.clear();
-    pauli_sums.clear();
-    num_samples.clear();
-    programs.clear();
   }
 
  private:
@@ -193,8 +184,6 @@ class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
         (*output_tensor)(i, j) = exp_v;
       }
     }
-    sv.release();
-    scratch.release();
   }
 
   void ComputeSmall(
@@ -236,7 +225,7 @@ class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
         if (cur_batch_index != old_batch_index) {
           // We've run into a new wavefunction we must compute.
           // Only compute a new wavefunction when we have to.
-          if (nq >= largest_nq) {
+          if (nq > largest_nq) {
             sv = ss.CreateState();
             scratch = ss.CreateState();
             largest_nq = nq;
@@ -258,8 +247,6 @@ class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
         (*output_tensor)(cur_batch_index, cur_op_index) = exp_v;
         old_batch_index = cur_batch_index;
       }
-      sv.release();
-      scratch.release();
     };
 
     const int64_t num_cycles =
