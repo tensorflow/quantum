@@ -23,11 +23,11 @@ MATH_OP_MODULE = load_module(os.path.join("math_ops", "_tfq_math_ops.so"))
 def inner_product(programs, symbol_names, symbol_values, other_programs):
     """Calculate the inner product between circuits.
 
-    Compute (potentailly many) inner products betwen the given circuits and
+    Compute (potentially many) inner products between the given circuits and
     the symbol free comparison circuits.
 
     Calculates out[i][j] = \langle \psi_{\text{programs[i]}} \\
-        (\text{symvol_values[i]}) | \psi_{\text{other_programs[j]}} \rangle
+        (\text{symbol_values[i]}) | \psi_{\text{other_programs[j]}} \rangle
 
 
     >>> symbols = sympy.symbols('alpha beta')
@@ -57,8 +57,8 @@ def inner_product(programs, symbol_names, symbol_values, other_programs):
 
 
 
-    Note: `other_programs` must not contain any free symbols. These can resolved
-        beforehand with `tfq.resolve_parameters`.
+    Note: `other_programs` must not contain any free symbols. These can
+        be resolved beforehand with `tfq.resolve_parameters`.
 
     Note: Currently this op is not differentiable.
 
