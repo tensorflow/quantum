@@ -23,11 +23,44 @@ MATH_OP_MODULE = load_module(os.path.join("math_ops", "_tfq_math_ops.so"))
 def inner_product(programs, symbol_names, symbol_values, other_programs):
     """Calculate the inner product between circuits.
 
-    Calculates out[i][j] = \langle \psi_{\text{programs[i]}} \\
-        (\text{symvol_values[i]}) | \psi_{\text{other_programs[j]}} \rangle
+    Compute (potentially many) inner products between the given circuits and
+    the symbol free comparison circuits.
 
-    Note: `other_programs` must not contain any free symbols. These can resolved
-        beforehand with `tfq.resolve_parameters`.
+    Calculates out[i][j] = \langle \psi_{\text{programs[i]}} \\
+        (\text{symbol_values[i]}) | \psi_{\text{other_programs[j]}} \rangle
+
+
+    >>> symbols = sympy.symbols('alpha beta')
+    >>> qubits = cirq.GridQubit.rect(1, 2)
+    >>> reference_circuits = [
+    ...     cirq.Circuit((cirq.H**symbols[0]).on_each(qubits)),
+    ...     cirq.Circuit(
+    ...         cirq.X(qubits[0]) ** symbols[0],
+    ...         cirq.Y(qubits[1]) ** symbols[1])
+    ... ]
+    >>> other_circuits = [
+    ...     cirq.Circuit(cirq.X.on_each(qubits)),
+    ...     cirq.Circuit((cirq.Y**0.125).on_each(qubits)),
+    ...     cirq.Circuit((cirq.X**0.5).on_each(qubits))
+    ... ]
+    >>> reference_tensor = tfq.convert_to_tensor(reference_circuits)
+    >>> symbol_tensor = tf.convert_to_tensor(list(symbols))
+    >>> values_tensor = tf.convert_to_tensor(np.arange(4).reshape(2, 2))
+    >>> other_tensor = tfq.convert_to_tensor([other_circuits, other_circuits])
+    >>> ip = tfq.math.inner_product(reference_tensor)
+    >>> ip
+    tf.Tensor(
+        [[ 0+0.j, 8.8871640e-01+0.3681184j,
+           0+0.5j],
+         [ 0+0.j, 7.3223300e-02-0.17677669j,
+           0-0.5j]],shape=(2, 3), dtype=complex64)
+
+
+
+    Note: `other_programs` must not contain any free symbols. These can
+        be resolved beforehand with `tfq.resolve_parameters`.
+
+    Note: Currently this op is not differentiable.
 
     Args:
         programs: `tf.Tensor` of strings with shape [batch_size] containing
