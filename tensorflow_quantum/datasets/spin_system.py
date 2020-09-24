@@ -518,6 +518,7 @@ def xxz_chain(qubits, boundary_condition="closed", data_dir=None):
         order_parameters.append(g)
         params = np.load(os.path.join(data_path, directory, "params.npy")) \
                  / np.pi
+        params = params.astype(np.float64)
         additional_info.append(
             SpinSystemInfo(g=g,
                            gs=np.load(
