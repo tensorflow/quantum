@@ -18,8 +18,7 @@ import numpy as np
 import cirq
 from tensorflow_quantum.datasets import spin_system
 from tensorflow_quantum.datasets.spin_system import SpinSystemInfo
-import logging
-import time
+
 
 class TFIChainTest(tf.test.TestCase):
     """Testing tfi_chain."""
@@ -185,15 +184,11 @@ if __name__ == '__main__':
     QBS_DICT_TFI_CHAIN = {}
     for nspins in SUPPORTED_NSPINS_TFI_CHAIN:
         QBS_TFI_CHAIN = cirq.GridQubit.rect(nspins, 1)
-        logging.warning('\nCalling tfi_chain, nspins={}\n'.format(nspins))
-        start = time.time()
         DATA_DICT_TFI_CHAIN[nspins] = spin_system.tfi_chain(
             QBS_TFI_CHAIN,
             'closed',
         )
-        logging.warning('\nEnd of function call, duration {}\n'.format(time.time()-start))
         QBS_DICT_TFI_CHAIN[nspins] = QBS_TFI_CHAIN
-
 
     # XXZ CHAIN
     SUPPORTED_NSPINS_XXZ_CHAIN = [4, 8, 12, 16]
@@ -201,14 +196,10 @@ if __name__ == '__main__':
     QBS_DICT_XXZ_CHAIN = {}
     for nspins in SUPPORTED_NSPINS_XXZ_CHAIN:
         QBS_XXZ_CHAIN = cirq.GridQubit.rect(nspins, 1)
-        logging.warning('\nCalling xxz_chain, nspins={}\n'.format(nspins))
-        start = time.time()
         DATA_DICT_XXZ_CHAIN[nspins] = spin_system.xxz_chain(
             QBS_XXZ_CHAIN,
             'closed',
         )
-        logging.warning('\nEnd of function call, duration {}\n'.format(time.time()-start))
-
         QBS_DICT_XXZ_CHAIN[nspins] = QBS_XXZ_CHAIN
 
     tf.test.main()
