@@ -267,7 +267,6 @@ def tfi_chain(qubits, boundary_condition="closed", data_dir=None):
     order_parameters = []
     additional_info = []
     labels = []
-
     # Load the data and append to the lists.
     for i, directory in enumerate(x for x in os.listdir(data_path)):
         # The folders are named according to the order value data they contain.
@@ -279,6 +278,7 @@ def tfi_chain(qubits, boundary_condition="closed", data_dir=None):
         order_parameters.append(g)
         params = np.load(os.path.join(data_path, directory, "params.npy")) \
                  / np.pi
+        params = params.astype(np.float)
         additional_info.append(
             SpinSystemInfo(g=g,
                            gs=np.load(
@@ -312,7 +312,6 @@ def tfi_chain(qubits, boundary_condition="closed", data_dir=None):
             labels.append(1)
         else:
             labels.append(2)
-
     # Make sure that the data is ordered from g=0.2 to g=1.8.
     _, resolved_circuits, labels, hamiltonians, additional_info = zip(*sorted(
         zip(order_parameters, resolved_circuits, labels, hamiltonians,
@@ -508,7 +507,6 @@ def xxz_chain(qubits, boundary_condition="closed", data_dir=None):
     order_parameters = []
     additional_info = []
     labels = []
-
     # Load the data and append to the lists.
     for i, directory in enumerate(x for x in os.listdir(data_path)):
         # The folders are named according to the order value data they contain.
