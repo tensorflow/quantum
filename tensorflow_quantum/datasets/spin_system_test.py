@@ -50,7 +50,7 @@ class TFIChainTest(tf.test.TestCase):
         """Test that all fidelities are close to 1."""
         for nspins in SUPPORTED_NSPINS_TFI_CHAIN:
             circuits, _, _, addinfo = DATA_DICT_TFI_CHAIN[nspins]
-            for n in range(len(addinfo)):
+            for n in RANDOM_SUBSET_TFI_CHAIN:
                 phi = cirq.Simulator().simulate(circuits[n]).final_state
                 gs = addinfo[n].gs
                 self.assertAllClose(np.abs(np.vdot(gs, phi)), 1.0, rtol=1e-3)
@@ -62,7 +62,7 @@ class TFIChainTest(tf.test.TestCase):
             qubit_map = {
                 QBS_DICT_TFI_CHAIN[nspins][i]: i for i in range(nspins)
             }
-            for n in range(len(addinfo)):
+            for n in RANDOM_SUBSET_TFI_CHAIN:
                 phi = cirq.Simulator().simulate(circuits[n]).final_state
                 e = pauli_sums[n].expectation_from_wavefunction(phi, qubit_map)
                 self.assertAllClose(e, addinfo[n].gs_energy, rtol=1e-4)
@@ -85,7 +85,7 @@ class TFIChainTest(tf.test.TestCase):
         """Test that the resolved circuits are correct."""
         for nspins in SUPPORTED_NSPINS_TFI_CHAIN:
             circuits, _, _, addinfo = DATA_DICT_TFI_CHAIN[nspins]
-            for n in range(len(addinfo)):
+            for n in RANDOM_SUBSET_TFI_CHAIN:
                 resolved_circuit = cirq.resolve_parameters(
                     addinfo[n].var_circuit, addinfo[n].params)
                 state_circuit = cirq.Simulator().simulate(
@@ -128,7 +128,7 @@ class XXZChainTest(tf.test.TestCase):
         """Test that all fidelities are close to 1."""
         for nspins in SUPPORTED_NSPINS_XXZ_CHAIN:
             circuits, _, _, addinfo = DATA_DICT_XXZ_CHAIN[nspins]
-            for n in range(len(addinfo)):
+            for n in RANDOM_SUBSET_XXZ_CHAIN:
                 phi = cirq.Simulator().simulate(circuits[n]).final_state
                 gs = addinfo[n].gs
                 self.assertAllClose(np.abs(np.vdot(gs, phi)), 1.0, rtol=5e-3)
@@ -140,7 +140,7 @@ class XXZChainTest(tf.test.TestCase):
             qubit_map = {
                 QBS_DICT_XXZ_CHAIN[nspins][i]: i for i in range(nspins)
             }
-            for n in range(len(addinfo)):
+            for n in RANDOM_SUBSET_XXZ_CHAIN:
                 phi = cirq.Simulator().simulate(circuits[n]).final_state
                 e = pauli_sums[n].expectation_from_wavefunction(phi, qubit_map)
                 self.assertAllClose(e, addinfo[n].gs_energy, rtol=5e-3)
@@ -163,7 +163,7 @@ class XXZChainTest(tf.test.TestCase):
         """Test that the resolved circuits are correct."""
         for nspins in SUPPORTED_NSPINS_XXZ_CHAIN:
             circuits, _, _, addinfo = DATA_DICT_XXZ_CHAIN[nspins]
-            for n in range(len(addinfo)):
+            for n in RANDOM_SUBSET_XXZ_CHAIN:
                 resolved_circuit = cirq.resolve_parameters(
                     addinfo[n].var_circuit, addinfo[n].params)
                 state_circuit = cirq.Simulator().simulate(
@@ -177,7 +177,7 @@ class XXZChainTest(tf.test.TestCase):
 
 
 if __name__ == '__main__':
-
+    RANDOM_SUBSET_SIZE = 10
     # TFI CHAIN
     SUPPORTED_NSPINS_TFI_CHAIN = [4, 8, 12, 16]
     DATA_DICT_TFI_CHAIN = {}
@@ -189,7 +189,8 @@ if __name__ == '__main__':
             'closed',
         )
         QBS_DICT_TFI_CHAIN[nspins] = QBS_TFI_CHAIN
-
+    RANDOM_SUBSET_TFI_CHAIN = np.random.permutation(list(
+        range(76)))[:RANDOM_SUBSET_SIZE]
     # XXZ CHAIN
     SUPPORTED_NSPINS_XXZ_CHAIN = [4, 8, 12, 16]
     DATA_DICT_XXZ_CHAIN = {}
@@ -201,5 +202,6 @@ if __name__ == '__main__':
             'closed',
         )
         QBS_DICT_XXZ_CHAIN[nspins] = QBS_XXZ_CHAIN
-
+    RANDOM_SUBSET_XXZ_CHAIN = np.random.permutation(list(
+        range(76)))[:RANDOM_SUBSET_SIZE]
     tf.test.main()
