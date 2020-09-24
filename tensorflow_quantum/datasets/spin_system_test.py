@@ -23,20 +23,6 @@ from tensorflow_quantum.datasets.spin_system import SpinSystemInfo
 class TFIChainTest(tf.test.TestCase):
     """Testing tfi_chain."""
 
-    def __init__(self, method):
-        self.supported_nspins = [4, 8, 12, 16]
-        self.data_dict = {}
-        self.qbs_dict = {}
-        for nspins in self.supported_nspins:
-            qbs = cirq.GridQubit.rect(nspins, 1)
-            self.data_dict[nspins] = spin_system.tfi_chain(
-                qbs,
-                'closed',
-            )
-            self.qbs_dict[nspins] = qbs
-        self.random_subset = np.random.permutation(list(range(81)))[:10]
-        super(TFIChainTest, self).__init__(method)
-
     def test_errors(self):
         """Test that it errors on invalid arguments."""
         with self.assertRaisesRegex(ValueError,
@@ -62,27 +48,29 @@ class TFIChainTest(tf.test.TestCase):
 
     def test_fidelity(self):
         """Test that all fidelities are close to 1."""
-        for nspins in self.supported_nspins:
-            circuits, _, _, addinfo = self.data_dict[nspins]
-            for n in self.random_subset:
+        for nspins in supported_nspins_tfi_chain:
+            circuits, _, _, addinfo = data_dict_tfi_chain[nspins]
+            for n in random_subset_tfi_chain:
                 phi = cirq.Simulator().simulate(circuits[n]).final_state
                 gs = addinfo[n].gs
                 self.assertAllClose(np.abs(np.vdot(gs, phi)), 1.0, rtol=1e-3)
 
     def test_paulisum(self):
         """Test that the PauliSum Hamiltonians give the ground state energy."""
-        for nspins in self.supported_nspins:
-            circuits, _, pauli_sums, addinfo = self.data_dict[nspins]
-            qubit_map = {self.qbs_dict[nspins][i]: i for i in range(nspins)}
-            for n in self.random_subset:
+        for nspins in supported_nspins_tfi_chain:
+            circuits, _, pauli_sums, addinfo = data_dict_tfi_chain[nspins]
+            qubit_map = {
+                qbs_dict_tfi_chain[nspins][i]: i for i in range(nspins)
+            }
+            for n in random_subset_tfi_chain:
                 phi = cirq.Simulator().simulate(circuits[n]).final_state
                 e = pauli_sums[n].expectation_from_wavefunction(phi, qubit_map)
                 self.assertAllClose(e, addinfo[n].gs_energy, rtol=1e-4)
 
     def test_returned_objects(self):
         """Test that the length and types of returned objects are correct."""
-        for nspins in self.supported_nspins:
-            circuits, labels, pauli_sums, addinfo = self.data_dict[nspins]
+        for nspins in supported_nspins_tfi_chain:
+            circuits, labels, pauli_sums, addinfo = data_dict_tfi_chain[nspins]
             self.assertLen(circuits, 81)
             self.assertLen(labels, 81)
             self.assertLen(pauli_sums, 81)
@@ -95,9 +83,9 @@ class TFIChainTest(tf.test.TestCase):
 
     def test_param_resolver(self):
         """Test that the resolved circuits are correct."""
-        for nspins in self.supported_nspins:
-            circuits, _, _, addinfo = self.data_dict[nspins]
-            for n in self.random_subset:
+        for nspins in supported_nspins_tfi_chain:
+            circuits, _, _, addinfo = data_dict_tfi_chain[nspins]
+            for n in random_subset_tfi_chain:
                 resolved_circuit = cirq.resolve_parameters(
                     addinfo[n].var_circuit, addinfo[n].params)
                 state_circuit = cirq.Simulator().simulate(
@@ -111,21 +99,7 @@ class TFIChainTest(tf.test.TestCase):
 
 
 class XXZChainTest(tf.test.TestCase):
-    """Testing tfi_chain."""
-
-    def __init__(self, method):
-        self.supported_nspins = [4, 8, 12, 16]
-        self.data_dict = {}
-        self.qbs_dict = {}
-        for nspins in self.supported_nspins:
-            qbs = cirq.GridQubit.rect(nspins, 1)
-            self.data_dict[nspins] = spin_system.xxz_chain(
-                qbs,
-                'closed',
-            )
-            self.qbs_dict[nspins] = qbs
-        self.random_subset = np.random.permutation(list(range(76)))[:10]
-        super(XXZChainTest, self).__init__(method)
+    """Testing xxz_chain."""
 
     def test_errors(self):
         """Test that it errors on invalid arguments."""
@@ -152,27 +126,29 @@ class XXZChainTest(tf.test.TestCase):
 
     def test_fidelity(self):
         """Test that all fidelities are close to 1."""
-        for nspins in self.supported_nspins:
-            circuits, _, _, addinfo = self.data_dict[nspins]
-            for n in self.random_subset:
+        for nspins in supported_nspins_xxz_chain:
+            circuits, _, _, addinfo = data_dict_xxz_chain[nspins]
+            for n in random_subset_xxz_chain:
                 phi = cirq.Simulator().simulate(circuits[n]).final_state
                 gs = addinfo[n].gs
                 self.assertAllClose(np.abs(np.vdot(gs, phi)), 1.0, rtol=5e-3)
 
     def test_paulisum(self):
         """Test that the PauliSum Hamiltonians give the ground state energy."""
-        for nspins in self.supported_nspins:
-            circuits, _, pauli_sums, addinfo = self.data_dict[nspins]
-            qubit_map = {self.qbs_dict[nspins][i]: i for i in range(nspins)}
-            for n in self.random_subset:
+        for nspins in supported_nspins_xxz_chain:
+            circuits, _, pauli_sums, addinfo = data_dict_xxz_chain[nspins]
+            qubit_map = {
+                qbs_dict_xxz_chain[nspins][i]: i for i in range(nspins)
+            }
+            for n in random_subset_xxz_chain:
                 phi = cirq.Simulator().simulate(circuits[n]).final_state
                 e = pauli_sums[n].expectation_from_wavefunction(phi, qubit_map)
                 self.assertAllClose(e, addinfo[n].gs_energy, rtol=5e-3)
 
     def test_returned_objects(self):
         """Test that the length and types of returned objects are correct."""
-        for nspins in self.supported_nspins:
-            circuits, labels, pauli_sums, addinfo = self.data_dict[nspins]
+        for nspins in supported_nspins_xxz_chain:
+            circuits, labels, pauli_sums, addinfo = data_dict_xxz_chain[nspins]
             self.assertLen(circuits, 76)
             self.assertLen(labels, 76)
             self.assertLen(pauli_sums, 76)
@@ -185,9 +161,9 @@ class XXZChainTest(tf.test.TestCase):
 
     def test_param_resolver(self):
         """Test that the resolved circuits are correct."""
-        for nspins in self.supported_nspins:
-            circuits, _, _, addinfo = self.data_dict[nspins]
-            for n in self.random_subset:
+        for nspins in supported_nspins_xxz_chain:
+            circuits, _, _, addinfo = data_dict_xxz_chain[nspins]
+            for n in random_subset_xxz_chain:
                 resolved_circuit = cirq.resolve_parameters(
                     addinfo[n].var_circuit, addinfo[n].params)
                 state_circuit = cirq.Simulator().simulate(
@@ -201,4 +177,34 @@ class XXZChainTest(tf.test.TestCase):
 
 
 if __name__ == '__main__':
+    random_subset_size = 10
+
+    # TFI CHAIN
+    supported_nspins_tfi_chain = [4, 8, 12, 16]
+    data_dict_tfi_chain = {}
+    qbs_dict_tfi_chain = {}
+    for nspins in supported_nspins_tfi_chain:
+        qbs_tfi_chain = cirq.GridQubit.rect(nspins, 1)
+        data_dict_tfi_chain[nspins] = spin_system.tfi_chain(
+            qbs_tfi_chain,
+            'closed',
+        )
+        qbs_dict_tfi_chain[nspins] = qbs_tfi_chain
+    random_subset_tfi_chain = np.random.permutation(list(
+        range(81)))[:random_subset_size]
+
+    # XXZ CHAIN
+    supported_nspins_xxz_chain = [4, 8, 12, 16]
+    data_dict_xxz_chain = {}
+    qbs_dict_xxz_chain = {}
+    for nspins in supported_nspins_xxz_chain:
+        qbs_xxz_chain = cirq.GridQubit.rect(nspins, 1)
+        data_dict_xxz_chain[nspins] = spin_system.xxz_chain(
+            qbs_xxz_chain,
+            'closed',
+        )
+        qbs_dict_xxz_chain[nspins] = qbs_xxz_chain
+    random_subset_xxz_chain = np.random.permutation(list(
+        range(76)))[:random_subset_size]
+
     tf.test.main()
