@@ -24,3 +24,6 @@ from tensorflow_quantum.core.ops import (padded_to_ragged, padded_to_ragged2d,
 # Special case for append op which we didn't name well.
 from tensorflow_quantum.core.ops import \
     tfq_append_circuit as append_circuit
+
+# Import math ops.
+from tensorflow_quantum.core.ops import math_ops

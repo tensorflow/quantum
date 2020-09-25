@@ -75,11 +75,11 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
     std::vector<SymbolMap> maps;
     OP_REQUIRES_OK(context, GetSymbolMaps(context, &maps));
 
-    OP_REQUIRES(context, pauli_sums.size() == programs.size(),
+    OP_REQUIRES(context, programs.size() == maps.size(),
                 tensorflow::errors::InvalidArgument(absl::StrCat(
-                    "Number of circuits and PauliSums do not match. Got ",
-                    programs.size(), " circuits and ", pauli_sums.size(),
-                    " paulisums.")));
+                    "Number of circuits and symbol_values do not match. Got ",
+                    programs.size(), " circuits and ", maps.size(),
+                    " symbol values.")));
 
     // Construct qsim circuits.
     std::vector<QsimCircuit> qsim_circuits(programs.size(), QsimCircuit());
@@ -153,16 +153,6 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
                    partial_fused_circuits, pauli_sums, gradient_gates,
                    downstream_grads, context, &output_tensor);
     }
-    // just to be on the safe side.
-    qsim_circuits.clear();
-    full_fuse.clear();
-    gate_meta.clear();
-    gradient_gates.clear();
-    num_qubits.clear();
-    maps.clear();
-    pauli_sums.clear();
-    programs.clear();
-    downstream_grads.clear();
   }
 
  private:
@@ -255,9 +245,6 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
               scratch);
         }
       }
-      sv.release();
-      scratch.release();
-      scratch2.release();
     };
 
     const int64_t num_cycles =
@@ -354,9 +341,6 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
                         scratch);
       }
     }
-    sv.release();
-    scratch.release();
-    scratch2.release();
   }
 };
 

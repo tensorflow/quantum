@@ -89,6 +89,43 @@ Status ParsePrograms(OpKernelContext* context, const std::string& input_name,
   return Status::OK();
 }
 
+Status ParsePrograms2D(OpKernelContext* context, const std::string& input_name,
+                       std::vector<std::vector<Program>>* programs) {
+  const tensorflow::Tensor* input;
+  Status status = context->input(input_name, &input);
+  if (!status.ok()) {
+    return status;
+  }
+
+  if (input->dims() != 2) {
+    // Never parse anything other than a 1d list of circuits.
+    return Status(tensorflow::error::INVALID_ARGUMENT,
+                  absl::StrCat("other_programs must be rank 2. Got rank ",
+                               input->dims(), "."));
+  }
+
+  const auto program_strings = input->matrix<tensorflow::tstring>();
+  const int num_programs = program_strings.dimension(0);
+  const int num_entries = program_strings.dimension(1);
+  programs->assign(num_programs, std::vector<Program>(num_entries, Program()));
+
+  auto DoWork = [&](int start, int end) {
+    for (int i = start; i < end; i++) {
+      OP_REQUIRES_OK(
+          context,
+          ParseProto(program_strings(i / num_entries, i % num_entries),
+                     &programs->at(i / num_entries).at(i % num_entries)));
+    }
+  };
+
+  // TODO(mbbrough): Determine if this is a good cycle estimate.
+  const int cycle_estimate = 1000;
+  context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
+      num_programs * num_entries, cycle_estimate, DoWork);
+
+  return Status::OK();
+}
+
 Status GetProgramsAndProgramsToAppend(
     OpKernelContext* context, std::vector<Program>* programs,
     std::vector<Program>* programs_to_append) {
@@ -127,6 +164,13 @@ Status GetProgramsAndNumQubits(
     if (!status.ok()) {
       return status;
     }
+    if (programs->size() != p_sums->size()) {
+      return Status(
+          tensorflow::error::INVALID_ARGUMENT,
+          absl::StrCat("Number of circuits and PauliSums do not match. Got ",
+                       programs->size(), " circuits and ", p_sums->size(),
+                       " paulisums."));
+    }
   }
 
   // Resolve qubit ID's in parallel.
@@ -147,6 +191,50 @@ Status GetProgramsAndNumQubits(
 
   // TODO(mbbrough): Determine if this is a good cycle estimate.
   const int cycle_estimate = 1000;
+  context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
+      num_qubits->size(), cycle_estimate, DoWork);
+
+  return Status::OK();
+}
+
+tensorflow::Status GetProgramsAndNumQubits(
+    OpKernelContext* context, std::vector<Program>* programs,
+    std::vector<int>* num_qubits,
+    std::vector<std::vector<Program>>* other_programs) {
+  // 1. Parse input programs
+  // 2. Parse other_programs
+  // 3. Convert GridQubit locations to integers and ensure exact matching.
+  Status status = ParsePrograms(context, "programs", programs);
+  if (!status.ok()) {
+    return status;
+  }
+
+  status = ParsePrograms2D(context, "other_programs", other_programs);
+  if (!status.ok()) {
+    return status;
+  }
+
+  if (programs->size() != other_programs->size()) {
+    return Status(tensorflow::error::INVALID_ARGUMENT,
+                  absl::StrCat("programs and other_programs batch dimension",
+                               " do not match. Foud: ", programs->size(),
+                               " and ", other_programs->size()));
+  }
+
+  // Resolve qubit ID's in parallel.
+  num_qubits->assign(programs->size(), -1);
+  auto DoWork = [&](int start, int end) {
+    for (int i = start; i < end; i++) {
+      Program& program = (*programs)[i];
+      unsigned int this_num_qubits;
+      OP_REQUIRES_OK(context, ResolveQubitIds(&program, &this_num_qubits,
+                                              &(*other_programs)[i]));
+      (*num_qubits)[i] = this_num_qubits;
+    }
+  };
+
+  // TODO(mbbrough): Determine if this is a good cycle estimate.
+  const int cycle_estimate = 1000 * (*other_programs)[0].size();
   context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
       num_qubits->size(), cycle_estimate, DoWork);
 

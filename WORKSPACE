@@ -101,24 +101,6 @@ load("//third_party/tf:tf_configure.bzl", "tf_configure")
 tf_configure(name = "local_config_tf")
 
 http_archive(
-    name = "eigen",
-    # TODO(pmassey): Probably move this content in a third_party/eigen.BUILD file
-    build_file_content = """
-cc_library(
-  name = "eigen3",
-  textual_hdrs = glob(["Eigen/**", "unsupported/**"]),
-  visibility = ["//visibility:public"],
-)
-    """,
-    sha256 = "a3c10a8c14f55e9f09f98b0a0ac6874c21bda91f65b7469d9b1f6925990e867b",  # SHARED_EIGEN_SHA
-        strip_prefix = "eigen-d10b27fe37736d2944630ecd7557cefa95cf87c9",
-        urls = [
-            "https://storage.googleapis.com/mirror.tensorflow.org/gitlab.com/libeigen/eigen/-/archive/d10b27fe37736d2944630ecd7557cefa95cf87c9/eigen-d10b27fe37736d2944630ecd7557cefa95cf87c9.tar.gz",
-            "https://gitlab.com/libeigen/eigen/-/archive/d10b27fe37736d2944630ecd7557cefa95cf87c9/eigen-d10b27fe37736d2944630ecd7557cefa95cf87c9.tar.gz",
-        ],
-)
-
-http_archive(
     name = "six_archive",
     build_file = "@com_google_protobuf//:six.BUILD",
     sha256 = "105f8d68616f8248e24bf0e9372ef04d3cc10104f1980f54d57b2ce73a5ad56a",

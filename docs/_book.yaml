@@ -50,6 +50,6 @@ upper_tabs:
     - name: API
       skip_translation: true
       contents:
-      - include: /quantum/api_docs/python/_toc.yaml
+      - include: /quantum/api_docs/python/tfq/_toc.yaml
 
 - include: /_upper_tabs_right.yaml
