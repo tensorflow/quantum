@@ -92,7 +92,7 @@ def _download_spin_data(system_name, boundary_condition, nspins, data_dir):
 
 
 def tfi_chain(qubits, boundary_condition="closed", data_dir=None):
-    """Transverse field Ising-model quantum data set.
+    """1D Transverse field Ising-model quantum data set.
 
     $$
     H = - \sum_{i} \sigma_i^z \sigma_{i+1}^z - g\sigma_i^x
@@ -278,6 +278,8 @@ def tfi_chain(qubits, boundary_condition="closed", data_dir=None):
         order_parameters.append(g)
         params = np.load(os.path.join(data_path, directory, "params.npy")) \
                  / np.pi
+        # Parameters are stored as np.float32, but cirq expects np.float64
+        # See https://github.com/quantumlib/Cirq/issues/3359
         params = params.astype(np.float)
         additional_info.append(
             SpinSystemInfo(g=g,
@@ -293,9 +295,9 @@ def tfi_chain(qubits, boundary_condition="closed", data_dir=None):
                            var_circuit=circuit))
 
         # Resolve the circuit parameters.
-        param_resolver = cirq.resolve_parameters(circuit,
-                                                 additional_info[i].params)
-        resolved_circuits.append(param_resolver)
+        resolved_circuit = cirq.resolve_parameters(circuit,
+                                                   additional_info[i].params)
+        resolved_circuits.append(resolved_circuit)
 
         # Make the PauliSum.
         paulisum = sum(
@@ -321,7 +323,7 @@ def tfi_chain(qubits, boundary_condition="closed", data_dir=None):
 
 
 def xxz_chain(qubits, boundary_condition="closed", data_dir=None):
-    """XXZ model quantum data set.
+    """1D XXZ model quantum data set.
 
     $$
     H = \sum_{i} \sigma_i^x \sigma_{i+1}^x + \sigma_i^y \sigma_{i+1}^y +
@@ -399,7 +401,7 @@ def xxz_chain(qubits, boundary_condition="closed", data_dir=None):
     {'theta_0': 1.0780547, 'theta_1': 0.99271035, 'theta_2': 1.0854135, ...
 
     and change them to experiment with different parameter values by using
-    the unresolved variational circuit returned by tfichain
+    the unresolved variational circuit returned by xxzchain
     >>> new_params = {}
     ... for symbol_name, value in addinfo[10].params.items():
     ...    new_params[symbol_name] = 0.5 * value
@@ -478,18 +480,13 @@ def xxz_chain(qubits, boundary_condition="closed", data_dir=None):
 
     # Define the circuit.
     circuit = cirq.Circuit(cirq.X.on_each(qubits))
+    even_qubits = qubits[::2]
+    odd_qubits = qubits[1::2]
     circuit.append(cirq.H(qubits[i]) for i in range(0, nspins, 2))
-    circuit.append(
-        cirq.CNOT(qubits[j], qubits[j + 1]) for j in range(0, nspins - 1, 2))
+    circuit.append(cirq.CNOT(q1, q2) for q1, q2 in zip(even_qubits, odd_qubits))
 
-    odd_qubits = list(
-        zip([qubits[j] for j in range(1, nspins - 1, 2)],
-            [qubits[j + 1] for j in range(1, nspins - 1, 2)]))
-    even_qubits = list(
-        zip([qubits[j] for j in range(0, nspins - 1, 2)],
-            [qubits[j + 1] for j in range(0, nspins - 1, 2)]))
     for d in range(depth):
-        for q1, q2 in odd_qubits:
+        for q1, q2 in zip(odd_qubits, even_qubits[1:]):
             circuit.append(cirq.ZZ(q1, q2)**(symbols[d]))
             circuit.append(cirq.YY(q1, q2)**(symbols[d + depth]))
             circuit.append(cirq.XX(q1, q2)**(symbols[d + depth]))
@@ -497,7 +494,7 @@ def xxz_chain(qubits, boundary_condition="closed", data_dir=None):
             circuit.append(cirq.ZZ(qubits[-1], qubits[0])**(symbols[d]))
             circuit.append(cirq.YY(qubits[-1], qubits[0])**(symbols[d + depth]))
             circuit.append(cirq.XX(qubits[-1], qubits[0])**(symbols[d + depth]))
-        for q1, q2 in even_qubits:
+        for q1, q2 in zip(even_qubits, odd_qubits):
             circuit.append(cirq.ZZ(q1, q2)**(symbols[d + 2 * depth]))
             circuit.append(cirq.YY(q1, q2)**(symbols[d + 3 * depth]))
             circuit.append(cirq.XX(q1, q2)**(symbols[d + 3 * depth]))
@@ -518,7 +515,9 @@ def xxz_chain(qubits, boundary_condition="closed", data_dir=None):
         order_parameters.append(g)
         params = np.load(os.path.join(data_path, directory, "params.npy")) \
                  / np.pi
-        params = params.astype(np.float64)
+        # Parameters are stored as np.float32, but cirq expects np.float64
+        # See https://github.com/quantumlib/Cirq/issues/3359
+        params = params.astype(np.float)
         additional_info.append(
             SpinSystemInfo(g=g,
                            gs=np.load(
@@ -532,21 +531,18 @@ def xxz_chain(qubits, boundary_condition="closed", data_dir=None):
                            params=dict(zip(symbol_names, params.flatten())),
                            var_circuit=circuit))
         # Resolve the circuit parameters.
-        param_resolver = cirq.resolve_parameters(circuit,
-                                                 additional_info[i].params)
-        resolved_circuits.append(param_resolver)
+        resolved_circuit = cirq.resolve_parameters(circuit,
+                                                   additional_info[i].params)
+        resolved_circuits.append(resolved_circuit)
         # Make the PauliSum.
-        paulisum = sum(order_parameters[i] * cirq.Z(q1) * cirq.Z(q2)
+        paulisum = sum(order_parameters[i] * cirq.Z(q1) * cirq.Z(q2) +
+                       cirq.Y(q1) * cirq.Y(q2) + cirq.X(q1) * cirq.X(q2)
                        for q1, q2 in zip(qubits, qubits[1:]))
-        paulisum += sum(
-            cirq.Y(q1) * cirq.Y(q2) for q1, q2 in zip(qubits, qubits[1:]))
-        paulisum += sum(
-            cirq.X(q1) * cirq.X(q2) for q1, q2 in zip(qubits, qubits[1:]))
+
         if boundary_condition == "closed":
             paulisum += order_parameters[i] * cirq.Z(qubits[0]) * cirq.Z(
-                qubits[-1])
-            paulisum += cirq.Y(qubits[0]) * cirq.Y(qubits[-1])
-            paulisum += cirq.X(qubits[0]) * cirq.X(qubits[-1])
+                qubits[-1]) + cirq.Y(qubits[0]) * cirq.Y(qubits[-1]) + cirq.X(
+                    qubits[0]) * cirq.X(qubits[-1])
         hamiltonians.append(paulisum)
 
         # Set labels for the different phases.
