@@ -19,6 +19,34 @@ import cirq
 from tensorflow_quantum.datasets import spin_system
 from tensorflow_quantum.datasets.spin_system import SpinSystemInfo
 
+RANDOM_SUBSET_SIZE = 10
+# TFI CHAIN
+SUPPORTED_NSPINS_TFI_CHAIN = [4, 8, 12, 16]
+DATA_DICT_TFI_CHAIN = {}
+QBS_DICT_TFI_CHAIN = {}
+for nspins in SUPPORTED_NSPINS_TFI_CHAIN:
+    QBS_TFI_CHAIN = cirq.GridQubit.rect(nspins, 1)
+    DATA_DICT_TFI_CHAIN[nspins] = spin_system.tfi_chain(
+        QBS_TFI_CHAIN,
+        'closed',
+    )
+    QBS_DICT_TFI_CHAIN[nspins] = QBS_TFI_CHAIN
+RANDOM_SUBSET_TFI_CHAIN = np.random.permutation(list(
+    range(76)))[:RANDOM_SUBSET_SIZE]
+# XXZ CHAIN
+SUPPORTED_NSPINS_XXZ_CHAIN = [4, 8, 12, 16]
+DATA_DICT_XXZ_CHAIN = {}
+QBS_DICT_XXZ_CHAIN = {}
+for nspins in SUPPORTED_NSPINS_XXZ_CHAIN:
+    QBS_XXZ_CHAIN = cirq.GridQubit.rect(nspins, 1)
+    DATA_DICT_XXZ_CHAIN[nspins] = spin_system.xxz_chain(
+        QBS_XXZ_CHAIN,
+        'closed',
+    )
+    QBS_DICT_XXZ_CHAIN[nspins] = QBS_XXZ_CHAIN
+RANDOM_SUBSET_XXZ_CHAIN = np.random.permutation(list(
+    range(76)))[:RANDOM_SUBSET_SIZE]
+
 
 class TFIChainTest(tf.test.TestCase):
     """Testing tfi_chain."""
@@ -177,31 +205,5 @@ class XXZChainTest(tf.test.TestCase):
 
 
 if __name__ == '__main__':
-    RANDOM_SUBSET_SIZE = 10
-    # TFI CHAIN
-    SUPPORTED_NSPINS_TFI_CHAIN = [4, 8, 12, 16]
-    DATA_DICT_TFI_CHAIN = {}
-    QBS_DICT_TFI_CHAIN = {}
-    for nspins in SUPPORTED_NSPINS_TFI_CHAIN:
-        QBS_TFI_CHAIN = cirq.GridQubit.rect(nspins, 1)
-        DATA_DICT_TFI_CHAIN[nspins] = spin_system.tfi_chain(
-            QBS_TFI_CHAIN,
-            'closed',
-        )
-        QBS_DICT_TFI_CHAIN[nspins] = QBS_TFI_CHAIN
-    RANDOM_SUBSET_TFI_CHAIN = np.random.permutation(list(
-        range(76)))[:RANDOM_SUBSET_SIZE]
-    # XXZ CHAIN
-    SUPPORTED_NSPINS_XXZ_CHAIN = [4, 8, 12, 16]
-    DATA_DICT_XXZ_CHAIN = {}
-    QBS_DICT_XXZ_CHAIN = {}
-    for nspins in SUPPORTED_NSPINS_XXZ_CHAIN:
-        QBS_XXZ_CHAIN = cirq.GridQubit.rect(nspins, 1)
-        DATA_DICT_XXZ_CHAIN[nspins] = spin_system.xxz_chain(
-            QBS_XXZ_CHAIN,
-            'closed',
-        )
-        QBS_DICT_XXZ_CHAIN[nspins] = QBS_XXZ_CHAIN
-    RANDOM_SUBSET_XXZ_CHAIN = np.random.permutation(list(
-        range(76)))[:RANDOM_SUBSET_SIZE]
+
     tf.test.main()
