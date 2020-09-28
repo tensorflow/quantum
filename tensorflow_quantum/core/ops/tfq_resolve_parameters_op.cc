@@ -71,8 +71,6 @@ class TfqResolveParametersOp : public tensorflow::OpKernel {
     const int num_cycles = 1000;
     context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
         programs.size(), num_cycles, DoWork);
-    programs.clear();
-    maps.clear();
   }
 };
 

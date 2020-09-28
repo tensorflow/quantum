@@ -113,6 +113,90 @@ Status ResolveQubitIds(Program* program, unsigned int* num_qubits,
   return Status::OK();
 }
 
+Status ResolveQubitIds(Program* program, unsigned int* num_qubits,
+                       std::vector<Program>* other_programs) {
+  if (program->circuit().moments().empty()) {
+    // (#679) Just ignore empty program.
+    // Number of qubits in empty programs is zero.
+    *num_qubits = 0;
+    return Status::OK();
+  }
+
+  absl::flat_hash_set<std::pair<std::pair<int, int>, std::string>> id_set;
+  for (const Moment& moment : program->circuit().moments()) {
+    for (const Operation& operation : moment.operations()) {
+      for (const Qubit& qubit : operation.qubits()) {
+        int r, c;
+        const std::vector<std::string> splits = absl::StrSplit(qubit.id(), "_");
+        if (splits.size() != 2) {
+          return Status(tensorflow::error::INVALID_ARGUMENT,
+                        "Unable to parse qubit: " + qubit.id());
+        }
+        if (!absl::SimpleAtoi(splits[0], &r)) {
+          return Status(tensorflow::error::INVALID_ARGUMENT,
+                        "Unable to parse qubit: " + qubit.id());
+        }
+        if (!absl::SimpleAtoi(splits[1], &c)) {
+          return Status(tensorflow::error::INVALID_ARGUMENT,
+                        "Unable to parse qubit: " + qubit.id());
+        }
+        auto locs = std::pair<std::pair<int, int>, std::string>(
+            std::pair<int, int>(r, c), qubit.id());
+        id_set.insert(locs);
+      }
+    }
+  }
+  *num_qubits = id_set.size();
+
+  // call to std::sort will do (r1 < r2) || ((r1 == r2) && c1 < c2)
+  std::vector<std::pair<std::pair<int, int>, std::string>> ids(id_set.begin(),
+                                                               id_set.end());
+  std::sort(ids.begin(), ids.end());
+
+  absl::flat_hash_map<std::string, std::string> id_to_index;
+  absl::flat_hash_set<std::string> id_ref;
+  for (size_t i = 0; i < ids.size(); i++) {
+    id_to_index[ids[i].second] = absl::StrCat(i);
+    id_ref.insert(ids[i].second);
+  }
+
+  // Replace the Program Qubit ids with the indices.
+  for (Moment& moment : *program->mutable_circuit()->mutable_moments()) {
+    for (Operation& operation : *moment.mutable_operations()) {
+      for (Qubit& qubit : *operation.mutable_qubits()) {
+        qubit.set_id(id_to_index.at(qubit.id()));
+      }
+    }
+  }
+
+  for (size_t i = 0; i < other_programs->size(); i++) {
+    // Replace the other_program Qubit ids with the indices.
+    absl::flat_hash_set<std::string> visited_qubits(id_ref);
+    for (Moment& moment :
+         *(other_programs->at(i)).mutable_circuit()->mutable_moments()) {
+      for (Operation& operation : *moment.mutable_operations()) {
+        for (Qubit& qubit : *operation.mutable_qubits()) {
+          visited_qubits.erase(qubit.id());
+          const auto result = id_to_index.find(qubit.id());
+          if (result == id_to_index.end()) {
+            return Status(tensorflow::error::INVALID_ARGUMENT,
+                          "A paired circuit contains qubits not found in "
+                          "reference circuit.");
+          }
+          qubit.set_id(result->second);
+        }
+      }
+    }
+    if (!visited_qubits.empty()) {
+      return Status(
+          tensorflow::error::INVALID_ARGUMENT,
+          "A reference circuit contains qubits not found in paired circuit.");
+    }
+  }
+
+  return Status::OK();
+}
+
 Status ResolveSymbols(
     const absl::flat_hash_map<std::string, std::pair<int, float>>& param_map,
     Program* program, bool resolve_all /*=true*/) {
