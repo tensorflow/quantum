@@ -27,7 +27,6 @@ py_test(
 py_test(
     name = "spin_system_test",
     srcs = ["spin_system_test.py"],
-    timeout = "eternal",
     python_version = "PY3",
     deps = [
         ":spin_system",
