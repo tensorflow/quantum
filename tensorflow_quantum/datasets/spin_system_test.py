@@ -118,6 +118,7 @@ class TFIChainTest(tf.test.TestCase):
 
 class XXZChainTest(tf.test.TestCase):
     """Testing xxz_chain."""
+
     @classmethod
     def setUpClass(self) -> None:
         """Setup data for the test"""
