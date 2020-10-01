@@ -22,9 +22,10 @@ from tensorflow_quantum.datasets.spin_system import SpinSystemInfo
 
 class TFIChainTest(tf.test.TestCase):
     """Testing tfi_chain."""
+    # pylint: disable=C0103
 
     @classmethod
-    def setUpClass(self) -> None:
+    def setUpClass(self):
         """Setup data for the test"""
         self.random_subset_size = 10
         self.supported_nspins_tfi_chain = [4, 8, 12, 16]
@@ -118,9 +119,10 @@ class TFIChainTest(tf.test.TestCase):
 
 class XXZChainTest(tf.test.TestCase):
     """Testing xxz_chain."""
+    # pylint: disable=C0103
 
     @classmethod
-    def setUpClass(self) -> None:
+    def setUpClass(self):
         """Setup data for the test"""
         self.random_subset_size = 10
         # XXZ CHAIN
