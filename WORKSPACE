@@ -1,6 +1,6 @@
 # This file includes external dependencies that are required to compile the
 # TensorFlow op. Maybe of them are specific versions used by the TensorFlow
-# binary used. These are extracted from TF v2.3.0, tensorflow/workspace.bzl.
+# binary used. These are extracted from TF v2.3.1, tensorflow/workspace.bzl.
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
@@ -85,10 +85,10 @@ http_archive(
 
 http_archive(
     name = "org_tensorflow",
-    sha256 = "fd3e6580cfe2035aa80d569b76bba5f33119362907f3d77039b6bedf76172712",
-    strip_prefix = "tensorflow-2.2.0",
+    sha256 = "6f063636673d6ef4ac60febd2541e3ad3516a57c18339a680c794b736798d054",
+    strip_prefix = "tensorflow-2.3.1",
     urls = [
-        "https://github.com/tensorflow/tensorflow/archive/v2.2.0.zip",
+        "https://github.com/tensorflow/tensorflow/archive/v2.3.1.zip",
     ],
 )
 
