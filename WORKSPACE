@@ -60,9 +60,9 @@ http_archive(
 
 http_archive(
     name = "cirq",
-    sha256 = "c90f3a1f5a0c295e65e73a1ac1daf9ac81349ee32d57e78f6229bde4820bc59b",
-    strip_prefix = "Cirq-0.8.0",
-    urls = ["https://github.com/quantumlib/Cirq/archive/v0.8.0.zip"],
+    sha256 = "0bd07b9caddab7a2b52e49f0fe0b84a6844163eff34656f1a9f048847ec2b43a",
+    strip_prefix = "Cirq-0.9.0",
+    urls = ["https://github.com/quantumlib/Cirq/archive/v0.9.0.zip"],
 )
 
 http_archive(

@@ -24,8 +24,8 @@ from tensorflow_quantum.core.serialize import serializer
 from tensorflow_quantum.python import util
 
 MOMENT_DEPTH = 25
-WF_SIM = cirq.sim.sparse_simulator.Simulator()
-DM_SIM = cirq.sim.density_matrix_simulator.DensityMatrixSimulator()
+WF_SIM = cirq.Simulator()
+DM_SIM = cirq.DensityMatrixSimulator()
 
 
 class CirqAnalyticalExpectationTest(tf.test.TestCase):
@@ -34,20 +34,16 @@ class CirqAnalyticalExpectationTest(tf.test.TestCase):
     def test_get_cirq_analytical_expectation_op(self):
         """Input check the wrapper for the cirq analytical expectation op."""
         with self.assertRaisesRegex(
-                TypeError,
-                "simulator must inherit cirq.sim.SimulatesFinalState."):
+                TypeError, "simulator must inherit cirq.SimulatesFinalState."):
             cirq_ops._get_cirq_analytical_expectation("junk")
         # TODO(peterse): Tighten these tests a bit..
         cirq_ops._get_cirq_analytical_expectation()
-        cirq_ops._get_cirq_analytical_expectation(
-            cirq.sim.sparse_simulator.Simulator())
-        cirq_ops._get_cirq_analytical_expectation(
-            cirq.sim.density_matrix_simulator.DensityMatrixSimulator())
+        cirq_ops._get_cirq_analytical_expectation(cirq.Simulator())
+        cirq_ops._get_cirq_analytical_expectation(cirq.DensityMatrixSimulator())
 
     def test_cirq_analytical_expectation_op_inputs(self):
         """Test input checking in the state sim op."""
-        test_op = cirq_ops._get_cirq_analytical_expectation(
-            cirq.sim.sparse_simulator.Simulator())
+        test_op = cirq_ops._get_cirq_analytical_expectation(cirq.Simulator())
         bits = cirq.GridQubit.rect(1, 5)
         test_circuit = serializer.serialize_circuit(
             cirq.testing.random_circuit(bits, MOMENT_DEPTH,
@@ -90,8 +86,7 @@ class CirqAnalyticalExpectationTest(tf.test.TestCase):
 
     def test_analytic_expectation_empty_circuit(self):
         """Test empty circuits"""
-        test_op = cirq_ops._get_cirq_analytical_expectation(
-            cirq.sim.sparse_simulator.Simulator())
+        test_op = cirq_ops._get_cirq_analytical_expectation(cirq.Simulator())
         bits = cirq.GridQubit.rect(1, 5)
         test_pauli_sum = serializer.serialize_paulisum(
             cirq.PauliSum.from_pauli_strings([cirq.Z(bits[0])
@@ -111,15 +106,12 @@ class CirqSampledExpectationTest(tf.test.TestCase):
             cirq_ops._get_cirq_sampled_expectation("junk")
         # TODO(peterse): Tighten these tests a bit..
         cirq_ops._get_cirq_sampled_expectation()
-        cirq_ops._get_cirq_sampled_expectation(
-            cirq.sim.sparse_simulator.Simulator())
-        cirq_ops._get_cirq_sampled_expectation(
-            cirq.sim.density_matrix_simulator.DensityMatrixSimulator())
+        cirq_ops._get_cirq_sampled_expectation(cirq.Simulator())
+        cirq_ops._get_cirq_sampled_expectation(cirq.DensityMatrixSimulator())
 
     def test_cirq_sampled_expectation_op_inputs(self):
         """test input checking in the state sim op."""
-        test_op = cirq_ops._get_cirq_sampled_expectation(
-            cirq.sim.sparse_simulator.Simulator())
+        test_op = cirq_ops._get_cirq_sampled_expectation(cirq.Simulator())
         bits = cirq.GridQubit.rect(1, 5)
         test_circuit = serializer.serialize_circuit(
             cirq.testing.random_circuit(bits, MOMENT_DEPTH,
@@ -183,8 +175,7 @@ class CirqSampledExpectationTest(tf.test.TestCase):
 
     def test_sampled_expectation_empty_circuit(self):
         """Test empty circuits"""
-        test_op = cirq_ops._get_cirq_sampled_expectation(
-            cirq.sim.sparse_simulator.Simulator())
+        test_op = cirq_ops._get_cirq_sampled_expectation(cirq.Simulator())
         bits = cirq.GridQubit.rect(1, 5)
         test_pauli_sum = serializer.serialize_paulisum(
             cirq.PauliSum.from_pauli_strings([cirq.Z(bits[0])
@@ -200,20 +191,17 @@ class CirqSimulateStateTest(tf.test.TestCase, parameterized.TestCase):
     def test_get_cirq_state_op(self):
         """Input check the wrapper for the cirq state op."""
         with self.assertRaisesRegex(
-                TypeError,
-                "simulator must inherit cirq.sim.SimulatesFinalState."):
+                TypeError, "simulator must inherit cirq.SimulatesFinalState."):
             cirq_ops._get_cirq_simulate_state("junk")
         cirq_ops._get_cirq_simulate_state()
-        cirq_ops._get_cirq_simulate_state(cirq.sim.sparse_simulator.Simulator())
-        cirq_ops._get_cirq_simulate_state(
-            cirq.sim.density_matrix_simulator.DensityMatrixSimulator())
+        cirq_ops._get_cirq_simulate_state(cirq.Simulator())
+        cirq_ops._get_cirq_simulate_state(cirq.DensityMatrixSimulator())
 
     # TODO(trevormccrt): input checking might be parameterizeable over all ops
     # if we decide to properly input check our c++ ops
     def test_cirq_state_op_inputs(self):
         """test input checking in the state sim op."""
-        test_op = cirq_ops._get_cirq_simulate_state(
-            cirq.sim.sparse_simulator.Simulator())
+        test_op = cirq_ops._get_cirq_simulate_state(cirq.Simulator())
         bits = cirq.GridQubit.rect(1, 5)
         test_circuit = serializer.serialize_circuit(
             cirq.testing.random_circuit(bits, MOMENT_DEPTH,
@@ -285,9 +273,7 @@ class CirqSimulateStateTest(tf.test.TestCase, parameterized.TestCase):
 
             # density matricies should be zero everywhere except for the
             # top left corner
-            if isinstance(
-                    result,
-                    cirq.sim.density_matrix_simulator.DensityMatrixTrialResult):
+            if isinstance(result, cirq.DensityMatrixTrialResult):
                 dm = result.final_density_matrix
                 blank_state = np.ones(
                     (2**max(all_n_qubits), 2**(max(all_n_qubits))),
@@ -297,9 +283,7 @@ class CirqSimulateStateTest(tf.test.TestCase, parameterized.TestCase):
 
             # wavefunctions should be zero everywhere to the right of the states
             # present in this system
-            elif isinstance(
-                    result,
-                    cirq.sim.wave_function_simulator.WaveFunctionTrialResult):
+            elif isinstance(result, cirq.StateVectorTrialResult):
                 wf = result.final_state
                 blank_state = np.ones(
                     (2**max(all_n_qubits)), dtype=np.complex64) * -2
@@ -308,14 +292,15 @@ class CirqSimulateStateTest(tf.test.TestCase, parameterized.TestCase):
 
             else:
                 # TODO
-                raise RuntimeError('Simulator returned unknown type of result.')
+                raise RuntimeError(
+                    'Simulator returned unknown type of result.' +
+                    str(type(result)))
 
         self.assertAllClose(tfq_results, manual_padded_results)
 
     def test_state_empty_circuit(self):
         """Test empty circuits"""
-        test_op = cirq_ops._get_cirq_simulate_state(
-            cirq.sim.sparse_simulator.Simulator())
+        test_op = cirq_ops._get_cirq_simulate_state(cirq.Simulator())
         test_empty_circuit = serializer.serialize_circuit(
             cirq.Circuit()).SerializeToString()
         _ = test_op([test_empty_circuit], [], [[]])
@@ -329,9 +314,8 @@ class CirqSamplesTest(tf.test.TestCase, parameterized.TestCase):
         with self.assertRaisesRegex(TypeError, "must inherit cirq.Sampler."):
             cirq_ops._get_cirq_samples("junk")
         cirq_ops._get_cirq_samples()
-        cirq_ops._get_cirq_samples(cirq.sim.sparse_simulator.Simulator())
-        cirq_ops._get_cirq_samples(
-            cirq.sim.density_matrix_simulator.DensityMatrixSimulator())
+        cirq_ops._get_cirq_samples(cirq.Simulator())
+        cirq_ops._get_cirq_samples(cirq.DensityMatrixSimulator())
         mock_engine = mock.Mock()
         cirq_ops._get_cirq_samples(
             cirq.google.QuantumEngineSampler(engine=mock_engine,
@@ -340,8 +324,7 @@ class CirqSamplesTest(tf.test.TestCase, parameterized.TestCase):
 
     def test_cirq_sampling_op_inputs(self):
         """test input checking in the cirq sampling op."""
-        test_op = cirq_ops._get_cirq_samples(
-            cirq.sim.sparse_simulator.Simulator())
+        test_op = cirq_ops._get_cirq_samples(cirq.Simulator())
 
         bits = cirq.GridQubit.rect(1, 5)
         test_circuit = serializer.serialize_circuit(
@@ -407,16 +390,15 @@ class CirqSamplesTest(tf.test.TestCase, parameterized.TestCase):
             this_expected_output[:, :max(all_n_qubits) - n_qubits] = -2
             expected_outputs.append(this_expected_output)
             circuits.append(
-                cirq.Circuit(
-                    *cirq.X.on_each(*cirq.GridQubit.rect(1, n_qubits))))
+                cirq.Circuit(*cirq.X.on_each(
+                    *cirq.GridQubit.rect(1, n_qubits))))
         results = op(util.convert_to_tensor(circuits), [], [[]] * len(circuits),
                      [n_samples]).numpy()
         self.assertAllClose(expected_outputs, results)
 
     def test_sample_empty_circuit(self):
         """Test empty circuits"""
-        test_op = cirq_ops._get_cirq_samples(
-            cirq.sim.sparse_simulator.Simulator())
+        test_op = cirq_ops._get_cirq_samples(cirq.Simulator())
         test_empty_circuit = serializer.serialize_circuit(
             cirq.Circuit()).SerializeToString()
         _ = test_op([test_empty_circuit], [], [[]], [10])
@@ -430,7 +412,7 @@ class CirqSamplesTest(tf.test.TestCase, parameterized.TestCase):
             def run_sweep(self, program, params, repetitions):
                 """Returns all ones in the correct sample shape."""
                 return [
-                    cirq.TrialResult.from_single_parameter_set(
+                    cirq.TrialResult(
                         params=param,
                         measurements={
                             'tfq':
@@ -448,8 +430,8 @@ class CirqSamplesTest(tf.test.TestCase, parameterized.TestCase):
         circuits = []
         for n_qubits in all_n_qubits:
             circuits.append(
-                cirq.Circuit(
-                    *cirq.X.on_each(*cirq.GridQubit.rect(1, n_qubits))))
+                cirq.Circuit(*cirq.X.on_each(
+                    *cirq.GridQubit.rect(1, n_qubits))))
         test_results = this_op(util.convert_to_tensor(circuits), [],
                                [[]] * len(circuits), [n_samples]).numpy()
 

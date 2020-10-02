@@ -371,14 +371,13 @@ def batch_calculate_state(circuits, param_resolvers, simulator):
     _validate_inputs(circuits, param_resolvers, simulator, 'analytic')
 
     biggest_circuit = max(len(circuit.all_qubits()) for circuit in circuits)
-    if isinstance(simulator,
-                  cirq.sim.density_matrix_simulator.DensityMatrixSimulator):
+    if isinstance(simulator, cirq.DensityMatrixSimulator):
         return_mem_shape = (len(circuits), 1 << biggest_circuit,
                             1 << biggest_circuit)
         post_process = lambda x: x.final_density_matrix
-    elif isinstance(simulator, cirq.sim.sparse_simulator.Simulator):
+    elif isinstance(simulator, cirq.Simulator):
         return_mem_shape = (len(circuits), 1 << biggest_circuit)
-        post_process = lambda x: x.final_state
+        post_process = lambda x: x.final_state_vector
     else:
         raise TypeError('Simulator {} is not supported by '
                         'batch_calculate_state.'.format(type(simulator)))
@@ -440,12 +439,11 @@ def batch_calculate_expectation(circuits, param_resolvers, ops, simulator):
                                 ' Given: {}'.format(type(x)))
 
     return_mem_shape = (len(circuits), len(ops[0]))
-    if isinstance(simulator,
-                  cirq.sim.density_matrix_simulator.DensityMatrixSimulator):
+    if isinstance(simulator, cirq.DensityMatrixSimulator):
         post_process = lambda op, state, order: sum(
             x._expectation_from_density_matrix_no_validation(
                 state.final_density_matrix, order) for x in op).real
-    elif isinstance(simulator, cirq.sim.sparse_simulator.Simulator):
+    elif isinstance(simulator, cirq.Simulator):
         post_process = \
             lambda op, state, order: op.expectation_from_wavefunction(
                 state.final_state, order).real
@@ -615,13 +613,12 @@ def batch_sample(circuits, param_resolvers, n_samples, simulator):
     return_mem_shape = (len(circuits), n_samples, biggest_circuit)
     shared_array = _make_simple_view(return_mem_shape, -2, np.int32, 'i')
 
-    if isinstance(simulator,
-                  cirq.sim.density_matrix_simulator.DensityMatrixSimulator):
+    if isinstance(simulator, cirq.DensityMatrixSimulator):
         post_process = lambda state, size, n_samples: \
             cirq.sample_density_matrix(
                 state.final_density_matrix, [i for i in range(size)],
                 repetitions=n_samples)
-    elif isinstance(simulator, cirq.sim.sparse_simulator.Simulator):
+    elif isinstance(simulator, cirq.Simulator):
         post_process = lambda state, size, n_samples: cirq.sample_state_vector(
             state.final_state, list(range(size)), repetitions=n_samples)
     else:
