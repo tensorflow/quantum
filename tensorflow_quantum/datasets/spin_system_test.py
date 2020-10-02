@@ -40,6 +40,7 @@ class TFIChainTest(tf.test.TestCase):
             self.qbs_dict_tfi_chain[nspins] = qbs_tfi_chain
         self.random_subset_tfi_chain = np.random.permutation(list(
             range(76)))[:self.random_subset_size]
+        super(TFIChainTest).__init__(self)
 
     def test_errors(self):
         """Test that it errors on invalid arguments."""
@@ -138,6 +139,7 @@ class XXZChainTest(tf.test.TestCase):
             self.qbs_dict_xxz_chain[nspins] = qbs_xxz_chain
         self.random_subset_xxz_chain = np.random.permutation(list(
             range(76)))[:self.random_subset_size]
+        super(XXZChainTest).__init__(self)
 
     def test_errors(self):
         """Test that it errors on invalid arguments."""
