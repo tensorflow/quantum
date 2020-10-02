@@ -4,5 +4,5 @@ nbconvert==5.6.1
 nbformat==4.4.0
 pylint==2.4.4
 yapf==0.28.0
-tensorflow==2.3.0
+tensorflow==2.3.1
 google-api-python-client==1.8.0
