@@ -65,6 +65,7 @@ def test_imports():
     # Datasets.
     _ = tfq.datasets.excited_cluster_states
     _ = tfq.datasets.tfi_chain
+    _ = tfq.datasets.xxz_chain
 
     #Optimizers
     _ = tfq.optimizers.rotosolve_minimize
