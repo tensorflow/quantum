@@ -49,7 +49,7 @@ def _expectation_helper(sim, circuit, params, op):
     if isinstance(sim, cirq.Simulator):
         state = sim.simulate(circuit, params).final_state.astype(np.complex128)
         return [
-            op.expectation_from_wavefunction(
+            op.expectation_from_state_vector(
                 state,
                 dict(
                     zip(sorted(circuit.all_qubits()),
@@ -92,8 +92,8 @@ class BatchUtilTest(tf.test.TestCase, parameterized.TestCase):
     }, {
         'sim': cirq.Simulator()
     }])
-    def test_batch_simulate_state(self, sim):
-        """Test variable sized wavefunction output."""
+    def test_batch_simulate_state_vector(self, sim):
+        """Test variable sized state vector output."""
         circuit_batch, resolver_batch = _get_mixed_batch(
             cirq.GridQubit.rect(1, N_QUBITS), SYMBOLS, BATCH_SIZE)
         results = batch_util.batch_calculate_state(circuit_batch,

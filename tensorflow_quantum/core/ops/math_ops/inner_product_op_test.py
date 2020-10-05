@@ -245,9 +245,9 @@ class InnerProductTest(tf.test.TestCase, parameterized.TestCase):
         for i in range(batch_size):
             final_circuit = cirq.resolve_parameters(circuit_batch[i],
                                                     resolver_batch[i])
-            final_wf = cirq.final_wavefunction(final_circuit)
+            final_wf = cirq.final_state_vector(final_circuit)
             for j in range(inner_dim_size):
-                internal_wf = cirq.final_wavefunction(other_batch[i][j])
+                internal_wf = cirq.final_state_vector(other_batch[i][j])
                 out_arr[i][j] = np.vdot(final_wf, internal_wf)
 
         self.assertAllClose(out, out_arr)
@@ -292,9 +292,9 @@ class InnerProductTest(tf.test.TestCase, parameterized.TestCase):
 
         out_arr = np.empty((batch_size, inner_dim_size), dtype=np.complex64)
         for i in range(batch_size):
-            final_wf = cirq.final_wavefunction(circuit_batch[i])
+            final_wf = cirq.final_state_vector(circuit_batch[i])
             for j in range(inner_dim_size):
-                internal_wf = cirq.final_wavefunction(other_batch[i][j])
+                internal_wf = cirq.final_state_vector(other_batch[i][j])
                 out_arr[i][j] = np.vdot(final_wf, internal_wf)
 
         self.assertAllClose(out, out_arr)

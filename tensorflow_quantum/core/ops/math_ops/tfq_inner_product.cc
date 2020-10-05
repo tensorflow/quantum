@@ -162,7 +162,7 @@ class TfqInnerProductOp : public tensorflow::OpKernel {
     State sv = StateSpace(largest_nq, tfq_for).CreateState();
     State scratch = StateSpace(largest_nq, tfq_for).CreateState();
 
-    // Simulate programs one by one. Parallelizing over wavefunctions
+    // Simulate programs one by one. Parallelizing over state vectors
     // we no longer parallelize over circuits. Each time we encounter a
     // a larger circuit we will grow the Statevector as necessary.
     for (int i = 0; i < fused_circuits.size(); i++) {
