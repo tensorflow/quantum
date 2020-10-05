@@ -120,8 +120,7 @@ def _batch_deserialize_helper(programs, symbol_names, symbol_values):
     return de_ser_programs, resolvers
 
 
-def _get_cirq_analytical_expectation(
-        simulator=cirq.sim.sparse_simulator.Simulator()):
+def _get_cirq_analytical_expectation(simulator=cirq.Simulator()):
     """Get a `callable` that is a TensorFlow op that outputs expectation values.
 
     Generate a TensorFlow `tf.py_function` op that when called on `tf.Tensor`s
@@ -210,8 +209,8 @@ def _get_cirq_analytical_expectation(
 
         return expectations
 
-    if not isinstance(simulator, cirq.sim.SimulatesFinalState):
-        raise TypeError("simulator must inherit cirq.sim.SimulatesFinalState.")
+    if not isinstance(simulator, cirq.SimulatesFinalState):
+        raise TypeError("simulator must inherit cirq.SimulatesFinalState.")
 
     @_upgrade_inputs
     def expectation_generator(programs_tf, symbol_names_tf, symbol_values_tf,
@@ -231,8 +230,7 @@ def _get_cirq_analytical_expectation(
     return expectation_generator
 
 
-def _get_cirq_sampled_expectation(
-        simulator=cirq.sim.sparse_simulator.Simulator()):
+def _get_cirq_sampled_expectation(simulator=cirq.Simulator()):
     """Get a `callable` that is a TensorFlow op that outputs sampled expectation
     values.
 
@@ -388,7 +386,7 @@ def _group_tuples(inputs):
     return groups
 
 
-def _get_cirq_samples(sampler=cirq.sim.sparse_simulator.Simulator()):
+def _get_cirq_samples(sampler=cirq.Simulator()):
     """Get a `callable` that is a TensorFlow op that outputs circuit samples.
 
     Generate a TensorFlow `tf.py_function` op that when called on `tf.Tensor`s
@@ -472,10 +470,7 @@ def _get_cirq_samples(sampler=cirq.sim.sparse_simulator.Simulator()):
 
         num_samples = int(num_samples.numpy())
 
-        if isinstance(
-                sampler,
-            (cirq.sim.sparse_simulator.Simulator,
-             cirq.sim.density_matrix_simulator.DensityMatrixSimulator)):
+        if isinstance(sampler, (cirq.Simulator, cirq.DensityMatrixSimulator)):
             # Only local simulators can be handled by batch_sample
             results = batch_util.batch_sample(programs, resolvers, num_samples,
                                               sampler)
@@ -560,7 +555,7 @@ def _get_cirq_samples(sampler=cirq.sim.sparse_simulator.Simulator()):
     return sample_generator
 
 
-def _get_cirq_simulate_state(simulator=cirq.sim.sparse_simulator.Simulator()):
+def _get_cirq_simulate_state(simulator=cirq.Simulator()):
     """Get a `callable` that is a TensorFlow op that outputs circuit states.
 
     Generate a TensorFlow `tf.py_function` op that when called on `tf.Tensor`s
@@ -631,8 +626,8 @@ def _get_cirq_simulate_state(simulator=cirq.sim.sparse_simulator.Simulator()):
 
         return states, _no_grad
 
-    if not isinstance(simulator, cirq.sim.SimulatesFinalState):
-        raise TypeError("simulator must inherit cirq.sim.SimulatesFinalState.")
+    if not isinstance(simulator, cirq.SimulatesFinalState):
+        raise TypeError("simulator must inherit cirq.SimulatesFinalState.")
 
     @_upgrade_inputs
     def state_generator(circuit_spec, param_names, param_values):
@@ -645,7 +640,7 @@ def _get_cirq_simulate_state(simulator=cirq.sim.sparse_simulator.Simulator()):
             ],
             Tout=tf.complex64,
         )
-        if isinstance(simulator, cirq.sim.Simulator):
+        if isinstance(simulator, cirq.Simulator):
             out.set_shape([circuit_spec.shape[0], None])
         else:
             out.set_shape([circuit_spec.shape[0], None, None])

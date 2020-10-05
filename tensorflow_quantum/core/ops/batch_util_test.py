@@ -36,7 +36,7 @@ def _get_mixed_batch(qubits, symbols, size):
 
 
 def _pad_state(sim, state, n):
-    if isinstance(sim, cirq.sim.sparse_simulator.Simulator):
+    if isinstance(sim, cirq.Simulator):
         state = state.final_state
     if isinstance(sim, cirq.DensityMatrixSimulator):
         state = state.final_density_matrix
@@ -46,7 +46,7 @@ def _pad_state(sim, state, n):
 
 
 def _expectation_helper(sim, circuit, params, op):
-    if isinstance(sim, cirq.sim.sparse_simulator.Simulator):
+    if isinstance(sim, cirq.Simulator):
         state = sim.simulate(circuit, params).final_state.astype(np.complex128)
         return [
             op.expectation_from_wavefunction(
@@ -72,7 +72,7 @@ def _expectation_helper(sim, circuit, params, op):
 
 
 def _sample_helper(sim, state, n_qubits, n_samples):
-    if isinstance(sim, cirq.sim.sparse_simulator.Simulator):
+    if isinstance(sim, cirq.Simulator):
         return cirq.sample_state_vector(state.final_state,
                                         list(range(n_qubits)),
                                         repetitions=n_samples)
@@ -90,7 +90,7 @@ class BatchUtilTest(tf.test.TestCase, parameterized.TestCase):
     @parameterized.parameters([{
         'sim': cirq.DensityMatrixSimulator()
     }, {
-        'sim': cirq.sim.sparse_simulator.Simulator()
+        'sim': cirq.Simulator()
     }])
     def test_batch_simulate_state(self, sim):
         """Test variable sized wavefunction output."""
@@ -109,7 +109,7 @@ class BatchUtilTest(tf.test.TestCase, parameterized.TestCase):
     @parameterized.parameters([{
         'sim': cirq.DensityMatrixSimulator()
     }, {
-        'sim': cirq.sim.sparse_simulator.Simulator()
+        'sim': cirq.Simulator()
     }])
     def test_batch_expectation(self, sim):
         """Test expectation."""
@@ -131,7 +131,7 @@ class BatchUtilTest(tf.test.TestCase, parameterized.TestCase):
     @parameterized.parameters([{
         'sim': cirq.DensityMatrixSimulator()
     }, {
-        'sim': cirq.sim.sparse_simulator.Simulator()
+        'sim': cirq.Simulator()
     }])
     def test_batch_sampled_expectation(self, sim):
         """Test expectation."""
@@ -155,7 +155,7 @@ class BatchUtilTest(tf.test.TestCase, parameterized.TestCase):
     @parameterized.parameters([{
         'sim': cirq.DensityMatrixSimulator()
     }, {
-        'sim': cirq.sim.sparse_simulator.Simulator()
+        'sim': cirq.Simulator()
     }])
     def test_batch_sample_basic(self, sim):
         """Test sampling."""
@@ -178,7 +178,7 @@ class BatchUtilTest(tf.test.TestCase, parameterized.TestCase):
     @parameterized.parameters([{
         'sim': cirq.DensityMatrixSimulator()
     }, {
-        'sim': cirq.sim.sparse_simulator.Simulator()
+        'sim': cirq.Simulator()
     }])
     def test_batch_sample(self, sim):
         """Test sampling."""
@@ -214,7 +214,7 @@ class BatchUtilTest(tf.test.TestCase, parameterized.TestCase):
     @parameterized.parameters([{
         'sim': cirq.DensityMatrixSimulator()
     }, {
-        'sim': cirq.sim.sparse_simulator.Simulator()
+        'sim': cirq.Simulator()
     }])
     def test_empty_circuits(self, sim):
         """Test functions with empty circuits."""
