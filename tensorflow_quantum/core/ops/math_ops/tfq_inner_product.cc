@@ -239,8 +239,8 @@ class TfqInnerProductOp : public tensorflow::OpKernel {
         }
 
         if (cur_batch_index != old_batch_index) {
-          // We've run into a new wavefunction we must compute.
-          // Only compute a new wavefunction when we have to.
+          // We've run into a new state vector we must compute.
+          // Only compute a new state vector when we have to.
           if (nq > largest_nq) {
             sv = ss.CreateState();
             scratch = ss.CreateState();

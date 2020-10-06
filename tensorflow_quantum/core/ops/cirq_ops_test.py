@@ -281,7 +281,7 @@ class CirqSimulateStateTest(tf.test.TestCase, parameterized.TestCase):
                 blank_state[:dm.shape[0], :dm.shape[1]] = dm
                 manual_padded_results.append(blank_state)
 
-            # wavefunctions should be zero everywhere to the right of the states
+            # state vectors should be zero everywhere to the right of the states
             # present in this system
             elif isinstance(result, cirq.StateVectorTrialResult):
                 wf = result.final_state

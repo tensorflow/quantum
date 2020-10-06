@@ -22,7 +22,7 @@ from tensorflow_quantum.core.ops import (cirq_ops, tfq_simulate_ops,
 from tensorflow_quantum.python import quantum_context
 
 
-class TFQWavefunctionSimulator(enum.Enum):
+class TFQStateVectorSimulator(enum.Enum):
     """Enum to make specifying TFQ simulators user-friendly."""
     expectation = tfq_simulate_ops.tfq_simulate_expectation
     samples = tfq_simulate_ops.tfq_simulate_samples
@@ -120,7 +120,7 @@ def get_expectation_op(
 
     op = None
     if backend is None:
-        op = TFQWavefunctionSimulator.expectation
+        op = TFQStateVectorSimulator.expectation
 
     if isinstance(backend, cirq.SimulatesFinalState):
         op = cirq_ops._get_cirq_analytical_expectation(backend)
@@ -216,7 +216,7 @@ def get_sampling_op(
 
     op = None
     if backend is None:
-        op = TFQWavefunctionSimulator.samples
+        op = TFQStateVectorSimulator.samples
 
     if isinstance(backend, cirq.Sampler):
         op = cirq_ops._get_cirq_samples(backend)
@@ -269,7 +269,7 @@ def get_state_op(
         backend: Optional Python `object` that specifies what backend this op
             should use when evaluating circuits. Can be any
             `cirq.SimulatesFinalState`. If not provided, the default C++
-            wavefunction simulator will be used.
+            state vector simulator will be used.
         quantum_concurrent: Optional Python `bool`. True indicates that the
             returned op should not block graph level parallelism on itself when
             executing. False indicates that graph level parallelism on itself
@@ -305,7 +305,7 @@ def get_state_op(
 
     op = None
     if backend is None:
-        op = TFQWavefunctionSimulator.state
+        op = TFQStateVectorSimulator.state
 
     if isinstance(backend, (cirq.SimulatesFinalState)):
         op = cirq_ops._get_cirq_simulate_state(backend)
@@ -416,7 +416,7 @@ def get_sampled_expectation_op(
 
     op = None
     if backend is None:
-        op = TFQWavefunctionSimulator.sampled_expectation
+        op = TFQStateVectorSimulator.sampled_expectation
 
     if isinstance(backend, cirq.Sampler):
         op = cirq_ops._get_cirq_sampled_expectation(backend)

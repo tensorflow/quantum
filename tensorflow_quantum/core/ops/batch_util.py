@@ -211,7 +211,7 @@ def _setup_dict(array_view, view_shape, simulator, post_process):
 
 
 def _state_worker_func(indices, programs, params):
-    """Compute the wavefunction for each program in indices."""
+    """Compute the state vector for each program in indices."""
     x_np = _convert_complex_view_to_np(INFO_DICT['arr'], INFO_DICT['shape'])
     simulator = INFO_DICT['sim']
 
@@ -243,7 +243,7 @@ def _analytical_expectation_worker_func(indices, programs, params, ops):
             continue
 
         if old_batch_index != batch_index:
-            # must compute a new wavefunction.
+            # must compute a new state vector.
             qubit_oder = dict(
                 zip(sorted(programs[batch_index].all_qubits()),
                     list(range(len(programs[batch_index].all_qubits())))))
@@ -349,7 +349,7 @@ def batch_calculate_state(circuits, param_resolvers, simulator):
     `cirq.ParamResolver` in `param_resolvers` was used to resolve any symbols
     in it. If simulator is a `cirq.DensityMatrixSimulator` this final state will
     be a density matrix, if simulator is a `cirq.Simulator` this final state
-    will be a wavefunction. More specifically for a given `i`
+    will be a state vector. More specifically for a given `i`
     `batch_calculate_state` will use `param_resolvers[i]` to resolve the symbols
     in `circuits[i]` and then place the final state in the return list at index
     `i`.
@@ -445,7 +445,7 @@ def batch_calculate_expectation(circuits, param_resolvers, ops, simulator):
                 state.final_density_matrix, order) for x in op).real
     elif isinstance(simulator, cirq.Simulator):
         post_process = \
-            lambda op, state, order: op.expectation_from_wavefunction(
+            lambda op, state, order: op.expectation_from_state_vector(
                 state.final_state, order).real
     else:
         raise TypeError('Simulator {} is not supported by '
