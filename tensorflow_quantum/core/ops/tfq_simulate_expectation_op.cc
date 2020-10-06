@@ -134,7 +134,7 @@ class TfqSimulateExpectationOp : public tensorflow::OpKernel {
     State sv = StateSpace(largest_nq, tfq_for).CreateState();
     State scratch = StateSpace(largest_nq, tfq_for).CreateState();
 
-    // Simulate programs one by one. Parallelizing over wavefunctions
+    // Simulate programs one by one. Parallelizing over state vectors
     // we no longer parallelize over circuits. Each time we encounter a
     // a larger circuit we will grow the Statevector as necessary.
     for (int i = 0; i < fused_circuits.size(); i++) {
@@ -205,8 +205,8 @@ class TfqSimulateExpectationOp : public tensorflow::OpKernel {
         }
 
         if (cur_batch_index != old_batch_index) {
-          // We've run into a new wavefunction we must compute.
-          // Only compute a new wavefunction when we have to.
+          // We've run into a new state vector we must compute.
+          // Only compute a new state vector when we have to.
           if (nq > largest_nq) {
             sv = ss.CreateState();
             scratch = ss.CreateState();
