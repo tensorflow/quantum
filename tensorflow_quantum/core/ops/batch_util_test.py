@@ -47,7 +47,8 @@ def _pad_state(sim, state, n):
 
 def _expectation_helper(sim, circuit, params, op):
     if isinstance(sim, cirq.Simulator):
-        state = sim.simulate(circuit, params).final_state_vector.astype(np.complex128)
+        state = sim.simulate(circuit,
+                             params).final_state_vector.astype(np.complex128)
         return [
             op.expectation_from_state_vector(
                 state,
