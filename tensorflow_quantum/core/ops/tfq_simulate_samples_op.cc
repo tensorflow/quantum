@@ -133,7 +133,7 @@ class TfqSimulateSamplesOp : public tensorflow::OpKernel {
     int largest_nq = 1;
     State sv = StateSpace(largest_nq, tfq_for).CreateState();
 
-    // Simulate programs one by one. Parallelizing over wavefunctions
+    // Simulate programs one by one. Parallelizing over state vectors
     // we no longer parallelize over circuits. Each time we encounter a
     // a larger circuit we will grow the Statevector as nescessary.
     for (int i = 0; i < fused_circuits.size(); i++) {

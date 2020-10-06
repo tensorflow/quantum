@@ -37,7 +37,7 @@ def _get_mixed_batch(qubits, symbols, size):
 
 def _pad_state(sim, state, n):
     if isinstance(sim, cirq.Simulator):
-        state = state.final_state
+        state = state.final_state_vector
     if isinstance(sim, cirq.DensityMatrixSimulator):
         state = state.final_density_matrix
     return np.pad(state, (0, (1 << n) - state.shape[-1]),
@@ -47,9 +47,10 @@ def _pad_state(sim, state, n):
 
 def _expectation_helper(sim, circuit, params, op):
     if isinstance(sim, cirq.Simulator):
-        state = sim.simulate(circuit, params).final_state.astype(np.complex128)
+        state = sim.simulate(circuit,
+                             params).final_state_vector.astype(np.complex128)
         return [
-            op.expectation_from_wavefunction(
+            op.expectation_from_state_vector(
                 state,
                 dict(
                     zip(sorted(circuit.all_qubits()),
@@ -73,7 +74,7 @@ def _expectation_helper(sim, circuit, params, op):
 
 def _sample_helper(sim, state, n_qubits, n_samples):
     if isinstance(sim, cirq.Simulator):
-        return cirq.sample_state_vector(state.final_state,
+        return cirq.sample_state_vector(state.final_state_vector,
                                         list(range(n_qubits)),
                                         repetitions=n_samples)
     if isinstance(sim, cirq.DensityMatrixSimulator):
@@ -92,8 +93,8 @@ class BatchUtilTest(tf.test.TestCase, parameterized.TestCase):
     }, {
         'sim': cirq.Simulator()
     }])
-    def test_batch_simulate_state(self, sim):
-        """Test variable sized wavefunction output."""
+    def test_batch_simulate_state_vector(self, sim):
+        """Test variable sized state vector output."""
         circuit_batch, resolver_batch = _get_mixed_batch(
             cirq.GridQubit.rect(1, N_QUBITS), SYMBOLS, BATCH_SIZE)
         results = batch_util.batch_calculate_state(circuit_batch,

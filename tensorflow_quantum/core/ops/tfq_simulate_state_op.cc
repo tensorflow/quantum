@@ -127,7 +127,7 @@ class TfqSimulateStateOp : public tensorflow::OpKernel {
     int largest_nq = 1;
     State sv = StateSpace(largest_nq, tfq_for).CreateState();
 
-    // Simulate programs one by one. Parallelizing over wavefunctions
+    // Simulate programs one by one. Parallelizing over state vectors
     // we no longer parallelize over circuits. Each time we encounter a
     // a larger circuit we will grow the Statevector as nescessary.
     for (int i = 0; i < fused_circuits.size(); i++) {
@@ -217,7 +217,7 @@ REGISTER_OP("TfqSimulateState")
     .Input("programs: string")
     .Input("symbol_names: string")
     .Input("symbol_values: float")
-    .Output("wavefunction: complex64")
+    .Output("state_vector: complex64")
     .SetShapeFn([](tensorflow::shape_inference::InferenceContext* c) {
       tensorflow::shape_inference::ShapeHandle programs_shape;
       TF_RETURN_IF_ERROR(c->WithRank(c->input(0), 1, &programs_shape));
