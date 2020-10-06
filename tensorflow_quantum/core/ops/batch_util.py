@@ -446,7 +446,7 @@ def batch_calculate_expectation(circuits, param_resolvers, ops, simulator):
     elif isinstance(simulator, cirq.Simulator):
         post_process = \
             lambda op, state, order: op.expectation_from_state_vector(
-                state.final_state, order).real
+                state.final_state_vector, order).real
     else:
         raise TypeError('Simulator {} is not supported by '
                         'batch_calculate_expectation.'.format(type(simulator)))
@@ -620,7 +620,7 @@ def batch_sample(circuits, param_resolvers, n_samples, simulator):
                 repetitions=n_samples)
     elif isinstance(simulator, cirq.Simulator):
         post_process = lambda state, size, n_samples: cirq.sample_state_vector(
-            state.final_state, list(range(size)), repetitions=n_samples)
+            state.final_state_vector, list(range(size)), repetitions=n_samples)
     else:
         raise TypeError('Simulator {} is not supported by batch_sample.'.format(
             type(simulator)))

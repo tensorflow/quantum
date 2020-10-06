@@ -284,7 +284,7 @@ class CirqSimulateStateTest(tf.test.TestCase, parameterized.TestCase):
             # state vectors should be zero everywhere to the right of the states
             # present in this system
             elif isinstance(result, cirq.StateVectorTrialResult):
-                wf = result.final_state
+                wf = result.final_state_vector
                 blank_state = np.ones(
                     (2**max(all_n_qubits)), dtype=np.complex64) * -2
                 blank_state[:wf.shape[0]] = wf
