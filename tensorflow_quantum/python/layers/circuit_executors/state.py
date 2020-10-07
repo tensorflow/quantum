@@ -51,7 +51,7 @@ class State(tf.keras.layers.Layer):
         (0.-3.0908619663705394e-08j), (0.707106+6.181723932741079e-08j)]]>
 
 
-    This use case can be simplified to compute the wavefunction produced by a
+    This use case can be simplified to compute the state vector produced by a
     fixed circuit where the values of the parameters vary. For example, this
     layer produces a Bell state.
 

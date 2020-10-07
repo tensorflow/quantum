@@ -46,7 +46,7 @@ def tfq_simulate_expectation(programs, symbol_names, symbol_values, pauli_sums):
 
 
 def tfq_simulate_state(programs, symbol_names, symbol_values):
-    """Returns the state of the programs using the C++ wavefunction simulator.
+    """Returns the state of the programs using the C++ state vector simulator.
 
     Simulate the final state of `programs` given `symbol_values` are placed
     inside of the symbols with the name in `symbol_names` in each circuit.
@@ -70,7 +70,7 @@ def tfq_simulate_state(programs, symbol_names, symbol_values):
 
 
 def tfq_simulate_samples(programs, symbol_names, symbol_values, num_samples):
-    """Generate samples using the C++ wavefunction simulator.
+    """Generate samples using the C++ state vector simulator.
 
     Simulate the final state of `programs` given `symbol_values` are placed
     inside of the symbols with the name in `symbol_names` in each circuit.

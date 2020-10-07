@@ -92,7 +92,7 @@ def _download_spin_data(system_name, boundary_condition, nspins, data_dir):
 
 
 def tfi_chain(qubits, boundary_condition="closed", data_dir=None):
-    """Transverse field Ising-model quantum data set.
+    """1D Transverse field Ising-model quantum data set.
 
     $$
     H = - \sum_{i} \sigma_i^z \sigma_{i+1}^z - g\sigma_i^x
@@ -267,7 +267,6 @@ def tfi_chain(qubits, boundary_condition="closed", data_dir=None):
     order_parameters = []
     additional_info = []
     labels = []
-
     # Load the data and append to the lists.
     for i, directory in enumerate(x for x in os.listdir(data_path)):
         # The folders are named according to the order value data they contain.
@@ -279,6 +278,9 @@ def tfi_chain(qubits, boundary_condition="closed", data_dir=None):
         order_parameters.append(g)
         params = np.load(os.path.join(data_path, directory, "params.npy")) \
                  / np.pi
+        # Parameters are stored as np.float32, but cirq expects np.float64
+        # See https://github.com/quantumlib/Cirq/issues/3359
+        params = params.astype(np.float)
         additional_info.append(
             SpinSystemInfo(g=g,
                            gs=np.load(
@@ -293,9 +295,9 @@ def tfi_chain(qubits, boundary_condition="closed", data_dir=None):
                            var_circuit=circuit))
 
         # Resolve the circuit parameters.
-        param_resolver = cirq.resolve_parameters(circuit,
-                                                 additional_info[i].params)
-        resolved_circuits.append(param_resolver)
+        resolved_circuit = cirq.resolve_parameters(circuit,
+                                                   additional_info[i].params)
+        resolved_circuits.append(resolved_circuit)
 
         # Make the PauliSum.
         paulisum = sum(
@@ -312,6 +314,242 @@ def tfi_chain(qubits, boundary_condition="closed", data_dir=None):
             labels.append(1)
         else:
             labels.append(2)
+    # Make sure that the data is ordered from g=0.2 to g=1.8.
+    _, resolved_circuits, labels, hamiltonians, additional_info = zip(*sorted(
+        zip(order_parameters, resolved_circuits, labels, hamiltonians,
+            additional_info)))
+
+    return resolved_circuits, labels, hamiltonians, additional_info
+
+
+def xxz_chain(qubits, boundary_condition="closed", data_dir=None):
+    """1D XXZ model quantum data set.
+
+    $$
+    H = \sum_{i} \sigma_i^x \sigma_{i+1}^x + \sigma_i^y \sigma_{i+1}^y +
+    \Delta\sigma_i^z \sigma_{i+1}^z
+    $$
+
+    Contains 76 circuit parameterizations corresponding to
+    the ground states of the 1D XXZ chain for g in [0.3,1.8].
+    This dataset contains 76 datapoints. Each datapoint is represented by a
+    circuit (`cirq.Circuit`), a label (Python `float`) a Hamiltonian
+    (`cirq.PauliSum`) and some additional metadata. Each Hamiltonian in a
+    datapoint is a 1D XXZ chain with boundary condition `boundary_condition` on
+    `qubits` whos order parameter dictates the value of label. The circuit in a
+    datapoint prepares (an approximation to) the ground state of the Hamiltonian
+    in the datapoint.
+
+    Example usage:
+
+    >>> qbs = cirq.GridQubit.rect(4, 1)
+    >>> circuits, labels, pauli_sums, addinfo  =
+    ...     tfq.datasets.xxz_chain(qbs, "closed")
+
+    You can print the available order parameters
+
+    >>> [info.g for info in addinfo]
+    [0.30, 0.32, 0.34, ... ,1.76, 1.78, 1.8]
+
+    and the circuit corresponding to the ground state for a certain order
+    parameter
+
+    >>> print(circuits[10])
+                           ┌──────────────────┐   ┌──────────────────┐
+    (0, 0): ───X───H───@─────────────ZZ─────────────────────YY────────── ...
+                       │             │                      │
+    (1, 0): ───X───────X────ZZ───────┼─────────────YY───────┼─────────── ...
+                            │        │             │        │
+    (2, 0): ───X───H───@────ZZ^-0.922┼─────────────YY^-0.915┼─────────── ...
+                       │             │                      │
+    (3, 0): ───X───────X─────────────ZZ^-0.922──────────────YY^-0.915─── ...
+                           └──────────────────┘   └──────────────────┘
+
+    The labels indicate the phase of the system
+    >>> labels[10]
+    0
+
+    Additionally, you can obtain the `cirq.PauliSum` representation of the
+    Hamiltonian
+
+    >>> print(pauli_sums[10])
+    0.400*Z((0, 0))*Z((1, 0))+0.400*Z((1, 0))*Z((2, 0))+ ...
+    +1.000*Y((0, 0))*Y((3, 0))+1.000*X((0, 0))*X((3, 0))
+
+    The fourth output, `addinfo`, contains additional information
+    about each instance of the system (see `tfq.datasets.spin_system.SpinSystem`
+    ).
+
+    For instance, you can print the ground state obtained from
+    exact diagonalization
+
+    >>> addinfo[10].gs
+    [-8.69032854e-18-6.58023246e-20j  4.54546402e-17+3.08736567e-17j
+     -9.51026525e-18+2.42638062e-17j  4.52284042e-02+3.18111120e-01j
+                                    ...
+      4.52284042e-02+3.18111120e-01j -6.57974275e-18-3.84526414e-17j
+     -1.60673943e-17+5.79767820e-17j  2.86193021e-17-5.06694574e-17j]
+
+    with corresponding ground state energy
+
+    >>> addinfo[10].gs_energy
+    -6.744562646538039
+
+    You can also inspect the parameters
+
+    >>> addinfo[10].params
+    {'theta_0': 1.0780547, 'theta_1': 0.99271035, 'theta_2': 1.0854135, ...
+
+    and change them to experiment with different parameter values by using
+    the unresolved variational circuit returned by xxzchain
+    >>> new_params = {}
+    ... for symbol_name, value in addinfo[10].params.items():
+    ...    new_params[symbol_name] = 0.5 * value
+    >>> new_params
+    {'theta_0': 0.5390273332595825, 'theta_1': 0.49635517597198486, ...
+    >>> new_circuit = cirq.resolve_parameters(addinfo[10].var_circuit,
+    ... new_params)
+    >>> print(new_circuit)
+                           ┌──────────────────┐   ┌──────────────────┐
+    (0, 0): ───X───H───@─────────────ZZ─────────────────────YY────────── ...
+                       │             │                      │
+    (1, 0): ───X───────X────ZZ───────┼─────────────YY───────┼─────────── ...
+                            │        │             │        │
+    (2, 0): ───X───H───@────ZZ^(7/13)┼─────────────YY^0.543 ┼─────────── ...
+                       │             │                      │
+    (3, 0): ───X───────X─────────────ZZ^(7/13)──────────────YY^0.543 ─── ...
+                           └──────────────────┘   └──────────────────┘
+    Args:
+        qubits: Python `lst` of `cirq.GridQubit`s. Supported number of spins
+            are [4, 8, 12, 16].
+        boundary_condition: Python `str` indicating the boundary condition
+            of the chain. Supported boundary conditions are ["closed"].
+        data_dir: Optional Python `str` location where to store the data on
+            disk. Defaults to `/tmp/.keras`.
+    Returns:
+        A Python `lst` cirq.Circuit of depth len(qubits) / 2 with resolved
+            parameters.
+        A Python `lst` of labels, 0, for the critical metallic phase
+            (`Delta<=1`) and 1 for the insulating phase (`Delta>1`).
+        A Python `lst` of `cirq.PauliSum`s.
+        A Python `lst` of `namedtuple` instances containing the following
+            fields:
+        - `g`: Numpy `float` order parameter.
+        - `gs`: Complex `np.ndarray` ground state wave function from
+            exact diagonalization.
+        - `gs_energy`: Numpy `float` ground state energy from exact
+            diagonalization.
+        - `res_energy`: Python `float` residual between the circuit energy
+            and the exact energy from exact diagonalization.
+        - `fidelity`: Python `float` overlap between the circuit state
+            and the exact ground state from exact diagonalization.
+        - `params`: Dict with Python `str` keys and Numpy`float` values.
+            Contains $M \times P $ parameters. Here $M$ is the number of
+            parameters per circuit layer and $P$ the circuit depth.
+        - `var_circuit`: Variational `cirq.Circuit` quantum circuit with
+            unresolved Sympy parameters.
+    """
+
+    supported_n = [4, 8, 12, 16]
+    supported_bc = ["closed"]
+    if any(isinstance(q, list) for q in qubits):
+        raise TypeError("qubits must be a one-dimensional list")
+
+    if not all(isinstance(q, cirq.GridQubit) for q in qubits):
+        raise TypeError("qubits must be a list of cirq.GridQubit objects.")
+
+    nspins = len(qubits)
+    depth = nspins // 2
+    if nspins not in supported_n:
+        raise ValueError("Supported number of spins are {}, received {}".format(
+            supported_n, nspins))
+
+    if boundary_condition not in supported_bc:
+        raise ValueError(
+            "Supported boundary conditions are {}, received {}".format(
+                supported_bc, boundary_condition))
+
+    data_path = _download_spin_data('XXZ_chain', boundary_condition, nspins,
+                                    data_dir)
+
+    name_generator = unique_name()
+
+    # 4 * N/2 parameters.
+    symbol_names = [next(name_generator) for _ in range(2 * nspins)]
+    symbols = [sympy.Symbol(name) for name in symbol_names]
+
+    # Define the circuit.
+    circuit = cirq.Circuit(cirq.X.on_each(qubits))
+    even_qubits = qubits[::2]
+    odd_qubits = qubits[1::2]
+    circuit.append(cirq.H(qubits[i]) for i in range(0, nspins, 2))
+    circuit.append(cirq.CNOT(q1, q2) for q1, q2 in zip(even_qubits, odd_qubits))
+
+    for d in range(depth):
+        for q1, q2 in zip(odd_qubits, even_qubits[1:]):
+            circuit.append(cirq.ZZ(q1, q2)**(symbols[d]))
+            circuit.append(cirq.YY(q1, q2)**(symbols[d + depth]))
+            circuit.append(cirq.XX(q1, q2)**(symbols[d + depth]))
+        if boundary_condition == "closed":
+            circuit.append(cirq.ZZ(qubits[-1], qubits[0])**(symbols[d]))
+            circuit.append(cirq.YY(qubits[-1], qubits[0])**(symbols[d + depth]))
+            circuit.append(cirq.XX(qubits[-1], qubits[0])**(symbols[d + depth]))
+        for q1, q2 in zip(even_qubits, odd_qubits):
+            circuit.append(cirq.ZZ(q1, q2)**(symbols[d + 2 * depth]))
+            circuit.append(cirq.YY(q1, q2)**(symbols[d + 3 * depth]))
+            circuit.append(cirq.XX(q1, q2)**(symbols[d + 3 * depth]))
+    # Initiate lists.
+    resolved_circuits = []
+    hamiltonians = []
+    order_parameters = []
+    additional_info = []
+    labels = []
+    # Load the data and append to the lists.
+    for i, directory in enumerate(x for x in os.listdir(data_path)):
+        # The folders are named according to the order value data they contain.
+        g = float(directory)
+        with open(os.path.join(data_path, directory, "stats.txt"), "r") as file:
+            lines = file.readlines()
+            res_e = float(lines[0].split("=")[1].strip("\n"))
+            fidelity = float(lines[2].split("=")[1].strip("\n"))
+        order_parameters.append(g)
+        params = np.load(os.path.join(data_path, directory, "params.npy")) \
+                 / np.pi
+        # Parameters are stored as np.float32, but cirq expects np.float64
+        # See https://github.com/quantumlib/Cirq/issues/3359
+        params = params.astype(np.float)
+        additional_info.append(
+            SpinSystemInfo(g=g,
+                           gs=np.load(
+                               os.path.join(data_path, directory,
+                                            "groundstate.npy"))[:, 0],
+                           gs_energy=np.load(
+                               os.path.join(data_path, directory,
+                                            "energy.npy"))[0],
+                           res_energy=res_e,
+                           fidelity=fidelity,
+                           params=dict(zip(symbol_names, params.flatten())),
+                           var_circuit=circuit))
+        # Resolve the circuit parameters.
+        resolved_circuit = cirq.resolve_parameters(circuit,
+                                                   additional_info[i].params)
+        resolved_circuits.append(resolved_circuit)
+        # Make the PauliSum.
+        paulisum = sum(order_parameters[i] * cirq.Z(q1) * cirq.Z(q2) +
+                       cirq.Y(q1) * cirq.Y(q2) + cirq.X(q1) * cirq.X(q2)
+                       for q1, q2 in zip(qubits, qubits[1:]))
+
+        if boundary_condition == "closed":
+            paulisum += order_parameters[i] * cirq.Z(qubits[0]) * cirq.Z(
+                qubits[-1]) + cirq.Y(qubits[0]) * cirq.Y(qubits[-1]) + cirq.X(
+                    qubits[0]) * cirq.X(qubits[-1])
+        hamiltonians.append(paulisum)
+
+        # Set labels for the different phases.
+        if order_parameters[i] <= 1.0:
+            labels.append(0)
+        else:
+            labels.append(1)
 
     # Make sure that the data is ordered from g=0.2 to g=1.8.
     _, resolved_circuits, labels, hamiltonians, additional_info = zip(*sorted(
