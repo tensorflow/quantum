@@ -96,6 +96,13 @@ class LinearCombination(differentiator.Differentiator):
         self.perturbations = tf.constant(perturbations)
 
     @tf.function
+    def get_gradient_circuits(self, programs, symbol_names, symbol_values):
+        """See base class description."""
+        raise NotImplementedError(
+            "Gradient circuits are not currently available for "
+            "LinearCombination.")
+
+    @tf.function
     def differentiate_analytic(self, programs, symbol_names, symbol_values,
                                pauli_sums, forward_pass_vals, grad):
 

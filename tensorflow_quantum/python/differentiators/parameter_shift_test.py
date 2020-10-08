@@ -46,6 +46,13 @@ def _simple_op_inputs():
 class ParameterShiftTest(tf.test.TestCase, parameterized.TestCase):
     """Test the ParameterShift Differentiator will run end to end."""
 
+    def test_no_gradient_circuits(self):
+        """Confirm ParameterShift differentiator has no gradient circuits."""
+        dif = linear_combination.ParameterShift()
+        with self.assertRaisesRegex(NotImplementedError,
+                                    expected_regex="not currently available"):
+            _ = dif.get_gradient_circuits(None, None, None)
+
     def test_parameter_shift_analytic(self):
         """Test if ParameterShift.differentiate_analytical doesn't crash before
         running."""

@@ -36,7 +36,6 @@ class AdjointTest(tf.test.TestCase):
 
     def test_no_gradient_circuits(self):
         """Confirm the adjoint differentiator has no gradient circuits."""
-
         dif = adjoint.Adjoint()
         with self.assertRaisesRegex(NotImplementedError,
                                     expected_regex="no accessible "
