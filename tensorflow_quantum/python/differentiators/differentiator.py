@@ -198,9 +198,9 @@ class Differentiator(metaclass=abc.ABCMeta):
         If the quantum state |s(x)> is computed on a quantum processing unit
         (QPU), backpropagation is no longer possible. Instead, the classical
         computer, where the objective function resides, can only access
-        bitstrings sampled from states produced on the QPU. This function
-        exposes the circuits, symbols, and values required for computing
-        gradients on real QPUs.
+        bitstrings sampled from states produced on the QPU; derivatives must be
+        computed from these samples instead. This function exposes the circuits,
+        symbols, and values required for computing such gradients on real QPUs.
 
         NOTE: most users should simply hand a differentiator to the circuit
         executor of their choice (for example, see the docs for
@@ -247,8 +247,16 @@ class Differentiator(metaclass=abc.ABCMeta):
         If the caller has a list of functions `f` with vector-valued outputs of
         length [n_vals] to apply to a batch of circuits, then the derivative of
         the computation will have shape [batch_size, n_params, n_vals]. Then in
-        terms of the inputs and outputs of this function, each entry of the
-        derivative can be computed as
+        terms of the inputs and outputs of `get_gradient_circuits`, each entry
+        of the derivative can be computed as
+
+        d(<programs[i](symbol_values[i])|
+            f[i]|programs[i](symbol_values[i])>)
+        / d(symbol_names[k]) = sum_m (batch_mapper[i, k, m] *
+            (<batch_programs[i, m](batch_symbol_values[i, m])|
+                f[i]|batch_programs[i, m](batch_symbol_values[i, mi])>)
+
+        where d represents taking the partial derivative.
         """
 
 
