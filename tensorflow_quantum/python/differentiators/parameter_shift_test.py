@@ -48,7 +48,7 @@ class ParameterShiftTest(tf.test.TestCase, parameterized.TestCase):
 
     def test_no_gradient_circuits(self):
         """Confirm ParameterShift differentiator has no gradient circuits."""
-        dif = linear_combination.ParameterShift()
+        dif = parameter_shift.ParameterShift()
         with self.assertRaisesRegex(NotImplementedError,
                                     expected_regex="not currently available"):
             _ = dif.get_gradient_circuits(None, None, None)
