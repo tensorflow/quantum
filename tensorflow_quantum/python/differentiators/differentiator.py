@@ -259,7 +259,6 @@ class Differentiator(metaclass=abc.ABCMeta):
         where d represents taking the partial derivative.
         """
 
-
     @abc.abstractmethod
     def differentiate_analytic(self, programs, symbol_names, symbol_values,
                                pauli_sums, forward_pass_vals, grad):
