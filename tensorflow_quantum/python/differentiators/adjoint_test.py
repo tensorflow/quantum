@@ -42,5 +42,6 @@ class AdjointTest(tf.test.TestCase):
                                     "gradient circuits"):
             _ = dif.get_gradient_circuits(None, None, None)
 
+
 if __name__ == '__main__':
     tf.test.main()
