@@ -180,7 +180,7 @@ class Differentiator(metaclass=abc.ABCMeta):
         return self
 
     @abc.abstractmethod
-    def get_gradient_circuits(programs, symbol_names, symbol_values):
+    def get_gradient_circuits(self, programs, symbol_names, symbol_values):
         """Transforms programs to allow gradient calculations on real QPUs.
 
         In the classical setting, backpropagation can be used to compute
