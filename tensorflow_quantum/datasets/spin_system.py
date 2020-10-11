@@ -142,8 +142,8 @@ def tfi_chain(qubits, boundary_condition="closed", data_dir=None):
 
     >>> print(pauli_sums[10])
     -1.000*Z((0, 0))*Z((1, 0))-1.000*Z((1, 0))*Z((2, 0))-1.000*Z((2, 0))*
-    Z((3, 0))-1.000*Z((0, 0))*Z((3, 0))-0.400*X((0, 0))-0.400*X((1, 0))-
-    0.400*X((2, 0))-0.400*X((3, 0))
+    Z((3, 0))-1.000*Z((0, 0))*Z((3, 0)) ...
+    -0.400*X((2, 0))-0.400*X((3, 0))
 
     The fourth output, `addinfo`, contains additional information
     about each instance of the system (see `tfq.datasets.spin_system.SpinSystem`
@@ -566,15 +566,15 @@ def tfi_rectangular(qubits, boundary_condition="torus", data_dir=None):
     H = - \sum_{\langle i,j \rangle} \sigma_i^z \sigma_{j}^z - g\sigma_i^x
     $$
 
-    Contains 81 circuit parameterizations corresponding to
+    Contains 51 circuit parameterizations corresponding to
     the ground states of the 2D TFI chain for g in [2.5,3.5].
     This dataset contains 51 datapoints. Each datapoint is represented by a
     circuit (`cirq.Circuit`), a label (Python `float`) a Hamiltonian
     (`cirq.PauliSum`) and some additional metadata. Each Hamiltonian in a
-    datapoint is a 1D TFI chain with boundary condition `boundary_condition` on
-    `qubits` whos order parameter dictates the value of label. The circuit in a
-    datapoint prepares (an approximation to) the ground state of the Hamiltonian
-    in the datapoint.
+    datapoint is a 2D TFI rectangular lattice with boundary condition
+    `boundary_condition` on `qubits` whos order parameter dictates the value of
+    label. The circuit in a datapoint prepares (an approximation to) the ground
+    state of the Hamiltonian in the datapoint.
 
     Example usage:
 
@@ -591,15 +591,16 @@ def tfi_rectangular(qubits, boundary_condition="torus", data_dir=None):
     parameter
 
     >>> print(circuits[10])
-                                                          ┌─────── ...
-    (0, 0): ───H───ZZ──────────────────────────────────ZZ───────── ...
-                   │                                   │
-    (1, 0): ───H───ZZ^0.761───ZZ─────────X^0.641───────┼────────── ...
-                              │                        │
-    (2, 0): ───H──────────────ZZ^0.761───ZZ────────────┼────────── ...
-                                         │             │
-    (3, 0): ───H─────────────────────────ZZ^0.761──────ZZ^0.761─── ...
-                                                      └─────────── ...
+                       ┌──────────────────────┐   ┌───────────────────── ...
+    (0, 0): ───H────ZZ─────────────────────────ZZ─────────────────────── ...
+                    │                          │
+    (1, 0): ───H────ZZ^0.948896────────────────┼──────────ZZ──────────── ...
+                                               │          │
+    (2, 0): ───H────ZZ─────────────────────────┼──────────┼───────────── ...
+                    │                          │          │
+    (3, 0): ───H────┼──────────ZZ──────────────┼──────────┼───────────── ...
+       .            .                          .          .
+       .            .                          .          .
 
     The labels indicate the phase of the system
     >>> labels[10]
@@ -609,9 +610,9 @@ def tfi_rectangular(qubits, boundary_condition="torus", data_dir=None):
     Hamiltonian
 
     >>> print(pauli_sums[10])
-    -1.000*Z((0, 0))*Z((1, 0))-1.000*Z((1, 0))*Z((2, 0))-1.000*Z((2, 0))*
-    Z((3, 0))-1.000*Z((0, 0))*Z((3, 0))-0.400*X((0, 0))-0.400*X((1, 0))-
-    0.400*X((2, 0))-0.400*X((3, 0))
+    -2.700*X((0, 0))-2.700*X((1, 0))-2.700*X((2, 0))-2.700*X((3, 0))-
+    2.700*X((4, 0))-2.700*X((5, 0))-2.700*X((6, 0))-2.700*X((7, 0))- ...
+    -1.000*Z((3, 0))*Z((6, 0))-1.000*Z((4, 0))*Z((5, 0))
 
     The fourth output, `addinfo`, contains additional information
     about each instance of the system (see `tfq.datasets.spin_system.SpinSystem`
@@ -621,22 +622,22 @@ def tfi_rectangular(qubits, boundary_condition="torus", data_dir=None):
     exact diagonalization
 
     >>> addinfo[10].gs
-    [[-0.38852974+0.57092165j]
-     [-0.04107317+0.06035461j]
+    [-0.11843355-0.30690906j -0.04374221-0.11335368j -0.04374221-0.11335368j
+     -0.02221491-0.0575678j  -0.04374221-0.11335368j -0.02221491-0.0575678j
                 ...
-     [-0.04107317+0.06035461j]
-     [-0.38852974+0.57092165j]]
+     -0.04374221-0.11335368j -0.02221491-0.0575678j  -0.04374221-0.11335368j
+     -0.04374221-0.11335368j -0.11843355-0.30690906j]
 
     with corresponding ground state energy
 
     >>> addinfo[10].gs_energy
-    -4.169142950406478
+    -26.974953331962762
 
     You can also inspect the parameters
 
     >>> addinfo[10].params
-    {"theta_0": 0.7614564630036476, "theta_1": 0.6774991338794768,
-    "theta_2": 0.6407093304791429, "theta_3": 0.7335369771742435}
+    {'theta_0': 0.948896, 'theta_1': 0.90053445, ...
+    'theta_8': 0.76966083, 'theta_9': 0.87608284}
 
     and change them to experiment with different parameter values by using
     the unresolved variational circuit returned by tfichain
@@ -644,34 +645,35 @@ def tfi_rectangular(qubits, boundary_condition="torus", data_dir=None):
     ... for symbol_name, value in addinfo[10].params.items():
     ...    new_params[symbol_name] = 0.5 * value
     >>> new_params
-    {"theta_0": 0.3807282315018238, "theta_1": 0.3387495669397384,
-    "theta_2": 0.32035466523957146, "theta_3": 0.36676848858712174}
+    {'theta_0': 0.47444799542427063, 'theta_1': 0.4502672255039215, ...
+    'theta_8': 0.38483041524887085, 'theta_9': 0.43804141879081726}
     >>> new_circuit = cirq.resolve_parameters(addinfo[10].var_circuit,
     ... new_params)
     >>> print(new_circuit)
-                                                           ┌─────── ...
-    (0, 0): ───H───ZZ──────────────────────────────────ZZ───────── ...
-                   │                                   │
-    (1, 0): ───H───ZZ^0.761───ZZ─────────X^0.32────────┼────────── ...
-                              │                        │
-    (2, 0): ───H──────────────ZZ^0.761───ZZ────────────┼────────── ...
-                                         │             │
-    (3, 0): ───H─────────────────────────ZZ^0.761──────ZZ^0.761─── ...
-                                                      └─────────── ...
+                       ┌──────────────────────┐   ┌───────────────────── ...
+    (0, 0): ───H────ZZ─────────────────────────ZZ─────────────────────── ...
+                    │                          │
+    (1, 0): ───H────ZZ^0.474───────────────────┼──────────ZZ──────────── ...
+                                               │          │
+    (2, 0): ───H────ZZ─────────────────────────┼──────────┼───────────── ...
+                    │                          │          │
+    (3, 0): ───H────┼──────────ZZ──────────────┼──────────┼───────────── ...
+       .            .                          .          .
+       .            .                          .          .
+
 
     Args:
         qubits: Python `lst` of `cirq.GridQubit`s. Supported number of spins
             are [9, 12, 16].
         boundary_condition: Python `str` indicating the boundary condition
-            of the chain. Supported boundary conditions are ["closed"].
+            of the chain. Supported boundary conditions are ["torus"].
         data_dir: Optional Python `str` location where to store the data on
             disk. Defaults to `/tmp/.keras`.
     Returns:
-        A Python `lst` cirq.Circuit of depth len(qubits) / 2 with resolved
+        A Python `lst` cirq.Circuit of depth ceil(len(qubits) / 2) with resolved
             parameters.
-        A Python `lst` of labels, 0, for the ferromagnetic phase (`g<1`), 1 for
-            the critical point (`g==1`) and 2 for the paramagnetic phase
-            (`g>1`).
+        A Python `lst` of labels, 0, for the phase (`g<3.04`),
+            1 for the critical point (`g==3.04`) and 2 for the phase (`g>3.04`).
         A Python `lst` of `cirq.PauliSum`s.
         A Python `lst` of `namedtuple` instances containing the following
             fields:
@@ -716,7 +718,7 @@ def tfi_rectangular(qubits, boundary_condition="torus", data_dir=None):
 
     name_generator = unique_name()
 
-    # 2 * N/2 parameters.
+    # 2 * depth parameters.
     symbol_names = [next(name_generator) for _ in range(2 * depth)]
 
     symbols = [sympy.Symbol(name) for name in symbol_names]
@@ -804,10 +806,13 @@ def tfi_rectangular(qubits, boundary_condition="torus", data_dir=None):
         hamiltonians.append(paulisum)
 
         # Set labels for the different phases.
-        if order_parameters[i] < 3.05:
+        if order_parameters[i] < 3.04:
             labels.append(0)
-        else:
+        elif order_parameters[i]==3.04:
             labels.append(1)
+        else:
+            labels.append(2)
+
 
     # Make sure that the data is ordered from g=2.5 to g=3.5.
     _, resolved_circuits, labels, hamiltonians, additional_info = zip(*sorted(
