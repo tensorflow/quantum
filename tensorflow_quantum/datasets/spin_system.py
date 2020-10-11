@@ -808,11 +808,10 @@ def tfi_rectangular(qubits, boundary_condition="torus", data_dir=None):
         # Set labels for the different phases.
         if order_parameters[i] < 3.04:
             labels.append(0)
-        elif order_parameters[i]==3.04:
+        elif order_parameters[i] == 3.04:
             labels.append(1)
         else:
             labels.append(2)
-
 
     # Make sure that the data is ordered from g=2.5 to g=3.5.
     _, resolved_circuits, labels, hamiltonians, additional_info = zip(*sorted(
