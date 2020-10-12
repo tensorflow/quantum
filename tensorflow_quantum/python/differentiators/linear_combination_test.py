@@ -66,12 +66,101 @@ class LinearCombinationTest(tf.test.TestCase, parameterized.TestCase):
         with self.assertRaisesRegex(ValueError, expected_regex="unique"):
             linear_combination.LinearCombination([1, 1], [1, 1])
 
-    def test_no_gradient_circuits(self):
-        """Confirm LinearCombination differentiator has no gradient circuits."""
-        dif = linear_combination.LinearCombination([1, 1], [1, 0])
-        with self.assertRaisesRegex(NotImplementedError,
-                                    expected_regex="not currently available"):
-            _ = dif.get_gradient_circuits(None, None, None)
+    def test_get_gradient_circuits(self):
+        """Confirm get_gradient_circuits returns the expected values."""
+        symbols = [sympy.Symbol("s0"), sympy.Symbol("s1")]
+        q0 = cirq.GridQubit(0, 0)
+        q1 = cirq.GridQubit(1, 2)
+        input_programs = util.convert_to_tensor([
+            cirq.Circuit(cirq.X(q0)**symbols[0],
+                         cirq.ry(symbols[1])(q1)),
+            cirq.Circuit(cirq.rx(symbols[0])(q0),
+                         cirq.Y(q1)**symbols[1]),
+        ])
+        input_symbol_names = tf.constant([str(s) for s in symbols])
+        input_symbol_values = tf.constant([
+            [1.5, -2.7],
+            [-0.3, 0.9],
+        ])
+        input_weights = [1.0, -0.5]
+        input_perturbations = [1.0, -1.5]
+        linear_combination = linear_combination.LinearCombination(
+            input_weights, input_perturbations)
+
+        # For each program in the input batch: LinearCombination creates a copy
+        # of that program for each symbol in the batch; then for each symbol,
+        # the program is copied for each non-zero perturbation; finally, a
+        # single copy is added for the zero perturbation.
+        expected_programs_0 = tf.tile(tf.expand_dims(input_programs[0], 0),
+                                      [len(symbols) * len(input_perturbations) + 1])
+        expected_programs_1 = tf.tile(tf.expand_dims(input_programs[1], 0),
+                                      [len(symbols) * len(input_perturbations) + 1])
+        expected_batch_programs = tf.concat([
+            tf.expand_dims(expected_programs_0, 0),
+            tf.expand_dims(expected_programs_1, 0),
+        ], 0)
+
+        # LinearCombination does not add new symbols to the gradient circuits.
+        expected_new_symbol_names = input_symbol_names
+
+        # For each program in the input batch: first, the input symbol_values
+        # for the program are tiled to the number of copies in the output, here
+        # (n_symbols * n_non_zero_perturbations + 1).  Then we create the tensor
+        # of perturbations to apply to these symbol values: the first entry in
+        # the perturbations tensor is all zeros; then for each symbol, we tile
+        # out the non-zero perturbations at that symbol's index, keeping all the
+        # other symbol perturbations at zero.  Finally we add the perturbations
+        # to the original symbol values.
+        temp_symbol_values_0 = tf.tile(
+            tf.expand_dims(input_symbol_values[0],
+                           0), [len(symbols) * len(input_perturbations) + 1, 1])
+        temp_symbol_values_1 = tf.tile(
+            tf.expand_dims(input_symbol_values[1],
+                           0), [len(symbols) * len(input_perturbations) + 1, 1])
+        # For LinearCombination, the perturbations are the same for every
+        # program in the input batch.
+        temp_perturbations = tf.constant([
+            [0.0, 0.0],
+            [perturbations[0], 0.0],
+            [perturbations[1], 0.0],
+            [0.0, perturbations[0]],
+            [0.0, perturbations[1]],
+        ])
+        expected_batch_symbol_values = tf.concat([
+            tf.expand_dims(temp_symbol_values_0 + temp_perturbations, 0),
+            tf.expand_dims(temp_symbol_values_1 + temp_perturbations, 0),
+        ], 0)
+
+        # The map for LinearCombination is the same for every program `i` in the
+        # input batch, so we have that `batch_mapper[i, k, m]` is the same for
+        # all `i`.  Thus we can build a 2-D map for indices `k` and `m` and then
+        # tile it over the batch dimension.
+
+        # For this individual map, we have that the first entry at each index
+        # `k` is zero, since there was no zero perturbation in the inputs.
+        # Then the remaining entries are the weights for each perturbation,
+        # padded with zeros for the entries not associated with the symbol
+        # at index `k`.
+        single_batch_mapper = tf.constant([
+            [0.0, input_weights[0], input_weights[1], 0.0, 0.0],
+            [0.0, 0.0, 0.0, input_weights[0], input_weights[1]],
+        ])
+        # The mapper is the same for all programs in the input batch.
+        expected_batch_mapper = tf.tile(tf.expand_dims(single_batch_mapper, 0),
+                                        [2, 1, 1])
+
+        (
+            test_batch_programs, test_new_symbol_names,
+            test_batch_symbol_values, test_batch_mapper
+        ) = test_linear_combination.get_intermediate_logic(
+             test_programs, test_symbol_names, test_symbol_values)
+        self.assertAllEqual(expected_batch_programs, test_batch_programs)
+        self.assertAllEqual(expected_new_symbol_names,
+                            test_new_symbol_names)
+        self.assertAllClose(expected_batch_symbol_values,
+                            test_batch_symbol_values,
+                            atol=1e-6)
+        self.assertAllClose(expected_batch_mapper, test_batch_mapper, atol=1e-6)
 
     def test_forward_instantiate(self):
         """Test ForwardDifference type checking."""
