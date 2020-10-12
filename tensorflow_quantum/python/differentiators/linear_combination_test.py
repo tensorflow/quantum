@@ -65,6 +65,9 @@ class LinearCombinationTest(tf.test.TestCase, parameterized.TestCase):
             linear_combination.LinearCombination([1, 1, 1], [1, 0])
         with self.assertRaisesRegex(ValueError, expected_regex="unique"):
             linear_combination.LinearCombination([1, 1], [1, 1])
+        with self.assertRaisesRegex(TypeError,
+                                    expected_regex="at least two"):
+            linear_combination.LinearCombination([1], [1])
 
     def test_get_gradient_circuits(self):
         """Confirm get_gradient_circuits returns the expected values."""
