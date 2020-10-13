@@ -181,43 +181,42 @@ class Differentiator(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def get_gradient_circuits(self, programs, symbol_names, symbol_values):
-        """Transforms programs to allow gradient calculations on real QPUs.
+        """Return circuits to compute gradients for given forward pass circuits.
 
-        In the classical setting, backpropagation can be used to compute
-        derivatives of an objective function f(x) with respect to its inputs x.
-        Backpropagation works by recursively applying the chain rule to the
-        graph of computations defining f.
+        Prepares (but does not execute) all intermediate circuits needed to
+        calculate the gradients for the given forward pass circuits specified by
+        `programs`, `symbol_names`, and `symbol_values`. The returned
+        `tf.Tensor` objects give all necessary information to recreate the
+        internal logic of the differentiator.
 
-        Moving towards the quantum setting, suppose there is some objective
-        function f(|s(x)>), where |s(x)> is the state produced by some quantum
-        circuit with parameters x. If one simulates the circuit on a classical
-        computer, then one can similarly apply the chain rule to f(|s(x)>) to
-        obtain the derivative; this is the approach taken by the adjoint
-        differentiator in TFQ.
+        If the caller has a list of functions `f` (one for each program in the
+        batch) with [n_vals] output values per function, then the derivative of
+        the computation will have shape [batch_size, n_params, n_vals]. In terms
+        of the Args and Returns of `get_gradient_circuits`, each entry of this
+        derivative can then be computed as
 
-        If the quantum state |s(x)> is computed on a quantum processing unit
-        (QPU), backpropagation is no longer possible. Instead, the classical
-        computer, where the objective function resides, can only access
-        bitstrings sampled from states produced on the QPU; derivatives must be
-        computed from these samples instead. This function exposes the circuits,
-        symbols, and values required for computing such gradients on real QPUs.
+        d(<programs[i](symbol_values[i])|
+            f[i]|programs[i](symbol_values[i])>)
+        / d(symbol_names[k]) = sum_m (batch_mapper[i, k, m] *
+            (<batch_programs[i, m](batch_symbol_values[i, m])|
+                f[i]|batch_programs[i, m](batch_symbol_values[i, m])>)
 
-        NOTE: most users should simply hand a differentiator to the circuit
-        executor of their choice (for example, see the docs for
-        `tfq.layers.Expectation`, which accepts a `differentiator` initializer).
-        This function is intended for advanced users who need more flexibility
-        than the standard workflow allows.
+        where d represents taking the partial derivative.
+
+        NOTE: this feature is intended for advanced users who need more
+        flexibility than the standard workflow allows.
 
         Args:
             programs: `tf.Tensor` of strings with shape [batch_size] containing
-                the string representations of the circuits to be executed.
+                the string representations of the circuits to be executed during
+                the forward pass.
             symbol_names: `tf.Tensor` of strings with shape [n_params], which is
                 used to specify the order in which the values in `symbol_values`
                 should be placed inside of the circuits in `programs`.
             symbol_values: `tf.Tensor` of real numbers with shape
                 [batch_size, n_params] specifying parameter values to resolve
-                into the circuits specified by programs, following the ordering
-                dictated by `symbol_names`.
+                into the circuits specified by programs during the forward pass,
+                following the ordering dictated by `symbol_names`.
 
         Returns:
             batch_programs: 2-D `tf.Tensor` of strings representing circuits to
@@ -243,20 +242,6 @@ class Differentiator(metaclass=abc.ABCMeta):
                 second dimension is the length of the input `symbol_names`,
                 and the third dimension is the length of the second dimension of
                 the output `batch_programs`.
-
-        If the caller has a list of functions `f` with vector-valued outputs of
-        length [n_vals] to apply to a batch of circuits, then the derivative of
-        the computation will have shape [batch_size, n_params, n_vals]. Then in
-        terms of the inputs and outputs of `get_gradient_circuits`, each entry
-        of the derivative can be computed as
-
-        d(<programs[i](symbol_values[i])|
-            f[i]|programs[i](symbol_values[i])>)
-        / d(symbol_names[k]) = sum_m (batch_mapper[i, k, m] *
-            (<batch_programs[i, m](batch_symbol_values[i, m])|
-                f[i]|batch_programs[i, m](batch_symbol_values[i, mi])>)
-
-        where d represents taking the partial derivative.
         """
 
     @abc.abstractmethod
