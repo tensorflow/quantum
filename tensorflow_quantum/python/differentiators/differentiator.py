@@ -189,8 +189,8 @@ class Differentiator(metaclass=abc.ABCMeta):
         `tf.Tensor` objects give all necessary information to recreate the
         internal logic of the differentiator.
 
-        If the caller has a list of functions `f` with vector-valued outputs of
-        length [n_vals] to apply to a batch of circuits, then the derivative of
+        If the caller has a list of functions `f` (one for each program in the
+        batch) with [n_vals] output values per function, then the derivative of
         the computation will have shape [batch_size, n_params, n_vals]. In terms
         of the Args and Returns of `get_gradient_circuits`, each entry of this
         derivative can then be computed as
@@ -208,14 +208,15 @@ class Differentiator(metaclass=abc.ABCMeta):
 
         Args:
             programs: `tf.Tensor` of strings with shape [batch_size] containing
-                the string representations of the circuits to be executed.
+                the string representations of the circuits to be executed during
+                the forward pass.
             symbol_names: `tf.Tensor` of strings with shape [n_params], which is
                 used to specify the order in which the values in `symbol_values`
                 should be placed inside of the circuits in `programs`.
             symbol_values: `tf.Tensor` of real numbers with shape
                 [batch_size, n_params] specifying parameter values to resolve
-                into the circuits specified by programs, following the ordering
-                dictated by `symbol_names`.
+                into the circuits specified by programs during the forward pass,
+                following the ordering dictated by `symbol_names`.
 
         Returns:
             batch_programs: 2-D `tf.Tensor` of strings representing circuits to
