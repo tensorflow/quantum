@@ -122,12 +122,19 @@ class LinearCombination(differentiator.Differentiator):
         # LinearCombination does not add new symbols to the gradient circuits.
         new_symbol_names = tf.identity(symbol_names)
 
+        # Apply perturbations to the forward pass symbol values.
         bare_symbol_values = tf.tile(
             tf.expand_dims(symbol_values, 1),
             [1, n_symbols * n_non_zero_perturbations + 1, 1])
-
-        single_program_perturbations =
-
+        perts_zeros_pad = tf.zeros([n_non_zero_perturbations])
+        stacked_perts = tf.stack([perts_zeros_pad, non_zero_perturbations])
+        gathered_perts = tf.gather(stacked_perts, tf.eye(n_symbols, dtype=tf.int32))
+        transposed_perts = tf.transpose(gathered_perts, [0, 2, 1])
+        reshaped_perts = tf.reshape(transposed_perts, [n_non_zero_perturbations * n_symbols, n_symbols])
+        symbol_zeros_pad = tf.zeros([1, n_symbols])
+        single_program_perts = tf.concat([symbol_zeros_pad, reshaped_perts], 0)
+        all_perts = tf.tile(tf.expand_dims(single_program_perts, 0), [n_programs, 1, 1])
+        batch_symbol_values = bare_symbol_values + all_perts
 
         return (
             batch_programs, new_symbol_names, batch_symbol_values, batch_mapper)
