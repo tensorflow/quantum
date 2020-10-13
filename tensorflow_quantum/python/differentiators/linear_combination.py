@@ -98,14 +98,39 @@ class LinearCombination(differentiator.Differentiator):
         self.n_perturbations = tf.constant(len(perturbations))
         self.perturbations = tf.constant(perturbations)
 
-
-
     @tf.function
     def get_gradient_circuits(self, programs, symbol_names, symbol_values):
         """See base class description."""
-        raise NotImplementedError(
-            "Gradient circuits are not currently available for "
-            "LinearCombination.")
+        n_programs = tf.gather(tf.shape(programs), 0)
+        n_symbols = tf.gather(tf.shape(symbol_names), 0)
+
+        # don't do any computation for a perturbation of zero, just use
+        # forward pass values
+        mask = tf.not_equal(self.perturbations,
+                            tf.zeros_like(self.perturbations))
+        non_zero_perturbations = tf.boolean_mask(self.perturbations, mask)
+        non_zero_weights = tf.boolean_mask(self.weights, mask)
+        n_non_zero_perturbations = tf.gather(tf.shape(non_zero_perturbations),
+                                             0)
+
+        # A new copy of each program is run for each symbol and each
+        # non-zero perturbation, plus one more for the all zeros perturbation.
+        batch_programs = tf.tile(
+            tf.expand_dims(programs, 1),
+            [1, n_symbols * n_non_zero_perturbations + 1])
+
+        # LinearCombination does not add new symbols to the gradient circuits.
+        new_symbol_names = tf.identity(symbol_names)
+
+        bare_symbol_values = tf.tile(
+            tf.expand_dims(symbol_values, 1),
+            [1, n_symbols * n_non_zero_perturbations + 1, 1])
+
+        single_program_perturbations =
+
+
+        return (
+            batch_programs, new_symbol_names, batch_symbol_values, batch_mapper)
 
     @tf.function
     def differentiate_analytic(self, programs, symbol_names, symbol_values,
