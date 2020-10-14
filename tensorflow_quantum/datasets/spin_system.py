@@ -661,7 +661,6 @@ def tfi_rectangular(qubits, boundary_condition="torus", data_dir=None):
        .            .                          .          .
        .            .                          .          .
 
-
     Args:
         qubits: Python `lst` of `cirq.GridQubit`s. Supported number of spins
             are [9, 12, 16].
