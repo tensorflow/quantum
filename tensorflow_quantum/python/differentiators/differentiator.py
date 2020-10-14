@@ -235,7 +235,7 @@ class Differentiator(metaclass=abc.ABCMeta):
         >>> program_i_deriv_parities = tf.map_function(
         ...     lambda x: tf.map_function(f, x), program_i_deriv_samples)
         >>> deriv_i_k = tf.reduce_sum(
-        ...     tf.reduce_mean(program_i_deriv_parities, 1))
+        ...     batch_mapper[i, k]*tf.reduce_mean(program_i_deriv_parities, 1))
 
 
         NOTE: this feature is intended for advanced users who need more
