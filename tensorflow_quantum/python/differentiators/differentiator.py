@@ -189,22 +189,58 @@ class Differentiator(metaclass=abc.ABCMeta):
         `tf.Tensor` objects give all necessary information to recreate the
         internal logic of the differentiator.
 
-        If the caller has a list of functions `f` (one for each program in the
-        batch) with [n_vals] output values per function, then the derivative of
-        the computation will have shape [batch_size, n_params, n_vals]. In terms
-        of the Args and Returns of `get_gradient_circuits`, each entry of this
-        derivative can then be computed as
+        Example: suppose the caller wants to compute the gradient of the average
+        parity of the output bitstrings across a batch of programs.  This could
+        be done by using the Expectation layer with a ZZ...Z PauliString
+        measured at the output, but let's consider how this would work with the
+        Sample layer. We first define a function that computes the parity given
+        a bitstring:
 
-        d(<programs[i](symbol_values[i])|
-            f[i]|programs[i](symbol_values[i])>)
-        / d(symbol_names[k]) = sum_m (batch_mapper[i, k, m] *
-            (<batch_programs[i, m](batch_symbol_values[i, m])|
-                f[i]|batch_programs[i, m](batch_symbol_values[i, m])>)
 
-        where d represents taking the partial derivative.
+        >>> def f(bitstring):
+        ...     spins = -2*bitstring + tf.ones(tf.shape(bitstring))
+        ...     return tf.math.reduce_prod(spins)
+
+
+        We would obtain the forward pass values by doing:
+
+
+        >>> repetitions = 1000
+        >>> all_parities = tf.map_function(lambda x: tf.map_function(f, x),
+        ...     tfq.layers.Sample()(
+        ...         programs, symbol_names=symbol_names,
+        ...         symbol_values=symbol_values, repetitions=repetitions))
+        ... forward_pass = tf.reduce_mean(all_parities, 1)
+
+
+        Next, suppose we wish to use some gradient instance `diff` to
+        differentiate these forward pass values. Start by calling
+        `diff.get_gradient_circuits` to get the components we need:
+
+
+        >>> (
+        ...     batch_programs, new_symbol_names, batch_symbol_values,
+        ...     batch_mapper
+        ... ) = diff.get_gradient_circuits(
+        ...     programs, symbol_names, symbol_values)
+
+
+        If we want to get the derivative of `forward_pass[i]` with respect to
+        the parameter `symbol_names[k]`, we would do:
+
+
+        >>> program_i_deriv_samples = tfq.layers.Sample()(
+        ...     batch_programs[i], symbol_names=new_symbol_names,
+        ...     symbol_values=batch_symbol_values[i], repetitions=repetitions)
+        >>> program_i_deriv_parities = tf.map_function(
+        ...     lambda x: tf.map_function(f, x), program_i_deriv_samples)
+        >>> deriv_i_k = tf.reduce_sum(
+        ...     tf.reduce_mean(program_i_deriv_parities, 1))
+
 
         NOTE: this feature is intended for advanced users who need more
         flexibility than the standard workflow allows.
+
 
         Args:
             programs: `tf.Tensor` of strings with shape [batch_size] containing
