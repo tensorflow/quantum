@@ -560,7 +560,7 @@ def xxz_chain(qubits, boundary_condition="closed", data_dir=None):
 
 
 def tfi_rectangular(qubits, boundary_condition="torus", data_dir=None):
-    """Transverse field Ising-model quantum data set.
+    """2D transverse field Ising-model quantum data set.
 
     $$
     H = - \sum_{\langle i,j \rangle} \sigma_i^z \sigma_{j}^z - g\sigma_i^x
