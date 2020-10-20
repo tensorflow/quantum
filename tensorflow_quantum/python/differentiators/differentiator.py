@@ -191,8 +191,7 @@ class Differentiator(metaclass=abc.ABCMeta):
 
         Suppose we have some inputs `programs`, `symbol_names`, and
         `symbol_values`.  To get the derivative of the expectation values of a
-        tensor of PauliSums `pauli_sums` with respect to these inputs, for some
-        program index `i` and symbol index `k`, do:
+        tensor of PauliSums `pauli_sums` with respect to these inputs, do:
 
 
         >>> diff = <some differentiator>()
@@ -201,26 +200,33 @@ class Differentiator(metaclass=abc.ABCMeta):
         ...     batch_mapper
         ... ) = diff.get_gradient_circuits(
         ...     programs, symbol_names, symbol_values)
-        >>> d_programs_i_d_symbol_k_manual = tf.reduce_sum(
-        ...     batch_mapper[i, k] * tfq.layers.Expectation()(
-        ...         batch_programs[i], symbol_names=new_symbol_names,
-        ...         symbol_values=batch_symbol_values[i],
-        ...         operators=tf.tile(tf.expand_dims(pauli_sums[i], 0),
-        ...             [tf.shape(batch_programs), 1])), 1)
+        >>> exp_layer = tfq.layers.Expectation()
+        >>> batch_pauli_sums = tf.tile(
+        ...     tf.expand_dims(pauli_sums, 0),
+        ...     [1, tf.shape(batch_mapper)[2], 1])
+        >>> batch_expectations = tf.map_fn(
+        ...     lambda x: exp_layer(x[0], new_symbol_names, x[2], x[3]),
+        ...     (batch_programs, batch_symbol_values, batch_pauli_sums),
+        ...     fn_output_signature=tf.float32)
+        >>> grad_manual = tf.reduce_sum(tf.map_fn(
+        ...     lambda x: tf.reduce_sum(x[0] * x[1], -1),
+        ...     (batch_mapper, batch_expectations),
+        ...     fn_output_signature=tf.float32), -1)
 
 
-        This has the same effect as taking the gradient of Expectation layer:
+        For best performance the user should flatten the inputs and feed them
+        to the Expectation layer all at once, but the above better illustrates
+        the structure of the computation. To perform the same gradient
+        calculation automatically:
 
 
         >>> with tf.GradientTape() as g:
-        >>>     symbol_values_i = symbol_values[i]
-        >>>     g.watch(symbol_values_i)
+        >>>     g.watch(symbol_values)
         >>>     exact_outputs = tfq.layers.Expectation()(
-        ...         programs[i], symbol_names=symbol_names,
-        ...         symbol_values=symbol_values_i, operators=pauli_sums[i])
-        >>> d_programs_i_d_symbol_k_auto = g.gradient(
-        ...     exact_outputs, symbol_values_i)
-        >>> all(d_programs_i_d_symbol_k_auto == d_programs_i_d_symbol_k_manual)
+        ...         programs, symbol_names=symbol_names,
+        ...         symbol_values=symbol_values, operators=pauli_sums)
+        >>> grad_auto = g.gradient(exact_outputs, symbol_values)
+        >>> all(derivative_manual == derivative_auto)
         True
 
 
