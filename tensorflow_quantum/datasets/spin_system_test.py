@@ -70,7 +70,7 @@ class TFIChainTest(tf.test.TestCase):
         for nspins in self.supported_nspins_tfi_chain:
             circuits, _, _, addinfo = self.data_dict_tfi_chain[nspins]
             for n in self.random_subset_tfi_chain:
-                phi = cirq.Simulator().simulate(circuits[n]).final_state
+                phi = cirq.Simulator().simulate(circuits[n]).final_state_vector
                 gs = addinfo[n].gs
                 self.assertAllClose(np.abs(np.vdot(gs, phi)), 1.0, rtol=1e-3)
 
@@ -82,7 +82,7 @@ class TFIChainTest(tf.test.TestCase):
                 self.qbs_dict_tfi_chain[nspins][i]: i for i in range(nspins)
             }
             for n in self.random_subset_tfi_chain:
-                phi = cirq.Simulator().simulate(circuits[n]).final_state
+                phi = cirq.Simulator().simulate(circuits[n]).final_state_vector
                 e = pauli_sums[n].expectation_from_wavefunction(phi, qubit_map)
                 self.assertAllClose(e, addinfo[n].gs_energy, rtol=1e-4)
 
@@ -109,9 +109,9 @@ class TFIChainTest(tf.test.TestCase):
                 resolved_circuit = cirq.resolve_parameters(
                     addinfo[n].var_circuit, addinfo[n].params)
                 state_circuit = cirq.Simulator().simulate(
-                    circuits[n]).final_state
+                    circuits[n]).final_state_vector
                 state_resolved_circuit = cirq.Simulator().simulate(
-                    resolved_circuit).final_state
+                    resolved_circuit).final_state_vector
                 self.assertAllClose(np.abs(
                     np.vdot(state_circuit, state_resolved_circuit)),
                                     1.0,
@@ -169,7 +169,7 @@ class XXZChainTest(tf.test.TestCase):
         for nspins in self.supported_nspins_xxz_chain:
             circuits, _, _, addinfo = self.data_dict_xxz_chain[nspins]
             for n in self.random_subset_xxz_chain:
-                phi = cirq.Simulator().simulate(circuits[n]).final_state
+                phi = cirq.Simulator().simulate(circuits[n]).final_state_vector
                 gs = addinfo[n].gs
                 self.assertAllClose(np.abs(np.vdot(gs, phi)), 1.0, rtol=5e-3)
 
@@ -181,7 +181,7 @@ class XXZChainTest(tf.test.TestCase):
                 self.qbs_dict_xxz_chain[nspins][i]: i for i in range(nspins)
             }
             for n in self.random_subset_xxz_chain:
-                phi = cirq.Simulator().simulate(circuits[n]).final_state
+                phi = cirq.Simulator().simulate(circuits[n]).final_state_vector
                 e = pauli_sums[n].expectation_from_wavefunction(phi, qubit_map)
                 self.assertAllClose(e, addinfo[n].gs_energy, rtol=5e-3)
 
@@ -208,9 +208,9 @@ class XXZChainTest(tf.test.TestCase):
                 resolved_circuit = cirq.resolve_parameters(
                     addinfo[n].var_circuit, addinfo[n].params)
                 state_circuit = cirq.Simulator().simulate(
-                    circuits[n]).final_state
+                    circuits[n]).final_state_vector
                 state_resolved_circuit = cirq.Simulator().simulate(
-                    resolved_circuit).final_state
+                    resolved_circuit).final_state_vector
                 self.assertAllClose(np.abs(
                     np.vdot(state_circuit, state_resolved_circuit)),
                                     1.0,
@@ -269,7 +269,7 @@ class TFIRectangularTest(tf.test.TestCase):
         for nspins in self.supported_nspins_tfi_rectangular:
             circuits, _, _, addinfo = self.data_dict_tfi_rectangular[nspins]
             for n in self.random_subset_tfi_rectangular:
-                phi = cirq.Simulator().simulate(circuits[n]).final_state
+                phi = cirq.Simulator().simulate(circuits[n]).final_state_vector
                 gs = addinfo[n].gs
                 self.assertAllClose(np.abs(np.vdot(gs, phi)), 1.0, rtol=5e-3)
 
@@ -283,7 +283,7 @@ class TFIRectangularTest(tf.test.TestCase):
                 for i in range(nspins)
             }
             for n in self.random_subset_tfi_rectangular:
-                phi = cirq.Simulator().simulate(circuits[n]).final_state
+                phi = cirq.Simulator().simulate(circuits[n]).final_state_vector
                 e = pauli_sums[n].expectation_from_wavefunction(phi, qubit_map)
                 self.assertAllClose(e, addinfo[n].gs_energy, rtol=5e-3)
 
@@ -310,9 +310,9 @@ class TFIRectangularTest(tf.test.TestCase):
                 resolved_circuit = cirq.resolve_parameters(
                     addinfo[n].var_circuit, addinfo[n].params)
                 state_circuit = cirq.Simulator().simulate(
-                    circuits[n]).final_state
+                    circuits[n]).final_state_vector
                 state_resolved_circuit = cirq.Simulator().simulate(
-                    resolved_circuit).final_state
+                    resolved_circuit).final_state_vector
                 self.assertAllClose(np.abs(
                     np.vdot(state_circuit, state_resolved_circuit)),
                                     1.0,
