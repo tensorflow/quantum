@@ -1,6 +1,6 @@
 # This file includes external dependencies that are required to compile the
 # TensorFlow op. Maybe of them are specific versions used by the TensorFlow
-# binary used. These are extracted from TF v2.3.0, tensorflow/workspace.bzl.
+# binary used. These are extracted from TF v2.3.1, tensorflow/workspace.bzl.
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
@@ -60,9 +60,9 @@ http_archive(
 
 http_archive(
     name = "cirq",
-    sha256 = "c90f3a1f5a0c295e65e73a1ac1daf9ac81349ee32d57e78f6229bde4820bc59b",
-    strip_prefix = "Cirq-0.8.0",
-    urls = ["https://github.com/quantumlib/Cirq/archive/v0.8.0.zip"],
+    sha256 = "418cb7ff9c223e1e32516ab0ccc578385734af833528d6f5d903260b322d3362",
+    strip_prefix = "Cirq-0.9.1",
+    urls = ["https://github.com/quantumlib/Cirq/archive/v0.9.1.zip"],
 )
 
 http_archive(
@@ -85,10 +85,10 @@ http_archive(
 
 http_archive(
     name = "org_tensorflow",
-    sha256 = "fd3e6580cfe2035aa80d569b76bba5f33119362907f3d77039b6bedf76172712",
-    strip_prefix = "tensorflow-2.2.0",
+    sha256 = "6f063636673d6ef4ac60febd2541e3ad3516a57c18339a680c794b736798d054",
+    strip_prefix = "tensorflow-2.3.1",
     urls = [
-        "https://github.com/tensorflow/tensorflow/archive/v2.2.0.zip",
+        "https://github.com/tensorflow/tensorflow/archive/v2.3.1.zip",
     ],
 )
 
@@ -99,24 +99,6 @@ tf_workspace(tf_repo_name = "@org_tensorflow")
 load("//third_party/tf:tf_configure.bzl", "tf_configure")
 
 tf_configure(name = "local_config_tf")
-
-http_archive(
-    name = "eigen",
-    # TODO(pmassey): Probably move this content in a third_party/eigen.BUILD file
-    build_file_content = """
-cc_library(
-  name = "eigen3",
-  textual_hdrs = glob(["Eigen/**", "unsupported/**"]),
-  visibility = ["//visibility:public"],
-)
-    """,
-    sha256 = "a3c10a8c14f55e9f09f98b0a0ac6874c21bda91f65b7469d9b1f6925990e867b",  # SHARED_EIGEN_SHA
-        strip_prefix = "eigen-d10b27fe37736d2944630ecd7557cefa95cf87c9",
-        urls = [
-            "https://storage.googleapis.com/mirror.tensorflow.org/gitlab.com/libeigen/eigen/-/archive/d10b27fe37736d2944630ecd7557cefa95cf87c9/eigen-d10b27fe37736d2944630ecd7557cefa95cf87c9.tar.gz",
-            "https://gitlab.com/libeigen/eigen/-/archive/d10b27fe37736d2944630ecd7557cefa95cf87c9/eigen-d10b27fe37736d2944630ecd7557cefa95cf87c9.tar.gz",
-        ],
-)
 
 http_archive(
     name = "six_archive",

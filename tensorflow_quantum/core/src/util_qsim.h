@@ -140,7 +140,7 @@ tensorflow::Status ComputeExpectationQsim(const tfq::proto::PauliSum& p_sum,
                                           const StateSpaceT& ss, StateT& state,
                                           StateT& scratch,
                                           float* expectation_value) {
-  // apply the  gates of the pauliterms to a copy of the wavefunction
+  // apply the gates of the pauliterms to a copy of the state vector
   // and add up expectation value term by term.
   tensorflow::Status status = tensorflow::Status::OK();
   for (const tfq::proto::PauliTerm& term : p_sum.terms()) {
@@ -192,7 +192,7 @@ tensorflow::Status ComputeSampledExpectationQsim(
   if (num_samples == 0) {
     return tensorflow::Status::OK();
   }
-  // apply the  gates of the pauliterms to a copy of the wavefunction
+  // apply the gates of the pauliterms to a copy of the state vector
   // and add up expectation value term by term.
   tensorflow::Status status = tensorflow::Status::OK();
   for (const tfq::proto::PauliTerm& term : p_sum.terms()) {
@@ -301,7 +301,7 @@ tensorflow::Status AccumulateOperators(
     const std::vector<tfq::proto::PauliSum>& p_sums,
     const std::vector<float>& op_coeffs, const SimT& sim, const StateSpaceT& ss,
     StateT& source, StateT& scratch, StateT& dest) {
-  // apply the  gates of the pauliterms to a copy of the wavefunction
+  // apply the gates of the pauliterms to a copy of the state vector
   // accumulating results as we go. Effectively doing O|psi> for an arbitrary
   // O. Result is stored on scratch.
   tensorflow::Status status = tensorflow::Status::OK();

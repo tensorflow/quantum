@@ -313,7 +313,7 @@ class SimulateStateTest(tf.test.TestCase, parameterized.TestCase):
         manual_padded_results = []
         for circuit in circuit_batch:
             result = sim.simulate(circuit)
-            wf = result.final_state
+            wf = result.final_state_vector
             blank_state = np.ones(
                 (2**max(all_n_qubits)), dtype=np.complex64) * -2
             blank_state[:wf.shape[0]] = wf
