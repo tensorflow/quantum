@@ -19,8 +19,7 @@ from tensorflow_quantum.core.ops.load_module import load_module
 UTILITY_OP_MODULE = load_module("_tfq_utility_ops.so")
 
 
-@tf.function
-def append_circuit(first_programs, second_programs):
+def append_circuit(programs, programs_to_append):
     """Merge programs in the input tensors.
 
     Given two tensors of programs, this function merges the programs pairwise
@@ -53,17 +52,17 @@ def append_circuit(first_programs, second_programs):
 
 
     Args:
-        first_programs: `tf.Tensor` of strings with shape [batch_size] containing
+        programs: `tf.Tensor` of strings with shape [batch_size] containing
             the string representations of circuits.
-        second_programs: `tf.Tensor` of strings with shape [batch_size] containing
-            the string representations of circuits.
+        programs_to_append: `tf.Tensor` of strings with shape [batch_size]
+            containing the string representations of circuits to append.
 
     Returns:
         `tf.Tensor` with shape [batch_size]. Entry `i` is the string
-            representing the circuit which is `second_programs[i]`
-            appended to `first_programs[i]`.
+            representing the circuit which is `programs_to_append[i]`
+            appended to `programs[i]`.
     """
-    return UTILITY_OP_MODULE.tfq_append_circuit(first_programs, second_programs)
+    return UTILITY_OP_MODULE.tfq_append_circuit(programs, programs_to_append)
 
 
 @tf.function
