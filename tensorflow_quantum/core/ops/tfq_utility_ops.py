@@ -18,9 +18,6 @@ from tensorflow_quantum.core.ops.load_module import load_module
 
 UTILITY_OP_MODULE = load_module("_tfq_utility_ops.so")
 
-# pylint: disable=invalid-name
-tfq_append_circuit = UTILITY_OP_MODULE.tfq_append_circuit
-
 
 @tf.function
 def padded_to_ragged(masked_state):
@@ -96,3 +93,49 @@ def resolve_parameters(programs, symbol_names, symbol_values):
     """
     return UTILITY_OP_MODULE.tfq_resolve_parameters(
         programs, symbol_names, tf.cast(symbol_values, tf.float32))
+
+
+def append_circuit(first_programs, second_programs):
+    """Merge programs in the input tensors.
+
+    Given two tensors of programs, this function merges the programs pairwise
+    and returns a single tensor containing the merged programs. Note that this
+    function is not differentiable because the output has type string.
+
+
+    >>> q = cirq.GridQubit(0, 0)
+    >>> p0 = [cirq.Circuit(cirq.H(q)), cirq.Circuit(cirq.S(q))]
+    >>> p1 = [cirq.Circuit(cirq.Z(q)), cirq.Circuit(cirq.X(q))]
+    >>> p0_t = tfq.convert_to_tensor(p0)
+    >>> p1_t = tfq.convert_to_tensor(p1)
+    >>> tfq.from_tensor(append_circuit(p0_t, p1_t))
+    array([cirq.Circuit([
+        cirq.Moment(
+            cirq.H(cirq.GridQubit(0, 0)),
+        ),
+        cirq.Moment(
+            cirq.Z(cirq.GridQubit(0, 0)),
+        ),
+    ]),
+           cirq.Circuit([
+        cirq.Moment(
+            cirq.S(cirq.GridQubit(0, 0)),
+        ),
+        cirq.Moment(
+            cirq.X(cirq.GridQubit(0, 0)),
+        ),
+    ])], dtype=object)
+
+
+    Args:
+        first_programs: `tf.Tensor` of strings with shape [batch_size] containing
+            the string representations of circuits.
+        second_programs: `tf.Tensor` of strings with shape [batch_size] containing
+            the string representations of circuits.
+
+    Returns:
+        `tf.Tensor` with shape [batch_size]. Entry `i` is the string
+            representing the circuit which is `second_programs[i]`
+            appended to `first_programs[i]`.
+    """
+    return UTILITY_OP_MODULE.tfq_append_circuit(first_programs, second_programs)
