@@ -125,7 +125,7 @@ class AddCircuit(tf.keras.layers.Layer):
                     "Append circuits cannot be parsed with given input:"
                     " ".format(append))
 
-            return tfq_utility_ops.append_circuit(inputs, append)
+            return tfq_utility_ops.tfq_append_circuit(inputs, append)
 
         # Otherwise ingest prepend circuits.
         if isinstance(prepend, cirq.Circuit):
@@ -137,4 +137,4 @@ class AddCircuit(tf.keras.layers.Layer):
                 "Prepend circuits cannot be parsed with given input:"
                 " ".format(prepend))
 
-        return tfq_utility_ops.append_circuit(prepend, inputs)
+        return tfq_utility_ops.tfq_append_circuit(prepend, inputs)

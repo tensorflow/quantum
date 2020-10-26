@@ -68,17 +68,17 @@ class AddCircuitTest(tf.test.TestCase):
             # prepend is wrong shape.
             add(circuit, prepend=[circuit, circuit])
 
-        with self.assertRaisesRegex(ValueError,
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     expected_regex="rank 1"):
             # prepend is wrong shape.
             add(circuit, prepend=[[circuit]])
 
-        with self.assertRaisesRegex(ValueError,
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     expected_regex="rank 1"):
             # append is wrong shape.
             add(circuit, append=[[circuit]])
 
-        with self.assertRaisesRegex(ValueError,
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     expected_regex="rank 1"):
             # circuit is wrong shape.
             add([[circuit]], append=[circuit])
