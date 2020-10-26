@@ -67,8 +67,10 @@ class AppendCircuitOpTest(tf.test.TestCase, parameterized.TestCase):
 
         with self.assertRaisesRegex(TypeError,
                                     '2 positional arguments but 3 were given'):
-          tfq_utility_ops.append_circuit([test_circuit], [test_circuit],
-                                         [test_circuit])
+            # pylint: disable=too-many-function-args
+            tfq_utility_ops.append_circuit([test_circuit], [test_circuit],
+                                           [test_circuit])
+            # pylint: enable=too-many-function-args
 
         # These tests really just makes sure we can cast output
         res = tfq_utility_ops.append_circuit([], [])
