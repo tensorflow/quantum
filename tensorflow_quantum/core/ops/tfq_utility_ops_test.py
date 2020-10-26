@@ -65,10 +65,10 @@ class AppendCircuitOpTest(tf.test.TestCase, parameterized.TestCase):
             tfq_utility_ops.append_circuit([test_circuit])
             # pylint: enable=no-value-for-parameter
 
-        # TODO (mbbrough): should this line work or no. what is the TF
-        # standard here ?
-        tfq_utility_ops.append_circuit([test_circuit], [test_circuit],
-                                           [test_circuit])
+        with self.assertRaisesRegex(TypeError,
+                                    '2 positional arguments but 3 were given'):
+          tfq_utility_ops.append_circuit([test_circuit], [test_circuit],
+                                         [test_circuit])
 
         # These tests really just makes sure we can cast output
         res = tfq_utility_ops.append_circuit([], [])
