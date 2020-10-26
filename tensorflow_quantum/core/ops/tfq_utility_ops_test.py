@@ -25,7 +25,7 @@ from tensorflow_quantum.core.serialize import serializer
 from tensorflow_quantum.python import util
 
 
-class CircuitAppendOpTest(tf.test.TestCase, parameterized.TestCase):
+class AppendCircuitOpTest(tf.test.TestCase, parameterized.TestCase):
     """Test the in-graph circuit append op."""
 
     def test_append_input_checking(self):
@@ -33,45 +33,45 @@ class CircuitAppendOpTest(tf.test.TestCase, parameterized.TestCase):
         test_circuit = serializer.serialize_circuit(
             cirq.Circuit(cirq.X.on(cirq.GridQubit(0, 0)))).SerializeToString()
         with self.assertRaisesRegex(TypeError, 'Cannot convert \\[1\\]'):
-            tfq_utility_ops.tfq_append_circuit([test_circuit], [1])
+            tfq_utility_ops.append_circuit([test_circuit], [1])
         with self.assertRaisesRegex(TypeError, 'Cannot convert \\[1\\]'):
-            tfq_utility_ops.tfq_append_circuit([1], [test_circuit])
+            tfq_utility_ops.append_circuit([1], [test_circuit])
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'Unparseable proto'):
-            tfq_utility_ops.tfq_append_circuit(['wrong'], ['wrong'])
+            tfq_utility_ops.append_circuit(['wrong'], ['wrong'])
         with self.assertRaisesRegex(
                 tf.errors.InvalidArgumentError,
                 'programs and programs_to_append must have matching sizes.'):
-            tfq_utility_ops.tfq_append_circuit([test_circuit],
+            tfq_utility_ops.append_circuit([test_circuit],
                                                [test_circuit, test_circuit])
         with self.assertRaisesRegex(
                 tf.errors.InvalidArgumentError,
                 'programs and programs_to_append must have matching sizes.'):
-            tfq_utility_ops.tfq_append_circuit([test_circuit, test_circuit],
+            tfq_utility_ops.append_circuit([test_circuit, test_circuit],
                                                [test_circuit])
         with self.assertRaisesRegex(
                 tf.errors.InvalidArgumentError,
                 'programs and programs_to_append must have matching sizes'):
-            tfq_utility_ops.tfq_append_circuit([], [test_circuit])
+            tfq_utility_ops.append_circuit([], [test_circuit])
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'programs must be rank 1. Got rank 2'):
-            tfq_utility_ops.tfq_append_circuit([[test_circuit, test_circuit]],
+            tfq_utility_ops.append_circuit([[test_circuit, test_circuit]],
                                                [[test_circuit, test_circuit]])
 
         with self.assertRaisesRegex(TypeError,
                                     'missing 1 required positional argument'):
             # pylint: disable=no-value-for-parameter
-            tfq_utility_ops.tfq_append_circuit([test_circuit])
+            tfq_utility_ops.append_circuit([test_circuit])
             # pylint: enable=no-value-for-parameter
 
         # TODO (mbbrough): should this line work or no. what is the TF
         # standard here ?
-        tfq_utility_ops.tfq_append_circuit([test_circuit], [test_circuit],
+        tfq_utility_ops.append_circuit([test_circuit], [test_circuit],
                                            [test_circuit])
 
         # These tests really just makes sure we can cast output
-        res = tfq_utility_ops.tfq_append_circuit([], [])
+        res = tfq_utility_ops.append_circuit([], [])
 
         self.assertDTypeEqual(res.numpy().astype(np.str), np.dtype('<U1'))
 
@@ -100,7 +100,7 @@ class CircuitAppendOpTest(tf.test.TestCase, parameterized.TestCase):
         serialized_circuits_to_append = util.convert_to_tensor(
             circuits_to_append)
 
-        tfq_results = tfq_utility_ops.tfq_append_circuit(
+        tfq_results = tfq_utility_ops.append_circuit(
             serialized_base_circuits, serialized_circuits_to_append)
 
         tfq_results = util.from_tensor(tfq_results)
