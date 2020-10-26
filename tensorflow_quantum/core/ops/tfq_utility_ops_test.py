@@ -43,12 +43,12 @@ class AppendCircuitOpTest(tf.test.TestCase, parameterized.TestCase):
                 tf.errors.InvalidArgumentError,
                 'programs and programs_to_append must have matching sizes.'):
             tfq_utility_ops.append_circuit([test_circuit],
-                                               [test_circuit, test_circuit])
+                                           [test_circuit, test_circuit])
         with self.assertRaisesRegex(
                 tf.errors.InvalidArgumentError,
                 'programs and programs_to_append must have matching sizes.'):
             tfq_utility_ops.append_circuit([test_circuit, test_circuit],
-                                               [test_circuit])
+                                           [test_circuit])
         with self.assertRaisesRegex(
                 tf.errors.InvalidArgumentError,
                 'programs and programs_to_append must have matching sizes'):
@@ -57,7 +57,7 @@ class AppendCircuitOpTest(tf.test.TestCase, parameterized.TestCase):
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'programs must be rank 1. Got rank 2'):
             tfq_utility_ops.append_circuit([[test_circuit, test_circuit]],
-                                               [[test_circuit, test_circuit]])
+                                           [[test_circuit, test_circuit]])
 
         with self.assertRaisesRegex(TypeError,
                                     'missing 1 required positional argument'):
