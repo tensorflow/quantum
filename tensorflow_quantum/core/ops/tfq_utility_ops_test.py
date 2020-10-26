@@ -32,9 +32,9 @@ class AppendCircuitOpTest(tf.test.TestCase, parameterized.TestCase):
         """Check that the append op has correct input checking."""
         test_circuit = serializer.serialize_circuit(
             cirq.Circuit(cirq.X.on(cirq.GridQubit(0, 0)))).SerializeToString()
-        with self.assertRaisesRegex(TypeError, 'Cannot convert \\[1\\]'):
+        with self.assertRaisesRegex(TypeError, 'Expected string'):
             tfq_utility_ops.append_circuit([test_circuit], [1])
-        with self.assertRaisesRegex(TypeError, 'Cannot convert \\[1\\]'):
+        with self.assertRaisesRegex(TypeError, 'Expected string'):
             tfq_utility_ops.append_circuit([1], [test_circuit])
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'Unparseable proto'):
@@ -54,7 +54,7 @@ class AppendCircuitOpTest(tf.test.TestCase, parameterized.TestCase):
                 'programs and programs_to_append must have matching sizes'):
             tfq_utility_ops.append_circuit([], [test_circuit])
 
-        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+        with self.assertRaisesRegex(ValueError,
                                     'programs must be rank 1. Got rank 2'):
             tfq_utility_ops.append_circuit([[test_circuit, test_circuit]],
                                                [[test_circuit, test_circuit]])
