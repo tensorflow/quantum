@@ -45,7 +45,7 @@ struct QsimFor {
   template <typename Function, typename... Args>
   void Run(uint64_t size, Function&& func, Args&&... args) const {
     auto worker_f = [&func, &args...](int64_t start, int64_t end) {
-      for (uint64_t i = start; i < end; i++) {
+      for (int64_t i = start; i < end; i++) {
         // First two arguments in RUN appear to be unused.
         std::forward<Function>(func)(-10, -10, i, std::forward<Args>(args)...);
       }
@@ -162,8 +162,8 @@ tensorflow::Status ComputeExpectationQsim(const tfq::proto::PauliSum& p_sum,
     }
     // copy from src to scratch.
     ss.CopyState(state, scratch);
-    for (int j = 0; j < fused_circuit.size(); j++) {
-      qsim::ApplyFusedGate(sim, fused_circuit[j], scratch);
+    for (const qsim::GateFused<QsimGate>& fused_gate : fused_circuit) {
+      qsim::ApplyFusedGate(sim, fused_gate, scratch);
     }
 
     if (!status.ok()) {
@@ -214,8 +214,8 @@ tensorflow::Status ComputeSampledExpectationQsim(
     }
     // copy from src to scratch.
     ss.CopyState(state, scratch);
-    for (int j = 0; j < fused_circuit.size(); j++) {
-      qsim::ApplyFusedGate(sim, fused_circuit[j], scratch);
+    for (const qsim::GateFused<QsimGate>& fused_gate : fused_circuit) {
+      qsim::ApplyFusedGate(sim, fused_gate, scratch);
     }
 
     if (!status.ok()) {
@@ -238,15 +238,15 @@ tensorflow::Status ComputeSampledExpectationQsim(
 
     // Compute the BitMask.
     uint64_t mask = 0;
-    for (int i = 0; i < parity_bits.size(); i++) {
-      mask |= uint64_t(1) << uint64_t(parity_bits[i]);
+    for (const unsigned int parity_bit : parity_bits) {
+      mask |= uint64_t(1) << uint64_t(parity_bit);
     }
 
     // Compute the running parity.
     int parity_total(0);
     int count = 0;
-    for (int i = 0; i < state_samples.size(); i++) {
-      count = std::bitset<64>(state_samples[i] & mask).count() & 1;
+    for (const uint64_t state_sample : state_samples) {
+      count = std::bitset<64>(state_sample & mask).count() & 1;
       parity_total += count ? -1 : 1;
     }
     *expectation_value += static_cast<float>(parity_total) *
@@ -308,7 +308,10 @@ tensorflow::Status AccumulateOperators(
   ss.CopyState(source, scratch);
   ss.SetAllZeros(dest);
 
-  for (int i = 0; i < p_sums.size(); i++) {
+  DCHECK_EQ(p_sums.size(), op_coeffs.size());
+  const int num_p_sums = p_sums.size();
+
+  for (int i = 0; i < num_p_sums; i++) {
     for (const tfq::proto::PauliTerm& term : p_sums[i].terms()) {
       const float leading_coeff = op_coeffs[i] * term.coefficient_real();
       if (std::fabs(leading_coeff) < 1e-5) {
@@ -334,8 +337,8 @@ tensorflow::Status AccumulateOperators(
       }
 
       // Apply scaled gates, accumulate, undo.
-      for (int j = 0; j < fused_circuit.size(); j++) {
-        qsim::ApplyFusedGate(sim, fused_circuit[j], scratch);
+      for (const qsim::GateFused<QsimGate>& fused_gate : fused_circuit) {
+        qsim::ApplyFusedGate(sim, fused_gate, scratch);
       }
 
       ss.Multiply(leading_coeff, scratch);
