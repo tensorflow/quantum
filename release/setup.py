@@ -55,7 +55,7 @@ REQUIRED_PACKAGES = ['cirq == 0.9.1', 'sympy == 1.5']
 # placed as extra to not have required overwrite existing nightly installs if
 # they exist.
 EXTRA_PACKAGES = ['tensorflow == 2.3.1']
-CUR_VERSION = '0.4.0'
+CUR_VERSION = '0.5.0'
 
 
 class BinaryDistribution(Distribution):

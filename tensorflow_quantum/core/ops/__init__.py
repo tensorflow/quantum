@@ -20,10 +20,10 @@ from tensorflow_quantum.core.ops.circuit_execution_ops import (
     get_state_op)
 
 from tensorflow_quantum.core.ops.tfq_unitary_op import get_unitary_op
-from tensorflow_quantum.core.ops.tfq_utility_ops import (padded_to_ragged,
+from tensorflow_quantum.core.ops.tfq_utility_ops import (append_circuit,
+                                                         padded_to_ragged,
                                                          padded_to_ragged2d,
-                                                         resolve_parameters,
-                                                         tfq_append_circuit)
+                                                         resolve_parameters)
 
 # Import math_ops.
 from tensorflow_quantum.core.ops import math_ops

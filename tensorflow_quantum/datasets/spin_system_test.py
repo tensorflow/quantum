@@ -217,6 +217,108 @@ class XXZChainTest(tf.test.TestCase):
                                     rtol=1e-3)
 
 
+class TFIRectangularTest(tf.test.TestCase):
+    """Testing tfi_rectangular."""
+    # pylint: disable=C0103
+
+    @classmethod
+    def setUpClass(self):
+        """Setup data for the test"""
+        self.random_subset_size = 10
+        # TFI RECT
+        self.supported_nspins_tfi_rectangular = [9, 12, 16]
+        self.data_dict_tfi_rectangular = {}
+        self.qbs_dict_tfi_rectangular = {}
+        for nspins in self.supported_nspins_tfi_rectangular:
+            qbs_tfi_rectangular = cirq.GridQubit.rect(nspins, 1)
+            self.data_dict_tfi_rectangular[
+                nspins] = spin_system.tfi_rectangular(
+                    qbs_tfi_rectangular,
+                    'torus',
+                )
+            self.qbs_dict_tfi_rectangular[nspins] = qbs_tfi_rectangular
+        self.random_subset_tfi_rectangular = np.random.permutation(
+            list(range(51)))[:self.random_subset_size]
+        super(TFIRectangularTest).__init__(self)
+
+    def test_errors(self):
+        """Test that it errors on invalid arguments."""
+        with self.assertRaisesRegex(ValueError,
+                                    expected_regex='Supported number of'):
+            qbs = cirq.GridQubit.rect(3, 1)
+            spin_system.tfi_rectangular(qbs)
+        with self.assertRaisesRegex(
+                ValueError, expected_regex='Supported boundary conditions'):
+            qbs = cirq.GridQubit.rect(9, 1)
+            spin_system.tfi_rectangular(qbs, 'open')
+        with self.assertRaisesRegex(TypeError,
+                                    expected_regex='expected str, bytes '):
+            qbs = cirq.GridQubit.rect(9, 1)
+            spin_system.tfi_rectangular(qbs, data_dir=123)
+        with self.assertRaisesRegex(TypeError,
+                                    expected_regex='must be a list of'):
+            spin_system.tfi_rectangular(['bob'])
+
+        with self.assertRaisesRegex(TypeError,
+                                    expected_regex='must be a one-dimensional'):
+            qbs = cirq.GridQubit.rect(9, 1)
+            spin_system.tfi_rectangular([qbs])
+
+    def test_fidelity(self):
+        """Test that all fidelities are close to 1."""
+        for nspins in self.supported_nspins_tfi_rectangular:
+            circuits, _, _, addinfo = self.data_dict_tfi_rectangular[nspins]
+            for n in self.random_subset_tfi_rectangular:
+                phi = cirq.Simulator().simulate(circuits[n]).final_state_vector
+                gs = addinfo[n].gs
+                self.assertAllClose(np.abs(np.vdot(gs, phi)), 1.0, rtol=5e-3)
+
+    def test_paulisum(self):
+        """Test that the PauliSum Hamiltonians give the ground state energy."""
+        for nspins in self.supported_nspins_tfi_rectangular:
+            circuits, _, pauli_sums, addinfo = self.data_dict_tfi_rectangular[
+                nspins]
+            qubit_map = {
+                self.qbs_dict_tfi_rectangular[nspins][i]: i
+                for i in range(nspins)
+            }
+            for n in self.random_subset_tfi_rectangular:
+                phi = cirq.Simulator().simulate(circuits[n]).final_state_vector
+                e = pauli_sums[n].expectation_from_state_vector(phi, qubit_map)
+                self.assertAllClose(e, addinfo[n].gs_energy, rtol=5e-3)
+
+    def test_returned_objects(self):
+        """Test that the length and types of returned objects are correct."""
+        for nspins in self.supported_nspins_tfi_rectangular:
+            circuits, labels, pauli_sums, addinfo = \
+                self.data_dict_tfi_rectangular[nspins]
+            self.assertLen(circuits, 51)
+            self.assertLen(labels, 51)
+            self.assertLen(pauli_sums, 51)
+            self.assertLen(addinfo, 51)
+            for n in range(51):
+                self.assertIsInstance(circuits[n], cirq.Circuit)
+                self.assertIsInstance(labels[n], int)
+                self.assertIsInstance(pauli_sums[n], cirq.PauliSum)
+                self.assertIsInstance(addinfo[n], SpinSystemInfo)
+
+    def test_param_resolver(self):
+        """Test that the resolved circuits are correct."""
+        for nspins in self.supported_nspins_tfi_rectangular:
+            circuits, _, _, addinfo = self.data_dict_tfi_rectangular[nspins]
+            for n in self.random_subset_tfi_rectangular:
+                resolved_circuit = cirq.resolve_parameters(
+                    addinfo[n].var_circuit, addinfo[n].params)
+                state_circuit = cirq.Simulator().simulate(
+                    circuits[n]).final_state_vector
+                state_resolved_circuit = cirq.Simulator().simulate(
+                    resolved_circuit).final_state_vector
+                self.assertAllClose(np.abs(
+                    np.vdot(state_circuit, state_resolved_circuit)),
+                                    1.0,
+                                    rtol=1e-3)
+
+
 if __name__ == '__main__':
 
     tf.test.main()
