@@ -309,9 +309,8 @@ tensorflow::Status AccumulateOperators(
   ss.SetAllZeros(dest);
 
   DCHECK_EQ(p_sums.size(), op_coeffs.size());
-  const int num_p_sums = p_sums.size();
 
-  for (int i = 0; i < num_p_sums; i++) {
+  for (size_t i = 0; i < p_sums.size(); i++) {
     for (const tfq::proto::PauliTerm& term : p_sums[i].terms()) {
       const float leading_coeff = op_coeffs[i] * term.coefficient_real();
       if (std::fabs(leading_coeff) < 1e-5) {
