@@ -67,8 +67,8 @@ TEST_P(TwoTermSampledExpectationFixture, CorrectnessTest) {
 
   // Prepare initial state.
   ss.SetStateZero(sv);
-  for (int j = 0; j < fused_circuit.size(); j++) {
-    qsim::ApplyFusedGate(sim, fused_circuit[j], sv);
+  for (const qsim::GateFused<QsimGate>& fused_gate : fused_circuit) {
+    qsim::ApplyFusedGate(sim, fused_gate, sv);
   }
 
   PauliSum p_sum;
@@ -132,8 +132,8 @@ TEST_P(TwoTermExpectationFixture, CorrectnessTest) {
 
   // Prepare initial state.
   ss.SetStateZero(sv);
-  for (int j = 0; j < fused_circuit.size(); j++) {
-    qsim::ApplyFusedGate(sim, fused_circuit[j], sv);
+  for (const qsim::GateFused<QsimGate>& fused_gate : fused_circuit) {
+    qsim::ApplyFusedGate(sim, fused_gate, sv);
   }
 
   PauliSum p_sum;
@@ -241,8 +241,8 @@ TEST(UtilQsimTest, SampledCompoundCase) {
 
   // Prepare initial state.
   ss.SetStateZero(sv);
-  for (int j = 0; j < fused_circuit.size(); j++) {
-    qsim::ApplyFusedGate(sim, fused_circuit[j], sv);
+  for (const qsim::GateFused<QsimGate>& fused_gate : fused_circuit) {
+    qsim::ApplyFusedGate(sim, fused_gate, sv);
   }
 
   PauliSum p_sum;
@@ -299,8 +299,8 @@ TEST(UtilQsimTest, CompoundCase) {
 
   // Prepare initial state.
   ss.SetStateZero(sv);
-  for (int j = 0; j < fused_circuit.size(); j++) {
-    qsim::ApplyFusedGate(sim, fused_circuit[j], sv);
+  for (const qsim::GateFused<QsimGate>& fused_gate : fused_circuit) {
+    qsim::ApplyFusedGate(sim, fused_gate, sv);
   }
 
   PauliSum p_sum;
@@ -352,8 +352,8 @@ TEST(UtilQsimTest, ApplyGateDagger) {
 
   // Prepare initial state.
   ss.SetStateZero(sv);
-  for (int i = 0; i < simple_circuit.gates.size(); i++) {
-    qsim::ApplyGate(sim, simple_circuit.gates[i], sv);
+  for (const auto& gate : simple_circuit.gates) {
+    qsim::ApplyGate(sim, gate, sv);
   }
   for (int i = simple_circuit.gates.size() - 1; i >= 0; i--) {
     ApplyGateDagger(sim, simple_circuit.gates[i], sv);
@@ -394,8 +394,8 @@ TEST(UtilQsimTest, ApplyFusedGateDagger) {
 
   // Prepare initial state.
   ss.SetStateZero(sv);
-  for (int j = 0; j < fused_circuit.size(); j++) {
-    qsim::ApplyFusedGate(sim, fused_circuit[j], sv);
+  for (const qsim::GateFused<QsimGate>& fused_gate : fused_circuit) {
+    qsim::ApplyFusedGate(sim, fused_gate, sv);
   }
   for (int i = fused_circuit.size() - 1; i >= 0; i--) {
     ApplyFusedGateDagger(sim, fused_circuit[i], sv);
@@ -436,8 +436,8 @@ TEST(UtilQsimTest, AccumulateOperatorsBasic) {
 
   // Prepare initial state.
   ss.SetStateZero(sv);
-  for (int j = 0; j < fused_circuit.size(); j++) {
-    qsim::ApplyFusedGate(sim, fused_circuit[j], sv);
+  for (const qsim::GateFused<QsimGate>& fused_gate : fused_circuit) {
+    qsim::ApplyFusedGate(sim, fused_gate, sv);
   }
 
   PauliSum p_sum;
