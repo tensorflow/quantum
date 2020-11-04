@@ -202,22 +202,25 @@ class Differentiator(metaclass=abc.ABCMeta):
         ...     programs, symbol_names, symbol_values)
         >>> exp_layer = tfq.layers.Expectation()
         >>> batch_pauli_sums = tf.tile(
-        ...     tf.expand_dims(pauli_sums, 0),
+        ...     tf.expand_dims(pauli_sums, 1),
         ...     [1, tf.shape(batch_mapper)[2], 1])
-        >>> batch_expectations = tf.map_fn(
-        ...     lambda x: exp_layer(x[0], new_symbol_names, x[2], x[3]),
-        ...     (batch_programs, batch_symbol_values, batch_pauli_sums),
-        ...     fn_output_signature=tf.float32)
-        >>> grad_manual = tf.reduce_sum(tf.map_fn(
-        ...     lambda x: tf.reduce_sum(x[0] * x[1], -1),
-        ...     (batch_mapper, batch_expectations),
-        ...     fn_output_signature=tf.float32), -1)
+        >>> n_batch_programs = tf.reduce_prod(tf.shape(batch_programs))
+        >>> n_symbols = tf.shape(new_symbol_names)[0]
+        >>> n_ops = tf.shape(pauli_sums)[1]
+        >>> batch_expectations = tfq.layers.Expectation()(
+        ...     tf.reshape(batch_programs, [n_batch_programs]),
+        ...     symbol_names=new_symbol_names,
+        ...     symbol_values=tf.reshape(
+        ...         batch_symbol_values, [n_batch_programs, n_symbols]),
+        ...     operators=tf.reshape(
+        ...         batch_pauli_sums, [n_batch_programs, n_ops]))
+        >>> batch_expectations = tf.reshape(
+        ...     batch_expectations, tf.shape(batch_pauli_sums))
+        >>> grad_manual = tf.reduce_sum(
+        ...     tf.einsum('ikm,jmp->ikp', batch_mapper, batch_expectations), -1)
 
 
-        For best performance the user should flatten the inputs and feed them
-        to the Expectation layer all at once, but the above better illustrates
-        the structure of the computation. To perform the same gradient
-        calculation automatically:
+        To perform the same gradient calculation automatically:
 
 
         >>> with tf.GradientTape() as g:
@@ -226,7 +229,7 @@ class Differentiator(metaclass=abc.ABCMeta):
         ...         programs, symbol_names=symbol_names,
         ...         symbol_values=symbol_values, operators=pauli_sums)
         >>> grad_auto = g.gradient(exact_outputs, symbol_values)
-        >>> all(derivative_manual == derivative_auto)
+        >>> tf.math.reduce_all(grad_manual == grad_auto).numpy()
         True
 
 
