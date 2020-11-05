@@ -111,7 +111,7 @@ class TfqCalculateUnitaryOp : public tensorflow::OpKernel {
     // Simulate programs one by one. Parallelizing over state vectors
     // we no longer parallelize over circuits. Each time we encounter a
     // a larger circuit we will grow the unitary as nescessary.
-    for (int i = 0; i < fused_circuits.size(); i++) {
+    for (size_t i = 0; i < fused_circuits.size(); i++) {
       int nq = num_qubits[i];
       UCalculator sim = UCalculator(nq, tfq_for);
       UnitarySpace us = UnitarySpace(nq, tfq_for);
@@ -121,7 +121,7 @@ class TfqCalculateUnitaryOp : public tensorflow::OpKernel {
         u = us.CreateUnitary();
       }
       us.SetIdentity(u);
-      for (int j = 0; j < fused_circuits[i].size(); j++) {
+      for (size_t j = 0; j < fused_circuits[i].size(); j++) {
         qsim::ApplyFusedGate(sim, fused_circuits[i][j], u);
       }
 
