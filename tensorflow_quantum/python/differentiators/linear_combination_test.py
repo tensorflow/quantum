@@ -66,6 +66,13 @@ class LinearCombinationTest(tf.test.TestCase, parameterized.TestCase):
         with self.assertRaisesRegex(ValueError, expected_regex="unique"):
             linear_combination.LinearCombination([1, 1], [1, 1])
 
+    def test_no_gradient_circuits(self):
+        """Confirm LinearCombination differentiator has no gradient circuits."""
+        dif = linear_combination.LinearCombination([1, 1], [1, 0])
+        with self.assertRaisesRegex(NotImplementedError,
+                                    expected_regex="not currently available"):
+            _ = dif.get_gradient_circuits(None, None, None)
+
     def test_forward_instantiate(self):
         """Test ForwardDifference type checking."""
         linear_combination.ForwardDifference()
