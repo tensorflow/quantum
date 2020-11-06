@@ -189,22 +189,54 @@ class Differentiator(metaclass=abc.ABCMeta):
         `tf.Tensor` objects give all necessary information to recreate the
         internal logic of the differentiator.
 
-        If the caller has a list of functions `f` (one for each program in the
-        batch) with [n_vals] output values per function, then the derivative of
-        the computation will have shape [batch_size, n_params, n_vals]. In terms
-        of the Args and Returns of `get_gradient_circuits`, each entry of this
-        derivative can then be computed as
 
-        d(<programs[i](symbol_values[i])|
-            f[i]|programs[i](symbol_values[i])>)
-        / d(symbol_names[k]) = sum_m (batch_mapper[i, k, m] *
-            (<batch_programs[i, m](batch_symbol_values[i, m])|
-                f[i]|batch_programs[i, m](batch_symbol_values[i, m])>)
+        Suppose we have some inputs `programs`, `symbol_names`, and
+        `symbol_values`.  To get the derivative of the expectation values of a
+        tensor of PauliSums `pauli_sums` with respect to these inputs, do:
 
-        where d represents taking the partial derivative.
+
+        >>> diff = <some differentiator>()
+        >>> (
+        ...     batch_programs, new_symbol_names, batch_symbol_values,
+        ...     batch_mapper
+        ... ) = diff.get_gradient_circuits(
+        ...     programs, symbol_names, symbol_values)
+        >>> exp_layer = tfq.layers.Expectation()
+        >>> batch_pauli_sums = tf.tile(
+        ...     tf.expand_dims(pauli_sums, 1),
+        ...     [1, tf.shape(batch_mapper)[2], 1])
+        >>> n_batch_programs = tf.reduce_prod(tf.shape(batch_programs))
+        >>> n_symbols = tf.shape(new_symbol_names)[0]
+        >>> n_ops = tf.shape(pauli_sums)[1]
+        >>> batch_expectations = tfq.layers.Expectation()(
+        ...     tf.reshape(batch_programs, [n_batch_programs]),
+        ...     symbol_names=new_symbol_names,
+        ...     symbol_values=tf.reshape(
+        ...         batch_symbol_values, [n_batch_programs, n_symbols]),
+        ...     operators=tf.reshape(
+        ...         batch_pauli_sums, [n_batch_programs, n_ops]))
+        >>> batch_expectations = tf.reshape(
+        ...     batch_expectations, tf.shape(batch_pauli_sums))
+        >>> grad_manual = tf.reduce_sum(
+        ...     tf.einsum('ikm,jmp->ikp', batch_mapper, batch_expectations), -1)
+
+
+        To perform the same gradient calculation automatically:
+
+
+        >>> with tf.GradientTape() as g:
+        >>>     g.watch(symbol_values)
+        >>>     exact_outputs = tfq.layers.Expectation()(
+        ...         programs, symbol_names=symbol_names,
+        ...         symbol_values=symbol_values, operators=pauli_sums)
+        >>> grad_auto = g.gradient(exact_outputs, symbol_values)
+        >>> tf.math.reduce_all(grad_manual == grad_auto).numpy()
+        True
+
 
         NOTE: this feature is intended for advanced users who need more
         flexibility than the standard workflow allows.
+
 
         Args:
             programs: `tf.Tensor` of strings with shape [batch_size] containing

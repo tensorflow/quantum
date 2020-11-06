@@ -40,6 +40,8 @@ upper_tabs:
         path: /quantum/tutorials/hello_many_worlds
       - title: "MNIST classification"
         path: /quantum/tutorials/mnist
+      - title: "Quantum data"
+        path: /quantum/tutorials/quantum_data
       - title: "Calculate gradients"
         path: /quantum/tutorials/gradients
       - title: "Barren plateaus"
