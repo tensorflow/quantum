@@ -199,7 +199,7 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
         }
 
         ss.SetStateZero(sv);
-        for (size_t j = 0; j < full_fuse[i].size(); j++) {
+        for (int j = 0; j < full_fuse[i].size(); j++) {
           qsim::ApplyFusedGate(sim, full_fuse[i][j], sv);
         }
 
@@ -222,7 +222,7 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
           // Hit a parameterized gate.
           ApplyGateDagger(
               sim, qsim_circuits[i].gates[gradient_gates[i][j - 1].index], sv);
-          for (size_t k = 0; k < gradient_gates[i][j - 1].grad_gates.size(); k++) {
+          for (int k = 0; k < gradient_gates[i][j - 1].grad_gates.size(); k++) {
             // Copy sv onto scratch2 in anticipation of non-unitary "gradient
             // gate".
             ss.CopyState(sv, scratch2);
@@ -277,7 +277,7 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
     State scratch = StateSpace(largest_nq, tfq_for).CreateState();
     State scratch2 = StateSpace(largest_nq, tfq_for).CreateState();
 
-    for (size_t i = 0; i < partial_fused_circuits.size(); i++) {
+    for (int i = 0; i < partial_fused_circuits.size(); i++) {
       int nq = num_qubits[i];
       Simulator sim = Simulator(nq, tfq_for);
       StateSpace ss = StateSpace(nq, tfq_for);
@@ -295,7 +295,7 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
       }
 
       ss.SetStateZero(sv);
-      for (size_t j = 0; j < full_fuse[i].size(); j++) {
+      for (int j = 0; j < full_fuse[i].size(); j++) {
         qsim::ApplyFusedGate(sim, full_fuse[i][j], sv);
       }
 
@@ -318,7 +318,7 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
         // Hit a parameterized gate.
         ApplyGateDagger(
             sim, qsim_circuits[i].gates[gradient_gates[i][j - 1].index], sv);
-        for (size_t k = 0; k < gradient_gates[i][j - 1].grad_gates.size(); k++) {
+        for (int k = 0; k < gradient_gates[i][j - 1].grad_gates.size(); k++) {
           // Copy sv onto scratch2 in anticipation of non-unitary "gradient
           // gate".
           ss.CopyState(sv, scratch2);

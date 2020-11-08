@@ -130,7 +130,7 @@ class TfqSimulateStateOp : public tensorflow::OpKernel {
     // Simulate programs one by one. Parallelizing over state vectors
     // we no longer parallelize over circuits. Each time we encounter a
     // a larger circuit we will grow the Statevector as nescessary.
-    for (size_t i = 0; i < fused_circuits.size(); i++) {
+    for (int i = 0; i < fused_circuits.size(); i++) {
       int nq = num_qubits[i];
       Simulator sim = Simulator(nq, tfq_for);
       StateSpace ss = StateSpace(nq, tfq_for);
@@ -140,7 +140,7 @@ class TfqSimulateStateOp : public tensorflow::OpKernel {
         sv = ss.CreateState();
       }
       ss.SetStateZero(sv);
-      for (size_t j = 0; j < fused_circuits[i].size(); j++) {
+      for (int j = 0; j < fused_circuits[i].size(); j++) {
         qsim::ApplyFusedGate(sim, fused_circuits[i][j], sv);
       }
 
@@ -189,7 +189,7 @@ class TfqSimulateStateOp : public tensorflow::OpKernel {
           sv = ss.CreateState();
         }
         ss.SetStateZero(sv);
-        for (size_t j = 0; j < fused_circuits[i].size(); j++) {
+        for (int j = 0; j < fused_circuits[i].size(); j++) {
           qsim::ApplyFusedGate(sim, fused_circuits[i][j], sv);
         }
 

@@ -165,7 +165,7 @@ class TfqInnerProductOp : public tensorflow::OpKernel {
     // Simulate programs one by one. Parallelizing over state vectors
     // we no longer parallelize over circuits. Each time we encounter a
     // a larger circuit we will grow the Statevector as necessary.
-    for (size_t i = 0; i < fused_circuits.size(); i++) {
+    for (int i = 0; i < fused_circuits.size(); i++) {
       int nq = num_qubits[i];
       Simulator sim = Simulator(nq, tfq_for);
       StateSpace ss = StateSpace(nq, tfq_for);
@@ -179,10 +179,10 @@ class TfqInnerProductOp : public tensorflow::OpKernel {
       //  the state if there is a possibility that circuit[i] and
       //  circuit[i + 1] produce the same state.
       ss.SetStateZero(sv);
-      for (size_t j = 0; j < fused_circuits[i].size(); j++) {
+      for (int j = 0; j < fused_circuits[i].size(); j++) {
         qsim::ApplyFusedGate(sim, fused_circuits[i][j], sv);
       }
-      for (size_t j = 0; j < other_fused_circuits[i].size(); j++) {
+      for (int j = 0; j < other_fused_circuits[i].size(); j++) {
         // (#679) Just ignore empty program
         if (fused_circuits[i].size() == 0) {
           (*output_tensor)(i, j) = std::complex<float>(1, 0);
@@ -190,7 +190,7 @@ class TfqInnerProductOp : public tensorflow::OpKernel {
         }
 
         ss.SetStateZero(scratch);
-        for (size_t k = 0; k < other_fused_circuits[i][j].size(); k++) {
+        for (int k = 0; k < other_fused_circuits[i][j].size(); k++) {
           qsim::ApplyFusedGate(sim, other_fused_circuits[i][j][k], scratch);
         }
 
@@ -249,13 +249,13 @@ class TfqInnerProductOp : public tensorflow::OpKernel {
           // no need to update scratch_state since ComputeExpectation
           // will take care of things for us.
           ss.SetStateZero(sv);
-          for (size_t j = 0; j < fused_circuits[cur_batch_index].size(); j++) {
+          for (int j = 0; j < fused_circuits[cur_batch_index].size(); j++) {
             qsim::ApplyFusedGate(sim, fused_circuits[cur_batch_index][j], sv);
           }
         }
 
         ss.SetStateZero(scratch);
-        for (size_t k = 0;
+        for (int k = 0;
              k <
              other_fused_circuits[cur_batch_index][cur_internal_index].size();
              k++) {
