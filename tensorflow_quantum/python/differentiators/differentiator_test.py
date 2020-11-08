@@ -20,6 +20,9 @@ from tensorflow_quantum.python.differentiators import differentiator
 class WorkingDifferentiator(differentiator.Differentiator):
     """test."""
 
+    def get_gradient_circuits(self, programs, symbol_names, symbol_values):
+        """test."""
+
     def differentiate_analytic(self, programs, symbol_names, symbol_values,
                                pauli_sums, forward_pass_vals, grad):
         """test."""

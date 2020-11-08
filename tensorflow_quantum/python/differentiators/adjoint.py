@@ -88,6 +88,13 @@ class Adjoint(differentiator.Differentiator):
         return super().generate_differentiable_op(analytic_op=analytic_op)
 
     @tf.function
+    def get_gradient_circuits(self, programs, symbol_names, symbol_values):
+        """See base class description."""
+        raise NotImplementedError(
+            "Adjoint differentiator cannot run on a real QPU, "
+            "therefore it has no accessible gradient circuits.")
+
+    @tf.function
     def differentiate_analytic(self, programs, symbol_names, symbol_values,
                                pauli_sums, forward_pass_vals, grad):
         return tfq_adj_grad_op.tfq_adj_grad(programs, symbol_names,
