@@ -336,9 +336,12 @@ def _symbols_in_op(op):
             ret |= op.phase_exponent.free_symbols
         return ret
 
-    raise ValueError("Attempted to scan for symbols in circuit with unsupported"
-                     " ops inside. Expected op found in tfq.get_supported_gates"
-                     " but found: ".format(str(op)))
+    raise ValueError(
+        "Attempted to scan for symbols in circuit with unsupported"
+        " ops inside.", "Expected op found in "
+        "tfq.util.get_supported_gates but found: {}.".format(str(op)),
+        "Please make sure circuits contain only ops found in "
+        "tfq.util.get_supported_gates().")
 
 
 def get_circuit_symbols(circuit):
