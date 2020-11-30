@@ -48,7 +48,7 @@ upper_tabs:
         path: /quantum/tutorials/barren_plateaus
       - title: "Quantum CNN"
         path: /quantum/tutorials/qcnn
-      - title: "Visualization tools"
+      - title: "Research tools"
         path: /quantum/tutorials/research_tools
 
     - name: API
