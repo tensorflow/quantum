@@ -172,25 +172,24 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
     const auto tfq_for = qsim::SequentialFor(1);
     using Simulator = qsim::Simulator<const qsim::SequentialFor&>;
     using StateSpace = Simulator::StateSpace;
-    using State = StateSpace::State;
 
     auto DoWork = [&](int start, int end) {
       // Begin simulation.
       int largest_nq = 1;
-      State sv = StateSpace(largest_nq, tfq_for).CreateState();
-      State scratch = StateSpace(largest_nq, tfq_for).CreateState();
-      State scratch2 = StateSpace(largest_nq, tfq_for).CreateState();
+      Simulator sim = Simulator(tfq_for);
+      StateSpace ss = StateSpace(tfq_for);
+      auto sv = ss.Create(largest_nq);
+      auto scratch = ss.Create(largest_nq);
+      auto scratch2 = ss.Create(largest_nq);
 
       for (int i = start; i < end; i++) {
         int nq = num_qubits[i];
-        Simulator sim = Simulator(nq, tfq_for);
-        StateSpace ss = StateSpace(nq, tfq_for);
         if (nq > largest_nq) {
           // need to switch to larger statespace.
           largest_nq = nq;
-          sv = ss.CreateState();
-          scratch = ss.CreateState();
-          scratch2 = ss.CreateState();
+          sv = ss.Create(largest_nq);
+          scratch = ss.Create(largest_nq);
+          scratch2 = ss.Create(largest_nq);
         }
 
         // (#679) Just ignore empty program
@@ -225,7 +224,7 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
           for (int k = 0; k < gradient_gates[i][j - 1].grad_gates.size(); k++) {
             // Copy sv onto scratch2 in anticipation of non-unitary "gradient
             // gate".
-            ss.CopyState(sv, scratch2);
+            ss.Copy(sv, scratch2);
             qsim::ApplyGate(sim, gradient_gates[i][j - 1].grad_gates[k],
                             scratch2);
 
@@ -269,24 +268,24 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
     const auto tfq_for = tfq::QsimFor(context);
     using Simulator = qsim::Simulator<const tfq::QsimFor&>;
     using StateSpace = Simulator::StateSpace;
-    using State = StateSpace::State;
 
     // Begin simulation.
     int largest_nq = 1;
-    State sv = StateSpace(largest_nq, tfq_for).CreateState();
-    State scratch = StateSpace(largest_nq, tfq_for).CreateState();
-    State scratch2 = StateSpace(largest_nq, tfq_for).CreateState();
+    Simulator sim = Simulator(tfq_for);
+    StateSpace ss = StateSpace(tfq_for);
+    auto sv = ss.Create(largest_nq);
+    auto scratch = ss.Create(largest_nq);
+    auto scratch2 = ss.Create(largest_nq);
 
     for (int i = 0; i < partial_fused_circuits.size(); i++) {
       int nq = num_qubits[i];
-      Simulator sim = Simulator(nq, tfq_for);
-      StateSpace ss = StateSpace(nq, tfq_for);
+
       if (nq > largest_nq) {
         // need to switch to larger statespace.
         largest_nq = nq;
-        sv = ss.CreateState();
-        scratch = ss.CreateState();
-        scratch2 = ss.CreateState();
+        sv = ss.Create(largest_nq);
+        scratch = ss.Create(largest_nq);
+        scratch2 = ss.Create(largest_nq);
       }
 
       // (#679) Just ignore empty program
@@ -321,7 +320,7 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
         for (int k = 0; k < gradient_gates[i][j - 1].grad_gates.size(); k++) {
           // Copy sv onto scratch2 in anticipation of non-unitary "gradient
           // gate".
-          ss.CopyState(sv, scratch2);
+          ss.Copy(sv, scratch2);
           qsim::ApplyGate(sim, gradient_gates[i][j - 1].grad_gates[k],
                           scratch2);
 

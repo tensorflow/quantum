@@ -287,7 +287,7 @@ INSTANTIATE_TEST_CASE_P(
 
 TEST(QsimCircuitParserTest, SingleConstantGate) {
   absl::flat_hash_map<std::string, QsimGate> reference = {
-      {"I", qsim::Cirq::I<float>::Create(0, 0)}};
+      {"I", qsim::Cirq::I1<float>::Create(0, 0)}};
   for (auto kv : reference) {
     Program program_proto;
     Circuit* circuit_proto = program_proto.mutable_circuit();
