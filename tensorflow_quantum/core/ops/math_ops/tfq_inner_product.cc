@@ -171,8 +171,8 @@ class TfqInnerProductOp : public tensorflow::OpKernel {
       if (nq > largest_nq) {
         // need to switch to larger statespace.
         largest_nq = nq;
-        sv = ss.Create(nq);
-        scratch = ss.Create(nq);
+        sv = ss.Create(largest_nq);
+        scratch = ss.Create(largest_nq);
       }
       // TODO: add heuristic here so that we do not always recompute
       //  the state if there is a possibility that circuit[i] and
@@ -240,9 +240,9 @@ class TfqInnerProductOp : public tensorflow::OpKernel {
           // We've run into a new state vector we must compute.
           // Only compute a new state vector when we have to.
           if (nq > largest_nq) {
-            sv = ss.Create(nq);
-            scratch = ss.Create(nq);
             largest_nq = nq;
+            sv = ss.Create(largest_nq);
+            scratch = ss.Create(largest_nq);
           }
           // no need to update scratch_state since ComputeExpectation
           // will take care of things for us.
