@@ -214,7 +214,7 @@ inline Status TwoEigenGate(
 Status IGate(const Operation& op, const SymbolMap& param_map,
              const unsigned int num_qubits, const unsigned int time,
              QsimCircuit* circuit, std::vector<GateMetaData>* metadata) {
-  return SingleConstantGate(op, param_map, &qsim::Cirq::I<float>::Create,
+  return SingleConstantGate(op, param_map, &qsim::Cirq::I1<float>::Create,
                             num_qubits, time, circuit, metadata);
 }
 
@@ -522,6 +522,7 @@ tensorflow::Status QsimCircuitFromProgram(
 
   // Build fused circuit.
   *fused_circuit = qsim::BasicGateFuser<qsim::IO, QsimGate>().FuseGates(
+      qsim::BasicGateFuser<qsim::IO, QsimGate>::Parameter(),
       circuit->num_qubits, circuit->gates);
   return Status::OK();
 }

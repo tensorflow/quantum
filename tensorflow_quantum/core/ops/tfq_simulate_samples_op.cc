@@ -127,23 +127,23 @@ class TfqSimulateSamplesOp : public tensorflow::OpKernel {
     const auto tfq_for = tfq::QsimFor(context);
     using Simulator = qsim::Simulator<const tfq::QsimFor&>;
     using StateSpace = Simulator::StateSpace;
-    using State = StateSpace::State;
 
     // Begin simulation.
     int largest_nq = 1;
-    State sv = StateSpace(largest_nq, tfq_for).CreateState();
+    Simulator sim = Simulator(tfq_for);
+    StateSpace ss = StateSpace(tfq_for);
+    auto sv = ss.Create(largest_nq);
 
     // Simulate programs one by one. Parallelizing over state vectors
     // we no longer parallelize over circuits. Each time we encounter a
     // a larger circuit we will grow the Statevector as nescessary.
     for (int i = 0; i < fused_circuits.size(); i++) {
       int nq = num_qubits[i];
-      Simulator sim = Simulator(nq, tfq_for);
-      StateSpace ss = StateSpace(nq, tfq_for);
+
       if (nq > largest_nq) {
         // need to switch to larger statespace.
         largest_nq = nq;
-        sv = ss.CreateState();
+        sv = ss.Create(largest_nq);
       }
       ss.SetStateZero(sv);
       for (int j = 0; j < fused_circuits[i].size(); j++) {
@@ -180,19 +180,19 @@ class TfqSimulateSamplesOp : public tensorflow::OpKernel {
     const auto tfq_for = qsim::SequentialFor(1);
     using Simulator = qsim::Simulator<const qsim::SequentialFor&>;
     using StateSpace = Simulator::StateSpace;
-    using State = StateSpace::State;
 
     auto DoWork = [&](int start, int end) {
       int largest_nq = 1;
-      State sv = StateSpace(largest_nq, tfq_for).CreateState();
+      Simulator sim = Simulator(tfq_for);
+      StateSpace ss = StateSpace(tfq_for);
+      auto sv = ss.Create(largest_nq);
       for (int i = start; i < end; i++) {
         int nq = num_qubits[i];
-        Simulator sim = Simulator(nq, tfq_for);
-        StateSpace ss = StateSpace(nq, tfq_for);
+
         if (nq > largest_nq) {
           // need to switch to larger statespace.
           largest_nq = nq;
-          sv = ss.CreateState();
+          sv = ss.Create(largest_nq);
         }
         ss.SetStateZero(sv);
         for (int j = 0; j < fused_circuits[i].size(); j++) {
