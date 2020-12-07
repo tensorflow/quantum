@@ -56,14 +56,15 @@ TEST_P(TwoTermSampledExpectationFixture, CorrectnessTest) {
       qsim::Cirq::YPowGate<float>::Create(2, 0, 0.5, 0.0));
 
   auto fused_circuit = qsim::BasicGateFuser<qsim::IO, QsimGate>().FuseGates(
+      qsim::BasicGateFuser<qsim::IO, QsimGate>::Parameter(),
       simple_circuit.num_qubits, simple_circuit.gates);
 
   // Instantiate qsim objects.
-  qsim::Simulator<qsim::SequentialFor> sim(2, 1);
-  qsim::Simulator<qsim::SequentialFor>::StateSpace ss(2, 1);
-  auto sv = ss.CreateState();
+  qsim::Simulator<qsim::SequentialFor> sim(1);
+  qsim::Simulator<qsim::SequentialFor>::StateSpace ss(1);
+  auto sv = ss.Create(2);
   ss.SetStateZero(sv);
-  auto scratch = ss.CreateState();
+  auto scratch = ss.Create(2);
 
   // Prepare initial state.
   ss.SetStateZero(sv);
@@ -121,14 +122,15 @@ TEST_P(TwoTermExpectationFixture, CorrectnessTest) {
       qsim::Cirq::YPowGate<float>::Create(2, 0, 0.5, 0.0));
 
   auto fused_circuit = qsim::BasicGateFuser<qsim::IO, QsimGate>().FuseGates(
+      qsim::BasicGateFuser<qsim::IO, QsimGate>::Parameter(),
       simple_circuit.num_qubits, simple_circuit.gates);
 
   // Instantiate qsim objects.
-  qsim::Simulator<qsim::SequentialFor> sim(2, 1);
-  qsim::Simulator<qsim::SequentialFor>::StateSpace ss(2, 1);
-  auto sv = ss.CreateState();
+  qsim::Simulator<qsim::SequentialFor> sim(1);
+  qsim::Simulator<qsim::SequentialFor>::StateSpace ss(1);
+  auto sv = ss.Create(2);
   ss.SetStateZero(sv);
-  auto scratch = ss.CreateState();
+  auto scratch = ss.Create(2);
 
   // Prepare initial state.
   ss.SetStateZero(sv);
@@ -174,11 +176,11 @@ TEST(UtilQsimTest, SampledEmptyTermCase) {
   // test that the identity term gets picked up correctly as an empty
   // pauliTerm.
   // Instantiate qsim objects.
-  qsim::Simulator<qsim::SequentialFor> sim(2, 1);
-  qsim::Simulator<qsim::SequentialFor>::StateSpace ss(2, 1);
-  auto sv = ss.CreateState();
+  qsim::Simulator<qsim::SequentialFor> sim(1);
+  qsim::Simulator<qsim::SequentialFor>::StateSpace ss(1);
+  auto sv = ss.Create(2);
   ss.SetStateZero(sv);
-  auto scratch = ss.CreateState();
+  auto scratch = ss.Create(2);
 
   PauliSum p_sum_empty;
 
@@ -198,11 +200,11 @@ TEST(UtilQsimTest, EmptyTermCase) {
   // test that the identity term gets picked up correctly as an empty
   // pauliTerm.
   // Instantiate qsim objects.
-  qsim::Simulator<qsim::SequentialFor> sim(2, 1);
-  qsim::Simulator<qsim::SequentialFor>::StateSpace ss(2, 1);
-  auto sv = ss.CreateState();
+  qsim::Simulator<qsim::SequentialFor> sim(1);
+  qsim::Simulator<qsim::SequentialFor>::StateSpace ss(1);
+  auto sv = ss.Create(2);
   ss.SetStateZero(sv);
-  auto scratch = ss.CreateState();
+  auto scratch = ss.Create(2);
 
   PauliSum p_sum_empty;
 
@@ -230,14 +232,15 @@ TEST(UtilQsimTest, SampledCompoundCase) {
       qsim::Cirq::YPowGate<float>::Create(2, 0, 0.5, 0.0));
 
   auto fused_circuit = qsim::BasicGateFuser<qsim::IO, QsimGate>().FuseGates(
+      qsim::BasicGateFuser<qsim::IO, QsimGate>::Parameter(),
       simple_circuit.num_qubits, simple_circuit.gates);
 
   // Instantiate qsim objects.
-  qsim::Simulator<qsim::SequentialFor> sim(2, 1);
-  qsim::Simulator<qsim::SequentialFor>::StateSpace ss(2, 1);
-  auto sv = ss.CreateState();
+  qsim::Simulator<qsim::SequentialFor> sim(1);
+  qsim::Simulator<qsim::SequentialFor>::StateSpace ss(1);
+  auto sv = ss.Create(2);
   ss.SetStateZero(sv);
-  auto scratch = ss.CreateState();
+  auto scratch = ss.Create(2);
 
   // Prepare initial state.
   ss.SetStateZero(sv);
@@ -288,14 +291,15 @@ TEST(UtilQsimTest, CompoundCase) {
       qsim::Cirq::YPowGate<float>::Create(2, 0, 0.5, 0.0));
 
   auto fused_circuit = qsim::BasicGateFuser<qsim::IO, QsimGate>().FuseGates(
+      qsim::BasicGateFuser<qsim::IO, QsimGate>::Parameter(),
       simple_circuit.num_qubits, simple_circuit.gates);
 
   // Instantiate qsim objects.
-  qsim::Simulator<qsim::SequentialFor> sim(2, 1);
-  qsim::Simulator<qsim::SequentialFor>::StateSpace ss(2, 1);
-  auto sv = ss.CreateState();
+  qsim::Simulator<qsim::SequentialFor> sim(1);
+  qsim::Simulator<qsim::SequentialFor>::StateSpace ss(1);
+  auto sv = ss.Create(2);
   ss.SetStateZero(sv);
-  auto scratch = ss.CreateState();
+  auto scratch = ss.Create(2);
 
   // Prepare initial state.
   ss.SetStateZero(sv);
@@ -344,11 +348,11 @@ TEST(UtilQsimTest, ApplyGateDagger) {
   simple_circuit.gates.push_back(
       qsim::Cirq::YPowGate<float>::Create(2, 0, 0.5, 0.0));
   // Instantiate qsim objects.
-  qsim::Simulator<qsim::SequentialFor> sim(2, 1);
-  qsim::Simulator<qsim::SequentialFor>::StateSpace ss(2, 1);
-  auto sv = ss.CreateState();
+  qsim::Simulator<qsim::SequentialFor> sim(1);
+  qsim::Simulator<qsim::SequentialFor>::StateSpace ss(1);
+  auto sv = ss.Create(2);
   ss.SetStateZero(sv);
-  auto scratch = ss.CreateState();
+  auto scratch = ss.Create(2);
 
   // Prepare initial state.
   ss.SetStateZero(sv);
@@ -381,15 +385,16 @@ TEST(UtilQsimTest, ApplyFusedGateDagger) {
   simple_circuit.gates.push_back(
       qsim::Cirq::YPowGate<float>::Create(2, 0, 0.5, 0.0));
   // Instantiate qsim objects.
-  qsim::Simulator<qsim::SequentialFor> sim(2, 1);
-  qsim::Simulator<qsim::SequentialFor>::StateSpace ss(2, 1);
-  auto sv = ss.CreateState();
+  qsim::Simulator<qsim::SequentialFor> sim(1);
+  qsim::Simulator<qsim::SequentialFor>::StateSpace ss(1);
+  auto sv = ss.Create(2);
   ss.SetStateZero(sv);
-  auto scratch = ss.CreateState();
+  auto scratch = ss.Create(2);
 
   // Prepare initial state.
   ss.SetStateZero(sv);
   auto fused_circuit = qsim::BasicGateFuser<qsim::IO, QsimGate>().FuseGates(
+      qsim::BasicGateFuser<qsim::IO, QsimGate>::Parameter(),
       simple_circuit.num_qubits, simple_circuit.gates);
 
   // Prepare initial state.
@@ -424,15 +429,16 @@ TEST(UtilQsimTest, AccumulateOperatorsBasic) {
       qsim::Cirq::YPowGate<float>::Create(2, 0, 0.5, 0.0));
 
   auto fused_circuit = qsim::BasicGateFuser<qsim::IO, QsimGate>().FuseGates(
+      qsim::BasicGateFuser<qsim::IO, QsimGate>::Parameter(),
       simple_circuit.num_qubits, simple_circuit.gates);
 
   // Instantiate qsim objects.
-  qsim::Simulator<qsim::SequentialFor> sim(2, 1);
-  qsim::Simulator<qsim::SequentialFor>::StateSpace ss(2, 1);
-  auto sv = ss.CreateState();
+  qsim::Simulator<qsim::SequentialFor> sim(1);
+  qsim::Simulator<qsim::SequentialFor>::StateSpace ss(1);
+  auto sv = ss.Create(2);
   ss.SetStateZero(sv);
-  auto scratch = ss.CreateState();
-  auto dest = ss.CreateState();
+  auto scratch = ss.Create(2);
+  auto dest = ss.Create(2);
 
   // Prepare initial state.
   ss.SetStateZero(sv);
@@ -505,12 +511,12 @@ TEST(UtilQsimTest, AccumulateOperatorsBasic) {
 
 TEST(UtilQsimTest, AccumulateOperatorsEmpty) {
   // Instantiate qsim objects.
-  qsim::Simulator<qsim::SequentialFor> sim(2, 1);
-  qsim::Simulator<qsim::SequentialFor>::StateSpace ss(2, 1);
-  auto sv = ss.CreateState();
+  qsim::Simulator<qsim::SequentialFor> sim(1);
+  qsim::Simulator<qsim::SequentialFor>::StateSpace ss(1);
+  auto sv = ss.Create(2);
   ss.SetStateZero(sv);
-  auto scratch = ss.CreateState();
-  auto dest = ss.CreateState();
+  auto scratch = ss.Create(2);
+  auto dest = ss.Create(2);
 
   AccumulateOperators({}, {}, sim, ss, sv, scratch, dest);
 

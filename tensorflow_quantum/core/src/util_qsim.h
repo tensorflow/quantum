@@ -154,14 +154,14 @@ tensorflow::Status ComputeExpectationQsim(const tfq::proto::PauliSum& p_sum,
     QsimCircuit main_circuit;
     std::vector<qsim::GateFused<QsimGate>> fused_circuit;
 
-    status = QsimCircuitFromPauliTerm(term, ss.num_qubits_, &main_circuit,
+    status = QsimCircuitFromPauliTerm(term, state.num_qubits(), &main_circuit,
                                       &fused_circuit);
 
     if (!status.ok()) {
       return status;
     }
     // copy from src to scratch.
-    ss.CopyState(state, scratch);
+    ss.Copy(state, scratch);
     for (const qsim::GateFused<QsimGate>& fused_gate : fused_circuit) {
       qsim::ApplyFusedGate(sim, fused_gate, scratch);
     }
@@ -207,13 +207,13 @@ tensorflow::Status ComputeSampledExpectationQsim(
     QsimCircuit main_circuit;
     std::vector<qsim::GateFused<QsimGate>> fused_circuit;
 
-    status = QsimZBasisCircuitFromPauliTerm(term, ss.num_qubits_, &main_circuit,
-                                            &fused_circuit);
+    status = QsimZBasisCircuitFromPauliTerm(term, state.num_qubits(),
+                                            &main_circuit, &fused_circuit);
     if (!status.ok()) {
       return status;
     }
     // copy from src to scratch.
-    ss.CopyState(state, scratch);
+    ss.Copy(state, scratch);
     for (const qsim::GateFused<QsimGate>& fused_gate : fused_circuit) {
       qsim::ApplyFusedGate(sim, fused_gate, scratch);
     }
@@ -233,7 +233,7 @@ tensorflow::Status ComputeSampledExpectationQsim(
       //  so it is safe to just use atoi.
       bool unused = absl::SimpleAtoi(pair.qubit_id(), &location);
       // Parity functions use little-endian indexing
-      parity_bits.push_back(ss.num_qubits_ - location - 1);
+      parity_bits.push_back(state.num_qubits() - location - 1);
     }
 
     // Compute the BitMask.
@@ -256,41 +256,6 @@ tensorflow::Status ComputeSampledExpectationQsim(
   return status;
 }
 
-template <typename Gate, typename Simulator, typename State>
-inline void ApplyGateDagger(const Simulator& simulator, const Gate& gate,
-                            State& state) {
-  typename Simulator::fp_type matrix[32];
-
-  if (gate.num_qubits == 1 && gate.matrix.size() == 8) {
-    std::copy(gate.matrix.begin(), gate.matrix.begin() + 8, matrix);
-    qsim::Matrix2Dagger(matrix);
-    simulator.ApplyGate1(gate.qubits[0], matrix, state);
-  } else if (gate.num_qubits == 2 && gate.matrix.size() == 32) {
-    std::copy(gate.matrix.begin(), gate.matrix.begin() + 32, matrix);
-    qsim::Matrix4Dagger(matrix);
-    // Here we should have gate.qubits[0] < gate.qubits[1].
-    simulator.ApplyGate2(gate.qubits[0], gate.qubits[1], matrix, state);
-  }
-}
-
-// Fuse gates. Dagger. Then apply. Slight modification from qsim.
-template <typename Gate, typename Simulator, typename State>
-inline void ApplyFusedGateDagger(const Simulator& simulator, const Gate& gate,
-                                 State& state) {
-  typename Simulator::fp_type matrix[32];
-
-  if (gate.num_qubits == 1 && gate.pmaster->matrix.size() == 8) {
-    qsim::CalcMatrix2(gate.gates, matrix);
-    qsim::Matrix2Dagger(matrix);
-    simulator.ApplyGate1(gate.qubits[0], matrix, state);
-  } else if (gate.num_qubits == 2 && gate.pmaster->matrix.size() == 32) {
-    // Here we should have gate.qubits[0] < gate.qubits[1].
-    qsim::CalcMatrix4(gate.qubits[0], gate.qubits[1], gate.gates, matrix);
-    qsim::Matrix4Dagger(matrix);
-    simulator.ApplyGate2(gate.qubits[0], gate.qubits[1], matrix, state);
-  }
-}
-
 // Assumes p_sums.size() == op_coeffs.size()
 // state stores |psi>. scratch has been created, but does not
 // require initialization. dest has been created, but does not require
@@ -305,7 +270,7 @@ tensorflow::Status AccumulateOperators(
   // accumulating results as we go. Effectively doing O|psi> for an arbitrary
   // O. Result is stored on scratch.
   tensorflow::Status status = tensorflow::Status::OK();
-  ss.CopyState(source, scratch);
+  ss.Copy(source, scratch);
   ss.SetAllZeros(dest);
 
   DCHECK_EQ(p_sums.size(), op_coeffs.size());
@@ -321,16 +286,16 @@ tensorflow::Status AccumulateOperators(
       if (term.paulis_size() == 0) {
         // identity term. Scalar multiply, add, then revert.
         ss.Multiply(leading_coeff, scratch);
-        ss.AddState(scratch, dest);
-        ss.CopyState(source, scratch);
+        ss.Add(scratch, dest);
+        ss.Copy(source, scratch);
         continue;
       }
 
       QsimCircuit main_circuit;
       std::vector<qsim::GateFused<QsimGate>> fused_circuit;
 
-      status = QsimCircuitFromPauliTerm(term, ss.num_qubits_, &main_circuit,
-                                        &fused_circuit);
+      status = QsimCircuitFromPauliTerm(term, source.num_qubits(),
+                                        &main_circuit, &fused_circuit);
       if (!status.ok()) {
         return status;
       }
@@ -341,8 +306,8 @@ tensorflow::Status AccumulateOperators(
       }
 
       ss.Multiply(leading_coeff, scratch);
-      ss.AddState(scratch, dest);
-      ss.CopyState(source, scratch);
+      ss.Add(scratch, dest);
+      ss.Copy(source, scratch);
       // scratch should now be reverted back to original source.
     }
   }
