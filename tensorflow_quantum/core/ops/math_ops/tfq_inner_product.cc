@@ -160,8 +160,8 @@ class TfqInnerProductOp : public tensorflow::OpKernel {
     int largest_nq = 1;
     Simulator sim = Simulator(tfq_for);
     StateSpace ss = StateSpace(tfq_for);
-    auto sv = StateSpace(tfq_for).Create(largest_nq);
-    auto scratch = StateSpace(tfq_for).Create(largest_nq);
+    auto sv = ss.Create(largest_nq);
+    auto scratch = ss.Create(largest_nq);
 
     // Simulate programs one by one. Parallelizing over state vectors
     // we no longer parallelize over circuits. Each time we encounter a
@@ -221,8 +221,8 @@ class TfqInnerProductOp : public tensorflow::OpKernel {
 
       Simulator sim = Simulator(tfq_for);
       StateSpace ss = StateSpace(tfq_for);
-      auto sv = StateSpace(tfq_for).Create(largest_nq);
-      auto scratch = StateSpace(tfq_for).Create(largest_nq);
+      auto sv = ss.Create(largest_nq);
+      auto scratch = ss.Create(largest_nq);
       for (int i = start; i < end; i++) {
         cur_batch_index = i / output_dim_internal_size;
         cur_internal_index = i % output_dim_internal_size;
