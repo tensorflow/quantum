@@ -153,7 +153,6 @@ def _optional_control_promote(gate, control_qubits_message,
         r = int(r)
         c = int(c)
         cv = int(cv)
-        # gate = gate.controlled_by(cirq.GridQubit(r, c), controlled_value=[cv])
         qbs.append(cirq.GridQubit(r, c))
         vals.append([cv])
 

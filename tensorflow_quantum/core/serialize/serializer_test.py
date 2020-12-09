@@ -579,6 +579,15 @@ class SerializerTest(tf.test.TestCase, parameterized.TestCase):
         with self.assertRaises(ValueError):
             serializer.serialize_circuit(unsupported_circuit2)
 
+    def test_serialize_controlled_circuit_unsupported_value(self):
+        """Ensure serializing invalid controlled gates fails gracefully."""
+        qubits = cirq.GridQubit.rect(1, 2)
+        bad_qubit = cirq.LineQubit(5)
+        simple_circuit = cirq.Circuit(
+            cirq.H(qubits[0]).controlled_by(qubits[1], bad_qubit))
+        with self.assertRaises(ValueError):
+            serializer.serialize_circuit(simple_circuit)
+
     @parameterized.parameters([{'inp': v} for v in ['wrong', 1.0, None, []]])
     def test_serialize_circuit_wrong_type(self, inp):
         """Attempt to serialize invalid objects types."""
@@ -701,23 +710,6 @@ class SerializerTest(tf.test.TestCase, parameterized.TestCase):
             paulisum_with_identity,
             serializer.deserialize_paulisum(
                 serializer.serialize_paulisum(paulisum_with_identity)))
-
-    # def test_controlled_operations(self):
-    #   qubits = cirq.GridQubit.rect(1, 3)
-    #   simple_circuit = cirq.Circuit(cirq.HPowGate(exponent=0.3)(qubits[0]))
-
-    #   # print(simple_circuit)
-    #   # print(serializer.serialize_circuit(simple_circuit))
-    #   xx= _build_gate_proto("HP",
-    #                        ['exponent', 'exponent_scalar', 'global_shift'],
-    #                        [0.3, 1.0, 0.0], ['0_0'])
-    #   rr = _make_controlled_gate_proto(xx, '0_5', '1')
-
-    #   new_circuit = _make_controlled_circuits(
-    #     simple_circuit, [cirq.GridQubit(0, 5)], [1])
-
-    #   rq = serializer.serialize_circuit(new_circuit)
-    #   self.assertProtoEquals(rq, rr)
 
 
 if __name__ == "__main__":
