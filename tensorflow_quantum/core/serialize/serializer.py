@@ -135,9 +135,13 @@ class DelayedAssignmentGate(cirq.Gate):
     def _qid_shape_(self):
         raise ValueError("Called qid_shape on workaround class.")
 
+    # pylint: disable=invalid-name
     def on(self, *qubits):
+        """Returns gate_callable on qubits controlled by contol_qubits."""
         return self._gate_callable(*qubits).controlled_by(
             *self._control_qubits, control_values=self._control_values)
+
+    # pylint: enable=invalid-name
 
 
 def _optional_control_promote(gate, qubits_message, values_message):
