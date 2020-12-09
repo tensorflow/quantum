@@ -61,6 +61,18 @@ def _build_gate_proto(gate_id, arg_names, arg_vals, qubit_ids):
               symbol: "alpha"
             }
           }
+          args {
+            key: "control_qubits"
+            value {
+              arg_value: ""
+            }
+          }
+          args {
+            key: "control_values"
+            value {
+              arg_value: ""
+            }
+          }
           qubits {
             id: "0_0"
           }
@@ -85,10 +97,37 @@ def _build_gate_proto(gate_id, arg_names, arg_vals, qubit_ids):
         qubits=[program_pb2.Qubit(
             id=q_id) for q_id in qubit_ids])])
 
+    # Add in empty control information
+    t = program_proto.circuit.moments[0].operations[0]
+    t.args['control_qubits'].arg_value.string_value = ''
+    t.args['control_values'].arg_value.string_value = ''
+
     return program_proto
 
 
-def _get_valid_circuit_proto_pairs():
+def _make_controlled_gate_proto(program_proto, control_qubits, control_values):
+    """Turn a gate proto (from above) into a controlled gate proto.
+
+    inserts control_qubits and control_values into gate args map.
+    """
+    t = program_proto.circuit.moments[0].operations[0]
+    t.args['control_qubits'].arg_value.string_value = control_qubits
+    t.args['control_values'].arg_value.string_value = control_values
+    return program_proto
+
+
+def _make_controlled_circuit(circuit, control_qubits, control_values):
+    new_circuit = cirq.Circuit()
+    for moment in circuit:
+        for op in moment:
+            new_op = op
+            for qb, v in zip(control_qubits[::-1], control_values[::-1]):
+                new_op = new_op.controlled_by(qb, control_values=[v])
+            new_circuit += new_op
+    return new_circuit
+
+
+def _get_circuit_proto_pairs():
     q0 = cirq.GridQubit(0, 0)
     q1 = cirq.GridQubit(0, 1)
 
@@ -380,6 +419,15 @@ def _get_valid_circuit_proto_pairs():
     return pairs
 
 
+def _get_controlled_circuit_proto_pairs():
+    return [(_make_controlled_circuit(
+        a, [cirq.GridQubit(5, 6),
+            cirq.GridQubit(7, 8),
+            cirq.GridQubit(9, 10)],
+        [1, 1, 0]), _make_controlled_gate_proto(b, '5_6,7_8,9_10', '1,1,0'))
+            for a, b in _get_circuit_proto_pairs()]
+
+
 def _get_valid_pauli_proto_pairs():
     """Generate valid paulisum proto pairs."""
     q0 = cirq.GridQubit(0, 0)
@@ -425,7 +473,8 @@ class SerializerTest(tf.test.TestCase, parameterized.TestCase):
 
     @parameterized.parameters([{
         'circ_proto_pair': v
-    } for v in _get_valid_circuit_proto_pairs()])
+    } for v in _get_controlled_circuit_proto_pairs() +
+                               _get_circuit_proto_pairs()])
     def test_serialize_circuit_valid(self, circ_proto_pair):
         """Test conversion of cirq Circuits to tfq_gate_set proto."""
         self.assertProtoEquals(serializer.serialize_circuit(circ_proto_pair[0]),
@@ -433,7 +482,8 @@ class SerializerTest(tf.test.TestCase, parameterized.TestCase):
 
     @parameterized.parameters([{
         'circ_proto_pair': v
-    } for v in _get_valid_circuit_proto_pairs()])
+    } for v in _get_controlled_circuit_proto_pairs() +
+                               _get_circuit_proto_pairs()])
     def test_deserialize_circuit_valid(self, circ_proto_pair):
         """Test deserialization of protos in tfq_gate_set."""
 
@@ -445,7 +495,8 @@ class SerializerTest(tf.test.TestCase, parameterized.TestCase):
 
     @parameterized.parameters([{
         'circ_proto_pair': v
-    } for v in _get_valid_circuit_proto_pairs()])
+    } for v in _get_controlled_circuit_proto_pairs() +
+                               _get_circuit_proto_pairs()])
     def test_serialize_deserialize_circuit_consistency(self, circ_proto_pair):
         """Ensure that serializing followed by deserializing works."""
 
@@ -650,6 +701,23 @@ class SerializerTest(tf.test.TestCase, parameterized.TestCase):
             paulisum_with_identity,
             serializer.deserialize_paulisum(
                 serializer.serialize_paulisum(paulisum_with_identity)))
+
+    # def test_controlled_operations(self):
+    #   qubits = cirq.GridQubit.rect(1, 3)
+    #   simple_circuit = cirq.Circuit(cirq.HPowGate(exponent=0.3)(qubits[0]))
+
+    #   # print(simple_circuit)
+    #   # print(serializer.serialize_circuit(simple_circuit))
+    #   xx= _build_gate_proto("HP",
+    #                        ['exponent', 'exponent_scalar', 'global_shift'],
+    #                        [0.3, 1.0, 0.0], ['0_0'])
+    #   rr = _make_controlled_gate_proto(xx, '0_5', '1')
+
+    #   new_circuit = _make_controlled_circuits(
+    #     simple_circuit, [cirq.GridQubit(0, 5)], [1])
+
+    #   rq = serializer.serialize_circuit(new_circuit)
+    #   self.assertProtoEquals(rq, rr)
 
 
 if __name__ == "__main__":
