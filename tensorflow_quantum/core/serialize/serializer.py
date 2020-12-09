@@ -140,21 +140,12 @@ class DelayedAssignmentGate(cirq.Gate):
             *self._control_qubits, control_values=self._control_values)
 
 
-def _optional_control_promote(gate, control_qubits_message,
-                              control_values_message):
+def _optional_control_promote(gate, qubits_message, values_message):
     """Optionally promote to controlled gate based on serialized control msg."""
-    if control_qubits_message == '' and control_values_message == '':
+    if qubits_message == '' and values_message == '':
         return gate
-    qbs = []
-    vals = []
-    for qb, cv in zip(control_qubits_message.split(','),
-                      control_values_message.split(',')):
-        r, c = qb.split('_')
-        r = int(r)
-        c = int(c)
-        cv = int(cv)
-        qbs.append(cirq.GridQubit(r, c))
-        vals.append([cv])
+    qbs = [v2.qubit_from_proto_id(qb) for qb in qubits_message.split(',')]
+    vals = [int(cv) for cv in values_message.split(',')]
 
     return DelayedAssignmentGate(gate, qbs, vals)
 
