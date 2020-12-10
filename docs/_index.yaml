@@ -64,6 +64,18 @@ landing_page:
 
   - classname: devsite-landing-row-cards
     items:
+    - heading: "Power of quantum data"
+      path: https://blog.tensorflow.org/2020/11/characterizing-quantum-advantage-in.html
+      image_path: /resources/images/tf-logo-card-16x9.png
+      buttons:
+        - label: "Read on TensorFlow blog"
+          path: https://blog.tensorflow.org/2020/11/characterizing-quantum-advantage-in.html
+    - heading: "User Journey: Owen"
+      path: https://blog.tensorflow.org/2020/11/my-experience-with-tensorflow-quantum.html
+      image_path: /resources/images/tf-logo-card-16x9.png
+      buttons:
+        - label: "Read on TensorFlow blog"
+          path: https://blog.tensorflow.org/2020/11/my-experience-with-tensorflow-quantum.html
     - heading: "Announcing<br>TensorFlow Quantum"
       image_path: /resources/images/google-research-card-16x9.png
       path: https://ai.googleblog.com/2020/03/announcing-tensorflow-quantum-open.html
