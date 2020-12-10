@@ -82,6 +82,8 @@ landing_page:
       buttons:
       - label: "Read on the Google AI blog"
         path: https://ai.googleblog.com/2020/03/announcing-tensorflow-quantum-open.html
+
+  - classname: devsite-landing-row-cards
     - heading: "TensorFlow Quantum (TF Dev Summit '20)"
       youtube_id: -o9AhIz1uvo
       buttons:
