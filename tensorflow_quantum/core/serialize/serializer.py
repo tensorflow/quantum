@@ -539,7 +539,8 @@ def serialize_circuit(circuit_inp):
     # Demote cirq.controlled_operations (controlled gates) to their sub_gate
     # types with _tfq_control_qubits and _tfq_control_values fields so that
     # the gates can still get picked up by the serializer. There would be no way
-    # to discern controlledgates from one another otherwise.
+    # to discern controlledgates from one another otherwise. This
+    # "momentary demotion" occurs with the help of the DelayedAssignmentGate.
     for i, moment in enumerate(circuit):
         for op in moment:
             if isinstance(op,
