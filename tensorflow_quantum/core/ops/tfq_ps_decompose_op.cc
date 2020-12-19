@@ -176,6 +176,11 @@ class TfqPsDecomposeOp : public tensorflow::OpKernel {
     new_op_map["exponent_scalar"].mutable_arg_value()->set_float_value(
         cur_exponent_scalar * -0.5);
     new_op_map["exponent"].set_symbol(symbol);
+    // Copy over control metadata.
+    new_op_map["control_qubits"].mutable_arg_value()->set_string_value(
+        cur_op_map["control_qubits"].arg_value().string_value());
+    new_op_map["control_values"].mutable_arg_value()->set_string_value(
+        cur_op_map["control_values"].arg_value().string_value());
     // Step 4. add qubits.
     *new_op.mutable_qubits() = {cur_op_qubits.begin(), cur_op_qubits.end()};
     return new_op;
@@ -215,6 +220,11 @@ class TfqPsDecomposeOp : public tensorflow::OpKernel {
     }
     // Step 4. add qubits.
     *new_op.mutable_qubits() = {cur_op_qubits.begin(), cur_op_qubits.end()};
+    // Copy over control metadata.
+    new_op_map["control_qubits"].mutable_arg_value()->set_string_value(
+        cur_op_map["control_qubits"].arg_value().string_value());
+    new_op_map["control_values"].mutable_arg_value()->set_string_value(
+        cur_op_map["control_values"].arg_value().string_value());
     return new_op;
   }
 
@@ -251,6 +261,11 @@ class TfqPsDecomposeOp : public tensorflow::OpKernel {
     }
     *new_op.mutable_qubits() = {cur_op_qubits.begin() + use_target,
                                 cur_op_qubits.end() - !use_target};
+    // Copy over control metadata.
+    new_op_map["control_qubits"].mutable_arg_value()->set_string_value(
+        cur_op_map["control_qubits"].arg_value().string_value());
+    new_op_map["control_values"].mutable_arg_value()->set_string_value(
+        cur_op_map["control_values"].arg_value().string_value());
     return new_op;
   }
 
@@ -290,6 +305,11 @@ class TfqPsDecomposeOp : public tensorflow::OpKernel {
     }
     // Step 4. add qubits.
     *new_op.mutable_qubits() = {cur_op_qubits.begin(), cur_op_qubits.end()};
+    // Copy over control metadata.
+    new_op_map["control_qubits"].mutable_arg_value()->set_string_value(
+        cur_op_map["control_qubits"].arg_value().string_value());
+    new_op_map["control_values"].mutable_arg_value()->set_string_value(
+        cur_op_map["control_values"].arg_value().string_value());
     return new_op;
   }
 };
