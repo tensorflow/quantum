@@ -65,7 +65,7 @@ void CreateGradientCircuit(
              circuit.gates[i].kind == qsim::Cirq::GateKind::kZZPowGate ||
              circuit.gates[i].kind == qsim::Cirq::GateKind::kISwapPowGate ||
              circuit.gates[i].kind == qsim::Cirq::GateKind::kSwapPowGate) {
-      bool swapq = circuit.gates[i].inverse;
+      bool swapq = circuit.gates[i].swapped;
       PopulateGradientTwoEigen(
           metadata[i].create_f2, metadata[i].symbol_values[0], i,
           swapq ? circuit.gates[i].qubits[1] : circuit.gates[i].qubits[0],
@@ -102,7 +102,7 @@ void CreateGradientCircuit(
     else if (circuit.gates[i].kind == qsim::Cirq::GateKind::kFSimGate) {
       // Process potentially several symbols.
 
-      bool swapq = circuit.gates[i].inverse;
+      bool swapq = circuit.gates[i].swapped;
       for (int j = 0; j < metadata[i].symbol_values.size(); j++) {
         if (metadata[i].placeholder_names[j] == GateParamNames::kTheta) {
           PopulateGradientFsimTheta(
@@ -127,7 +127,7 @@ void CreateGradientCircuit(
     else if (circuit.gates[i].kind ==
              qsim::Cirq::GateKind::kPhasedISwapPowGate) {
       // Process potentially several symbols.
-      bool swapq = circuit.gates[i].inverse;
+      bool swapq = circuit.gates[i].swapped;
       for (int j = 0; j < metadata[i].symbol_values.size(); j++) {
         if (metadata[i].placeholder_names[j] ==
             GateParamNames::kPhaseExponent) {
@@ -161,12 +161,15 @@ void CreateGradientCircuit(
                         std::vector<qsim::GateFused<QsimGate>>({}));
   for (int i = 0; i < grad_gates->size(); i++) {
     right = circuit.gates.begin() + (*grad_gates)[i].index;
-    (*partial_fuses)[i] = fuser.FuseGates(circuit.num_qubits, left, right);
+    (*partial_fuses)[i] =
+        fuser.FuseGates(qsim::BasicGateFuser<qsim::IO, QsimGate>::Parameter(),
+                        circuit.num_qubits, left, right);
     left = right + 1;
   }
   right = circuit.gates.end();
   (*partial_fuses)[grad_gates->size()] =
-      fuser.FuseGates(circuit.num_qubits, left, right);
+      fuser.FuseGates(qsim::BasicGateFuser<qsim::IO, QsimGate>::Parameter(),
+                      circuit.num_qubits, left, right);
 }
 
 void PopulateGradientSingleEigen(
@@ -180,7 +183,7 @@ void PopulateGradientSingleEigen(
   auto right = create_f(0, qid, (exp - _GRAD_EPS) * exp_s, gs);
   Matrix2Diff(right.matrix,
               left.matrix);  // left's entries have right subtracted.
-  qsim::Matrix2ScalarMultiply(0.5 / _GRAD_EPS, left.matrix);
+  qsim::MatrixScalarMultiply(0.5 / _GRAD_EPS, left.matrix);
   grad->grad_gates.push_back(left);
 }
 
@@ -195,7 +198,7 @@ void PopulateGradientTwoEigen(
   auto right = create_f(0, qid, qid2, (exp - _GRAD_EPS) * exp_s, gs);
   Matrix4Diff(right.matrix,
               left.matrix);  // left's entries have right subtracted.
-  qsim::Matrix4ScalarMultiply(0.5 / _GRAD_EPS, left.matrix);
+  qsim::MatrixScalarMultiply(0.5 / _GRAD_EPS, left.matrix);
   grad->grad_gates.push_back(left);
 }
 
@@ -212,7 +215,7 @@ void PopulateGradientPhasedXPhasedExponent(const std::string& symbol,
       0, qid, (pexp - _GRAD_EPS) * pexp_s, exp * exp_s, gs);
   Matrix2Diff(right.matrix,
               left.matrix);  // left's entries have right subtracted.
-  qsim::Matrix2ScalarMultiply(0.5 / _GRAD_EPS, left.matrix);
+  qsim::MatrixScalarMultiply(0.5 / _GRAD_EPS, left.matrix);
   grad->grad_gates.push_back(left);
 }
 
@@ -229,7 +232,7 @@ void PopulateGradientPhasedXExponent(const std::string& symbol,
       0, qid, pexp * pexp_s, (exp - _GRAD_EPS) * exp_s, gs);
   Matrix2Diff(right.matrix,
               left.matrix);  // left's entries have right subtracted.
-  qsim::Matrix2ScalarMultiply(0.5 / _GRAD_EPS, left.matrix);
+  qsim::MatrixScalarMultiply(0.5 / _GRAD_EPS, left.matrix);
   grad->grad_gates.push_back(left);
 }
 
@@ -245,7 +248,7 @@ void PopulateGradientFsimTheta(const std::string& symbol, unsigned int location,
       0, qid, qid2, (theta - _GRAD_EPS) * theta_s, phi * phi_s);
   Matrix4Diff(right.matrix,
               left.matrix);  // left's entries have right subtracted.
-  qsim::Matrix4ScalarMultiply(0.5 / _GRAD_EPS, left.matrix);
+  qsim::MatrixScalarMultiply(0.5 / _GRAD_EPS, left.matrix);
   grad->grad_gates.push_back(left);
 }
 
@@ -261,7 +264,7 @@ void PopulateGradientFsimPhi(const std::string& symbol, unsigned int location,
       0, qid, qid2, theta * theta_s, (phi - _GRAD_EPS) * phi_s);
   Matrix4Diff(right.matrix,
               left.matrix);  // left's entries have right subtracted.
-  qsim::Matrix4ScalarMultiply(0.5 / _GRAD_EPS, left.matrix);
+  qsim::MatrixScalarMultiply(0.5 / _GRAD_EPS, left.matrix);
   grad->grad_gates.push_back(left);
 }
 
@@ -277,7 +280,7 @@ void PopulateGradientPhasedISwapPhasedExponent(
       0, qid, qid2, (pexp - _GRAD_EPS) * pexp_s, exp * exp_s);
   Matrix4Diff(right.matrix,
               left.matrix);  // left's entries have right subtracted.
-  qsim::Matrix4ScalarMultiply(0.5 / _GRAD_EPS, left.matrix);
+  qsim::MatrixScalarMultiply(0.5 / _GRAD_EPS, left.matrix);
   grad->grad_gates.push_back(left);
 }
 
@@ -294,7 +297,7 @@ void PopulateGradientPhasedISwapExponent(const std::string& symbol,
       0, qid, qid2, pexp * pexp_s, (exp - _GRAD_EPS) * exp_s);
   Matrix4Diff(right.matrix,
               left.matrix);  // left's entries have right subtracted.
-  qsim::Matrix4ScalarMultiply(0.5 / _GRAD_EPS, left.matrix);
+  qsim::MatrixScalarMultiply(0.5 / _GRAD_EPS, left.matrix);
   grad->grad_gates.push_back(left);
 }
 

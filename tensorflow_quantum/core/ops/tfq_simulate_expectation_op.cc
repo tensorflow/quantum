@@ -127,25 +127,25 @@ class TfqSimulateExpectationOp : public tensorflow::OpKernel {
     const auto tfq_for = tfq::QsimFor(context);
     using Simulator = qsim::Simulator<const tfq::QsimFor&>;
     using StateSpace = Simulator::StateSpace;
-    using State = StateSpace::State;
 
     // Begin simulation.
     int largest_nq = 1;
-    State sv = StateSpace(largest_nq, tfq_for).CreateState();
-    State scratch = StateSpace(largest_nq, tfq_for).CreateState();
+    Simulator sim = Simulator(tfq_for);
+    StateSpace ss = StateSpace(tfq_for);
+    auto sv = ss.Create(largest_nq);
+    auto scratch = ss.Create(largest_nq);
 
     // Simulate programs one by one. Parallelizing over state vectors
     // we no longer parallelize over circuits. Each time we encounter a
     // a larger circuit we will grow the Statevector as necessary.
     for (int i = 0; i < fused_circuits.size(); i++) {
       int nq = num_qubits[i];
-      Simulator sim = Simulator(nq, tfq_for);
-      StateSpace ss = StateSpace(nq, tfq_for);
+
       if (nq > largest_nq) {
         // need to switch to larger statespace.
         largest_nq = nq;
-        sv = ss.CreateState();
-        scratch = ss.CreateState();
+        sv = ss.Create(largest_nq);
+        scratch = ss.Create(largest_nq);
       }
       // TODO: add heuristic here so that we do not always recompute
       //  the state if there is a possibility that circuit[i] and
@@ -178,7 +178,6 @@ class TfqSimulateExpectationOp : public tensorflow::OpKernel {
     const auto tfq_for = qsim::SequentialFor(1);
     using Simulator = qsim::Simulator<const qsim::SequentialFor&>;
     using StateSpace = Simulator::StateSpace;
-    using State = StateSpace::State;
 
     const int output_dim_op_size = output_tensor->dimension(1);
 
@@ -188,15 +187,15 @@ class TfqSimulateExpectationOp : public tensorflow::OpKernel {
       int largest_nq = 1;
       int cur_op_index;
 
-      State sv = StateSpace(largest_nq, tfq_for).CreateState();
-      State scratch = StateSpace(largest_nq, tfq_for).CreateState();
+      Simulator sim = Simulator(tfq_for);
+      StateSpace ss = StateSpace(tfq_for);
+      auto sv = ss.Create(largest_nq);
+      auto scratch = ss.Create(largest_nq);
       for (int i = start; i < end; i++) {
         cur_batch_index = i / output_dim_op_size;
         cur_op_index = i % output_dim_op_size;
 
         const int nq = num_qubits[cur_batch_index];
-        Simulator sim = Simulator(nq, tfq_for);
-        StateSpace ss = StateSpace(nq, tfq_for);
 
         // (#679) Just ignore empty program
         if (fused_circuits[cur_batch_index].size() == 0) {
@@ -208,9 +207,9 @@ class TfqSimulateExpectationOp : public tensorflow::OpKernel {
           // We've run into a new state vector we must compute.
           // Only compute a new state vector when we have to.
           if (nq > largest_nq) {
-            sv = ss.CreateState();
-            scratch = ss.CreateState();
             largest_nq = nq;
+            sv = ss.Create(largest_nq);
+            scratch = ss.Create(largest_nq);
           }
           // no need to update scratch_state since ComputeExpectation
           // will take care of things for us.
