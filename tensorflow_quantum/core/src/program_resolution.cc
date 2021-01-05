@@ -247,8 +247,7 @@ Status ResolveQubitIds(Program* program, unsigned int* num_qubits,
                                                ->at("control_qubits")
                                                .arg_value()
                                                .string_value();
-        if (control_qubits ==
-            "") {  // explicit empty value set in serializer.py.
+        if (control_qubits == "") {  // explicit empty value.
           continue;
         }
         std::vector<absl::string_view> control_ids =
