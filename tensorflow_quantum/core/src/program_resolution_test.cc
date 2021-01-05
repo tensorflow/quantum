@@ -16,6 +16,7 @@ limitations under the License.
 #include "tensorflow_quantum/core/src/program_resolution.h"
 
 #include <google/protobuf/text_format.h>
+
 #include <string>
 
 #include "absl/container/flat_hash_map.h"
