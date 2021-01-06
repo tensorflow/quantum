@@ -50,7 +50,7 @@ Status RegisterQubits(
   }
 
   const std::vector<absl::string_view> qb_list = absl::StrSplit(qb_string, ',');
-  for (const auto qb : qb_list) {
+  for (auto qb : qb_list) {
     int r, c;
     const std::vector<absl::string_view> splits = absl::StrSplit(qb, '_');
     if (splits.size() != 2) {
@@ -66,7 +66,7 @@ Status RegisterQubits(
                     absl::StrCat("Unable to parse qubit: ", qb));
     }
     auto locs = std::pair<std::pair<int, int>, std::string>(
-        std::pair<int, int>(r, c), qb);
+        std::pair<int, int>(r, c), std::string(qb));
     id_set->insert(locs);
   }
   return Status::OK();
