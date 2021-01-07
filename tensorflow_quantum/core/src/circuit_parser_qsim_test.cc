@@ -52,12 +52,26 @@ Arg MakeArg(const std::string& val) {
   return arg;
 }
 
+Arg MakeControlArg(const std::string& val) {
+  Arg arg;
+  arg.mutable_arg_value()->set_string_value(val);
+  return arg;
+}
+
+inline void AssertControlEqual(const QsimGate& a, const QsimGate& b) {
+  for (int i = 0; i < a.controlled_by.size(); i++) {
+    ASSERT_EQ(a.controlled_by[i], b.controlled_by[i]);
+  }
+  ASSERT_EQ(a.cmask, b.cmask);
+}
+
 inline void AssertTwoQubitEqual(const QsimGate& a, const QsimGate& b) {
   for (int i = 0; i < 32; i++) {
     ASSERT_NEAR(a.matrix[i], b.matrix[i], 1e-5);
   }
   ASSERT_EQ(a.qubits[0], b.qubits[0]);
   ASSERT_EQ(a.qubits[1], b.qubits[1]);
+  AssertControlEqual(a, b);
 }
 
 inline void AssertOneQubitEqual(const QsimGate& a, const QsimGate& b) {
@@ -65,6 +79,7 @@ inline void AssertOneQubitEqual(const QsimGate& a, const QsimGate& b) {
     ASSERT_NEAR(a.matrix[i], b.matrix[i], 1e-5);
   }
   ASSERT_EQ(a.qubits[0], b.qubits[0]);
+  AssertControlEqual(a, b);
 }
 
 class TwoQubitEigenFixture
@@ -95,6 +110,10 @@ TEST_P(TwoQubitEigenFixture, TwoEigenGate) {
   (*args_proto)["global_shift"] = MakeArg(gs);
   (*args_proto)["exponent"] = MakeArg("placeholder");
   (*args_proto)["exponent_scalar"] = MakeArg(0.5);
+
+  // Set the control args.
+  (*args_proto)["control_qubits"] = MakeControlArg("");
+  (*args_proto)["control_values"] = MakeControlArg("");
 
   // Set the qubits.
   Qubit* qubits_proto = operations_proto->add_qubits();
@@ -168,6 +187,63 @@ TEST_P(TwoQubitEigenFixture, TwoEigenGate) {
                          "Could not find symbol in parameter map: alpha"));
 }
 
+TEST_P(TwoQubitEigenFixture, TwoEigenGateControlled) {
+  float exp = 1.1234;
+  float gs = 2.2345;
+
+  // Get gate name and reference qsim gate.
+  std::string name = std::get<0>(GetParam());
+  auto ref_gate =
+      std::get<1>(GetParam())(0, 1, 0, exp, gs).ControlledBy({2, 3}, {0, 0});
+  Program program_proto;
+  Circuit* circuit_proto = program_proto.mutable_circuit();
+  circuit_proto->set_scheduling_strategy(circuit_proto->MOMENT_BY_MOMENT);
+  Moment* moments_proto = circuit_proto->add_moments();
+
+  // Add gate.
+  Operation* operations_proto = moments_proto->add_operations();
+  Gate* gate_proto = operations_proto->mutable_gate();
+  gate_proto->set_id(name);
+
+  // Set args.
+  google::protobuf::Map<std::string, Arg>* args_proto =
+      operations_proto->mutable_args();
+  (*args_proto)["global_shift"] = MakeArg(gs);
+  (*args_proto)["exponent"] = MakeArg("placeholder");
+  (*args_proto)["exponent_scalar"] = MakeArg(0.5);
+
+  // Set the control args.
+  (*args_proto)["control_qubits"] = MakeControlArg("1,0");
+  (*args_proto)["control_values"] = MakeControlArg("0,0");
+
+  // Set the qubits.
+  Qubit* qubits_proto = operations_proto->add_qubits();
+  qubits_proto->set_id("2");
+  qubits_proto = operations_proto->add_qubits();
+  qubits_proto->set_id("3");
+
+  QsimCircuit test_circuit;
+  std::vector<qsim::GateFused<QsimGate>> fused_circuit;
+  SymbolMap symbol_map = {{"placeholder", std::pair<int, float>(1, 2 * exp)}};
+  std::vector<GateMetaData> metadata;
+
+  // Test case where we have a placeholder.
+  ASSERT_EQ(QsimCircuitFromProgram(program_proto, symbol_map, 4, &test_circuit,
+                                   &fused_circuit, &metadata),
+            tensorflow::Status::OK());
+  AssertTwoQubitEqual(test_circuit.gates[0], ref_gate);
+  EXPECT_EQ(metadata[0].index, 0);
+  EXPECT_EQ(metadata[0].symbol_values[0], "placeholder");
+  EXPECT_EQ(metadata[0].placeholder_names[0], GateParamNames::kExponent);
+  EXPECT_NEAR(metadata[0].gate_params[0], 2 * exp, 1e-5);
+  EXPECT_NEAR(metadata[0].gate_params[1], 0.5, 1e-5);
+  EXPECT_NEAR(metadata[0].gate_params[2], gs, 1e-5);
+  EXPECT_EQ(metadata.size(), 1);
+  EXPECT_EQ(metadata[0].gate_params.size(), 3);
+  EXPECT_EQ(metadata[0].symbol_values.size(), 1);
+  EXPECT_EQ(metadata[0].placeholder_names.size(), 1);
+}
+
 INSTANTIATE_TEST_CASE_P(
     TwoQubitEigenTests, TwoQubitEigenFixture,
     ::testing::Values(
@@ -207,6 +283,10 @@ TEST_P(SingleQubitEigenFixture, SingleEigenGate) {
   (*args_proto)["global_shift"] = MakeArg(gs);
   (*args_proto)["exponent"] = MakeArg("placeholder");
   (*args_proto)["exponent_scalar"] = MakeArg(0.5);
+
+  // Set the control args to empty.
+  (*args_proto)["control_qubits"] = MakeControlArg("");
+  (*args_proto)["control_values"] = MakeControlArg("");
 
   // Set the qubits.
   Qubit* qubits_proto = operations_proto->add_qubits();
@@ -277,6 +357,61 @@ TEST_P(SingleQubitEigenFixture, SingleEigenGate) {
                          "Could not find symbol in parameter map: alpha"));
 }
 
+TEST_P(SingleQubitEigenFixture, SingleEigenGateControlled) {
+  float exp = 1.1234;
+  float gs = 2.2345;
+
+  // Get gate name and reference qsim gate.
+  std::string name = std::get<0>(GetParam());
+  auto ref_gate =
+      std::get<1>(GetParam())(0, 0, exp, gs).ControlledBy({1, 2}, {0, 0});
+  // Try symbol resolution.
+  Program program_proto;
+  Circuit* circuit_proto = program_proto.mutable_circuit();
+  circuit_proto->set_scheduling_strategy(circuit_proto->MOMENT_BY_MOMENT);
+  Moment* moments_proto = circuit_proto->add_moments();
+
+  // Add gate.
+  Operation* operations_proto = moments_proto->add_operations();
+  Gate* gate_proto = operations_proto->mutable_gate();
+  gate_proto->set_id(name);
+
+  // Set args.
+  google::protobuf::Map<std::string, Arg>* args_proto =
+      operations_proto->mutable_args();
+  (*args_proto)["global_shift"] = MakeArg(gs);
+  (*args_proto)["exponent"] = MakeArg("placeholder");
+  (*args_proto)["exponent_scalar"] = MakeArg(0.5);
+
+  // Set the control args to empty.
+  (*args_proto)["control_qubits"] = MakeControlArg("1,0");
+  (*args_proto)["control_values"] = MakeControlArg("0,0");
+
+  // Set the qubits.
+  Qubit* qubits_proto = operations_proto->add_qubits();
+  qubits_proto->set_id("2");
+
+  QsimCircuit test_circuit;
+  std::vector<qsim::GateFused<QsimGate>> fused_circuit;
+  SymbolMap symbol_map = {{"placeholder", std::pair<int, float>(1, 2 * exp)}};
+  std::vector<GateMetaData> metadata;
+
+  ASSERT_EQ(QsimCircuitFromProgram(program_proto, symbol_map, 3, &test_circuit,
+                                   &fused_circuit, &metadata),
+            tensorflow::Status::OK());
+  AssertOneQubitEqual(test_circuit.gates[0], ref_gate);
+  EXPECT_EQ(metadata[0].index, 0);
+  EXPECT_EQ(metadata[0].symbol_values[0], "placeholder");
+  EXPECT_EQ(metadata[0].placeholder_names[0], GateParamNames::kExponent);
+  EXPECT_NEAR(metadata[0].gate_params[0], 2 * exp, 1e-5);
+  EXPECT_NEAR(metadata[0].gate_params[1], 0.5, 1e-5);
+  EXPECT_NEAR(metadata[0].gate_params[2], gs, 1e-5);
+  EXPECT_EQ(metadata.size(), 1);
+  EXPECT_EQ(metadata[0].gate_params.size(), 3);
+  EXPECT_EQ(metadata[0].symbol_values.size(), 1);
+  EXPECT_EQ(metadata[0].placeholder_names.size(), 1);
+}
+
 INSTANTIATE_TEST_CASE_P(
     SingleQubitEigenTests, SingleQubitEigenFixture,
     ::testing::Values(
@@ -299,6 +434,12 @@ TEST(QsimCircuitParserTest, SingleConstantGate) {
     Gate* gate_proto = operations_proto->mutable_gate();
     gate_proto->set_id(kv.first);
 
+    // Set the control args to empty.
+    google::protobuf::Map<std::string, Arg>* args_proto =
+        operations_proto->mutable_args();
+    (*args_proto)["control_qubits"] = MakeControlArg("");
+    (*args_proto)["control_values"] = MakeControlArg("");
+
     // Set the qubits.
     Qubit* qubits_proto = operations_proto->add_qubits();
     qubits_proto->set_id("0");
@@ -309,6 +450,46 @@ TEST(QsimCircuitParserTest, SingleConstantGate) {
     std::vector<GateMetaData> metadata;
 
     ASSERT_EQ(QsimCircuitFromProgram(program_proto, empty_map, 1, &test_circuit,
+                                     &fused_circuit, &metadata),
+              tensorflow::Status::OK());
+    AssertOneQubitEqual(test_circuit.gates[0], kv.second);
+    EXPECT_EQ(metadata.size(), 1);
+    EXPECT_EQ(metadata[0].placeholder_names.size(), 0);
+    EXPECT_EQ(metadata[0].symbol_values.size(), 0);
+    EXPECT_EQ(metadata[0].gate_params.size(), 0);
+  }
+}
+
+TEST(QsimCircuitParserTest, SingleConstantGateControlled) {
+  absl::flat_hash_map<std::string, QsimGate> reference = {
+      {"I", qsim::Cirq::I1<float>::Create(0, 0).ControlledBy({1, 2}, {0, 0})}};
+  for (auto kv : reference) {
+    Program program_proto;
+    Circuit* circuit_proto = program_proto.mutable_circuit();
+    circuit_proto->set_scheduling_strategy(circuit_proto->MOMENT_BY_MOMENT);
+    Moment* moments_proto = circuit_proto->add_moments();
+
+    // Add gate.
+    Operation* operations_proto = moments_proto->add_operations();
+    Gate* gate_proto = operations_proto->mutable_gate();
+    gate_proto->set_id(kv.first);
+
+    // Set the control args to empty.
+    google::protobuf::Map<std::string, Arg>* args_proto =
+        operations_proto->mutable_args();
+    (*args_proto)["control_qubits"] = MakeControlArg("1,0");
+    (*args_proto)["control_values"] = MakeControlArg("0,0");
+
+    // Set the qubits.
+    Qubit* qubits_proto = operations_proto->add_qubits();
+    qubits_proto->set_id("2");
+
+    QsimCircuit test_circuit;
+    std::vector<qsim::GateFused<QsimGate>> fused_circuit;
+    SymbolMap empty_map;
+    std::vector<GateMetaData> metadata;
+
+    ASSERT_EQ(QsimCircuitFromProgram(program_proto, empty_map, 3, &test_circuit,
                                      &fused_circuit, &metadata),
               tensorflow::Status::OK());
     AssertOneQubitEqual(test_circuit.gates[0], kv.second);
@@ -333,6 +514,12 @@ TEST(QsimCircuitParserTest, TwoConstantGate) {
     Gate* gate_proto = operations_proto->mutable_gate();
     gate_proto->set_id(kv.first);
 
+    // Set the control args to empty.
+    google::protobuf::Map<std::string, Arg>* args_proto =
+        operations_proto->mutable_args();
+    (*args_proto)["control_qubits"] = MakeControlArg("");
+    (*args_proto)["control_values"] = MakeControlArg("");
+
     // Set the qubits.
     Qubit* qubits_proto = operations_proto->add_qubits();
     qubits_proto->set_id("0");
@@ -355,7 +542,50 @@ TEST(QsimCircuitParserTest, TwoConstantGate) {
   }
 }
 
-TEST(QsimCircuitParserTest, FsimGateTest) {
+TEST(QsimCircuitParserTest, TwoConstantGateControlled) {
+  absl::flat_hash_map<std::string, QsimGate> reference = {
+      {"I2",
+       qsim::Cirq::I2<float>::Create(0, 1, 0).ControlledBy({2, 3}, {0, 0})}};
+  for (auto kv : reference) {
+    Program program_proto;
+    Circuit* circuit_proto = program_proto.mutable_circuit();
+    circuit_proto->set_scheduling_strategy(circuit_proto->MOMENT_BY_MOMENT);
+    Moment* moments_proto = circuit_proto->add_moments();
+
+    // Add gate.
+    Operation* operations_proto = moments_proto->add_operations();
+    Gate* gate_proto = operations_proto->mutable_gate();
+    gate_proto->set_id(kv.first);
+
+    // Set the control args to empty.
+    google::protobuf::Map<std::string, Arg>* args_proto =
+        operations_proto->mutable_args();
+    (*args_proto)["control_qubits"] = MakeControlArg("1,0");
+    (*args_proto)["control_values"] = MakeControlArg("0,0");
+
+    // Set the qubits.
+    Qubit* qubits_proto = operations_proto->add_qubits();
+    qubits_proto->set_id("2");
+    qubits_proto = operations_proto->add_qubits();
+    qubits_proto->set_id("3");
+
+    QsimCircuit test_circuit;
+    std::vector<qsim::GateFused<QsimGate>> fused_circuit;
+    SymbolMap empty_map;
+    std::vector<GateMetaData> metadata;
+
+    ASSERT_EQ(QsimCircuitFromProgram(program_proto, empty_map, 4, &test_circuit,
+                                     &fused_circuit, &metadata),
+              tensorflow::Status::OK());
+    AssertTwoQubitEqual(test_circuit.gates[0], kv.second);
+    EXPECT_EQ(metadata.size(), 1);
+    EXPECT_EQ(metadata[0].placeholder_names.size(), 0);
+    EXPECT_EQ(metadata[0].symbol_values.size(), 0);
+    EXPECT_EQ(metadata[0].gate_params.size(), 0);
+  }
+}
+
+TEST(QsimCircuitParserTest, FsimGate) {
   float theta = 0.1234;
   float phi = 0.4567;
   auto reference = qsim::Cirq::FSimGate<float>::Create(0, 0, 1, theta, phi);
@@ -376,6 +606,10 @@ TEST(QsimCircuitParserTest, FsimGateTest) {
   (*args_proto)["theta_scalar"] = MakeArg(0.5);
   (*args_proto)["phi"] = MakeArg("beta");
   (*args_proto)["phi_scalar"] = MakeArg(0.2);
+
+  // Set the control args to empty.
+  (*args_proto)["control_qubits"] = MakeControlArg("");
+  (*args_proto)["control_values"] = MakeControlArg("");
 
   // Set the qubits.
   Qubit* qubits_proto = operations_proto->add_qubits();
@@ -453,7 +687,65 @@ TEST(QsimCircuitParserTest, FsimGateTest) {
                          "Could not find symbol in parameter map: alpha"));
 }
 
-TEST(QsimCircuitParserTest, PhasedISwapTest) {
+TEST(QsimCircuitParserTest, FsimGateControlled) {
+  float theta = 0.1234;
+  float phi = 0.4567;
+  auto reference = qsim::Cirq::FSimGate<float>::Create(0, 0, 1, theta, phi)
+                       .ControlledBy({2, 3}, {0, 0});
+  Program program_proto;
+  Circuit* circuit_proto = program_proto.mutable_circuit();
+  circuit_proto->set_scheduling_strategy(circuit_proto->MOMENT_BY_MOMENT);
+  Moment* moments_proto = circuit_proto->add_moments();
+
+  // Add gate.
+  Operation* operations_proto = moments_proto->add_operations();
+  Gate* gate_proto = operations_proto->mutable_gate();
+  gate_proto->set_id("FSIM");
+
+  // Set the args.
+  google::protobuf::Map<std::string, Arg>* args_proto =
+      operations_proto->mutable_args();
+  (*args_proto)["theta"] = MakeArg("alpha");
+  (*args_proto)["theta_scalar"] = MakeArg(0.5);
+  (*args_proto)["phi"] = MakeArg("beta");
+  (*args_proto)["phi_scalar"] = MakeArg(0.2);
+
+  // Set the control args.
+  (*args_proto)["control_qubits"] = MakeControlArg("1,0");
+  (*args_proto)["control_values"] = MakeControlArg("0,0");
+
+  // Set the qubits.
+  Qubit* qubits_proto = operations_proto->add_qubits();
+  qubits_proto->set_id("2");
+  qubits_proto = operations_proto->add_qubits();
+  qubits_proto->set_id("3");
+
+  QsimCircuit test_circuit;
+  std::vector<qsim::GateFused<QsimGate>> fused_circuit;
+  SymbolMap symbol_map = {{"alpha", std::pair<int, float>(0, 2 * theta)},
+                          {"beta", std::pair<int, float>(1, 5 * phi)}};
+  std::vector<GateMetaData> metadata;
+
+  // Test symbol resolution.
+  ASSERT_EQ(QsimCircuitFromProgram(program_proto, symbol_map, 4, &test_circuit,
+                                   &fused_circuit, &metadata),
+            tensorflow::Status::OK());
+  AssertTwoQubitEqual(test_circuit.gates[0], reference);
+  EXPECT_EQ(metadata.size(), 1);
+  EXPECT_EQ(metadata[0].placeholder_names.size(), 2);
+  EXPECT_EQ(metadata[0].symbol_values.size(), 2);
+  EXPECT_EQ(metadata[0].gate_params.size(), 4);
+  EXPECT_NEAR(metadata[0].gate_params[0], 2 * theta, 1e-5);
+  EXPECT_NEAR(metadata[0].gate_params[1], 0.5, 1e-5);
+  EXPECT_NEAR(metadata[0].gate_params[2], 5 * phi, 1e-5);
+  EXPECT_NEAR(metadata[0].gate_params[3], 0.2, 1e-5);
+  EXPECT_EQ(metadata[0].symbol_values[0], "alpha");
+  EXPECT_EQ(metadata[0].symbol_values[1], "beta");
+  EXPECT_EQ(metadata[0].placeholder_names[0], GateParamNames::kTheta);
+  EXPECT_EQ(metadata[0].placeholder_names[1], GateParamNames::kPhi);
+}
+
+TEST(QsimCircuitParserTest, PhasedISwap) {
   float exponent = 0.1234;
   float phase_exponent = 0.4567;
   auto reference = qsim::Cirq::PhasedISwapPowGate<float>::Create(
@@ -475,6 +767,10 @@ TEST(QsimCircuitParserTest, PhasedISwapTest) {
   (*args_proto)["phase_exponent_scalar"] = MakeArg(0.5);
   (*args_proto)["exponent"] = MakeArg("beta");
   (*args_proto)["exponent_scalar"] = MakeArg(0.2);
+
+  // Set the control args.
+  (*args_proto)["control_qubits"] = MakeControlArg("");
+  (*args_proto)["control_values"] = MakeControlArg("");
 
   // Set the qubits.
   Qubit* qubits_proto = operations_proto->add_qubits();
@@ -553,7 +849,67 @@ TEST(QsimCircuitParserTest, PhasedISwapTest) {
                          "Could not find symbol in parameter map: alpha"));
 }
 
-TEST(QsimCircuitParserTest, PhasedXPowTest) {
+TEST(QsimCircuitParserTest, PhasedISwapControlled) {
+  float exponent = 0.1234;
+  float phase_exponent = 0.4567;
+  auto reference = qsim::Cirq::PhasedISwapPowGate<float>::Create(
+                       0, 1, 0, phase_exponent, exponent)
+                       .ControlledBy({2, 3}, {0, 0});
+  Program program_proto;
+  Circuit* circuit_proto = program_proto.mutable_circuit();
+  circuit_proto->set_scheduling_strategy(circuit_proto->MOMENT_BY_MOMENT);
+  Moment* moments_proto = circuit_proto->add_moments();
+
+  // Add gate.
+  Operation* operations_proto = moments_proto->add_operations();
+  Gate* gate_proto = operations_proto->mutable_gate();
+  gate_proto->set_id("PISP");
+
+  // Set the args.
+  google::protobuf::Map<std::string, Arg>* args_proto =
+      operations_proto->mutable_args();
+  (*args_proto)["phase_exponent"] = MakeArg("alpha");
+  (*args_proto)["phase_exponent_scalar"] = MakeArg(0.5);
+  (*args_proto)["exponent"] = MakeArg("beta");
+  (*args_proto)["exponent_scalar"] = MakeArg(0.2);
+
+  // Set the control args.
+  (*args_proto)["control_qubits"] = MakeControlArg("1,0");
+  (*args_proto)["control_values"] = MakeControlArg("0,0");
+
+  // Set the qubits.
+  Qubit* qubits_proto = operations_proto->add_qubits();
+  qubits_proto->set_id("2");
+  qubits_proto = operations_proto->add_qubits();
+  qubits_proto->set_id("3");
+
+  QsimCircuit test_circuit;
+  std::vector<qsim::GateFused<QsimGate>> fused_circuit;
+  SymbolMap symbol_map = {
+      {"alpha", std::pair<int, float>(0, 2 * phase_exponent)},
+      {"beta", std::pair<int, float>(1, 5 * exponent)}};
+  std::vector<GateMetaData> metadata;
+
+  // Test symbol resolution.
+  ASSERT_EQ(QsimCircuitFromProgram(program_proto, symbol_map, 4, &test_circuit,
+                                   &fused_circuit, &metadata),
+            tensorflow::Status::OK());
+  AssertTwoQubitEqual(test_circuit.gates[0], reference);
+  EXPECT_EQ(metadata.size(), 1);
+  EXPECT_EQ(metadata[0].placeholder_names.size(), 2);
+  EXPECT_EQ(metadata[0].symbol_values.size(), 2);
+  EXPECT_EQ(metadata[0].gate_params.size(), 4);
+  EXPECT_NEAR(metadata[0].gate_params[0], 2 * phase_exponent, 1e-5);
+  EXPECT_NEAR(metadata[0].gate_params[1], 0.5, 1e-5);
+  EXPECT_NEAR(metadata[0].gate_params[2], 5 * exponent, 1e-5);
+  EXPECT_NEAR(metadata[0].gate_params[3], 0.2, 1e-5);
+  EXPECT_EQ(metadata[0].symbol_values[0], "alpha");
+  EXPECT_EQ(metadata[0].symbol_values[1], "beta");
+  EXPECT_EQ(metadata[0].placeholder_names[0], GateParamNames::kPhaseExponent);
+  EXPECT_EQ(metadata[0].placeholder_names[1], GateParamNames::kExponent);
+}
+
+TEST(QsimCircuitParserTest, PhasedXPow) {
   float exponent = 0.1234;
   float phase_exponent = 0.4567;
   float gs = 0.8910;
@@ -577,6 +933,10 @@ TEST(QsimCircuitParserTest, PhasedXPowTest) {
   (*args_proto)["exponent"] = MakeArg("beta");
   (*args_proto)["exponent_scalar"] = MakeArg(0.2);
   (*args_proto)["global_shift"] = MakeArg(gs);
+
+  // Set the control args.
+  (*args_proto)["control_qubits"] = MakeControlArg("");
+  (*args_proto)["control_values"] = MakeControlArg("");
 
   // Set the qubits.
   Qubit* qubits_proto = operations_proto->add_qubits();
@@ -653,6 +1013,132 @@ TEST(QsimCircuitParserTest, PhasedXPowTest) {
                              &fused_circuit),
       tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
                          "Could not find symbol in parameter map: alpha"));
+}
+
+TEST(QsimCircuitParserTest, PhasedXPowControlled) {
+  float exponent = 0.1234;
+  float phase_exponent = 0.4567;
+  float gs = 0.8910;
+  auto reference = qsim::Cirq::PhasedXPowGate<float>::Create(
+                       0, 0, phase_exponent, exponent, gs)
+                       .ControlledBy({1, 2}, {0, 0});
+  Program program_proto;
+  Circuit* circuit_proto = program_proto.mutable_circuit();
+  circuit_proto->set_scheduling_strategy(circuit_proto->MOMENT_BY_MOMENT);
+  Moment* moments_proto = circuit_proto->add_moments();
+
+  // Add gate.
+  Operation* operations_proto = moments_proto->add_operations();
+  Gate* gate_proto = operations_proto->mutable_gate();
+  gate_proto->set_id("PXP");
+
+  // Set the args.
+  google::protobuf::Map<std::string, Arg>* args_proto =
+      operations_proto->mutable_args();
+  (*args_proto)["phase_exponent"] = MakeArg("alpha");
+  (*args_proto)["phase_exponent_scalar"] = MakeArg(0.5);
+  (*args_proto)["exponent"] = MakeArg("beta");
+  (*args_proto)["exponent_scalar"] = MakeArg(0.2);
+  (*args_proto)["global_shift"] = MakeArg(gs);
+
+  // Set the control args.
+  (*args_proto)["control_qubits"] = MakeControlArg("1,0");
+  (*args_proto)["control_values"] = MakeControlArg("0,0");
+
+  // Set the qubits.
+  Qubit* qubits_proto = operations_proto->add_qubits();
+  qubits_proto->set_id("2");
+
+  QsimCircuit test_circuit;
+  std::vector<qsim::GateFused<QsimGate>> fused_circuit;
+  SymbolMap symbol_map = {
+      {"alpha", std::pair<int, float>(0, 2 * phase_exponent)},
+      {"beta", std::pair<int, float>(1, 5 * exponent)}};
+  std::vector<GateMetaData> metadata;
+
+  // Test symbol resolution.
+  ASSERT_EQ(QsimCircuitFromProgram(program_proto, symbol_map, 3, &test_circuit,
+                                   &fused_circuit, &metadata),
+            tensorflow::Status::OK());
+  AssertOneQubitEqual(test_circuit.gates[0], reference);
+  EXPECT_EQ(metadata.size(), 1);
+  EXPECT_EQ(metadata[0].placeholder_names.size(), 2);
+  EXPECT_EQ(metadata[0].symbol_values.size(), 2);
+  EXPECT_EQ(metadata[0].gate_params.size(), 5);
+  EXPECT_NEAR(metadata[0].gate_params[0], 2 * phase_exponent, 1e-5);
+  EXPECT_NEAR(metadata[0].gate_params[1], 0.5, 1e-5);
+  EXPECT_NEAR(metadata[0].gate_params[2], 5 * exponent, 1e-5);
+  EXPECT_NEAR(metadata[0].gate_params[3], 0.2, 1e-5);
+  EXPECT_NEAR(metadata[0].gate_params[4], gs, 1e-5);
+  EXPECT_EQ(metadata[0].symbol_values[0], "alpha");
+  EXPECT_EQ(metadata[0].symbol_values[1], "beta");
+  EXPECT_EQ(metadata[0].placeholder_names[0], GateParamNames::kPhaseExponent);
+  EXPECT_EQ(metadata[0].placeholder_names[1], GateParamNames::kExponent);
+}
+
+TEST(QsimCircuitParserTest, InvalidControlValues) {
+  Program program_proto;
+  Circuit* circuit_proto = program_proto.mutable_circuit();
+  circuit_proto->set_scheduling_strategy(circuit_proto->MOMENT_BY_MOMENT);
+  Moment* moments_proto = circuit_proto->add_moments();
+
+  // Add gate.
+  Operation* operations_proto = moments_proto->add_operations();
+  Gate* gate_proto = operations_proto->mutable_gate();
+  gate_proto->set_id("I");
+
+  // Set the control args to empty.
+  google::protobuf::Map<std::string, Arg>* args_proto =
+      operations_proto->mutable_args();
+  (*args_proto)["control_qubits"] = MakeControlArg("1,0");
+  (*args_proto)["control_values"] = MakeControlArg("0,junk");
+
+  // Set the qubits.
+  Qubit* qubits_proto = operations_proto->add_qubits();
+  qubits_proto->set_id("2");
+
+  QsimCircuit test_circuit;
+  std::vector<qsim::GateFused<QsimGate>> fused_circuit;
+  SymbolMap empty_map;
+  std::vector<GateMetaData> metadata;
+
+  ASSERT_EQ(QsimCircuitFromProgram(program_proto, empty_map, 3, &test_circuit,
+                                   &fused_circuit, &metadata),
+            tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
+                               "Unparseable control value: junk"));
+}
+
+TEST(QsimCircuitParserTest, MismatchControlNum) {
+  Program program_proto;
+  Circuit* circuit_proto = program_proto.mutable_circuit();
+  circuit_proto->set_scheduling_strategy(circuit_proto->MOMENT_BY_MOMENT);
+  Moment* moments_proto = circuit_proto->add_moments();
+
+  // Add gate.
+  Operation* operations_proto = moments_proto->add_operations();
+  Gate* gate_proto = operations_proto->mutable_gate();
+  gate_proto->set_id("I");
+
+  // Set the control args to empty.
+  google::protobuf::Map<std::string, Arg>* args_proto =
+      operations_proto->mutable_args();
+  (*args_proto)["control_qubits"] = MakeControlArg("1,0");
+  (*args_proto)["control_values"] = MakeControlArg("0");
+
+  // Set the qubits.
+  Qubit* qubits_proto = operations_proto->add_qubits();
+  qubits_proto->set_id("2");
+
+  QsimCircuit test_circuit;
+  std::vector<qsim::GateFused<QsimGate>> fused_circuit;
+  SymbolMap empty_map;
+  std::vector<GateMetaData> metadata;
+
+  ASSERT_EQ(QsimCircuitFromProgram(program_proto, empty_map, 3, &test_circuit,
+                                   &fused_circuit, &metadata),
+            tensorflow::Status(
+                tensorflow::error::INVALID_ARGUMENT,
+                "Mistmatched number of control qubits and control values."));
 }
 
 TEST(QsimCircuitParserTest, EmptyTest) {

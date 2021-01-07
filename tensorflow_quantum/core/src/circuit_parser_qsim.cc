@@ -25,6 +25,7 @@ limitations under the License.
 #include "../qsim/lib/io.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/strings/numbers.h"
+#include "absl/strings/str_split.h"
 #include "absl/types/optional.h"
 #include "cirq/google/api/v2/program.pb.h"
 #include "tensorflow/core/lib/core/status.h"
@@ -75,6 +76,70 @@ inline Status ParseProtoArg(
   return Status::OK();
 }
 
+inline Status ParseProtoControls(const Operation& op,
+                                 const unsigned int num_qubits,
+                                 std::vector<unsigned int>* control_qubits,
+                                 std::vector<unsigned int>* control_values) {
+  absl::string_view control_str =
+      op.args().at("control_qubits").arg_value().string_value();
+  absl::string_view control_v_str =
+      op.args().at("control_values").arg_value().string_value();
+
+  if (control_str == "" && control_v_str == "") {
+    // empty default value set in serializer.py
+    return Status::OK();
+  }
+
+  std::vector<absl::string_view> control_toks =
+      absl::StrSplit(control_str, ',');
+  std::vector<absl::string_view> control_v_toks =
+      absl::StrSplit(control_v_str, ',');
+
+  if (control_toks.size() != control_v_toks.size()) {
+    return Status(tensorflow::error::INVALID_ARGUMENT,
+                  "Mistmatched number of control qubits and control values.");
+  }
+  if (control_toks.empty()) {
+    return Status::OK();
+  }
+  bool valid;
+  unsigned int tmp;
+  control_qubits->reserve(control_toks.size());
+  for (auto tok : control_toks) {
+    // don't bother error checking since this is done earlier
+    // in program_resolution.
+    valid = absl::SimpleAtoi(tok, &tmp);
+    control_qubits->push_back(num_qubits - tmp - 1);
+  }
+  control_values->reserve(control_v_toks.size());
+  for (auto tok : control_v_toks) {
+    valid = absl::SimpleAtoi(tok, &tmp);
+    if (!valid) {
+      return Status(tensorflow::error::INVALID_ARGUMENT,
+                    "Unparseable control value: " + std::string(tok));
+    }
+    control_values->push_back(tmp);
+  }
+  return Status::OK();
+}
+
+inline Status OptionalInsertControls(const Operation& op,
+                                     const unsigned int num_qubits,
+                                     QsimGate* gate) {
+  std::vector<unsigned int> control_values;
+  std::vector<unsigned int> control_qubits;
+  Status s;
+  s = ParseProtoControls(op, num_qubits, &control_qubits, &control_values);
+  if (!s.ok()) {
+    return s;
+  }
+  if (control_qubits.empty()) {
+    return Status::OK();
+  }
+  qsim::MakeControlledGate(control_qubits, control_values, *gate);
+  return Status::OK();
+}
+
 // series of fixed signature gate builders.
 // there is no need to error check for unparseable symbols
 // or proto args not being present. Those errors are caught
@@ -88,7 +153,12 @@ inline Status SingleConstantGate(
     QsimCircuit* circuit, std::vector<GateMetaData>* metadata) {
   unsigned int q0;
   bool unused = absl::SimpleAtoi(op.qubits(0).id(), &q0);
-  circuit->gates.push_back(create_f(time, num_qubits - q0 - 1));
+  auto gate = create_f(time, num_qubits - q0 - 1);
+  Status s = OptionalInsertControls(op, num_qubits, &gate);
+  if (!s.ok()) {
+    return s;
+  }
+  circuit->gates.push_back(gate);
 
   // check for symbols and track metadata if needed.
   if (metadata != nullptr) {
@@ -109,8 +179,12 @@ inline Status TwoConstantGate(
   unsigned int q0, q1;
   bool unused = absl::SimpleAtoi(op.qubits(0).id(), &q0);
   unused = absl::SimpleAtoi(op.qubits(1).id(), &q1);
-  circuit->gates.push_back(
-      create_f(time, num_qubits - q0 - 1, num_qubits - q1 - 1));
+  auto gate = create_f(time, num_qubits - q0 - 1, num_qubits - q1 - 1);
+  Status s = OptionalInsertControls(op, num_qubits, &gate);
+  if (!s.ok()) {
+    return s;
+  }
+  circuit->gates.push_back(gate);
 
   // check for symbols and track metadata if needed.
   if (metadata != nullptr) {
@@ -148,8 +222,12 @@ inline Status SingleEigenGate(
     return u;
   }
 
-  circuit->gates.push_back(
-      create_f(time, num_qubits - q0 - 1, exp * exp_s, gs));
+  auto gate = create_f(time, num_qubits - q0 - 1, exp * exp_s, gs);
+  Status s = OptionalInsertControls(op, num_qubits, &gate);
+  if (!s.ok()) {
+    return s;
+  }
+  circuit->gates.push_back(gate);
 
   // check for symbols and track metadata if needed.
   if (metadata != nullptr) {
@@ -193,8 +271,14 @@ inline Status TwoEigenGate(
   if (!u.ok()) {
     return u;
   }
-  circuit->gates.push_back(create_f(time, num_qubits - q0 - 1,
-                                    num_qubits - q1 - 1, exp * exp_s, gs));
+  auto gate =
+      create_f(time, num_qubits - q0 - 1, num_qubits - q1 - 1, exp * exp_s, gs);
+
+  Status s = OptionalInsertControls(op, num_qubits, &gate);
+  if (!s.ok()) {
+    return s;
+  }
+  circuit->gates.push_back(gate);
 
   // check for symbols and track metadata if needed.
   if (metadata != nullptr) {
@@ -336,8 +420,13 @@ inline Status PhasedXGate(const Operation& op, const SymbolMap& param_map,
   if (!u.ok()) {
     return u;
   }
-  circuit->gates.push_back(qsim::Cirq::PhasedXPowGate<float>::Create(
-      time, num_qubits - q0 - 1, pexp * pexp_s, exp * exp_s, gs));
+  auto gate = qsim::Cirq::PhasedXPowGate<float>::Create(
+      time, num_qubits - q0 - 1, pexp * pexp_s, exp * exp_s, gs);
+  Status s = OptionalInsertControls(op, num_qubits, &gate);
+  if (!s.ok()) {
+    return s;
+  }
+  circuit->gates.push_back(gate);
 
   // check for symbols and track metadata if needed.
   if (metadata != nullptr) {
@@ -387,9 +476,14 @@ inline Status FsimGate(const Operation& op, const SymbolMap& param_map,
   if (!u.ok()) {
     return u;
   }
-  circuit->gates.push_back(qsim::Cirq::FSimGate<float>::Create(
-      time, num_qubits - q0 - 1, num_qubits - q1 - 1, theta * theta_s,
-      phi * phi_s));
+  auto gate = qsim::Cirq::FSimGate<float>::Create(time, num_qubits - q0 - 1,
+                                                  num_qubits - q1 - 1,
+                                                  theta * theta_s, phi * phi_s);
+  Status s = OptionalInsertControls(op, num_qubits, &gate);
+  if (!s.ok()) {
+    return s;
+  }
+  circuit->gates.push_back(gate);
 
   // check for symbols and track metadata if needed.
   if (metadata != nullptr) {
@@ -440,9 +534,14 @@ inline Status PhasedISwapGate(const Operation& op, const SymbolMap& param_map,
   if (!u.ok()) {
     return u;
   }
-  circuit->gates.push_back(qsim::Cirq::PhasedISwapPowGate<float>::Create(
+  auto gate = qsim::Cirq::PhasedISwapPowGate<float>::Create(
       time, num_qubits - q0 - 1, num_qubits - q1 - 1, pexp * pexp_s,
-      exp * exp_s));
+      exp * exp_s);
+  Status s = OptionalInsertControls(op, num_qubits, &gate);
+  if (!s.ok()) {
+    return s;
+  }
+  circuit->gates.push_back(gate);
 
   // check for symbols and track metadata if needed.
   if (metadata != nullptr) {
@@ -549,6 +648,12 @@ Status QsimCircuitFromPauliTerm(
     (*new_op->mutable_args())["exponent_scalar"]
         .mutable_arg_value()
         ->set_float_value(1.0);
+    (*new_op->mutable_args())["control_values"]
+        .mutable_arg_value()
+        ->set_string_value("");
+    (*new_op->mutable_args())["control_qubits"]
+        .mutable_arg_value()
+        ->set_string_value("");
   }
 
   return QsimCircuitFromProgram(measurement_program, empty_map, num_qubits,
@@ -593,6 +698,12 @@ Status QsimZBasisCircuitFromPauliTerm(
     (*new_op->mutable_args())["exponent_scalar"]
         .mutable_arg_value()
         ->set_float_value(1.0);
+    (*new_op->mutable_args())["control_values"]
+        .mutable_arg_value()
+        ->set_string_value("");
+    (*new_op->mutable_args())["control_qubits"]
+        .mutable_arg_value()
+        ->set_string_value("");
   }
 
   return QsimCircuitFromProgram(measurement_program, empty_map, num_qubits,
