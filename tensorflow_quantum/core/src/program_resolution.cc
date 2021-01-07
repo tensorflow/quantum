@@ -21,6 +21,7 @@ limitations under the License.
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 #include "cirq/google/api/v2/program.pb.h"
 #include "tensorflow/core/lib/core/error_codes.pb.h"
@@ -39,6 +40,38 @@ using tfq::proto::PauliQubitPair;
 using tfq::proto::PauliSum;
 using tfq::proto::PauliTerm;
 
+Status RegisterQubits(
+    const std::string& qb_string,
+    absl::flat_hash_set<std::pair<std::pair<int, int>, std::string>>* id_set) {
+  // Inserts qubits found in qb_string into id_set.
+
+  if (qb_string == "") {
+    return Status::OK();  // no control-default value specified in serializer.py
+  }
+
+  const std::vector<absl::string_view> qb_list = absl::StrSplit(qb_string, ',');
+  for (auto qb : qb_list) {
+    int r, c;
+    const std::vector<absl::string_view> splits = absl::StrSplit(qb, '_');
+    if (splits.size() != 2) {
+      return Status(tensorflow::error::INVALID_ARGUMENT,
+                    absl::StrCat("Unable to parse qubit: ", qb));
+    }
+    if (!absl::SimpleAtoi(splits[0], &r)) {
+      return Status(tensorflow::error::INVALID_ARGUMENT,
+                    absl::StrCat("Unable to parse qubit: ", qb));
+    }
+    if (!absl::SimpleAtoi(splits[1], &c)) {
+      return Status(tensorflow::error::INVALID_ARGUMENT,
+                    absl::StrCat("Unable to parse qubit: ", qb));
+    }
+    auto locs = std::pair<std::pair<int, int>, std::string>(
+        std::pair<int, int>(r, c), std::string(qb));
+    id_set->insert(locs);
+  }
+  return Status::OK();
+}
+
 Status ResolveQubitIds(Program* program, unsigned int* num_qubits,
                        std::vector<PauliSum>* p_sums /*=nullptr*/) {
   if (program->circuit().moments().empty()) {
@@ -51,24 +84,18 @@ Status ResolveQubitIds(Program* program, unsigned int* num_qubits,
   absl::flat_hash_set<std::pair<std::pair<int, int>, std::string>> id_set;
   for (const Moment& moment : program->circuit().moments()) {
     for (const Operation& operation : moment.operations()) {
+      Status s;
       for (const Qubit& qubit : operation.qubits()) {
-        int r, c;
-        const std::vector<std::string> splits = absl::StrSplit(qubit.id(), "_");
-        if (splits.size() != 2) {
-          return Status(tensorflow::error::INVALID_ARGUMENT,
-                        "Unable to parse qubit: " + qubit.id());
+        s = RegisterQubits(qubit.id(), &id_set);
+        if (!s.ok()) {
+          return s;
         }
-        if (!absl::SimpleAtoi(splits[0], &r)) {
-          return Status(tensorflow::error::INVALID_ARGUMENT,
-                        "Unable to parse qubit: " + qubit.id());
-        }
-        if (!absl::SimpleAtoi(splits[1], &c)) {
-          return Status(tensorflow::error::INVALID_ARGUMENT,
-                        "Unable to parse qubit: " + qubit.id());
-        }
-        auto locs = std::pair<std::pair<int, int>, std::string>(
-            std::pair<int, int>(r, c), qubit.id());
-        id_set.insert(locs);
+      }
+      s = RegisterQubits(
+          operation.args().at("control_qubits").arg_value().string_value(),
+          &id_set);
+      if (!s.ok()) {
+        return s;
       }
     }
   }
@@ -87,9 +114,27 @@ Status ResolveQubitIds(Program* program, unsigned int* num_qubits,
   // Replace the Program Qubit ids with the indices.
   for (Moment& moment : *program->mutable_circuit()->mutable_moments()) {
     for (Operation& operation : *moment.mutable_operations()) {
+      // Resolve qubit ids.
       for (Qubit& qubit : *operation.mutable_qubits()) {
         qubit.set_id(id_to_index.at(qubit.id()));
       }
+      // Resolve control qubit ids found in the control_qubits arg.
+      absl::string_view control_qubits =
+          operation.args().at("control_qubits").arg_value().string_value();
+      if (control_qubits == "") {  // explicit empty value set in serializer.py.
+        continue;
+      }
+      std::vector<absl::string_view> control_ids =
+          absl::StrSplit(control_qubits, ',');
+      std::vector<std::string> control_indexs;
+      control_indexs.reserve(control_ids.size());
+      for (auto id : control_ids) {
+        control_indexs.push_back(id_to_index.at(id));
+      }
+      operation.mutable_args()
+          ->at("control_qubits")
+          .mutable_arg_value()
+          ->set_string_value(absl::StrJoin(control_indexs, ","));
     }
   }
 
@@ -125,24 +170,18 @@ Status ResolveQubitIds(Program* program, unsigned int* num_qubits,
   absl::flat_hash_set<std::pair<std::pair<int, int>, std::string>> id_set;
   for (const Moment& moment : program->circuit().moments()) {
     for (const Operation& operation : moment.operations()) {
+      Status s;
       for (const Qubit& qubit : operation.qubits()) {
-        int r, c;
-        const std::vector<std::string> splits = absl::StrSplit(qubit.id(), "_");
-        if (splits.size() != 2) {
-          return Status(tensorflow::error::INVALID_ARGUMENT,
-                        "Unable to parse qubit: " + qubit.id());
+        s = RegisterQubits(qubit.id(), &id_set);
+        if (!s.ok()) {
+          return s;
         }
-        if (!absl::SimpleAtoi(splits[0], &r)) {
-          return Status(tensorflow::error::INVALID_ARGUMENT,
-                        "Unable to parse qubit: " + qubit.id());
-        }
-        if (!absl::SimpleAtoi(splits[1], &c)) {
-          return Status(tensorflow::error::INVALID_ARGUMENT,
-                        "Unable to parse qubit: " + qubit.id());
-        }
-        auto locs = std::pair<std::pair<int, int>, std::string>(
-            std::pair<int, int>(r, c), qubit.id());
-        id_set.insert(locs);
+      }
+      s = RegisterQubits(
+          operation.args().at("control_qubits").arg_value().string_value(),
+          &id_set);
+      if (!s.ok()) {
+        return s;
       }
     }
   }
@@ -166,6 +205,23 @@ Status ResolveQubitIds(Program* program, unsigned int* num_qubits,
       for (Qubit& qubit : *operation.mutable_qubits()) {
         qubit.set_id(id_to_index.at(qubit.id()));
       }
+      // Resolve control qubit ids found in the control_qubits arg.
+      absl::string_view control_qubits =
+          operation.args().at("control_qubits").arg_value().string_value();
+      if (control_qubits == "") {  // explicit empty value set in serializer.py.
+        continue;
+      }
+      std::vector<absl::string_view> control_ids =
+          absl::StrSplit(control_qubits, ',');
+      std::vector<std::string> control_indexs;
+      control_indexs.reserve(control_ids.size());
+      for (auto id : control_ids) {
+        control_indexs.push_back(id_to_index.at(id));
+      }
+      operation.mutable_args()
+          ->at("control_qubits")
+          .mutable_arg_value()
+          ->set_string_value(absl::StrJoin(control_indexs, ","));
     }
   }
 
@@ -175,6 +231,7 @@ Status ResolveQubitIds(Program* program, unsigned int* num_qubits,
     for (Moment& moment :
          *(other_programs->at(i)).mutable_circuit()->mutable_moments()) {
       for (Operation& operation : *moment.mutable_operations()) {
+        // Resolve qubit ids.
         for (Qubit& qubit : *operation.mutable_qubits()) {
           visited_qubits.erase(qubit.id());
           const auto result = id_to_index.find(qubit.id());
@@ -185,6 +242,32 @@ Status ResolveQubitIds(Program* program, unsigned int* num_qubits,
           }
           qubit.set_id(result->second);
         }
+        // Resolve control qubit ids.
+        absl::string_view control_qubits = operation.mutable_args()
+                                               ->at("control_qubits")
+                                               .arg_value()
+                                               .string_value();
+        if (control_qubits == "") {  // explicit empty value.
+          continue;
+        }
+        std::vector<absl::string_view> control_ids =
+            absl::StrSplit(control_qubits, ',');
+        std::vector<std::string> control_indexs;
+        control_indexs.reserve(control_ids.size());
+        for (auto id : control_ids) {
+          visited_qubits.erase(id);
+          const auto result = id_to_index.find(id);
+          if (result == id_to_index.end()) {
+            return Status(tensorflow::error::INVALID_ARGUMENT,
+                          "A paired circuit contains qubits not found in "
+                          "reference circuit.");
+          }
+          control_indexs.push_back(result->second);
+        }
+        operation.mutable_args()
+            ->at("control_qubits")
+            .mutable_arg_value()
+            ->set_string_value(absl::StrJoin(control_indexs, ","));
       }
     }
     if (!visited_qubits.empty()) {
