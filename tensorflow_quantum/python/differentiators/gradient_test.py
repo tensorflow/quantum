@@ -204,7 +204,7 @@ class AnalyticGradientCorrectnessTest(tf.test.TestCase, parameterized.TestCase):
                                                     symbol_names, psums)
 
         # will this be too tight? time will tell.
-        self.assertAllClose(cirq_grads, tfq_grads, rtol=1e-2, atol=1e-2)
+        self.assertAllClose(cirq_grads, tfq_grads, rtol=2e-2, atol=2e-2)
 
     @parameterized.parameters(
         list(

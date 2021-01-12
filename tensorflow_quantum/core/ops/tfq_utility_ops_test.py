@@ -290,8 +290,8 @@ class ResolveParametersOpTest(tf.test.TestCase, parameterized.TestCase):
 
         # Get random circuit batches
         qubits = cirq.GridQubit.rect(1, n_qubits)
-        batch_size = 15
-        n_moments = 15
+        batch_size = 1
+        n_moments = 5
         circuit_batch, resolver_batch = \
             util.random_symbol_circuit_resolver_batch(
                 qubits, symbol_names, batch_size, n_moments)
@@ -323,9 +323,19 @@ class ResolveParametersOpTest(tf.test.TestCase, parameterized.TestCase):
                                  expected_resolved_circuits):
             for test_m, exp_m in zip(test_c, exp_c):
                 for test_o, exp_o in zip(test_m, exp_m):
-                    tg = test_o.gate
-                    eg = exp_o.gate
+                    tg = test_o
+                    eg = exp_o
+                    if isinstance(tg, cirq.ControlledOperation):
+                        self.assertEqual(tg.controls, eg.controls)
+                        self.assertEqual(tg.control_values, eg.control_values)
+                        # Pull out controlled gate for tests later on.
+                        tg = tg.sub_operation
+                        eg = eg.sub_operation
+
+                    tg = tg.gate
+                    eg = eg.gate
                     self.assertEqual(type(tg), type(eg))
+
                     # TODO(zaqqwerty): simplify parsing when cirq build parser
                     # see core/serialize/serializer.py
                     if isinstance(tg, cirq.IdentityGate):

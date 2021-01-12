@@ -233,7 +233,7 @@ class ExecutionOpsConsistentyTest(tf.test.TestCase, parameterized.TestCase):
             util.kwargs_cartesian_product(
                 **{
                     'op_and_sim': [(op, sim)
-                                   for (op, sim) in zip(STATE_OPS, SIMS)],
+                                   for (op, sim) in list(zip(STATE_OPS, SIMS))[:1]],
                     'n_qubits': [3, 7],
                     'symbol_names': [['a'], ['a', 'b'],
                                      ['a', 'b', 'c', 'd', 'e']]
