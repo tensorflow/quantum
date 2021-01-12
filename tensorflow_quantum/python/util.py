@@ -366,9 +366,6 @@ def kwargs_cartesian_product(**kwargs):
 
 def _symbols_in_op(op):
     """Returns the set of symbols in a parameterized gate."""
-    if isinstance(op, cirq.ControlledOperation):
-        op = op.gate
-
     if isinstance(op, cirq.EigenGate):
         return op.exponent.free_symbols
 

@@ -542,16 +542,17 @@ def serialize_circuit(circuit_inp):
     # to discern controlledgates from one another otherwise. This
     # "momentary demotion" occurs with the help of the DelayedAssignmentGate.
     for i, moment in enumerate(circuit):
-        controlled_ops = [op for op in moment if isinstance(op, cirq.ControlledOperation)]
-        working_moment = moment
-        for j, op in enumerate(controlled_ops):
+        controlled_ops = [
+        op for op in moment if isinstance(op, cirq.ControlledOperation)]
+        new_ops = dict()
+        for op in controlled_ops:
             tfq_compatible = op.sub_operation
             tfq_compatible._tfq_control_qubits = op.controls
             tfq_compatible._tfq_control_values = op.control_values
-            controlled_ops[j] = tfq_compatible
-            working_moment = working_moment.without_operations_touching(op.qubits)
+            new_ops[op.qubits] = tfq_compatible
 
-        circuit[i] = working_moment.with_operations(controlled_ops)
+        circuit[i] = cirq.Moment(
+            new_ops[op.qubits] if op.qubits in new_ops else op for op in moment)
 
     return SERIALIZER.serialize(circuit)
 
