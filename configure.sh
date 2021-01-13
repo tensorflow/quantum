@@ -52,7 +52,7 @@ function is_ppc64le() {
 # Check if we are building GPU or CPU ops, default CPU
 while [[ "$TF_NEED_CUDA" == "" ]]; do
   read -p "Do you want to build ops again TensorFlow CPU pip package?"\
-" Y or enter for CPU (tensorflow), N for GPU (tensorflow-gpu). [Y/n] " INPUT
+" Y or enter for CPU (tensorflow-cpu), N for GPU (tensorflow). [Y/n] " INPUT
   case $INPUT in
     [Yy]* ) echo "Build with CPU pip package."; TF_NEED_CUDA=0;;
     [Nn]* ) echo "Build with GPU pip package."; TF_NEED_CUDA=1;;
@@ -76,39 +76,39 @@ done
 if [[ "$TF_NEED_CUDA" == "0" ]]; then
 
   # Check if it's installed
-  if [[ $(pip show tensorflow) == *tensorflow* ]] || [[ $(pip show tf-nightly) == *tf-nightly* ]] ; then
+  if [[ $(pip show tensorflow-cpu) == *tensorflow-cpu* ]] || [[ $(pip show tf-nightly-cpu) == *tf-nightly-cpu* ]] ; then
     echo 'Using installed tensorflow'
   else
     # Uninstall GPU version if it is installed.
-    if [[ $(pip show tensorflow-gpu) == *tensorflow-gpu* ]]; then
+    if [[ $(pip show tensorflow) == *tensorflow* ]]; then
       echo 'Already have gpu version of tensorflow installed. Uninstalling......\n'
-      pip uninstall tensorflow-gpu
-    elif [[ $(pip show tf-nightly-gpu) == *tf-nightly-gpu* ]]; then
+      pip uninstall tensorflow
+    elif [[ $(pip show tf-nightly) == *tf-nightly* ]]; then
       echo 'Already have gpu version of tensorflow installed. Uninstalling......\n'
-      pip uninstall tf-nightly-gpu
+      pip uninstall tf-nightly
     fi
     # Install CPU version
-    echo 'Installing tensorflow......\n'
-    pip install tensorflow
+    echo 'Installing tensorflow-cpu......\n'
+    pip install tensorflow-cpu
   fi
 
 else
 
   # Check if it's installed
-   if [[ $(pip show tensorflow-gpu) == *tensorflow-gpu* ]] || [[ $(pip show tf-nightly-gpu) == *tf-nightly-gpu* ]]; then
-    echo 'Using installed tensorflow-gpu'
+   if [[ $(pip show tensorflow) == *tensorflow* ]] || [[ $(pip show tf-nightly) == *tf-nightly* ]]; then
+    echo 'Using installed tensorflow'
   else
     # Uninstall CPU version if it is installed.
-    if [[ $(pip show tensorflow) == *tensorflow* ]]; then
+    if [[ $(pip show tensorflow-cpu) == *tensorflow-cpu* ]]; then
       echo 'Already have tensorflow non-gpu installed. Uninstalling......\n'
       pip uninstall tensorflow
-    elif [[ $(pip show tf-nightly) == *tf-nightly* ]]; then
+    elif [[ $(pip show tf-nightly-cpu) == *tf-nightly-cpu* ]]; then
       echo 'Already have tensorflow non-gpu installed. Uninstalling......\n'
       pip uninstall tf-nightly
     fi
-    # Install CPU version
-    echo 'Installing tensorflow-gpu .....\n'
-    pip install tensorflow-gpu
+    # Install GPU version
+    echo 'Installing tensorflow .....\n'
+    pip install tensorflow
   fi
 fi
 
