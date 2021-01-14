@@ -77,49 +77,6 @@ def _input_check_helper(programs, symbol_names, symbol_values):
                          ' dimension of symbol_values tensor.')
 
 
-def _batch_deserialize_helper(programs, symbol_names, symbol_values):
-    """Helper function that converts tensors to cirq constructs.
-
-     Converts the string representation of the circuits in `programs`
-     to `cirq.Circuit` objects and produces a corresponding
-     `cirq.ParamResolver` constructed using `symbol_names` and `symbol_values`.
-
-    Args:
-        programs: `tf.Tensor` of strings with shape [batch_size] containing
-            the string representations of the circuits to be executed.
-        symbol_names: `tf.Tensor` of strings with shape [n_params], which
-            is used to specify the order in which the values in
-            `symbol_values` should be placed inside of the circuits in
-            `programs`.
-        symbol_values: `tf.Tensor` of real numbers with shape
-            [batch_size, n_params] specifying parameter values to resolve
-            into the circuits specified by programs, following the ordering
-            dictated by `symbol_names`.
-
-    Returns:
-        `tuple` containing a `list` of `cirq.Circuit`s constructed from programs
-        and a `list` of `cirq.ParamResolver`s.
-    """
-    de_ser_symbol_names = [x.decode('UTF-8') for x in symbol_names.numpy()]
-    de_ser_programs = []
-    resolvers = []
-    # TODO(zaqqwerty): investigate parallelization of this loop
-    for program, values in zip(programs, symbol_values):
-        program = program.numpy()
-        values = values.numpy().astype(float)
-
-        circuit_proto = cirq.google.api.v2.program_pb2.Program()
-        circuit_proto.ParseFromString(program)
-
-        circuit = serializer.deserialize_circuit(circuit_proto)
-
-        resolver = cirq.study.resolver.ParamResolver(
-            dict(zip(de_ser_symbol_names, values)))
-        de_ser_programs.append(circuit)
-        resolvers.append(resolver)
-    return de_ser_programs, resolvers
-
-
 def _get_cirq_analytical_expectation(simulator=cirq.Simulator()):
     """Get a `callable` that is a TensorFlow op that outputs expectation values.
 
@@ -192,7 +149,7 @@ def _get_cirq_analytical_expectation(simulator=cirq.Simulator()):
             raise TypeError('pauli_sums tensor must have the same batch shape '
                             'as programs tensor.')
 
-        programs, resolvers = _batch_deserialize_helper(programs, symbol_names,
+        programs, resolvers = batch_util.batch_deserialize(programs, symbol_names,
                                                         symbol_values)
 
         sum_inputs = []
@@ -320,7 +277,7 @@ def _get_cirq_sampled_expectation(simulator=cirq.Simulator()):
         if tf.less_equal(num_samples, 0).numpy().any():
             raise TypeError('num_samples contains sample value <= 0.')
 
-        programs, resolvers = _batch_deserialize_helper(programs, symbol_names,
+        programs, resolvers = batch_util.batch_deserialize(programs, symbol_names,
                                                         symbol_values)
 
         num_samples = num_samples.numpy().tolist()
@@ -465,7 +422,7 @@ def _get_cirq_samples(sampler=cirq.Simulator()):
             raise TypeError("num_samples tensor must be of integer type")
 
         serialized_programs = programs
-        programs, resolvers = _batch_deserialize_helper(programs, symbol_names,
+        programs, resolvers = batch_util.batch_deserialize(programs, symbol_names,
                                                         symbol_values)
 
         num_samples = int(num_samples.numpy())
@@ -621,7 +578,7 @@ def _get_cirq_simulate_state(simulator=cirq.Simulator()):
         _input_check_helper(programs, symbol_names, symbol_values)
 
         states = batch_util.batch_calculate_state(
-            *_batch_deserialize_helper(programs, symbol_names, symbol_values),
+            *batch_util.batch_deserialize(programs, symbol_names, symbol_values),
             simulator)
 
         return states, _no_grad

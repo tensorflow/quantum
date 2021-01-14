@@ -341,6 +341,49 @@ def _validate_inputs(circuits, param_resolvers, simulator, sim_type):
         raise ValueError('Invalid simulator type specified.')
 
 
+def batch_deserialize(programs, symbol_names, symbol_values):
+    """Helper function that converts tensors to cirq constructs.
+
+    Converts the string representation of the circuits in `programs`
+    to `cirq.Circuit` objects and produces a corresponding
+    `cirq.ParamResolver` constructed using `symbol_names` and `symbol_values`.
+
+    Args:
+        programs: `tf.Tensor` of strings with shape [batch_size] containing
+            the string representations of the circuits to be executed.
+        symbol_names: `tf.Tensor` of strings with shape [n_params], which
+            is used to specify the order in which the values in
+            `symbol_values` should be placed inside of the circuits in
+            `programs`.
+        symbol_values: `tf.Tensor` of real numbers with shape
+            [batch_size, n_params] specifying parameter values to resolve
+            into the circuits specified by programs, following the ordering
+            dictated by `symbol_names`.
+
+    Returns:
+        `tuple` containing a `list` of `cirq.Circuit`s constructed from programs
+        and a `list` of `cirq.ParamResolver`s.
+    """
+    de_ser_symbol_names = [x.decode('UTF-8') for x in symbol_names.numpy()]
+    de_ser_programs = []
+    resolvers = []
+    # TODO(zaqqwerty): investigate parallelization of this loop
+    for program, values in zip(programs, symbol_values):
+        program = program.numpy()
+        values = values.numpy().astype(float)
+
+        circuit_proto = cirq.google.api.v2.program_pb2.Program()
+        circuit_proto.ParseFromString(program)
+
+        circuit = serializer.deserialize_circuit(circuit_proto)
+
+        resolver = cirq.study.resolver.ParamResolver(
+            dict(zip(de_ser_symbol_names, values)))
+        de_ser_programs.append(circuit)
+        resolvers.append(resolver)
+    return de_ser_programs, resolvers
+
+
 def batch_calculate_state(circuits, param_resolvers, simulator):
     """Compute states using a given simulator using parallel processing.
 
