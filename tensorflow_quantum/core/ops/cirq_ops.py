@@ -149,8 +149,8 @@ def _get_cirq_analytical_expectation(simulator=cirq.Simulator()):
             raise TypeError('pauli_sums tensor must have the same batch shape '
                             'as programs tensor.')
 
-        programs, resolvers = batch_util.batch_deserialize(programs, symbol_names,
-                                                        symbol_values)
+        programs, resolvers = batch_util.batch_deserialize(
+            programs, symbol_names, symbol_values)
 
         sum_inputs = []
         for sub_list in pauli_sums.numpy():
@@ -277,8 +277,8 @@ def _get_cirq_sampled_expectation(simulator=cirq.Simulator()):
         if tf.less_equal(num_samples, 0).numpy().any():
             raise TypeError('num_samples contains sample value <= 0.')
 
-        programs, resolvers = batch_util.batch_deserialize(programs, symbol_names,
-                                                        symbol_values)
+        programs, resolvers = batch_util.batch_deserialize(
+            programs, symbol_names, symbol_values)
 
         num_samples = num_samples.numpy().tolist()
 
@@ -422,8 +422,8 @@ def _get_cirq_samples(sampler=cirq.Simulator()):
             raise TypeError("num_samples tensor must be of integer type")
 
         serialized_programs = programs
-        programs, resolvers = batch_util.batch_deserialize(programs, symbol_names,
-                                                        symbol_values)
+        programs, resolvers = batch_util.batch_deserialize(
+            programs, symbol_names, symbol_values)
 
         num_samples = int(num_samples.numpy())
 
@@ -578,7 +578,8 @@ def _get_cirq_simulate_state(simulator=cirq.Simulator()):
         _input_check_helper(programs, symbol_names, symbol_values)
 
         states = batch_util.batch_calculate_state(
-            *batch_util.batch_deserialize(programs, symbol_names, symbol_values),
+            *batch_util.batch_deserialize(
+                programs, symbol_names, symbol_values),
             simulator)
 
         return states, _no_grad

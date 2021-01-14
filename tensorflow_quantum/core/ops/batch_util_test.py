@@ -89,21 +89,21 @@ class BatchUtilTest(tf.test.TestCase, parameterized.TestCase):
     """Test cases for BatchUtils main functions."""
 
     def test_batch_deserialize(self):
-      """Confirm that tensors are converted to Cirq correctly."""
-      qubits = cirq.GridQubit.rect(1, N_QUBITS)
-      (
-          expected_circuits, expected_resolvers
-      ) = util.random_symbol_circuit_resolver_batch(qubits, SYMBOLS, BATCH_SIZE)
-      programs = util.convert_to_tensor(expected_circuits)
-      symbol_names = tf.constant(SYMBOLS)
-      symbol_values = tf.constant(
-          [[r[k] for k in SYMBOLS] for r in expected_resolvers])
-      deser_circuits, deser_resolvers = batch_util.batch_deserialize(
-          programs, symbol_names, symbol_values)
-      for e_c, d_c in zip(expected_circuits, deser_circuits):
-        cirq.testing.assert_same_circuits(e_c, d_c)
-      for e_r, d_r in zip(expected_resolvers, deser_resolvers):
-        self.assertDictEqual(e_r, d_r)
+        """Confirm that tensors are converted to Cirq correctly."""
+        qubits = cirq.GridQubit.rect(1, N_QUBITS)
+        (
+            expected_circuits, expected_resolvers
+        ) = util.random_symbol_circuit_resolver_batch(qubits, SYMBOLS, BATCH_SIZE)
+        programs = util.convert_to_tensor(expected_circuits)
+        symbol_names = tf.constant(SYMBOLS)
+        symbol_values = tf.constant(
+            [[r[k] for k in SYMBOLS] for r in expected_resolvers])
+        deser_circuits, deser_resolvers = batch_util.batch_deserialize(
+            programs, symbol_names, symbol_values)
+        for e_c, d_c in zip(expected_circuits, deser_circuits):
+            cirq.testing.assert_same_circuits(e_c, d_c)
+        for e_r, d_r in zip(expected_resolvers, deser_resolvers):
+            self.assertDictEqual(e_r, d_r)
 
     @parameterized.parameters([{
         'sim': cirq.DensityMatrixSimulator()
