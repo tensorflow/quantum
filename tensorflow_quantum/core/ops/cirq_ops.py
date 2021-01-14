@@ -21,8 +21,6 @@ import tensorflow as tf
 import cirq
 
 from tensorflow_quantum.core.ops import batch_util
-from tensorflow_quantum.core.proto import pauli_sum_pb2
-from tensorflow_quantum.core.serialize import serializer
 
 
 def _upgrade_inputs(op_wrapper):

@@ -23,6 +23,7 @@ from multiprocessing.pool import Pool as ProcessPool
 import numpy as np
 import cirq
 
+from tensorflow_quantum.core.proto import pauli_sum_pb2
 from tensorflow_quantum.core.serialize import serializer
 
 
