@@ -91,9 +91,9 @@ class BatchUtilTest(tf.test.TestCase, parameterized.TestCase):
     def test_batch_deserialize(self):
         """Confirm that tensors are converted to Cirq correctly."""
         qubits = cirq.GridQubit.rect(1, N_QUBITS)
-        (
-            expected_circuits, expected_resolvers
-        ) = util.random_symbol_circuit_resolver_batch(qubits, SYMBOLS, BATCH_SIZE)
+        (expected_circuits,
+         expected_resolvers) = util.random_symbol_circuit_resolver_batch(
+            qubits, SYMBOLS, BATCH_SIZE)
         programs = util.convert_to_tensor(expected_circuits)
         symbol_names = tf.constant(SYMBOLS)
         symbol_values = tf.constant(

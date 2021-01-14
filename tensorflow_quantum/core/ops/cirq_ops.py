@@ -578,9 +578,8 @@ def _get_cirq_simulate_state(simulator=cirq.Simulator()):
         _input_check_helper(programs, symbol_names, symbol_values)
 
         states = batch_util.batch_calculate_state(
-            *batch_util.batch_deserialize(
-                programs, symbol_names, symbol_values),
-            simulator)
+            *batch_util.batch_deserialize(programs, symbol_names,
+                                          symbol_values), simulator)
 
         return states, _no_grad
 
