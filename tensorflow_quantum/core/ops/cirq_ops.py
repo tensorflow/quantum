@@ -149,17 +149,10 @@ def _get_cirq_analytical_expectation(simulator=cirq.Simulator()):
             raise TypeError('pauli_sums tensor must have the same batch shape '
                             'as programs tensor.')
 
-        programs, resolvers = batch_util.batch_deserialize(
+        programs, resolvers = batch_util.batch_deserialize_programs(
             programs, symbol_names, symbol_values)
 
-        sum_inputs = []
-        for sub_list in pauli_sums.numpy():
-            to_append = []
-            for x in sub_list:
-                obj = pauli_sum_pb2.PauliSum()
-                obj.ParseFromString(x)
-                to_append.append(serializer.deserialize_paulisum(obj))
-            sum_inputs.append(to_append)
+        sum_inputs = batch_util.batch_deserialize_operators(pauli_sums)
 
         expectations = batch_util.batch_calculate_expectation(
             programs, resolvers, sum_inputs, simulator)
@@ -277,19 +270,12 @@ def _get_cirq_sampled_expectation(simulator=cirq.Simulator()):
         if tf.less_equal(num_samples, 0).numpy().any():
             raise TypeError('num_samples contains sample value <= 0.')
 
-        programs, resolvers = batch_util.batch_deserialize(
+        programs, resolvers = batch_util.batch_deserialize_programs(
             programs, symbol_names, symbol_values)
 
         num_samples = num_samples.numpy().tolist()
 
-        sum_inputs = []
-        for sub_list in pauli_sums.numpy():
-            to_append = []
-            for x in sub_list:
-                obj = pauli_sum_pb2.PauliSum()
-                obj.ParseFromString(x)
-                to_append.append(serializer.deserialize_paulisum(obj))
-            sum_inputs.append(to_append)
+        sum_inputs = batch_util.batch_deserialize_operators(pauli_sums)
 
         expectations = batch_util.batch_calculate_sampled_expectation(
             programs, resolvers, sum_inputs, num_samples, simulator)
@@ -422,7 +408,7 @@ def _get_cirq_samples(sampler=cirq.Simulator()):
             raise TypeError("num_samples tensor must be of integer type")
 
         serialized_programs = programs
-        programs, resolvers = batch_util.batch_deserialize(
+        programs, resolvers = batch_util.batch_deserialize_programs(
             programs, symbol_names, symbol_values)
 
         num_samples = int(num_samples.numpy())
@@ -578,8 +564,8 @@ def _get_cirq_simulate_state(simulator=cirq.Simulator()):
         _input_check_helper(programs, symbol_names, symbol_values)
 
         states = batch_util.batch_calculate_state(
-            *batch_util.batch_deserialize(programs, symbol_names,
-                                          symbol_values), simulator)
+            *batch_util.batch_deserialize_programs(programs, symbol_names,
+                                                   symbol_values), simulator)
 
         return states, _no_grad
 

@@ -341,8 +341,8 @@ def _validate_inputs(circuits, param_resolvers, simulator, sim_type):
         raise ValueError('Invalid simulator type specified.')
 
 
-def batch_deserialize(programs, symbol_names, symbol_values):
-    """Helper function that converts tensors to cirq constructs.
+def batch_deserialize_programs(programs, symbol_names, symbol_values):
+    """Converts tensors to circuits and parameter resolvers.
 
     Converts the string representation of the circuits in `programs`
     to `cirq.Circuit` objects and produces a corresponding
@@ -382,6 +382,28 @@ def batch_deserialize(programs, symbol_names, symbol_values):
         de_ser_programs.append(circuit)
         resolvers.append(resolver)
     return de_ser_programs, resolvers
+
+
+def batch_deserialize_operators(operators):
+    """Converts a tensor into an array of `cirq.PauliSum`s.
+
+    Args:
+        pauli_sums: 2-D `tf.Tensor` of strings which are the serialized
+            representations of `cirq.PauliSum`s.
+
+    Returns:
+        deser_operators: `list` of `list`s of `cirq.PauliSum`s, which are the
+            objects deserialized from `operators`.
+    """
+    deser_operators = []
+    for sub_list in operators.numpy():
+        to_append = []
+        for x in sub_list:
+            obj = pauli_sum_pb2.PauliSum()
+            obj.ParseFromString(x)
+            to_append.append(serializer.deserialize_paulisum(obj))
+        deser_operators.append(to_append)
+    return deser_operators
 
 
 def batch_calculate_state(circuits, param_resolvers, simulator):
