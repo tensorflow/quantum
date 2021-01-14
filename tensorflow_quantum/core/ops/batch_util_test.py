@@ -88,7 +88,7 @@ def _sample_helper(sim, state, n_qubits, n_samples):
 class BatchUtilTest(tf.test.TestCase, parameterized.TestCase):
     """Test cases for BatchUtils main functions."""
 
-    def test_batch_deserialize(self):
+    def test_batch_deserialize_programs(self):
         """Confirm that tensors are converted to Cirq correctly."""
         qubits = cirq.GridQubit.rect(1, N_QUBITS)
         (expected_circuits,
@@ -98,12 +98,16 @@ class BatchUtilTest(tf.test.TestCase, parameterized.TestCase):
         symbol_names = tf.constant(SYMBOLS)
         symbol_values = tf.constant(
             [[r[k] for k in SYMBOLS] for r in expected_resolvers])
-        deser_circuits, deser_resolvers = batch_util.batch_deserialize(
+        deser_circuits, deser_resolvers = batch_util.batch_deserialize_programs(
             programs, symbol_names, symbol_values)
         for e_c, d_c in zip(expected_circuits, deser_circuits):
             cirq.testing.assert_same_circuits(e_c, d_c)
         for e_r, d_r in zip(expected_resolvers, deser_resolvers):
             self.assertDictEqual(e_r, d_r)
+
+    def test_batch_deserialize_operators(self):
+        """Confirm that tensors are converted to PauliSums correctly."""
+        pass
 
     @parameterized.parameters([{
         'sim': cirq.DensityMatrixSimulator()
