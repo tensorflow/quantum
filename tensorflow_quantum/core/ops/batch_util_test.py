@@ -100,14 +100,19 @@ class BatchUtilTest(tf.test.TestCase, parameterized.TestCase):
             [[r[k] for k in SYMBOLS] for r in expected_resolvers])
         deser_circuits, deser_resolvers = batch_util.batch_deserialize_programs(
             programs, symbol_names, symbol_values)
-        for e_c, d_c in zip(expected_circuits, deser_circuits):
-            cirq.testing.assert_same_circuits(e_c, d_c)
+        cirq.protocols.approx_eq(expected_circuits, deser_circuits)
         for e_r, d_r in zip(expected_resolvers, deser_resolvers):
             self.assertDictEqual(e_r, d_r)
 
     def test_batch_deserialize_operators(self):
         """Confirm that tensors are converted to PauliSums correctly."""
-        pass
+        qubits = cirq.GridQubit.rect(1, N_QUBITS)
+        psums = []
+        for _ in range(BATCH_SIZE):
+          psums.append(random_pauli_sums(qubits, PAULI_LENGTH, BATCH_SIZE))
+        psums_tf = util.convert_to_tensor(psums)
+        psums_deser = batch_util.batch_deserialize_operators(psums_tf)
+        cirq.protocols.approx_eq(psums, psums_deser)
 
     @parameterized.parameters([{
         'sim': cirq.DensityMatrixSimulator()
