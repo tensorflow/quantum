@@ -326,6 +326,7 @@ class ResolveParametersOpTest(tf.test.TestCase, parameterized.TestCase):
                     tg = test_o.gate
                     eg = exp_o.gate
                     self.assertEqual(type(tg), type(eg))
+                    self.assertTrue(cirq.approx_eq(test_o, exp_o, atol=1e-4))
                     # TODO(zaqqwerty): simplify parsing when cirq build parser
                     # see core/serialize/serializer.py
                     if isinstance(tg, cirq.IdentityGate):
