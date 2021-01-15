@@ -109,7 +109,8 @@ class BatchUtilTest(tf.test.TestCase, parameterized.TestCase):
         qubits = cirq.GridQubit.rect(1, N_QUBITS)
         psums = []
         for _ in range(BATCH_SIZE):
-          psums.append(random_pauli_sums(qubits, PAULI_LENGTH, BATCH_SIZE))
+            psums.append(
+                util.random_pauli_sums(qubits, PAULI_LENGTH, BATCH_SIZE))
         psums_tf = util.convert_to_tensor(psums)
         psums_deser = batch_util.batch_deserialize_operators(psums_tf)
         cirq.protocols.approx_eq(psums, psums_deser)
