@@ -402,7 +402,7 @@ def _symbols_in_op(op):
         "tfq.util.get_supported_gates().")
 
 
-def _is_expression_approx_eq(exp_1, exp_2, atol):
+def is_expression_approx_eq(exp_1, exp_2, atol):
     """Compare possibly symbolic expressions for approximate equality.
 
     Coefficient based approximate equality.  If no symbol is present in
@@ -414,8 +414,8 @@ def _is_expression_approx_eq(exp_1, exp_2, atol):
     s_2 = serializer._symbol_extractor(exp_2)
     v_1 = serializer._scalar_extractor(exp_1)
     v_2 = serializer._scalar_extractor(exp_2)
-    s_eq = cirq.approx_eq(s_1, s_2)
-    v_eq = cirq.approx_eq(v_1, v_2)
+    s_eq = cirq.approx_eq(s_1, s_2, atol=atol)
+    v_eq = cirq.approx_eq(v_1, v_2, atol=atol)
     return s_eq and v_eq
 
 
@@ -449,22 +449,22 @@ def is_gate_approx_eq(gate_true, gate_deser, atol=1e-5):
         # all identity gates are the same
         return True
     if isinstance(gate_true, cirq.EigenGate):
-        a = _is_expression_approx_eq(gate_true._global_shift,
-                                     gate_deser._global_shift, atol)
-        b = _is_expression_approx_eq(gate_true._exponent, gate_deser._exponent,
-                                     atol)
+        a = is_expression_approx_eq(gate_true._global_shift,
+                                    gate_deser._global_shift, atol)
+        b = is_expression_approx_eq(gate_true._exponent, gate_deser._exponent,
+                                    atol)
         return a and b
     if isinstance(gate_true, cirq.FSimGate):
-        a = _is_expression_approx_eq(gate_true.theta, gate_deser.theta, atol)
-        b = _is_expression_approx_eq(gate_true.phi, gate_deser.phi, atol)
+        a = is_expression_approx_eq(gate_true.theta, gate_deser.theta, atol)
+        b = is_expression_approx_eq(gate_true.phi, gate_deser.phi, atol)
         return a and b
     if isinstance(gate_true, (cirq.PhasedXPowGate, cirq.PhasedISwapPowGate)):
-        a = _is_expression_approx_eq(gate_true._global_shift,
-                                     gate_deser._global_shift, atol)
-        b = _is_expression_approx_eq(gate_true._exponent, gate_deser._exponent,
-                                     atol)
-        c = _is_expression_approx_eq(gate_true._phase_exponent,
-                                     gate_deser._phase_exponent, atol)
+        a = is_expression_approx_eq(gate_true._global_shift,
+                                    gate_deser._global_shift, atol)
+        b = is_expression_approx_eq(gate_true._exponent, gate_deser._exponent,
+                                    atol)
+        c = is_expression_approx_eq(gate_true._phase_exponent,
+                                    gate_deser._phase_exponent, atol)
         return a and b and c
     raise ValueError(
         f"Some valid TFQ gate type is not yet accounted for, got {gate_true}")
