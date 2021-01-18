@@ -188,18 +188,44 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
         b = 1
         c = 2
         atol = 0.1
-        self.assertTrue(is_expression_approx_eq(a, b, atol))
-        self.assertFalse(is_expression_approx_eq(a, c, atol))
-        self.assertTrue(is_expression_approx_eq(a, c, 2.0))
+        self.assertTrue(util.is_expression_approx_eq(a, b, atol))
+        self.assertFalse(util.is_expression_approx_eq(a, c, atol))
+        self.assertTrue(util.is_expression_approx_eq(a, c, 2.0))
 
-        # Reals
+        # reals
         a = 1.1234
         b = 1.1231
         c = 1.1220
         atol = 5e-4
-        self.assertTrue(is_expression_approx_eq(a, b, atol))
-        self.assertFalse(is_expression_approx_eq(a, c, atol))
-        self.assertTrue(is_expression_approx_eq(a, c, 0.01))
+        self.assertTrue(util.is_expression_approx_eq(a, b, atol))
+        self.assertFalse(util.is_expression_approx_eq(a, c, atol))
+        self.assertTrue(util.is_expression_approx_eq(a, c, 0.01))
+
+        # symbols
+        a = sympy.Symbol("s_1")
+        b = sympy.Symbol("s_1")
+        c = sympy.Symbol("s_wrong")
+        self.assertTrue(util.is_expression_approx_eq(a, b, atol))
+        self.assertFalse(util.is_expression_approx_eq(a, c, atol))
+
+        # symbol * number
+
+
+        # number * symbol
+
+
+        # other not equal
+        atol=1e-3
+        self.assertFalse(util.is_expression_approx_eq(1, sympy.Symbol("s"), atol))
+        self.assertFalse(util.is_expression_approx_eq(sympy.Symbol("s"), 1, atol))
+
+        # too complicated
+
+        # junk
+        with self.assertRaisesRegex(TypeError, expected_regex='Invalid input'):
+            util.is_expression_approx_eq('junk', 'junk', 1e-3)
+        with self.assertRaisesRegex(TypeError, expected_regex='Invalid atol'):
+            util.is_expression_approx_eq(1, 1, 'junk')
 
     def test_get_circuit_symbols(self):
         """Test that symbols can be extracted from circuits.
