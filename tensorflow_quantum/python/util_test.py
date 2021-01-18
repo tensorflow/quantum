@@ -202,24 +202,46 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
         self.assertTrue(util.is_expression_approx_eq(a, c, 0.01))
 
         # symbols
-        a = sympy.Symbol("s_1")
-        b = sympy.Symbol("s_1")
+        a = sympy.Symbol("s")
+        b = sympy.Symbol("s")
         c = sympy.Symbol("s_wrong")
         self.assertTrue(util.is_expression_approx_eq(a, b, atol))
         self.assertFalse(util.is_expression_approx_eq(a, c, atol))
 
-        # symbol * number
-
-
         # number * symbol
+        a = 3.5 * sympy.Symbol("s")
+        b = 3.501 * sympy.Symbol("s")
+        c = 3.5 * sympy.Symbol("s_wrong")
+        atol=1e-2
+        self.assertTrue(util.is_expression_approx_eq(a, b, atol))
+        self.assertFalse(util.is_expression_approx_eq(a, c, atol))
+        c = 3.6 * sympy.Symbol("s")
+        self.assertFalse(util.is_expression_approx_eq(a, c, atol))
 
+        # symbol * number
+        a = sympy.Symbol("s") * -1.7
+        b = sympy.Symbol("s") * -1.701
+        c = sympy.Symbol("s_wrong") * -1.7
+        atol=1e-2
+        self.assertTrue(util.is_expression_approx_eq(a, b, atol))
+        self.assertFalse(util.is_expression_approx_eq(a, c, atol))
+        c = sympy.Symbol("s") * -1.8
+        self.assertFalse(util.is_expression_approx_eq(a, c, atol))
 
         # other not equal
         atol=1e-3
-        self.assertFalse(util.is_expression_approx_eq(1, sympy.Symbol("s"), atol))
-        self.assertFalse(util.is_expression_approx_eq(sympy.Symbol("s"), 1, atol))
+        self.assertFalse(
+            util.is_expression_approx_eq(1, sympy.Symbol("s"), atol))
+        self.assertFalse(
+            util.is_expression_approx_eq(sympy.Symbol("s"), 1, atol))
 
         # too complicated
+        a = sympy.Symbol("s_1") * sympy.Symbol("s_2")
+        b = 1.0 * a
+        with self.assertRaisesRegex(ValueError, expected_regex='not supported'):
+            util.is_expression_approx_eq(a, a, 1e-3)
+        with self.assertRaisesRegex(ValueError, expected_regex='not supported'):
+            util.is_expression_approx_eq(a, b, 1e-3)
 
         # junk
         with self.assertRaisesRegex(TypeError, expected_regex='Invalid input'):
