@@ -15,7 +15,6 @@
 """A collection of helper functions that are useful several places in tfq."""
 import random
 import itertools
-import numbers
 
 import numpy as np
 import sympy
@@ -391,17 +390,17 @@ def is_gate_approx_eq(gate_true, gate_deser, atol=1e-5):
     if isinstance(gate_true, cirq.IdentityGate):
         # all identity gates are the same
         return True
-    elif isinstance(gate_true, cirq.EigenGate):
+    if isinstance(gate_true, cirq.EigenGate):
         a = _is_expression_approx_eq(
             gate_true._global_shift, gate_deser._global_shift, atol)
         b = _is_expression_approx_eq(
             gate_true._exponent, gate_deser._exponent, atol)
         return a and b
-    elif isinstance(gate_true, cirq.FSimGate):
+    if isinstance(gate_true, cirq.FSimGate):
         a = _is_expression_approx_eq(gate_true.theta, gate_deser.theta, atol)
         b = _is_expression_approx_eq(gate_true.phi, gate_deser.phi, atol)
         return a and b
-    elif isinstance(gate_true, (cirq.PhasedXPowGate, cirq.PhasedISwapPowGate)):
+    if isinstance(gate_true, (cirq.PhasedXPowGate, cirq.PhasedISwapPowGate)):
         a = _is_expression_approx_eq(
             gate_true._global_shift, gate_deser._global_shift, atol)
         b = _is_expression_approx_eq(
@@ -409,7 +408,8 @@ def is_gate_approx_eq(gate_true, gate_deser, atol=1e-5):
         c = _is_expression_approx_eq(
             gate_true._phase_exponent, gate_deser._phase_exponent, atol)
         return a and b and c
-    raise ValueError("All gates should be caught above.")
+    raise ValueError(
+        f"Some valid TFQ gate type is not yet accounted for, got {gate_true}")
 
 
 def get_circuit_symbols(circuit):
