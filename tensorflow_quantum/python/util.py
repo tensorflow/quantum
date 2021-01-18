@@ -449,22 +449,22 @@ def is_gate_approx_eq(gate_true, gate_deser, atol=1e-5):
         # all identity gates are the same
         return True
     if isinstance(gate_true, cirq.EigenGate):
-        a = _is_expression_approx_eq(
-            gate_true._global_shift, gate_deser._global_shift, atol)
-        b = _is_expression_approx_eq(
-            gate_true._exponent, gate_deser._exponent, atol)
+        a = _is_expression_approx_eq(gate_true._global_shift,
+                                     gate_deser._global_shift, atol)
+        b = _is_expression_approx_eq(gate_true._exponent, gate_deser._exponent,
+                                     atol)
         return a and b
     if isinstance(gate_true, cirq.FSimGate):
         a = _is_expression_approx_eq(gate_true.theta, gate_deser.theta, atol)
         b = _is_expression_approx_eq(gate_true.phi, gate_deser.phi, atol)
         return a and b
     if isinstance(gate_true, (cirq.PhasedXPowGate, cirq.PhasedISwapPowGate)):
-        a = _is_expression_approx_eq(
-            gate_true._global_shift, gate_deser._global_shift, atol)
-        b = _is_expression_approx_eq(
-            gate_true._exponent, gate_deser._exponent, atol)
-        c = _is_expression_approx_eq(
-            gate_true._phase_exponent, gate_deser._phase_exponent, atol)
+        a = _is_expression_approx_eq(gate_true._global_shift,
+                                     gate_deser._global_shift, atol)
+        b = _is_expression_approx_eq(gate_true._exponent, gate_deser._exponent,
+                                     atol)
+        c = _is_expression_approx_eq(gate_true._phase_exponent,
+                                     gate_deser._phase_exponent, atol)
         return a and b and c
     raise ValueError(
         f"Some valid TFQ gate type is not yet accounted for, got {gate_true}")
