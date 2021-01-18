@@ -181,6 +181,26 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
         with self.assertRaisesRegex(ValueError, expected_regex='not iterable'):
             list(util.kwargs_cartesian_product(a=[1, 2], b=-1))
 
+    def test_is_expression_approx_eq(self):
+        """Test that coefficients and symbols are compared correctly."""
+        # integers
+        a = 1
+        b = 1
+        c = 2
+        atol = 0.1
+        self.assertTrue(is_expression_approx_eq(a, b, atol))
+        self.assertFalse(is_expression_approx_eq(a, c, atol))
+        self.assertTrue(is_expression_approx_eq(a, c, 2.0))
+
+        # Reals
+        a = 1.1234
+        b = 1.1231
+        c = 1.1220
+        atol = 5e-4
+        self.assertTrue(is_expression_approx_eq(a, b, atol))
+        self.assertFalse(is_expression_approx_eq(a, c, atol))
+        self.assertTrue(is_expression_approx_eq(a, c, 0.01))
+
     def test_get_circuit_symbols(self):
         """Test that symbols can be extracted from circuits.
         This test will error out if get_supported_gates gets updated with new

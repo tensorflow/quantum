@@ -306,6 +306,5 @@ class ResolveParametersOpTest(tf.test.TestCase, parameterized.TestCase):
                         util.is_gate_approx_eq(test_o.gate, exp_o.gate))
 
 
-
 if __name__ == '__main__':
     tf.test.main()
