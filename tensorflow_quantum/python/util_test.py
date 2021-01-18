@@ -212,7 +212,7 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
         a = 3.5 * sympy.Symbol("s")
         b = 3.501 * sympy.Symbol("s")
         c = 3.5 * sympy.Symbol("s_wrong")
-        atol=1e-2
+        atol = 1e-2
         self.assertTrue(util.is_expression_approx_eq(a, b, atol))
         self.assertFalse(util.is_expression_approx_eq(a, c, atol))
         c = 3.6 * sympy.Symbol("s")
@@ -222,14 +222,14 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
         a = sympy.Symbol("s") * -1.7
         b = sympy.Symbol("s") * -1.701
         c = sympy.Symbol("s_wrong") * -1.7
-        atol=1e-2
+        atol = 1e-2
         self.assertTrue(util.is_expression_approx_eq(a, b, atol))
         self.assertFalse(util.is_expression_approx_eq(a, c, atol))
         c = sympy.Symbol("s") * -1.8
         self.assertFalse(util.is_expression_approx_eq(a, c, atol))
 
         # other not equal
-        atol=1e-3
+        atol = 1e-3
         self.assertFalse(
             util.is_expression_approx_eq(1, sympy.Symbol("s"), atol))
         self.assertFalse(
