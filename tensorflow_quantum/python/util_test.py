@@ -274,7 +274,7 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
         # Unsupported gate
         with self.assertRaisesRegex(TypeError,
                                     expected_regex='not a valid TFQ gate'):
-            util.is_gate_approx_eq(cirq.IdentityGate, cirq.TOFFOLI)
+            util.is_gate_approx_eq(cirq.IdentityGate, cirq.ThreeQubitGate)
 
         # Not a child class
         self.assertFalse(util.is_gate_approx_eq(cirq.X, cirq.Y))
