@@ -301,8 +301,8 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
                 self.assertFalse(
                     util.is_gate_approx_eq(g_true, g_not_eq, atol=atol))
             g_true = cirq.FSimGate(theta=e_true, phi=e_eq)
-            g_eq = g(theta=e_eq, phi=e_true)
-            g_not_eq = g(theta=e_not_eq, phi=e_not_eq)
+            g_eq = cirq.FSimGate(theta=e_eq, phi=e_true)
+            g_not_eq = cirq.FSimGate(theta=e_not_eq, phi=e_not_eq)
             self.assertTrue(util.is_gate_approx_eq(g_true, g_eq, atol=atol))
             self.assertFalse(util.is_gate_approx_eq(g_true, g_not_eq,
                                                     atol=atol))
