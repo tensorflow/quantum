@@ -411,6 +411,8 @@ def is_expression_approx_eq(exp_1, exp_2, atol):
     equal.  If the expressions contain symbols, return true if the two symbols
     are the same and their coefficients are approximately equal.
     """
+    if not isinstance(atol, numbers.Real):
+        raise TypeError("atol must be a real number.")
     s_1 = serializer._symbol_extractor(exp_1)
     s_2 = serializer._symbol_extractor(exp_2)
     v_1 = serializer._scalar_extractor(exp_1)
