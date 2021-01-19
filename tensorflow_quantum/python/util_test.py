@@ -272,7 +272,7 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
             util.is_gate_approx_eq(cirq.IdentityGate, "junk")
 
         # Unsupported gate
-        with self.assertRaisesRegex(TypeError,
+        with self.assertRaisesRegex(ValueError,
                                     expected_regex='not a valid TFQ gate'):
             util.is_gate_approx_eq(cirq.IdentityGate, cirq.CCNOT)
 
