@@ -394,8 +394,8 @@ def is_gate_approx_eq(gate_true, gate_deser, atol=1e-5):
             gate_deser, cirq.Gate):
         raise TypeError("Arguments must be cirq gates.")
     supported_gates = serializer.SERIALIZER.supported_gate_types()
-    if not (any([isinstance(gate_true, g) for g in supported_gates]) and any(
-            [isinstance(gate_deser, g) for g in supported_gates])):
+    if not (any([isinstance(gate_true, g) for g in supported_gates]) and
+            any([isinstance(gate_deser, g) for g in supported_gates])):
         raise ValueError("One of the inputs is not a valid TFQ gate.")
     if not isinstance(gate_true, type(gate_deser)):
         return False
