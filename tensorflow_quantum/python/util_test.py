@@ -246,7 +246,8 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
         # junk
         with self.assertRaisesRegex(TypeError, expected_regex='Invalid input'):
             util.is_expression_approx_eq('junk', 'junk', 1e-3)
-        with self.assertRaisesRegex(TypeError, expected_regex='Invalid atol'):
+        with self.assertRaisesRegex(TypeError,
+                                    expected_regex='atol must be a real'):
             util.is_expression_approx_eq(1, 1, 'junk')
 
     def test_is_gate_approx_eq(self):
