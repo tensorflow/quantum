@@ -271,9 +271,9 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
 
         # junk
         with self.assertRaisesRegex(TypeError, expected_regex='type cirq.Gate'):
-            util.is_gate_approx_eq("junk", cirq.IdentityGate))
+            util.is_gate_approx_eq("junk", cirq.IdentityGate)
         with self.assertRaisesRegex(TypeError, expected_regex='type cirq.Gate'):
-            util.is_gate_approx_eq(cirq.IdentityGate, "junk"))
+            util.is_gate_approx_eq(cirq.IdentityGate, "junk")
 
         # Parameterized gates
         for e_true, e_eq, e_not_eq in zip(exps_true, exps_eq, exps_not_eq):
