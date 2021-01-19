@@ -265,15 +265,24 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
             sympy.Symbol("s_2") * 4.4
         ]
 
-        # Identity gate
-        self.assertTrue(
-            util.is_gate_approx_eq(cirq.IdentityGate, cirq.IdentityGate))
-
         # junk
         with self.assertRaisesRegex(TypeError, expected_regex='type cirq.Gate'):
             util.is_gate_approx_eq("junk", cirq.IdentityGate)
         with self.assertRaisesRegex(TypeError, expected_regex='type cirq.Gate'):
             util.is_gate_approx_eq(cirq.IdentityGate, "junk")
+
+        # Unsupported gate
+        with self.assertRaisesRegex(TypeError,
+                                    expected_regex='not a valid TFQ gate'):
+            util.is_gate_approx_eq(cirq.IdentityGate, cirq.TOFFOLI)
+
+        # Not a child class
+        self.assertFalse(
+            util.is_gate_approx_eq(cirq.X, cirq.Y)
+
+        # Identity gate
+        self.assertTrue(
+            util.is_gate_approx_eq(cirq.IdentityGate, cirq.IdentityGate))
 
         # Parameterized gates
         for e_true, e_eq, e_not_eq in zip(exps_true, exps_eq, exps_not_eq):
@@ -287,22 +296,22 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
             for g in serializer.PHASED_EIGEN_GATES_DICT:
                 g_true = g(exponent=e_true,
                            global_shift=e_eq,
-                           phase_exponent=-1.0*e_true)
+                           phase_exponent=-1.0 * e_true)
                 g_eq = g(exponent=e_eq,
                          global_shift=e_true,
-                         phase_exponent=-1.0*e_eq)
+                         phase_exponent=-1.0 * e_eq)
                 g_not_eq = g(exponent=e_not_eq,
                              global_shift=e_not_eq,
-                             phase_exponent=-1.0*e_not_eq)
+                             phase_exponent=-1.0 * e_not_eq)
                 self.assertTrue(util.is_gate_approx_eq(g_true, g_eq, atol=atol))
-                self.assertFalse(util.is_gate_approx_eq(g_true, g_not_eq,
-                                                        atol=atol))
+                self.assertFalse(
+                    util.is_gate_approx_eq(g_true, g_not_eq, atol=atol))
             g_true = cirq.FSimGate(theta=e_true, phi=e_eq)
             g_eq = g(theta=e_eq, phi=e_true)
             g_not_eq = g(theta=e_not_eq, phi=e_not_eq)
             self.assertTrue(util.is_gate_approx_eq(g_true, g_eq, atol=atol))
-            self.assertFalse(
-                util.is_gate_approx_eq(g_true, g_not_eq, atol=atol))
+            self.assertFalse(util.is_gate_approx_eq(g_true, g_not_eq,
+                                                    atol=atol))
 
     def test_get_circuit_symbols(self):
         """Test that symbols can be extracted from circuits.
