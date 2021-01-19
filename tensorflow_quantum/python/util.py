@@ -399,7 +399,7 @@ def is_gate_approx_eq(gate_true, gate_deser, atol=1e-5):
         raise ValueError("One of the inputs is not a valid TFQ gate.")
     if not isinstance(gate_true, type(gate_deser)):
         return False
-    if gate_true is gate_deser:
+    if isinstance(gate_true, cirq.I) and isinstance(gate_deser, cirq.I):
         # all identity gates are the same
         return True
     if isinstance(gate_true, cirq.EigenGate):
