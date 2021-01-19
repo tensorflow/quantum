@@ -253,15 +253,27 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
         """Check valid TFQ gates for approximate equality."""
         atol = 1e-2
         exps_true = [
-            3, 2.54, -1.7 * sympy.Symbol("s_1"), sympy.Symbol("s_2") * 4.3]
+            3, 2.54, -1.7 * sympy.Symbol("s_1"),
+            sympy.Symbol("s_2") * 4.3
+        ]
         exps_eq = [
-            3, 2.542, -1.705 * sympy.Symbol("s_1"), sympy.Symbol("s_2") * 4.305]
+            3, 2.542, -1.705 * sympy.Symbol("s_1"),
+            sympy.Symbol("s_2") * 4.305
+        ]
         exps_not_eq = [
-            4, 2.57, -1.5 * sympy.Symbol("s_1"), sympy.Symbol("s_2") * 4.4]
+            4, 2.57, -1.5 * sympy.Symbol("s_1"),
+            sympy.Symbol("s_2") * 4.4
+        ]
 
         # Identity gate
         self.assertTrue(
             util.is_gate_approx_eq(cirq.IdentityGate, cirq.IdentityGate))
+
+        # junk
+        with self.assertRaisesRegex(TypeError, expected_regex='type cirq.Gate'):
+            util.is_gate_approx_eq("junk", cirq.IdentityGate))
+        with self.assertRaisesRegex(TypeError, expected_regex='type cirq.Gate'):
+            util.is_gate_approx_eq(cirq.IdentityGate, "junk"))
 
         # Parameterized gates
         for e_true, e_eq, e_not_eq in zip(exps_true, exps_eq, exps_not_eq):
@@ -273,15 +285,18 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
                 self.assertFalse(
                     util.is_gate_approx_eq(g_true, g_not_eq, atol=atol))
             for g in serializer.PHASED_EIGEN_GATES_DICT:
-                g_true = g(exponent=e_true, global_shift=e_eq,
+                g_true = g(exponent=e_true,
+                           global_shift=e_eq,
                            phase_exponent=-1.0*e_true)
-                g_eq = g(exponent=e_eq, global_shift=e_true,
+                g_eq = g(exponent=e_eq,
+                         global_shift=e_true,
                          phase_exponent=-1.0*e_eq)
-                g_not_eq = g(exponent=e_not_eq, global_shift=e_not_eq,
+                g_not_eq = g(exponent=e_not_eq,
+                             global_shift=e_not_eq,
                              phase_exponent=-1.0*e_not_eq)
                 self.assertTrue(util.is_gate_approx_eq(g_true, g_eq, atol=atol))
-                self.assertFalse(
-                    util.is_gate_approx_eq(g_true, g_not_eq, atol=atol))
+                self.assertFalse(util.is_gate_approx_eq(g_true, g_not_eq,
+                                                        atol=atol))
             g_true = cirq.FSimGate(theta=e_true, phi=e_eq)
             g_eq = g(theta=e_eq, phi=e_true)
             g_not_eq = g(theta=e_not_eq, phi=e_not_eq)
