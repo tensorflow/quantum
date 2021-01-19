@@ -91,18 +91,23 @@ class BatchUtilTest(tf.test.TestCase, parameterized.TestCase):
     def test_batch_deserialize_programs(self):
         """Confirm that tensors are converted to Cirq correctly."""
         qubits = cirq.GridQubit.rect(1, N_QUBITS)
-        (expected_circuits,
-         expected_resolvers) = util.random_symbol_circuit_resolver_batch(
+        (exp_circuits,
+         exp_resolvers) = util.random_symbol_circuit_resolver_batch(
              qubits, SYMBOLS, BATCH_SIZE)
-        programs = util.convert_to_tensor(expected_circuits)
+        programs = util.convert_to_tensor(exp_circuits)
         symbol_names = tf.constant(SYMBOLS)
         symbol_values = tf.constant(
-            [[r[k] for k in SYMBOLS] for r in expected_resolvers])
+            [[r[k] for k in SYMBOLS] for r in exp_resolvers])
         deser_circuits, deser_resolvers = batch_util.batch_deserialize_programs(
             programs, symbol_names, symbol_values)
-        cirq.protocols.approx_eq(expected_circuits, deser_circuits)
-        for e_r, d_r in zip(expected_resolvers, deser_resolvers):
-            self.assertDictEqual(e_r, d_r)
+        for exp_moment, deser_moment in zip(exp_circuits, deser_circuits):
+            for exp_op, deser_op in zip(exp_moment, deser_moment):
+                self.assertTrue(util.is_gate_approx_eq(exp_op.gate,
+                                                       deser_op.gate))
+        for e_r, d_r in zip(exp_resolvers, deser_resolvers):
+            self.assertTrue(set(e_r) == set(d_r))
+            for k in e_r:
+                self.assertTrue(util.is_expression_approx_eq(e_r[k], d_r[k], 1e-5))
 
     def test_batch_deserialize_operators(self):
         """Confirm that tensors are converted to PauliSums correctly."""
