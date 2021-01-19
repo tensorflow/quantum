@@ -102,12 +102,13 @@ class BatchUtilTest(tf.test.TestCase, parameterized.TestCase):
             programs, symbol_names, symbol_values)
         for exp_moment, deser_moment in zip(exp_circuits, deser_circuits):
             for exp_op, deser_op in zip(exp_moment, deser_moment):
-                self.assertTrue(util.is_gate_approx_eq(exp_op.gate,
-                                                       deser_op.gate))
+                self.assertTrue(
+                    util.is_gate_approx_eq(exp_op.gate, deser_op.gate))
         for e_r, d_r in zip(exp_resolvers, deser_resolvers):
             self.assertTrue(set(e_r) == set(d_r))
             for k in e_r:
-                self.assertTrue(util.is_expression_approx_eq(e_r[k], d_r[k], 1e-5))
+                self.assertTrue(
+                    util.is_expression_approx_eq(e_r[k], d_r[k], 1e-5))
 
     def test_batch_deserialize_operators(self):
         """Confirm that tensors are converted to PauliSums correctly."""
