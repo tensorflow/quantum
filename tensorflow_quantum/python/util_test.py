@@ -281,8 +281,7 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
         self.assertFalse(util.is_gate_approx_eq(cirq.X, cirq.Y))
 
         # Identity gate
-        self.assertTrue(
-            util.is_gate_approx_eq(cirq.I, cirq.I))
+        self.assertTrue(util.is_gate_approx_eq(cirq.I, cirq.I))
 
         # Parameterized gates
         for e_true, e_eq, e_not_eq in zip(exps_true, exps_eq, exps_not_eq):
