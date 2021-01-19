@@ -278,7 +278,7 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
 
         # Not a child class
         self.assertFalse(
-            util.is_gate_approx_eq(cirq.X, cirq.Y)
+            util.is_gate_approx_eq(cirq.X, cirq.Y))
 
         # Identity gate
         self.assertTrue(
