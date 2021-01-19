@@ -294,15 +294,9 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
                 self.assertFalse(
                     util.is_gate_approx_eq(g_true, g_not_eq, atol=atol))
             for g in serializer.PHASED_EIGEN_GATES_DICT:
-                g_true = g(exponent=e_true,
-                           global_shift=e_eq,
-                           phase_exponent=-1.0 * e_true)
-                g_eq = g(exponent=e_eq,
-                         global_shift=e_true,
-                         phase_exponent=-1.0 * e_eq)
-                g_not_eq = g(exponent=e_not_eq,
-                             global_shift=e_not_eq,
-                             phase_exponent=-1.0 * e_not_eq)
+                g_true = g(exponent=e_true, phase_exponent=-1.0 * e_true)
+                g_eq = g(exponent=e_eq, phase_exponent=-1.0 * e_eq)
+                g_not_eq = g(exponent=e_not_eq, phase_exponent=-1.0 * e_not_eq)
                 self.assertTrue(util.is_gate_approx_eq(g_true, g_eq, atol=atol))
                 self.assertFalse(
                     util.is_gate_approx_eq(g_true, g_not_eq, atol=atol))
