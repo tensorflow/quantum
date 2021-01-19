@@ -15,6 +15,7 @@
 """A collection of helper functions that are useful several places in tfq."""
 import random
 import itertools
+import numbers
 
 import numpy as np
 import sympy
@@ -356,7 +357,12 @@ def is_expression_approx_eq(exp_1, exp_2, atol):
     s_2 = serializer._symbol_extractor(exp_2)
     v_1 = serializer._scalar_extractor(exp_1)
     v_2 = serializer._scalar_extractor(exp_2)
-    s_eq = cirq.approx_eq(s_1, s_2, atol=atol)
+    if isinstance(s_1, numbers.Real) and isinstance(s_2, numbers.Real):
+        s_eq = cirq.approx_eq(s_1, s_2, atol=atol)
+    elif isinstance(s_1, sympy.Symbol) and isinstance(s_2, sympy.Symbol):
+        s_eq = str(s_1) == str(s_2)
+    else:
+        s_eq = False
     v_eq = cirq.approx_eq(v_1, v_2, atol=atol)
     return s_eq and v_eq
 
