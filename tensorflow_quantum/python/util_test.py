@@ -266,9 +266,9 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
         ]
 
         # junk
-        with self.assertRaisesRegex(TypeError, expected_regex='type cirq.Gate'):
+        with self.assertRaisesRegex(TypeError, expected_regex='cirq gates'):
             util.is_gate_approx_eq("junk", cirq.IdentityGate)
-        with self.assertRaisesRegex(TypeError, expected_regex='type cirq.Gate'):
+        with self.assertRaisesRegex(TypeError, expected_regex='cirq gates'):
             util.is_gate_approx_eq(cirq.IdentityGate, "junk")
 
         # Unsupported gate
