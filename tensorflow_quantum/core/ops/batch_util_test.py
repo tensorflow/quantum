@@ -100,10 +100,13 @@ class BatchUtilTest(tf.test.TestCase, parameterized.TestCase):
             [[r[k] for k in SYMBOLS] for r in exp_resolvers])
         deser_circuits, deser_resolvers = batch_util.batch_deserialize_programs(
             programs, symbol_names, symbol_values)
-        for exp_moment, deser_moment in zip(exp_circuits, deser_circuits):
-            for exp_op, deser_op in zip(exp_moment, deser_moment):
-                self.assertTrue(
-                    util.is_gate_approx_eq(exp_op.gate, deser_op.gate))
+        for exp_c, deser_c in zip(exp_circuits, deser_circuits):
+            self.assertTrue(len(exp_c) == len(deser_c))
+            for exp_moment, deser_moment in zip(exp_c, deser_c)
+                self.assertTrue(len(exp_moment) == len(deser_moment))
+                for exp_op, deser_op in zip(exp_moment, deser_moment):
+                    self.assertTrue(
+                        util.is_gate_approx_eq(exp_op.gate, deser_op.gate))
         for e_r, d_r in zip(exp_resolvers, deser_resolvers):
             self.assertTrue(set(e_r) == set(d_r))
             for k in e_r:
