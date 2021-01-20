@@ -133,27 +133,6 @@ class AppendCircuitOpTest(tf.test.TestCase, parameterized.TestCase):
 class ResolveParametersOpTest(tf.test.TestCase, parameterized.TestCase):
     """Test the in-graph parameter resolving op."""
 
-    def _compare_gate_parameters(self, tg_value, eg_value):
-        """TODO(zaqqwerty): Remove this function and the gate-specific tests
-        below once https://github.com/quantumlib/Cirq/issues/3192 is resolved"""
-        rounding_digits = 3
-        if isinstance(tg_value, int):
-            self.assertAlmostEqual(tg_value, eg_value)
-        elif isinstance(tg_value, float):
-            self.assertAlmostEqual(tg_value, eg_value, places=rounding_digits)
-        else:
-            test_value = 1
-            exp_value = 1
-            for v in tg_value.args:
-                if not isinstance(v, sympy.Symbol):
-                    test_value *= sympy.N(v)
-            for v in eg_value.args:
-                if not isinstance(v, sympy.Symbol):
-                    exp_value *= sympy.N(v)
-            self.assertAlmostEqual(test_value,
-                                   exp_value,
-                                   delta=0.1**rounding_digits)
-
     def test_resolve_parameters_input_checking(self):
         """Check that the resolve parameters op has correct input checking."""
         n_qubits = 5
@@ -323,35 +302,8 @@ class ResolveParametersOpTest(tf.test.TestCase, parameterized.TestCase):
                                  expected_resolved_circuits):
             for test_m, exp_m in zip(test_c, exp_c):
                 for test_o, exp_o in zip(test_m, exp_m):
-                    tg = test_o.gate
-                    eg = exp_o.gate
-                    self.assertEqual(type(tg), type(eg))
-                    # TODO(zaqqwerty): simplify parsing when cirq build parser
-                    # see core/serialize/serializer.py
-                    if isinstance(tg, cirq.IdentityGate):
-                        # all identity gates are the same
-                        continue
-                    elif isinstance(tg, cirq.EigenGate):
-                        self._compare_gate_parameters(tg._global_shift,
-                                                      eg._global_shift)
-                        self._compare_gate_parameters(tg._exponent,
-                                                      eg._exponent)
-                    elif isinstance(tg, cirq.FSimGate):
-                        self._compare_gate_parameters(tg.theta, eg.theta)
-                        self._compare_gate_parameters(tg.phi, eg.phi)
-                    elif isinstance(
-                            tg, (cirq.PhasedXPowGate, cirq.PhasedISwapPowGate)):
-                        self._compare_gate_parameters(tg._global_shift,
-                                                      eg._global_shift)
-                        self._compare_gate_parameters(tg._exponent,
-                                                      eg._exponent)
-                        self._compare_gate_parameters(tg._phase_exponent,
-                                                      eg._phase_exponent)
-                    else:
-                        self.assertTrue(False,
-                                        msg="Some gate in the randomizer "
-                                        "is not being checked: "
-                                        "{}".format(type(tg)))
+                    self.assertTrue(
+                        util.is_gate_approx_eq(test_o.gate, exp_o.gate))
 
 
 if __name__ == '__main__':
