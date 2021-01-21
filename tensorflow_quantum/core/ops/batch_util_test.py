@@ -102,7 +102,7 @@ class BatchUtilTest(tf.test.TestCase, parameterized.TestCase):
             programs, symbol_names, symbol_values)
         for exp_c, deser_c in zip(exp_circuits, deser_circuits):
             self.assertTrue(len(exp_c) == len(deser_c))
-            for exp_moment, deser_moment in zip(exp_c, deser_c)
+            for exp_moment, deser_moment in zip(exp_c, deser_c):
                 self.assertTrue(len(exp_moment) == len(deser_moment))
                 for exp_op, deser_op in zip(exp_moment, deser_moment):
                     self.assertTrue(
