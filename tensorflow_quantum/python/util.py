@@ -96,10 +96,10 @@ def random_symbol_circuit(qubits,
         if isinstance(op, cirq.IdentityGate):
             circuit[:i] += op.on(*locs)
             continue
-        full_gate = (op**(
-            (np.random.random() if include_scalars else 1.0) *
-            sympy.Symbol(random_symbols[location % len(random_symbols)]))).on(
-                *locs)
+        working_symbol = sympy.Symbol(random_symbols[location %
+                                                     len(random_symbols)])
+        working_scalar = np.random.random() if include_scalars else 1.0
+        full_gate = (op**(working_scalar * working_symbol)).on(*locs)
         if np.random.random() < 0.5:
             # Add a control to this gate.
             full_gate = _apply_random_control(full_gate, qubits)
