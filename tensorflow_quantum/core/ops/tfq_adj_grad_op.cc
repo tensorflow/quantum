@@ -220,13 +220,14 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
 
           // Hit a parameterized gate.
           // todo fix this copy.
-          auto cur_gate = qsim_circuits[i].gates[gradient_gates[i][j - 1].index];
+          auto cur_gate =
+              qsim_circuits[i].gates[gradient_gates[i][j - 1].index];
           ApplyGateDagger(sim, cur_gate, sv);
 
           StateSpace::MeasurementResult mr;
           mr.mask = 0;
           mr.bits = 0;
-          for(int l =0; l<cur_gate.controlled_by.size();l++){
+          for (int l = 0; l < cur_gate.controlled_by.size(); l++) {
             auto control_loc = cur_gate.controlled_by[l];
             mr.mask |= (uint64_t{1} << control_loc);
             mr.bits |= (cur_gate.cmask & (1 << l)) << control_loc;
@@ -236,7 +237,7 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
             // Copy sv onto scratch2 in anticipation of non-unitary "gradient
             // gate".
             ss.Copy(sv, scratch2);
-            if(cur_gate.controlled_by.size()){
+            if (cur_gate.controlled_by.size()) {
               // Gradient of controlled gattes puts zeros on diagonal which is
               // the same as collapsing the state and then applying the
               // non-controlled version of the gradient gate.
@@ -337,7 +338,7 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
         StateSpace::MeasurementResult mr;
         mr.mask = 0;
         mr.bits = 0;
-        for(int l =0; l<cur_gate.controlled_by.size();l++){
+        for (int l = 0; l < cur_gate.controlled_by.size(); l++) {
           auto control_loc = cur_gate.controlled_by[l];
           mr.mask |= (uint64_t{1} << control_loc);
           mr.bits |= (cur_gate.cmask & (1 << l)) << control_loc;
@@ -347,7 +348,7 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
           // Copy sv onto scratch2 in anticipation of non-unitary "gradient
           // gate".
           ss.Copy(sv, scratch2);
-          if(cur_gate.controlled_by.size()){
+          if (cur_gate.controlled_by.size()) {
             // Gradient of controlled gattes puts zeros on diagonal which is
             // the same as collapsing the state and then applying the
             // non-controlled version of the gradient gate.

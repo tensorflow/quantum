@@ -543,7 +543,8 @@ def serialize_circuit(circuit_inp):
     # "momentary demotion" occurs with the help of the DelayedAssignmentGate.
     for i, moment in enumerate(circuit):
         controlled_ops = [
-        op for op in moment if isinstance(op, cirq.ControlledOperation)]
+            op for op in moment if isinstance(op, cirq.ControlledOperation)
+        ]
         new_ops = dict()
         for op in controlled_ops:
             tfq_compatible = op.sub_operation

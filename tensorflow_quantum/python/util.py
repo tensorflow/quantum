@@ -98,8 +98,8 @@ def random_symbol_circuit(qubits,
             continue
         full_gate = (op**(
             (np.random.random() if include_scalars else 1.0) *
-            sympy.Symbol(random_symbols[location % len(random_symbols)])
-        )).on(*locs)
+            sympy.Symbol(random_symbols[location % len(random_symbols)]))).on(
+                *locs)
         if np.random.random() < 0.5:
             # Add a control to this gate.
             full_gate = _apply_random_control(full_gate, qubits)
@@ -123,12 +123,12 @@ def random_circuit_resolver_batch(qubits, batch_size, n_moments=15, p=0.9):
     return_resolvers = []
     for _ in range(batch_size):
         circuit = cirq.testing.random_circuit(qubits, n_moments, p,
-                                        supported_gates)
+                                              supported_gates)
 
         for i in range(len(circuit)):
             op = random.choice(list(supported_gates.keys()))
             n_qubits = supported_gates[op]
-            if(n_qubits > len(qubits)):
+            if (n_qubits > len(qubits)):
                 # skip adding gates in small case.
                 continue
             locs = tuple(random.sample(qubits, n_qubits))

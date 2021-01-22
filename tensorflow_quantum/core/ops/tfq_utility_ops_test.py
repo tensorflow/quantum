@@ -334,7 +334,7 @@ class ResolveParametersOpTest(tf.test.TestCase, parameterized.TestCase):
 
                     tg = tg.gate
                     eg = eg.gate
-                    
+
                     self.assertEqual(type(tg), type(eg))
                     # TODO(zaqqwerty): simplify parsing when cirq build parser
                     # see core/serialize/serializer.py
