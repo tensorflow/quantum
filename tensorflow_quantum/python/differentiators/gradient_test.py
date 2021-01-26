@@ -151,14 +151,14 @@ class AnalyticGradientCorrectnessTest(tf.test.TestCase, parameterized.TestCase):
                 **{
                     'differentiator': ANALYTIC_DIFFS,
                     'op': ANALYTIC_OPS,
-                    'n_qubits': [5],
+                    'n_qubits': [10],
                     'n_programs': [3],
                     'n_ops': [3],
                     'symbol_names': [['a', 'b']]
                 })) + [{
                     'differentiator': adjoint.Adjoint(),
                     'op': circuit_execution_ops.get_expectation_op(),
-                    'n_qubits': 5,
+                    'n_qubits': 10,
                     'n_programs': 5,
                     'n_ops': 3,
                     'symbol_names': ['a', 'b']

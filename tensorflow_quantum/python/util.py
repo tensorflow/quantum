@@ -77,7 +77,8 @@ def _apply_random_control(gate, all_qubits):
         # No open qubits to control. Return unmodified gate.
         return gate
     control_locs = random.sample(open_qubits, n_open)
-    return gate.controlled_by(*control_locs)
+    control_values = random.choices([0, 1], k=n_open)
+    return gate.controlled_by(*control_locs, control_values=control_values)
 
 
 def random_symbol_circuit(qubits,
