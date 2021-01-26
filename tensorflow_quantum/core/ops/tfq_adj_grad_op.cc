@@ -227,7 +227,7 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
           // if applicable compute control qubit mask and control value bits.
           uint64_t mask = 0;
           uint64_t cbits = 0;
-          for (int k = 0; k < cur_gate.controlled_by.size(); k++){
+          for (int k = 0; k < cur_gate.controlled_by.size(); k++) {
             uint64_t control_loc = cur_gate.controlled_by[k];
             mask |= uint64_t{1} << control_loc;
             cbits |= ((cur_gate.cmask >> k) & 1) << control_loc;
@@ -338,7 +338,7 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
         // if applicable compute control qubit mask and control value bits.
         uint64_t mask = 0;
         uint64_t cbits = 0;
-        for (int k = 0; k < cur_gate.controlled_by.size(); k++){
+        for (int k = 0; k < cur_gate.controlled_by.size(); k++) {
           uint64_t control_loc = cur_gate.controlled_by[k];
           mask |= uint64_t{1} << control_loc;
           cbits |= ((cur_gate.cmask >> k) & 1) << control_loc;
