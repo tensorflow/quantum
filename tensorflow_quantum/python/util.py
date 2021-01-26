@@ -26,7 +26,15 @@ from tensorflow_quantum.core.serialize import serializer
 
 
 def get_supported_gates():
-    """A helper to get the gates supported by tfq."""
+    """A helper to get the gates supported by tfq.
+
+    Returns a dictionary mapping from supported gate types
+    to the number of qubits each gate operates on.
+
+    Any of these gates used in conjuction with the
+    `controll_by` function for multi qubit control are also
+    supported.
+    """
     supported_gates = serializer.SERIALIZER.supported_gate_types()
     gate_arity_mapping_dict = dict()
     for gate in supported_gates:
