@@ -32,7 +32,7 @@ def get_supported_gates():
     to the number of qubits each gate operates on.
 
     Any of these gates used in conjuction with the
-    `controll_by` function for multi qubit control are also
+    `controlled_by` function for multi qubit control are also
     supported.
     """
     supported_gates = serializer.SERIALIZER.supported_gate_types()
