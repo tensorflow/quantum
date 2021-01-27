@@ -219,12 +219,30 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
           }
 
           // Hit a parameterized gate.
-          ApplyGateDagger(
-              sim, qsim_circuits[i].gates[gradient_gates[i][j - 1].index], sv);
+          auto cur_gate =
+              qsim_circuits[i].gates[gradient_gates[i][j - 1].index];
+
+          ApplyGateDagger(sim, cur_gate, sv);
+
+          // if applicable compute control qubit mask and control value bits.
+          uint64_t mask = 0;
+          uint64_t cbits = 0;
+          for (int k = 0; k < cur_gate.controlled_by.size(); k++) {
+            uint64_t control_loc = cur_gate.controlled_by[k];
+            mask |= uint64_t{1} << control_loc;
+            cbits |= ((cur_gate.cmask >> k) & 1) << control_loc;
+          }
+
           for (int k = 0; k < gradient_gates[i][j - 1].grad_gates.size(); k++) {
             // Copy sv onto scratch2 in anticipation of non-unitary "gradient
             // gate".
             ss.Copy(sv, scratch2);
+            if (!cur_gate.controlled_by.empty()) {
+              // Gradient of controlled gattes puts zeros on diagonal which is
+              // the same as collapsing the state and then applying the
+              // non-controlled version of the gradient gate.
+              ss.BulkSetAmpl(scratch2, mask, cbits, 0, 0, true);
+            }
             qsim::ApplyGate(sim, gradient_gates[i][j - 1].grad_gates[k],
                             scratch2);
 
@@ -239,9 +257,7 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
             (*output_tensor)(i, loc) += ss.RealInnerProduct(scratch2, scratch) +
                                         ss.RealInnerProduct(scratch, scratch2);
           }
-          ApplyGateDagger(
-              sim, qsim_circuits[i].gates[gradient_gates[i][j - 1].index],
-              scratch);
+          ApplyGateDagger(sim, cur_gate, scratch);
         }
       }
     };
@@ -315,12 +331,29 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
         }
 
         // Hit a parameterized gate.
-        ApplyGateDagger(
-            sim, qsim_circuits[i].gates[gradient_gates[i][j - 1].index], sv);
+        // todo fix this copy.
+        auto cur_gate = qsim_circuits[i].gates[gradient_gates[i][j - 1].index];
+        ApplyGateDagger(sim, cur_gate, sv);
+
+        // if applicable compute control qubit mask and control value bits.
+        uint64_t mask = 0;
+        uint64_t cbits = 0;
+        for (int k = 0; k < cur_gate.controlled_by.size(); k++) {
+          uint64_t control_loc = cur_gate.controlled_by[k];
+          mask |= uint64_t{1} << control_loc;
+          cbits |= ((cur_gate.cmask >> k) & 1) << control_loc;
+        }
+
         for (int k = 0; k < gradient_gates[i][j - 1].grad_gates.size(); k++) {
           // Copy sv onto scratch2 in anticipation of non-unitary "gradient
           // gate".
           ss.Copy(sv, scratch2);
+          if (!cur_gate.controlled_by.empty()) {
+            // Gradient of controlled gattes puts zeros on diagonal which is
+            // the same as collapsing the state and then applying the
+            // non-controlled version of the gradient gate.
+            ss.BulkSetAmpl(scratch2, mask, cbits, 0, 0, true);
+          }
           qsim::ApplyGate(sim, gradient_gates[i][j - 1].grad_gates[k],
                           scratch2);
 
@@ -335,9 +368,7 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
           (*output_tensor)(i, loc) += ss.RealInnerProduct(scratch2, scratch) +
                                       ss.RealInnerProduct(scratch, scratch2);
         }
-        ApplyGateDagger(sim,
-                        qsim_circuits[i].gates[gradient_gates[i][j - 1].index],
-                        scratch);
+        ApplyGateDagger(sim, cur_gate, scratch);
       }
     }
   }

@@ -208,19 +208,6 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
             self.assertListEqual(sorted(extracted_symbols),
                                  sorted(expected_symbols))
 
-    def test_get_circuit_symbols_error(self):
-        """Ensure that errors are reported when using unsupported ops."""
-        # TODO(mbbrough): remove this test once we reach complete parity
-        #   with cirq in terms of parametrized gate support.
-        qubits = cirq.GridQubit.rect(1, 2)
-        symbol = sympy.Symbol("u")
-        op = cirq.ZPowGate(exponent=symbol).on(qubits[0]).controlled_by(
-            qubits[1])
-        bad_circuit = cirq.Circuit(op)
-        with self.assertRaisesRegex(
-                ValueError, expected_regex="tfq.util.get_supported_gates"):
-            util.get_circuit_symbols(bad_circuit)
-
 
 class ExponentialUtilFunctionsTest(tf.test.TestCase):
     """Test that Exponential utility functions work."""

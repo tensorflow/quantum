@@ -26,7 +26,15 @@ from tensorflow_quantum.core.serialize import serializer
 
 
 def get_supported_gates():
-    """A helper to get the gates supported by tfq."""
+    """A helper to get the gates supported by tfq.
+
+    Returns a dictionary mapping from supported gate types
+    to the number of qubits each gate operates on.
+
+    Any of these gates used in conjuction with the
+    `controlled_by` function for multi qubit control are also
+    supported.
+    """
     supported_gates = serializer.SERIALIZER.supported_gate_types()
     gate_arity_mapping_dict = dict()
     for gate in supported_gates:
@@ -44,6 +52,33 @@ def get_supported_gates():
             g_num_qubits = gate().num_qubits()
         gate_arity_mapping_dict[g] = g_num_qubits
     return gate_arity_mapping_dict
+
+
+def _apply_random_control(gate, all_qubits):
+    """Returns a random controlled version of `gate`.
+
+    Chooses a random subset s from `all_qubits` that does not intersect
+    with `gate.qubits` and returns gate.controlled_by(s). Note that
+    if no such set s can be found (size of s would be zero) then
+    `gate` is returned unchanged.
+
+    Args:
+        gate: Gate to be promoted to a controlled gate with the
+            `controlled_by` function in Cirq.
+        all_qubits: All qubits used by the circuit which `gate`
+            comes from.
+    Returns:
+        A new gate with a random subset of the set difference
+        between all_qubits and gate.qubits controlling `gate`.
+    """
+    open_qubits = set(all_qubits) - set(gate.qubits)
+    n_open = min(len(open_qubits), 3)
+    if n_open == 0:
+        # No open qubits to control. Return unmodified gate.
+        return gate
+    control_locs = random.sample(open_qubits, n_open)
+    control_values = random.choices([0, 1], k=n_open)
+    return gate.controlled_by(*control_locs, control_values=control_values)
 
 
 def random_symbol_circuit(qubits,
@@ -64,18 +99,22 @@ def random_symbol_circuit(qubits,
     location = 0
 
     for i in range(len(circuit)):
-        if np.random.random() < p:
-            op = random.choice(list(supported_gates.keys()))
-            n_qubits = supported_gates[op]
-            locs = tuple(random.sample(qubits, n_qubits))
-            if isinstance(op, cirq.IdentityGate):
-                circuit[:i] += op.on(*locs)
-            else:
-                circuit[:i] += (op**(
-                    (np.random.random() if include_scalars else 1.0) *
-                    sympy.Symbol(random_symbols[location % len(random_symbols)])
-                )).on(*locs)
-                location += 1
+        op = random.choice(list(supported_gates.keys()))
+        n_qubits = supported_gates[op]
+        locs = tuple(random.sample(qubits, n_qubits))
+        if isinstance(op, cirq.IdentityGate):
+            circuit[:i] += op.on(*locs)
+            continue
+        working_symbol = sympy.Symbol(random_symbols[location %
+                                                     len(random_symbols)])
+        working_scalar = np.random.random() if include_scalars else 1.0
+        full_gate = (op**(working_scalar * working_symbol)).on(*locs)
+        if np.random.random() < 0.5:
+            # Add a control to this gate.
+            full_gate = _apply_random_control(full_gate, qubits)
+
+        circuit[:i] += full_gate
+        location += 1
 
     # Use the rest of the symbols
     while location < len(random_symbols):
@@ -88,12 +127,31 @@ def random_symbol_circuit(qubits,
 
 def random_circuit_resolver_batch(qubits, batch_size, n_moments=15, p=0.9):
     """Generate a batch of random circuits and symbolless resolvers."""
+    supported_gates = get_supported_gates()
     return_circuits = []
     return_resolvers = []
     for _ in range(batch_size):
-        return_circuits.append(
-            cirq.testing.random_circuit(qubits, n_moments, p,
-                                        get_supported_gates()))
+        circuit = cirq.testing.random_circuit(qubits, n_moments, p,
+                                              supported_gates)
+
+        for i in range(len(circuit)):
+            op = random.choice(list(supported_gates.keys()))
+            n_qubits = supported_gates[op]
+            if (n_qubits > len(qubits)):
+                # skip adding gates in small case.
+                continue
+            locs = tuple(random.sample(qubits, n_qubits))
+            if isinstance(op, cirq.IdentityGate):
+                circuit[:i] += op.on(*locs)
+                continue
+            full_gate = (op**np.random.random()).on(*locs)
+            if np.random.random() < 0.5:
+                # Add a control to this gate.
+                full_gate = _apply_random_control(full_gate, qubits)
+
+            circuit[:i] += full_gate
+
+        return_circuits.append(circuit)
         return_resolvers.append(cirq.ParamResolver({}))
 
     return return_circuits, return_resolvers
@@ -357,7 +415,10 @@ def get_circuit_symbols(circuit):
     for moment in circuit:
         for op in moment:
             if cirq.is_parameterized(op):
-                all_symbols |= _symbols_in_op(op.gate)
+                sub_op = op
+                if isinstance(op, cirq.ControlledOperation):
+                    sub_op = op.sub_operation
+                all_symbols |= _symbols_in_op(sub_op.gate)
     return [str(x) for x in all_symbols]
 
 
