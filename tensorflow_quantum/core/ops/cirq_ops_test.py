@@ -296,7 +296,7 @@ class CirqSimulateStateTest(tf.test.TestCase, parameterized.TestCase):
                     'Simulator returned unknown type of result.' +
                     str(type(result)))
 
-        self.assertAllClose(tfq_results, manual_padded_results)
+        self.assertAllClose(tfq_results, manual_padded_results, atol=1e-5)
 
     def test_state_empty_circuit(self):
         """Test empty circuits"""
