@@ -181,76 +181,76 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
         with self.assertRaisesRegex(ValueError, expected_regex='not iterable'):
             list(util.kwargs_cartesian_product(a=[1, 2], b=-1))
 
-    def test_is_expression_approx_eq(self):
+    def test_expression_approx_eq(self):
         """Test that coefficients and symbols are compared correctly."""
         # integers
         a = 1
         b = 1
         c = 2
         atol = 0.1
-        self.assertTrue(util.is_expression_approx_eq(a, b, atol))
-        self.assertFalse(util.is_expression_approx_eq(a, c, atol))
-        self.assertTrue(util.is_expression_approx_eq(a, c, 2.0))
+        self.assertTrue(util._expression_approx_eq(a, b, atol))
+        self.assertFalse(util._expression_approx_eq(a, c, atol))
+        self.assertTrue(util._expression_approx_eq(a, c, 2.0))
 
         # reals
         a = 1.1234
         b = 1.1231
         c = 1.1220
         atol = 5e-4
-        self.assertTrue(util.is_expression_approx_eq(a, b, atol))
-        self.assertFalse(util.is_expression_approx_eq(a, c, atol))
-        self.assertTrue(util.is_expression_approx_eq(a, c, 0.01))
+        self.assertTrue(util._expression_approx_eq(a, b, atol))
+        self.assertFalse(util._expression_approx_eq(a, c, atol))
+        self.assertTrue(util._expression_approx_eq(a, c, 0.01))
 
         # symbols
         a = sympy.Symbol("s")
         b = sympy.Symbol("s")
         c = sympy.Symbol("s_wrong")
-        self.assertTrue(util.is_expression_approx_eq(a, b, atol))
-        self.assertFalse(util.is_expression_approx_eq(a, c, atol))
+        self.assertTrue(util._expression_approx_eq(a, b, atol))
+        self.assertFalse(util._expression_approx_eq(a, c, atol))
 
         # number * symbol
         a = 3.5 * sympy.Symbol("s")
         b = 3.501 * sympy.Symbol("s")
         c = 3.5 * sympy.Symbol("s_wrong")
         atol = 1e-2
-        self.assertTrue(util.is_expression_approx_eq(a, b, atol))
-        self.assertFalse(util.is_expression_approx_eq(a, c, atol))
+        self.assertTrue(util._expression_approx_eq(a, b, atol))
+        self.assertFalse(util._expression_approx_eq(a, c, atol))
         c = 3.6 * sympy.Symbol("s")
-        self.assertFalse(util.is_expression_approx_eq(a, c, atol))
+        self.assertFalse(util._expression_approx_eq(a, c, atol))
 
         # symbol * number
         a = sympy.Symbol("s") * -1.7
         b = sympy.Symbol("s") * -1.701
         c = sympy.Symbol("s_wrong") * -1.7
         atol = 1e-2
-        self.assertTrue(util.is_expression_approx_eq(a, b, atol))
-        self.assertFalse(util.is_expression_approx_eq(a, c, atol))
+        self.assertTrue(util._expression_approx_eq(a, b, atol))
+        self.assertFalse(util._expression_approx_eq(a, c, atol))
         c = sympy.Symbol("s") * -1.8
-        self.assertFalse(util.is_expression_approx_eq(a, c, atol))
+        self.assertFalse(util._expression_approx_eq(a, c, atol))
 
         # other not equal
         atol = 1e-3
         self.assertFalse(
-            util.is_expression_approx_eq(1, sympy.Symbol("s"), atol))
+            util._expression_approx_eq(1, sympy.Symbol("s"), atol))
         self.assertFalse(
-            util.is_expression_approx_eq(sympy.Symbol("s"), 1, atol))
+            util._expression_approx_eq(sympy.Symbol("s"), 1, atol))
 
         # too complicated
         a = sympy.Symbol("s_1") * sympy.Symbol("s_2")
         b = 1.0 * a
         with self.assertRaisesRegex(ValueError, expected_regex='not supported'):
-            util.is_expression_approx_eq(a, a, 1e-3)
+            util._expression_approx_eq(a, a, 1e-3)
         with self.assertRaisesRegex(ValueError, expected_regex='not supported'):
-            util.is_expression_approx_eq(a, b, 1e-3)
+            util._expression_approx_eq(a, b, 1e-3)
 
         # junk
         with self.assertRaisesRegex(TypeError, expected_regex='Invalid input'):
-            util.is_expression_approx_eq('junk', 'junk', 1e-3)
+            util._expression_approx_eq('junk', 'junk', 1e-3)
         with self.assertRaisesRegex(TypeError,
                                     expected_regex='atol must be a real'):
-            util.is_expression_approx_eq(1, 1, 'junk')
+            util._expression_approx_eq(1, 1, 'junk')
 
-    def test_is_gate_approx_eq(self):
+    def test_gate_approx_eq(self):
         """Check valid TFQ gates for approximate equality."""
         atol = 1e-2
         exps_true = [
@@ -267,21 +267,26 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
         ]
 
         # junk
-        with self.assertRaisesRegex(TypeError, expected_regex='cirq gates'):
-            util.is_gate_approx_eq("junk", cirq.I)
-        with self.assertRaisesRegex(TypeError, expected_regex='cirq gates'):
-            util.is_gate_approx_eq(cirq.I, "junk")
+        with self.assertRaisesRegex(TypeError,
+                                    expected_regex='`gate_true` not a cirq'):
+            util.gate_approx_eq("junk", cirq.I)
+        with self.assertRaisesRegex(TypeError,
+                                    expected_regex='`gate_deser` not a cirq'):
+            util.gate_approx_eq(cirq.I, "junk")
 
-        # Unsupported gate
-        with self.assertRaisesRegex(ValueError,
-                                    expected_regex='not a valid TFQ gate'):
-            util.is_gate_approx_eq(cirq.I, cirq.CCNOT)
+        # Unsupported gates
+        with self.assertRaisesRegex(
+            ValueError, expected_regex='`gate_true` is not a valid TFQ gate'):
+            util.gate_approx_eq(cirq.PhasedXZGate, cirq.I)
+        with self.assertRaisesRegex(
+            ValueError, expected_regex='`gate_deser` is not a valid TFQ gate'):
+            util.gate_approx_eq(cirq.I, cirq.PhasedXZGate)
 
         # Not a child class
-        self.assertFalse(util.is_gate_approx_eq(cirq.X, cirq.Y))
+        self.assertFalse(util.gate_approx_eq(cirq.X, cirq.Y))
 
         # Identity gate
-        self.assertTrue(util.is_gate_approx_eq(cirq.I, cirq.I))
+        self.assertTrue(util.gate_approx_eq(cirq.I, cirq.I))
 
         # Parameterized gates
         for e_true, e_eq, e_not_eq in zip(exps_true, exps_eq, exps_not_eq):
@@ -289,21 +294,21 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
                 g_true = g(exponent=e_true, global_shift=e_eq)
                 g_eq = g(exponent=e_eq, global_shift=e_true)
                 g_not_eq = g(exponent=e_not_eq, global_shift=e_not_eq)
-                self.assertTrue(util.is_gate_approx_eq(g_true, g_eq, atol=atol))
+                self.assertTrue(util.gate_approx_eq(g_true, g_eq, atol=atol))
                 self.assertFalse(
-                    util.is_gate_approx_eq(g_true, g_not_eq, atol=atol))
+                    util.gate_approx_eq(g_true, g_not_eq, atol=atol))
             for g in serializer.PHASED_EIGEN_GATES_DICT:
                 g_true = g(exponent=e_true, phase_exponent=-1.0 * e_true)
                 g_eq = g(exponent=e_eq, phase_exponent=-1.0 * e_eq)
                 g_not_eq = g(exponent=e_not_eq, phase_exponent=-1.0 * e_not_eq)
-                self.assertTrue(util.is_gate_approx_eq(g_true, g_eq, atol=atol))
+                self.assertTrue(util.gate_approx_eq(g_true, g_eq, atol=atol))
                 self.assertFalse(
-                    util.is_gate_approx_eq(g_true, g_not_eq, atol=atol))
+                    util.gate_approx_eq(g_true, g_not_eq, atol=atol))
             g_true = cirq.FSimGate(theta=e_true, phi=e_eq)
             g_eq = cirq.FSimGate(theta=e_eq, phi=e_true)
             g_not_eq = cirq.FSimGate(theta=e_not_eq, phi=e_not_eq)
-            self.assertTrue(util.is_gate_approx_eq(g_true, g_eq, atol=atol))
-            self.assertFalse(util.is_gate_approx_eq(g_true, g_not_eq,
+            self.assertTrue(util.gate_approx_eq(g_true, g_eq, atol=atol))
+            self.assertFalse(util.gate_approx_eq(g_true, g_not_eq,
                                                     atol=atol))
 
     def test_get_circuit_symbols(self):

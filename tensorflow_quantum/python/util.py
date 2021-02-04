@@ -403,13 +403,22 @@ def _symbols_in_op(op):
         "tfq.util.get_supported_gates().")
 
 
-def is_expression_approx_eq(exp_1, exp_2, atol):
+def _expression_approx_eq(exp_1, exp_2, atol):
     """Compare possibly symbolic expressions for approximate equality.
 
     Coefficient based approximate equality.  If no symbol is present in
     `exp_1` or `exp_2`, then return true if the expressions are approximately
     equal.  If the expressions contain symbols, return true if the two symbols
     are the same and their coefficients are approximately equal.
+
+    Args:
+      exp_1: An argument to a cirq Gate, either a `sympy.Basic` or a number.
+      exp_1: An argument to a cirq Gate, either a `sympy.Basic` or a number.
+      atol: Float determining how close the coefficients must be for truth.
+
+    Returns:
+      bool which says whether the coefficients of `exp_1` and `exp_2` are
+        approximately equal.
     """
     if not isinstance(atol, numbers.Real):
         raise TypeError("atol must be a real number.")
@@ -417,44 +426,43 @@ def is_expression_approx_eq(exp_1, exp_2, atol):
     s_2 = serializer._symbol_extractor(exp_2)
     v_1 = serializer._scalar_extractor(exp_1)
     v_2 = serializer._scalar_extractor(exp_2)
-    if isinstance(s_1, numbers.Real) and isinstance(s_2, numbers.Real):
-        s_eq = cirq.approx_eq(s_1, s_2, atol=atol)
-    elif isinstance(s_1, sympy.Symbol) and isinstance(s_2, sympy.Symbol):
-        s_eq = str(s_1) == str(s_2)
-    else:
-        s_eq = False
     v_eq = cirq.approx_eq(v_1, v_2, atol=atol)
-    return s_eq and v_eq
+    if isinstance(s_1, numbers.Real) and isinstance(s_2, numbers.Real):
+        return cirq.approx_eq(s_1, s_2, atol=atol) and v_eq
+    if isinstance(s_1, sympy.Symbol) and isinstance(s_2, sympy.Symbol):
+        return str(s_1) == str(s_2) and v_eq
+    return False
 
 
-def is_gate_approx_eq(gate_true, gate_deser, atol=1e-5):
+def gate_approx_eq(gate_true, gate_deser, atol=1e-5):
     """Compares gates in the allowed TFQ gate set.
 
-    Serialized gates can only have simple expressions of the form s*n or n*s,
-    where s is a `sympy.Symbol` and n is some number.  Checks that each
-    corresponding expression in `gate_true` and `gate_deser` are approximately
-    equal.
-
-    This function is needed for testing round trips through the serializer,
-    since that trip rounds coefficients.
+    Gates in TFQ support symbols, numbers or a single product of a real number
+    and a symbol as their parameters. This function behaves like
+    `cirq.approx_eq` specialized for these kinds of gates so that TFQ can
+    support approximate equality in gates containing symbols.
 
     Args:
-        gate_true: `cirq.Gate` which is in the TFQ gate set.
-        gate_deser: `cirq.Gate` which is in the TFQ gate set.  This may be a
-            more general type of gate than `gate_true`, for example
-            `gate_true` may be an X while `gate_deser` is an XPowGate.
+        gate_true: `cirq.Gate` which is in the TFQ gate set.  These are gates
+          which are instances of those found in `tfq.util.get_supported_gates()`
+        gate_deser: `cirq.Gate` which is in the TFQ gate set.  These are gates
+          which are instances of those found in `tfq.util.get_supported_gates()`
 
     Returns:
         bool which says if the two gates are approximately equal in the way
             described above.
     """
-    if not isinstance(gate_true, cirq.Gate) or not isinstance(
-            gate_deser, cirq.Gate):
-        raise TypeError("Arguments must be cirq gates.")
+    if not isinstance(gate_true, cirq.Gate):
+        raise TypeError(f"`gate_true` not a cirq gate, got {type(gate_true)}")
+    if not isinstance(gate_deser, cirq.Gate):
+        raise TypeError(f"`gate_deser` not a cirq gate, got {type(gate_deser)}")
     supported_gates = serializer.SERIALIZER.supported_gate_types()
-    if not (any([isinstance(gate_true, g) for g in supported_gates]) and
-            any([isinstance(gate_deser, g) for g in supported_gates])):
-        raise ValueError("One of the inputs is not a valid TFQ gate.")
+    if not any([isinstance(gate_true, g) for g in supported_gates]):
+        raise ValueError(
+            f"`gate_true` is not a valid TFQ gate, got {gate_true}")
+    if not any([isinstance(gate_deser, g) for g in supported_gates]):
+        raise ValueError(
+            f"`gate_deser` is not a valid TFQ gate, got {gate_deser}")
     if not isinstance(gate_true, type(gate_deser)):
         return False
     if isinstance(gate_true, type(cirq.I)) and isinstance(
@@ -462,22 +470,22 @@ def is_gate_approx_eq(gate_true, gate_deser, atol=1e-5):
         # all identity gates are the same
         return True
     if isinstance(gate_true, cirq.EigenGate):
-        a = is_expression_approx_eq(gate_true._global_shift,
-                                    gate_deser._global_shift, atol)
-        b = is_expression_approx_eq(gate_true._exponent, gate_deser._exponent,
-                                    atol)
+        a = _expression_approx_eq(gate_true._global_shift,
+                                  gate_deser._global_shift, atol)
+        b = _expression_approx_eq(gate_true._exponent, gate_deser._exponent,
+                                  atol)
         return a and b
     if isinstance(gate_true, cirq.FSimGate):
-        a = is_expression_approx_eq(gate_true.theta, gate_deser.theta, atol)
-        b = is_expression_approx_eq(gate_true.phi, gate_deser.phi, atol)
+        a = _expression_approx_eq(gate_true.theta, gate_deser.theta, atol)
+        b = _expression_approx_eq(gate_true.phi, gate_deser.phi, atol)
         return a and b
     if isinstance(gate_true, (cirq.PhasedXPowGate, cirq.PhasedISwapPowGate)):
-        a = is_expression_approx_eq(gate_true._global_shift,
-                                    gate_deser._global_shift, atol)
-        b = is_expression_approx_eq(gate_true._exponent, gate_deser._exponent,
-                                    atol)
-        c = is_expression_approx_eq(gate_true._phase_exponent,
-                                    gate_deser._phase_exponent, atol)
+        a = _expression_approx_eq(gate_true._global_shift,
+                                  gate_deser._global_shift, atol)
+        b = _expression_approx_eq(gate_true._exponent, gate_deser._exponent,
+                                  atol)
+        c = _expression_approx_eq(gate_true._phase_exponent,
+                                  gate_deser._phase_exponent, atol)
         return a and b and c
     raise ValueError(
         f"Some valid TFQ gate type is not yet accounted for, got {gate_true}")
