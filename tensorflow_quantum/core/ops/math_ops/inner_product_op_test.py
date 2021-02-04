@@ -250,7 +250,7 @@ class InnerProductTest(tf.test.TestCase, parameterized.TestCase):
                 internal_wf = cirq.final_state_vector(other_batch[i][j])
                 out_arr[i][j] = np.vdot(final_wf, internal_wf)
 
-        self.assertAllClose(out, out_arr)
+        self.assertAllClose(out, out_arr, atol=1e-5)
 
     @parameterized.parameters([
         {
@@ -297,7 +297,7 @@ class InnerProductTest(tf.test.TestCase, parameterized.TestCase):
                 internal_wf = cirq.final_state_vector(other_batch[i][j])
                 out_arr[i][j] = np.vdot(final_wf, internal_wf)
 
-        self.assertAllClose(out, out_arr)
+        self.assertAllClose(out, out_arr, atol=1e-5)
 
     def test_correctness_empty(self):
         """Test the inner product between two empty circuits."""

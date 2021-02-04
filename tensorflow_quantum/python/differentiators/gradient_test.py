@@ -158,7 +158,7 @@ class AnalyticGradientCorrectnessTest(tf.test.TestCase, parameterized.TestCase):
                 })) + [{
                     'differentiator': adjoint.Adjoint(),
                     'op': circuit_execution_ops.get_expectation_op(),
-                    'n_qubits': 5,
+                    'n_qubits': 10,
                     'n_programs': 5,
                     'n_ops': 3,
                     'symbol_names': ['a', 'b']
@@ -204,7 +204,7 @@ class AnalyticGradientCorrectnessTest(tf.test.TestCase, parameterized.TestCase):
                                                     symbol_names, psums)
 
         # will this be too tight? time will tell.
-        self.assertAllClose(cirq_grads, tfq_grads, rtol=1e-2, atol=1e-2)
+        self.assertAllClose(cirq_grads, tfq_grads, rtol=2e-2, atol=2e-2)
 
     @parameterized.parameters(
         list(

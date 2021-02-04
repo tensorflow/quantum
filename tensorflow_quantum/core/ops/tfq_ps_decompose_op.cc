@@ -55,7 +55,7 @@ class TfqPsDecomposeOp : public tensorflow::OpKernel {
                                 0, context->input(0).shape(), &output));
     auto output_tensor = output->flat<tensorflow::tstring>();
 
-    const int max_buffer_moments = 3;
+    const int max_buffer_moments = 5;
 
     auto DoWork = [&](int start, int end) {
       for (int i = start; i < end; i++) {
@@ -79,21 +79,21 @@ class TfqPsDecomposeOp : public tensorflow::OpKernel {
                   phase_exponent.arg_case() == Arg::ArgCase::kSymbol) {
                 // Decompose cirq.PhasedISwapPowGate only if it is
                 // parameterized.
-                num_extra_moments = 3;
+                num_extra_moments = 5;
                 Operation new_op;
 
                 new_op = getOpForPISP(cur_op, 0, 0);
                 cur_moment.mutable_operations()->at(k) = new_op;
                 new_op = getOpForPISP(cur_op, 1, 1);
-                *cur_moment.add_operations() = new_op;
-                new_op = getOpForISP(cur_op, "XXP", exponent.symbol());
                 *temp_moment_list[0].add_operations() = new_op;
-                new_op = getOpForISP(cur_op, "YYP", exponent.symbol());
+                new_op = getOpForISP(cur_op, "XXP", exponent.symbol());
                 *temp_moment_list[1].add_operations() = new_op;
+                new_op = getOpForISP(cur_op, "YYP", exponent.symbol());
+                *temp_moment_list[2].add_operations() = new_op;
                 new_op = getOpForPISP(cur_op, 1, 0);
-                *temp_moment_list[2].add_operations() = new_op;
+                *temp_moment_list[3].add_operations() = new_op;
                 new_op = getOpForPISP(cur_op, 0, 1);
-                *temp_moment_list[2].add_operations() = new_op;
+                *temp_moment_list[4].add_operations() = new_op;
               }
             } else if (cur_op.gate().id() == "ISP") {
               auto exponent = cur_op_map.at("exponent");

@@ -319,7 +319,7 @@ class SimulateStateTest(tf.test.TestCase, parameterized.TestCase):
             blank_state[:wf.shape[0]] = wf
             manual_padded_results.append(blank_state)
 
-        self.assertAllClose(tfq_results, manual_padded_results)
+        self.assertAllClose(tfq_results, manual_padded_results, atol=1e-5)
 
 
 class SimulateSamplesTest(tf.test.TestCase, parameterized.TestCase):
