@@ -15,6 +15,7 @@
 """A collection of helper functions that are useful several places in tfq."""
 import random
 import itertools
+import numbers
 
 import numpy as np
 import sympy
@@ -400,6 +401,73 @@ def _symbols_in_op(op):
         "tfq.util.get_supported_gates but found: {}.".format(str(op)),
         "Please make sure circuits contain only ops found in "
         "tfq.util.get_supported_gates().")
+
+
+def _is_expression_approx_eq(exp_1, exp_2, atol):
+    """Compare possibly symbolic expressions for approximate equality.
+
+    Coefficient based approximate equality.  If no symbol is present in
+    `exp_1` or `exp_2`, then return true if the expressions are approximately
+    equal.  If the expressions contain symbols, return true if the two symbols
+    are the same and their coefficients are approximately equal.
+    """
+    s_1 = serializer._symbol_extractor(exp_1)
+    s_2 = serializer._symbol_extractor(exp_2)
+    v_1 = serializer._scalar_extractor(exp_1)
+    v_2 = serializer._scalar_extractor(exp_2)
+    s_eq = cirq.approx_eq(s_1, s_2)
+    v_eq = cirq.approx_eq(v_1, v_2)
+    return s_eq and v_eq
+
+
+def is_gate_approx_eq(gate_true, gate_deser, atol=1e-5):
+    """Compares gates in the allowed TFQ gate set.
+
+    Serialized gates can only have simple expressions of the form s*n or n*s,
+    where s is a `sympy.Symbol` and n is some number.  Checks that each
+    corresponding expression in `gate_true` and `gate_deser` are approximately
+    equal.
+
+    This function is needed for testing round trips through the serializer,
+    since that trip rounds coefficients.
+
+    Args:
+        gate_true: `cirq.Gate` which is in the TFQ gate set.
+        gate_deser: `cirq.Gate` which is in the TFQ gate set.  This may be a
+            more general type of gate than `gate_true`, for example
+            `gate_true` may be an X while `gate_deser` is an XPowGate.
+
+    Returns:
+        bool which says if the two gates are approximately equal in the way
+            described above.
+    """
+    supported_gates = serializer.SERIALIZER.supported_gate_types()
+    if gate_true not in supported_gates or gate_deser not in supported_gates:
+        return False
+    if not isinstance(gate_true, gate_deser):
+        return False
+    if isinstance(gate_true, cirq.IdentityGate):
+        # all identity gates are the same
+        return True
+    elif isinstance(gate_true, cirq.EigenGate):
+        a = _is_expression_approx_eq(
+            gate_true._global_shift, gate_deser._global_shift, atol)
+        b = _is_expression_approx_eq(
+            gate_true._exponent, gate_deser._exponent, atol)
+        return a and b
+    elif isinstance(gate_true, cirq.FSimGate):
+        a = _is_expression_approx_eq(gate_true.theta, gate_deser.theta, atol)
+        b = _is_expression_approx_eq(gate_true.phi, gate_deser.phi, atol)
+        return a and b
+    elif isinstance(gate_true, (cirq.PhasedXPowGate, cirq.PhasedISwapPowGate)):
+        a = _is_expression_approx_eq(
+            gate_true._global_shift, gate_deser._global_shift, atol)
+        b = _is_expression_approx_eq(
+            gate_true._exponent, gate_deser._exponent, atol)
+        c = _is_expression_approx_eq(
+            gate_true._phase_exponent, gate_deser._phase_exponent, atol)
+        return a and b and c
+    raise ValueError("All gates should be caught above.")
 
 
 def get_circuit_symbols(circuit):
