@@ -230,10 +230,8 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
 
         # other not equal
         atol = 1e-3
-        self.assertFalse(
-            util._expression_approx_eq(1, sympy.Symbol("s"), atol))
-        self.assertFalse(
-            util._expression_approx_eq(sympy.Symbol("s"), 1, atol))
+        self.assertFalse(util._expression_approx_eq(1, sympy.Symbol("s"), atol))
+        self.assertFalse(util._expression_approx_eq(sympy.Symbol("s"), 1, atol))
 
         # too complicated
         a = sympy.Symbol("s_1") * sympy.Symbol("s_2")
@@ -276,10 +274,12 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
 
         # Unsupported gates
         with self.assertRaisesRegex(
-            ValueError, expected_regex='`gate_true` is not a valid TFQ gate'):
+                ValueError,
+                expected_regex='`gate_true` is not a valid TFQ gate'):
             util.gate_approx_eq(cirq.PhasedXZGate, cirq.I)
         with self.assertRaisesRegex(
-            ValueError, expected_regex='`gate_deser` is not a valid TFQ gate'):
+                ValueError,
+                expected_regex='`gate_deser` is not a valid TFQ gate'):
             util.gate_approx_eq(cirq.I, cirq.PhasedXZGate)
 
         # Not a child class
@@ -308,8 +308,7 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
             g_eq = cirq.FSimGate(theta=e_eq, phi=e_true)
             g_not_eq = cirq.FSimGate(theta=e_not_eq, phi=e_not_eq)
             self.assertTrue(util.gate_approx_eq(g_true, g_eq, atol=atol))
-            self.assertFalse(util.gate_approx_eq(g_true, g_not_eq,
-                                                    atol=atol))
+            self.assertFalse(util.gate_approx_eq(g_true, g_not_eq, atol=atol))
 
     def test_get_circuit_symbols(self):
         """Test that symbols can be extracted from circuits.
