@@ -26,8 +26,8 @@ def inner_product(programs, symbol_names, symbol_values, other_programs):
     Compute (potentially many) inner products between the given circuits and
     the symbol free comparison circuits.
 
-    Calculates out[i][j] = \langle \psi_{\text{programs[i]}} \\
-        (\text{symbol_values[i]}) | \psi_{\text{other_programs[j]}} \rangle
+    Calculates out[i][j] = $ \langle \psi_{\text{programs[i]}} \\
+        (\text{symbol_values[i]}) | \psi_{\text{other_programs[j]}} \rangle $
 
 
     >>> symbols = sympy.symbols('alpha beta')
@@ -44,10 +44,10 @@ def inner_product(programs, symbol_names, symbol_values, other_programs):
     ...     cirq.Circuit((cirq.X**0.5).on_each(qubits))
     ... ]
     >>> reference_tensor = tfq.convert_to_tensor(reference_circuits)
-    >>> symbol_tensor = tf.convert_to_tensor(list(symbols))
+    >>> symbol_tensor = tf.convert_to_tensor([s.name for s in symbols])
     >>> values_tensor = tf.convert_to_tensor(np.arange(4).reshape(2, 2))
     >>> other_tensor = tfq.convert_to_tensor([other_circuits, other_circuits])
-    >>> ip = tfq.math.inner_product(reference_tensor)
+    >>> ip = tfq.math.inner_product(reference_tensor, symbol_tensor, values_tensor, other_tensor)
     >>> ip
     tf.Tensor(
         [[ 0+0.j, 8.8871640e-01+0.3681184j,
