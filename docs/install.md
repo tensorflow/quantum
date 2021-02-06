@@ -122,7 +122,7 @@ Finally, confirm installation of the correct `bazel` version:
 ### 4. Build TensorFlow from source
 
 Here we adapt instructions from the TensorFlow [build from source](https://www.tensorflow.org/install/source)
-guide, see the link for further details. TensorFlow Quantum is compatible with TensorFlow version&nbsp;2.3.
+guide, see the link for further details. TensorFlow Quantum is compatible with TensorFlow version&nbsp;2.4.
 
 Download the
 <a href="https://github.com/tensorflow/tensorflow" class="external">TensorFlow source code</a>:
