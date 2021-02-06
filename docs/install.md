@@ -17,7 +17,7 @@ TensorFlow Quantum is supported on Python 3.6, 3.7, and 3.8 and depends directly
 ### Requirements
 
 * pip 19.0 or later (requires `manylinux2010` support)
-* [TensorFlow == 2.3.1](https://www.tensorflow.org/install/pip)
+* [TensorFlow == 2.4.1](https://www.tensorflow.org/install/pip)
 
 See the [TensorFlow install guide](https://www.tensorflow.org/install/pip) to
 set up your Python development environment and an (optional) virtual environment.
@@ -27,7 +27,7 @@ Upgrade `pip` and install TensorFlow
 <!-- common_typos_disable -->
 <pre class="devsite-click-to-copy">
   <code class="devsite-terminal">pip3 install --upgrade pip</code>
-  <code class="devsite-terminal">pip3 install tensorflow==2.3.1</code>
+  <code class="devsite-terminal">pip3 install tensorflow==2.4.1</code>
 </pre>
 <!-- common_typos_enable -->
 
@@ -84,7 +84,7 @@ As noted in the TensorFlow
 guide, the <a href="https://bazel.build/" class="external">Bazel</a>
 build system will be required.
 
-To ensure compatibility with TensorFlow 2.3.1, we use `bazel` version 3.1.0. To remove any existing version of Bazel:
+To ensure compatibility with TensorFlow 2.4.1, we use `bazel` version 3.1.0. To remove any existing version of Bazel:
 
 <!-- common_typos_disable -->
 <pre class="devsite-click-to-copy">
@@ -131,7 +131,7 @@ Download the
 <pre class="devsite-click-to-copy">
   <code class="devsite-terminal">git clone https://github.com/tensorflow/tensorflow.git</code>
   <code class="devsite-terminal">cd tensorflow</code>
-  <code class="devsite-terminal">git checkout v2.3.1</code>
+  <code class="devsite-terminal">git checkout v2.4.1</code>
 </pre>
 
 Be sure the virtual environment you created in step 2 is activated. Then, install the TensorFlow dependencies:
