@@ -163,12 +163,14 @@ class TfqPsSymbolReplaceOp : public tensorflow::OpKernel {
       for (int i = start; i < end; i++) {
         int sidx = i % n_symbols;
         int pidx = i / n_symbols;
-        for (std::vector<std::string>::size_type j = 0; j < output_programs.at(pidx).at(sidx).size(); j++) {
+        for (std::vector<std::string>::size_type j = 0;
+             j < output_programs.at(pidx).at(sidx).size(); j++) {
           output_tensor(pidx, sidx, j) =
               output_programs.at(pidx).at(sidx).at(j);
         }
-        for (std::vector<std::string>::size_type j = output_programs.at(pidx).at(sidx).size(); j < biggest_pad;
-             j++) {
+        for (std::vector<std::string>::size_type j =
+                 output_programs.at(pidx).at(sidx).size();
+             j < biggest_pad; j++) {
           output_tensor(pidx, sidx, j) = empty_program;
         }
       }

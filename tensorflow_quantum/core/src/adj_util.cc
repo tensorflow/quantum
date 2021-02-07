@@ -38,7 +38,8 @@ void CreateGradientCircuit(
     const QsimCircuit& circuit, const std::vector<GateMetaData>& metadata,
     std::vector<std::vector<qsim::GateFused<QsimGate>>>* partial_fuses,
     std::vector<GradientOfGate>* grad_gates) {
-  for (std::vector<tfq::GateMetaData>::size_type i = 0; i < metadata.size(); i++) {
+  for (std::vector<tfq::GateMetaData>::size_type i = 0; i < metadata.size();
+       i++) {
     if (metadata[i].symbol_values.size() == 0) {
       continue;
     }
@@ -78,7 +79,8 @@ void CreateGradientCircuit(
     // PhasedX
     else if (circuit.gates[i].kind == qsim::Cirq::GateKind::kPhasedXPowGate) {
       // Process potentially several symbols.
-      for (std::vector<std::string>::size_type j = 0; j < metadata[i].symbol_values.size(); j++) {
+      for (std::vector<std::string>::size_type j = 0;
+           j < metadata[i].symbol_values.size(); j++) {
         if (metadata[i].placeholder_names[j] ==
             GateParamNames::kPhaseExponent) {
           PopulateGradientPhasedXPhasedExponent(
@@ -103,7 +105,8 @@ void CreateGradientCircuit(
       // Process potentially several symbols.
 
       bool swapq = circuit.gates[i].swapped;
-      for (std::vector<std::string>::size_type j = 0; j < metadata[i].symbol_values.size(); j++) {
+      for (std::vector<std::string>::size_type j = 0;
+           j < metadata[i].symbol_values.size(); j++) {
         if (metadata[i].placeholder_names[j] == GateParamNames::kTheta) {
           PopulateGradientFsimTheta(
               metadata[i].symbol_values[j], i,
@@ -128,7 +131,8 @@ void CreateGradientCircuit(
              qsim::Cirq::GateKind::kPhasedISwapPowGate) {
       // Process potentially several symbols.
       bool swapq = circuit.gates[i].swapped;
-      for (std::vector<std::string>::size_type j = 0; j < metadata[i].symbol_values.size(); j++) {
+      for (std::vector<std::string>::size_type j = 0;
+           j < metadata[i].symbol_values.size(); j++) {
         if (metadata[i].placeholder_names[j] ==
             GateParamNames::kPhaseExponent) {
           PopulateGradientPhasedISwapPhasedExponent(
@@ -159,7 +163,8 @@ void CreateGradientCircuit(
 
   partial_fuses->assign(grad_gates->size() + 1,
                         std::vector<qsim::GateFused<QsimGate>>({}));
-  for (std::vector<tfq::GradientOfGate>::size_type i = 0; i < grad_gates->size(); i++) {
+  for (std::vector<tfq::GradientOfGate>::size_type i = 0;
+       i < grad_gates->size(); i++) {
     right = circuit.gates.begin() + (*grad_gates)[i].index;
     (*partial_fuses)[i] =
         fuser.FuseGates(qsim::BasicGateFuser<qsim::IO, QsimGate>::Parameter(),

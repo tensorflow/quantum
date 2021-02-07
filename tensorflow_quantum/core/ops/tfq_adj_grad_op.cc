@@ -198,7 +198,8 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
         }
 
         ss.SetStateZero(sv);
-        for (std::vector<qsim::GateFused<QsimGate>>::size_type j = 0; j < full_fuse[i].size(); j++) {
+        for (std::vector<qsim::GateFused<QsimGate>>::size_type j = 0;
+             j < full_fuse[i].size(); j++) {
           qsim::ApplyFusedGate(sim, full_fuse[i][j], sv);
         }
 
@@ -227,13 +228,15 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
           // if applicable compute control qubit mask and control value bits.
           uint64_t mask = 0;
           uint64_t cbits = 0;
-          for (std::vector<unsigned int>::size_type k = 0; k < cur_gate.controlled_by.size(); k++) {
+          for (std::vector<unsigned int>::size_type k = 0;
+               k < cur_gate.controlled_by.size(); k++) {
             uint64_t control_loc = cur_gate.controlled_by[k];
             mask |= uint64_t{1} << control_loc;
             cbits |= ((cur_gate.cmask >> k) & 1) << control_loc;
           }
 
-          for (std::vector<QsimGate>::size_type k = 0; k < gradient_gates[i][j - 1].grad_gates.size(); k++) {
+          for (std::vector<QsimGate>::size_type k = 0;
+               k < gradient_gates[i][j - 1].grad_gates.size(); k++) {
             // Copy sv onto scratch2 in anticipation of non-unitary "gradient
             // gate".
             ss.Copy(sv, scratch2);
@@ -293,7 +296,10 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
     auto scratch = ss.Create(largest_nq);
     auto scratch2 = ss.Create(largest_nq);
 
-    for (std::vector<std::vector<std::vector<qsim::GateFused<QsimGate>>>>::size_type i = 0; i < partial_fused_circuits.size(); i++) {
+    for (std::vector<
+             std::vector<std::vector<qsim::GateFused<QsimGate>>>>::size_type i =
+             0;
+         i < partial_fused_circuits.size(); i++) {
       int nq = num_qubits[i];
 
       if (nq > largest_nq) {
@@ -310,7 +316,8 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
       }
 
       ss.SetStateZero(sv);
-      for (std::vector<qsim::GateFused<QsimGate>>::size_type j = 0; j < full_fuse[i].size(); j++) {
+      for (std::vector<qsim::GateFused<QsimGate>>::size_type j = 0;
+           j < full_fuse[i].size(); j++) {
         qsim::ApplyFusedGate(sim, full_fuse[i][j], sv);
       }
 
@@ -338,13 +345,15 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
         // if applicable compute control qubit mask and control value bits.
         uint64_t mask = 0;
         uint64_t cbits = 0;
-        for (std::vector<unsigned int>::size_type k = 0; k < cur_gate.controlled_by.size(); k++) {
+        for (std::vector<unsigned int>::size_type k = 0;
+             k < cur_gate.controlled_by.size(); k++) {
           uint64_t control_loc = cur_gate.controlled_by[k];
           mask |= uint64_t{1} << control_loc;
           cbits |= ((cur_gate.cmask >> k) & 1) << control_loc;
         }
 
-        for (std::vector<QsimGate>::size_type k = 0; k < gradient_gates[i][j - 1].grad_gates.size(); k++) {
+        for (std::vector<QsimGate>::size_type k = 0;
+             k < gradient_gates[i][j - 1].grad_gates.size(); k++) {
           // Copy sv onto scratch2 in anticipation of non-unitary "gradient
           // gate".
           ss.Copy(sv, scratch2);
