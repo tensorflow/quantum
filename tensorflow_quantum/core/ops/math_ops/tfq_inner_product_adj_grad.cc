@@ -57,6 +57,10 @@ class TfqInnerProductAdjGradOp : public tensorflow::OpKernel {
     const int output_dim_batch_size = context->input(0).dim_size(0);
     const int output_dim_internal_size = context->input(3).dim_size(1);
     const int output_dim_symbols_size = context->input(1).dim_size(0);
+    OP_REQUIRES(context, output_dim_symbols_size > 0,
+                tensorflow::errors::InvalidArgument(absl::StrCat(
+                    "The number of symbols must be a positive integer, got ",
+                    output_dim_symbols_size, " symbols.")));
     tensorflow::TensorShape output_shape;
     output_shape.AddDim(output_dim_batch_size);
     output_shape.AddDim(output_dim_internal_size);
@@ -282,10 +286,10 @@ class TfqInnerProductAdjGradOp : public tensorflow::OpKernel {
   }
 };
 
-REGISTER_KERNEL_BUILDER(Name("TfqInnerProduct").Device(tensorflow::DEVICE_CPU),
-                        TfqInnerProductAdjGradOp);
+REGISTER_KERNEL_BUILDER(Name("TfqInnerProductAdjGrad")
+    .Device(tensorflow::DEVICE_CPU), TfqInnerProductAdjGradOp);
 
-REGISTER_OP("TfqInnerProduct")
+REGISTER_OP("TfqInnerProductAdjGrad")
     .Input("programs: string")
     .Input("symbol_names: string")
     .Input("symbol_values: float")
@@ -308,7 +312,11 @@ REGISTER_OP("TfqInnerProduct")
           c->Dim(programs_shape, 0);
       tensorflow::shape_inference::DimensionHandle output_cols =
           c->Dim(other_programs_shape, 1);
-      c->set_output(0, c->Matrix(output_rows, output_cols));
+      tensorflow::shape_inference::DimensionHandle n_symbols =
+          c->Dim(symbol_names_shape, 0);
+      std::vector<tensorflow::shape_inference::DimensionHandle> dims =
+          {output_rows, output_cols, n_symbols};
+      c->set_output(0, c->MakeShape(dims));
 
       return tensorflow::Status::OK();
     });

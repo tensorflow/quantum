@@ -527,9 +527,12 @@ class InnerProductAdjGradTest(tf.test.TestCase, parameterized.TestCase):
 
         programs = util.convert_to_tensor(circuit_batch)
         other_programs = util.convert_to_tensor(other_batch)
-        symbol_names = tf.convert_to_tensor(symbol_names,
-                                            dtype=tf.dtypes.string)
+        symbol_names_tensor = tf.convert_to_tensor(symbol_names,
+                                                   dtype=tf.dtypes.string)
         symbol_values = tf.convert_to_tensor(symbol_values_array)
+
+        out = inner_product_op.inner_product_adj_grad(
+            programs, symbol_names_tensor, symbol_values, other_programs)
 
         out_arr = np.empty((batch_size, inner_dim_size, n_params),
                            dtype=np.complex64)
@@ -544,11 +547,11 @@ class InnerProductAdjGradTest(tf.test.TestCase, parameterized.TestCase):
                 final_circuit_m = cirq.resolve_parameters(circuit_batch[i],
                                                           new_resolver)
                 final_wf_p = cirq.final_state_vector(final_circuit_p)
-                final_wf_m = cirq.final_state_vector(final_circuit_p)
-                final_wf = (final_wf_p - final_wf_m) / 2.0 / dx
+                final_wf_m = cirq.final_state_vector(final_circuit_m)
+                final_wf_grad = (final_wf_p - final_wf_m) / 2.0 / dx
                 for j in range(inner_dim_size):
                     internal_wf = cirq.final_state_vector(other_batch[i][j])
-                    out_arr[i][j][k] = np.vdot(final_wf, internal_wf)
+                    out_arr[i][j][k] = np.vdot(final_wf_grad, internal_wf)
 
         self.assertAllClose(out, out_arr, atol=1e-5)
 
@@ -589,7 +592,7 @@ class InnerProductAdjGradTest(tf.test.TestCase, parameterized.TestCase):
 
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
-                                    'params must be a positive integer.'):
+                                    'symbols must be a positive integer'):
             out = inner_product_op.inner_product_adj_grad(
                 programs, symbol_names, symbol_values, other_programs)
 
@@ -602,7 +605,7 @@ class InnerProductAdjGradTest(tf.test.TestCase, parameterized.TestCase):
         other_program = util.convert_to_tensor([[cirq.Circuit()]])
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
-                                    'params must be a positive integer.'):
+                                    'symbols must be a positive integer'):
             out = inner_product_op.inner_product_adj_grad(
                 empty_cicuit, empty_symbols, empty_values, other_program)
 
