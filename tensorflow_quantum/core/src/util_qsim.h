@@ -231,7 +231,7 @@ tensorflow::Status ComputeSampledExpectationQsim(
       unsigned int location;
       // GridQubit id should be parsed down to integer at this upstream
       //  so it is safe to just use atoi.
-      bool unused = absl::SimpleAtoi(pair.qubit_id(), &location);
+      std::ignore = absl::SimpleAtoi(pair.qubit_id(), &location);
       // Parity functions use little-endian indexing
       parity_bits.push_back(state.num_qubits() - location - 1);
     }

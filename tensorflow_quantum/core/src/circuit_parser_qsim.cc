@@ -152,7 +152,7 @@ inline Status SingleConstantGate(
     const unsigned int num_qubits, const unsigned int time,
     QsimCircuit* circuit, std::vector<GateMetaData>* metadata) {
   unsigned int q0;
-  bool unused = absl::SimpleAtoi(op.qubits(0).id(), &q0);
+  std::ignore = absl::SimpleAtoi(op.qubits(0).id(), &q0);
   auto gate = create_f(time, num_qubits - q0 - 1);
   Status s = OptionalInsertControls(op, num_qubits, &gate);
   if (!s.ok()) {
@@ -177,8 +177,8 @@ inline Status TwoConstantGate(
     const unsigned int num_qubits, const unsigned int time,
     QsimCircuit* circuit, std::vector<GateMetaData>* metadata) {
   unsigned int q0, q1;
-  bool unused = absl::SimpleAtoi(op.qubits(0).id(), &q0);
-  unused = absl::SimpleAtoi(op.qubits(1).id(), &q1);
+  std::ignore = absl::SimpleAtoi(op.qubits(0).id(), &q0);
+  std::ignore = absl::SimpleAtoi(op.qubits(1).id(), &q1);
   auto gate = create_f(time, num_qubits - q0 - 1, num_qubits - q1 - 1);
   Status s = OptionalInsertControls(op, num_qubits, &gate);
   if (!s.ok()) {
@@ -203,10 +203,9 @@ inline Status SingleEigenGate(
     const unsigned int num_qubits, const unsigned int time,
     QsimCircuit* circuit, std::vector<GateMetaData>* metadata) {
   unsigned int q0;
-  bool unused;
   float exp, exp_s, gs;
   Status u;
-  unused = absl::SimpleAtoi(op.qubits(0).id(), &q0);
+  std::ignore = absl::SimpleAtoi(op.qubits(0).id(), &q0);
 
   absl::optional<std::string> exponent_symbol;
   u = ParseProtoArg(op, "exponent", param_map, &exp, &exponent_symbol);
@@ -253,10 +252,9 @@ inline Status TwoEigenGate(
     QsimCircuit* circuit, std::vector<GateMetaData>* metadata) {
   unsigned int q0, q1;
   float exp, exp_s, gs;
-  bool unused;
   Status u;
-  unused = absl::SimpleAtoi(op.qubits(0).id(), &q0);
-  unused = absl::SimpleAtoi(op.qubits(1).id(), &q1);
+  std::ignore = absl::SimpleAtoi(op.qubits(0).id(), &q0);
+  std::ignore = absl::SimpleAtoi(op.qubits(1).id(), &q1);
 
   absl::optional<std::string> exponent_symbol;
   u = ParseProtoArg(op, "exponent", param_map, &exp, &exponent_symbol);
@@ -392,10 +390,9 @@ inline Status PhasedXGate(const Operation& op, const SymbolMap& param_map,
                           const unsigned int time, QsimCircuit* circuit,
                           std::vector<GateMetaData>* metadata) {
   int q0;
-  bool unused;
   float pexp, pexp_s, exp, exp_s, gs;
   Status u;
-  unused = absl::SimpleAtoi(op.qubits(0).id(), &q0);
+  std::ignore = absl::SimpleAtoi(op.qubits(0).id(), &q0);
 
   absl::optional<std::string> exponent_symbol;
   u = ParseProtoArg(op, "exponent", param_map, &exp, &exponent_symbol);
@@ -452,11 +449,10 @@ inline Status FsimGate(const Operation& op, const SymbolMap& param_map,
                        QsimCircuit* circuit,
                        std::vector<GateMetaData>* metadata) {
   int q0, q1;
-  bool unused;
   float theta, theta_s, phi, phi_s;
   Status u;
-  unused = absl::SimpleAtoi(op.qubits(0).id(), &q0);
-  unused = absl::SimpleAtoi(op.qubits(1).id(), &q1);
+  std::ignore = absl::SimpleAtoi(op.qubits(0).id(), &q0);
+  std::ignore = absl::SimpleAtoi(op.qubits(1).id(), &q1);
 
   absl::optional<std::string> theta_symbol;
   u = ParseProtoArg(op, "theta", param_map, &theta, &theta_symbol);
@@ -509,11 +505,10 @@ inline Status PhasedISwapGate(const Operation& op, const SymbolMap& param_map,
                               const unsigned int time, QsimCircuit* circuit,
                               std::vector<GateMetaData>* metadata) {
   int q0, q1;
-  bool unused;
   float pexp, pexp_s, exp, exp_s;
   Status u;
-  unused = absl::SimpleAtoi(op.qubits(0).id(), &q0);
-  unused = absl::SimpleAtoi(op.qubits(1).id(), &q1);
+  std::ignore = absl::SimpleAtoi(op.qubits(0).id(), &q0);
+  std::ignore = absl::SimpleAtoi(op.qubits(1).id(), &q1);
 
   absl::optional<std::string> exponent_symbol;
   u = ParseProtoArg(op, "exponent", param_map, &exp, &exponent_symbol);

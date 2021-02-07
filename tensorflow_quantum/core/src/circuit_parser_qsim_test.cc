@@ -59,7 +59,7 @@ Arg MakeControlArg(const std::string& val) {
 }
 
 inline void AssertControlEqual(const QsimGate& a, const QsimGate& b) {
-  for (int i = 0; i < a.controlled_by.size(); i++) {
+  for (std::vector<unsigned int>::size_type i = 0; i < a.controlled_by.size(); i++) {
     ASSERT_EQ(a.controlled_by[i], b.controlled_by[i]);
   }
   ASSERT_EQ(a.cmask, b.cmask);

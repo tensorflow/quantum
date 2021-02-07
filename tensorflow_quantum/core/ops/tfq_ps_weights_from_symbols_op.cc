@@ -144,7 +144,7 @@ class TfqPsWeightsFromSymbolOp : public tensorflow::OpKernel {
     auto DoWork2 = [&](int start, int end) {
       for (int i = start; i < end; i++) {
         for (int j = 0; j < n_symbols; j++) {
-          for (int k = 0; k < output_results.at(i).at(j).size(); k++) {
+          for (std::vector<float>::size_type k = 0; k < output_results.at(i).at(j).size(); k++) {
             output_tensor(i, j, k) = output_results.at(i).at(j).at(k);
           }
           for (int k = output_results.at(i).at(j).size();

@@ -137,7 +137,7 @@ class TfqSimulateSamplesOp : public tensorflow::OpKernel {
     // Simulate programs one by one. Parallelizing over state vectors
     // we no longer parallelize over circuits. Each time we encounter a
     // a larger circuit we will grow the Statevector as nescessary.
-    for (int i = 0; i < fused_circuits.size(); i++) {
+    for (std::vector<std::vector<qsim::GateFused<QsimGate>>>::size_type i = 0; i < fused_circuits.size(); i++) {
       int nq = num_qubits[i];
 
       if (nq > largest_nq) {
@@ -146,13 +146,13 @@ class TfqSimulateSamplesOp : public tensorflow::OpKernel {
         sv = ss.Create(largest_nq);
       }
       ss.SetStateZero(sv);
-      for (int j = 0; j < fused_circuits[i].size(); j++) {
+      for (std::vector<qsim::GateFused<QsimGate>>::size_type j = 0; j < fused_circuits[i].size(); j++) {
         qsim::ApplyFusedGate(sim, fused_circuits[i][j], sv);
       }
 
       auto samples = ss.Sample(sv, num_samples, rand() % 123456);
       for (int j = 0; j < num_samples; j++) {
-        uint64_t q_ind = 0;
+        int q_ind = 0;
         uint64_t mask = 1;
         bool val = 0;
         while (q_ind < nq) {
@@ -195,13 +195,13 @@ class TfqSimulateSamplesOp : public tensorflow::OpKernel {
           sv = ss.Create(largest_nq);
         }
         ss.SetStateZero(sv);
-        for (int j = 0; j < fused_circuits[i].size(); j++) {
+        for (std::vector<qsim::GateFused<QsimGate>>::size_type j = 0; j < fused_circuits[i].size(); j++) {
           qsim::ApplyFusedGate(sim, fused_circuits[i][j], sv);
         }
 
         auto samples = ss.Sample(sv, num_samples, rand() % 123456);
         for (int j = 0; j < num_samples; j++) {
-          uint64_t q_ind = 0;
+          int q_ind = 0;
           uint64_t mask = 1;
           bool val = 0;
           while (q_ind < nq) {
