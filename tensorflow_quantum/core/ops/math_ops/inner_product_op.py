@@ -47,8 +47,8 @@ def inner_product(programs, symbol_names, symbol_values, other_programs):
     >>> symbol_tensor = tf.convert_to_tensor([s.name for s in symbols])
     >>> values_tensor = tf.convert_to_tensor(np.arange(4).reshape(2, 2))
     >>> other_tensor = tfq.convert_to_tensor([other_circuits, other_circuits])
-    >>> ip = tfq.math.inner_product(reference_tensor, symbol_tensor, values_tensor,
-    ...                             other_tensor)
+    >>> ip = tfq.math.inner_product(reference_tensor, symbol_tensor,
+    ...                             values_tensor, other_tensor)
     >>> ip
     tf.Tensor(
         [[ 0+0.j, 8.8871640e-01+0.3681184j,
