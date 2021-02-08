@@ -197,6 +197,7 @@ class TfqInnerProductAdjGradOp : public tensorflow::OpKernel {
     Simulator sim = Simulator(tfq_for);
     StateSpace ss = StateSpace(tfq_for);
     auto sv = ss.Create(largest_nq);
+    auto sv_adj = ss.Create(largest_nq);
     auto scratch = ss.Create(largest_nq);
     auto scratch2 = ss.Create(largest_nq);
 
@@ -210,7 +211,9 @@ class TfqInnerProductAdjGradOp : public tensorflow::OpKernel {
         // need to switch to larger statespace.
         largest_nq = nq;
         sv = ss.Create(largest_nq);
+        sv_adj = ss.Create(largest_nq);
         scratch = ss.Create(largest_nq);
+        scratch2 = ss.Create(largest_nq);
       }
       ss.SetStateZero(sv);
       for (std::vector<qsim::GateFused<QsimGate>>::size_type j = 0;
@@ -219,6 +222,7 @@ class TfqInnerProductAdjGradOp : public tensorflow::OpKernel {
       }
       for (std::vector<std::vector<qsim::GateFused<QsimGate>>>::size_type j = 0;
            j < other_fused_circuits[i].size(); j++) {
+        ss.Copy(sv, sv_adj);
         ss.SetStateZero(scratch);
         for (std::vector<qsim::GateFused<QsimGate>>::size_type k = 0;
              k < other_fused_circuits[i][j].size(); k++) {
@@ -233,7 +237,7 @@ class TfqInnerProductAdjGradOp : public tensorflow::OpKernel {
         // Start adjoint differentiation.
         for (int l = partial_fused_circuits[i].size() - 1; l >= 0; l--) {
           for (int k = partial_fused_circuits[i][l].size() - 1; k >= 0; k--) {
-            ApplyFusedGateDagger(sim, partial_fused_circuits[i][l][k], sv);
+            ApplyFusedGateDagger(sim, partial_fused_circuits[i][l][k], sv_adj);
             ApplyFusedGateDagger(sim, partial_fused_circuits[i][l][k], scratch);
           }
           if (l == 0) {
@@ -245,7 +249,7 @@ class TfqInnerProductAdjGradOp : public tensorflow::OpKernel {
           // todo fix this copy.
           auto cur_gate =
               qsim_circuits[i].gates[gradient_gates[i][l - 1].index];
-          ApplyGateDagger(sim, cur_gate, sv);
+          ApplyGateDagger(sim, cur_gate, sv_adj);
 
           // if applicable compute control qubit mask and control value bits.
           uint64_t mask = 0;
@@ -261,9 +265,9 @@ class TfqInnerProductAdjGradOp : public tensorflow::OpKernel {
                k < gradient_gates[i][l - 1].grad_gates.size(); k++) {
             // Copy sv onto scratch2 in anticipation of non-unitary "gradient
             // gate".
-            ss.Copy(sv, scratch2);
+            ss.Copy(sv_adj, scratch2);
             if (!cur_gate.controlled_by.empty()) {
-              // Gradient of controlled gattes puts zeros on diagonal which is
+              // Gradient of controlled gates puts zeros on diagonal which is
               // the same as collapsing the state and then applying the
               // non-controlled version of the gradient gate.
               ss.BulkSetAmpl(scratch2, mask, cbits, 0, 0, true);
@@ -399,7 +403,7 @@ class TfqInnerProductAdjGradOp : public tensorflow::OpKernel {
             // gate".
             ss.Copy(sv_adj, scratch2);
             if (!cur_gate.controlled_by.empty()) {
-              // Gradient of controlled gattes puts zeros on diagonal which is
+              // Gradient of controlled gates puts zeros on diagonal which is
               // the same as collapsing the state and then applying the
               // non-controlled version of the gradient gate.
               ss.BulkSetAmpl(scratch2, mask, cbits, 0, 0, true);

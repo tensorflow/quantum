@@ -200,17 +200,22 @@ class InnerProductAdjGradTest(tf.test.TestCase, parameterized.TestCase):
     @parameterized.parameters([
         {
             'n_qubits': 5,
-            'batch_size': 10,
+            'batch_size': 1,  # ComputeLarge
+            'inner_dim_size': 5
+        },
+        {
+            'n_qubits': 5,
+            'batch_size': 10,  # ComputeSmall
             'inner_dim_size': 1
         },
         {
             'n_qubits': 10,
-            'batch_size': 10,
+            'batch_size': 10,  # ComputeSmall
             'inner_dim_size': 2
         },
         {
             'n_qubits': 5,
-            'batch_size': 10,
+            'batch_size': 10,  # ComputeSmall
             'inner_dim_size': 5
         },
     ])

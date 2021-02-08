@@ -349,7 +349,7 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
           // gate".
           ss.Copy(sv, scratch2);
           if (!cur_gate.controlled_by.empty()) {
-            // Gradient of controlled gattes puts zeros on diagonal which is
+            // Gradient of controlled gates puts zeros on diagonal which is
             // the same as collapsing the state and then applying the
             // non-controlled version of the gradient gate.
             ss.BulkSetAmpl(scratch2, mask, cbits, 0, 0, true);
