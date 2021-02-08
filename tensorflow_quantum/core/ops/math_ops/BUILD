@@ -59,6 +59,7 @@ cc_binary(
     deps = [
         "//tensorflow_quantum/core/ops:parse_context",
         "//tensorflow_quantum/core/ops:tfq_simulate_utils",
+        "//tensorflow_quantum/core/src:adj_util",
         "//tensorflow_quantum/core/src:circuit_parser_qsim",
         "//tensorflow_quantum/core/src:util_qsim",
         "@qsim//lib:qsim_lib",
