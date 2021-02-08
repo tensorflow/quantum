@@ -13,8 +13,10 @@
 # limitations under the License.
 # ==============================================================================
 """A collection of helper functions that are useful several places in tfq."""
-import random
+
 import itertools
+import numbers
+import random
 
 import numpy as np
 import sympy
