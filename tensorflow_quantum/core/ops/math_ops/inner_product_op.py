@@ -53,6 +53,16 @@ def inner_product_adj_grad(programs, symbol_names, symbol_values,
     ...               reference_tensor, symbol_tensor, values_tensor,
     ...               other_tensor)
     >>> grad_ip
+    tf.Tensor(
+    [[[ 0+0.j  0+0.j]
+      [ 0.17605604-0.42503685j  0+0.j]
+      [ 0.46005663+1.1106750j  0+0.j]]
+
+     [[ 1.5707562-0.j 0-0.j]
+      [-0.22244042-0.09213787j -0.8559104+1.2809625j]
+      [-0.78537834-0.78537798j -1.5707799+0.j]]], shape=(2, 3, 2),
+      dtype=complex64)
+
 
 
     Note: `other_programs` must not contain any free symbols. These can
@@ -160,6 +170,7 @@ def inner_product(programs, symbol_names, symbol_values, other_programs):
         behavior of tensorflow gradient. For example, no matter what shape is,
         gradients of a given tensor `x` w.r.t empty `symbol` is None.
 
+
         >>> qubits = cirq.GridQubit.rect(1, 2)
         >>> programs = [
         ...     cirq.Circuit(cirq.H.on_each(qubits)),
@@ -184,6 +195,8 @@ def inner_product(programs, symbol_names, symbol_values, other_programs):
         None
         >>> t.gradient(y, s)
         None
+
+
 
         Args:
             dy: `tf.Tensor` of gradients coming from the next computational op
