@@ -88,10 +88,10 @@ class TfqInnerProductAdjGradOp : public tensorflow::OpKernel {
                     programs.size(), " circuits and ", maps.size(),
                     " symbol values.")));
     OP_REQUIRES(context, output_dim_symbol_size == maps[0].size(),
-                    tensorflow::errors::InvalidArgument(absl::StrCat(
-                        "Number of symbols and symbol maps do not match. Got ",
-                        output_dim_symbol_size, " symbols and ", maps[0].size(),
-                        " symbol values.")));
+                tensorflow::errors::InvalidArgument(absl::StrCat(
+                    "Number of symbols and symbol maps do not match. Got ",
+                    output_dim_symbol_size, " symbols and ", maps[0].size(),
+                    " symbol values.")));
 
     // Construct qsim circuits for programs.
     std::vector<QsimCircuit> qsim_circuits(programs.size(), QsimCircuit());
@@ -250,13 +250,15 @@ class TfqInnerProductAdjGradOp : public tensorflow::OpKernel {
           // if applicable compute control qubit mask and control value bits.
           uint64_t mask = 0;
           uint64_t cbits = 0;
-          for (std::vector<unsigned int>::size_type k = 0; k < cur_gate.controlled_by.size(); k++) {
+          for (std::vector<unsigned int>::size_type k = 0;
+               k < cur_gate.controlled_by.size(); k++) {
             uint64_t control_loc = cur_gate.controlled_by[k];
             mask |= uint64_t{1} << control_loc;
             cbits |= ((cur_gate.cmask >> k) & 1) << control_loc;
           }
 
-          for (std::vector<QsimGate>::size_type k = 0; k < gradient_gates[i][l - 1].grad_gates.size(); k++) {
+          for (std::vector<QsimGate>::size_type k = 0;
+               k < gradient_gates[i][l - 1].grad_gates.size(); k++) {
             // Copy sv onto scratch2 in anticipation of non-unitary "gradient
             // gate".
             ss.Copy(sv, scratch2);
@@ -314,6 +316,7 @@ class TfqInnerProductAdjGradOp : public tensorflow::OpKernel {
       Simulator sim = Simulator(tfq_for);
       StateSpace ss = StateSpace(tfq_for);
       auto sv = ss.Create(largest_nq);
+      auto sv_adj = ss.Create(largest_nq);
       auto scratch = ss.Create(largest_nq);
       auto scratch2 = ss.Create(largest_nq);
       for (int i = start; i < end; i++) {
@@ -328,6 +331,7 @@ class TfqInnerProductAdjGradOp : public tensorflow::OpKernel {
           if (nq > largest_nq) {
             largest_nq = nq;
             sv = ss.Create(largest_nq);
+            sv_adj = ss.Create(largest_nq);
             scratch = ss.Create(largest_nq);
             scratch2 = ss.Create(largest_nq);
           }
@@ -340,6 +344,7 @@ class TfqInnerProductAdjGradOp : public tensorflow::OpKernel {
           }
         }
 
+        ss.Copy(sv, sv_adj);
         ss.SetStateZero(scratch);
         for (std::vector<qsim::GateFused<QsimGate>>::size_type k = 0;
              k <
@@ -362,7 +367,7 @@ class TfqInnerProductAdjGradOp : public tensorflow::OpKernel {
           for (int k = partial_fused_circuits[cur_batch_index][l].size() - 1;
                k >= 0; k--) {
             ApplyFusedGateDagger(
-                sim, partial_fused_circuits[cur_batch_index][l][k], sv);
+                sim, partial_fused_circuits[cur_batch_index][l][k], sv_adj);
             ApplyFusedGateDagger(
                 sim, partial_fused_circuits[cur_batch_index][l][k], scratch);
           }
@@ -376,7 +381,7 @@ class TfqInnerProductAdjGradOp : public tensorflow::OpKernel {
           auto cur_gate =
               qsim_circuits[cur_batch_index]
                   .gates[gradient_gates[cur_batch_index][l - 1].index];
-          ApplyGateDagger(sim, cur_gate, sv);
+          ApplyGateDagger(sim, cur_gate, sv_adj);
 
           // if applicable compute control qubit mask and control value bits.
           uint64_t mask = 0;
@@ -392,7 +397,7 @@ class TfqInnerProductAdjGradOp : public tensorflow::OpKernel {
                k++) {
             // Copy sv onto scratch2 in anticipation of non-unitary "gradient
             // gate".
-            ss.Copy(sv, scratch2);
+            ss.Copy(sv_adj, scratch2);
             if (!cur_gate.controlled_by.empty()) {
               // Gradient of controlled gattes puts zeros on diagonal which is
               // the same as collapsing the state and then applying the
