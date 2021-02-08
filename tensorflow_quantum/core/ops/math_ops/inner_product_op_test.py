@@ -27,7 +27,7 @@ class InnerProductTest(tf.test.TestCase, parameterized.TestCase):
     """Tests tfq_inner_product."""
 
     def test_inner_product_inputs(self):
-        """Make sure that inner_product fails gracefully on bad inputs."""
+        """Makes sure that inner_product fails gracefully on bad inputs."""
         n_qubits = 5
         batch_size = 5
         symbol_names = ['alpha']
@@ -221,7 +221,7 @@ class InnerProductTest(tf.test.TestCase, parameterized.TestCase):
     ])
     def test_correctness_with_symbols(self, n_qubits, batch_size,
                                       inner_dim_size):
-        """Test that inner_product works with symbols."""
+        """Tests that inner_product works with symbols."""
         symbol_names = ['alpha', 'beta', 'gamma']
         qubits = cirq.GridQubit.rect(1, n_qubits)
         circuit_batch, resolver_batch = \
@@ -261,23 +261,28 @@ class InnerProductTest(tf.test.TestCase, parameterized.TestCase):
     @parameterized.parameters([
         {
             'n_qubits': 5,
-            'batch_size': 10,
+            'batch_size': 1,  # ComputeLarge
+            'inner_dim_size': 5
+        },
+        {
+            'n_qubits': 5,
+            'batch_size': 10,  # ComputeSmall
             'inner_dim_size': 1
         },
         {
             'n_qubits': 10,
-            'batch_size': 10,
+            'batch_size': 10,  # ComputeSmall
             'inner_dim_size': 2
         },
         {
             'n_qubits': 5,
-            'batch_size': 10,
+            'batch_size': 10,  # ComputeSmall
             'inner_dim_size': 5
         },
     ])
     def test_correctness_without_symbols(self, n_qubits, batch_size,
                                          inner_dim_size):
-        """Test that inner_product works without symbols."""
+        """Tests that inner_product works without symbols."""
         qubits = cirq.GridQubit.rect(1, n_qubits)
         circuit_batch, _ = \
             util.random_circuit_resolver_batch(
@@ -306,7 +311,7 @@ class InnerProductTest(tf.test.TestCase, parameterized.TestCase):
         self.assertAllClose(out, out_arr, atol=1e-5)
 
     def test_correctness_empty(self):
-        """Test the inner product between two empty circuits."""
+        """Tests the inner product between two empty circuits."""
 
         empty_cicuit = util.convert_to_tensor([cirq.Circuit()])
         empty_symbols = tf.convert_to_tensor([], dtype=tf.dtypes.string)
@@ -317,6 +322,132 @@ class InnerProductTest(tf.test.TestCase, parameterized.TestCase):
                                              empty_values, other_program)
         expected = np.array([[1.0]], dtype=np.complex64)
         self.assertAllClose(out, expected)
+
+    @parameterized.parameters([
+        {
+            'n_qubits': 5,
+            'batch_size': 1,  # ComputeLarge
+            'inner_dim_size': 5
+        },
+        {
+            'n_qubits': 5,
+            'batch_size': 10,  # ComputeSmall
+            'inner_dim_size': 1
+        },
+        {
+            'n_qubits': 10,
+            'batch_size': 10,  # ComputeSmall
+            'inner_dim_size': 2
+        },
+        {
+            'n_qubits': 5,
+            'batch_size': 10,  # ComputeSmall
+            'inner_dim_size': 5
+        },
+    ])
+    def test_tf_gradient_correctness_with_symbols(self, n_qubits, batch_size,
+                                                  inner_dim_size):
+        """Tests that tf.gradient of inner_product works with symbols."""
+        symbol_names = ['alpha', 'beta', 'gamma']
+        n_params = len(symbol_names)
+        qubits = cirq.GridQubit.rect(1, n_qubits)
+        circuit_batch, resolver_batch = \
+            util.random_symbol_circuit_resolver_batch(
+                qubits, symbol_names, batch_size)
+
+        other_batch = [
+            util.random_circuit_resolver_batch(qubits, inner_dim_size)[0]
+            for i in range(batch_size)
+        ]
+
+        symbol_values_array = np.array(
+            [[resolver[symbol]
+              for symbol in symbol_names]
+             for resolver in resolver_batch])
+
+        programs = util.convert_to_tensor(circuit_batch)
+        other_programs = util.convert_to_tensor(other_batch)
+        symbol_names_tensor = tf.convert_to_tensor(symbol_names,
+                                                   dtype=tf.dtypes.string)
+        symbol_values = tf.convert_to_tensor(symbol_values_array)
+
+        with tf.GradientTape() as tape:
+            tape.watch(symbol_values)
+            ip = inner_product_op.inner_product(programs, symbol_names_tensor,
+                                                symbol_values, other_programs)
+        out = tape.gradient(ip, symbol_values)
+
+        out_arr = np.empty((batch_size, inner_dim_size, n_params),
+                           dtype=np.complex64)
+        # dx came from _GRAD_EPS of core/src/adj_util.cc
+        dx = 5e-3
+        for i in range(batch_size):
+            for k, name in enumerate(symbol_names):
+                if name in resolver_batch[i].param_dict:
+                    new_resolver = copy.deepcopy(resolver_batch[i])
+                    new_resolver.param_dict[name] += dx
+                    final_circuit_p = cirq.resolve_parameters(
+                        circuit_batch[i], new_resolver)
+                    new_resolver = copy.deepcopy(resolver_batch[i])
+                    new_resolver.param_dict[name] -= dx
+                    final_circuit_m = cirq.resolve_parameters(
+                        circuit_batch[i], new_resolver)
+                    final_wf_p = cirq.final_state_vector(final_circuit_p)
+                    final_wf_m = cirq.final_state_vector(final_circuit_m)
+                    # Performs central finite difference.
+                    final_wf_grad = 0.5 * (final_wf_p - final_wf_m) / dx
+                    for j in range(inner_dim_size):
+                        internal_wf = cirq.final_state_vector(other_batch[i][j])
+                        out_arr[i][j][k] = np.vdot(final_wf_grad, internal_wf)
+
+        self.assertAllClose(out, out_arr, atol=1e-3)
+
+    @parameterized.parameters([
+        {
+            'n_qubits': 5,
+            'batch_size': 1,  # ComputeLarge
+            'inner_dim_size': 5
+        },
+        {
+            'n_qubits': 5,
+            'batch_size': 10,  # ComputeSmall
+            'inner_dim_size': 1
+        },
+        {
+            'n_qubits': 10,
+            'batch_size': 10,  # ComputeSmall
+            'inner_dim_size': 2
+        },
+        {
+            'n_qubits': 5,
+            'batch_size': 10,  # ComputeSmall
+            'inner_dim_size': 5
+        },
+    ])
+    def test_tf_gradient_correctness_without_symbols(self, n_qubits, batch_size,
+                                                     inner_dim_size):
+        """Tests that tf.gradient of inner_product works without symbols."""
+        qubits = cirq.GridQubit.rect(1, n_qubits)
+        circuit_batch, _ = \
+            util.random_circuit_resolver_batch(
+                qubits, batch_size)
+
+        other_batch = [
+            util.random_circuit_resolver_batch(qubits, inner_dim_size)[0]
+            for i in range(batch_size)
+        ]
+
+        programs = util.convert_to_tensor(circuit_batch)
+        other_programs = util.convert_to_tensor(other_batch)
+        symbol_names = tf.convert_to_tensor([], dtype=tf.dtypes.string)
+        symbol_values = tf.convert_to_tensor([[] for _ in range(batch_size)])
+
+        with tf.GradientTape() as tape:
+            tape.watch(symbol_values)
+            ip = inner_product_op.inner_product(programs, symbol_names,
+                                                symbol_values, other_programs)
+        out = tape.gradient(ip, symbol_values)
+        self.assertIsNone(out)
 
 
 if __name__ == "__main__":

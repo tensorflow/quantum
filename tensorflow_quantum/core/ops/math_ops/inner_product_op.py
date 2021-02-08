@@ -156,6 +156,35 @@ def inner_product(programs, symbol_names, symbol_values, other_programs):
     def grad(dy):
         """Calculate the gradients of this inner_product op.
 
+        For empty symbols, this function will just output `None` as the default
+        behavior of tensorflow gradient. For example, no matter what shape is,
+        gradients of a given tensor `x` w.r.t empty `symbol` is None.
+
+        >>> qubits = cirq.GridQubit.rect(1, 2)
+        >>> programs = [
+        ...     cirq.Circuit(cirq.H.on_each(qubits)),
+        ...     cirq.Circuit(
+        ...         cirq.X(qubits[0]),
+        ...         cirq.Y(qubits[1]))
+        ... ]
+        >>> other_programs = [
+        ...     cirq.Circuit(cirq.X.on_each(qubits)),
+        ...     cirq.Circuit((cirq.Y**0.125).on_each(qubits)),
+        ...     cirq.Circuit((cirq.X**0.5).on_each(qubits))
+        ... ]
+        >>> programs = tfq.constant([])
+        >>> symbol_names = tf.constant([])
+        >>> symbol_values = tf.constant([])
+        >>> with tf.GradientTape() as t:
+        >>>   t.watch(symbol)
+        >>>   x = tf.constant(tf.ones((3,4)))
+        >>>   y = tfq.math_ops.inner_product(programs, symbol_names,
+        ...                                  symbol_values, other_programs)
+        >>> t.gradient(x, s)  # TensorFlow default behavior.
+        None
+        >>> t.gradient(y, s)
+        None
+
         Args:
             dy: `tf.Tensor` of gradients coming from the next computational op
                 with the shape [batch_size, n_others]
@@ -166,10 +195,12 @@ def inner_product(programs, symbol_names, symbol_values, other_programs):
              w.r.t. `symbol_names[k]` merged with the gradient `dy` from the
              next computational op.
         """
+        if symbol_names.shape[0] == 0:
+            return [None, None, None, None]
         inner_prod_grad = inner_product_adj_grad(
             programs, symbol_names, tf.cast(symbol_values, tf.float32),
             other_programs)
-        return tf.einsum("bos,bo->bos", inner_prod_grad, dy)
+        return [None, None, tf.einsum("bos,bo->bos", inner_prod_grad, dy), None]
 
     return MATH_OP_MODULE.tfq_inner_product(programs, symbol_names,
                                             tf.cast(symbol_values, tf.float32),
