@@ -303,7 +303,7 @@ class ResolveParametersOpTest(tf.test.TestCase, parameterized.TestCase):
             for test_m, exp_m in zip(test_c, exp_c):
                 for test_o, exp_o in zip(test_m, exp_m):
                     self.assertTrue(
-                        util.is_gate_approx_eq(test_o.gate, exp_o.gate))
+                        util.gate_approx_eq(test_o.gate, exp_o.gate))
 
 
 if __name__ == '__main__':

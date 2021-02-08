@@ -453,9 +453,9 @@ def gate_approx_eq(gate_true, gate_deser, atol=1e-5):
         bool which says if the two gates are approximately equal in the way
             described above.
     """
-    if not isinstance(gate_true, cirq.Gate):
+    if not isinstance(gate_true, cirq.ops.raw_types.Gate):
         raise TypeError(f"`gate_true` not a cirq gate, got {type(gate_true)}")
-    if not isinstance(gate_deser, cirq.Gate):
+    if not isinstance(gate_deser, cirq.ops.raw_types.Gate):
         raise TypeError(f"`gate_deser` not a cirq gate, got {type(gate_deser)}")
     supported_gates = serializer.SERIALIZER.supported_gate_types()
     if not any([isinstance(gate_true, g) for g in supported_gates]):

@@ -237,16 +237,16 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
         a = sympy.Symbol("s_1") * sympy.Symbol("s_2")
         b = 1.0 * a
         with self.assertRaisesRegex(ValueError, expected_regex='not supported'):
-            util._expression_approx_eq(a, a, 1e-3)
+            _ = util._expression_approx_eq(a, a, 1e-3)
         with self.assertRaisesRegex(ValueError, expected_regex='not supported'):
-            util._expression_approx_eq(a, b, 1e-3)
+            _ = util._expression_approx_eq(a, b, 1e-3)
 
         # junk
         with self.assertRaisesRegex(TypeError, expected_regex='Invalid input'):
-            util._expression_approx_eq('junk', 'junk', 1e-3)
+            _ = util._expression_approx_eq('junk', 'junk', 1e-3)
         with self.assertRaisesRegex(TypeError,
                                     expected_regex='atol must be a real'):
-            util._expression_approx_eq(1, 1, 'junk')
+            _ = util._expression_approx_eq(1, 1, 'junk')
 
     def test_gate_approx_eq(self):
         """Check valid TFQ gates for approximate equality."""
@@ -266,21 +266,21 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
 
         # junk
         with self.assertRaisesRegex(TypeError,
-                                    expected_regex='`gate_true` not a cirq'):
-            util.gate_approx_eq("junk", cirq.I)
+                                    expected_regex="`gate_true` not a cirq"):
+            _ = util.gate_approx_eq("junk", cirq.I)
         with self.assertRaisesRegex(TypeError,
-                                    expected_regex='`gate_deser` not a cirq'):
-            util.gate_approx_eq(cirq.I, "junk")
+                                    expected_regex="`gate_deser` not a cirq"):
+            _ = util.gate_approx_eq(cirq.I, "junk")
 
         # Unsupported gates
         with self.assertRaisesRegex(
-                ValueError,
-                expected_regex='`gate_true` is not a valid TFQ gate'):
-            util.gate_approx_eq(cirq.PhasedXZGate, cirq.I)
+                TypeError,
+                expected_regex="`gate_true` not a valid TFQ gate"):
+            _ = util.gate_approx_eq(cirq.PhasedXZGate, cirq.I)
         with self.assertRaisesRegex(
-                ValueError,
-                expected_regex='`gate_deser` is not a valid TFQ gate'):
-            util.gate_approx_eq(cirq.I, cirq.PhasedXZGate)
+                TypeError,
+                expected_regex="`gate_deser` not a valid TFQ gate"):
+            _ = util.gate_approx_eq(cirq.I, cirq.PhasedXZGate)
 
         # Not a child class
         self.assertFalse(util.gate_approx_eq(cirq.X, cirq.Y))
