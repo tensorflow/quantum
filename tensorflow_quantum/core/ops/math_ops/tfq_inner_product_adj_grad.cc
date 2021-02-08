@@ -57,15 +57,15 @@ class TfqInnerProductAdjGradOp : public tensorflow::OpKernel {
     // Create the output Tensor.
     const int output_dim_batch_size = context->input(0).dim_size(0);
     const int output_dim_internal_size = context->input(3).dim_size(1);
-    const int output_dim_symbols_size = context->input(1).dim_size(0);
-    OP_REQUIRES(context, output_dim_symbols_size > 0,
+    const int output_dim_symbol_size = context->input(1).dim_size(0);
+    OP_REQUIRES(context, output_dim_symbol_size > 0,
                 tensorflow::errors::InvalidArgument(absl::StrCat(
                     "The number of symbols must be a positive integer, got ",
-                    output_dim_symbols_size, " symbols.")));
+                    output_dim_symbol_size, " symbols.")));
     tensorflow::TensorShape output_shape;
     output_shape.AddDim(output_dim_batch_size);
     output_shape.AddDim(output_dim_internal_size);
-    output_shape.AddDim(output_dim_symbols_size);
+    output_shape.AddDim(output_dim_symbol_size);
 
     tensorflow::Tensor* output = nullptr;
     OP_REQUIRES_OK(context, context->allocate_output(0, output_shape, &output));
@@ -87,6 +87,11 @@ class TfqInnerProductAdjGradOp : public tensorflow::OpKernel {
                     "Number of circuits and symbol_values do not match. Got ",
                     programs.size(), " circuits and ", maps.size(),
                     " symbol values.")));
+    OP_REQUIRES(context, output_dim_symbol_size == maps[0].size(),
+                    tensorflow::errors::InvalidArgument(absl::StrCat(
+                        "Number of symbols and symbol maps do not match. Got ",
+                        output_dim_symbol_size, " symbols and ", maps[0].size(),
+                        " symbol values.")));
 
     // Construct qsim circuits for programs.
     std::vector<QsimCircuit> qsim_circuits(programs.size(), QsimCircuit());
@@ -222,7 +227,7 @@ class TfqInnerProductAdjGradOp : public tensorflow::OpKernel {
 
         // now sv is |psi>, scratch is |phi>
         // initialize gradients for given |psi> and |phi>.
-        for (std::vector<SymbolMap>::size_type k = 0; k < maps.size(); k++) {
+        for (int k = 0; k < maps[i].size(); k++) {
           (*output_tensor)(i, j, k) = std::complex<float>(0, 0);
         }
         // Start adjoint differentiation.
@@ -245,13 +250,13 @@ class TfqInnerProductAdjGradOp : public tensorflow::OpKernel {
           // if applicable compute control qubit mask and control value bits.
           uint64_t mask = 0;
           uint64_t cbits = 0;
-          for (int k = 0; k < cur_gate.controlled_by.size(); k++) {
+          for (std::vector<unsigned int>::size_type k = 0; k < cur_gate.controlled_by.size(); k++) {
             uint64_t control_loc = cur_gate.controlled_by[k];
             mask |= uint64_t{1} << control_loc;
             cbits |= ((cur_gate.cmask >> k) & 1) << control_loc;
           }
 
-          for (int k = 0; k < gradient_gates[i][l - 1].grad_gates.size(); k++) {
+          for (std::vector<QsimGate>::size_type k = 0; k < gradient_gates[i][l - 1].grad_gates.size(); k++) {
             // Copy sv onto scratch2 in anticipation of non-unitary "gradient
             // gate".
             ss.Copy(sv, scratch2);
@@ -324,6 +329,7 @@ class TfqInnerProductAdjGradOp : public tensorflow::OpKernel {
             largest_nq = nq;
             sv = ss.Create(largest_nq);
             scratch = ss.Create(largest_nq);
+            scratch2 = ss.Create(largest_nq);
           }
           // no need to update scratch_state since ComputeExpectation
           // will take care of things for us.
@@ -346,7 +352,7 @@ class TfqInnerProductAdjGradOp : public tensorflow::OpKernel {
 
         // now sv is |psi>, scratch is |phi>
         // initialize gradients for given |psi> and |phi>.
-        for (std::vector<SymbolMap>::size_type k = 0; k < maps.size(); k++) {
+        for (int k = 0; k < maps[cur_batch_index].size(); k++) {
           (*output_tensor)(cur_batch_index, cur_internal_index, k) =
               std::complex<float>(0, 0);
         }
@@ -413,7 +419,6 @@ class TfqInnerProductAdjGradOp : public tensorflow::OpKernel {
           }
           ApplyGateDagger(sim, cur_gate, scratch);
         }
-
         old_batch_index = cur_batch_index;
       }
     };

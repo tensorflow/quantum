@@ -84,3 +84,13 @@ py_test(
         "//tensorflow_quantum/python:util",
     ],
 )
+
+py_test(
+    name = "inner_product_adj_grad_op_test",
+    srcs = ["inner_product_adj_grad_op_test.py"],
+    python_version = "PY3",
+    deps = [
+        ":inner_product_op_py",
+        "//tensorflow_quantum/python:util",
+    ],
+)
