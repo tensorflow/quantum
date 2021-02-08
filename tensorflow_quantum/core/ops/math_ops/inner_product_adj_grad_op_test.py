@@ -339,8 +339,10 @@ class InnerProductAdjGradTest(tf.test.TestCase, parameterized.TestCase):
         symbol_values = tf.convert_to_tensor([[0.0 for _ in range(2)]])
         other_program = util.convert_to_tensor([[cirq.Circuit()]])
 
-        out = inner_product_op.inner_product_adj_grad(
-            empty_cicuit, symbol_names, symbol_values, other_program)
+        out = inner_product_op.inner_product_adj_grad(empty_cicuit,
+                                                      symbol_names,
+                                                      symbol_values,
+                                                      other_program)
         expected = np.zeros((1, 1, len(symbol_names)), dtype=np.complex64)
         self.assertAllClose(out, expected)
 
