@@ -221,7 +221,7 @@ class InnerProductAdjGradTest(tf.test.TestCase, parameterized.TestCase):
     ])
     def test_correctness_with_symbols(self, n_qubits, batch_size,
                                       inner_dim_size):
-        """Test that inner_product works with symbols."""
+        """Tests that inner_product works with symbols."""
         symbol_names = ['alpha', 'beta', 'gamma']
         n_params = len(symbol_names)
         qubits = cirq.GridQubit.rect(1, n_qubits)
@@ -299,7 +299,7 @@ class InnerProductAdjGradTest(tf.test.TestCase, parameterized.TestCase):
     ])
     def test_correctness_without_symbols(self, n_qubits, batch_size,
                                          inner_dim_size):
-        """Test that inner_product_adj_grad works without symbols."""
+        """Tests that inner_product_adj_grad works without symbols."""
         qubits = cirq.GridQubit.rect(1, n_qubits)
         circuit_batch, _ = \
           util.random_circuit_resolver_batch(
@@ -321,7 +321,7 @@ class InnerProductAdjGradTest(tf.test.TestCase, parameterized.TestCase):
                 programs, symbol_names, symbol_values, other_programs)
 
     def test_correctness_empty(self):
-        """Test the inner product adj grad between two empty circuits."""
+        """Tests the inner product adj grad between two empty circuits."""
         symbol_names = ['alpha', 'beta']
         empty_cicuit = util.convert_to_tensor([cirq.Circuit()])
         empty_symbols = tf.convert_to_tensor([], dtype=tf.dtypes.string)
