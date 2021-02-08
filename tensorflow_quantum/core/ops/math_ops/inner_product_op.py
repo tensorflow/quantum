@@ -189,7 +189,7 @@ def inner_product(programs, symbol_names, symbol_values, other_programs):
         >>> with tf.GradientTape() as t:
         >>>   t.watch(symbol)
         >>>   x = tf.constant(tf.ones((3,4)))
-        >>>   y = tfq.math_ops.inner_product(programs, symbol_names,
+        >>>   y = tfq.math.inner_product(programs, symbol_names,
         ...                                  symbol_values, other_programs)
         >>> t.gradient(x, s)  # TensorFlow default behavior.
         None
