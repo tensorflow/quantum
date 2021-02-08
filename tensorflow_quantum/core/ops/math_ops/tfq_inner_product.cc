@@ -182,11 +182,6 @@ class TfqInnerProductOp : public tensorflow::OpKernel {
         qsim::ApplyFusedGate(sim, fused_circuits[i][j], sv);
       }
       for (int j = 0; j < other_fused_circuits[i].size(); j++) {
-        // (#679) Just ignore empty program
-        if (fused_circuits[i].size() == 0) {
-          (*output_tensor)(i, j) = std::complex<float>(1, 0);
-          continue;
-        }
 
         ss.SetStateZero(scratch);
         for (int k = 0; k < other_fused_circuits[i][j].size(); k++) {
@@ -228,13 +223,6 @@ class TfqInnerProductOp : public tensorflow::OpKernel {
         cur_internal_index = i % output_dim_internal_size;
 
         const int nq = num_qubits[cur_batch_index];
-
-        // (#679) Just ignore empty program
-        if (fused_circuits[cur_batch_index].size() == 0) {
-          (*output_tensor)(cur_batch_index, cur_internal_index) =
-              std::complex<float>(1, 0);
-          continue;
-        }
 
         if (cur_batch_index != old_batch_index) {
           // We've run into a new state vector we must compute.

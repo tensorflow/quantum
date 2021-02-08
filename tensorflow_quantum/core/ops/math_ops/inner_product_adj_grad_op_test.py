@@ -322,7 +322,7 @@ class InnerProductAdjGradTest(tf.test.TestCase, parameterized.TestCase):
 
     def test_correctness_empty(self):
         """Test the inner product adj grad between two empty circuits."""
-
+        symbol_names = ['alpha', 'beta']
         empty_cicuit = util.convert_to_tensor([cirq.Circuit()])
         empty_symbols = tf.convert_to_tensor([], dtype=tf.dtypes.string)
         empty_values = tf.convert_to_tensor([[]])
@@ -332,6 +332,17 @@ class InnerProductAdjGradTest(tf.test.TestCase, parameterized.TestCase):
                                     'symbols must be a positive integer'):
             out = inner_product_op.inner_product_adj_grad(
                 empty_cicuit, empty_symbols, empty_values, other_program)
+
+        empty_cicuit = util.convert_to_tensor([cirq.Circuit()])
+        symbol_names = tf.convert_to_tensor(symbol_names,
+                                            dtype=tf.dtypes.string)
+        symbol_values = tf.convert_to_tensor([[0.0 for _ in range(2)]])
+        other_program = util.convert_to_tensor([[cirq.Circuit()]])
+
+        out = inner_product_op.inner_product_adj_grad(
+            empty_cicuit, symbol_names, symbol_values, other_program)
+        expected = np.zeros((1, 1, len(symbol_names)), dtype=np.complex64)
+        self.assertAllClose(out, expected)
 
 
 if __name__ == "__main__":
