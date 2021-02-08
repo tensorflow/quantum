@@ -317,7 +317,7 @@ class InnerProductAdjGradTest(tf.test.TestCase, parameterized.TestCase):
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'symbols must be a positive integer'):
-            out = inner_product_op.inner_product_adj_grad(
+            inner_product_op.inner_product_adj_grad(
                 programs, symbol_names, symbol_values, other_programs)
 
     def test_correctness_empty(self):
