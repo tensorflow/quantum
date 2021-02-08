@@ -453,17 +453,25 @@ def gate_approx_eq(gate_true, gate_deser, atol=1e-5):
         bool which says if the two gates are approximately equal in the way
             described above.
     """
-    if not isinstance(gate_true, cirq.ops.raw_types.Gate):
+    if not isinstance(gate_true, cirq.Gate):
         raise TypeError(f"`gate_true` not a cirq gate, got {type(gate_true)}")
-    if not isinstance(gate_deser, cirq.ops.raw_types.Gate):
+    if not isinstance(gate_deser, cirq.Gate):
         raise TypeError(f"`gate_deser` not a cirq gate, got {type(gate_deser)}")
+    if isinstance(gate_true, cirq.ControlledGate) != isinstance(gate_deser, cirq.ControlledGate):
+        raise TypeError("Both gates must be ControlledGates, or neither.")
+    if isinstance(gate_true, cirq.ControlledGate):
+        if gate_true.control_qid_shape != gate_deser.control_qid_shape:
+            return False
+        if gate_true.control_values != gate_deser.control_values:
+            return False
+        return gate_approx_eq(gate_true.sub_gate, gate_deser.sub_gate)
     supported_gates = serializer.SERIALIZER.supported_gate_types()
     if not any([isinstance(gate_true, g) for g in supported_gates]):
         raise ValueError(
-            f"`gate_true` is not a valid TFQ gate, got {gate_true}")
+            f"`gate_true` not a valid TFQ gate, got {gate_true}")
     if not any([isinstance(gate_deser, g) for g in supported_gates]):
         raise ValueError(
-            f"`gate_deser` is not a valid TFQ gate, got {gate_deser}")
+            f"`gate_deser` not a valid TFQ gate, got {gate_deser}")
     if not isinstance(gate_true, type(gate_deser)):
         return False
     if isinstance(gate_true, type(cirq.I)) and isinstance(

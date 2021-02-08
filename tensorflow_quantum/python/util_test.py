@@ -274,13 +274,17 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
 
         # Unsupported gates
         with self.assertRaisesRegex(
-                TypeError,
+                ValueError,
                 expected_regex="`gate_true` not a valid TFQ gate"):
-            _ = util.gate_approx_eq(cirq.PhasedXZGate, cirq.I)
+            _ = util.gate_approx_eq(
+                cirq.PhasedXZGate(x_exponent=1, z_exponent=1, axis_phase_exponent=1),
+                cirq.I)
         with self.assertRaisesRegex(
-                TypeError,
+                ValueError,
                 expected_regex="`gate_deser` not a valid TFQ gate"):
-            _ = util.gate_approx_eq(cirq.I, cirq.PhasedXZGate)
+            _ = util.gate_approx_eq(
+                cirq.I,
+                cirq.PhasedXZGate(x_exponent=1, z_exponent=1, axis_phase_exponent=1))
 
         # Not a child class
         self.assertFalse(util.gate_approx_eq(cirq.X, cirq.Y))
@@ -309,6 +313,25 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
             g_not_eq = cirq.FSimGate(theta=e_not_eq, phi=e_not_eq)
             self.assertTrue(util.gate_approx_eq(g_true, g_eq, atol=atol))
             self.assertFalse(util.gate_approx_eq(g_true, g_not_eq, atol=atol))
+
+        # Controlled gates
+        with self.assertRaisesRegex(
+                TypeError,
+                expected_regex="Both gates must be ControlledGates"):
+          _ = util.gate_approx_eq(
+              cirq.ops.ControlledGate(cirq.X, 2, [1, 0], [2, 2]), cirq.X)
+        self.assertFalse(util.gate_approx_eq(
+            cirq.ops.ControlledGate(cirq.X, 2, [1, 0], [2, 2]),
+            cirq.ops.ControlledGate(cirq.X, 2, [1, 1], [2, 2])))
+        self.assertFalse(util.gate_approx_eq(
+            cirq.ops.ControlledGate(cirq.X, 2, [1, 0], [2, 2]),
+            cirq.ops.ControlledGate(cirq.X, 2, [1, 0], [2, 1])))
+        self.assertFalse(util.gate_approx_eq(
+            cirq.ops.ControlledGate(cirq.X, 2, [1, 0], [2, 2]),
+            cirq.ops.ControlledGate(cirq.Y, 2, [1, 0], [2, 2])))
+        self.assertTrue(util.gate_approx_eq(
+            cirq.ops.ControlledGate(cirq.X, 2, [1, 0], [2, 2]),
+            cirq.ops.ControlledGate(cirq.X, 2, [1, 0], [2, 2])))
 
     def test_get_circuit_symbols(self):
         """Test that symbols can be extracted from circuits.
