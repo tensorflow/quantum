@@ -384,9 +384,9 @@ class InnerProductAdjGradTest(tf.test.TestCase, parameterized.TestCase):
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'Unparseable proto'):
             # circuit tensor has the right type but invalid values.
-            inner_product_op.inner_product_adj_grad(['junk'] * batch_size, symbol_names,
-                                           symbol_values_array,
-                                           util.convert_to_tensor(other_batch))
+            inner_product_op.inner_product_adj_grad(
+                ['junk'] * batch_size, symbol_names, symbol_values_array,
+                util.convert_to_tensor(other_batch))
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'Could not find symbol in parameter map'):
@@ -421,9 +421,9 @@ class InnerProductAdjGradTest(tf.test.TestCase, parameterized.TestCase):
 
         with self.assertRaisesRegex(TypeError, 'Cannot convert'):
             # circuits tensor has the wrong type.
-            inner_product_op.inner_product_adj_grad([1.0] * batch_size, symbol_names,
-                                           symbol_values_array,
-                                           util.convert_to_tensor(other_batch))
+            inner_product_op.inner_product_adj_grad(
+                [1.0] * batch_size, symbol_names, symbol_values_array,
+                util.convert_to_tensor(other_batch))
 
         with self.assertRaisesRegex(TypeError, 'Cannot convert'):
             # symbol_names tensor has the wrong type.
@@ -474,8 +474,8 @@ class InnerProductAdjGradTest(tf.test.TestCase, parameterized.TestCase):
                 util.convert_to_tensor(other_batch))
 
         with self.assertRaisesRegex(
-            tf.errors.InvalidArgumentError,
-            expected_regex='Found symbols in other_programs'):
+                tf.errors.InvalidArgumentError,
+                expected_regex='Found symbols in other_programs'):
             # other_programs has symbols.
             inner_product_op.inner_product_adj_grad(
                 util.convert_to_tensor(circuit_batch), symbol_names,
@@ -506,7 +506,7 @@ class InnerProductAdjGradTest(tf.test.TestCase, parameterized.TestCase):
         },
     ])
     def test_correctness_with_symbols(self, n_qubits, batch_size,
-        inner_dim_size):
+                                      inner_dim_size):
         """Test that inner_product works with symbols."""
         symbol_names = ['alpha', 'beta', 'gamma']
         n_params = len(symbol_names)
@@ -531,8 +531,10 @@ class InnerProductAdjGradTest(tf.test.TestCase, parameterized.TestCase):
                                                    dtype=tf.dtypes.string)
         symbol_values = tf.convert_to_tensor(symbol_values_array)
 
-        out = inner_product_op.inner_product_adj_grad(
-            programs, symbol_names_tensor, symbol_values, other_programs)
+        out = inner_product_op.inner_product_adj_grad(programs,
+                                                      symbol_names_tensor,
+                                                      symbol_values,
+                                                      other_programs)
 
         out_arr = np.empty((batch_size, inner_dim_size, n_params),
                            dtype=np.complex64)
@@ -541,11 +543,11 @@ class InnerProductAdjGradTest(tf.test.TestCase, parameterized.TestCase):
             for k, name in enumerate(symbol_names):
                 new_resolver = copy.deepcopy(resolver_batch[i])
                 new_resolver.param_dict[name] += dx
-                final_circuit_p = cirq.resolve_parameters(circuit_batch[i],
-                                                          new_resolver)
-                new_resolver.param_dict[name] -= 2*dx
-                final_circuit_m = cirq.resolve_parameters(circuit_batch[i],
-                                                          new_resolver)
+                final_circuit_p = cirq.resolve_parameters(
+                    circuit_batch[i], new_resolver)
+                new_resolver.param_dict[name] -= 2 * dx
+                final_circuit_m = cirq.resolve_parameters(
+                    circuit_batch[i], new_resolver)
                 final_wf_p = cirq.final_state_vector(final_circuit_p)
                 final_wf_m = cirq.final_state_vector(final_circuit_m)
                 final_wf_grad = (final_wf_p - final_wf_m) / 2.0 / dx
@@ -573,7 +575,7 @@ class InnerProductAdjGradTest(tf.test.TestCase, parameterized.TestCase):
         },
     ])
     def test_correctness_without_symbols(self, n_qubits, batch_size,
-        inner_dim_size):
+                                         inner_dim_size):
         """Test that inner_product_adj_grad works without symbols."""
         qubits = cirq.GridQubit.rect(1, n_qubits)
         circuit_batch, _ = \
@@ -589,7 +591,6 @@ class InnerProductAdjGradTest(tf.test.TestCase, parameterized.TestCase):
         other_programs = util.convert_to_tensor(other_batch)
         symbol_names = tf.convert_to_tensor([], dtype=tf.dtypes.string)
         symbol_values = tf.convert_to_tensor([[] for _ in range(batch_size)])
-
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'symbols must be a positive integer'):
@@ -608,6 +609,7 @@ class InnerProductAdjGradTest(tf.test.TestCase, parameterized.TestCase):
                                     'symbols must be a positive integer'):
             out = inner_product_op.inner_product_adj_grad(
                 empty_cicuit, empty_symbols, empty_values, other_program)
+
 
 if __name__ == "__main__":
     tf.test.main()

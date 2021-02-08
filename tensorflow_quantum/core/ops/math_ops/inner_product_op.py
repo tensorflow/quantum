@@ -21,7 +21,7 @@ MATH_OP_MODULE = load_module(os.path.join("math_ops", "_tfq_math_ops.so"))
 
 
 def inner_product_adj_grad(programs, symbol_names, symbol_values,
-    other_programs):
+                           other_programs):
     """Calculate the adjoint gradients of the inner product between circuits.
 
     Compute the gradients of the (potentially many) inner products between
@@ -152,6 +152,7 @@ def inner_product(programs, symbol_names, symbol_values, other_programs):
             to the inner product of `programs[i]` with `symbol_values[i]`
             resolved in and `other_programs[i][j]`.
     """
+
     def grad(dy):
         """Calculate the gradients of this inner_product op.
 
@@ -169,6 +170,7 @@ def inner_product(programs, symbol_names, symbol_values, other_programs):
             programs, symbol_names, tf.cast(symbol_values, tf.float32),
             other_programs)
         return tf.einsum("bos,bo->bos", inner_prod_grad, dy)
+
     return MATH_OP_MODULE.tfq_inner_product(programs, symbol_names,
                                             tf.cast(symbol_values, tf.float32),
                                             other_programs), grad
