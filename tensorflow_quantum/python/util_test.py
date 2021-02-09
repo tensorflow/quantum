@@ -351,22 +351,19 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
                 ValueError, expected_regex="`gate_true` not a valid TFQ gate"):
             _ = util.gate_approx_eq(
                 cirq.ops.ControlledGate(
-                        cirq.PhasedXZGate(x_exponent=1,
-                                          z_exponent=1,
-                                          axis_phase_exponent=1),
-                        2, [1, 0], [2, 2]),
-                cirq.ops.ControlledGate(cirq.X, 2, [1, 0], [2, 2]))
+                    cirq.PhasedXZGate(x_exponent=1,
+                                      z_exponent=1,
+                                      axis_phase_exponent=1), 2, [1, 0],
+                    [2, 2]), cirq.ops.ControlledGate(cirq.X, 2, [1, 0], [2, 2]))
         with self.assertRaisesRegex(
                 ValueError, expected_regex="`gate_deser` not a valid TFQ gate"):
             _ = util.gate_approx_eq(
                 cirq.ops.ControlledGate(cirq.X, 2, [1, 0], [2, 2]),
                 cirq.ops.ControlledGate(
-                        cirq.PhasedXZGate(x_exponent=1,
-                                          z_exponent=1,
-                                          axis_phase_exponent=1),
-                        2, [1, 0], [2, 2]))
-
-
+                    cirq.PhasedXZGate(x_exponent=1,
+                                      z_exponent=1,
+                                      axis_phase_exponent=1), 2, [1, 0],
+                    [2, 2]))
 
     def test_get_circuit_symbols(self):
         """Test that symbols can be extracted from circuits.
