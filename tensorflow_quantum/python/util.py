@@ -459,7 +459,7 @@ def gate_approx_eq(gate_true, gate_deser, atol=1e-5):
         raise TypeError(f"`gate_deser` not a cirq gate, got {type(gate_deser)}")
     if isinstance(gate_true, cirq.ControlledGate) != isinstance(
             gate_deser, cirq.ControlledGate):
-        raise TypeError("Both gates must be ControlledGates, or neither.")
+        return False
     if isinstance(gate_true, cirq.ControlledGate):
         if gate_true.control_qid_shape != gate_deser.control_qid_shape:
             return False
