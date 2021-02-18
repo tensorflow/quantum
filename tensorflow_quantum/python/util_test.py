@@ -191,6 +191,190 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
         with self.assertRaisesRegex(ValueError, expected_regex='not iterable'):
             list(util.kwargs_cartesian_product(a=[1, 2], b=-1))
 
+    def test_expression_approx_eq(self):
+        """Test that coefficients and symbols are compared correctly."""
+        # integers
+        a = 1
+        b = 1
+        c = 2
+        atol = 0.1
+        self.assertTrue(util._expression_approx_eq(a, b, atol))
+        self.assertFalse(util._expression_approx_eq(a, c, atol))
+        self.assertTrue(util._expression_approx_eq(a, c, 2.0))
+
+        # reals
+        a = 1.1234
+        b = 1.1231
+        c = 1.1220
+        atol = 5e-4
+        self.assertTrue(util._expression_approx_eq(a, b, atol))
+        self.assertFalse(util._expression_approx_eq(a, c, atol))
+        self.assertTrue(util._expression_approx_eq(a, c, 0.01))
+
+        # symbols
+        a = sympy.Symbol("s")
+        b = sympy.Symbol("s")
+        c = sympy.Symbol("s_wrong")
+        self.assertTrue(util._expression_approx_eq(a, b, atol))
+        self.assertFalse(util._expression_approx_eq(a, c, atol))
+
+        # number * symbol
+        a = 3.5 * sympy.Symbol("s")
+        b = 3.501 * sympy.Symbol("s")
+        c = 3.5 * sympy.Symbol("s_wrong")
+        atol = 1e-2
+        self.assertTrue(util._expression_approx_eq(a, b, atol))
+        self.assertFalse(util._expression_approx_eq(a, c, atol))
+        c = 3.6 * sympy.Symbol("s")
+        self.assertFalse(util._expression_approx_eq(a, c, atol))
+
+        # symbol * number
+        a = sympy.Symbol("s") * -1.7
+        b = sympy.Symbol("s") * -1.701
+        c = sympy.Symbol("s_wrong") * -1.7
+        atol = 1e-2
+        self.assertTrue(util._expression_approx_eq(a, b, atol))
+        self.assertFalse(util._expression_approx_eq(a, c, atol))
+        c = sympy.Symbol("s") * -1.8
+        self.assertFalse(util._expression_approx_eq(a, c, atol))
+
+        # other not equal
+        atol = 1e-3
+        self.assertFalse(util._expression_approx_eq(1, sympy.Symbol("s"), atol))
+        self.assertFalse(util._expression_approx_eq(sympy.Symbol("s"), 1, atol))
+
+    def test_expression_approx_eq_error(self):
+        """Confirms that bad inputs raise appropriate errors."""
+        # too complicated
+        a = sympy.Symbol("s_1") * sympy.Symbol("s_2")
+        b = 1.0 * a
+        with self.assertRaisesRegex(ValueError, expected_regex='not supported'):
+            _ = util._expression_approx_eq(a, a, 1e-3)
+        with self.assertRaisesRegex(ValueError, expected_regex='not supported'):
+            _ = util._expression_approx_eq(a, b, 1e-3)
+
+        # junk
+        with self.assertRaisesRegex(TypeError, expected_regex='Invalid input'):
+            _ = util._expression_approx_eq(1, 'junk', 1e-3)
+        with self.assertRaisesRegex(TypeError, expected_regex='Invalid input'):
+            _ = util._expression_approx_eq('junk', 1, 1e-3)
+        with self.assertRaisesRegex(TypeError,
+                                    expected_regex='atol must be a real'):
+            _ = util._expression_approx_eq(1, 1, 'junk')
+
+    def test_gate_approx_eq(self):
+        """Check valid TFQ gates for approximate equality."""
+        atol = 1e-2
+        exps_true = [
+            3, 2.54, -1.7 * sympy.Symbol("s_1"),
+            sympy.Symbol("s_2") * 4.3
+        ]
+        exps_eq = [
+            3, 2.542, -1.705 * sympy.Symbol("s_1"),
+            sympy.Symbol("s_2") * 4.305
+        ]
+        exps_not_eq = [
+            4, 2.57, -1.5 * sympy.Symbol("s_1"),
+            sympy.Symbol("s_2") * 4.4
+        ]
+
+        # Not a child class
+        self.assertFalse(util.gate_approx_eq(cirq.X, cirq.Y))
+
+        # Identity gate
+        self.assertTrue(util.gate_approx_eq(cirq.I, cirq.I))
+
+        # Parameterized gates
+        for e_true, e_eq, e_not_eq in zip(exps_true, exps_eq, exps_not_eq):
+            for g in serializer.EIGEN_GATES_DICT:
+                g_true = g(exponent=e_true, global_shift=e_eq)
+                g_eq = g(exponent=e_eq, global_shift=e_true)
+                g_not_eq = g(exponent=e_not_eq, global_shift=e_not_eq)
+                self.assertTrue(util.gate_approx_eq(g_true, g_eq, atol=atol))
+                self.assertFalse(
+                    util.gate_approx_eq(g_true, g_not_eq, atol=atol))
+            for g in serializer.PHASED_EIGEN_GATES_DICT:
+                g_true = g(exponent=e_true, phase_exponent=-1.0 * e_true)
+                g_eq = g(exponent=e_eq, phase_exponent=-1.0 * e_eq)
+                g_not_eq = g(exponent=e_not_eq, phase_exponent=-1.0 * e_not_eq)
+                self.assertTrue(util.gate_approx_eq(g_true, g_eq, atol=atol))
+                self.assertFalse(
+                    util.gate_approx_eq(g_true, g_not_eq, atol=atol))
+            g_true = cirq.FSimGate(theta=e_true, phi=e_eq)
+            g_eq = cirq.FSimGate(theta=e_eq, phi=e_true)
+            g_not_eq = cirq.FSimGate(theta=e_not_eq, phi=e_not_eq)
+            self.assertTrue(util.gate_approx_eq(g_true, g_eq, atol=atol))
+            self.assertFalse(util.gate_approx_eq(g_true, g_not_eq, atol=atol))
+
+        # Controlled gates
+        self.assertFalse(
+            util.gate_approx_eq(
+                cirq.ops.ControlledGate(cirq.X, 2, [1, 0], [2, 2]),
+                cirq.ops.ControlledGate(cirq.X, 2, [1, 1], [2, 2])))
+        self.assertFalse(
+            util.gate_approx_eq(
+                cirq.ops.ControlledGate(cirq.X, 2, [1, 0], [2, 2]),
+                cirq.ops.ControlledGate(cirq.X, 2, [1, 0], [2, 1])))
+        self.assertFalse(
+            util.gate_approx_eq(
+                cirq.ops.ControlledGate(cirq.X, 2, [1, 0], [2, 2]),
+                cirq.ops.ControlledGate(cirq.Y, 2, [1, 0], [2, 2])))
+        self.assertTrue(
+            util.gate_approx_eq(
+                cirq.ops.ControlledGate(cirq.X, 2, [1, 0], [2, 2]),
+                cirq.ops.ControlledGate(cirq.X, 2, [1, 0], [2, 2])))
+
+        # Mixed gates
+        self.assertFalse(
+            util.gate_approx_eq(
+                cirq.ops.ControlledGate(cirq.X, 2, [1, 0], [2, 2]), cirq.X))
+        self.assertFalse(
+            util.gate_approx_eq(
+                cirq.X, cirq.ops.ControlledGate(cirq.X, 2, [1, 0], [2, 2])))
+
+    def test_gate_approx_eq_error(self):
+        """Confirms that bad inputs cause an error to be raised."""
+        # junk
+        with self.assertRaisesRegex(TypeError,
+                                    expected_regex="`gate_true` not a cirq"):
+            _ = util.gate_approx_eq("junk", cirq.I)
+        with self.assertRaisesRegex(TypeError,
+                                    expected_regex="`gate_deser` not a cirq"):
+            _ = util.gate_approx_eq(cirq.I, "junk")
+
+        # Unsupported gates
+        with self.assertRaisesRegex(
+                ValueError, expected_regex="`gate_true` not a valid TFQ gate"):
+            _ = util.gate_approx_eq(
+                cirq.PhasedXZGate(x_exponent=1,
+                                  z_exponent=1,
+                                  axis_phase_exponent=1), cirq.I)
+        with self.assertRaisesRegex(
+                ValueError, expected_regex="`gate_deser` not a valid TFQ gate"):
+            _ = util.gate_approx_eq(
+                cirq.I,
+                cirq.PhasedXZGate(x_exponent=1,
+                                  z_exponent=1,
+                                  axis_phase_exponent=1))
+        # Unsupported gates inside a controlled gate
+        with self.assertRaisesRegex(
+                ValueError, expected_regex="`gate_true` not a valid TFQ gate"):
+            _ = util.gate_approx_eq(
+                cirq.ops.ControlledGate(
+                    cirq.PhasedXZGate(x_exponent=1,
+                                      z_exponent=1,
+                                      axis_phase_exponent=1), 2, [1, 0],
+                    [2, 2]), cirq.ops.ControlledGate(cirq.X, 2, [1, 0], [2, 2]))
+        with self.assertRaisesRegex(
+                ValueError, expected_regex="`gate_deser` not a valid TFQ gate"):
+            _ = util.gate_approx_eq(
+                cirq.ops.ControlledGate(cirq.X, 2, [1, 0], [2, 2]),
+                cirq.ops.ControlledGate(
+                    cirq.PhasedXZGate(x_exponent=1,
+                                      z_exponent=1,
+                                      axis_phase_exponent=1), 2, [1, 0],
+                    [2, 2]))
+
     def test_get_circuit_symbols(self):
         """Test that symbols can be extracted from circuits.
         This test will error out if get_supported_gates gets updated with new
