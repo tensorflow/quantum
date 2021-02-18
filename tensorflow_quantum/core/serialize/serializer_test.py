@@ -30,7 +30,7 @@ def _build_circuit_ops_proto(gate_id, arg_names, arg_vals, qubit_ids):
     program_proto.language.gate_set = 'tfq_gate_set'
 
     circuit_proto = program_proto.circuit
-    circuit_proto.scheduling_strategy = circuit_proto.MOMENT_BY_MOMENT  #'1'.
+    circuit_proto.scheduling_strategy = circuit_proto.MOMENT_BY_MOMENT
     circuit_proto.moments.add(operations=[program_pb2.Operation(
         gate = program_pb2.Gate(id=gate_id),
         args = {arg_names[i]: (program_pb2.Arg(symbol=arg_vals[i]) \
