@@ -61,8 +61,10 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
     def test_get_supported_gates(self):
         """Confirm one of every gate is returned."""
         mapping_1 = util.get_supported_gates()
-        self.assertEqual(len(mapping_1.keys()),
-                         len(serializer.SERIALIZER.supported_gate_types()))
+        self.assertEqual(
+            len(mapping_1.keys()),
+            len(serializer.SERIALIZER.supported_gate_types()) -
+            len(util._SUPPORTED_CHANNELS))
 
     @parameterized.parameters(_items_to_tensorize())
     def test_convert_to_tensor(self, item):

@@ -25,6 +25,30 @@ from tensorflow_quantum.core.proto import pauli_sum_pb2
 from tensorflow_quantum.core.serialize import serializer
 
 
+def _build_circuit_ops_proto(gate_id, arg_names, arg_vals, qubit_ids):
+    program_proto = program_pb2.Program()
+    program_proto.language.gate_set = 'tfq_gate_set'
+
+    circuit_proto = program_proto.circuit
+    circuit_proto.scheduling_strategy = circuit_proto.MOMENT_BY_MOMENT  #'1'.
+    circuit_proto.moments.add(operations=[program_pb2.Operation(
+        gate = program_pb2.Gate(id=gate_id),
+        args = {arg_names[i]: (program_pb2.Arg(symbol=arg_vals[i]) \
+        if isinstance(arg_vals[i], str) else \
+            program_pb2.Arg(
+                arg_value=cirq.google.api.v2.program_pb2.ArgValue(
+                    float_value=np.round(float(arg_vals[i]), 6)))) \
+                for i in range(len(arg_vals))},
+        qubits=[program_pb2.Qubit(
+            id=q_id) for q_id in qubit_ids])])
+    return program_proto
+
+
+def _build_channel_proto(gate_id, arg_names, arg_vals, qubit_ids):
+    """Helper function to generate proto for a given noise spec."""
+    return _build_circuit_ops_proto(gate_id, arg_names, arg_vals, qubit_ids)
+
+
 def _build_gate_proto(gate_id, arg_names, arg_vals, qubit_ids):
     """Helper function to generate proto for a given circuit spec.
 
@@ -80,22 +104,8 @@ def _build_gate_proto(gate_id, arg_names, arg_vals, qubit_ids):
       }
     }
     """
-
-    program_proto = program_pb2.Program()
-    program_proto.language.gate_set = 'tfq_gate_set'
-
-    circuit_proto = program_proto.circuit
-    circuit_proto.scheduling_strategy = circuit_proto.MOMENT_BY_MOMENT  #'1'.
-    circuit_proto.moments.add(operations=[program_pb2.Operation(
-        gate = program_pb2.Gate(id=gate_id),
-        args = {arg_names[i]: (program_pb2.Arg(symbol=arg_vals[i]) \
-        if isinstance(arg_vals[i], str) else \
-            program_pb2.Arg(
-                arg_value=cirq.google.api.v2.program_pb2.ArgValue(
-                    float_value=np.round(float(arg_vals[i]), 6)))) \
-                for i in range(len(arg_vals))},
-        qubits=[program_pb2.Qubit(
-            id=q_id) for q_id in qubit_ids])])
+    program_proto = _build_circuit_ops_proto(gate_id, arg_names, arg_vals,
+                                             qubit_ids)
 
     # Add in empty control information
     t = program_proto.circuit.moments[0].operations[0]
@@ -451,6 +461,17 @@ def _get_valid_pauli_proto_pairs():
     return pairs
 
 
+def _get_noise_proto_pairs():
+    q0 = cirq.GridQubit(0, 0)
+
+    pairs = [
+        # Depolarization.
+        (cirq.Circuit(cirq.depolarize(p=0.3)(q0)),
+         _build_channel_proto("DP", ['p'], [0.3], ['0_0'])),
+    ]
+    return pairs
+
+
 def _build_pauli_proto(coefs, ops, qubit_ids):
     """Construct pauli_sum proto explicitly."""
     terms = []
@@ -471,19 +492,21 @@ def _build_pauli_proto(coefs, ops, qubit_ids):
 class SerializerTest(tf.test.TestCase, parameterized.TestCase):
     """Tests basic serializer functionality"""
 
-    @parameterized.parameters([{
-        'circ_proto_pair': v
-    } for v in _get_controlled_circuit_proto_pairs() +
-                               _get_circuit_proto_pairs()])
+    @parameterized.parameters(
+        [{
+            'circ_proto_pair': v
+        } for v in _get_controlled_circuit_proto_pairs() +
+         _get_circuit_proto_pairs() + _get_noise_proto_pairs()])
     def test_serialize_circuit_valid(self, circ_proto_pair):
         """Test conversion of cirq Circuits to tfq_gate_set proto."""
         self.assertProtoEquals(serializer.serialize_circuit(circ_proto_pair[0]),
                                circ_proto_pair[1])
 
-    @parameterized.parameters([{
-        'circ_proto_pair': v
-    } for v in _get_controlled_circuit_proto_pairs() +
-                               _get_circuit_proto_pairs()])
+    @parameterized.parameters(
+        [{
+            'circ_proto_pair': v
+        } for v in _get_controlled_circuit_proto_pairs() +
+         _get_circuit_proto_pairs() + _get_noise_proto_pairs()])
     def test_deserialize_circuit_valid(self, circ_proto_pair):
         """Test deserialization of protos in tfq_gate_set."""
 
@@ -493,10 +516,11 @@ class SerializerTest(tf.test.TestCase, parameterized.TestCase):
         self.assertEqual(circ_proto_pair[0],
                          serializer.deserialize_circuit(circ_proto_pair[1]))
 
-    @parameterized.parameters([{
-        'circ_proto_pair': v
-    } for v in _get_controlled_circuit_proto_pairs() +
-                               _get_circuit_proto_pairs()])
+    @parameterized.parameters(
+        [{
+            'circ_proto_pair': v
+        } for v in _get_controlled_circuit_proto_pairs() +
+         _get_circuit_proto_pairs() + _get_noise_proto_pairs()])
     def test_serialize_deserialize_circuit_consistency(self, circ_proto_pair):
         """Ensure that serializing followed by deserializing works."""
 
@@ -565,7 +589,7 @@ class SerializerTest(tf.test.TestCase, parameterized.TestCase):
                 serializer.serialize_circuit(gate_with_param)).unitary())
 
     def test_serialize_circuit_unsupported_value(self):
-        """Ensure we error on unsupported arithmetic expressions."""
+        """Ensure we error on unsupported arithmetic expressions and qubits."""
         q0 = cirq.GridQubit(0, 0)
         unsupported_circuit = cirq.Circuit(
             cirq.HPowGate()(q0)**(sympy.Symbol('alpha') + 1))
@@ -583,8 +607,19 @@ class SerializerTest(tf.test.TestCase, parameterized.TestCase):
         """Ensure serializing invalid controlled gates fails gracefully."""
         qubits = cirq.GridQubit.rect(1, 2)
         bad_qubit = cirq.LineQubit(5)
-        simple_circuit = cirq.Circuit(
+        invalid_control = cirq.Circuit(
             cirq.H(qubits[0]).controlled_by(qubits[1], bad_qubit))
+        invalid_symbol = cirq.Circuit((cirq.HPowGate()(
+            qubits[0])**(sympy.Symbol('alpha') + 1)).controlled_by(qubits[1]))
+        with self.assertRaises(ValueError):
+            serializer.serialize_circuit(invalid_control)
+        with self.assertRaises(ValueError):
+            serializer.serialize_circuit(invalid_symbol)
+
+    def test_serialize_noise_channel_unsupported_value(self):
+        """Ensure serializing invalid channels fails gracefully."""
+        qubit = cirq.LineQubit(5)
+        simple_circuit = cirq.Circuit(cirq.depolarize(0.3)(qubit))
         with self.assertRaises(ValueError):
             serializer.serialize_circuit(simple_circuit)
 

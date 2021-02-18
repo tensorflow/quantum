@@ -24,6 +24,8 @@ import cirq
 from tensorflow_quantum.core.proto import pauli_sum_pb2
 from tensorflow_quantum.core.serialize import serializer
 
+_SUPPORTED_CHANNELS = [cirq.DepolarizingChannel]
+
 
 def get_supported_gates():
     """A helper to get the gates supported by tfq.
@@ -35,7 +37,9 @@ def get_supported_gates():
     `controlled_by` function for multi qubit control are also
     supported.
     """
-    supported_gates = serializer.SERIALIZER.supported_gate_types()
+    supported_ops = serializer.SERIALIZER.supported_gate_types()
+    supported_gates = filter(lambda x: x not in _SUPPORTED_CHANNELS,
+                             supported_ops)
     gate_arity_mapping_dict = dict()
     for gate in supported_gates:
         if gate is cirq.IdentityGate:

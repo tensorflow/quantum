@@ -154,6 +154,32 @@ def _optional_control_promote(gate, qubits_message, values_message):
     return DelayedAssignmentGate(gate, qbs, vals)
 
 
+def _depolarize_channel_serializer():
+    args = [
+        # cirq channels can't contain symbols.
+        cirq.google.SerializingArg(serialized_name="p",
+                                   serialized_type=float,
+                                   op_getter=lambda x: x.gate.p)
+    ]
+    return cirq.google.GateOpSerializer(gate_type=cirq.DepolarizingChannel,
+                                        serialized_gate_id="DP",
+                                        args=args,
+                                        can_serialize_predicate=_CONSTANT_TRUE)
+
+
+def _depolarize_channel_deserializer():
+    """Make standard deserializer for fsim gate."""
+
+    args = [
+        cirq.google.DeserializingArg(serialized_name="p",
+                                     constructor_arg_name="p")
+    ]
+    return cirq.google.GateOpDeserializer(
+        serialized_gate_id="DP",
+        gate_constructor=cirq.DepolarizingChannel,
+        args=args)
+
+
 def _eigen_gate_serializer(gate_type, serialized_id):
     """Make standard serializer for eigen gates."""
 
@@ -455,7 +481,7 @@ SERIALIZERS = [
 ] + [
     _phased_eigen_gate_serializer(g, g_name)
     for g, g_name in PHASED_EIGEN_GATES_DICT.items()
-]
+] + [_depolarize_channel_serializer()]
 
 DESERIALIZERS = [
     _eigen_gate_deserializer(g, g_name)
@@ -467,7 +493,7 @@ DESERIALIZERS = [
 ] + [
     _phased_eigen_gate_deserializer(g, g_name)
     for g, g_name in PHASED_EIGEN_GATES_DICT.items()
-]
+] + [_depolarize_channel_deserializer()]
 
 SERIALIZER = cirq.google.SerializableGateSet(gate_set_name="tfq_gate_set",
                                              serializers=SERIALIZERS,
