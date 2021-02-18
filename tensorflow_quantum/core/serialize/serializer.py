@@ -155,6 +155,8 @@ def _optional_control_promote(gate, qubits_message, values_message):
 
 
 def _depolarize_channel_serializer():
+    """Make standard serializer for depolarization channel."""
+
     args = [
         # cirq channels can't contain symbols.
         cirq.google.SerializingArg(serialized_name="p",
@@ -168,7 +170,7 @@ def _depolarize_channel_serializer():
 
 
 def _depolarize_channel_deserializer():
-    """Make standard deserializer for fsim gate."""
+    """Make standard deserializer for depolarization channel."""
 
     args = [
         cirq.google.DeserializingArg(serialized_name="p",
