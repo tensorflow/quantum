@@ -26,6 +26,9 @@ import cirq
 from tensorflow_quantum.core.proto import pauli_sum_pb2
 from tensorflow_quantum.core.serialize import serializer
 
+# Can't use set() since channels don't give proper support.
+_SUPPORTED_CHANNELS = [cirq.DepolarizingChannel]
+
 
 def get_supported_gates():
     """A helper to get the gates supported by tfq.
@@ -37,7 +40,9 @@ def get_supported_gates():
     `controlled_by` function for multi qubit control are also
     supported.
     """
-    supported_gates = serializer.SERIALIZER.supported_gate_types()
+    supported_ops = serializer.SERIALIZER.supported_gate_types()
+    supported_gates = filter(lambda x: x not in _SUPPORTED_CHANNELS,
+                             supported_ops)
     gate_arity_mapping_dict = dict()
     for gate in supported_gates:
         if gate is cirq.IdentityGate:
@@ -54,6 +59,23 @@ def get_supported_gates():
             g_num_qubits = gate().num_qubits()
         gate_arity_mapping_dict[g] = g_num_qubits
     return gate_arity_mapping_dict
+
+
+def get_supported_channels():
+    """Get the channels that are supported in TFQ.
+
+    Returns a dictionary mapping from supported channel types
+    to number of qubits.
+    """
+    supported_ops = serializer.SERIALIZER.supported_gate_types()
+    supported_channels = filter(lambda x: x in _SUPPORTED_CHANNELS,
+                                supported_ops)
+    channel_arity_mapping_dict = dict()
+    for chan in supported_channels:
+        # For now all channels are single qubit.
+        if chan == cirq.DepolarizingChannel:
+            channel_arity_mapping_dict[chan(0.01)] = 1
+    return channel_arity_mapping_dict
 
 
 def _apply_random_control(gate, all_qubits):
