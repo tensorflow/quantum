@@ -42,6 +42,7 @@ def test_imports():
     _ = tfq.get_quantum_concurrent_op_mode
     _ = tfq.from_tensor
     _ = tfq.set_quantum_concurrent_op_mode
+    _ = tfq.util.get_supported_channels
     _ = tfq.util.get_supported_gates
     _ = tfq.util.exponential
 

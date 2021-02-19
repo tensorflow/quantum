@@ -72,45 +72,23 @@ while [[ "$TF_CUDA_VERSION" == "" ]]; do
 done
 
 
-# CPU
-if [[ "$TF_NEED_CUDA" == "0" ]]; then
-
-  # Check if it's installed
-  if [[ $(pip show tensorflow-cpu) == *tensorflow-cpu* ]] || [[ $(pip show tf-nightly-cpu) == *tf-nightly-cpu* ]] ; then
-    echo 'Using installed tensorflow'
-  else
-    # Uninstall GPU version if it is installed.
-    if [[ $(pip show tensorflow) == *tensorflow* ]]; then
-      echo 'Already have gpu version of tensorflow installed. Uninstalling......\n'
-      pip uninstall tensorflow
-    elif [[ $(pip show tf-nightly) == *tf-nightly* ]]; then
-      echo 'Already have gpu version of tensorflow installed. Uninstalling......\n'
-      pip uninstall tf-nightly
-    fi
-    # Install CPU version
-    echo 'Installing tensorflow-cpu......\n'
-    pip install tensorflow-cpu
-  fi
-
+# Check if it's installed
+if [[ $(pip show tensorflow) == *tensorflow* ]] || [[ $(pip show tf-nightly) == *tf-nightly* ]]; then
+  echo 'Using installed tensorflow'
 else
-
-  # Check if it's installed
-   if [[ $(pip show tensorflow) == *tensorflow* ]] || [[ $(pip show tf-nightly) == *tf-nightly* ]]; then
-    echo 'Using installed tensorflow'
-  else
-    # Uninstall CPU version if it is installed.
-    if [[ $(pip show tensorflow-cpu) == *tensorflow-cpu* ]]; then
-      echo 'Already have tensorflow non-gpu installed. Uninstalling......\n'
-      pip uninstall tensorflow
-    elif [[ $(pip show tf-nightly-cpu) == *tf-nightly-cpu* ]]; then
-      echo 'Already have tensorflow non-gpu installed. Uninstalling......\n'
-      pip uninstall tf-nightly
-    fi
-    # Install GPU version
-    echo 'Installing tensorflow .....\n'
-    pip install tensorflow
+  # Uninstall CPU version if it is installed.
+  if [[ $(pip show tensorflow-cpu) == *tensorflow-cpu* ]]; then
+    echo 'Already have tensorflow non-gpu installed. Uninstalling......\n'
+    pip uninstall tensorflow
+  elif [[ $(pip show tf-nightly-cpu) == *tf-nightly-cpu* ]]; then
+    echo 'Already have tensorflow non-gpu installed. Uninstalling......\n'
+    pip uninstall tf-nightly
   fi
+  # Install GPU version
+  echo 'Installing tensorflow .....\n'
+  pip install tensorflow
 fi
+
 
 
 TF_CFLAGS=( $(python -c 'import tensorflow as tf; print(" ".join(tf.sysconfig.get_compile_flags()))') )
