@@ -461,8 +461,8 @@ class CirqSamplesTest(tf.test.TestCase, parameterized.TestCase):
         circuits = []
         for n_qubits in all_n_qubits:
             circuits.append(
-                cirq.Circuit(*cirq.X.on_each(
-                    *cirq.GridQubit.rect(1, n_qubits))))
+                cirq.Circuit(
+                    *cirq.X.on_each(*cirq.GridQubit.rect(1, n_qubits))))
         test_results = this_op(util.convert_to_tensor(circuits), [],
                                [[]] * len(circuits), [n_samples]).numpy()
 
