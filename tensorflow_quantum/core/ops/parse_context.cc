@@ -234,7 +234,7 @@ tensorflow::Status GetProgramsAndNumQubits(
   };
 
   // TODO(mbbrough): Determine if this is a good cycle estimate.
-  const int cycle_estimate = 1000 * (*other_programs)[0].size();
+  const int cycle_estimate = 1000;
   context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
       num_qubits->size(), cycle_estimate, DoWork);
 

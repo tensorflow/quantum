@@ -94,6 +94,7 @@ class Adjoint(differentiator.Differentiator):
             "Adjoint differentiator cannot run on a real QPU, "
             "therefore it has no accessible gradient circuits.")
 
+    @differentiator.catch_empty_inputs
     @tf.function
     def differentiate_analytic(self, programs, symbol_names, symbol_values,
                                pauli_sums, forward_pass_vals, grad):

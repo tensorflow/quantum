@@ -15,8 +15,32 @@
 """Testing consistency in values across differentiation methods."""
 import abc
 import inspect
+import functools
 
 import tensorflow as tf
+
+
+def catch_empty_inputs(func):
+    """Helper function for differentiators to correctly handle empty cases.
+
+    Adds support to decorated function for the case when `programs` or
+    `symbol_values` is empty which requires output to be
+    `tf.zeros_like(symbol_values)`.
+    """
+
+    @functools.wraps(func)
+    def new_diff(*args, **kwargs):
+        # args[1] is programs. args[3] is symbol_values
+        programs = args[1]
+        symbol_values = args[3]
+        empty_args = tf.equal(tf.size(programs), 0)
+        empty_vals = tf.equal(tf.size(symbol_values), 0)
+
+        ret_zero = tf.logical_or(empty_args, empty_vals)
+        return tf.cond(ret_zero, lambda: tf.zeros_like(symbol_values),
+                       lambda: func(*args, **kwargs))
+
+    return new_diff
 
 
 class Differentiator(metaclass=abc.ABCMeta):

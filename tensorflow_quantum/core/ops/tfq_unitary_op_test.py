@@ -136,6 +136,15 @@ class UnitaryTest(tf.test.TestCase, parameterized.TestCase):
 
         self.assertAllClose(tfq_empty_u, [empty_u], atol=1e-5)  # wrap in batch.
 
+    def test_calculate_unitary_no_circuit(self):
+        """Ensure calculate_unitary is consistent with no circuits."""
+        unitary_op = tfq_unitary_op.get_unitary_op()
+        no_circuit = tf.raw_ops.Empty(shape=(0,), dtype=tf.string)
+        empty_values = tf.raw_ops.Empty(shape=(0, 0), dtype=tf.float32)
+        tfq_empty_u = unitary_op(no_circuit, [], empty_values)
+        expected_shape = tf.TensorShape([0, None, None])
+        self.assertEqual(tfq_empty_u.shape.as_list(), expected_shape.as_list())
+
     @parameterized.parameters([{
         'n_qubits': 6,
         'unitary_op': tfq_unitary_op.get_unitary_op(True)

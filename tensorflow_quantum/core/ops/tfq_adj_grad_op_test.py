@@ -233,6 +233,17 @@ class ADJGradTest(tf.test.TestCase, parameterized.TestCase):
             tf.convert_to_tensor([[]]))
         self.assertShapeEqual(np.zeros((1, 0)), out)
 
+    def test_calculate_adj_grad_no_circuit(self):
+        """Verify that the no circuit case is handled gracefully."""
+        out = tfq_adj_grad_op.tfq_adj_grad(
+            tf.raw_ops.Empty(shape=(0,), dtype=tf.string),
+            tf.raw_ops.Empty(shape=(0,), dtype=tf.string),
+            tf.raw_ops.Empty(shape=(0, 0), dtype=tf.float32),
+            tf.raw_ops.Empty(shape=(0, 0), dtype=tf.string),
+            tf.raw_ops.Empty(shape=(0, 0), dtype=tf.float32),
+        )
+        self.assertShapeEqual(np.zeros((0, 0)), out)
+
     def test_calculate_adj_grad_simple_case(self):
         """Make sure that adjoint gradient works on simple input case."""
         n_qubits = 2

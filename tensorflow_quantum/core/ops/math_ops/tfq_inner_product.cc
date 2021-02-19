@@ -48,6 +48,7 @@ class TfqInnerProductOp : public tensorflow::OpKernel {
 
   void Compute(tensorflow::OpKernelContext* context) override {
     // TODO (mbbrough): add more dimension checks for other inputs here.
+    std::cout << "MADE IT HERE!!!" << std::endl;
     const int num_inputs = context->num_inputs();
     OP_REQUIRES(context, num_inputs == 4,
                 tensorflow::errors::InvalidArgument(absl::StrCat(
@@ -64,6 +65,7 @@ class TfqInnerProductOp : public tensorflow::OpKernel {
     OP_REQUIRES_OK(context, context->allocate_output(0, output_shape, &output));
     auto output_tensor = output->matrix<std::complex<float>>();
 
+    std::cout << "MADE IT HERE2!!!" << std::endl;
     // Parse program protos.
     std::vector<Program> programs;
     std::vector<int> num_qubits;
@@ -129,6 +131,8 @@ class TfqInnerProductOp : public tensorflow::OpKernel {
     for (const int num : num_qubits) {
       max_num_qubits = std::max(max_num_qubits, num);
     }
+
+    std::cout << "MADE IT HERE!!!" << std::endl;
 
     // Cross reference with standard google cloud compute instances
     // Memory ~= 2 * num_threads * (2 * 64 * 2 ** num_qubits in circuits)

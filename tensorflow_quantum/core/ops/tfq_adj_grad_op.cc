@@ -124,11 +124,11 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
                     " circuits.")));
 
     OP_REQUIRES(
-        context, downstream_grads[0].size() == pauli_sums[0].size(),
+        context, context->input(4).dim_size(1) == context->input(3).dim_size(1),
         tensorflow::errors::InvalidArgument(absl::StrCat(
             "Number of gradients and pauli sum dimension do not match. Got ",
-            downstream_grads[0].size(), " gradient entries and ",
-            pauli_sums[0].size(), " paulis per circuit.")));
+            context->input(4).dim_size(1), " gradient entries and ",
+            context->input(3).dim_size(1), " paulis per circuit.")));
 
     int max_num_qubits = 0;
     for (const int num : num_qubits) {

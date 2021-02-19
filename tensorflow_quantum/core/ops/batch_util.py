@@ -341,6 +341,11 @@ def _validate_inputs(circuits, param_resolvers, simulator, sim_type):
         raise ValueError('Invalid simulator type specified.')
 
 
+def _check_empty(circuits):
+    """Returns true if circuits is the empty tensor."""
+    return len(circuits) == 0
+
+
 def batch_calculate_state(circuits, param_resolvers, simulator):
     """Compute states using a given simulator using parallel processing.
 
@@ -369,6 +374,11 @@ def batch_calculate_state(circuits, param_resolvers, simulator):
          [len(circuits), <size of biggest state>, <size of biggest state>]
     """
     _validate_inputs(circuits, param_resolvers, simulator, 'analytic')
+    if _check_empty(circuits):
+        empty_ret = np.zeros((0, 0), dtype=np.complex64)
+        if isinstance(simulator, cirq.DensityMatrixSimulator):
+            empty_ret = np.zeros((0, 0, 0), dtype=np.complex64)
+        return empty_ret
 
     biggest_circuit = max(len(circuit.all_qubits()) for circuit in circuits)
     if isinstance(simulator, cirq.DensityMatrixSimulator):
@@ -423,6 +433,9 @@ def batch_calculate_expectation(circuits, param_resolvers, ops, simulator):
             [len(circuits), len(ops[0])]
     """
     _validate_inputs(circuits, param_resolvers, simulator, 'analytic')
+    if _check_empty(circuits):
+        return np.zeros((0, 0), dtype=np.float32)
+
     if not isinstance(ops, (list, tuple, np.ndarray)):
         raise TypeError('ops must be a list or array.'
                         ' Given: {}'.format(type(ops)))
@@ -513,6 +526,9 @@ def batch_calculate_sampled_expectation(circuits, param_resolvers, ops,
             [len(circuits), len(ops[0])]
     """
     _validate_inputs(circuits, param_resolvers, simulator, 'sample')
+    if _check_empty(circuits):
+        return np.zeros((0, 0), dtype=np.float32)
+
     if not isinstance(ops, (list, tuple, np.ndarray)):
         raise TypeError('ops must be a list or array.'
                         ' Given: {}'.format(type(ops)))
@@ -602,6 +618,9 @@ def batch_sample(circuits, param_resolvers, n_samples, simulator):
         qubits in bitstrings mapped to -2.
     """
     _validate_inputs(circuits, param_resolvers, simulator, 'sample')
+    if _check_empty(circuits):
+        return np.zeros((0, 0, 0), dtype=np.int32)
+
     if not isinstance(n_samples, int):
         raise TypeError('n_samples must be an int.'
                         'Given: {}'.format(type(n_samples)))
