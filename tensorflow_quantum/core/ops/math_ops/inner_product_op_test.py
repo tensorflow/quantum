@@ -315,7 +315,6 @@ class InnerProductTest(tf.test.TestCase, parameterized.TestCase):
     def test_correctness_no_circuit(self):
         """Test the inner product between no circuits."""
 
-        # empty_cicuit = util.convert_to_tensor([cirq.Circuit()])
         empty_circuit = tf.raw_ops.Empty(shape=(0,), dtype=tf.string)
         empty_symbols = tf.raw_ops.Empty(shape=(0,), dtype=tf.string)
         empty_values = tf.raw_ops.Empty(shape=(0, 0), dtype=tf.float32)
