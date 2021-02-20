@@ -62,6 +62,7 @@ class ParameterShift(differentiator.Differentiator):
             "Gradient circuits are not currently available for "
             "ParameterShift.")
 
+    @differentiator.catch_empty_inputs
     @tf.function
     def differentiate_analytic(self, programs, symbol_names, symbol_values,
                                pauli_sums, forward_pass_vals, grad):
@@ -201,6 +202,7 @@ class ParameterShift(differentiator.Differentiator):
         # now apply the chain rule
         return tf.einsum('sco,co -> cs', partials, grad)
 
+    @differentiator.catch_empty_inputs
     @tf.function
     def differentiate_sampled(self, programs, symbol_names, symbol_values,
                               pauli_sums, num_samples, forward_pass_vals, grad):

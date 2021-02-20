@@ -235,6 +235,33 @@ class AnalyticGradientCorrectnessTest(tf.test.TestCase, parameterized.TestCase):
         ground_truth_grads = np.array([[-1.1839752]])
         self.assertAllClose(ground_truth_grads, grads, rtol=1e-2, atol=1e-2)
 
+    @parameterized.parameters(
+        list(
+            util.kwargs_cartesian_product(**{
+                'differentiator': ANALYTIC_DIFFS,
+                'op': ANALYTIC_OPS,
+            })) + [{
+                'differentiator': adjoint.Adjoint(),
+                'op': circuit_execution_ops.get_expectation_op(),
+            }])
+    def test_empty_circuit_grad(self, differentiator, op):
+        """Test that providing no circuits will fail gracefully."""
+        differentiator.refresh()
+        op = differentiator.generate_differentiable_op(analytic_op=op)
+        circuit = tf.convert_to_tensor([], dtype=tf.string)
+        psums = tf.raw_ops.Empty(shape=(0, 0), dtype=tf.string)
+
+        # Calculate tfq gradient.
+        symbol_values_tensor = tf.raw_ops.Empty(shape=(0, 0), dtype=tf.float32)
+        symbol_names_tensor = tf.convert_to_tensor([], dtype=tf.string)
+        with tf.GradientTape() as g:
+            g.watch(symbol_values_tensor)
+            expectations = op(circuit, symbol_names_tensor,
+                              symbol_values_tensor, psums)
+        grads = g.gradient(expectations, symbol_values_tensor)
+        self.assertShapeEqual(grads.numpy(),
+                              tf.raw_ops.Empty(shape=(0, 0), dtype=tf.float32))
+
 
 class SampledGradientCorrectnessTest(tf.test.TestCase, parameterized.TestCase):
     """Test approximate correctness to analytical methods."""
@@ -326,6 +353,31 @@ class SampledGradientCorrectnessTest(tf.test.TestCase, parameterized.TestCase):
                                                     symbol_names, psums)
 
         self.assertAllClose(cirq_grads, tfq_grads, rtol=tol, atol=tol)
+
+    @parameterized.parameters(
+        list(
+            util.kwargs_cartesian_product(**{
+                'differentiator': SAMPLED_DIFFS,
+                'op': SAMPLED_OPS,
+            })))
+    def test_empty_circuit_sampled_grad(self, differentiator, op):
+        """Test that providing no circuits will fail gracefully."""
+        differentiator.refresh()
+        op = differentiator.generate_differentiable_op(sampled_op=op)
+        circuit = tf.convert_to_tensor([], dtype=tf.string)
+        psums = tf.raw_ops.Empty(shape=(0, 0), dtype=tf.string)
+
+        # Calculate tfq gradient.
+        symbol_values_tensor = tf.raw_ops.Empty(shape=(0, 0), dtype=tf.float32)
+        symbol_names_tensor = tf.convert_to_tensor([], dtype=tf.string)
+        n_samples_tensor = tf.raw_ops.Empty(shape=(0, 0), dtype=tf.int32)
+        with tf.GradientTape() as g:
+            g.watch(symbol_values_tensor)
+            expectations = op(circuit, symbol_names_tensor,
+                              symbol_values_tensor, psums, n_samples_tensor)
+        grads = g.gradient(expectations, symbol_values_tensor)
+        self.assertShapeEqual(grads.numpy(),
+                              tf.raw_ops.Empty(shape=(0, 0), dtype=tf.float32))
 
 
 if __name__ == '__main__':
