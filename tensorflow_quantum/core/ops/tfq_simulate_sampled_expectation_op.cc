@@ -90,11 +90,11 @@ class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
                     pauli_sums.size(), " lists of pauli sums.")));
 
     OP_REQUIRES(
-        context, num_samples[0].size() == pauli_sums[0].size(),
+        context, context->input(4).dim_size(1) == context->input(3).dim_size(1),
         tensorflow::errors::InvalidArgument(absl::StrCat(
             "Dimension 1 of num_samples and pauli_sums do not match.", "Got ",
-            num_samples[0].size(), " lists of sample sizes and ",
-            pauli_sums[0].size(), " lists of pauli sums.")));
+            context->input(4).dim_size(1), " lists of sample sizes and ",
+            context->input(3).dim_size(1), " lists of pauli sums.")));
 
     // Construct qsim circuits.
     std::vector<QsimCircuit> qsim_circuits(programs.size(), QsimCircuit());

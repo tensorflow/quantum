@@ -313,6 +313,23 @@ class ExecutionOpsConsistentyTest(tf.test.TestCase, parameterized.TestCase):
 
     @parameterized.parameters(
         list(
+            util.kwargs_cartesian_product(**{
+                'op_and_sim': [(op, sim) for (op, sim) in zip(STATE_OPS, SIMS)]
+            })))
+    def test_simulate_state_no_circuits(self, op_and_sim):
+        """Test no circuits for states using cirq and tfq."""
+        op = op_and_sim[0]
+        sim = op_and_sim[1]
+
+        circuit_batch = tf.raw_ops.Empty(shape=(0,), dtype=tf.string)
+        empty_params = tf.raw_ops.Empty(shape=(0, 0), dtype=tf.float32)
+
+        op_states = op(circuit_batch, [], empty_params).numpy()
+        cirq_states = batch_util.batch_calculate_state([], [], sim)
+        self.assertEqual(op_states.shape, cirq_states.shape)
+
+    @parameterized.parameters(
+        list(
             util.kwargs_cartesian_product(
                 **{
                     'op_and_sim': [(op, sim)
@@ -391,6 +408,26 @@ class ExecutionOpsConsistentyTest(tf.test.TestCase, parameterized.TestCase):
                             cirq_expectations.flatten(),
                             rtol=1e-5,
                             atol=1e-5)
+
+    @parameterized.parameters(
+        list(
+            util.kwargs_cartesian_product(
+                **{
+                    'op_and_sim': [(op, sim)
+                                   for (op, sim) in zip(EXPECTATION_OPS, SIMS)]
+                })))
+    def test_analytical_expectation_no_circuits(self, op_and_sim):
+        """Test no circuits for states using cirq and tfq."""
+        op = op_and_sim[0]
+        sim = op_and_sim[1]
+
+        circuit_batch = tf.raw_ops.Empty(shape=(0,), dtype=tf.string)
+        empty_params = tf.raw_ops.Empty(shape=(0, 0), dtype=tf.float32)
+        empty_ops = tf.raw_ops.Empty(shape=(0, 0), dtype=tf.string)
+
+        op_exp = op(circuit_batch, [], empty_params, empty_ops).numpy()
+        cirq_exp = batch_util.batch_calculate_expectation([], [], [[]], sim)
+        self.assertEqual(op_exp.shape, cirq_exp.shape)
 
     @parameterized.parameters(
         list(
@@ -478,6 +515,29 @@ class ExecutionOpsConsistentyTest(tf.test.TestCase, parameterized.TestCase):
                             cirq_expectations.flatten(),
                             rtol=1e-1,
                             atol=1e-1)
+
+    @parameterized.parameters(
+        list(
+            util.kwargs_cartesian_product(
+                **{
+                    'op_and_sim': [(op, sim) for (
+                        op, sim) in zip(SAMPLED_EXPECTATION_OPS, SIMS)]
+                })))
+    def test_sampled_expectation_no_circuits(self, op_and_sim):
+        """Test no circuits for states using cirq and tfq."""
+        op = op_and_sim[0]
+        sim = op_and_sim[1]
+
+        circuit_batch = tf.raw_ops.Empty(shape=(0,), dtype=tf.string)
+        empty_params = tf.raw_ops.Empty(shape=(0, 0), dtype=tf.float32)
+        empty_ops = tf.raw_ops.Empty(shape=(0, 0), dtype=tf.string)
+        empty_samples = tf.raw_ops.Empty(shape=(0, 0), dtype=tf.int32)
+
+        op_exp = op(circuit_batch, [], empty_params, empty_ops,
+                    empty_samples).numpy()
+        cirq_exp = batch_util.batch_calculate_sampled_expectation([], [], [[]],
+                                                                  [], sim)
+        self.assertEqual(op_exp.shape, cirq_exp.shape)
 
     # keep the qubit count low here, all computations scale exponentially
     @parameterized.parameters(
@@ -578,6 +638,24 @@ class ExecutionOpsConsistentyTest(tf.test.TestCase, parameterized.TestCase):
 
         for a, b in zip(op_histograms, cirq_histograms):
             self.assertLess(stats.entropy(a + 1e-8, b + 1e-8), 0.005)
+
+    @parameterized.parameters(
+        list(
+            util.kwargs_cartesian_product(**{
+                'op_and_sim': [(op, sim)
+                               for (op, sim) in zip(SAMPLING_OPS, SIMS)]
+            })))
+    def test_sampling_no_circuits(self, op_and_sim):
+        """Test no circuits for states using cirq and tfq."""
+        op = op_and_sim[0]
+        sim = op_and_sim[1]
+
+        circuit_batch = tf.raw_ops.Empty(shape=(0,), dtype=tf.string)
+        empty_params = tf.raw_ops.Empty(shape=(0, 0), dtype=tf.float32)
+        num_samples = tf.convert_to_tensor([5])
+        op_states = op(circuit_batch, [], empty_params, num_samples).numpy()
+        cirq_samples = batch_util.batch_sample([], [], [5], sim)
+        self.assertEqual(op_states.shape, cirq_samples.shape)
 
 
 if __name__ == '__main__':

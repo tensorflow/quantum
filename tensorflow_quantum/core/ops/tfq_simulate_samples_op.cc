@@ -102,6 +102,10 @@ class TfqSimulateSamplesOp : public tensorflow::OpKernel {
     OP_REQUIRES_OK(context, context->allocate_output(0, output_shape, &output));
     auto output_tensor = output->tensor<int8_t, 3>();
 
+    if (num_samples == 0) {
+      return;  // bug in qsim dependency we can't control.
+    }
+
     // Cross reference with standard google cloud compute instances
     // Memory ~= 2 * num_threads * (2 * 64 * 2 ** num_qubits in circuits)
     // e2s2 = 2 CPU, 8GB -> Can safely do 25 since Memory = 4GB

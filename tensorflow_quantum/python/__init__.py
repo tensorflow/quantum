@@ -15,6 +15,7 @@
 """Module definitions for tensorflow_quantum.python.util.*"""
 from tensorflow_quantum.python.util import (
     # Utility functions.
+    get_supported_channels,
     get_supported_gates,
     exponential,
 )
