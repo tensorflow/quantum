@@ -311,7 +311,7 @@ class InnerProductTest(tf.test.TestCase, parameterized.TestCase):
         self.assertAllClose(out, out_arr, atol=1e-5)
 
     def test_correctness_empty(self):
-        """Tests the inner product between two empty circuits."""
+        """Tests the inner product with empty circuits."""
 
         empty_cicuit = util.convert_to_tensor([cirq.Circuit()])
         empty_symbols = tf.convert_to_tensor([], dtype=tf.dtypes.string)
@@ -322,6 +322,17 @@ class InnerProductTest(tf.test.TestCase, parameterized.TestCase):
                                              empty_values, other_program)
         expected = np.array([[1.0]], dtype=np.complex64)
         self.assertAllClose(out, expected)
+
+        qubit = cirq.GridQubit(0, 0)
+        non_empty_cicuit = util.convert_to_tensor([cirq.Circuit(cirq.X(qubit))])
+        empty_symbols = tf.convert_to_tensor([], dtype=tf.dtypes.string)
+        empty_values = tf.convert_to_tensor([[]])
+        other_program = util.convert_to_tensor([[cirq.Circuit()]])
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'qubits not found'):
+            inner_product_op.inner_product(non_empty_cicuit, empty_symbols,
+                                           empty_values, other_program)
 
     @parameterized.parameters([
         {
@@ -377,8 +388,7 @@ class InnerProductTest(tf.test.TestCase, parameterized.TestCase):
                                                 symbol_values, other_programs)
         out = tape.gradient(ip, symbol_values)
 
-        out_arr = np.empty((batch_size, inner_dim_size, n_params),
-                           dtype=np.complex64)
+        out_arr = np.zeros((batch_size, n_params), dtype=np.complex64)
         # dx came from _GRAD_EPS of core/src/adj_util.cc
         dx = 5e-3
         for i in range(batch_size):
@@ -398,7 +408,7 @@ class InnerProductTest(tf.test.TestCase, parameterized.TestCase):
                     final_wf_grad = 0.5 * (final_wf_p - final_wf_m) / dx
                     for j in range(inner_dim_size):
                         internal_wf = cirq.final_state_vector(other_batch[i][j])
-                        out_arr[i][j][k] = np.vdot(final_wf_grad, internal_wf)
+                        out_arr[i][k] += np.vdot(final_wf_grad, internal_wf)
 
         self.assertAllClose(out, out_arr, atol=1e-3)
 

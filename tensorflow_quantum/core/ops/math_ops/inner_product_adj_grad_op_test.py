@@ -30,8 +30,10 @@ class InnerProductAdjGradTest(tf.test.TestCase, parameterized.TestCase):
         """Makes sure that inner_product_adj_grad fails on bad inputs."""
         n_qubits = 5
         batch_size = 5
+        n_other_programs = 3
         symbol_names = ['alpha']
         qubits = cirq.GridQubit.rect(1, n_qubits)
+        prev_grad = np.ones((batch_size, n_other_programs))
         circuit_batch, resolver_batch = \
           util.random_symbol_circuit_resolver_batch(
               qubits, symbol_names, batch_size)
@@ -42,7 +44,7 @@ class InnerProductAdjGradTest(tf.test.TestCase, parameterized.TestCase):
              for resolver in resolver_batch])
 
         other_batch = [
-            util.random_circuit_resolver_batch(qubits, 3)[0]
+            util.random_circuit_resolver_batch(qubits, n_other_programs)[0]
             for i in range(batch_size)
         ]
 
@@ -51,14 +53,16 @@ class InnerProductAdjGradTest(tf.test.TestCase, parameterized.TestCase):
             # Circuit tensor has too many dimensions.
             inner_product_op.inner_product_adj_grad(
                 util.convert_to_tensor([circuit_batch]), symbol_names,
-                symbol_values_array, util.convert_to_tensor(other_batch))
+                symbol_values_array, util.convert_to_tensor(other_batch),
+                prev_grad)
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'symbol_names must be rank 1.'):
             # symbol_names tensor has too many dimensions.
             inner_product_op.inner_product_adj_grad(
                 util.convert_to_tensor(circuit_batch), np.array([symbol_names]),
-                symbol_values_array, util.convert_to_tensor(other_batch))
+                symbol_values_array, util.convert_to_tensor(other_batch),
+                prev_grad)
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'symbol_values must be rank 2.'):
@@ -66,21 +70,24 @@ class InnerProductAdjGradTest(tf.test.TestCase, parameterized.TestCase):
             inner_product_op.inner_product_adj_grad(
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 np.array([symbol_values_array]),
-                util.convert_to_tensor(other_batch))
+                util.convert_to_tensor(other_batch),
+                prev_grad)
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'symbol_values must be rank 2.'):
             # symbol_values_array tensor has too few dimensions.
             inner_product_op.inner_product_adj_grad(
                 util.convert_to_tensor(circuit_batch), symbol_names,
-                symbol_values_array[0], util.convert_to_tensor(other_batch))
+                symbol_values_array[0], util.convert_to_tensor(other_batch),
+                prev_grad)
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'other_programs must be rank 2.'):
             # other_programs tensor has too few dimensions.
             inner_product_op.inner_product_adj_grad(
                 util.convert_to_tensor(circuit_batch), symbol_names,
-                symbol_values_array, util.convert_to_tensor(circuit_batch))
+                symbol_values_array, util.convert_to_tensor(circuit_batch),
+                prev_grad)
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'other_programs must be rank 2.'):
@@ -88,21 +95,24 @@ class InnerProductAdjGradTest(tf.test.TestCase, parameterized.TestCase):
             inner_product_op.inner_product_adj_grad(
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 symbol_values_array,
-                util.convert_to_tensor([[x] for x in other_batch]))
+                util.convert_to_tensor([[x] for x in other_batch]),
+                prev_grad)
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'Unparseable proto'):
             # circuit tensor has the right type but invalid values.
             inner_product_op.inner_product_adj_grad(
                 ['junk'] * batch_size, symbol_names, symbol_values_array,
-                util.convert_to_tensor(other_batch))
+                util.convert_to_tensor(other_batch),
+                prev_grad)
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'Could not find symbol in parameter map'):
             # symbol_names tensor has the right type but invalid values.
             inner_product_op.inner_product_adj_grad(
                 util.convert_to_tensor(circuit_batch), ['junk'],
-                symbol_values_array, util.convert_to_tensor(other_batch))
+                symbol_values_array, util.convert_to_tensor(other_batch),
+                prev_grad)
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'not found in reference circuit'):
@@ -114,7 +124,8 @@ class InnerProductAdjGradTest(tf.test.TestCase, parameterized.TestCase):
             inner_product_op.inner_product_adj_grad(
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 symbol_values_array,
-                util.convert_to_tensor([[x] for x in new_circuits]))
+                util.convert_to_tensor([[x] for x in new_circuits]),
+                prev_grad)
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'not found in paired circuit'):
@@ -126,45 +137,52 @@ class InnerProductAdjGradTest(tf.test.TestCase, parameterized.TestCase):
             inner_product_op.inner_product_adj_grad(
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 symbol_values_array,
-                util.convert_to_tensor([[x] for x in new_circuits]))
+                util.convert_to_tensor([[x] for x in new_circuits]),
+                prev_grad)
 
         with self.assertRaisesRegex(TypeError, 'Cannot convert'):
             # circuits tensor has the wrong type.
             inner_product_op.inner_product_adj_grad(
                 [1.0] * batch_size, symbol_names, symbol_values_array,
-                util.convert_to_tensor(other_batch))
+                util.convert_to_tensor(other_batch),
+                prev_grad)
 
         with self.assertRaisesRegex(TypeError, 'Cannot convert'):
             # symbol_names tensor has the wrong type.
             inner_product_op.inner_product_adj_grad(
                 util.convert_to_tensor(circuit_batch), [0.1234],
-                symbol_values_array, util.convert_to_tensor(other_batch))
+                symbol_values_array, util.convert_to_tensor(other_batch),
+                prev_grad)
 
         with self.assertRaisesRegex(tf.errors.UnimplementedError, ''):
             # symbol_values tensor has the wrong type.
             inner_product_op.inner_product_adj_grad(
                 util.convert_to_tensor(circuit_batch), symbol_names,
-                [['junk']] * batch_size, util.convert_to_tensor(other_batch))
+                [['junk']] * batch_size, util.convert_to_tensor(other_batch),
+                prev_grad)
 
         with self.assertRaisesRegex(TypeError, 'Cannot convert'):
             # other_programs tensor has the wrong type.
             inner_product_op.inner_product_adj_grad(
                 util.convert_to_tensor(circuit_batch), symbol_names,
-                symbol_values_array, [[1.0]] * batch_size)
+                symbol_values_array, [[1.0]] * batch_size,
+                prev_grad)
 
         with self.assertRaisesRegex(TypeError, 'missing'):
             # we are missing an argument.
             # pylint: disable=no-value-for-parameter
             inner_product_op.inner_product_adj_grad(
                 util.convert_to_tensor(circuit_batch), symbol_names,
-                symbol_values_array)
+                symbol_values_array,
+                prev_grad)
             # pylint: enable=no-value-for-parameter
 
         with self.assertRaisesRegex(TypeError, 'positional arguments'):
             # pylint: disable=too-many-function-args
             inner_product_op.inner_product_adj_grad(
                 util.convert_to_tensor(circuit_batch), symbol_names,
-                symbol_values_array, util.convert_to_tensor(other_batch), [])
+                symbol_values_array, util.convert_to_tensor(other_batch),
+                prev_grad, [])
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     expected_regex='do not match'):
@@ -172,7 +190,8 @@ class InnerProductAdjGradTest(tf.test.TestCase, parameterized.TestCase):
             inner_product_op.inner_product_adj_grad(
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 symbol_values_array,
-                util.convert_to_tensor(other_batch[:int(batch_size * 0.5)]))
+                util.convert_to_tensor(other_batch[:int(batch_size * 0.5)]),
+                prev_grad)
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     expected_regex='do not match'):
@@ -180,7 +199,8 @@ class InnerProductAdjGradTest(tf.test.TestCase, parameterized.TestCase):
             inner_product_op.inner_product_adj_grad(
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 symbol_values_array[::int(batch_size * 0.5)],
-                util.convert_to_tensor(other_batch))
+                util.convert_to_tensor(other_batch),
+                prev_grad)
 
         with self.assertRaisesRegex(
                 tf.errors.InvalidArgumentError,
@@ -189,12 +209,14 @@ class InnerProductAdjGradTest(tf.test.TestCase, parameterized.TestCase):
             inner_product_op.inner_product_adj_grad(
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 symbol_values_array,
-                util.convert_to_tensor([[x] for x in circuit_batch]))
+                util.convert_to_tensor([[x] for x in circuit_batch]),
+                prev_grad)
 
         res = inner_product_op.inner_product_adj_grad(
             util.convert_to_tensor(circuit_batch), symbol_names,
             symbol_values_array.astype(np.float64),
-            util.convert_to_tensor(other_batch))
+            util.convert_to_tensor(other_batch),
+            prev_grad)
         self.assertDTypeEqual(res, np.complex64)
 
     @parameterized.parameters([
@@ -210,7 +232,7 @@ class InnerProductAdjGradTest(tf.test.TestCase, parameterized.TestCase):
         },
         {
             'n_qubits': 10,
-            'batch_size': 10,  # ComputeSmall
+            'batch_size': 10, # ComputeSmall
             'inner_dim_size': 2
         },
         {
@@ -244,24 +266,26 @@ class InnerProductAdjGradTest(tf.test.TestCase, parameterized.TestCase):
         symbol_names_tensor = tf.convert_to_tensor(symbol_names,
                                                    dtype=tf.dtypes.string)
         symbol_values = tf.convert_to_tensor(symbol_values_array)
+        prev_grad = np.random.normal(size=(batch_size, inner_dim_size)).astype(
+            np.float32)
 
         out = inner_product_op.inner_product_adj_grad(programs,
                                                       symbol_names_tensor,
                                                       symbol_values,
-                                                      other_programs)
+                                                      other_programs,
+                                                      prev_grad)
 
-        out_arr = np.empty((batch_size, inner_dim_size, n_params),
-                           dtype=np.complex64)
+        out_arr = np.zeros((batch_size, n_params), dtype=np.complex64)
         # dx came from _GRAD_EPS of core/src/adj_util.cc
         dx = 5e-3
-        for i in range(batch_size):
+        for i, resolver in enumerate(resolver_batch):
             for k, name in enumerate(symbol_names):
-                if name in resolver_batch[i].param_dict:
-                    new_resolver = copy.deepcopy(resolver_batch[i])
+                if name in resolver.param_dict:
+                    new_resolver = copy.deepcopy(resolver)
                     new_resolver.param_dict[name] += dx
                     final_circuit_p = cirq.resolve_parameters(
                         circuit_batch[i], new_resolver)
-                    new_resolver = copy.deepcopy(resolver_batch[i])
+                    new_resolver = copy.deepcopy(resolver)
                     new_resolver.param_dict[name] -= dx
                     final_circuit_m = cirq.resolve_parameters(
                         circuit_batch[i], new_resolver)
@@ -269,9 +293,10 @@ class InnerProductAdjGradTest(tf.test.TestCase, parameterized.TestCase):
                     final_wf_m = cirq.final_state_vector(final_circuit_m)
                     # Performs central finite difference.
                     final_wf_grad = 0.5 * (final_wf_p - final_wf_m) / dx
-                    for j in range(inner_dim_size):
-                        internal_wf = cirq.final_state_vector(other_batch[i][j])
-                        out_arr[i][j][k] = np.vdot(final_wf_grad, internal_wf)
+                    for j, other in enumerate(other_batch[i]):
+                        internal_wf = cirq.final_state_vector(other)
+                        out_arr[i][k] += prev_grad[i][j] * np.vdot(
+                            final_wf_grad, internal_wf)
 
         self.assertAllClose(out, out_arr, atol=1e-3)
 
@@ -314,12 +339,14 @@ class InnerProductAdjGradTest(tf.test.TestCase, parameterized.TestCase):
         other_programs = util.convert_to_tensor(other_batch)
         symbol_names = tf.convert_to_tensor([], dtype=tf.dtypes.string)
         symbol_values = tf.convert_to_tensor([[] for _ in range(batch_size)])
+        prev_grad = np.ones((batch_size, inner_dim_size))
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'symbols must be a positive integer'):
             inner_product_op.inner_product_adj_grad(programs, symbol_names,
                                                     symbol_values,
-                                                    other_programs)
+                                                    other_programs,
+                                                    prev_grad)
 
     def test_correctness_empty(self):
         """Tests the inner product adj grad between two empty circuits."""
@@ -328,11 +355,13 @@ class InnerProductAdjGradTest(tf.test.TestCase, parameterized.TestCase):
         empty_symbols = tf.convert_to_tensor([], dtype=tf.dtypes.string)
         empty_values = tf.convert_to_tensor([[]])
         other_program = util.convert_to_tensor([[cirq.Circuit()]])
+        prev_grad = np.ones((1, 1))
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'symbols must be a positive integer'):
-            out = inner_product_op.inner_product_adj_grad(
-                empty_cicuit, empty_symbols, empty_values, other_program)
+            inner_product_op.inner_product_adj_grad(
+                empty_cicuit, empty_symbols, empty_values, other_program,
+                prev_grad)
 
         empty_cicuit = util.convert_to_tensor([cirq.Circuit()])
         symbol_names = tf.convert_to_tensor(symbol_names,
@@ -343,8 +372,9 @@ class InnerProductAdjGradTest(tf.test.TestCase, parameterized.TestCase):
         out = inner_product_op.inner_product_adj_grad(empty_cicuit,
                                                       symbol_names,
                                                       symbol_values,
-                                                      other_program)
-        expected = np.zeros((1, 1, len(symbol_names)), dtype=np.complex64)
+                                                      other_program,
+                                                      prev_grad)
+        expected = np.zeros((1, len(symbol_names)), dtype=np.complex64)
         self.assertAllClose(out, expected)
 
 

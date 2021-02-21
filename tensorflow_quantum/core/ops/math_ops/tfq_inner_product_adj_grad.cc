@@ -50,9 +50,9 @@ class TfqInnerProductAdjGradOp : public tensorflow::OpKernel {
   void Compute(tensorflow::OpKernelContext* context) override {
     // TODO (mbbrough): add more dimension checks for other inputs here.
     const int num_inputs = context->num_inputs();
-    OP_REQUIRES(context, num_inputs == 4,
+    OP_REQUIRES(context, num_inputs == 5,
                 tensorflow::errors::InvalidArgument(absl::StrCat(
-                    "Expected 4 inputs, got ", num_inputs, " inputs.")));
+                    "Expected 5 inputs, got ", num_inputs, " inputs.")));
 
     // Create the output Tensor.
     const int output_dim_batch_size = context->input(0).dim_size(0);
@@ -64,12 +64,11 @@ class TfqInnerProductAdjGradOp : public tensorflow::OpKernel {
                     output_dim_symbol_size, " symbols.")));
     tensorflow::TensorShape output_shape;
     output_shape.AddDim(output_dim_batch_size);
-    output_shape.AddDim(output_dim_internal_size);
     output_shape.AddDim(output_dim_symbol_size);
 
     tensorflow::Tensor* output = nullptr;
     OP_REQUIRES_OK(context, context->allocate_output(0, output_shape, &output));
-    auto output_tensor = output->tensor<std::complex<float>, 3>();
+    auto output_tensor = output->matrix<std::complex<float>>();
 
     // Parse program protos.
     std::vector<Program> programs;
@@ -160,19 +159,39 @@ class TfqInnerProductAdjGradOp : public tensorflow::OpKernel {
       max_num_qubits = std::max(max_num_qubits, num);
     }
 
+    // Get downstream gradients.
+    std::vector<std::vector<float>> downstream_grads;
+    OP_REQUIRES_OK(context, GetPrevGrads(context, &downstream_grads));
+
+    OP_REQUIRES(context, downstream_grads.size() == programs.size(),
+                tensorflow::errors::InvalidArgument(absl::StrCat(
+                    "Number of gradients and circuits do not match. Got ",
+                    downstream_grads.size(), " gradients and ", programs.size(),
+                    " circuits.")));
+
+    OP_REQUIRES(
+        context, downstream_grads[0].size() == output_dim_internal_size,
+        tensorflow::errors::InvalidArgument(absl::StrCat(
+            "Number of gradients and other_programs do not match. Got ",
+            downstream_grads[0].size(), " gradient entries and ",
+            output_dim_internal_size, " other programs.")));
+
+    output_tensor.setZero();
+
     // Cross reference with standard google cloud compute instances
     // Memory ~= 2 * num_threads * (2 * 64 * 2 ** num_qubits in circuits)
-    // e2s2 = 2 CPU, 8GB -> Can safely do 25 since Memory = 4GB
-    // e2s4 = 4 CPU, 16GB -> Can safely do 25 since Memory = 8GB
+    // e2s2 = 2 CPU, 8GB -> Can safely do 23 since Memory = 4GB
+    // e2s4 = 4 CPU, 16GB -> Can safely do 23 since Memory = 8GB
     // ...
-    if (max_num_qubits >= 26 || output_dim_batch_size == 1) {
+    if (max_num_qubits >= 24 || output_dim_batch_size == 1) {
       ComputeLarge(num_qubits, maps, qsim_circuits, fused_circuits,
                    partial_fused_circuits, gradient_gates, other_fused_circuits,
-                   context, &output_tensor);
+                   downstream_grads, context, &output_tensor);
     } else {
       ComputeSmall(num_qubits, max_num_qubits, maps, qsim_circuits,
                    fused_circuits, partial_fused_circuits, gradient_gates,
-                   other_fused_circuits, context, &output_tensor);
+                   other_fused_circuits, downstream_grads, context,
+                   &output_tensor);
     }
   }
 
@@ -185,8 +204,9 @@ class TfqInnerProductAdjGradOp : public tensorflow::OpKernel {
           partial_fused_circuits,
       const std::vector<std::vector<tfq::GradientOfGate>>& gradient_gates,
       const std::vector<std::vector<QsimFusedCircuit>>& other_fused_circuits,
+      const std::vector<std::vector<float>>& downstream_grads,
       tensorflow::OpKernelContext* context,
-      tensorflow::TTypes<std::complex<float>, 3>::Tensor* output_tensor) {
+      tensorflow::TTypes<std::complex<float>>::Matrix* output_tensor) {
     // Instantiate qsim objects.
     const auto tfq_for = tfq::QsimFor(context);
     using Simulator = qsim::Simulator<const tfq::QsimFor&>;
@@ -197,7 +217,6 @@ class TfqInnerProductAdjGradOp : public tensorflow::OpKernel {
     Simulator sim = Simulator(tfq_for);
     StateSpace ss = StateSpace(tfq_for);
     auto sv = ss.Create(largest_nq);
-    auto sv_adj = ss.Create(largest_nq);
     auto scratch = ss.Create(largest_nq);
     auto scratch2 = ss.Create(largest_nq);
 
@@ -211,7 +230,6 @@ class TfqInnerProductAdjGradOp : public tensorflow::OpKernel {
         // need to switch to larger statespace.
         largest_nq = nq;
         sv = ss.Create(largest_nq);
-        sv_adj = ss.Create(largest_nq);
         scratch = ss.Create(largest_nq);
         scratch2 = ss.Create(largest_nq);
       }
@@ -220,76 +238,80 @@ class TfqInnerProductAdjGradOp : public tensorflow::OpKernel {
            j < fused_circuits[i].size(); j++) {
         qsim::ApplyFusedGate(sim, fused_circuits[i][j], sv);
       }
+      // Accumulate all other_programs.
+      // |phi> = sum_j downstream_grads[i][j]*|phi[i][j]>
       for (std::vector<std::vector<qsim::GateFused<QsimGate>>>::size_type j = 0;
            j < other_fused_circuits[i].size(); j++) {
-        ss.Copy(sv, sv_adj);
-        ss.SetStateZero(scratch);
+        ss.SetStateZero(scratch2);
         for (std::vector<qsim::GateFused<QsimGate>>::size_type k = 0;
              k < other_fused_circuits[i][j].size(); k++) {
-          qsim::ApplyFusedGate(sim, other_fused_circuits[i][j][k], scratch);
+          qsim::ApplyFusedGate(sim, other_fused_circuits[i][j][k], scratch2);
+        }
+        ss.Multiply(downstream_grads[i][j], scratch2);
+        if (j == 0) {
+          ss.Copy(scratch2, scratch);
+        } else {
+          ss.Add(scratch2, scratch);
+        }
+      }
+
+      // now sv is |psi>
+      // scratch contains sum_j downstream_grads[i][j]*|phi[i][j]>
+      // Start adjoint differentiation.
+      for (int l = partial_fused_circuits[i].size() - 1; l >= 0; l--) {
+        for (int k = partial_fused_circuits[i][l].size() - 1; k >= 0; k--) {
+          ApplyFusedGateDagger(sim, partial_fused_circuits[i][l][k], sv);
+          ApplyFusedGateDagger(sim, partial_fused_circuits[i][l][k], scratch);
+        }
+        if (l == 0) {
+          // last layer will have no parametrized gates so can break.
+          break;
         }
 
-        // now sv is |psi>, scratch is |phi>
-        // initialize gradients for given |psi> and |phi>.
-        for (int k = 0; k < maps[i].size(); k++) {
-          (*output_tensor)(i, j, k) = std::complex<float>(0, 0);
+        // Hit a parameterized gate.
+        // todo fix this copy.
+        auto cur_gate =
+            qsim_circuits[i].gates[gradient_gates[i][l - 1].index];
+        ApplyGateDagger(sim, cur_gate, sv);
+
+        // if applicable compute control qubit mask and control value bits.
+        uint64_t mask = 0;
+        uint64_t cbits = 0;
+        for (std::vector<unsigned int>::size_type k = 0;
+             k < cur_gate.controlled_by.size(); k++) {
+          uint64_t control_loc = cur_gate.controlled_by[k];
+          mask |= uint64_t{1} << control_loc;
+          cbits |= ((cur_gate.cmask >> k) & 1) << control_loc;
         }
-        // Start adjoint differentiation.
-        for (int l = partial_fused_circuits[i].size() - 1; l >= 0; l--) {
-          for (int k = partial_fused_circuits[i][l].size() - 1; k >= 0; k--) {
-            ApplyFusedGateDagger(sim, partial_fused_circuits[i][l][k], sv_adj);
-            ApplyFusedGateDagger(sim, partial_fused_circuits[i][l][k], scratch);
-          }
-          if (l == 0) {
-            // last layer will have no parametrized gates so can break.
-            break;
-          }
 
-          // Hit a parameterized gate.
-          // todo fix this copy.
-          auto cur_gate =
-              qsim_circuits[i].gates[gradient_gates[i][l - 1].index];
-          ApplyGateDagger(sim, cur_gate, sv_adj);
-
-          // if applicable compute control qubit mask and control value bits.
-          uint64_t mask = 0;
-          uint64_t cbits = 0;
-          for (std::vector<unsigned int>::size_type k = 0;
-               k < cur_gate.controlled_by.size(); k++) {
-            uint64_t control_loc = cur_gate.controlled_by[k];
-            mask |= uint64_t{1} << control_loc;
-            cbits |= ((cur_gate.cmask >> k) & 1) << control_loc;
+        for (std::vector<QsimGate>::size_type k = 0;
+             k < gradient_gates[i][l - 1].grad_gates.size(); k++) {
+          // Copy sv onto scratch2 in anticipation of non-unitary "gradient
+          // gate".
+          ss.Copy(sv, scratch2);
+          if (!cur_gate.controlled_by.empty()) {
+            // Gradient of controlled gates puts zeros on diagonal which is
+            // the same as collapsing the state and then applying the
+            // non-controlled version of the gradient gate.
+            ss.BulkSetAmpl(scratch2, mask, cbits, 0, 0, true);
           }
+          qsim::ApplyGate(sim, gradient_gates[i][l - 1].grad_gates[k],
+                          scratch2);
 
-          for (std::vector<QsimGate>::size_type k = 0;
-               k < gradient_gates[i][l - 1].grad_gates.size(); k++) {
-            // Copy sv onto scratch2 in anticipation of non-unitary "gradient
-            // gate".
-            ss.Copy(sv_adj, scratch2);
-            if (!cur_gate.controlled_by.empty()) {
-              // Gradient of controlled gates puts zeros on diagonal which is
-              // the same as collapsing the state and then applying the
-              // non-controlled version of the gradient gate.
-              ss.BulkSetAmpl(scratch2, mask, cbits, 0, 0, true);
-            }
-            qsim::ApplyGate(sim, gradient_gates[i][l - 1].grad_gates[k],
-                            scratch2);
-
-            // don't need not-found check since this is done upstream already.
-            const auto it = maps[i].find(gradient_gates[i][l - 1].params[k]);
-            const int loc = it->second.first;
-            // Apply finite differencing for adjoint gradients.
-            // Finite differencing enables applying multiple `gradient_gate`
-            // of a symbol at the same circuit. For analytic methods like
-            // parameter-shift we need to apply a single `gradient_gate`
-            // per a symbol.
-            std::complex<double> result = ss.InnerProduct(scratch2, scratch);
-            (*output_tensor)(i, j, loc) +=
-                std::complex<float>(static_cast<float>(result.real()),
-                                    static_cast<float>(result.imag()));
-          }
-          ApplyGateDagger(sim, cur_gate, scratch);
+          // don't need not-found check since this is done upstream already.
+          const auto it = maps[i].find(gradient_gates[i][l - 1].params[k]);
+          const int loc = it->second.first;
+          // Apply finite differencing for adjoint gradients.
+          // Finite differencing enables applying multiple `gradient_gate`
+          // of a symbol at the same circuit. For analytic methods like
+          // parameter-shift we need to apply a single `gradient_gate`
+          // per a symbol.
+          std::complex<double> result = ss.InnerProduct(scratch2, scratch);
+          (*output_tensor)(i, loc) +=
+              std::complex<float>(static_cast<float>(result.real()),
+                                  static_cast<float>(result.imag()));
         }
+        ApplyGateDagger(sim, cur_gate, scratch);
       }
     }
   }
@@ -303,13 +325,14 @@ class TfqInnerProductAdjGradOp : public tensorflow::OpKernel {
           partial_fused_circuits,
       const std::vector<std::vector<tfq::GradientOfGate>>& gradient_gates,
       const std::vector<std::vector<QsimFusedCircuit>>& other_fused_circuits,
+      const std::vector<std::vector<float>>& downstream_grads,
       tensorflow::OpKernelContext* context,
-      tensorflow::TTypes<std::complex<float>, 3>::Tensor* output_tensor) {
+      tensorflow::TTypes<std::complex<float>>::Matrix* output_tensor) {
     const auto tfq_for = qsim::SequentialFor(1);
     using Simulator = qsim::Simulator<const qsim::SequentialFor&>;
     using StateSpace = Simulator::StateSpace;
 
-    const int output_dim_internal_size = output_tensor->dimension(1);
+    const int output_dim_internal_size = other_fused_circuits[0].size();
 
     auto DoWork = [&](int start, int end) {
       int old_batch_index = -2;
@@ -339,8 +362,6 @@ class TfqInnerProductAdjGradOp : public tensorflow::OpKernel {
             scratch = ss.Create(largest_nq);
             scratch2 = ss.Create(largest_nq);
           }
-          // no need to update scratch_state since ComputeExpectation
-          // will take care of things for us.
           ss.SetStateZero(sv);
           for (std::vector<qsim::GateFused<QsimGate>>::size_type j = 0;
                j < fused_circuits[cur_batch_index].size(); j++) {
@@ -348,7 +369,6 @@ class TfqInnerProductAdjGradOp : public tensorflow::OpKernel {
           }
         }
 
-        ss.Copy(sv, sv_adj);
         ss.SetStateZero(scratch);
         for (std::vector<qsim::GateFused<QsimGate>>::size_type k = 0;
              k <
@@ -358,14 +378,9 @@ class TfqInnerProductAdjGradOp : public tensorflow::OpKernel {
               sim, other_fused_circuits[cur_batch_index][cur_internal_index][k],
               scratch);
         }
-
         // now sv is |psi>, scratch is |phi>
-        // initialize gradients for given |psi> and |phi>.
-        for (int k = 0; k < maps[cur_batch_index].size(); k++) {
-          (*output_tensor)(cur_batch_index, cur_internal_index, k) =
-              std::complex<float>(0, 0);
-        }
         // Start adjoint differentiation.
+        ss.Copy(sv, sv_adj);
         for (int l = partial_fused_circuits[cur_batch_index].size() - 1; l >= 0;
              l--) {
           for (int k = partial_fused_circuits[cur_batch_index][l].size() - 1;
@@ -399,8 +414,8 @@ class TfqInnerProductAdjGradOp : public tensorflow::OpKernel {
           for (int k = 0;
                k < gradient_gates[cur_batch_index][l - 1].grad_gates.size();
                k++) {
-            // Copy sv onto scratch2 in anticipation of non-unitary "gradient
-            // gate".
+            // Copy sv_adj onto scratch2 in anticipation of non-unitary
+            // "gradient gate".
             ss.Copy(sv_adj, scratch2);
             if (!cur_gate.controlled_by.empty()) {
               // Gradient of controlled gates puts zeros on diagonal which is
@@ -422,9 +437,10 @@ class TfqInnerProductAdjGradOp : public tensorflow::OpKernel {
             // parameter-shift we need to apply a single `gradient_gate`
             // per a symbol.
             std::complex<double> result = ss.InnerProduct(scratch2, scratch);
-            (*output_tensor)(cur_batch_index, cur_internal_index, loc) +=
+            (*output_tensor)(cur_batch_index, loc) +=
+                (downstream_grads[cur_batch_index][cur_internal_index] *
                 std::complex<float>(static_cast<float>(result.real()),
-                                    static_cast<float>(result.imag()));
+                                    static_cast<float>(result.imag())));
           }
           ApplyGateDagger(sim, cur_gate, scratch);
         }
@@ -448,7 +464,8 @@ REGISTER_OP("TfqInnerProductAdjGrad")
     .Input("symbol_names: string")
     .Input("symbol_values: float")
     .Input("other_programs: string")
-    .Output("inner_products: complex64")
+    .Input("downstream_grads: float")
+    .Output("inner_products_adj_grad: complex64")
     .SetShapeFn([](tensorflow::shape_inference::InferenceContext* c) {
       tensorflow::shape_inference::ShapeHandle programs_shape;
       TF_RETURN_IF_ERROR(c->WithRank(c->input(0), 1, &programs_shape));
@@ -462,14 +479,15 @@ REGISTER_OP("TfqInnerProductAdjGrad")
       tensorflow::shape_inference::ShapeHandle other_programs_shape;
       TF_RETURN_IF_ERROR(c->WithRank(c->input(3), 2, &other_programs_shape));
 
+      tensorflow::shape_inference::ShapeHandle downstream_grads_shape;
+      TF_RETURN_IF_ERROR(c->WithRank(c->input(4), 2, &downstream_grads_shape));
+
       tensorflow::shape_inference::DimensionHandle output_rows =
           c->Dim(programs_shape, 0);
       tensorflow::shape_inference::DimensionHandle output_cols =
-          c->Dim(other_programs_shape, 1);
-      tensorflow::shape_inference::DimensionHandle n_symbols =
           c->Dim(symbol_names_shape, 0);
       std::vector<tensorflow::shape_inference::DimensionHandle> dims = {
-          output_rows, output_cols, n_symbols};
+          output_rows, output_cols};
       c->set_output(0, c->MakeShape(dims));
 
       return tensorflow::Status::OK();
