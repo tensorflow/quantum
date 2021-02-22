@@ -13,7 +13,7 @@ jobs:
           python-version: '3.6'
           architecture: 'x64'
       - name: Install Lint tools
-        run: pip install --upgrade pylint
+        run: pip install --upgrade pip setuptools; pip install -r requirements.txt;
       - name: Lint All
         run: ./scripts/lint_all.sh
 
