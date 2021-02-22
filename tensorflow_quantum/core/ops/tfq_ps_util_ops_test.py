@@ -123,96 +123,99 @@ class PSDecomposeTest(tf.test.TestCase):
         # Be careful, they are not decomposed if not parameterized.
         circuit_batch = [
             cirq.Circuit([
-                cirq.Moment(operations=[
-                    cirq.FSimGate(theta=0.10338130973488413 *
-                                  sympy.Symbol('CLAE'),
-                                  phi=0.10338130973488413 *
-                                  sympy.Symbol('IRKB')).
-                    on(cirq.GridQubit(0, 2), cirq.GridQubit(0, 3)),
+                cirq.Moment([
+                    cirq.FSimGate(
+                        theta=0.10338130973488413 * sympy.Symbol('CLAE'),
+                        phi=0.10338130973488413 * sympy.Symbol('IRKB')).on(
+                            cirq.GridQubit(0, 2), cirq.GridQubit(0, 3)),
                     cirq.PhasedXPowGate(phase_exponent=1.0,
                                         exponent=0.86426029696045281 *
                                         sympy.Symbol('HRYV')).on(
                                             cirq.GridQubit(0, 1)),
                 ]),
-                cirq.Moment(operations=[
+                cirq.Moment([
                     cirq.Y.on(cirq.GridQubit(0, 3)),
                     cirq.Z.on(cirq.GridQubit(0, 0)),
                     cirq.FSimGate(theta=1, phi=1).on(cirq.GridQubit(0, 1),
                                                      cirq.GridQubit(0, 2)),
                 ]),
-                cirq.Moment(operations=[
-                    (cirq.CNOT**(0.92874230274398684 * sympy.Symbol('IRKB'))
-                    ).on(cirq.GridQubit(0, 1), cirq.GridQubit(0, 2)),
+                cirq.Moment([
+                    (cirq.CNOT**(0.92874230274398684 *
+                                 sympy.Symbol('IRKB'))).on(
+                                     cirq.GridQubit(0, 1), cirq.GridQubit(0,
+                                                                          2)),
                 ]),
-                cirq.Moment(operations=[
+                cirq.Moment([
                     cirq.PhasedXPowGate(phase_exponent=sympy.Symbol('PJOU'),
                                         exponent=0.2081415255258906 *
                                         sympy.Symbol('LKRV')).on(
                                             cirq.GridQubit(0, 2)),
-                    (cirq.ISWAP**(0.32860954996781722 * sympy.Symbol('PJOU'))
-                    ).on(cirq.GridQubit(0, 1), cirq.GridQubit(0, 3)),
+                    (cirq.ISWAP**(0.32860954996781722 *
+                                  sympy.Symbol('PJOU'))).on(
+                                      cirq.GridQubit(0, 1),
+                                      cirq.GridQubit(0, 3)),
                 ]),
-                cirq.Moment(operations=[
+                cirq.Moment([
                     cirq.PhasedXPowGate(phase_exponent=sympy.Symbol('CJKX')).on(
                         cirq.GridQubit(0, 1)),
                     cirq.ZZ.on(cirq.GridQubit(0, 0), cirq.GridQubit(0, 3)),
-                    (cirq.X**(0.6826594585474709 *
-                              sympy.Symbol('HRYV'))).on(cirq.GridQubit(0, 2)),
+                    (cirq.X**(0.6826594585474709 * sympy.Symbol('HRYV'))).on(
+                        cirq.GridQubit(0, 2)),
                 ]),
-                cirq.Moment(operations=[
-                    (cirq.ZZ**(0.18781276022427218 * sympy.Symbol('PJOU'))
-                    ).on(cirq.GridQubit(0, 0), cirq.GridQubit(0, 3)),
+                cirq.Moment([
+                    (cirq.ZZ**(0.18781276022427218 * sympy.Symbol('PJOU'))).on(
+                        cirq.GridQubit(0, 0), cirq.GridQubit(0, 3)),
                 ]),
-                cirq.Moment(operations=[
+                cirq.Moment([
                     cirq.Y.on(cirq.GridQubit(0, 0)),
                 ]),
-                cirq.Moment(operations=[
-                    cirq.FSimGate(theta=0.13793763138552417 *
-                                  sympy.Symbol('CJKX'),
-                                  phi=0.13793763138552417 *
-                                  sympy.Symbol('PJOU')).
-                    on(cirq.GridQubit(0, 2), cirq.GridQubit(0, 3)),
-                    (cirq.ISWAP**(0.028165738453673095 * sympy.Symbol('NASW'))
-                    ).on(cirq.GridQubit(0, 0), cirq.GridQubit(0, 1)),
+                cirq.Moment([
+                    cirq.FSimGate(
+                        theta=0.13793763138552417 * sympy.Symbol('CJKX'),
+                        phi=0.13793763138552417 * sympy.Symbol('PJOU')).on(
+                            cirq.GridQubit(0, 2), cirq.GridQubit(0, 3)),
+                    (cirq.ISWAP**(0.028165738453673095 *
+                                  sympy.Symbol('NASW'))).on(
+                                      cirq.GridQubit(0, 0),
+                                      cirq.GridQubit(0, 1)),
                 ]),
-                cirq.Moment(operations=[
-                    cirq.FSimGate(theta=0.74356520426349459 *
-                                  sympy.Symbol('CJKX'),
-                                  phi=0.74356520426349459 *
-                                  sympy.Symbol('NASW')).
-                    on(cirq.GridQubit(0, 3), cirq.GridQubit(0, 0)),
+                cirq.Moment([
+                    cirq.FSimGate(
+                        theta=0.74356520426349459 * sympy.Symbol('CJKX'),
+                        phi=0.74356520426349459 * sympy.Symbol('NASW')).on(
+                            cirq.GridQubit(0, 3), cirq.GridQubit(0, 0)),
                 ]),
-                cirq.Moment(operations=[
+                cirq.Moment([
                     cirq.CNOT.on(cirq.GridQubit(0, 0), cirq.GridQubit(0, 2)),
                     cirq.SWAP.on(cirq.GridQubit(0, 3), cirq.GridQubit(0, 1)),
                 ]),
-                cirq.Moment(operations=[
+                cirq.Moment([
                     cirq.H.on(cirq.GridQubit(0, 3)),
                     cirq.H.on(cirq.GridQubit(0, 2)),
                     cirq.CNOT.on(cirq.GridQubit(0, 1), cirq.GridQubit(0, 0)),
                 ]),
-                cirq.Moment(operations=[
+                cirq.Moment([
                     cirq.CNOT.on(cirq.GridQubit(0, 0), cirq.GridQubit(0, 1)),
                     cirq.YY.on(cirq.GridQubit(0, 2), cirq.GridQubit(0, 3)),
                 ]),
-                cirq.Moment(operations=[
+                cirq.Moment([
                     cirq.CZ.on(cirq.GridQubit(0, 1), cirq.GridQubit(0, 0)),
                     cirq.CNOT.on(cirq.GridQubit(0, 2), cirq.GridQubit(0, 3)),
                 ]),
-                cirq.Moment(operations=[
+                cirq.Moment([
                     cirq.FSimGate(theta=1, phi=1).on(cirq.GridQubit(0, 0),
                                                      cirq.GridQubit(0, 2)),
                     cirq.CNOT.on(cirq.GridQubit(0, 3), cirq.GridQubit(0, 1)),
                 ]),
-                cirq.Moment(operations=[
+                cirq.Moment([
                     cirq.FSimGate(theta=1, phi=1).on(cirq.GridQubit(0, 0),
                                                      cirq.GridQubit(0, 3)),
                     cirq.SWAP.on(cirq.GridQubit(0, 2), cirq.GridQubit(0, 1)),
                 ]),
-                cirq.Moment(operations=[
+                cirq.Moment([
                     cirq.Y.on(cirq.GridQubit(0, 0)),
-                    cirq.PhasedXPowGate(
-                        phase_exponent=1.0).on(cirq.GridQubit(0, 2)),
+                    cirq.PhasedXPowGate(phase_exponent=1.0).on(
+                        cirq.GridQubit(0, 2)),
                     cirq.FSimGate(theta=1, phi=1).on(cirq.GridQubit(0, 1),
                                                      cirq.GridQubit(0, 3)),
                 ]),
