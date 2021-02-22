@@ -464,7 +464,9 @@ EIGEN_GATES_DICT = {
     cirq.ZZPowGate: "ZZP",
     cirq.HPowGate: "HP",
     cirq.CZPowGate: "CZP",
+    cirq.CCZPowGate: "CCZP",
     cirq.CNotPowGate: "CNP",
+    cirq.CCXPowGate: "CCXP",
     cirq.SwapPowGate: "SP",
     cirq.ISwapPowGate: "ISP",
 }

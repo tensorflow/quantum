@@ -295,6 +295,58 @@ inline Status TwoEigenGate(
   return Status::OK();
 }
 
+// three qubit eigen -> Create(time, q0, q1, q2, exp, gs)
+inline Status ThreeEigenGate(
+    const Operation& op, const SymbolMap& param_map,
+    const std::function<QsimGate(unsigned int, unsigned int, unsigned int,
+                                 unsigned int, float, float)>& create_f,
+    const unsigned int num_qubits, const unsigned int time,
+    QsimCircuit* circuit, std::vector<GateMetaData>* metadata) {
+  unsigned int q0, q1, q2;
+  float exp, exp_s, gs;
+  bool unused;
+  Status u;
+  unused = absl::SimpleAtoi(op.qubits(0).id(), &q0);
+  unused = absl::SimpleAtoi(op.qubits(1).id(), &q1);
+  unused = absl::SimpleAtoi(op.qubits(2).id(), &q2);
+
+  absl::optional<std::string> exponent_symbol;
+  u = ParseProtoArg(op, "exponent", param_map, &exp, &exponent_symbol);
+  if (!u.ok()) {
+    return u;
+  }
+  u = ParseProtoArg(op, "exponent_scalar", param_map, &exp_s);
+  if (!u.ok()) {
+    return u;
+  }
+  u = ParseProtoArg(op, "global_shift", param_map, &gs);
+  if (!u.ok()) {
+    return u;
+  }
+  auto gate = create_f(time, num_qubits - q0 - 1, num_qubits - q1 - 1,
+                       num_qubits - q2 - 1, exp * exp_s, gs);
+
+  Status s = OptionalInsertControls(op, num_qubits, &gate);
+  if (!s.ok()) {
+    return s;
+  }
+  circuit->gates.push_back(gate);
+
+  // check for symbols and track metadata if needed.
+  if (metadata != nullptr) {
+    GateMetaData info;
+    info.index = circuit->gates.size() - 1;
+    info.gate_params = {exp, exp_s, gs};
+    info.create_f3 = create_f;
+    if (exponent_symbol.has_value()) {
+      info.symbol_values = {exponent_symbol.value()};
+      info.placeholder_names = {GateParamNames::kExponent};
+    }
+    metadata->push_back(info);
+  }
+  return Status::OK();
+}
+
 Status IGate(const Operation& op, const SymbolMap& param_map,
              const unsigned int num_qubits, const unsigned int time,
              QsimCircuit* circuit, std::vector<GateMetaData>* metadata) {
@@ -365,11 +417,25 @@ Status CZGate(const Operation& op, const SymbolMap& param_map,
                       num_qubits, time, circuit, metadata);
 }
 
+Status CCZGate(const Operation& op, const SymbolMap& param_map,
+               const unsigned int num_qubits, const unsigned int time,
+               QsimCircuit* circuit, std::vector<GateMetaData>* metadata) {
+  return ThreeEigenGate(op, param_map, &qsim::Cirq::CCZPowGate<float>::Create,
+                        num_qubits, time, circuit, metadata);
+}
+
 Status CXGate(const Operation& op, const SymbolMap& param_map,
               const unsigned int num_qubits, const unsigned int time,
               QsimCircuit* circuit, std::vector<GateMetaData>* metadata) {
   return TwoEigenGate(op, param_map, &qsim::Cirq::CXPowGate<float>::Create,
                       num_qubits, time, circuit, metadata);
+}
+
+Status CCXGate(const Operation& op, const SymbolMap& param_map,
+               const unsigned int num_qubits, const unsigned int time,
+               QsimCircuit* circuit, std::vector<GateMetaData>* metadata) {
+  return ThreeEigenGate(op, param_map, &qsim::Cirq::CCXPowGate<float>::Create,
+                        num_qubits, time, circuit, metadata);
 }
 
 Status SwapGate(const Operation& op, const SymbolMap& param_map,
@@ -579,6 +645,7 @@ tensorflow::Status ParseAppendGate(const Operation& op,
                   {"ZP", &ZGate},      {"ZZP", &ZZGate},
                   {"CZP", &CZGate},    {"I2", &I2Gate},
                   {"CNP", &CXGate},    {"SP", &SwapGate},
+                  {"CCZP", &CCZGate},  {"CCXP", &CCXGate},
                   {"ISP", &ISwapGate}, {"PXP", &PhasedXGate},
                   {"FSIM", &FsimGate}, {"PISP", &PhasedISwapGate}};
 

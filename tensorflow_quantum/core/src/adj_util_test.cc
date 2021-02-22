@@ -42,6 +42,13 @@ void Matrix4Equal(const std::vector<float>& v,
   }
 }
 
+void Matrix8Equal(const std::vector<float>& v,
+                  const std::vector<float>& expected, float eps) {
+  for (int i = 0; i < 128; i++) {
+    EXPECT_NEAR(v[i], expected[i], eps);
+  }
+}
+
 typedef absl::flat_hash_map<std::string, std::pair<int, float>> SymbolMap;
 typedef qsim::Cirq::GateCirq<float> QsimGate;
 typedef qsim::Circuit<QsimGate> QsimCircuit;
@@ -166,6 +173,66 @@ INSTANTIATE_TEST_CASE_P(
                       &qsim::Cirq::ZZPowGate<float>::Create,
                       &qsim::Cirq::ISwapPowGate<float>::Create,
                       &qsim::Cirq::SwapPowGate<float>::Create));
+
+class ThreeQubitEigenFixture
+    : public ::testing::TestWithParam<
+          std::function<QsimGate(unsigned int, unsigned int, unsigned int,
+                                 unsigned int, float, float)>> {};
+
+TEST_P(ThreeQubitEigenFixture, CreateGradientThreeEigen) {
+  QsimCircuit circuit;
+  std::vector<GateMetaData> metadata;
+  std::vector<std::vector<qsim::GateFused<QsimGate>>> fuses;
+  std::vector<GradientOfGate> grad_gates;
+
+  // Create a symbolized gate.
+  std::function<QsimGate(unsigned int, unsigned int, unsigned int, unsigned int,
+                         float, float)>
+      given_f = GetParam();
+
+  circuit.num_qubits = 3;
+  circuit.gates.push_back(given_f(0, 0, 1, 2, 1.0, 2.0));
+  GateMetaData meta;
+  meta.index = 0;
+  meta.symbol_values.push_back("TheSymbol");
+  meta.placeholder_names.push_back(GateParamNames::kExponent);
+  meta.gate_params = {1.0, 1.0, 2.0};
+  meta.create_f3 = given_f;
+  metadata.push_back(meta);
+
+  CreateGradientCircuit(circuit, metadata, &fuses, &grad_gates);
+  EXPECT_EQ(grad_gates.size(), 1);
+  EXPECT_EQ(grad_gates[0].index, 0);
+  EXPECT_EQ(grad_gates[0].params.size(), 1);
+  EXPECT_EQ(grad_gates[0].params[0], "TheSymbol");
+
+  // fuse everything into 2 gates. One fuse before this gate and one after.
+  // both wind up being identity since this is the only gate.
+  EXPECT_EQ(fuses.size(), 2);
+
+  GradientOfGate tmp;
+  PopulateGradientThreeEigen(given_f, "TheSymbol", 0, 0, 1, 2, 1.0, 1.0, 2.0,
+                             &tmp);
+
+  Matrix8Equal(tmp.grad_gates[0].matrix, grad_gates[0].grad_gates[0].matrix,
+               1e-4);
+
+  // Test with NO symbol.
+  metadata.clear();
+  meta.symbol_values.clear();
+  meta.placeholder_names.clear();
+  fuses.clear();
+  grad_gates.clear();
+
+  CreateGradientCircuit(circuit, metadata, &fuses, &grad_gates);
+  EXPECT_EQ(grad_gates.size(), 0);
+  EXPECT_EQ(fuses.size(), 1);  // fuse everything into 1 gate.
+}
+
+INSTANTIATE_TEST_CASE_P(
+    ThreeQubitEigenTests, ThreeQubitEigenFixture,
+    ::testing::Values(&qsim::Cirq::CCZPowGate<float>::Create,
+                      &qsim::Cirq::CCXPowGate<float>::Create));
 
 TEST(AdjUtilTest, CreateGradientPhasedX) {
   QsimCircuit circuit;
