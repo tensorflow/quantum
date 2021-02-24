@@ -701,7 +701,7 @@ class SerializerTest(tf.test.TestCase, parameterized.TestCase):
         q0 = cirq.GridQubit(0, 0)
         c = cirq.Circuit(gate(q0))
 
-        c = c._resolve_parameters_(cirq.ParamResolver({"alpha": 0.1234567}))
+        c = cirq.resolve_parameters(c, cirq.ParamResolver({"alpha": 0.1234567}))
         before = c.unitary()
         c2 = serializer.deserialize_circuit(serializer.serialize_circuit(c))
         after = c2.unitary()
