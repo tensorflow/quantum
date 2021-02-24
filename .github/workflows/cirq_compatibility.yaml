@@ -1,0 +1,20 @@
+name: Cirq Compatibility
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+
+jobs:
+  consistency:
+    name: Nightly Compatibility
+    runs-on: ubuntu-16.04
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-python@v1
+        with:
+          python-version: '3.7'
+          architecture: 'x64'
+      - name: Install Cirq nightly
+        run: pip install --upgrade pip setuptools; pip install -r requirements.txt; pip install -U cirq --pre
+      - name: Run tests
+        run: ./scripts/test_all.sh
