@@ -17,6 +17,6 @@ jobs:
       - name: Configure CI TF
         run: echo "Y\n" | ./configure.sh
       - name: Install Cirq nightly
-        run: pip install -U cirq --pre --no-deps
+        run: pip install -U cirq --pre
       - name: Nightly tests
         run: ./scripts/test_all.sh
