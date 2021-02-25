@@ -53,7 +53,7 @@ class Adjoint(differentiator.Differentiator):
     >>> symbol_values_t = tf.convert_to_tensor(symbol_values)
     >>> symbol_names = tf.convert_to_tensor(['alpha'])
     >>> with tf.GradientTape() as g:
-    ...     g.watch(symbol_values_tensor)
+    ...     g.watch(symbol_values_t)
     ...     expectations = op(circuit, symbol_names, symbol_values_t, psums
     ... )
     >>> grads = g.gradient(expectations, symbol_values_t)
