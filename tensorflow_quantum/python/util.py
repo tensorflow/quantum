@@ -256,7 +256,7 @@ def convert_to_tensor(items_to_convert):
             or `cirq.Paulisum` objects. Must be recangular.
     Returns:
         A `tf.Tensor` that represents the input items.
-        
+
     Raises:
         TypeError: In case of invalid arguments provided in `items_to_convert`.
     """
@@ -342,7 +342,7 @@ def from_tensor(tensor_to_convert):
     Returns:
         Python `list` of items converted to their python representation stored
             in a (potentially nested) `list`.
-            
+
     Raises:
         TypeError: In case of an invalid tensor passed for conversion.
     """
@@ -386,7 +386,7 @@ def kwargs_cartesian_product(**kwargs):
 
     Returns:
         Python `generator` of the cartesian product of the inputs `kwargs`.
-    
+
     Raises:
         ValueError: In case of invalid arguments passed to `kwargs`.
     """
@@ -449,7 +449,7 @@ def _expression_approx_eq(exp_1, exp_2, atol):
     Returns:
       bool which says whether the coefficients of `exp_1` and `exp_2` are
         approximately equal.
-        
+
     Raises:
         TypeError: If `atol` is not a real number.
     """
@@ -484,7 +484,7 @@ def gate_approx_eq(gate_true, gate_deser, atol=1e-5):
     Returns:
         bool which says if the two gates are approximately equal in the way
             described above.
-    
+
     Raises:
         TypeError: If input gates are not of type `cirq.Gate`.
         ValueError: If invalid gate types are provided.
@@ -543,7 +543,7 @@ def get_circuit_symbols(circuit):
 
     Returns:
         Python `list` containing the symbols found in the circuit.
-    
+
     Raises:
         TypeError: If `circuit` is not of type `cirq.Circuit`.
     """
@@ -614,7 +614,7 @@ def check_commutability(pauli_sum):
     Args:
         pauli_sum: `cirq.PauliSum` object to be checked if all of terms inside
             are commutable each other.
-    
+
     Raises:
         ValueError: If one or more term pairs in `pauli_sum` are not commutable.
     """
