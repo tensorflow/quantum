@@ -401,7 +401,15 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
             extracted_symbols = util.get_circuit_symbols(test_circuit)
             self.assertListEqual(sorted(extracted_symbols),
                                  sorted(expected_symbols))
-
+    
+    def test_get_circuit_symbols_error(self):
+        """Make sure that the method errors where it should."""
+        input_circuit_test_parameters = ['2', sympy.Symbol("X")]
+        for param in input_circuit_test_parameters:
+            with self.assertRaisesRegex(TypeError, 
+                                        expected_regex='Expected a '
+                                                       'cirq.Circuit'):
+                util.get_circuit_symbols(param)
 
 class ExponentialUtilFunctionsTest(tf.test.TestCase):
     """Test that Exponential utility functions work."""
