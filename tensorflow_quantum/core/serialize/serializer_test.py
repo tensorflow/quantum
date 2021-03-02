@@ -540,7 +540,7 @@ class SerializerTest(tf.test.TestCase, parameterized.TestCase):
         """Ensure we error on unsupported gates."""
         q0 = cirq.GridQubit(0, 0)
         q1 = cirq.GridQubit(0, 1)
-        unsupported_circuit = cirq.Circuit(cirq.QFT(q0, q1))
+        unsupported_circuit = cirq.Circuit(cirq.qft(q0, q1))
 
         with self.assertRaises(ValueError):
             serializer.serialize_circuit(unsupported_circuit)
