@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""A collection of helper functions that are useful several places in tfq."""
+"""A collection of helper functions which are useful in places in TFQ."""
 
 import itertools
 import numbers
@@ -31,13 +31,13 @@ _SUPPORTED_CHANNELS = [cirq.DepolarizingChannel]
 
 
 def get_supported_gates():
-    """A helper to get the gates supported by tfq.
+    """A helper to get gates supported by TFQ.
 
     Returns a dictionary mapping from supported gate types
     to the number of qubits each gate operates on.
 
     Any of these gates used in conjuction with the
-    `controlled_by` function for multi qubit control are also
+    `controlled_by` function for multi-qubit control are also
     supported.
     """
     supported_ops = serializer.SERIALIZER.supported_gate_types()
@@ -62,7 +62,7 @@ def get_supported_gates():
 
 
 def get_supported_channels():
-    """Get the channels that are supported in TFQ.
+    """A helper to get the channels that are supported in TFQ.
 
     Returns a dictionary mapping from supported channel types
     to number of qubits.
@@ -110,7 +110,7 @@ def random_symbol_circuit(qubits,
                           n_moments=15,
                           p=0.9,
                           include_scalars=True):
-    """Generate a random circuit including some parameterized gates.
+    """Generates a random circuit including some parameterized gates.
 
     Symbols are randomly included in the gates of the first `n_moments` moments
     of the resulting circuit.  Then, parameterized H gates are added as
@@ -253,11 +253,12 @@ def convert_to_tensor(items_to_convert):
 
     Args:
         items_to_convert: Python `list` or nested `list` of `cirq.Circuit`
-            or `cirq.Paulisum` objects. Should be rectangular, or this function
-            will error.
-
+            or `cirq.Paulisum` objects. Must be recangular.
     Returns:
-        `tf.Tensor` that represents the input items.
+        A `tf.Tensor` that represents the input items.
+        
+    Raises:
+        TypeError: In case of invalid arguments provided in `items_to_convert`.
     """
 
     # We use recursion here because np.ndenumerate tries to loop over
@@ -281,8 +282,8 @@ def convert_to_tensor(items_to_convert):
                     serializer.serialize_circuit(item).SerializeToString())
             else:
                 raise TypeError("Incompatible item passed into "
-                                " convert_to_tensor. Tensor detected type: {}."
-                                " got: {}".format(curr_type, type(item)))
+                                "convert_to_tensor. Tensor detected type: {}. "
+                                "got: {}".format(curr_type, type(item)))
         return tensored_items
 
     # This will catch impossible dimensions
@@ -341,6 +342,9 @@ def from_tensor(tensor_to_convert):
     Returns:
         Python `list` of items converted to their python representation stored
             in a (potentially nested) `list`.
+            
+    Raises:
+        TypeError: In case of an invalid tensor passed for conversion.
     """
     if isinstance(tensor_to_convert, tf.Tensor):
         tensor_to_convert = tensor_to_convert.numpy()
@@ -382,6 +386,9 @@ def kwargs_cartesian_product(**kwargs):
 
     Returns:
         Python `generator` of the cartesian product of the inputs `kwargs`.
+    
+    Raises:
+        ValueError: In case of invalid arguments passed to `kwargs`.
     """
     keys = kwargs.keys()
     vals = kwargs.values()
@@ -442,6 +449,9 @@ def _expression_approx_eq(exp_1, exp_2, atol):
     Returns:
       bool which says whether the coefficients of `exp_1` and `exp_2` are
         approximately equal.
+        
+    Raises:
+        TypeError: If `atol` is not a real number.
     """
     if not isinstance(atol, numbers.Real):
         raise TypeError("atol must be a real number.")
@@ -474,7 +484,12 @@ def gate_approx_eq(gate_true, gate_deser, atol=1e-5):
     Returns:
         bool which says if the two gates are approximately equal in the way
             described above.
+    
+    Raises:
+        TypeError: If input gates are not of type `cirq.Gate`.
+        ValueError: If invalid gate types are provided.
     """
+
     if not isinstance(gate_true, cirq.Gate):
         raise TypeError(f"`gate_true` not a cirq gate, got {type(gate_true)}")
     if not isinstance(gate_deser, cirq.Gate):
@@ -590,12 +605,14 @@ def _many_z_to_single_z(focal_qubit, pauli_sum):
 
 
 def check_commutability(pauli_sum):
-    """Return False if at least one pair of terms in pauli_sum is not
-    commutable.
+    """Determines whether pairs of terms in `pauli_sum` are commutable.
 
     Args:
         pauli_sum: `cirq.PauliSum` object to be checked if all of terms inside
             are commutable each other.
+    
+    Raises:
+        ValueError: If one or more term pairs in `pauli_sum` are not commutable.
     """
     for term1 in pauli_sum:
         for term2 in pauli_sum:
@@ -617,7 +634,7 @@ def exp_identity(param, c, zeroth_qubit):
 
 
 def exponential(operators, coefficients=None):
-    """Return a Cirq circuit with exponential forms of operators.
+    """Return a Cirq circuit with exponential operator forms.
 
     Construct an exponential form of given `operators` and `coefficients`.
     Operators to be exponentiated are specified in `operators` as
@@ -644,6 +661,8 @@ def exponential(operators, coefficients=None):
     Returns:
         A `cirq.Circuit` containing exponential form of given `operators`
             and `coefficients`.
+    Raises:
+        TypeError: If `operators` (or its terms) is/are of an invalid type.
     """
     # Ingest operators.
     if not isinstance(operators, (list, tuple)):
