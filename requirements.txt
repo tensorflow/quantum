@@ -6,3 +6,5 @@ pylint==2.4.4
 yapf==0.28.0
 tensorflow==2.4.1
 google-api-python-client==1.8.0
+# Needed for compatibility with cirq program protos.
+googleapis-common-protos==1.52.0
