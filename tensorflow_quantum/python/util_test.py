@@ -404,8 +404,7 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
 
     def test_get_circuit_symbols_error(self):
         """Make sure that the method errors where it should."""
-        input_circuit_test_parameters = ['2', sympy.Symbol("X")]
-        for param in input_circuit_test_parameters:
+        for param in ['2', sympy.Symbol("X")]:
             # Passed an invalid parameter (not a cirq.Circuit).
             with self.assertRaisesRegex(TypeError,
                                         expected_regex='cirq.Circuit'):
