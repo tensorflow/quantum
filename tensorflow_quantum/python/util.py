@@ -489,7 +489,6 @@ def gate_approx_eq(gate_true, gate_deser, atol=1e-5):
         TypeError: If input gates are not of type `cirq.Gate`.
         ValueError: If invalid gate types are provided.
     """
-
     if not isinstance(gate_true, cirq.Gate):
         raise TypeError(f"`gate_true` not a cirq gate, got {type(gate_true)}")
     if not isinstance(gate_deser, cirq.Gate):
@@ -544,7 +543,12 @@ def get_circuit_symbols(circuit):
 
     Returns:
         Python `list` containing the symbols found in the circuit.
+    
+    Raises:
+        TypeError: If `circuit` is not of type `cirq.Circuit`.
     """
+    if not isinstance(circuit, cirq.Circuit):
+        raise TypeError(f"Expected a cirq.Circuit object, got {circuit}.")
     all_symbols = set()
     for moment in circuit:
         for op in moment:
