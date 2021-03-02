@@ -406,9 +406,9 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
         """Make sure that the method errors where it should."""
         input_circuit_test_parameters = ['2', sympy.Symbol("X")]
         for param in input_circuit_test_parameters:
+            # Passed an invalid parameter (not a cirq.Circuit).
             with self.assertRaisesRegex(TypeError,
-                                        expected_regex='Expected a '
-                                        'cirq.Circuit'):
+                                        expected_regex='cirq.Circuit'):
                 util.get_circuit_symbols(param)
 
 class ExponentialUtilFunctionsTest(tf.test.TestCase):
