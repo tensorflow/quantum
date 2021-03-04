@@ -106,19 +106,19 @@ class TfqCalculateUnitaryOp : public tensorflow::OpKernel {
 
     // Begin simulation.
     int largest_nq = 1;
-    Unitary u = UnitarySpace(largest_nq, tfq_for).CreateUnitary();
+    Unitary u = UnitarySpace(tfq_for).CreateUnitary(largest_nq);
 
     // Simulate programs one by one. Parallelizing over state vectors
     // we no longer parallelize over circuits. Each time we encounter a
     // a larger circuit we will grow the unitary as nescessary.
     for (int i = 0; i < fused_circuits.size(); i++) {
       int nq = num_qubits[i];
-      UCalculator sim = UCalculator(nq, tfq_for);
-      UnitarySpace us = UnitarySpace(nq, tfq_for);
+      UCalculator sim = UCalculator(tfq_for);
+      UnitarySpace us = UnitarySpace(tfq_for);
       if (nq > largest_nq) {
         // need to switch to larger unitaryspace.
         largest_nq = nq;
-        u = us.CreateUnitary();
+        u = us.CreateUnitary(nq);
       }
       us.SetIdentity(u);
       for (int j = 0; j < fused_circuits[i].size(); j++) {
@@ -136,7 +136,7 @@ class TfqCalculateUnitaryOp : public tensorflow::OpKernel {
           uint64_t k = l % (1 << max_num_qubits);
           if (k < crossover && j < crossover) {
             output_tensor(static_cast<ptrdiff_t>(i), static_cast<ptrdiff_t>(j),
-                          static_cast<ptrdiff_t>(k)) = us.GetEntry(u, j, k);
+                          static_cast<ptrdiff_t>(k)) = us.GetEntry(u, k, j);
           } else {
             output_tensor(static_cast<ptrdiff_t>(i), static_cast<ptrdiff_t>(j),
                           static_cast<ptrdiff_t>(k)) =
