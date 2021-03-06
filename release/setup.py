@@ -50,7 +50,9 @@ class InstallPlatlib(install):
             self.install_lib = self.install_platlib
 
 
-REQUIRED_PACKAGES = ['cirq == 0.9.1', 'sympy == 1.5']
+REQUIRED_PACKAGES = [
+    'cirq == 0.10.1', 'sympy == 1.5', 'googleapis-common-protos==1.52.0'
+]
 
 # placed as extra to not have required overwrite existing nightly installs if
 # they exist.
