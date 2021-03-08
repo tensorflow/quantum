@@ -225,7 +225,7 @@ class ADJGradTest(tf.test.TestCase, parameterized.TestCase):
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     expected_regex='cirq.Channel'):
-            # Circuit tensor has too many dimensions.
+            # attempting to use noisy circuit.
             noisy_circuit = cirq.Circuit(cirq.depolarize(0.3).on_each(*qubits))
             tfq_adj_grad_op.tfq_adj_grad(
                 util.convert_to_tensor([noisy_circuit for _ in circuit_batch]),
