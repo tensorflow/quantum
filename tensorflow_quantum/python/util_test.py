@@ -384,8 +384,9 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
         qubits = cirq.GridQubit.rect(1, 20)
         n_moments = 200
         for _ in range(5):
-            test_circuit = util.random_symbol_circuit(qubits, expected_symbols,
-                                                      n_moments)
+            test_circuit = util.random_symbol_circuit(qubits,
+                                                      expected_symbols,
+                                                      n_moments=n_moments)
             extracted_symbols = util.get_circuit_symbols(test_circuit)
             self.assertListEqual(sorted(extracted_symbols),
                                  sorted(expected_symbols))
@@ -396,8 +397,9 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
         qubits = cirq.GridQubit.rect(1, 2)
         n_moments = 1
         for _ in range(5):
-            test_circuit = util.random_symbol_circuit(qubits, expected_symbols,
-                                                      n_moments)
+            test_circuit = util.random_symbol_circuit(qubits,
+                                                      expected_symbols,
+                                                      n_moments=n_moments)
             extracted_symbols = util.get_circuit_symbols(test_circuit)
             self.assertListEqual(sorted(extracted_symbols),
                                  sorted(expected_symbols))

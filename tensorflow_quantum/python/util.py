@@ -107,26 +107,33 @@ def _apply_random_control(gate, all_qubits):
 
 def random_symbol_circuit(qubits,
                           symbols,
+                          *,
                           n_moments=15,
                           p=0.9,
-                          include_scalars=True):
+                          include_scalars=True,
+                          include_channels=False):
     """Generates a random circuit including some parameterized gates.
 
     Symbols are randomly included in the gates of the first `n_moments` moments
     of the resulting circuit.  Then, parameterized H gates are added as
     subsequent moments for any remaining unused symbols.
     """
-    supported_gates = get_supported_gates()
-    circuit = cirq.testing.random_circuit(qubits, n_moments, p, supported_gates)
+    supported_ops = get_supported_gates()
+    if include_channels:
+        for chan, n in get_supported_channels().items():
+            supported_ops[chan] = n
+
+    circuit = cirq.testing.random_circuit(qubits, n_moments, p, supported_ops)
     random_symbols = list(symbols)
     random.shuffle(random_symbols)
     location = 0
 
     for i in range(len(circuit)):
-        op = random.choice(list(supported_gates.keys()))
-        n_qubits = supported_gates[op]
+        op = random.choice(list(supported_ops.keys()))
+        n_qubits = supported_ops[op]
         locs = tuple(random.sample(qubits, n_qubits))
-        if isinstance(op, cirq.IdentityGate):
+        if isinstance(op, cirq.IdentityGate) or \
+            any(isinstance(op, x) for x in _SUPPORTED_CHANNELS):
             circuit[:i] += op.on(*locs)
             continue
         working_symbol = sympy.Symbol(random_symbols[location %
@@ -149,18 +156,27 @@ def random_symbol_circuit(qubits,
     return circuit
 
 
-def random_circuit_resolver_batch(qubits, batch_size, n_moments=15, p=0.9):
+def random_circuit_resolver_batch(qubits,
+                                  batch_size,
+                                  *,
+                                  n_moments=15,
+                                  p=0.9,
+                                  include_channels=False):
     """Generate a batch of random circuits and symbolless resolvers."""
-    supported_gates = get_supported_gates()
+    supported_ops = get_supported_gates()
+    if include_channels:
+        for chan, n in get_supported_channels().items():
+            supported_ops[chan] = n
+
     return_circuits = []
     return_resolvers = []
     for _ in range(batch_size):
         circuit = cirq.testing.random_circuit(qubits, n_moments, p,
-                                              supported_gates)
+                                              supported_ops)
 
         for i in range(len(circuit)):
-            op = random.choice(list(supported_gates.keys()))
-            n_qubits = supported_gates[op]
+            op = random.choice(list(supported_ops.keys()))
+            n_qubits = supported_ops[op]
             if (n_qubits > len(qubits)):
                 # skip adding gates in small case.
                 continue
@@ -184,16 +200,22 @@ def random_circuit_resolver_batch(qubits, batch_size, n_moments=15, p=0.9):
 def random_symbol_circuit_resolver_batch(qubits,
                                          symbols,
                                          batch_size,
+                                         *,
                                          n_moments=15,
                                          p=0.9,
-                                         include_scalars=True):
+                                         include_scalars=True,
+                                         include_channels=False):
     """Generate a batch of random circuits and resolvers."""
     return_circuits = []
     return_resolvers = []
     for _ in range(batch_size):
         return_circuits.append(
-            random_symbol_circuit(qubits, symbols, n_moments, p,
-                                  include_scalars))
+            random_symbol_circuit(qubits,
+                                  symbols,
+                                  n_moments=n_moments,
+                                  p=p,
+                                  include_scalars=include_scalars,
+                                  include_channels=include_channels))
 
         return_resolvers.append(
             cirq.ParamResolver(
@@ -467,6 +489,16 @@ def _expression_approx_eq(exp_1, exp_2, atol):
     return False
 
 
+# TODO: replace with cirq.approx_eq once
+# https://github.com/quantumlib/Cirq/issues/3886 is resolved for all channels.
+def _channel_approx_eq(op_true, op_deser, atol=1e-5):
+    if isinstance(op_true, cirq.DepolarizingChannel):
+        if isinstance(op_deser, cirq.DepolarizingChannel):
+            return abs(op_true.p - op_deser.p) < atol
+
+    return False
+
+
 def gate_approx_eq(gate_true, gate_deser, atol=1e-5):
     """Compares gates in the allowed TFQ gate set.
 
@@ -531,6 +563,9 @@ def gate_approx_eq(gate_true, gate_deser, atol=1e-5):
         c = _expression_approx_eq(gate_true._phase_exponent,
                                   gate_deser._phase_exponent, atol)
         return a and b and c
+    if any(isinstance(gate_true, x) for x in _SUPPORTED_CHANNELS):
+        # Compare channels.
+        return _channel_approx_eq(gate_true, gate_deser, atol)
     raise ValueError(
         f"Some valid TFQ gate type is not yet accounted for, got {gate_true}")
 
