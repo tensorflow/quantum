@@ -161,7 +161,13 @@ def _depolarize_channel_serializer():
         # cirq channels can't contain symbols.
         cirq.google.SerializingArg(serialized_name="p",
                                    serialized_type=float,
-                                   op_getter=lambda x: x.gate.p)
+                                   op_getter=lambda x: x.gate.p),
+        cirq.google.SerializingArg(serialized_name="control_qubits",
+                                   serialized_type=str,
+                                   op_getter=lambda x: ''),
+        cirq.google.SerializingArg(serialized_name="control_values",
+                                   serialized_type=str,
+                                   op_getter=lambda x: '')
     ]
     return cirq.google.GateOpSerializer(gate_type=cirq.DepolarizingChannel,
                                         serialized_gate_id="DP",

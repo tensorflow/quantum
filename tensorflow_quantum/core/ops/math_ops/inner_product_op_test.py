@@ -190,6 +190,15 @@ class InnerProductTest(tf.test.TestCase, parameterized.TestCase):
                 symbol_values_array,
                 util.convert_to_tensor([[x] for x in circuit_batch]))
 
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    expected_regex='cirq.Channel'):
+            # Circuit tensor has too many dimensions.
+            noisy_circuit = cirq.Circuit(cirq.depolarize(0.3).on_each(*qubits))
+            inner_product_op.inner_product(
+                util.convert_to_tensor([noisy_circuit for _ in circuit_batch]),
+                symbol_names, symbol_values_array,
+                util.convert_to_tensor(other_batch))
+
         res = inner_product_op.inner_product(
             util.convert_to_tensor(circuit_batch), symbol_names,
             symbol_values_array.astype(np.float64),
