@@ -223,6 +223,16 @@ class ADJGradTest(tf.test.TestCase, parameterized.TestCase):
                 tf.convert_to_tensor([[0, 0] for _ in range(len(circuit_batch))
                                      ]))
 
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    expected_regex='cirq.Channel'):
+            # attempting to use noisy circuit.
+            noisy_circuit = cirq.Circuit(cirq.depolarize(0.3).on_each(*qubits))
+            tfq_adj_grad_op.tfq_adj_grad(
+                util.convert_to_tensor([noisy_circuit for _ in circuit_batch]),
+                symbol_names, tf.convert_to_tensor(symbol_values_array),
+                util.convert_to_tensor([[x] for x in pauli_sums]),
+                tf.convert_to_tensor(upstream_grads))
+
     def test_calculate_adj_grad_empty(self):
         """Verify that the empty case is handled gracefully."""
         out = tfq_adj_grad_op.tfq_adj_grad(
