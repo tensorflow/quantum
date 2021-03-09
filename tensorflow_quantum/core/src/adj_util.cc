@@ -75,6 +75,20 @@ void CreateGradientCircuit(
       grad_gates->push_back(grad);
     }
 
+    // Three qubit Eigen.
+    else if (circuit.gates[i].kind == qsim::Cirq::GateKind::kCCZPowGate ||
+             circuit.gates[i].kind == qsim::Cirq::GateKind::kCCXPowGate) {
+      bool swapq = circuit.gates[i].swapped;
+      PopulateGradientThreeEigen(
+          metadata[i].create_f3, metadata[i].symbol_values[0], i,
+          swapq ? circuit.gates[i].qubits[2] : circuit.gates[i].qubits[0],
+          circuit.gates[i].qubits[1],
+          swapq ? circuit.gates[i].qubits[0] : circuit.gates[i].qubits[2],
+          metadata[i].gate_params[0], metadata[i].gate_params[1],
+          metadata[i].gate_params[2], &grad);
+      grad_gates->push_back(grad);
+    }
+
     // PhasedX
     else if (circuit.gates[i].kind == qsim::Cirq::GateKind::kPhasedXPowGate) {
       // Process potentially several symbols.
@@ -197,6 +211,23 @@ void PopulateGradientTwoEigen(
   auto left = create_f(0, qid, qid2, (exp + _GRAD_EPS) * exp_s, gs);
   auto right = create_f(0, qid, qid2, (exp - _GRAD_EPS) * exp_s, gs);
   Matrix4Diff(right.matrix,
+              left.matrix);  // left's entries have right subtracted.
+  qsim::MatrixScalarMultiply(0.5 / _GRAD_EPS, left.matrix);
+  grad->grad_gates.push_back(left);
+}
+
+void PopulateGradientThreeEigen(
+    const std::function<qsim::Cirq::GateCirq<float>(unsigned int, unsigned int,
+                                                    unsigned int, unsigned int,
+                                                    float, float)>& create_f,
+    const std::string& symbol, unsigned int location, unsigned int qid,
+    unsigned int qid2, unsigned int qid3, float exp, float exp_s, float gs,
+    GradientOfGate* grad) {
+  grad->params.push_back(symbol);
+  grad->index = location;
+  auto left = create_f(0, qid, qid2, qid3, (exp + _GRAD_EPS) * exp_s, gs);
+  auto right = create_f(0, qid, qid2, qid3, (exp - _GRAD_EPS) * exp_s, gs);
+  Matrix8Diff(right.matrix,
               left.matrix);  // left's entries have right subtracted.
   qsim::MatrixScalarMultiply(0.5 / _GRAD_EPS, left.matrix);
   grad->grad_gates.push_back(left);

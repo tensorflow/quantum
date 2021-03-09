@@ -185,7 +185,10 @@ class ExecutionOpsConsistentyTest(tf.test.TestCase, parameterized.TestCase):
             for qubit in qubits:
                 c += cirq.Circuit(cirq.Y(qubit)**0.125)
 
-            if gate_ref[gate] == 2:
+            if gate_ref[gate] == 3:
+                op_qubits = np.random.choice(qubits, size=3, replace=False)
+                c += cirq.Circuit(gate(*op_qubits))
+            elif gate_ref[gate] == 2:
                 op_qubits = np.random.choice(qubits, size=2, replace=False)
                 c += cirq.Circuit(gate(*op_qubits))
             elif gate_ref[gate] == 1:

@@ -61,6 +61,11 @@ struct GateMetaData {
   std::function<qsim::Cirq::GateCirq<float>(unsigned int, unsigned int,
                                             unsigned int, float, float)>
       create_f2;
+
+  // set only if gate is Three qubit Eigen gate.
+  std::function<qsim::Cirq::GateCirq<float>(
+      unsigned int, unsigned int, unsigned int, unsigned int, float, float)>
+      create_f3;
 };
 
 // parse a serialized Cirq program into a qsim representation.

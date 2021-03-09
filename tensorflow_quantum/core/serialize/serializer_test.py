@@ -129,6 +129,7 @@ def _make_controlled_circuit(circuit, control_qubits, control_values):
 def _get_circuit_proto_pairs():
     q0 = cirq.GridQubit(0, 0)
     q1 = cirq.GridQubit(0, 1)
+    q2 = cirq.GridQubit(0, 2)
 
     pairs = [
         # HPOW and aliases.
@@ -247,6 +248,26 @@ def _get_circuit_proto_pairs():
          _build_op_proto("CZP", ['exponent', 'exponent_scalar', 'global_shift'],
                          [1.0, 1.0, 0.0], ['0_0', '0_1'])),
 
+        # CCZPow and aliases
+        (cirq.Circuit(cirq.CCZPowGate(exponent=0.3)(q0, q1, q2)),
+         _build_gate_proto("CCZP",
+                           ['exponent', 'exponent_scalar', 'global_shift'],
+                           [0.3, 1.0, 0.0], ['0_0', '0_1', '0_2'])),
+        (cirq.Circuit(
+            cirq.CCZPowGate(exponent=sympy.Symbol('alpha'))(q0, q1, q2)),
+         _build_gate_proto("CCZP",
+                           ['exponent', 'exponent_scalar', 'global_shift'],
+                           ['alpha', 1.0, 0.0], ['0_0', '0_1', '0_2'])),
+        (cirq.Circuit(
+            cirq.CCZPowGate(exponent=3.1 * sympy.Symbol('alpha'))(q0, q1, q2)),
+         _build_gate_proto("CCZP",
+                           ['exponent', 'exponent_scalar', 'global_shift'],
+                           ['alpha', 3.1, 0.0], ['0_0', '0_1', '0_2'])),
+        (cirq.Circuit(cirq.CCZ(q0, q1, q2)),
+         _build_gate_proto("CCZP",
+                           ['exponent', 'exponent_scalar', 'global_shift'],
+                           [1.0, 1.0, 0.0], ['0_0', '0_1', '0_2'])),
+
         # CNOTPow and aliases
         (cirq.Circuit(cirq.CNotPowGate(exponent=0.3)(q0, q1)),
          _build_op_proto("CNP", ['exponent', 'exponent_scalar', 'global_shift'],
@@ -261,6 +282,26 @@ def _get_circuit_proto_pairs():
         (cirq.Circuit(cirq.CNOT(q0, q1)),
          _build_op_proto("CNP", ['exponent', 'exponent_scalar', 'global_shift'],
                          [1.0, 1.0, 0.0], ['0_0', '0_1'])),
+
+        # CCXPow and aliases
+        (cirq.Circuit(cirq.CCXPowGate(exponent=0.3)(q0, q1, q2)),
+         _build_gate_proto("CCXP",
+                           ['exponent', 'exponent_scalar', 'global_shift'],
+                           [0.3, 1.0, 0.0], ['0_0', '0_1', '0_2'])),
+        (cirq.Circuit(
+            cirq.CCXPowGate(exponent=sympy.Symbol('alpha'))(q0, q1, q2)),
+         _build_gate_proto("CCXP",
+                           ['exponent', 'exponent_scalar', 'global_shift'],
+                           ['alpha', 1.0, 0.0], ['0_0', '0_1', '0_2'])),
+        (cirq.Circuit(
+            cirq.CCXPowGate(exponent=3.1 * sympy.Symbol('alpha'))(q0, q1, q2)),
+         _build_gate_proto("CCXP",
+                           ['exponent', 'exponent_scalar', 'global_shift'],
+                           ['alpha', 3.1, 0.0], ['0_0', '0_1', '0_2'])),
+        (cirq.Circuit(cirq.TOFFOLI(q0, q1, q2)),
+         _build_gate_proto("CCXP",
+                           ['exponent', 'exponent_scalar', 'global_shift'],
+                           [1.0, 1.0, 0.0], ['0_0', '0_1', '0_2'])),
 
         # SWAPPow and aliases
         (cirq.Circuit(cirq.SwapPowGate(exponent=0.3)(q0, q1)),

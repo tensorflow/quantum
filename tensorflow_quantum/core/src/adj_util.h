@@ -65,6 +65,14 @@ void PopulateGradientTwoEigen(
     const std::string& symbol, unsigned int location, unsigned int qid,
     unsigned int qid2, float exp, float exp_s, float gs, GradientOfGate* grad);
 
+void PopulateGradientThreeEigen(
+    const std::function<qsim::Cirq::GateCirq<float>(unsigned int, unsigned int,
+                                                    unsigned int, unsigned int,
+                                                    float, float)>& create_f,
+    const std::string& symbol, unsigned int location, unsigned int qid,
+    unsigned int qid2, unsigned int qid3, float exp, float exp_s, float gs,
+    GradientOfGate* grad);
+
 // Note: all methods below expect gate qubit indices to have been swapped so
 // qid < qid2.
 void PopulateGradientPhasedXPhasedExponent(const std::string& symbol,
@@ -112,6 +120,14 @@ void Matrix2Diff(Array2& source, Array2& dest) {
 template <typename Array2>
 void Matrix4Diff(Array2& source, Array2& dest) {
   for (unsigned i = 0; i < 32; i++) {
+    dest[i] -= source[i];
+  }
+}
+
+// does matrix elementiwse subtraction dest -= source.
+template <typename Array2>
+void Matrix8Diff(Array2& source, Array2& dest) {
+  for (unsigned i = 0; i < 128; i++) {
     dest[i] -= source[i];
   }
 }
