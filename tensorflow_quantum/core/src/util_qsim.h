@@ -316,34 +316,29 @@ tensorflow::Status AccumulateOperators(
   return status;
 }
 
-// Assumes coefficients.size() == fused_circuits.size() and
-// coefficients[0].size() == fused_circuits[0].size().
+// Assumes coefficients.size() == fused_circuits.size().
+// These are checked at the upstream.
 // scratch has been created, but does not require initialization.
 // dest has been created, but does not require initialization.
-// |phi> = sum_j coefficients[i][j]*|phi[i][j]>
+// scratch has garbage value.
+// |psi> = sum_i coefficients[i]*|phi[i]>
 template <typename SimT, typename StateSpaceT, typename StateT>
 tensorflow::Status AccumulateFusedCircuits(
-    const std::vector<std::vector<float>>& coefficients,
-    const std::vector<std::vector<QsimFusedCircuit>>& fused_circuits,
-    const SimT& sim, const StateSpaceT& ss, StateT& scratch, StateT& dest) {
+    const std::vector<float>& coefficients,
+    const std::vector<QsimFusedCircuit>& fused_circuits, const SimT& sim,
+    const StateSpaceT& ss, StateT& scratch, StateT& dest) {
   tensorflow::Status status = tensorflow::Status::OK();
   ss.SetAllZeros(dest);
 
-  DCHECK_EQ(coefficients.size(), fused_circuits.size());
-  DCHECK_EQ(coefficients[0].size(), fused_circuits[0].size());
-
   for (std::vector<qsim::GateFused<QsimGate>>::size_type i = 0;
        i < fused_circuits.size(); i++) {
-    for (std::vector<std::vector<qsim::GateFused<QsimGate>>>::size_type j = 0;
+    ss.SetStateZero(scratch);
+    for (std::vector<qsim::GateFused<QsimGate>>::size_type j = 0;
          j < fused_circuits[i].size(); j++) {
-      ss.SetStateZero(scratch);
-      for (std::vector<qsim::GateFused<QsimGate>>::size_type k = 0;
-           k < fused_circuits[i][j].size(); k++) {
-        qsim::ApplyFusedGate(sim, fused_circuits[i][j][k], scratch);
-      }
-      ss.Multiply(coefficients[i][j], scratch);
-      ss.Add(scratch, dest);
+      qsim::ApplyFusedGate(sim, fused_circuits[i][j], scratch);
     }
+    ss.Multiply(coefficients[i], scratch);
+    ss.Add(scratch, dest);
   }
 
   return status;

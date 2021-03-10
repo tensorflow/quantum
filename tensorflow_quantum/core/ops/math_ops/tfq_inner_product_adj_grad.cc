@@ -238,8 +238,9 @@ class TfqInnerProductAdjGradOp : public tensorflow::OpKernel {
         qsim::ApplyFusedGate(sim, fused_circuits[i][j], sv);
       }
 
-      auto status = AccumulateFusedCircuits(
-          downstream_grads, other_fused_circuits, sim, ss, scratch2, scratch);
+      auto status =
+          AccumulateFusedCircuits(downstream_grads[i], other_fused_circuits[i],
+                                  sim, ss, scratch2, scratch);
 
       // now sv is |psi>
       // scratch contains sum_j downstream_grads[i][j]*|phi[i][j]>

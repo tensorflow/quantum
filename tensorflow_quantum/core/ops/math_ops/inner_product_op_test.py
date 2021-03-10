@@ -461,6 +461,21 @@ class InnerProductTest(tf.test.TestCase, parameterized.TestCase):
                                              empty_values, other_program)
         self.assertShapeEqual(np.zeros((0, 0)), out)
 
+    def test_tf_gradient_correctness_no_circuit(self):
+        """Test the inner product grad between no circuits."""
+
+        empty_circuit = tf.raw_ops.Empty(shape=(0,), dtype=tf.string)
+        empty_symbols = tf.raw_ops.Empty(shape=(0,), dtype=tf.string)
+        empty_values = tf.raw_ops.Empty(shape=(0, 0), dtype=tf.float32)
+        other_program = tf.raw_ops.Empty(shape=(0, 0), dtype=tf.string)
+
+        with tf.GradientTape() as tape:
+            tape.watch(empty_values)
+            out = inner_product_op.inner_product(empty_circuit, empty_symbols,
+                                                 empty_values, other_program)
+
+        self.assertShapeEqual(np.zeros((0, 0)), out)
+
 
 if __name__ == "__main__":
     tf.test.main()

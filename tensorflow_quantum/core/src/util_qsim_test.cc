@@ -40,6 +40,7 @@ using ::tfq::proto::PauliTerm;
 typedef absl::flat_hash_map<std::string, std::pair<int, float>> SymbolMap;
 typedef qsim::Cirq::GateCirq<float> QsimGate;
 typedef qsim::Circuit<QsimGate> QsimCircuit;
+typedef std::vector<qsim::GateFused<QsimGate>> QsimFusedCircuit;
 
 class TwoTermSampledExpectationFixture
     : public ::testing::TestWithParam<std::tuple<std::string, float>> {};
@@ -540,6 +541,80 @@ TEST(UtilQsimTest, AccumulateOperatorsEmpty) {
   EXPECT_NEAR(ss.GetAmpl(scratch, 3).real(), 0.0, 1e-5);
   EXPECT_NEAR(ss.GetAmpl(scratch, 3).imag(), 0.0, 1e-5);
 
+  // Check that dest contains all zeros.
+  EXPECT_NEAR(ss.GetAmpl(dest, 0).real(), 0.0, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(dest, 0).imag(), 0.0, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(dest, 1).real(), 0.0, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(dest, 1).imag(), 0.0, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(dest, 2).real(), 0.0, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(dest, 2).imag(), 0.0, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(dest, 3).real(), 0.0, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(scratch, 3).imag(), 0.0, 1e-5);
+}
+
+TEST(UtilQsimTest, AccumulateFusedCircuitsBasic) {
+  // Create circuit to prepare initial state.
+  std::vector<QsimCircuit> simple_circuits(2, QsimCircuit());
+  simple_circuits[0].num_qubits = 2;
+  simple_circuits[0].gates.push_back(
+      qsim::Cirq::XPowGate<float>::Create(0, 1, 0.25, 0.0));
+  simple_circuits[1].num_qubits = 2;
+  simple_circuits[1].gates.push_back(
+      qsim::Cirq::CXPowGate<float>::Create(1, 1, 0, 1.0, 0.0));
+  simple_circuits[1].gates.push_back(
+      qsim::Cirq::YPowGate<float>::Create(2, 0, 0.5, 0.0));
+
+  // Initialize fused circuits.
+  std::vector<QsimFusedCircuit> fused_circuits;
+  for (int i = 0; i < 2; i++) {
+    fused_circuits.push_back(
+        qsim::BasicGateFuser<qsim::IO, QsimGate>().FuseGates(
+            qsim::BasicGateFuser<qsim::IO, QsimGate>::Parameter(),
+            simple_circuits[i].num_qubits, simple_circuits[i].gates));
+  }
+
+  // Instantiate qsim objects.
+  qsim::Simulator<qsim::SequentialFor> sim(1);
+  qsim::Simulator<qsim::SequentialFor>::StateSpace ss(1);
+  auto sv = ss.Create(2);
+  auto scratch = ss.Create(2);
+  auto dest = ss.Create(2);
+
+  // Initialize coeffs.
+  std::vector<float> coeffs = {1.23, 4.56};
+
+  AccumulateFusedCircuits(coeffs, fused_circuits, sim, ss, scratch, dest);
+
+  // Scratch has coeffs[r][c] * fused circuits[r][c] where r, c = last indices.
+  // Check that dest got accumulated onto.
+  double accumulated_real[4] = {0.0, 0.0, 0.0, 0.0};
+  double accumulated_imag[4] = {0.0, 0.0, 0.0, 0.0};
+  for (unsigned int i = 0; i < 2; i++) {
+    ss.SetStateZero(sv);
+    for (const qsim::GateFused<QsimGate>& fused_gate : fused_circuits[i]) {
+      qsim::ApplyFusedGate(sim, fused_gate, sv);
+    }
+    for (unsigned int k = 0; k < 4; k++) {
+      accumulated_real[k] += coeffs[i] * ss.GetAmpl(sv, k).real();
+      accumulated_imag[k] += coeffs[i] * ss.GetAmpl(sv, k).imag();
+    }
+  }
+  for (unsigned int k = 0; k < 4; k++) {
+    EXPECT_NEAR(ss.GetAmpl(dest, k).real(), accumulated_real[k], 1e-5);
+    EXPECT_NEAR(ss.GetAmpl(dest, k).imag(), accumulated_imag[k], 1e-5);
+  }
+}
+
+TEST(UtilQsimTest, AccumulateFusedCircuitsEmpty) {
+  // Instantiate qsim objects.
+  qsim::Simulator<qsim::SequentialFor> sim(1);
+  qsim::Simulator<qsim::SequentialFor>::StateSpace ss(1);
+  auto scratch = ss.Create(2);
+  auto dest = ss.Create(2);
+
+  AccumulateFusedCircuits({}, {}, sim, ss, scratch, dest);
+
+  // scratch has garbage value.
   // Check that dest contains all zeros.
   EXPECT_NEAR(ss.GetAmpl(dest, 0).real(), 0.0, 1e-5);
   EXPECT_NEAR(ss.GetAmpl(dest, 0).imag(), 0.0, 1e-5);

@@ -365,6 +365,21 @@ class InnerProductAdjGradTest(tf.test.TestCase, parameterized.TestCase):
         expected = np.zeros((1, len(symbol_names)), dtype=np.complex64)
         self.assertAllClose(out, expected)
 
+    def test_correctness_no_circuit(self):
+        """Test the inner product grad between no circuits."""
+
+        empty_circuit = tf.raw_ops.Empty(shape=(0,), dtype=tf.string)
+        empty_symbols = tf.raw_ops.Empty(shape=(0,), dtype=tf.string)
+        empty_values = tf.raw_ops.Empty(shape=(0, 0), dtype=tf.float32)
+        other_program = tf.raw_ops.Empty(shape=(0, 0), dtype=tf.string)
+        empty_pred_grad = tf.raw_ops.Empty(shape=(0, 0), dtype=tf.float32)
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'number of symbols must be a positive'):
+            out = inner_product_op._inner_product_adj_grad(
+                empty_circuit, empty_symbols, empty_values, other_program,
+                empty_pred_grad)
+
 
 if __name__ == "__main__":
     tf.test.main()
