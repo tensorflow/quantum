@@ -37,7 +37,7 @@ def catch_empty_inputs(func):
         empty_args = tf.equal(tf.size(programs), 0)
         empty_vals = tf.equal(tf.size(symbol_values), 0)
         empty_symbols = tf.equal(tf.size(symbol_names), 0)
-        
+
         ret_zero = tf.logical_or(empty_args, empty_vals)
         ret_zero = tf.logical_or(ret_zero, empty_symbols)
         return tf.cond(ret_zero, lambda: tf.zeros_like(symbol_values),
