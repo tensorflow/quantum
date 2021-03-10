@@ -30,13 +30,16 @@ def catch_empty_inputs(func):
 
     @functools.wraps(func)
     def new_diff(*args, **kwargs):
-        # args[1] is programs. args[3] is symbol_values
+        # args[1]=programs. args[2]=symbol_names. args[3]=symbol_values
         programs = args[1]
+        symbol_names = args[2]
         symbol_values = args[3]
         empty_args = tf.equal(tf.size(programs), 0)
         empty_vals = tf.equal(tf.size(symbol_values), 0)
+        empty_symbols = tf.equal(tf.size(symbol_names), 0)
 
         ret_zero = tf.logical_or(empty_args, empty_vals)
+        ret_zero = tf.logical_or(ret_zero, empty_symbols)
         return tf.cond(ret_zero, lambda: tf.zeros_like(symbol_values),
                        lambda: func(*args, **kwargs))
 
