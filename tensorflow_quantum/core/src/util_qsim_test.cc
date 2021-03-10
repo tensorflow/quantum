@@ -623,7 +623,6 @@ TEST(UtilQsimTest, AccumulateFusedCircuitsEmpty) {
   EXPECT_NEAR(ss.GetAmpl(dest, 2).real(), 0.0, 1e-5);
   EXPECT_NEAR(ss.GetAmpl(dest, 2).imag(), 0.0, 1e-5);
   EXPECT_NEAR(ss.GetAmpl(dest, 3).real(), 0.0, 1e-5);
-  EXPECT_NEAR(ss.GetAmpl(scratch, 3).imag(), 0.0, 1e-5);
 }
 
 }  // namespace
