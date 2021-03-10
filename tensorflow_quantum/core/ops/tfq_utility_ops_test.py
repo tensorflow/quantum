@@ -93,10 +93,18 @@ class AppendCircuitOpTest(tf.test.TestCase, parameterized.TestCase):
         other_qubits = cirq.GridQubit.rect(2, max_n_bits)
 
         base_circuits, _ = util.random_symbol_circuit_resolver_batch(
-            qubits, symbols, n_circuits, include_scalars=False)
+            qubits,
+            symbols,
+            n_circuits,
+            include_scalars=True,
+            include_channels=True)
 
         circuits_to_append, _ = util.random_symbol_circuit_resolver_batch(
-            other_qubits, symbols, n_circuits, include_scalars=False)
+            other_qubits,
+            symbols,
+            n_circuits,
+            include_scalars=True,
+            include_channels=True)
 
         serialized_base_circuits = util.convert_to_tensor(base_circuits)
         serialized_circuits_to_append = util.convert_to_tensor(
@@ -273,7 +281,10 @@ class ResolveParametersOpTest(tf.test.TestCase, parameterized.TestCase):
         n_moments = 15
         circuit_batch, resolver_batch = \
             util.random_symbol_circuit_resolver_batch(
-                qubits, symbol_names, batch_size, n_moments)
+                qubits, symbol_names, batch_size,
+                n_moments=n_moments,
+                include_channels=True,
+                include_scalars=True)
 
         # Remove one of the symbols from the resolvers
         symbol_names_partial = symbol_names[1:]

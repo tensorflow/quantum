@@ -558,7 +558,7 @@ class ExecutionOpsConsistentyTest(tf.test.TestCase, parameterized.TestCase):
 
         circuit_batch, resolver_batch = \
             util.random_symbol_circuit_resolver_batch(
-                qubits, symbol_names, BATCH_SIZE, 30)
+                qubits, symbol_names, BATCH_SIZE, n_moments=30)
         for i in range(BATCH_SIZE):
             circuit_batch[i] += cirq.Circuit(
                 *[cirq.H(qubit) for qubit in qubits])

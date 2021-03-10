@@ -384,8 +384,9 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
         qubits = cirq.GridQubit.rect(1, 20)
         n_moments = 200
         for _ in range(5):
-            test_circuit = util.random_symbol_circuit(qubits, expected_symbols,
-                                                      n_moments)
+            test_circuit = util.random_symbol_circuit(qubits,
+                                                      expected_symbols,
+                                                      n_moments=n_moments)
             extracted_symbols = util.get_circuit_symbols(test_circuit)
             self.assertListEqual(sorted(extracted_symbols),
                                  sorted(expected_symbols))
@@ -396,11 +397,21 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
         qubits = cirq.GridQubit.rect(1, 2)
         n_moments = 1
         for _ in range(5):
-            test_circuit = util.random_symbol_circuit(qubits, expected_symbols,
-                                                      n_moments)
+            test_circuit = util.random_symbol_circuit(qubits,
+                                                      expected_symbols,
+                                                      n_moments=n_moments)
             extracted_symbols = util.get_circuit_symbols(test_circuit)
             self.assertListEqual(sorted(extracted_symbols),
                                  sorted(expected_symbols))
+
+    def test_get_circuit_symbols_error(self):
+        """Make sure that the method errors where it should."""
+        for param in ['2', sympy.Symbol("X")]:
+            # Passed an invalid parameter (not a cirq.Circuit).
+            with self.assertRaisesRegex(TypeError,
+                                        expected_regex='Expected a '
+                                        'cirq.Circuit'):
+                util.get_circuit_symbols(param)
 
 
 class ExponentialUtilFunctionsTest(tf.test.TestCase):

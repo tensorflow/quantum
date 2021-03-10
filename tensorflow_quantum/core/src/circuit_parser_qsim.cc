@@ -585,7 +585,9 @@ tensorflow::Status ParseAppendGate(const Operation& op,
   auto build_f = func_map.find(op.gate().id());
   if (build_f == func_map.end()) {
     return Status(tensorflow::error::INVALID_ARGUMENT,
-                  "Could not parse gate id: " + op.gate().id());
+                  absl::StrCat("Could not parse gate id: ", op.gate().id(),
+                               ". This is likely because a cirq.Channel was "
+                               "used in an op that does not support them."));
   }
   return build_f->second(op, param_map, num_qubits, time, circuit, metadata);
 }

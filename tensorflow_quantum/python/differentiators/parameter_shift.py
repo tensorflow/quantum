@@ -41,15 +41,16 @@ class ParameterShift(differentiator.Differentiator):
     ...     cirq.Circuit(cirq.X(qubit) ** sympy.Symbol('alpha'))
     ... ])
     >>> psums = tfq.convert_to_tensor([[cirq.Z(qubit)]])
-    >>> symbol_values_array = np.array([[0.123]], dtype=np.float32)
+    >>> symbol_values = np.array([[0.123]], dtype=np.float32)
     >>> # Calculate tfq gradient.
-    >>> symbol_values_tensor = tf.convert_to_tensor(symbol_values_array)
+    >>> symbol_values_t = tf.convert_to_tensor(symbol_values)
+    >>> symbol_names = tf.convert_to_tensor(['alpha'])
     >>> with tf.GradientTape() as g:
-    ...     g.watch(symbol_values_tensor)
-    ...     expectations = op(circuit, ['alpha'], symbol_values_tensor, psums)
+    ...     g.watch(symbol_values_t)
+    ...     expectations = op(circuit, symbol_names, symbol_values_t, psums)
     >>> # This value is now computed via the ParameterShift rule.
     >>> # https://arxiv.org/abs/1905.13311
-    >>> grads = g.gradient(expectations, symbol_values_tensor)
+    >>> grads = g.gradient(expectations, symbol_values_t)
     >>> grads
     tf.Tensor([[-1.1839752]], shape=(1, 1), dtype=float32)
 

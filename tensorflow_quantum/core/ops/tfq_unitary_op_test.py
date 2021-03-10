@@ -102,6 +102,14 @@ class UnitaryTest(tf.test.TestCase, parameterized.TestCase):
             unitary_op(util.convert_to_tensor(circuit_batch), symbol_names,
                        symbol_values_array, [])
 
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    expected_regex='cirq.Channel'):
+            # attempting to use noisy circuit.
+            noisy_circuit = cirq.Circuit(cirq.depolarize(0.3).on_each(*qubits))
+            unitary_op(
+                util.convert_to_tensor([noisy_circuit for _ in circuit_batch]),
+                symbol_names, symbol_values_array)
+
     @parameterized.parameters([
         {
             'all_n_qubits': [2, 3]
