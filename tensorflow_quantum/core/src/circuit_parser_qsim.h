@@ -20,6 +20,7 @@ limitations under the License.
 #include <vector>
 
 #include "../qsim/lib/circuit.h"
+#include "../qsim/lib/circuit_noisy.h"
 #include "../qsim/lib/fuser.h"
 #include "../qsim/lib/gates_cirq.h"
 #include "absl/container/flat_hash_map.h"
@@ -72,6 +73,16 @@ tensorflow::Status QsimCircuitFromProgram(
     const int num_qubits, qsim::Circuit<qsim::Cirq::GateCirq<float>>* circuit,
     std::vector<qsim::GateFused<qsim::Cirq::GateCirq<float>>>* fused_circuit,
     std::vector<GateMetaData>* metdata = nullptr);
+
+// parse a serialized Cirq program into a qsim representation.
+// ingests a Cirq Circuit proto and produces a resolved Noisy qsim Circuit,
+// Note: no metadata or fused circuits are produced as the qsim api for
+// 	noisy simulation appears to take care of a lot of this for us.
+tensorflow::Status NoisyQsimCircuitFromProgram(
+    const cirq::google::api::v2::Program& program,
+    const absl::flat_hash_map<std::string, std::pair<int, float>>& param_map,
+    const int num_qubits,
+    qsim::NoisyCircuit<qsim::Cirq::GateCirq<float>>* ncircuit);
 
 // parse a serialized pauliTerm from a larger cirq.Paulisum proto
 // into a qsim Circuit and fused circuit.
