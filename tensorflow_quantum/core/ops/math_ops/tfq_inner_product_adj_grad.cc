@@ -169,12 +169,11 @@ class TfqInnerProductAdjGradOp : public tensorflow::OpKernel {
                     downstream_grads.size(), " gradients and ", programs.size(),
                     " circuits.")));
 
-    OP_REQUIRES(
-        context, downstream_grads[0].size() == output_dim_internal_size,
-        tensorflow::errors::InvalidArgument(absl::StrCat(
-            "Number of gradients and other_programs do not match. Got ",
-            downstream_grads[0].size(), " gradient entries and ",
-            output_dim_internal_size, " other programs.")));
+    OP_REQUIRES(context, downstream_grads[0].size() == output_dim_internal_size,
+                tensorflow::errors::InvalidArgument(absl::StrCat(
+                    "Number of gradients and other_programs do not match. Got ",
+                    downstream_grads[0].size(), " gradient entries and ",
+                    output_dim_internal_size, " other programs.")));
 
     output_tensor.setZero();
 
@@ -238,22 +237,9 @@ class TfqInnerProductAdjGradOp : public tensorflow::OpKernel {
            j < fused_circuits[i].size(); j++) {
         qsim::ApplyFusedGate(sim, fused_circuits[i][j], sv);
       }
-      // Accumulate all other_programs.
-      // |phi> = sum_j downstream_grads[i][j]*|phi[i][j]>
-      for (std::vector<std::vector<qsim::GateFused<QsimGate>>>::size_type j = 0;
-           j < other_fused_circuits[i].size(); j++) {
-        ss.SetStateZero(scratch2);
-        for (std::vector<qsim::GateFused<QsimGate>>::size_type k = 0;
-             k < other_fused_circuits[i][j].size(); k++) {
-          qsim::ApplyFusedGate(sim, other_fused_circuits[i][j][k], scratch2);
-        }
-        ss.Multiply(downstream_grads[i][j], scratch2);
-        if (j == 0) {
-          ss.Copy(scratch2, scratch);
-        } else {
-          ss.Add(scratch2, scratch);
-        }
-      }
+
+      auto status = AccumulateFusedCircuits(
+          downstream_grads, other_fused_circuits, sim, ss, scratch2, scratch);
 
       // now sv is |psi>
       // scratch contains sum_j downstream_grads[i][j]*|phi[i][j]>
@@ -270,8 +256,7 @@ class TfqInnerProductAdjGradOp : public tensorflow::OpKernel {
 
         // Hit a parameterized gate.
         // todo fix this copy.
-        auto cur_gate =
-            qsim_circuits[i].gates[gradient_gates[i][l - 1].index];
+        auto cur_gate = qsim_circuits[i].gates[gradient_gates[i][l - 1].index];
         ApplyGateDagger(sim, cur_gate, sv);
 
         // if applicable compute control qubit mask and control value bits.
@@ -439,8 +424,8 @@ class TfqInnerProductAdjGradOp : public tensorflow::OpKernel {
             std::complex<double> result = ss.InnerProduct(scratch2, scratch);
             (*output_tensor)(cur_batch_index, loc) +=
                 (downstream_grads[cur_batch_index][cur_internal_index] *
-                std::complex<float>(static_cast<float>(result.real()),
-                                    static_cast<float>(result.imag())));
+                 std::complex<float>(static_cast<float>(result.real()),
+                                     static_cast<float>(result.imag())));
           }
           ApplyGateDagger(sim, cur_gate, scratch);
         }

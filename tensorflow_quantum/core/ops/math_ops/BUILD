@@ -86,8 +86,8 @@ py_test(
 )
 
 py_test(
-    name = "inner_product_adj_grad_op_test",
-    srcs = ["inner_product_adj_grad_op_test.py"],
+    name = "inner_product_grad_test",
+    srcs = ["inner_product_grad_test.py"],
     python_version = "PY3",
     deps = [
         ":inner_product_op_py",

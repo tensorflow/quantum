@@ -200,22 +200,22 @@ class InnerProductTest(tf.test.TestCase, parameterized.TestCase):
     @parameterized.parameters([
         {
             'n_qubits': 5,
-            'batch_size': 1,  # ComputeLarge
+            'batch_size': 1,
             'inner_dim_size': 5
         },
         {
             'n_qubits': 5,
-            'batch_size': 10,  # ComputeSmall
+            'batch_size': 10,
             'inner_dim_size': 1
         },
         {
             'n_qubits': 10,
-            'batch_size': 10,  # ComputeSmall
+            'batch_size': 10,
             'inner_dim_size': 2
         },
         {
             'n_qubits': 5,
-            'batch_size': 10,  # ComputeSmall
+            'batch_size': 10,
             'inner_dim_size': 5
         },
     ])
@@ -261,22 +261,22 @@ class InnerProductTest(tf.test.TestCase, parameterized.TestCase):
     @parameterized.parameters([
         {
             'n_qubits': 5,
-            'batch_size': 1,  # ComputeLarge
+            'batch_size': 1,
             'inner_dim_size': 5
         },
         {
             'n_qubits': 5,
-            'batch_size': 10,  # ComputeSmall
+            'batch_size': 2,
             'inner_dim_size': 1
         },
         {
             'n_qubits': 10,
-            'batch_size': 10,  # ComputeSmall
+            'batch_size': 3,
             'inner_dim_size': 2
         },
         {
             'n_qubits': 5,
-            'batch_size': 10,  # ComputeSmall
+            'batch_size': 10,
             'inner_dim_size': 5
         },
     ])
@@ -313,47 +313,38 @@ class InnerProductTest(tf.test.TestCase, parameterized.TestCase):
     def test_correctness_empty(self):
         """Tests the inner product with empty circuits."""
 
-        empty_cicuit = util.convert_to_tensor([cirq.Circuit()])
+        empty_circuit = util.convert_to_tensor([cirq.Circuit()])
         empty_symbols = tf.convert_to_tensor([], dtype=tf.dtypes.string)
         empty_values = tf.convert_to_tensor([[]])
         other_program = util.convert_to_tensor([[cirq.Circuit()]])
 
-        out = inner_product_op.inner_product(empty_cicuit, empty_symbols,
+        out = inner_product_op.inner_product(empty_circuit, empty_symbols,
                                              empty_values, other_program)
         expected = np.array([[1.0]], dtype=np.complex64)
         self.assertAllClose(out, expected)
 
         qubit = cirq.GridQubit(0, 0)
-        non_empty_cicuit = util.convert_to_tensor([cirq.Circuit(cirq.X(qubit))])
+        non_empty_circuit = util.convert_to_tensor(
+            [cirq.Circuit(cirq.X(qubit))])
         empty_symbols = tf.convert_to_tensor([], dtype=tf.dtypes.string)
         empty_values = tf.convert_to_tensor([[]])
         other_program = util.convert_to_tensor([[cirq.Circuit()]])
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'qubits not found'):
-            inner_product_op.inner_product(non_empty_cicuit, empty_symbols,
+            inner_product_op.inner_product(non_empty_circuit, empty_symbols,
                                            empty_values, other_program)
 
     @parameterized.parameters([
         {
             'n_qubits': 5,
-            'batch_size': 1,  # ComputeLarge
+            'batch_size': 1,
             'inner_dim_size': 5
         },
         {
             'n_qubits': 5,
-            'batch_size': 10,  # ComputeSmall
-            'inner_dim_size': 1
-        },
-        {
-            'n_qubits': 10,
-            'batch_size': 10,  # ComputeSmall
+            'batch_size': 3,
             'inner_dim_size': 2
-        },
-        {
-            'n_qubits': 5,
-            'batch_size': 10,  # ComputeSmall
-            'inner_dim_size': 5
         },
     ])
     def test_tf_gradient_correctness_with_symbols(self, n_qubits, batch_size,
@@ -410,28 +401,18 @@ class InnerProductTest(tf.test.TestCase, parameterized.TestCase):
                         internal_wf = cirq.final_state_vector(other_batch[i][j])
                         out_arr[i][k] += np.vdot(final_wf_grad, internal_wf)
 
-        self.assertAllClose(out, out_arr, atol=1e-3)
+        self.assertAllClose(out, np.conj(out_arr), atol=1e-3)
 
     @parameterized.parameters([
         {
             'n_qubits': 5,
-            'batch_size': 1,  # ComputeLarge
+            'batch_size': 1,
             'inner_dim_size': 5
         },
         {
             'n_qubits': 5,
-            'batch_size': 10,  # ComputeSmall
-            'inner_dim_size': 1
-        },
-        {
-            'n_qubits': 10,
-            'batch_size': 10,  # ComputeSmall
+            'batch_size': 3,
             'inner_dim_size': 2
-        },
-        {
-            'n_qubits': 5,
-            'batch_size': 10,  # ComputeSmall
-            'inner_dim_size': 5
         },
     ])
     def test_tf_gradient_correctness_without_symbols(self, n_qubits, batch_size,
@@ -457,7 +438,7 @@ class InnerProductTest(tf.test.TestCase, parameterized.TestCase):
             ip = inner_product_op.inner_product(programs, symbol_names,
                                                 symbol_values, other_programs)
         out = tape.gradient(ip, symbol_values)
-        self.assertIsNone(out)
+        self.assertAllClose(out, tf.zeros_like(symbol_values), atol=1e-3)
 
     def test_correctness_no_circuit(self):
         """Test the inner product between no circuits."""

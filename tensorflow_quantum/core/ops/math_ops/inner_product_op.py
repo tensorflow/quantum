@@ -20,8 +20,8 @@ from tensorflow_quantum.core.ops.load_module import load_module
 MATH_OP_MODULE = load_module(os.path.join("math_ops", "_tfq_math_ops.so"))
 
 
-def inner_product_adj_grad(programs, symbol_names, symbol_values,
-                           other_programs, prev_grad):
+def _inner_product_adj_grad(programs, symbol_names, symbol_values,
+                            other_programs, prev_grad):
     """Calculate the adjoint gradients of the inner product between circuits.
 
     Compute the gradients of the (potentially many) inner products between
@@ -32,39 +32,8 @@ def inner_product_adj_grad(programs, symbol_names, symbol_values,
         \psi_{\text{other_programs[j]}} \rangle $
 
 
-    >>> symbols = sympy.symbols('alpha beta')
-    >>> qubits = cirq.GridQubit.rect(1, 2)
-    >>> reference_circuits = [
-    ...     cirq.Circuit((cirq.H**symbols[0]).on_each(qubits)),
-    ...     cirq.Circuit(
-    ...         cirq.X(qubits[0]) ** symbols[0],
-    ...         cirq.Y(qubits[1]) ** symbols[1])
-    ... ]
-    >>> other_circuits = [
-    ...     cirq.Circuit(cirq.X.on_each(qubits)),
-    ...     cirq.Circuit((cirq.Y**0.125).on_each(qubits)),
-    ...     cirq.Circuit((cirq.X**0.5).on_each(qubits))
-    ... ]
-    >>> reference_tensor = tfq.convert_to_tensor(reference_circuits)
-    >>> symbol_tensor = tf.convert_to_tensor([s.name for s in symbols])
-    >>> values_tensor = tf.convert_to_tensor(np.arange(4).reshape(2, 2))
-    >>> other_tensor = tfq.convert_to_tensor([other_circuits, other_circuits])
-    >>> prev_grad = tf.convert_to_tensor(tf.ones((2, 2)))
-    >>> grad_ip = tfq.math.inner_product_adj_grad(
-    ...               reference_tensor, symbol_tensor, values_tensor,
-    ...               other_tensor, prev_grad)
-    >>> grad_ip
-    tf.Tensor(
-    [[ 0.6361127+0.6856381j ,  0.       +0.j        ],
-     [ 0.5629374-0.87751585j, -2.4266903+1.2809625j ]], shape=(2, 2),
-      dtype=complex64)
-
-
-
     Note: `other_programs` must not contain any free symbols. These can
         be resolved beforehand with `tfq.resolve_parameters`.
-
-    Note: Currently this op is not differentiable.
 
     Note: len(symbol_names) (=n_params) should be a positive integer.
 
@@ -92,9 +61,12 @@ def inner_product_adj_grad(programs, symbol_names, symbol_values,
         other_programs[i] w.r.t. `symbol_names[j]` and `programs[i]` is resolved
         with `symbol_values[i]`.
     """
-    return MATH_OP_MODULE.tfq_inner_product_adj_grad(
-        programs, symbol_names, tf.cast(symbol_values, tf.float32),
-        other_programs, tf.cast(prev_grad, tf.float32))
+    # Due to TF gradient scheme, we return complex conjugate derivative.
+    return tf.math.conj(
+        MATH_OP_MODULE.tfq_inner_product_adj_grad(
+            programs, symbol_names, tf.cast(symbol_values, tf.float32),
+            other_programs, tf.cast(prev_grad, tf.float32)))
+
 
 @tf.custom_gradient
 def inner_product(programs, symbol_names, symbol_values, other_programs):
@@ -138,8 +110,6 @@ def inner_product(programs, symbol_names, symbol_values, other_programs):
     Note: `other_programs` must not contain any free symbols. These can
         be resolved beforehand with `tfq.resolve_parameters`.
 
-    Note: Currently this op is differentiable via adjoint differentiation.
-
     Args:
         programs: `tf.Tensor` of strings with shape [batch_size] containing
             the string representations of the circuits
@@ -162,10 +132,14 @@ def inner_product(programs, symbol_names, symbol_values, other_programs):
     """
 
     def grad(dy):
-        if symbol_names.shape[0] == 0:
-            return [None, None, None, None]
-        inner_prod_grad = inner_product_adj_grad(
-            programs, symbol_names, symbol_values, other_programs, dy)
+
+        def _true_grad():
+            return _inner_product_adj_grad(programs, symbol_names,
+                                           symbol_values, other_programs, dy)
+
+        inner_prod_grad = tf.cond(tf.math.equal(symbol_names.shape[0], 0),
+                                  lambda: tf.zeros_like(symbol_values),
+                                  _true_grad)
         return [None, None, inner_prod_grad, None]
 
     return MATH_OP_MODULE.tfq_inner_product(programs, symbol_names,
