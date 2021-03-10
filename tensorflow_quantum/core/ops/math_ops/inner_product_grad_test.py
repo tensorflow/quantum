@@ -256,7 +256,7 @@ class InnerProductAdjGradTest(tf.test.TestCase, parameterized.TestCase):
                                                    dtype=tf.dtypes.string)
         symbol_values = tf.convert_to_tensor(symbol_values_array)
         prev_grad = tf.cast(tf.random.normal((batch_size, inner_dim_size)),
-                            dtype=tf.complex64)
+                            tf.complex64)
 
         out = inner_product_op._inner_product_adj_grad(programs,
                                                        symbol_names_tensor,
@@ -376,7 +376,7 @@ class InnerProductAdjGradTest(tf.test.TestCase, parameterized.TestCase):
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'number of symbols must be a positive'):
-            out = inner_product_op._inner_product_adj_grad(
+            _ = inner_product_op._inner_product_adj_grad(
                 empty_circuit, empty_symbols, empty_values, other_program,
                 empty_pred_grad)
 
