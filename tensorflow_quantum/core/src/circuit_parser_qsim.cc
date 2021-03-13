@@ -18,7 +18,10 @@ limitations under the License.
 #include <string>
 #include <vector>
 
+#include "../qsim/lib/channel.h"
+#include "../qsim/lib/channels_cirq.h"
 #include "../qsim/lib/circuit.h"
+#include "../qsim/lib/circuit_noisy.h"
 #include "../qsim/lib/fuser.h"
 #include "../qsim/lib/fuser_basic.h"
 #include "../qsim/lib/gates_cirq.h"
@@ -44,6 +47,7 @@ namespace {
 typedef absl::flat_hash_map<std::string, std::pair<int, float>> SymbolMap;
 typedef qsim::Cirq::GateCirq<float> QsimGate;
 typedef qsim::Circuit<QsimGate> QsimCircuit;
+typedef qsim::NoisyCircuit<QsimGate> NoisyQsimCircuit;
 
 inline Status ParseProtoArg(
     const Operation& op, const std::string& arg_name,
@@ -592,7 +596,81 @@ tensorflow::Status ParseAppendGate(const Operation& op,
   return build_f->second(op, param_map, num_qubits, time, circuit, metadata);
 }
 
+inline Status DepolarizingChannel(const Operation& op,
+                                  const unsigned int num_qubits,
+                                  const unsigned int time,
+                                  NoisyQsimCircuit* ncircuit) {
+  int q;
+  bool unused;
+  float p;
+  Status u;
+  unused = absl::SimpleAtoi(op.qubits(0).id(), &q);
+
+  u = ParseProtoArg(op, "p", {}, &p);
+  if (!u.ok()) {
+    return u;
+  }
+  auto chan = qsim::Cirq::DepolarizingChannel<float>::Create(
+      time, num_qubits - q - 1, p);
+  ncircuit->push_back(chan);
+  return Status::OK();
+}
+
+tensorflow::Status ParseAppendChannel(const Operation& op,
+                                      const unsigned int num_qubits,
+                                      const unsigned int time,
+                                      NoisyQsimCircuit* ncircuit) {
+  // map channel name -> callable to build qsim channel from operation proto.
+  static const absl::flat_hash_map<
+      std::string, std::function<Status(const Operation&, const unsigned int,
+                                        const unsigned int, NoisyQsimCircuit*)>>
+      chan_func_map = {{"DP", &DepolarizingChannel}};
+
+  auto build_f = chan_func_map.find(op.gate().id());
+  if (build_f == chan_func_map.end()) {
+    return Status(tensorflow::error::INVALID_ARGUMENT,
+                  absl::StrCat("Could not parse channel id: ", op.gate().id()));
+  }
+  return build_f->second(op, num_qubits, time, ncircuit);
+}
+
 }  // namespace
+
+tensorflow::Status NoisyQsimCircuitFromProgram(const Program& program,
+                                               const SymbolMap& param_map,
+                                               const int num_qubits,
+                                               NoisyQsimCircuit* ncircuit) {
+  // Special case empty.
+  if (num_qubits <= 0) {
+    return Status::OK();
+  }
+  int time = 0;
+  QsimCircuit placeholder;
+  placeholder.gates.reserve(2);
+
+  for (const Moment& moment : program.circuit().moments()) {
+    for (const Operation& op : moment.operations()) {
+      placeholder.gates.clear();
+      Status status = ParseAppendGate(op, param_map, num_qubits, time,
+                                      &placeholder, nullptr);
+      if (!status.ok()) {
+        // if failed to append gate, try appending channel.
+        status = ParseAppendChannel(op, num_qubits, time, ncircuit);
+      } else {
+        // succeeded in appending gate, convert to channel.
+        ncircuit->push_back(
+            std::move(qsim::MakeChannelFromGate(time, placeholder.gates[0])));
+      }
+
+      if (!status.ok()) {
+        return status;
+      }
+    }
+    time++;
+  }
+
+  return Status::OK();
+}
 
 tensorflow::Status QsimCircuitFromProgram(
     const Program& program, const SymbolMap& param_map, const int num_qubits,
