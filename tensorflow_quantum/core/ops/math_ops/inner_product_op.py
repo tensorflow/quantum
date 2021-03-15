@@ -20,8 +20,8 @@ from tensorflow_quantum.core.ops.load_module import load_module
 MATH_OP_MODULE = load_module(os.path.join("math_ops", "_tfq_math_ops.so"))
 
 
-def _inner_product_adj_grad(programs, symbol_names, symbol_values,
-                            other_programs, prev_grad):
+def _inner_product_grad(programs, symbol_names, symbol_values, other_programs,
+                        prev_grad):
     """Calculate the adjoint gradients of the inner product between circuits.
 
     Compute the gradients of the (potentially many) inner products between
@@ -63,7 +63,7 @@ def _inner_product_adj_grad(programs, symbol_names, symbol_values,
     """
     # Due to TF gradient scheme, we return complex conjugate derivative.
     return tf.math.conj(
-        MATH_OP_MODULE.tfq_inner_product_adj_grad(
+        MATH_OP_MODULE.tfq_inner_product_grad(
             programs, symbol_names, tf.cast(symbol_values, tf.float32),
             other_programs, tf.cast(prev_grad, tf.float32)))
 
@@ -134,10 +134,11 @@ def inner_product(programs, symbol_names, symbol_values, other_programs):
     def grad(dy):
 
         def _true_grad():
-            return _inner_product_adj_grad(programs, symbol_names,
-                                           symbol_values, other_programs, dy)
+            return _inner_product_grad(programs, symbol_names, symbol_values,
+                                       other_programs, dy)
 
-        inner_prod_grad = tf.cond(tf.math.equal(symbol_names.shape[0], 0),
+        ret_zero = tf.equal(tf.size(symbol_names), 0)
+        inner_prod_grad = tf.cond(ret_zero,
                                   lambda: tf.zeros_like(symbol_values),
                                   _true_grad)
         return [None, None, inner_prod_grad, None]

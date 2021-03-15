@@ -42,9 +42,9 @@ typedef qsim::Cirq::GateCirq<float> QsimGate;
 typedef qsim::Circuit<QsimGate> QsimCircuit;
 typedef std::vector<qsim::GateFused<QsimGate>> QsimFusedCircuit;
 
-class TfqInnerProductAdjGradOp : public tensorflow::OpKernel {
+class TfqInnerProductGradOp : public tensorflow::OpKernel {
  public:
-  explicit TfqInnerProductAdjGradOp(tensorflow::OpKernelConstruction* context)
+  explicit TfqInnerProductGradOp(tensorflow::OpKernelConstruction* context)
       : OpKernel(context) {}
 
   void Compute(tensorflow::OpKernelContext* context) override {
@@ -442,16 +442,16 @@ class TfqInnerProductAdjGradOp : public tensorflow::OpKernel {
 };
 
 REGISTER_KERNEL_BUILDER(
-    Name("TfqInnerProductAdjGrad").Device(tensorflow::DEVICE_CPU),
-    TfqInnerProductAdjGradOp);
+    Name("TfqInnerProductGrad").Device(tensorflow::DEVICE_CPU),
+    TfqInnerProductGradOp);
 
-REGISTER_OP("TfqInnerProductAdjGrad")
+REGISTER_OP("TfqInnerProductGrad")
     .Input("programs: string")
     .Input("symbol_names: string")
     .Input("symbol_values: float")
     .Input("other_programs: string")
     .Input("downstream_grads: float")
-    .Output("inner_products_adj_grad: complex64")
+    .Output("inner_products_grad: complex64")
     .SetShapeFn([](tensorflow::shape_inference::InferenceContext* c) {
       tensorflow::shape_inference::ShapeHandle programs_shape;
       TF_RETURN_IF_ERROR(c->WithRank(c->input(0), 1, &programs_shape));

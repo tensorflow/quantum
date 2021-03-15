@@ -14,7 +14,7 @@ cc_binary(
     name = "_tfq_math_ops.so",
     srcs = [
         "tfq_inner_product.cc",
-        "tfq_inner_product_adj_grad.cc",
+        "tfq_inner_product_grad.cc",
     ],
     copts = select({
         ":windows": [
