@@ -301,6 +301,35 @@ class NoisyExpectationCalculationTest(tf.test.TestCase, parameterized.TestCase):
 
         self.assertAllClose(cirq_exps, op_exps, atol=5e-2, rtol=5e-2)
 
+    def test_correctness_empty(self):
+        """Test the expectation for empty circuits."""
+        empty_circuit = util.convert_to_tensor([cirq.Circuit()])
+        empty_symbols = tf.convert_to_tensor([], dtype=tf.dtypes.string)
+        empty_values = tf.convert_to_tensor([[]])
+        empty_paulis = tf.convert_to_tensor([[]], dtype=tf.dtypes.string)
+        empty_n_samples = tf.convert_to_tensor([[]], dtype=tf.int32)
+
+        out = noisy_expectation_op.expectation(empty_circuit, empty_symbols,
+                                               empty_values, empty_paulis,
+                                               empty_n_samples)
+
+        expected = np.array([[]], dtype=np.complex64)
+        self.assertAllClose(out, expected)
+
+    def test_correctness_no_circuit(self):
+        """Test the correctness with the empty tensor."""
+        empty_circuit = tf.raw_ops.Empty(shape=(0,), dtype=tf.string)
+        empty_symbols = tf.raw_ops.Empty(shape=(0,), dtype=tf.string)
+        empty_values = tf.raw_ops.Empty(shape=(0, 0), dtype=tf.float32)
+        empty_paulis = tf.raw_ops.Empty(shape=(0, 0), dtype=tf.string)
+        empty_n_samples = tf.raw_ops.Empty(shape=(0, 0), dtype=tf.int32)
+
+        out = noisy_expectation_op.expectation(empty_circuit, empty_symbols,
+                                               empty_values, empty_paulis,
+                                               empty_n_samples)
+
+        self.assertShapeEqual(np.zeros((0, 0)), out)
+
 
 if __name__ == "__main__":
     tf.test.main()
