@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""Tests that specifically target tfq_simulate_ops."""
+"""Tests that specifically target noisy expectation calculation."""
 import numpy as np
 from absl.testing import parameterized
 import tensorflow as tf
@@ -23,11 +23,11 @@ from tensorflow_quantum.core.ops.noise import noisy_expectation_op
 from tensorflow_quantum.python import util
 
 
-class SimulateSampledExpectationTest(tf.test.TestCase, parameterized.TestCase):
-    """Tests tfq_simulate_sampled_expectation."""
+class NoisyExpectationCalculationTest(tf.test.TestCase, parameterized.TestCase):
+    """Tests tfq.noise.expectation."""
 
-    def test_simulate_sampled_expectation_inputs(self):
-        """Make sure sampled expectation op fails gracefully on bad inputs."""
+    def test_noisy_expectation_inputs(self):
+        """Make sure noisy expectation op fails gracefully on bad inputs."""
         n_qubits = 5
         batch_size = 5
         symbol_names = ['alpha']
