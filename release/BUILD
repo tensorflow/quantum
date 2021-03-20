@@ -13,6 +13,7 @@ sh_binary(
         "//tensorflow_quantum/core:__init__.py",
         "//tensorflow_quantum/core/ops:__init__.py",
         "//tensorflow_quantum/core/ops/math_ops:__init__.py",
+        "//tensorflow_quantum/core/ops/noise:__init__.py",
         "//tensorflow_quantum/core/proto:__init__.py",
         "//tensorflow_quantum/core/serialize:__init__.py",
 

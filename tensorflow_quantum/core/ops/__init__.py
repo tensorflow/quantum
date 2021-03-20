@@ -27,3 +27,6 @@ from tensorflow_quantum.core.ops.tfq_utility_ops import (append_circuit,
 
 # Import math_ops.
 from tensorflow_quantum.core.ops import math_ops
+
+# Import noise ops.
+from tensorflow_quantum.core.ops import noise

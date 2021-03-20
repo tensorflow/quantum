@@ -570,7 +570,8 @@ tensorflow::Status ParseAppendGate(const Operation& op,
                                    const unsigned int num_qubits,
                                    const unsigned int time,
                                    QsimCircuit* circuit,
-                                   std::vector<GateMetaData>* metadata) {
+                                   std::vector<GateMetaData>* metadata,
+                                   bool* lookup_fail) {
   // map gate name -> callable to build that qsim gate from operation proto.
   static const absl::flat_hash_map<
       std::string,
@@ -588,6 +589,7 @@ tensorflow::Status ParseAppendGate(const Operation& op,
 
   auto build_f = func_map.find(op.gate().id());
   if (build_f == func_map.end()) {
+    *lookup_fail = true;
     return Status(tensorflow::error::INVALID_ARGUMENT,
                   absl::StrCat("Could not parse gate id: ", op.gate().id(),
                                ". This is likely because a cirq.Channel was "
@@ -612,7 +614,7 @@ inline Status DepolarizingChannel(const Operation& op,
   }
   auto chan = qsim::Cirq::DepolarizingChannel<float>::Create(
       time, num_qubits - q - 1, p);
-  ncircuit->push_back(chan);
+  ncircuit->channels.push_back(chan);
   return Status::OK();
 }
 
@@ -641,25 +643,32 @@ tensorflow::Status NoisyQsimCircuitFromProgram(const Program& program,
                                                const int num_qubits,
                                                NoisyQsimCircuit* ncircuit) {
   // Special case empty.
+  ncircuit->num_qubits = num_qubits;
   if (num_qubits <= 0) {
     return Status::OK();
   }
+
   int time = 0;
+  bool gate_fail;
   QsimCircuit placeholder;
   placeholder.gates.reserve(2);
 
   for (const Moment& moment : program.circuit().moments()) {
     for (const Operation& op : moment.operations()) {
       placeholder.gates.clear();
+      gate_fail = false;
       Status status = ParseAppendGate(op, param_map, num_qubits, time,
-                                      &placeholder, nullptr);
-      if (!status.ok()) {
-        // if failed to append gate, try appending channel.
-        status = ParseAppendChannel(op, num_qubits, time, ncircuit);
-      } else {
+                                      &placeholder, nullptr, &gate_fail);
+      if (!gate_fail && !status.ok()) {
+        // found gate but errored when parsing.
+        return status;
+      } else if (status.ok()) {
         // succeeded in appending gate, convert to channel.
-        ncircuit->push_back(
+        ncircuit->channels.push_back(
             std::move(qsim::MakeChannelFromGate(time, placeholder.gates[0])));
+      } else {
+        // if failed to find gate, try appending channel.
+        status = ParseAppendChannel(op, num_qubits, time, ncircuit);
       }
 
       if (!status.ok()) {
@@ -679,6 +688,7 @@ tensorflow::Status QsimCircuitFromProgram(
   // Convert proto to qsim internal representation.
   circuit->num_qubits = num_qubits;
   int time = 0;
+  bool unused;
   // Special case empty.
   if (num_qubits <= 0) {
     return Status::OK();
@@ -690,8 +700,8 @@ tensorflow::Status QsimCircuitFromProgram(
   }
   for (const Moment& moment : program.circuit().moments()) {
     for (const Operation& op : moment.operations()) {
-      Status status =
-          ParseAppendGate(op, param_map, num_qubits, time, circuit, metadata);
+      Status status = ParseAppendGate(op, param_map, num_qubits, time, circuit,
+                                      metadata, &unused);
       if (!status.ok()) {
         return status;
       }
