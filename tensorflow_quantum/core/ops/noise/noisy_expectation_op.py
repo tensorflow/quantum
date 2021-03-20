@@ -27,7 +27,7 @@ def expectation(programs, symbol_names, symbol_values, pauli_sums, num_samples):
     inside of the symbols with the name in `symbol_names` in each circuit.
     Channels in this simulation will be "tossed" to a certain realization
     during simulation. This simulation is repeated `num_samples` times and
-    analytic expectation calculations with the given `pauli_sums` are done
+    analytic expectation calculations with the given `pauli_sums` are calculated
     after each run. Once all the runs are finished, these quantities are
     averaged together. This process can be thought of as analyical expectation
     calculation done using monte carlo state vector simulation to account

@@ -65,8 +65,8 @@ cc_binary(
 )
 
 py_library(
-    name = "noisy_simulate_ops",
-    srcs = ["noisy_simulate_ops.py"],
+    name = "noisy_expectation_op_py",
+    srcs = ["noisy_expectation_op.py"],
     data = [":_tfq_noise_ops.so"],
     deps = [
         "//tensorflow_quantum/core/ops:load_module",
@@ -74,11 +74,11 @@ py_library(
 )
 
 py_test(
-    name = "noisy_simulate_ops_test",
-    srcs = ["noisy_simulate_ops_test.py"],
+    name = "noisy_expectation_op_test",
+    srcs = ["noisy_expectation_op_test.py"],
     python_version = "PY3",
     deps = [
-        ":noisy_simulate_ops",
+        ":noisy_expectation_op_py",
         "//tensorflow_quantum/core/ops:batch_util",
         "//tensorflow_quantum/python:util",
     ],

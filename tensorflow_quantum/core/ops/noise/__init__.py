@@ -14,4 +14,4 @@
 # ==============================================================================
 """Module for tfq.core.ops.noise.*"""
 
-from tensorflow_quantum.core.ops.noise.noisy_simulate_ops import expectation
+from tensorflow_quantum.core.ops.noise.noisy_expectation_op import expectation
