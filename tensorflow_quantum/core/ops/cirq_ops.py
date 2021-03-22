@@ -209,8 +209,9 @@ def _get_cirq_analytical_expectation(simulator=cirq.Simulator()):
 
         return expectations
 
-    if not isinstance(simulator, cirq.SimulatesFinalState):
-        raise TypeError("simulator must inherit cirq.SimulatesFinalState.")
+    if not isinstance(simulator, cirq.SimulatesExpectationValues):
+        raise TypeError(
+            "simulator must inherit cirq.SimulatesExpectationValues.")
 
     @_upgrade_inputs
     def expectation_generator(programs_tf, symbol_names_tf, symbol_values_tf,

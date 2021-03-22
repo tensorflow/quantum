@@ -89,10 +89,10 @@ class PQCTest(tf.test.TestCase, parameterized.TestCase):
         qubit = cirq.GridQubit(0, 0)
         learnable_flip = cirq.Circuit(cirq.X(qubit)**symbol)
 
-        class MyState(cirq.SimulatesFinalState):
-            """My state simulator."""
+        class MyExpectation(cirq.SimulatesExpectationValues):
+            """My expectation values simulator."""
 
-            def simulate_sweep(self):
+            def simulate_expectation_values_sweep(self):
                 """do nothing."""
                 return
 
@@ -106,11 +106,11 @@ class PQCTest(tf.test.TestCase, parameterized.TestCase):
         with self.assertRaisesRegex(TypeError, expected_regex="cirq.Sampler"):
             pqc.PQC(learnable_flip,
                     cirq.Z(qubit),
-                    backend=MyState,
+                    backend=MyExpectation,
                     repetitions=500)
 
         with self.assertRaisesRegex(TypeError,
-                                    expected_regex="cirq.SimulatesFinalState"):
+                                    expected_regex="cirq.SimulatesExpectation"):
             pqc.PQC(learnable_flip,
                     cirq.Z(qubit),
                     backend=MySample,
