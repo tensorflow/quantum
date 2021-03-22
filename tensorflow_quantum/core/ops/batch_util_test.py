@@ -107,9 +107,11 @@ class BatchUtilTest(tf.test.TestCase, parameterized.TestCase):
 
         self.assertDTypeEqual(results, np.complex64)
 
+    # cirq.DensityMatrixSimulator is not a
+    # cirq.sim.simulator.SimulatesExpectationValues
     @parameterized.parameters([{
         'sim': cirq.Simulator()
-    }])  # cirq.DensityMatrixSimulator is not cirq.SimulatesExpectationValues
+    }])
     def test_batch_expectation(self, sim):
         """Test expectation."""
         qubits = cirq.GridQubit.rect(1, N_QUBITS)

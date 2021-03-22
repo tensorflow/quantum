@@ -300,9 +300,10 @@ def _validate_inputs(circuits, param_resolvers, simulator, sim_type):
                             ' is required. Given: {}'.format(type(simulator)))
 
     elif sim_type == 'expectation':
-        if not isinstance(simulator, cirq.SimulatesExpectationValues):
+        if not isinstance(
+            simulator, cirq.sim.simulator.SimulatesExpectationValues):
             raise TypeError('For expectation operations a '
-                            'cirq.SimulatesExpectationValues '
+                            'cirq.sim.simulator.SimulatesExpectationValues '
                             'is required.  Given: {}'.format(type(simulator)))
 
     elif sim_type == 'sample':
@@ -397,7 +398,7 @@ def batch_calculate_expectation(circuits, param_resolvers, ops, simulator):
             after `param_resolver[i]` is used to resolve any parameters
             in the circuit.
         simulator: Simulator object. Must inherit
-            `cirq.SimulatesExpectationValues`.
+            `cirq.sim.simulator.SimulatesExpectationValues`.
 
     Returns:
         `np.ndarray` containing the expectation values. Shape is:
@@ -427,7 +428,7 @@ def batch_calculate_expectation(circuits, param_resolvers, ops, simulator):
     for c, p, o in zip(circuits, param_resolvers, ops):
         all_exp_vals.append(simulator.simulate_expectation_values(c, o, p))
 
-    return return np.stack(all_exp_vals)
+    return np.stack(all_exp_vals)
 
 
 def batch_calculate_sampled_expectation(circuits, param_resolvers, ops,

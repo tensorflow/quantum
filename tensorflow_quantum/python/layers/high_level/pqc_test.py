@@ -89,7 +89,7 @@ class PQCTest(tf.test.TestCase, parameterized.TestCase):
         qubit = cirq.GridQubit(0, 0)
         learnable_flip = cirq.Circuit(cirq.X(qubit)**symbol)
 
-        class MyExpectation(cirq.SimulatesExpectationValues):
+        class MyExpectation(cirq.sim.simulator.SimulatesExpectationValues):
             """My expectation values simulator."""
 
             def simulate_expectation_values_sweep(self):
@@ -110,7 +110,7 @@ class PQCTest(tf.test.TestCase, parameterized.TestCase):
                     repetitions=500)
 
         with self.assertRaisesRegex(TypeError,
-                                    expected_regex="cirq.SimulatesExpectation"):
+                                    expected_regex="cirq.sim.simulator.SimulatesExpectationValues"):
             pqc.PQC(learnable_flip,
                     cirq.Z(qubit),
                     backend=MySample,

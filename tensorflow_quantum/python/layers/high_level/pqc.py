@@ -163,8 +163,9 @@ class PQC(tf.keras.layers.Layer):
             the native TensorFlow simulator (None), however users may also
             specify a preconfigured cirq simulation object to use instead.
             If a cirq object is given it must inherit either
-            `cirq.SimulatesExpectationValues` if analytic expectations are
-            desired or `cirq.Sampler` if sampled expectations are desired.
+            `cirq.sim.simulator.SimulatesExpectationValues` if analytic
+            expectations are desired or `cirq.Sampler` if sampled expectations
+            are desired.
         differentiator: Optional `tfq.differentiator` object to specify how
             gradients of `model_circuit` should be calculated.
         initializer: Optional `tf.keras.initializer` object to specify how the
@@ -230,12 +231,13 @@ class PQC(tf.keras.layers.Layer):
                             "and repetitions!=None. Please provide a backend "
                             "that inherits cirq.Sampler or set "
                             "repetitions=None.")
-        if not isinstance(backend, cirq.SimulatesExpectationValues
+        if not isinstance(backend, cirq.sim.simulator.SimulatesExpectationValues
                          ) and repetitions is None and backend is not None:
             raise TypeError("provided backend does not inherit "
-                            "cirq.SimulatesExpectationValues and "
+                            "cirq.sim.simulator.SimulatesExpectationValues and "
                             "repetitions=None. Please provide a backend that "
-                            "inherits cirq.SimulatesExpectationValues.")
+                            "inherits "
+                            "cirq.sim.simulator.SimulatesExpectationValues.")
         if self._analytic:
             self._executor = expectation.Expectation(
                 backend=backend, differentiator=differentiator)

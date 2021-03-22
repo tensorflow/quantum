@@ -151,7 +151,8 @@ class ControlledPQC(tf.keras.layers.Layer):
             specify a preconfigured cirq simulation object to use instead.
             If a cirq object is given it must inherit `cirq.Sampler` if
             `sampled_based` is True or it must inherit
-            `cirq.SimulatesExpectationValues` if `sample_based` is False.
+            `cirq.sim.simulator.SimulatesExpectationValues` if `sample_based` is
+            False.
         differentiator: Optional `tfq.differentiator` object to specify how
             gradients of `model_circuit` should be calculated.
         """
@@ -215,12 +216,13 @@ class ControlledPQC(tf.keras.layers.Layer):
                             "that inherits cirq.Sampler or set "
                             "repetitions=None.")
 
-        if not isinstance(backend, cirq.SimulatesExpectationValues
+        if not isinstance(backend, cirq.sim.simulator.SimulatesExpectationValues
                          ) and repetitions is None and backend is not None:
             raise TypeError("provided backend does not inherit "
-                            "cirq.SimulatesExpectationValues and "
+                            "cirq.sim.simulator.SimulatesExpectationValues and "
                             "repetitions=None. Please provide a backend that "
-                            "inherits cirq.SimulatesExpectationValues.")
+                            "inherits "
+                            "cirq.sim.simulator.SimulatesExpectationValues.")
 
         # Ingest backend and differentiator.
         if self._analytic:

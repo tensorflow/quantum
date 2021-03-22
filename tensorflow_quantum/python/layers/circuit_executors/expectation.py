@@ -211,8 +211,8 @@ class Expectation(tf.keras.layers.Layer):
         Args:
             backend: Optional Backend to use to simulate states. Defaults to
                 the native TensorFlow simulator (None), however users may also
-                specify a preconfigured cirq object to use instead,
-                which must inherit `cirq.SimulatesExpectationValues`.
+                specify a preconfigured cirq object to use instead, which must
+                inherit `cirq.sim.simulator.SimulatesExpectationValues`.
             differentiator: Optional Differentiator to use to calculate analytic
                 derivative values of given operators_to_measure and circuit,
                 which must inherit `tfq.differentiators.Differentiator` and
@@ -225,11 +225,11 @@ class Expectation(tf.keras.layers.Layer):
         super().__init__(**kwargs)
 
         # Ingest backend.
-        if not isinstance(backend, cirq.SimulatesExpectationValues) and \
+        if not isinstance(backend, cirq.sim.simulator.SimulatesExpectationValues) and \
                 isinstance(backend, cirq.Sampler):
-            raise TypeError("Backend implements cirq.Sampler but not"
-                            " cirq.SimulatesExpectationValues. Please use "
-                            "SampledExpectation instead.")
+            raise TypeError("Backend implements cirq.Sampler but not "
+                            "cirq.sim.simulator.SimulatesExpectationValues. "
+                            "Please use SampledExpectation instead.")
 
         # Ingest differentiator.
         if differentiator is None:

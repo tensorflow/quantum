@@ -34,7 +34,8 @@ class CirqAnalyticalExpectationTest(tf.test.TestCase):
     def test_get_cirq_analytical_expectation_op(self):
         """Input check the wrapper for the cirq analytical expectation op."""
         with self.assertRaisesRegex(
-                TypeError, "must inherit cirq.SimulatesExpectationValues."):
+                TypeError,
+                "must inherit cirq.sim.simulator.SimulatesExpectationValues."):
             cirq_ops._get_cirq_analytical_expectation("junk")
         # TODO(peterse): Tighten these tests a bit..
         cirq_ops._get_cirq_analytical_expectation()
