@@ -35,8 +35,10 @@ EXPECTATION_OPS = [
                                              quantum_concurrent=True),
     circuit_execution_ops.get_expectation_op(backend=WF_SIM,
                                              quantum_concurrent=True),
-    circuit_execution_ops.get_expectation_op(backend=DM_SIM,
-                                             quantum_concurrent=True),
+    # TODO(zaqqwerty): DM sim does not inherit
+    # cirq.sim.simulator.SimulatesExpectationValues
+    # circuit_execution_ops.get_expectation_op(backend=DM_SIM,
+    #                                          quantum_concurrent=True),
     # For timing interests C++ backend is tested in quantum_concurrent mode.
     circuit_execution_ops.get_expectation_op(backend=None,
                                              quantum_concurrent=False)
