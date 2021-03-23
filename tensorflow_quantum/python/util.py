@@ -27,7 +27,9 @@ from tensorflow_quantum.core.proto import pauli_sum_pb2
 from tensorflow_quantum.core.serialize import serializer
 
 # Can't use set() since channels don't give proper support.
-_SUPPORTED_CHANNELS = [cirq.DepolarizingChannel]
+_SUPPORTED_CHANNELS = [
+    cirq.DepolarizingChannel, cirq.AsymmetricDepolarizingChannel
+]
 
 
 def get_supported_gates():
@@ -67,15 +69,12 @@ def get_supported_channels():
     Returns a dictionary mapping from supported channel types
     to number of qubits.
     """
-    supported_ops = serializer.SERIALIZER.supported_gate_types()
-    supported_channels = filter(lambda x: x in _SUPPORTED_CHANNELS,
-                                supported_ops)
-    channel_arity_mapping_dict = dict()
-    for chan in supported_channels:
-        # For now all channels are single qubit.
-        if chan == cirq.DepolarizingChannel:
-            channel_arity_mapping_dict[chan(0.01)] = 1
-    return channel_arity_mapping_dict
+    # Add new channels here whenever additional support is needed.
+    channel_mapping = dict()
+    channel_mapping[cirq.DepolarizingChannel(0.01)] = 1
+    channel_mapping[cirq.AsymmetricDepolarizingChannel(0.01, 0.02, 0.03)] = 1
+
+    return channel_mapping
 
 
 def _apply_random_control(gate, all_qubits):
@@ -495,6 +494,12 @@ def _channel_approx_eq(op_true, op_deser, atol=1e-5):
     if isinstance(op_true, cirq.DepolarizingChannel):
         if isinstance(op_deser, cirq.DepolarizingChannel):
             return abs(op_true.p - op_deser.p) < atol
+
+    if isinstance(op_true, cirq.AsymmetricDepolarizingChannel):
+        if isinstance(op_deser, cirq.AsymmetricDepolarizingChannel):
+            return abs(op_true.p_x - op_deser.p_x) < atol and \
+                   abs(op_true.p_y - op_deser.p_y) < atol and \
+                   abs(op_true.p_z - op_deser.p_z) < atol
 
     return False
 
