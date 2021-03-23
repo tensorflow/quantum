@@ -86,8 +86,10 @@ class OpGetterInputChecks(tf.test.TestCase):
         """Test that get expectation only accepts inputs it should."""
         circuit_execution_ops.get_expectation_op()
         circuit_execution_ops.get_expectation_op(backend=cirq.Simulator())
-        circuit_execution_ops.get_expectation_op(
-            backend=cirq.DensityMatrixSimulator())
+        # TODO(zaqqwerty): DM simulator does not currently inherit
+        #                  cirq.sim.simulator.SimulatesExpectationValues
+        # circuit_execution_ops.get_expectation_op(
+        #     backend=cirq.DensityMatrixSimulator())
         circuit_execution_ops.get_expectation_op()
         with self.assertRaisesRegex(NotImplementedError,
                                     expected_regex='Sample-based'):
@@ -97,7 +99,8 @@ class OpGetterInputChecks(tf.test.TestCase):
                                                  processor_id='test',
                                                  gate_set=cirq.google.XMON))
         with self.assertRaisesRegex(
-                TypeError, expected_regex="a Cirq.SimulatesFinalState"):
+                TypeError,
+                expected_regex="cirq.sim.simulator.SimulatesExpectationValues"):
             circuit_execution_ops.get_expectation_op(backend="junk")
 
         with self.assertRaisesRegex(TypeError,
@@ -428,8 +431,11 @@ class ExecutionOpsConsistentyTest(tf.test.TestCase, parameterized.TestCase):
         empty_ops = tf.raw_ops.Empty(shape=(0, 0), dtype=tf.string)
 
         op_exp = op(circuit_batch, [], empty_params, empty_ops).numpy()
-        cirq_exp = batch_util.batch_calculate_expectation([], [], [[]], sim)
-        self.assertEqual(op_exp.shape, cirq_exp.shape)
+        # TODO(zaqqwerty): Dm sim does not inherit
+        # cirq.sim.simulator.SimulatesExpectationValues
+        if not isinstance(sim, cirq.DensityMatrixSimulator):
+            cirq_exp = batch_util.batch_calculate_expectation([], [], [[]], sim)
+            self.assertEqual(op_exp.shape, cirq_exp.shape)
 
     @parameterized.parameters(
         list(

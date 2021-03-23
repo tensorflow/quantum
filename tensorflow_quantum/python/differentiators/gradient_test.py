@@ -45,8 +45,10 @@ SAMPLED_DIFFS_TOLS = [0.5, 0.5, 0.2]
 
 ANALYTIC_OPS = [
     circuit_execution_ops.get_expectation_op(cirq.sim.Simulator()),  # WF
-    circuit_execution_ops.get_expectation_op(
-        cirq.DensityMatrixSimulator()),  # DM
+    # TODO(zaqqwerty): DM simulator does not support
+    #                  cirq.sim.simulator.SimulatesExpectationValues
+    # circuit_execution_ops.get_expectation_op(
+    #     cirq.DensityMatrixSimulator()),  # DM
     circuit_execution_ops.get_expectation_op()  # C++
 ]
 

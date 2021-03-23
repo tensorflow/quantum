@@ -229,13 +229,16 @@ class BatchUtilTest(tf.test.TestCase, parameterized.TestCase):
         true_expectation = (-2.0,)
 
         # (1) Test expectation
-        results = batch_util.batch_calculate_expectation(
-            circuit_batch, resolver_batch, [[x] for x in ops], sim)
-
-        for _, _, result, _ in zip(circuit_batch, resolver_batch, results, ops):
-            self.assertAllClose(true_expectation, result, rtol=1e-5, atol=1e-5)
-
-        self.assertDTypeEqual(results, np.float32)
+        # TODO(zaqqwerty): DM sim does not currently inherit
+        # cirq.sim.simulator.SimulatesExpectationValues
+        if not isinstance(sim, cirq.DensityMatrixSimulator):
+            results = batch_util.batch_calculate_expectation(
+                circuit_batch, resolver_batch, [[x] for x in ops], sim)
+            for _, _, result, _ in zip(
+                circuit_batch, resolver_batch, results, ops):
+                self.assertAllClose(
+                    true_expectation, result, rtol=1e-5, atol=1e-5)
+            self.assertDTypeEqual(results, np.float32)
 
         # (2) Test sampled_expectation
         results = batch_util.batch_calculate_sampled_expectation(
@@ -277,9 +280,10 @@ class BatchUtilTest(tf.test.TestCase, parameterized.TestCase):
     def test_no_circuit(self, sim):
         """Test functions with no circuits and empty arrays."""
         # (1) Test expectation
-        results = batch_util.batch_calculate_expectation([], [], [[]], sim)
-        self.assertDTypeEqual(results, np.float32)
-        self.assertEqual(np.zeros(shape=(0, 0)).shape, results.shape)
+        if not isinstance(sim, cirq.DensityMatrixSimulator):
+            results = batch_util.batch_calculate_expectation([], [], [[]], sim)
+            self.assertDTypeEqual(results, np.float32)
+            self.assertEqual(np.zeros(shape=(0, 0)).shape, results.shape)
 
         # (2) Test sampled_expectation
         results = batch_util.batch_calculate_sampled_expectation([], [], [[]],

@@ -40,7 +40,9 @@ class CirqAnalyticalExpectationTest(tf.test.TestCase):
         # TODO(peterse): Tighten these tests a bit..
         cirq_ops._get_cirq_analytical_expectation()
         cirq_ops._get_cirq_analytical_expectation(cirq.Simulator())
-        cirq_ops._get_cirq_analytical_expectation(cirq.DensityMatrixSimulator())
+        # TODO(zaqqwerty): DM sim does not inherit
+        #                  cirq.sim.simulator.SimulatesExpectationValues
+        # cirq_ops._get_cirq_analytical_expectation(cirq.DensityMatrixSimulator())
 
     def test_cirq_analytical_expectation_op_inputs(self):
         """Test input checking in the state sim op."""

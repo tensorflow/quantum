@@ -426,7 +426,15 @@ def batch_calculate_expectation(circuits, param_resolvers, ops, simulator):
 
     all_exp_vals = []
     for c, p, o in zip(circuits, param_resolvers, ops):
-        all_exp_vals.append(simulator.simulate_expectation_values(c, o, p))
+        # TODO(zaqqwerty): default cirq.Simulator does not support empty c.
+        #                  Convention in TFQ is to set such expectations to -2.
+        if len(c) == 0:
+            all_exp_vals.append(np.full(len(o), -2.0, dtype=np.float32))
+        else:
+            # Valid observables always have real expectation values.
+            all_exp_vals.append(np.real(np.asarray(
+                simulator.simulate_expectation_values(c, o, p))).astype(
+                    np.float32))
 
     return np.stack(all_exp_vals)
 

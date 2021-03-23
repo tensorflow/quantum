@@ -73,7 +73,7 @@ class ControlledPQCTest(tf.test.TestCase, parameterized.TestCase):
             controlled_pqc.ControlledPQC(learnable_flip,
                                          cirq.Z(bit),
                                          repetitions=500,
-                                         backend=MyState)
+                                         backend=MyExpectation)
 
     def test_controlled_pqc_model_circuit_error(self):
         """Test that invalid circuits error properly."""
