@@ -14,6 +14,7 @@ cc_binary(
     name = "_tfq_math_ops.so",
     srcs = [
         "tfq_inner_product.cc",
+        "tfq_inner_product_grad.cc",
     ],
     copts = select({
         ":windows": [
@@ -58,8 +59,9 @@ cc_binary(
     deps = [
         "//tensorflow_quantum/core/ops:parse_context",
         "//tensorflow_quantum/core/ops:tfq_simulate_utils",
-        "//tensorflow_quantum/core/src:util_qsim",
+        "//tensorflow_quantum/core/src:adj_util",
         "//tensorflow_quantum/core/src:circuit_parser_qsim",
+        "//tensorflow_quantum/core/src:util_qsim",
         "@qsim//lib:qsim_lib",
     ],
 )
@@ -76,6 +78,16 @@ py_library(
 py_test(
     name = "inner_product_op_test",
     srcs = ["inner_product_op_test.py"],
+    python_version = "PY3",
+    deps = [
+        ":inner_product_op_py",
+        "//tensorflow_quantum/python:util",
+    ],
+)
+
+py_test(
+    name = "inner_product_grad_test",
+    srcs = ["inner_product_grad_test.py"],
     python_version = "PY3",
     deps = [
         ":inner_product_op_py",

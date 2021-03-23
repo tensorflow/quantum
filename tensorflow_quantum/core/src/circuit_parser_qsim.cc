@@ -599,6 +599,28 @@ tensorflow::Status ParseAppendGate(const Operation& op,
   return build_f->second(op, param_map, num_qubits, time, circuit, metadata);
 }
 
+inline Status AsymmetricDepolarizingChannel(const Operation& op,
+                                            const unsigned int num_qubits,
+                                            const unsigned int time,
+                                            NoisyQsimCircuit* ncircuit) {
+  int q;
+  bool unused;
+  float p_x, p_y, p_z;
+  Status u;
+  unused = absl::SimpleAtoi(op.qubits(0).id(), &q);
+
+  u = ParseProtoArg(op, "p_x", {}, &p_x);
+  u = ParseProtoArg(op, "p_y", {}, &p_y);
+  u = ParseProtoArg(op, "p_z", {}, &p_z);
+  if (!u.ok()) {
+    return u;
+  }
+  auto chan = qsim::Cirq::AsymmetricDepolarizingChannel<float>::Create(
+      time, num_qubits - q - 1, p_x, p_y, p_z);
+  ncircuit->push_back(chan);
+  return Status::OK();
+}
+
 inline Status DepolarizingChannel(const Operation& op,
                                   const unsigned int num_qubits,
                                   const unsigned int time,
@@ -627,7 +649,8 @@ tensorflow::Status ParseAppendChannel(const Operation& op,
   static const absl::flat_hash_map<
       std::string, std::function<Status(const Operation&, const unsigned int,
                                         const unsigned int, NoisyQsimCircuit*)>>
-      chan_func_map = {{"DP", &DepolarizingChannel}};
+      chan_func_map = {{"DP", &DepolarizingChannel},
+                       {"ADP", &AsymmetricDepolarizingChannel}};
 
   auto build_f = chan_func_map.find(op.gate().id());
   if (build_f == chan_func_map.end()) {

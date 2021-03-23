@@ -1233,6 +1233,45 @@ TEST(QsimCircuitParserTest, CompoundCircuit) {
   ASSERT_EQ(test_circuit.num_qubits, 2);
 }
 
+TEST(QsimCircuitParserTest, AsymmetricDepolarizing) {
+  float p_x = 0.123;
+  float p_y = 0.456;
+  float p_z = 0.789;
+  auto reference = qsim::Cirq::AsymmetricDepolarizingChannel<float>::Create(
+      0, 0, p_x, p_y, p_z);
+  Program program_proto;
+  Circuit* circuit_proto = program_proto.mutable_circuit();
+  circuit_proto->set_scheduling_strategy(circuit_proto->MOMENT_BY_MOMENT);
+  Moment* moments_proto = circuit_proto->add_moments();
+
+  // Add channel.
+  Operation* operations_proto = moments_proto->add_operations();
+  Gate* gate_proto = operations_proto->mutable_gate();
+  gate_proto->set_id("ADP");
+
+  // Set the args.
+  google::protobuf::Map<std::string, Arg>* args_proto =
+      operations_proto->mutable_args();
+  (*args_proto)["p_x"] = MakeArg(p_x);
+  (*args_proto)["p_y"] = MakeArg(p_y);
+  (*args_proto)["p_z"] = MakeArg(p_z);
+
+  // Set the control args.
+  (*args_proto)["control_qubits"] = MakeControlArg("");
+  (*args_proto)["control_values"] = MakeControlArg("");
+
+  // Set the qubits.
+  Qubit* qubits_proto = operations_proto->add_qubits();
+  qubits_proto->set_id("0");
+
+  NoisyQsimCircuit test_circuit;
+
+  ASSERT_EQ(NoisyQsimCircuitFromProgram(program_proto, {}, 1, &test_circuit),
+            tensorflow::Status::OK());
+  AssertChannelEqual(test_circuit[0], reference);
+  ASSERT_EQ(test_circuit.size(), 1);
+}
+
 TEST(QsimCircuitParserTest, Depolarizing) {
   float p = 0.1234;
   auto reference = qsim::Cirq::DepolarizingChannel<float>::Create(0, 0, p);

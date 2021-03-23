@@ -35,6 +35,7 @@ namespace tfq {
 
 typedef qsim::Cirq::GateCirq<float> QsimGate;
 typedef qsim::Circuit<QsimGate> QsimCircuit;
+typedef std::vector<qsim::GateFused<QsimGate>> QsimFusedCircuit;
 
 // Custom FOR loop struct to use TF threadpool instead of native
 // qsim OpenMP or serial FOR implementations.
@@ -310,6 +311,34 @@ tensorflow::Status AccumulateOperators(
       ss.Copy(source, scratch);
       // scratch should now be reverted back to original source.
     }
+  }
+
+  return status;
+}
+
+// Assumes coefficients.size() == fused_circuits.size().
+// These are checked at the upstream.
+// scratch has been created, but does not require initialization.
+// dest has been created, but does not require initialization.
+// scratch has garbage value.
+// |psi> = sum_i coefficients[i]*|phi[i]>
+template <typename SimT, typename StateSpaceT, typename StateT>
+tensorflow::Status AccumulateFusedCircuits(
+    const std::vector<float>& coefficients,
+    const std::vector<QsimFusedCircuit>& fused_circuits, const SimT& sim,
+    const StateSpaceT& ss, StateT& scratch, StateT& dest) {
+  tensorflow::Status status = tensorflow::Status::OK();
+  ss.SetAllZeros(dest);
+
+  for (std::vector<qsim::GateFused<QsimGate>>::size_type i = 0;
+       i < fused_circuits.size(); i++) {
+    ss.SetStateZero(scratch);
+    for (std::vector<qsim::GateFused<QsimGate>>::size_type j = 0;
+         j < fused_circuits[i].size(); j++) {
+      qsim::ApplyFusedGate(sim, fused_circuits[i][j], scratch);
+    }
+    ss.Multiply(coefficients[i], scratch);
+    ss.Add(scratch, dest);
   }
 
   return status;
