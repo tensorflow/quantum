@@ -20,7 +20,7 @@ limitations under the License.
 #include "../qsim/lib/gates_cirq.h"
 #include "../qsim/lib/seqfor.h"
 #include "../qsim/lib/simmux.h"
-#include "cirq/google/api/v2/program.pb.h"
+#include "cirq_google/api/v2/program.pb.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/shape_inference.h"
 #include "tensorflow/core/framework/tensor_shape.h"
