@@ -571,7 +571,7 @@ tensorflow::Status ParseAppendGate(const Operation& op,
                                    const unsigned int time,
                                    QsimCircuit* circuit,
                                    std::vector<GateMetaData>* metadata,
-                                   bool* lookup_fail) {
+                                   bool* lookup_succeeded) {
   // map gate name -> callable to build that qsim gate from operation proto.
   static const absl::flat_hash_map<
       std::string,
@@ -589,12 +589,13 @@ tensorflow::Status ParseAppendGate(const Operation& op,
 
   auto build_f = func_map.find(op.gate().id());
   if (build_f == func_map.end()) {
-    *lookup_fail = true;
+    *lookup_succeeded = false;
     return Status(tensorflow::error::INVALID_ARGUMENT,
                   absl::StrCat("Could not parse gate id: ", op.gate().id(),
                                ". This is likely because a cirq.Channel was "
                                "used in an op that does not support them."));
   }
+  *lookup_succeeded = true;
   return build_f->second(op, param_map, num_qubits, time, circuit, metadata);
 }
 
@@ -649,25 +650,25 @@ tensorflow::Status NoisyQsimCircuitFromProgram(const Program& program,
   }
 
   int time = 0;
-  bool gate_fail;
+  bool gate_found;
   QsimCircuit placeholder;
   placeholder.gates.reserve(2);
 
   for (const Moment& moment : program.circuit().moments()) {
     for (const Operation& op : moment.operations()) {
       placeholder.gates.clear();
-      gate_fail = false;
+      gate_found = false;
       Status status = ParseAppendGate(op, param_map, num_qubits, time,
-                                      &placeholder, nullptr, &gate_fail);
-      if (!gate_fail && !status.ok()) {
-        // found gate but errored when parsing.
+                                      &placeholder, nullptr, &gate_found);
+      if (gate_found && !status.ok()) {
+        // gate found, failed when parsing proto.
         return status;
       } else if (status.ok()) {
-        // succeeded in appending gate, convert to channel.
+        // gate found. succeeded in parsing.
         ncircuit->channels.push_back(
             std::move(qsim::MakeChannelFromGate(time, placeholder.gates[0])));
       } else {
-        // if failed to find gate, try appending channel.
+        // got not found. Attempt to find and append channel.
         status = ParseAppendChannel(op, num_qubits, time, ncircuit);
       }
 

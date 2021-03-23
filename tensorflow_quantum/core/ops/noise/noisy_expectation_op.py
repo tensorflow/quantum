@@ -50,7 +50,11 @@ def expectation(programs, symbol_names, symbol_values, pauli_sums, num_samples):
         num_samples: `tf.Tensor` with `num_samples[i][j]` is equal to the
             number of times `programs[i]` will be simulated to estimate
             `pauli_sums[i][j]`. Therefore, `num_samples` must have the same
-            shape as `pauli_sums`.
+            shape as `pauli_sums`. Note: internally this quantity can get
+            rounded up to the nearest multiple of the number of available
+            threads to TensorFlow. For best performance ensure that the
+            quantities in `num_samples` are a multiple of the number of
+            available threads.
     Returns:
         `tf.Tensor` with shape [batch_size, n_ops] that holds the
             expectation value for each circuit with each op applied to it

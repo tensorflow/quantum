@@ -185,6 +185,7 @@ class NoisyExpectationCalculationTest(tf.test.TestCase, parameterized.TestCase):
                 symbol_values_array,
                 util.convert_to_tensor([[x] for x in pauli_sums]), [],
                 num_samples)
+            # pylint: enable=too-many-function-args
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     expected_regex='do not match'):
@@ -202,6 +203,7 @@ class NoisyExpectationCalculationTest(tf.test.TestCase, parameterized.TestCase):
                 symbol_values_array,
                 util.convert_to_tensor([[x] for x in pauli_sums]),
                 [[-1]] * batch_size)
+            # pylint: enable=too-many-function-args
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     expected_regex='do not match'):

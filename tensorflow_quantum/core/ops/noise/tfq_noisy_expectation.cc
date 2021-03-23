@@ -305,7 +305,7 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
           // Compute expectations across all ops using this trajectory.
           for (int j = 0; j < pauli_sums[i].size(); j++) {
             if (run_samples[j] >=
-                std::max(num_samples[i][j] / num_threads, 1)) {
+                (num_samples[i][j] + num_threads - 1) / num_threads) {
               continue;
             }
             float exp_v = 0.0;
@@ -319,7 +319,8 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
           // Check if we have run enough trajectories for all ops.
           bool break_loop = true;
           for (int j = 0; j < num_samples[i].size(); j++) {
-            if (run_samples[j] < std::max(num_samples[i][j] / num_threads, 1)) {
+            if (run_samples[j] <
+                (num_samples[i][j] + num_threads - 1) / num_threads) {
               break_loop = false;
               break;
             }
@@ -328,11 +329,9 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
             // Lock writing to this batch index in output_tensor.
             batch_locks[i].lock();
             for (int j = 0; j < num_samples[i].size(); j++) {
-              int divisor = num_samples[i][j];
-              // account for when num_samples[i][j] < num_threads.
-              if (num_samples[i][j] / num_threads == 0) {
-                divisor = num_threads;
-              }
+              int divisor =
+                  ((num_samples[i][j] + num_threads - 1) / num_threads) *
+                  num_threads;
               rolling_sums[j] /= divisor;
               (*output_tensor)(i, j) += static_cast<float>(rolling_sums[j]);
             }
