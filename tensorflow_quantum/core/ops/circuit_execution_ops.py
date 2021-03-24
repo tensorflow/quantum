@@ -78,7 +78,8 @@ def get_expectation_op(
 
     Args:
         backend: Optional Python `object` that specifies what backend this op
-            should use when evaluating circuits. Can be any
+            should use when evaluating circuits. Can be
+            `cirq.DensityMatrixSimulator` or any
             `cirq.sim.simulator.SimulatesExpectationValues`. If not provided the
             default C++ analytical expectation calculation op is returned.
         quantum_concurrent: Optional Python `bool`. True indicates that the

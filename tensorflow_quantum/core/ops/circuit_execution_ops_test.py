@@ -84,10 +84,8 @@ class OpGetterInputChecks(tf.test.TestCase):
         """Test that get expectation only accepts inputs it should."""
         circuit_execution_ops.get_expectation_op()
         circuit_execution_ops.get_expectation_op(backend=cirq.Simulator())
-        # TODO(zaqqwerty): DM simulator does not currently inherit
-        #                  cirq.sim.simulator.SimulatesExpectationValues
-        # circuit_execution_ops.get_expectation_op(
-        #     backend=cirq.DensityMatrixSimulator())
+        circuit_execution_ops.get_expectation_op(
+            backend=cirq.DensityMatrixSimulator())
         circuit_execution_ops.get_expectation_op()
         with self.assertRaisesRegex(NotImplementedError,
                                     expected_regex='Sample-based'):
