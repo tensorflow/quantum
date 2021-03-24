@@ -301,9 +301,13 @@ def _validate_inputs(circuits, param_resolvers, simulator, sim_type):
 
     elif sim_type == 'expectation':
         if not isinstance(
-            simulator, cirq.sim.simulator.SimulatesExpectationValues):
+            simulator, (
+                cirq.sim.simulator.SimulatesExpectationValues,
+                cirq.DensityMatrixSimulator)):
+            # TODO(zaqqwerty): remove DM sim check once cirq #3964 is resolved.
             raise TypeError('For expectation operations a '
                             'cirq.sim.simulator.SimulatesExpectationValues '
+                            'or cirq.DensityMatrixSimulator'
                             'is required.  Given: {}'.format(type(simulator)))
 
     elif sim_type == 'sample':
@@ -379,7 +383,7 @@ def batch_calculate_state(circuits, param_resolvers, simulator):
 
 
 def batch_calculate_expectation(circuits, param_resolvers, ops, simulator):
-    """Compute expectations from circuits using parallel processing.
+    """Compute expectations from a batch of circuits.
 
     Returns a `np.ndarray` containing the expectation values of `ops`
     applied to a specific circuit in `circuits`, given that the
@@ -426,15 +430,20 @@ def batch_calculate_expectation(circuits, param_resolvers, ops, simulator):
 
     all_exp_vals = []
     for c, p, o in zip(circuits, param_resolvers, ops):
-        # TODO(zaqqwerty): default cirq.Simulator does not support empty c.
-        #                  Convention in TFQ is to set such expectations to -2.
+        # Convention in TFQ is to set expectations of empty circuits to -2.
         if len(c) == 0:
             all_exp_vals.append(np.full(len(o), -2.0, dtype=np.float32))
         else:
-            # Valid observables always have real expectation values.
-            all_exp_vals.append(np.real(np.asarray(
-                simulator.simulate_expectation_values(c, o, p))).astype(
-                    np.float32))
+            # TODO(zaqqwerty): remove DM sim check once cirq #3964 is resolved.
+            if isinstance(simulator, cirq.DensityMatrixSimulator):
+                sim_result = simulator.simulate(c, p)
+                dm = sim_result.final_density_matrix
+                all_exp_vals.append(o.expectation_from_density_matrix(dm))
+            else:
+                # Valid observables always have real expectation values.
+                all_exp_vals.append(np.real(np.asarray(
+                    simulator.simulate_expectation_values(c, o, p))).astype(
+                        np.float32))
 
     return np.stack(all_exp_vals)
 
