@@ -225,7 +225,8 @@ class Expectation(tf.keras.layers.Layer):
         super().__init__(**kwargs)
 
         # Ingest backend.
-        if not isinstance(backend, cirq.sim.simulator.SimulatesExpectationValues) and \
+        if not isinstance(
+            backend, cirq.sim.simulator.SimulatesExpectationValues) and \
                 isinstance(backend, cirq.Sampler):
             raise TypeError("Backend implements cirq.Sampler but not "
                             "cirq.sim.simulator.SimulatesExpectationValues. "
