@@ -124,7 +124,8 @@ def get_expectation_op(
         op = TFQStateVectorSimulator.expectation
 
     # TODO(zaqqwerty): remove DM check after cirq #3964
-    if isinstance(backend, (cirq.sim.simulator.SimulatesExpectationValues, cirq.DensityMatrixSimulator)):
+    if isinstance(backend, (cirq.sim.simulator.SimulatesExpectationValues,
+                            cirq.DensityMatrixSimulator)):
         op = cirq_ops._get_cirq_analytical_expectation(backend)
 
     if op is not None:

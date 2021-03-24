@@ -56,14 +56,16 @@ class ControlledPQCTest(tf.test.TestCase, parameterized.TestCase):
                 """do nothing."""
                 return
 
-        with self.assertRaisesRegex(TypeError,
-                                    expected_regex="cirq.sim.simulator.SimulatesExpectation"):
+        with self.assertRaisesRegex(
+                TypeError,
+                expected_regex="cirq.sim.simulator.SimulatesExpectation"):
             controlled_pqc.ControlledPQC(learnable_flip,
                                          cirq.Z(bit),
                                          backend='junk')
 
-        with self.assertRaisesRegex(TypeError,
-                                    expected_regex="cirq.sim.simulator.SimulatesExpectation"):
+        with self.assertRaisesRegex(
+                TypeError,
+                expected_regex="cirq.sim.simulator.SimulatesExpectation"):
             controlled_pqc.ControlledPQC(learnable_flip,
                                          cirq.Z(bit),
                                          repetitions=None,

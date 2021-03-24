@@ -211,7 +211,8 @@ def _get_cirq_analytical_expectation(simulator=cirq.Simulator()):
 
         return expectations
 
-    if not isinstance(simulator, (cirq.sim.simulator.SimulatesExpectationValues, cirq.DensityMatrixSimulator)):
+    if not isinstance(simulator, (cirq.sim.simulator.SimulatesExpectationValues,
+                                  cirq.DensityMatrixSimulator)):
         raise TypeError(
             "simulator must be cirq.DensityMatrixSimulator or inherit "
             "cirq.sim.simulator.SimulatesExpectationValues.")

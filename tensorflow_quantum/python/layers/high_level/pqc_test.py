@@ -109,8 +109,9 @@ class PQCTest(tf.test.TestCase, parameterized.TestCase):
                     backend=MyExpectation,
                     repetitions=500)
 
-        with self.assertRaisesRegex(TypeError,
-                                    expected_regex="cirq.sim.simulator.SimulatesExpectationValues"):
+        with self.assertRaisesRegex(
+                TypeError,
+                expected_regex="cirq.sim.simulator.SimulatesExpectationValues"):
             pqc.PQC(learnable_flip,
                     cirq.Z(qubit),
                     backend=MySample,
