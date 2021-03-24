@@ -1,3 +1,5 @@
+# load op_wrapper
+
 package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
@@ -58,9 +60,9 @@ cc_binary(
     deps = [
         ":parse_context",
         ":tfq_simulate_utils",
-        "//tensorflow_quantum/core/src:util_qsim",
-        "//tensorflow_quantum/core/src:circuit_parser_qsim",
         "//tensorflow_quantum/core/src:adj_util",
+        "//tensorflow_quantum/core/src:circuit_parser_qsim",
+        "//tensorflow_quantum/core/src:util_qsim",
         "@qsim//lib:qsim_lib",
     ],
 )
@@ -125,9 +127,9 @@ cc_binary(
     name = "_tfq_simulate_ops.so",
     srcs = [
         "tfq_simulate_expectation_op.cc",
-        "tfq_simulate_samples_op.cc",
         "tfq_simulate_sampled_expectation_op.cc",
-        "tfq_simulate_state_op.cc"
+        "tfq_simulate_samples_op.cc",
+        "tfq_simulate_state_op.cc",
     ],
     copts = select({
         ":windows": [
@@ -172,20 +174,18 @@ cc_binary(
     deps = [
         ":parse_context",
         ":tfq_simulate_utils",
-
-        "//tensorflow_quantum/core/src:util_qsim",
-        "//tensorflow_quantum/core/src:circuit_parser_qsim",
-        "@qsim//lib:qsim_lib",
-
         "//tensorflow_quantum/core/proto:pauli_sum_cc_proto",
         "//tensorflow_quantum/core/proto:program_cc_proto",
+        "//tensorflow_quantum/core/src:circuit_parser_qsim",
         "//tensorflow_quantum/core/src:program_resolution",
+        "//tensorflow_quantum/core/src:util_qsim",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/container:inlined_vector",
         "@com_google_absl//absl/types:optional",
         "@com_google_absl//absl/types:span",
         "@local_config_tf//:libtensorflow_framework",
         "@local_config_tf//:tf_header_lib",
+        "@qsim//lib:qsim_lib",
     ],
 )
 
@@ -267,7 +267,7 @@ cc_library(
 cc_binary(
     name = "_tfq_calculate_unitary_op.so",
     srcs = [
-        "tfq_calculate_unitary_op.cc"
+        "tfq_calculate_unitary_op.cc",
     ],
     copts = select({
         ":windows": [
@@ -313,8 +313,8 @@ cc_binary(
         ":parse_context",
         "//tensorflow_quantum/core/proto:pauli_sum_cc_proto",
         "//tensorflow_quantum/core/proto:program_cc_proto",
-        "//tensorflow_quantum/core/src:util_qsim",
         "//tensorflow_quantum/core/src:circuit_parser_qsim",
+        "//tensorflow_quantum/core/src:util_qsim",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/container:inlined_vector",
         "@com_google_absl//absl/types:optional",
@@ -341,7 +341,7 @@ py_library(
     data = [":_tfq_adj_grad.so"],
     deps = [
         ":load_module",
-    ]
+    ],
 )
 
 py_library(
@@ -362,7 +362,7 @@ py_test(
     deps = [
         ":tfq_adj_grad_op_py",
         "//tensorflow_quantum/python:util",
-    ]
+    ],
 )
 
 py_test(
