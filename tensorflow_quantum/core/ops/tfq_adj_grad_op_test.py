@@ -86,7 +86,7 @@ class ADJGradTest(tf.test.TestCase, parameterized.TestCase):
             tfq_adj_grad_op.tfq_adj_grad(
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 tf.convert_to_tensor(symbol_values_array),
-                util.convert_to_tensor([x for x in pauli_sums]),
+                util.convert_to_tensor(list(pauli_sums)),
                 tf.convert_to_tensor(upstream_grads))
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,

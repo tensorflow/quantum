@@ -80,9 +80,9 @@ class NoisyExpectationCalculationTest(tf.test.TestCase, parameterized.TestCase):
                                     'pauli_sums must be rank 2.'):
             # pauli_sums tensor has too few dimensions.
             noisy_expectation_op.expectation(
-                util.convert_to_tensor(circuit_batch), symbol_names,
-                symbol_values_array,
-                util.convert_to_tensor([x for x in pauli_sums]), num_samples)
+                util.convert_to_tensor(circuit_batch),
+                symbol_names, symbol_values_array,
+                util.convert_to_tensor(list(pauli_sums)), num_samples)
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'pauli_sums must be rank 2.'):
