@@ -13,6 +13,5 @@ py_library(
         "//tensorflow_quantum/core/ops",
         "//tensorflow_quantum/core/proto:pauli_sum_py_proto",
         "//tensorflow_quantum/core/serialize",
-        "//tensorflow_quantum/core/src",
     ],
 )
