@@ -29,5 +29,6 @@ py_test(
     deps = [
         ":serializer",
         # cirq proto
+        "//tensorflow_quantum/core/proto:pauli_sum_py_proto",
     ],
 )

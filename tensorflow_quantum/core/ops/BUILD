@@ -367,7 +367,9 @@ py_library(
     name = "tfq_adj_grad_op_py",
     srcs = ["tfq_adj_grad_op.py"],
     data = [":_tfq_adj_grad.so"],
+    srcs_version = "PY3",
     deps = [
+        # tensorflow framework for wrappers
         ":load_module",
     ],
 )
@@ -376,7 +378,9 @@ py_library(
     name = "tfq_unitary_op_py",
     srcs = ["tfq_unitary_op.py"],
     data = [":_tfq_calculate_unitary_op.so"],
+    srcs_version = "PY3",
     deps = [
+        # tensorflow framework for wrappers
         ":load_module",
         ":tfq_utility_ops_py",
         "//tensorflow_quantum/python:quantum_context",
@@ -407,7 +411,9 @@ py_library(
     name = "tfq_simulate_ops_py",
     srcs = ["tfq_simulate_ops.py"],
     data = [":_tfq_simulate_ops.so"],
+    srcs_version = "PY3",
     deps = [
+        # tensorflow framework for wrappers
         ":load_module",
     ],
 )
@@ -425,6 +431,7 @@ py_test(
 py_library(
     name = "circuit_execution_ops",
     srcs = ["circuit_execution_ops.py"],
+    srcs_version = "PY3",
     deps = [
         ":cirq_ops",
         ":tfq_simulate_ops_py",
@@ -447,6 +454,7 @@ py_test(
 py_library(
     name = "cirq_ops",
     srcs = ["cirq_ops.py"],
+    srcs_version = "PY3",
     deps = [
         ":batch_util",
         "//tensorflow_quantum/core/serialize:serializer",
@@ -468,6 +476,7 @@ py_test(
 py_library(
     name = "batch_util",
     srcs = ["batch_util.py"],
+    srcs_version = "PY3",
     deps = [
         "//tensorflow_quantum/core/serialize:serializer",
     ],
@@ -488,7 +497,9 @@ py_library(
     name = "tfq_ps_util_ops_py",
     srcs = ["tfq_ps_util_ops.py"],
     data = [":_tfq_ps_utils.so"],
+    srcs_version = "PY3",
     deps = [
+        # tensorflow framework for wrappers
         ":load_module",
     ],
 )
@@ -507,7 +518,9 @@ py_library(
     name = "tfq_utility_ops_py",
     srcs = ["tfq_utility_ops.py"],
     data = [":_tfq_utility_ops.so"],
+    srcs_version = "PY3",
     deps = [
+        # tensorflow framework for wrappers
         ":load_module",
     ],
 )
@@ -526,5 +539,6 @@ py_test(
 py_library(
     name = "load_module",
     srcs = ["load_module.py"],
+    srcs_version = "PY3",
     deps = [],
 )
