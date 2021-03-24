@@ -45,7 +45,7 @@ Status RegisterQubits(
     absl::flat_hash_set<std::pair<std::pair<int, int>, std::string>>* id_set) {
   // Inserts qubits found in qb_string into id_set.
 
-  if (qb_string == "") {
+  if (qb_string.empty()) {
     return Status::OK();  // no control-default value specified in serializer.py
   }
 
@@ -121,7 +121,7 @@ Status ResolveQubitIds(Program* program, unsigned int* num_qubits,
       // Resolve control qubit ids found in the control_qubits arg.
       absl::string_view control_qubits =
           operation.args().at("control_qubits").arg_value().string_value();
-      if (control_qubits == "") {  // explicit empty value set in serializer.py.
+      if (control_qubits.empty()) {  // explicit empty value set in serializer.py.
         continue;
       }
       std::vector<absl::string_view> control_ids =
@@ -208,7 +208,7 @@ Status ResolveQubitIds(Program* program, unsigned int* num_qubits,
       // Resolve control qubit ids found in the control_qubits arg.
       absl::string_view control_qubits =
           operation.args().at("control_qubits").arg_value().string_value();
-      if (control_qubits == "") {  // explicit empty value set in serializer.py.
+      if (control_qubits.empty()) {  // explicit empty value set in serializer.py.
         continue;
       }
       std::vector<absl::string_view> control_ids =
@@ -247,7 +247,7 @@ Status ResolveQubitIds(Program* program, unsigned int* num_qubits,
                                                ->at("control_qubits")
                                                .arg_value()
                                                .string_value();
-        if (control_qubits == "") {  // explicit empty value.
+        if (control_qubits.empty()) {  // explicit empty value.
           continue;
         }
         std::vector<absl::string_view> control_ids =

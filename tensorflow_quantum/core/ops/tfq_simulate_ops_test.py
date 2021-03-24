@@ -80,7 +80,7 @@ class SimulateExpectationTest(tf.test.TestCase):
             tfq_simulate_ops.tfq_simulate_expectation(
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 symbol_values_array,
-                util.convert_to_tensor([x for x in pauli_sums]))
+                util.convert_to_tensor(list(pauli_sums)))
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'pauli_sums must be rank 2.'):
@@ -544,7 +544,7 @@ class SimulateSampledExpectationTest(tf.test.TestCase):
             tfq_simulate_ops.tfq_simulate_sampled_expectation(
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 symbol_values_array,
-                util.convert_to_tensor([x for x in pauli_sums]), num_samples)
+                util.convert_to_tensor(list(pauli_sums)), num_samples)
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'pauli_sums must be rank 2.'):
