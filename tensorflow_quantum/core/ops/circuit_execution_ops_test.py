@@ -35,10 +35,8 @@ EXPECTATION_OPS = [
                                              quantum_concurrent=True),
     circuit_execution_ops.get_expectation_op(backend=WF_SIM,
                                              quantum_concurrent=True),
-    # TODO(zaqqwerty): DM sim does not inherit
-    # cirq.sim.simulator.SimulatesExpectationValues
-    # circuit_execution_ops.get_expectation_op(backend=DM_SIM,
-    #                                          quantum_concurrent=True),
+    circuit_execution_ops.get_expectation_op(backend=DM_SIM,
+                                             quantum_concurrent=True),
     # For timing interests C++ backend is tested in quantum_concurrent mode.
     circuit_execution_ops.get_expectation_op(backend=None,
                                              quantum_concurrent=False)
@@ -431,11 +429,8 @@ class ExecutionOpsConsistentyTest(tf.test.TestCase, parameterized.TestCase):
         empty_ops = tf.raw_ops.Empty(shape=(0, 0), dtype=tf.string)
 
         op_exp = op(circuit_batch, [], empty_params, empty_ops).numpy()
-        # TODO(zaqqwerty): Dm sim does not inherit
-        # cirq.sim.simulator.SimulatesExpectationValues
-        if not isinstance(sim, cirq.DensityMatrixSimulator):
-            cirq_exp = batch_util.batch_calculate_expectation([], [], [[]], sim)
-            self.assertEqual(op_exp.shape, cirq_exp.shape)
+        cirq_exp = batch_util.batch_calculate_expectation([], [], [[]], sim)
+        self.assertEqual(op_exp.shape, cirq_exp.shape)
 
     @parameterized.parameters(
         list(
