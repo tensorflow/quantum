@@ -428,8 +428,8 @@ def batch_calculate_expectation(circuits, param_resolvers, ops, simulator):
                 raise TypeError('ops must contain only cirq.PauliSum objects.'
                                 ' Given: {}'.format(type(x)))
 
-    all_exp_vals = np.ones(
-        shape=(len(circuits), len(ops[0])), dtype=np.float32) * -2
+    all_exp_vals = np.ones(shape=(len(circuits), len(ops[0])),
+                           dtype=np.float32) * -2
     for i, (c, p, op_row) in enumerate(zip(circuits, param_resolvers, ops)):
         # Convention in TFQ is to set expectations of empty circuits to -2.
         if len(c) == 0:
@@ -443,11 +443,11 @@ def batch_calculate_expectation(circuits, param_resolvers, ops, simulator):
             for j, op in enumerate(op_row):
                 dm = sim_result.final_density_matrix
                 all_exp_vals[i][j] = op.expectation_from_density_matrix(
-                    dm, qubit_order, check_preconditions = False)
+                    dm, qubit_order, check_preconditions=False)
         else:
             # Valid observables always have real expectation values.
-            all_exp_vals[i] = np.real(np.asarray(
-                simulator.simulate_expectation_values(c, op_row, p)))
+            all_exp_vals[i] = np.real(
+                np.asarray(simulator.simulate_expectation_values(c, op_row, p)))
 
     return all_exp_vals
 
