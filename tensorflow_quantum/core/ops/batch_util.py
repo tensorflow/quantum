@@ -428,30 +428,28 @@ def batch_calculate_expectation(circuits, param_resolvers, ops, simulator):
                 raise TypeError('ops must contain only cirq.PauliSum objects.'
                                 ' Given: {}'.format(type(x)))
 
-    all_exp_vals = []
-    for c, p, o in zip(circuits, param_resolvers, ops):
+    all_exp_vals = np.ones(
+        shape=(len(circuits), len(ops[0])), dtype=np.float32) * -2
+    for i, (c, p, op_row) in enumerate(zip(circuits, param_resolvers, ops)):
         # Convention in TFQ is to set expectations of empty circuits to -2.
         if len(c) == 0:
-            all_exp_vals.append(np.full(len(o), -2.0, dtype=np.float32))
-        else:
-            # TODO(zaqqwerty): remove DM sim check once cirq #3964 is resolved.
-            if isinstance(simulator, cirq.DensityMatrixSimulator):
-                qubit_order = dict(
-                    zip(sorted(c.all_qubits()),
-                        list(range(len(c.all_qubits())))))
-                sim_result = simulator.simulate(c, p)
+            continue
+        # TODO(zaqqwerty): remove DM sim check once cirq #3964 is resolved.
+        if isinstance(simulator, cirq.DensityMatrixSimulator):
+            qubits = c.all_qubits()
+            pairs = zip(sorted(qubits), list(range(len(qubits))))
+            qubit_order = dict(pairs)
+            sim_result = simulator.simulate(c, p)
+            for j, op in enumerate(op_row):
                 dm = sim_result.final_density_matrix
-                all_exp_vals.append([
-                    sum(
-                        term._expectation_from_density_matrix_no_validation(
-                            dm, qubit_order) for term in op) for op in o
-                ])
-            else:
-                # Valid observables always have real expectation values.
-                all_exp_vals.append(
-                    simulator.simulate_expectation_values(c, o, p))
+                all_exp_vals[i][j] = op.expectation_from_density_matrix(
+                    dm, qubit_order, check_preconditions = False)
+        else:
+            # Valid observables always have real expectation values.
+            all_exp_vals[i] = np.real(np.asarray(
+                simulator.simulate_expectation_values(c, op_row, p)))
 
-    return np.real(np.asarray(all_exp_vals)).astype(np.float32)
+    return all_exp_vals
 
 
 def batch_calculate_sampled_expectation(circuits, param_resolvers, ops,
