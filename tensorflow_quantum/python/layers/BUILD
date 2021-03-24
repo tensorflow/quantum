@@ -10,8 +10,8 @@ py_library(
     srcs = ["__init__.py"],
     srcs_version = "PY3",
     deps = [
-        "//third_party/py/tensorflow_quantum/python/layers/circuit_construction",
-        "//third_party/py/tensorflow_quantum/python/layers/circuit_executors",
-        "//third_party/py/tensorflow_quantum/python/layers/high_level",
+        "//tensorflow_quantum/python/layers/circuit_construction",
+        "//tensorflow_quantum/python/layers/circuit_executors",
+        "//tensorflow_quantum/python/layers/high_level",
     ],
 )

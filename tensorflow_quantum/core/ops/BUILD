@@ -12,6 +12,26 @@ config_setting(
     constraint_values = ["@bazel_tools//platforms:windows"],
 )
 
+py_library(
+    name = "ops",
+    srcs = ["__init__.py"],
+    srcs_version = "PY3",
+    deps = [
+        ":batch_util",
+        ":circuit_execution_ops",
+        ":cirq_ops",
+        ":load_module",
+        ":tfq_adj_grad_op_py",
+        ":tfq_ps_util_ops_py",
+        ":tfq_simulate_ops_py",
+        ":tfq_unitary_op_py",
+        ":tfq_utility_ops_py",
+        # test addons
+        "//tensorflow_quantum/core/ops/math_ops:inner_product_op_py",
+        "//tensorflow_quantum/core/ops/noise:noisy_expectation_op_py",
+    ],
+)
+
 cc_binary(
     name = "_tfq_adj_grad.so",
     srcs = [
@@ -59,11 +79,15 @@ cc_binary(
     linkshared = 1,
     deps = [
         ":parse_context",
+        # cirq cc proto
         ":tfq_simulate_utils",
         "//tensorflow_quantum/core/src:adj_util",
         "//tensorflow_quantum/core/src:circuit_parser_qsim",
         "//tensorflow_quantum/core/src:util_qsim",
         "@qsim//lib:qsim_lib",
+        # tensorflow core framework
+        # tensorflow core lib
+        # tensorflow core protos
     ],
 )
 
@@ -117,6 +141,7 @@ cc_binary(
     deps = [
         ":parse_context",
         ":tfq_simulate_utils",
+        # cirq cc proto
         "//tensorflow_quantum/core/proto:program_cc_proto",
         "@local_config_tf//:libtensorflow_framework",
         "@local_config_tf//:tf_header_lib",
@@ -174,6 +199,7 @@ cc_binary(
     deps = [
         ":parse_context",
         ":tfq_simulate_utils",
+        # cirq cc proto
         "//tensorflow_quantum/core/proto:pauli_sum_cc_proto",
         "//tensorflow_quantum/core/proto:program_cc_proto",
         "//tensorflow_quantum/core/src:circuit_parser_qsim",
@@ -238,6 +264,7 @@ cc_binary(
     deps = [
         ":parse_context",
         ":tfq_simulate_utils",
+        # cirq cc proto
         "//tensorflow_quantum/core/proto:program_cc_proto",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/container:inlined_vector",
@@ -311,6 +338,7 @@ cc_binary(
     linkshared = 1,
     deps = [
         ":parse_context",
+        # cirq cc proto
         "//tensorflow_quantum/core/proto:pauli_sum_cc_proto",
         "//tensorflow_quantum/core/proto:program_cc_proto",
         "//tensorflow_quantum/core/src:circuit_parser_qsim",

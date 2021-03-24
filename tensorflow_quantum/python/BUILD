@@ -12,9 +12,9 @@ py_library(
     deps = [
         ":quantum_context",
         ":util",
-        "//third_party/py/tensorflow_quantum/python/differentiators",
-        "//third_party/py/tensorflow_quantum/python/layers",
-        "//third_party/py/tensorflow_quantum/python/optimizers",
+        "//tensorflow_quantum/python/differentiators",
+        "//tensorflow_quantum/python/layers",
+        "//tensorflow_quantum/python/optimizers",
     ],
 )
 
