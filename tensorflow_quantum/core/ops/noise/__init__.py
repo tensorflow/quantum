@@ -12,17 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""Imports to tensorflow_quantum.core.* level."""
-# Import getters for constructing ops.
-from tensorflow_quantum.core.ops import (get_expectation_op,
-                                         get_sampled_expectation_op,
-                                         get_sampling_op, get_state_op,
-                                         get_unitary_op)
-# Import regular ops.
-from tensorflow_quantum.core.ops import (append_circuit, padded_to_ragged,
-                                         padded_to_ragged2d, resolve_parameters)
-# Import math ops.
-from tensorflow_quantum.core.ops import math_ops
+"""Module for tfq.core.ops.noise.*"""
 
-# Import noise ops.
-from tensorflow_quantum.core.ops import noise
+from tensorflow_quantum.core.ops.noise.noisy_expectation_op import expectation

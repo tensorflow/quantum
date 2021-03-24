@@ -570,7 +570,8 @@ tensorflow::Status ParseAppendGate(const Operation& op,
                                    const unsigned int num_qubits,
                                    const unsigned int time,
                                    QsimCircuit* circuit,
-                                   std::vector<GateMetaData>* metadata) {
+                                   std::vector<GateMetaData>* metadata,
+                                   bool* lookup_succeeded) {
   // map gate name -> callable to build that qsim gate from operation proto.
   static const absl::flat_hash_map<
       std::string,
@@ -588,11 +589,13 @@ tensorflow::Status ParseAppendGate(const Operation& op,
 
   auto build_f = func_map.find(op.gate().id());
   if (build_f == func_map.end()) {
+    *lookup_succeeded = false;
     return Status(tensorflow::error::INVALID_ARGUMENT,
                   absl::StrCat("Could not parse gate id: ", op.gate().id(),
                                ". This is likely because a cirq.Channel was "
                                "used in an op that does not support them."));
   }
+  *lookup_succeeded = true;
   return build_f->second(op, param_map, num_qubits, time, circuit, metadata);
 }
 
@@ -614,7 +617,7 @@ inline Status AsymmetricDepolarizingChannel(const Operation& op,
   }
   auto chan = qsim::Cirq::AsymmetricDepolarizingChannel<float>::Create(
       time, num_qubits - q - 1, p_x, p_y, p_z);
-  ncircuit->push_back(chan);
+  ncircuit->channels.push_back(chan);
   return Status::OK();
 }
 
@@ -634,7 +637,7 @@ inline Status DepolarizingChannel(const Operation& op,
   }
   auto chan = qsim::Cirq::DepolarizingChannel<float>::Create(
       time, num_qubits - q - 1, p);
-  ncircuit->push_back(chan);
+  ncircuit->channels.push_back(chan);
   return Status::OK();
 }
 
@@ -664,25 +667,32 @@ tensorflow::Status NoisyQsimCircuitFromProgram(const Program& program,
                                                const int num_qubits,
                                                NoisyQsimCircuit* ncircuit) {
   // Special case empty.
+  ncircuit->num_qubits = num_qubits;
   if (num_qubits <= 0) {
     return Status::OK();
   }
+
   int time = 0;
+  bool gate_found;
   QsimCircuit placeholder;
   placeholder.gates.reserve(2);
 
   for (const Moment& moment : program.circuit().moments()) {
     for (const Operation& op : moment.operations()) {
       placeholder.gates.clear();
+      gate_found = false;
       Status status = ParseAppendGate(op, param_map, num_qubits, time,
-                                      &placeholder, nullptr);
-      if (!status.ok()) {
-        // if failed to append gate, try appending channel.
-        status = ParseAppendChannel(op, num_qubits, time, ncircuit);
-      } else {
-        // succeeded in appending gate, convert to channel.
-        ncircuit->push_back(
+                                      &placeholder, nullptr, &gate_found);
+      if (gate_found && !status.ok()) {
+        // gate found, failed when parsing proto.
+        return status;
+      } else if (status.ok()) {
+        // gate found. succeeded in parsing.
+        ncircuit->channels.push_back(
             std::move(qsim::MakeChannelFromGate(time, placeholder.gates[0])));
+      } else {
+        // got not found. Attempt to find and append channel.
+        status = ParseAppendChannel(op, num_qubits, time, ncircuit);
       }
 
       if (!status.ok()) {
@@ -702,6 +712,7 @@ tensorflow::Status QsimCircuitFromProgram(
   // Convert proto to qsim internal representation.
   circuit->num_qubits = num_qubits;
   int time = 0;
+  bool unused;
   // Special case empty.
   if (num_qubits <= 0) {
     return Status::OK();
@@ -713,8 +724,8 @@ tensorflow::Status QsimCircuitFromProgram(
   }
   for (const Moment& moment : program.circuit().moments()) {
     for (const Operation& op : moment.operations()) {
-      Status status =
-          ParseAppendGate(op, param_map, num_qubits, time, circuit, metadata);
+      Status status = ParseAppendGate(op, param_map, num_qubits, time, circuit,
+                                      metadata, &unused);
       if (!status.ok()) {
         return status;
       }
