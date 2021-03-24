@@ -121,7 +121,8 @@ Status ResolveQubitIds(Program* program, unsigned int* num_qubits,
       // Resolve control qubit ids found in the control_qubits arg.
       absl::string_view control_qubits =
           operation.args().at("control_qubits").arg_value().string_value();
-      if (control_qubits.empty()) {  // explicit empty value set in serializer.py.
+      // explicit empty value set in serializer.py.
+      if (control_qubits.empty()) {
         continue;
       }
       std::vector<absl::string_view> control_ids =
@@ -208,7 +209,8 @@ Status ResolveQubitIds(Program* program, unsigned int* num_qubits,
       // Resolve control qubit ids found in the control_qubits arg.
       absl::string_view control_qubits =
           operation.args().at("control_qubits").arg_value().string_value();
-      if (control_qubits.empty()) {  // explicit empty value set in serializer.py.
+      // explicit empty value set in serializer.py.
+      if (control_qubits.empty()) {
         continue;
       }
       std::vector<absl::string_view> control_ids =
