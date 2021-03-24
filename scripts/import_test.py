@@ -37,6 +37,9 @@ def test_imports():
     # Math ops.
     _ = tfq.math.inner_product
 
+    # Noisy simulation ops.
+    _ = tfq.noise.expectation
+
     # Util functions.
     _ = tfq.convert_to_tensor
     _ = tfq.get_quantum_concurrent_op_mode
