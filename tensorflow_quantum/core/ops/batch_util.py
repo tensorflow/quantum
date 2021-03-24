@@ -402,7 +402,8 @@ def batch_calculate_expectation(circuits, param_resolvers, ops, simulator):
             after `param_resolver[i]` is used to resolve any parameters
             in the circuit.
         simulator: Simulator object. Must inherit
-            `cirq.sim.simulator.SimulatesExpectationValues`.
+            `cirq.sim.simulator.SimulatesExpectationValues` or
+            `cirq.DensityMatrixSimulator`.
 
     Returns:
         `np.ndarray` containing the expectation values. Shape is:
