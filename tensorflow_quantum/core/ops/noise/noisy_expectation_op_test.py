@@ -252,7 +252,7 @@ class NoisyExpectationCalculationTest(tf.test.TestCase, parameterized.TestCase):
         pauli_sums1 = util.random_pauli_sums(qubits, 3, batch_size)
         pauli_sums2 = util.random_pauli_sums(qubits, 3, batch_size)
         batch_pauli_sums = [[x, y] for x, y in zip(pauli_sums1, pauli_sums2)]
-        num_samples = [[1000 if noisy else 1] * 2] * batch_size
+        num_samples = [[10000 if noisy else 3] * 2] * batch_size
 
         op_exps = noisy_expectation_op.expectation(
             util.convert_to_tensor(circuit_batch),
@@ -262,8 +262,8 @@ class NoisyExpectationCalculationTest(tf.test.TestCase, parameterized.TestCase):
         cirq_exps = batch_util.batch_calculate_expectation(
             circuit_batch, resolver_batch, batch_pauli_sums,
             cirq.DensityMatrixSimulator() if noisy else cirq.Simulator())
-
-        self.assertAllClose(cirq_exps, op_exps, atol=5e-2, rtol=5e-2)
+        tol = 5e-2 if noisy else 5e-4
+        self.assertAllClose(cirq_exps, op_exps, atol=tol, rtol=tol)
 
     @parameterized.parameters([{
         'channel': x

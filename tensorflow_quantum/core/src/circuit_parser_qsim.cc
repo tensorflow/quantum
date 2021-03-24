@@ -617,7 +617,7 @@ inline Status AsymmetricDepolarizingChannel(const Operation& op,
   }
   auto chan = qsim::Cirq::AsymmetricDepolarizingChannel<float>::Create(
       time, num_qubits - q - 1, p_x, p_y, p_z);
-  ncircuit->push_back(chan);
+  ncircuit->channels.push_back(chan);
   return Status::OK();
 }
 

@@ -129,7 +129,7 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
     // e2s2 = 2 CPU, 8GB -> Can safely do 25 since Memory = 4GB
     // e2s4 = 4 CPU, 16GB -> Can safely do 25 since Memory = 8GB
     // ...
-    if (max_num_qubits >= 25) {
+    if (max_num_qubits >= 26) {
       // If the number of qubits is lager than 24, we switch to an
       // alternate parallelization scheme with runtime:
       // O(n_circuits * max_j(num_samples[i])) with parallelization being
@@ -248,14 +248,19 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
                                          qsim::MultiQubitGateFuser, Simulator>;
 
     const int output_dim_batch_size = output_tensor->dimension(0);
-    const int output_dim_op_size = output_tensor->dimension(1);
-
     std::vector<tensorflow::mutex> batch_locks(output_dim_batch_size,
                                                tensorflow::mutex());
 
     const int num_threads = context->device()
                                 ->tensorflow_cpu_worker_threads()
                                 ->workers->NumThreads();
+
+    // [num_threads, batch_size].
+    std::vector<std::vector<int>> rep_offsets(
+        num_threads, std::vector<int>(output_dim_batch_size, 0));
+
+    BalanceTrajectory(num_samples, num_threads, &rep_offsets);
+
     output_tensor->setZero();
     auto DoWork = [&](int start, int end) {
       // Begin simulation.
@@ -268,6 +273,7 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
 
       for (int i = 0; i < ncircuits.size(); i++) {
         int nq = num_qubits[i];
+        int rep_offset = rep_offsets[start][i];
 
         // (#679) Just ignore empty program
         if (ncircuits[i].channels.size() == 0) {
@@ -304,8 +310,8 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
 
           // Compute expectations across all ops using this trajectory.
           for (int j = 0; j < pauli_sums[i].size(); j++) {
-            if (run_samples[j] >=
-                (num_samples[i][j] + num_threads - 1) / num_threads) {
+            int p_reps = (num_samples[i][j] + num_threads - 1) / num_threads;
+            if (run_samples[j] >= p_reps + rep_offset) {
               continue;
             }
             float exp_v = 0.0;
@@ -319,8 +325,8 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
           // Check if we have run enough trajectories for all ops.
           bool break_loop = true;
           for (int j = 0; j < num_samples[i].size(); j++) {
-            if (run_samples[j] <
-                (num_samples[i][j] + num_threads - 1) / num_threads) {
+            int p_reps = (num_samples[i][j] + num_threads - 1) / num_threads;
+            if (run_samples[j] < p_reps + rep_offset) {
               break_loop = false;
               break;
             }
@@ -329,10 +335,7 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
             // Lock writing to this batch index in output_tensor.
             batch_locks[i].lock();
             for (int j = 0; j < num_samples[i].size(); j++) {
-              int divisor =
-                  ((num_samples[i][j] + num_threads - 1) / num_threads) *
-                  num_threads;
-              rolling_sums[j] /= divisor;
+              rolling_sums[j] /= num_samples[i][j];
               (*output_tensor)(i, j) += static_cast<float>(rolling_sums[j]);
             }
             batch_locks[i].unlock();

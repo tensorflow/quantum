@@ -1268,8 +1268,9 @@ TEST(QsimCircuitParserTest, AsymmetricDepolarizing) {
 
   ASSERT_EQ(NoisyQsimCircuitFromProgram(program_proto, {}, 1, &test_circuit),
             tensorflow::Status::OK());
-  AssertChannelEqual(test_circuit[0], reference);
-  ASSERT_EQ(test_circuit.size(), 1);
+  AssertChannelEqual(test_circuit.channels[0], reference);
+  ASSERT_EQ(test_circuit.channels.size(), 1);
+  ASSERT_EQ(test_circuit.num_qubits, 1);
 }
 
 TEST(QsimCircuitParserTest, Depolarizing) {
