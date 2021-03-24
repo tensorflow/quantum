@@ -39,7 +39,7 @@ void CreateGradientCircuit(
     std::vector<std::vector<qsim::GateFused<QsimGate>>>* partial_fuses,
     std::vector<GradientOfGate>* grad_gates) {
   for (int i = 0; i < metadata.size(); i++) {
-    if (metadata[i].symbol_values.size() == 0) {
+    if (metadata[i].symbol_values.empty()) {
       continue;
     }
     // found a gate that was constructed with symbols.
