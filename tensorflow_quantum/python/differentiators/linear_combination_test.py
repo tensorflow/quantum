@@ -66,13 +66,6 @@ class LinearCombinationTest(tf.test.TestCase, parameterized.TestCase):
         with self.assertRaisesRegex(ValueError, expected_regex="unique"):
             linear_combination.LinearCombination([1, 1], [1, 1])
 
-    def test_no_gradient_circuits(self):
-        """Confirm LinearCombination differentiator has no gradient circuits."""
-        dif = linear_combination.LinearCombination([1, 1], [1, 0])
-        with self.assertRaisesRegex(NotImplementedError,
-                                    expected_regex="not currently available"):
-            _ = dif.get_gradient_circuits(None, None, None)
-
     def test_forward_instantiate(self):
         """Test ForwardDifference type checking."""
         linear_combination.ForwardDifference()
@@ -197,6 +190,28 @@ class LinearCombinationTest(tf.test.TestCase, parameterized.TestCase):
                             g.gradient(res, values),
                             atol=1e-1,
                             rtol=1e-1)
+
+    @parameterized.parameters(
+        list(
+            util.kwargs_cartesian_product(
+                **{
+                    'differentiator': ANALYTIC_DIFFS,
+                    'op': ANALYTIC_OPS,
+                    'n_qubits': [5],
+                    'n_programs': [3],
+                    'n_ops': [3],
+                    'symbol_names': [['a', 'b']]
+                })))
+
+    @parameterized.parameters([{
+        'diff': linear_combination.ForwardDifference()
+    }, {
+        'diff': linear_combination.CentralDifference()
+    }])
+    def test_gradient_circuits_grad_comparison(self, diff):
+        """Test that analytic gradient agrees with the one from grad circuits"""
+        differentiable_op = diff.generate_differentiable_op(
+            analytic_op=circuit_execution_ops.get_expectation_op())
 
 
 if __name__ == "__main__":
