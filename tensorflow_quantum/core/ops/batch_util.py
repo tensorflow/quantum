@@ -437,16 +437,15 @@ def batch_calculate_expectation(circuits, param_resolvers, ops, simulator):
         else:
             # TODO(zaqqwerty): remove DM sim check once cirq #3964 is resolved.
             if isinstance(simulator, cirq.DensityMatrixSimulator):
+                qubit_order = dict(zip(sorted(c.all_qubits()), list(range(len(c.all_qubits())))))
                 sim_result = simulator.simulate(c, p)
                 dm = sim_result.final_density_matrix
-                all_exp_vals.append(o.expectation_from_density_matrix(dm))
+                all_exp_vals.append([sum(term._expectation_from_density_matrix_no_validation(dm, qubit_order) for term in op)for op in o])
             else:
                 # Valid observables always have real expectation values.
-                all_exp_vals.append(np.real(np.asarray(
-                    simulator.simulate_expectation_values(c, o, p))).astype(
-                        np.float32))
+                all_exp_vals.append(simulator.simulate_expectation_values(c, o, p))
 
-    return np.stack(all_exp_vals)
+    return np.real(np.asarray(all_exp_vals)).astype(np.float32)
 
 
 def batch_calculate_sampled_expectation(circuits, param_resolvers, ops,
