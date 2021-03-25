@@ -56,85 +56,80 @@ class NoisySamplingTest(tf.test.TestCase, parameterized.TestCase):
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'rank 1. Got rank 2'):
             # programs tensor has the wrong shape.
-            noisy_samples_op.samples(
-                util.convert_to_tensor([circuit_batch]), symbol_names,
-                symbol_values_array, [num_samples])
+            noisy_samples_op.samples(util.convert_to_tensor([circuit_batch]),
+                                     symbol_names, symbol_values_array,
+                                     [num_samples])
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'rank 1. Got rank 2'):
             # symbol_names tensor has the wrong shape.
-            noisy_samples_op.samples(
-                util.convert_to_tensor(circuit_batch), np.array([symbol_names]),
-                symbol_values_array, [num_samples])
+            noisy_samples_op.samples(util.convert_to_tensor(circuit_batch),
+                                     np.array([symbol_names]),
+                                     symbol_values_array, [num_samples])
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'rank 2. Got rank 3'):
             # symbol_values tensor has the wrong shape.
-            noisy_samples_op.samples(
-                util.convert_to_tensor(circuit_batch), symbol_names,
-                np.array([symbol_values_array]), [num_samples])
+            noisy_samples_op.samples(util.convert_to_tensor(circuit_batch),
+                                     symbol_names,
+                                     np.array([symbol_values_array]),
+                                     [num_samples])
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'rank 2. Got rank 1'):
             # symbol_values tensor has the wrong shape 2.
-            noisy_samples_op.samples(
-                util.convert_to_tensor(circuit_batch), symbol_names,
-                symbol_values_array[0], [num_samples])
+            noisy_samples_op.samples(util.convert_to_tensor(circuit_batch),
+                                     symbol_names, symbol_values_array[0],
+                                     [num_samples])
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'rank 1. Got rank 2'):
             # num_samples tensor has the wrong shape.
-            noisy_samples_op.samples(
-                util.convert_to_tensor(circuit_batch), symbol_names,
-                symbol_values_array, [[num_samples]])
+            noisy_samples_op.samples(util.convert_to_tensor(circuit_batch),
+                                     symbol_names, symbol_values_array,
+                                     [[num_samples]])
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'Unparseable proto'):
             # programs tensor has the right type, but invalid value.
-            noisy_samples_op.samples(['junk'] * batch_size,
-                                                  symbol_names,
-                                                  symbol_values_array,
-                                                  [num_samples])
+            noisy_samples_op.samples(['junk'] * batch_size, symbol_names,
+                                     symbol_values_array, [num_samples])
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'Could not find symbol in parameter map'):
             # symbol_names tensor has the right type, but invalid value.
-            noisy_samples_op.samples(
-                util.convert_to_tensor(circuit_batch), ['junk'],
-                symbol_values_array, [num_samples])
+            noisy_samples_op.samples(util.convert_to_tensor(circuit_batch),
+                                     ['junk'], symbol_values_array,
+                                     [num_samples])
 
         with self.assertRaisesRegex(TypeError, 'Cannot convert'):
             # programs tensor has the wrong type.
-            noisy_samples_op.samples([1] * batch_size,
-                                                  symbol_names,
-                                                  symbol_values_array,
-                                                  [num_samples])
+            noisy_samples_op.samples([1] * batch_size, symbol_names,
+                                     symbol_values_array, [num_samples])
 
         with self.assertRaisesRegex(TypeError, 'Cannot convert'):
             # programs tensor has the wrong type.
-            noisy_samples_op.samples(
-                util.convert_to_tensor(circuit_batch), [1], symbol_values_array,
-                [num_samples])
+            noisy_samples_op.samples(util.convert_to_tensor(circuit_batch), [1],
+                                     symbol_values_array, [num_samples])
 
         with self.assertRaisesRegex(tf.errors.UnimplementedError,
                                     'Cast string to float is not supported'):
             # programs tensor has the wrong type.
-            noisy_samples_op.samples(
-                util.convert_to_tensor(circuit_batch), symbol_names,
-                [['junk']] * batch_size, [num_samples])
+            noisy_samples_op.samples(util.convert_to_tensor(circuit_batch),
+                                     symbol_names, [['junk']] * batch_size,
+                                     [num_samples])
 
         with self.assertRaisesRegex(Exception, 'junk'):
             # num_samples tensor has the wrong shape.
-            noisy_samples_op.samples(
-                util.convert_to_tensor(circuit_batch), symbol_names,
-                symbol_values_array, ['junk'])
+            noisy_samples_op.samples(util.convert_to_tensor(circuit_batch),
+                                     symbol_names, symbol_values_array,
+                                     ['junk'])
 
         with self.assertRaisesRegex(TypeError, 'missing'):
             # too few tensors.
             # pylint: disable=no-value-for-parameter
-            noisy_samples_op.samples(
-                util.convert_to_tensor(circuit_batch), symbol_names,
-                symbol_values_array)
+            noisy_samples_op.samples(util.convert_to_tensor(circuit_batch),
+                                     symbol_names, symbol_values_array)
             # pylint: enable=no-value-for-parameter
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
@@ -182,15 +177,13 @@ class NoisySamplingTest(tf.test.TestCase, parameterized.TestCase):
 
         n_samples = 10000
         op_samples = noisy_samples_op.samples(
-            util.convert_to_tensor(circuit_batch),
-            symbol_names, symbol_values_array, [n_samples]).to_list()
+            util.convert_to_tensor(circuit_batch), symbol_names,
+            symbol_values_array, [n_samples]).to_list()
 
         op_hists = self._compute_hists(op_samples, n_qubits)
 
         cirq_samples = batch_util.batch_sample(
-            circuit_batch,
-            resolver_batch,
-            n_samples,
+            circuit_batch, resolver_batch, n_samples,
             cirq.DensityMatrixSimulator() if noisy else cirq.Simulator())
 
         cirq_hists = self._compute_hists(cirq_samples, n_qubits)
@@ -223,14 +216,13 @@ class NoisySamplingTest(tf.test.TestCase, parameterized.TestCase):
         n_samples = (2**n_qubits) * 1000
 
         op_samples = noisy_samples_op.samples(
-            util.convert_to_tensor(circuit_batch),
-            symbol_names, symbol_values_array, [n_samples]).to_list()
+            util.convert_to_tensor(circuit_batch), symbol_names,
+            symbol_values_array, [n_samples]).to_list()
         op_hists = self._compute_hists(op_samples, n_qubits)
 
-        cirq_samples = batch_util.batch_sample(
-            circuit_batch,
-            resolver_batch,
-            n_samples, cirq.DensityMatrixSimulator())
+        cirq_samples = batch_util.batch_sample(circuit_batch, resolver_batch,
+                                               n_samples,
+                                               cirq.DensityMatrixSimulator())
         cirq_hists = self._compute_hists(cirq_samples, n_qubits)
 
         for a, b in zip(op_hists, cirq_hists):
@@ -264,8 +256,6 @@ class NoisySamplingTest(tf.test.TestCase, parameterized.TestCase):
             symbol_names, symbol_values_array, [n_samples]).to_list()
         a_reps = np.asarray(op_samples[:2])
         b_reps = np.asarray(op_samples[2:])
-        print(a_reps)
-        print(b_reps)
         self.assertEqual(a_reps.shape, (2, 10, 5))
         self.assertEqual(b_reps.shape, (2, 10, 6))
 
@@ -277,8 +267,7 @@ class NoisySamplingTest(tf.test.TestCase, parameterized.TestCase):
         empty_n_samples = tf.convert_to_tensor([1], dtype=tf.int32)
 
         out = noisy_samples_op.samples(empty_circuit, empty_symbols,
-                                               empty_values,
-                                               empty_n_samples)
+                                       empty_values, empty_n_samples)
 
         expected = np.array([[[]]], dtype=np.int8)
         self.assertAllClose(out.to_tensor(), expected)
@@ -291,8 +280,7 @@ class NoisySamplingTest(tf.test.TestCase, parameterized.TestCase):
         empty_n_samples = tf.convert_to_tensor([1], dtype=tf.int32)
 
         out = noisy_samples_op.samples(empty_circuit, empty_symbols,
-                                               empty_values,
-                                               empty_n_samples)
+                                       empty_values, empty_n_samples)
 
         self.assertShapeEqual(np.zeros((0, 0, 0)), out.to_tensor())
 
