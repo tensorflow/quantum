@@ -92,7 +92,10 @@ class LinearCombination(differentiator.Differentiator):
                              "length.")
         if not len(list(set(perturbations))) == len(perturbations):
             raise ValueError("All values in perturbations must be unique.")
-        self.weights = tf.constant(weights)
+        if len(perturbations) < 2:
+            # This is so that tensor squeezing does not cause a problem later.
+            raise ValueError("Must specify at least two perturbations.")
+        self.weights = tf.constant(weights, dtype=tf.float32)
         self.n_perturbations = tf.constant(len(perturbations))
         self.perturbations = tf.constant(perturbations)
 
