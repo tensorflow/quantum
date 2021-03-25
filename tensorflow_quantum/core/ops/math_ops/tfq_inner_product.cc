@@ -28,6 +28,7 @@ limitations under the License.
 #include "tensorflow/core/lib/core/error_codes.pb.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow/core/lib/core/threadpool.h"
+#include "tensorflow/core/platform/mutex.h"
 #include "tensorflow_quantum/core/ops/parse_context.h"
 #include "tensorflow_quantum/core/src/util_qsim.h"
 
@@ -86,17 +87,22 @@ class TfqInnerProductOp : public tensorflow::OpKernel {
     std::vector<QsimFusedCircuit> fused_circuits(programs.size(),
                                                  QsimFusedCircuit({}));
 
+    Status parse_status = Status::OK();
+    auto p_lock = tensorflow::mutex();
     auto construct_f = [&](int start, int end) {
       for (int i = start; i < end; i++) {
-        OP_REQUIRES_OK(context, QsimCircuitFromProgram(
-                                    programs[i], maps[i], num_qubits[i],
-                                    &qsim_circuits[i], &fused_circuits[i]));
+        NESTED_FN_STATUS_SYNC(
+            parse_status,
+            QsimCircuitFromProgram(programs[i], maps[i], num_qubits[i],
+                                   &qsim_circuits[i], &fused_circuits[i]),
+            p_lock);
       }
     };
 
     const int num_cycles = 1000;
     context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
         output_dim_batch_size, num_cycles, construct_f);
+    OP_REQUIRES_OK(context, parse_status);
 
     // Construct qsim circuits for other_programs.
     std::vector<std::vector<QsimCircuit>> other_qsim_circuits(
@@ -114,16 +120,19 @@ class TfqInnerProductOp : public tensorflow::OpKernel {
         Status status = QsimCircuitFromProgram(
             other_programs[ii][jj], {}, num_qubits[ii],
             &other_qsim_circuits[ii][jj], &other_fused_circuits[ii][jj]);
-        OP_REQUIRES(context, status.ok(),
-                    tensorflow::errors::InvalidArgument(absl::StrCat(
-                        "Found symbols in other_programs.",
-                        "No symbols are allowed in these circuits.")));
+        NESTED_FN_STATUS_SYNC(parse_status, status, p_lock);
       }
     };
 
     context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
         output_dim_batch_size * output_dim_internal_size, num_cycles,
         construct_f2);
+    if (!parse_status.ok()) {
+      OP_REQUIRES_OK(context,
+                     tensorflow::errors::InvalidArgument(absl::StrCat(
+                         "Found symbols in other_programs.",
+                         "No symbols are allowed in these circuits.")));
+    }
 
     int max_num_qubits = 0;
     for (const int num : num_qubits) {
