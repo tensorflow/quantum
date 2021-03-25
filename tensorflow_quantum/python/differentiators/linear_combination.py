@@ -97,7 +97,7 @@ class LinearCombination(differentiator.Differentiator):
             raise ValueError("Must specify at least two perturbations.")
         self.weights = tf.constant(weights, dtype=tf.float32)
         self.n_perturbations = tf.constant(len(perturbations))
-        self.perturbations = tf.constant(perturbations)
+        self.perturbations = tf.constant(perturbations, dtype=tf.float32)
 
         mask = tf.not_equal(self.perturbations,
                             tf.zeros_like(self.perturbations))
@@ -127,15 +127,14 @@ class LinearCombination(differentiator.Differentiator):
         new_symbol_names = tf.identity(symbol_names)
 
         # Build the symbol value perturbations for a single input program.
-        perts_zeros_pad = tf.zeros([n_non_zero_perturbations])
-        stacked_perts = tf.stack([perts_zeros_pad, non_zero_perturbations])
+        perts_zeros_pad = tf.zeros([self.n_non_zero_perturbations], dtype=tf.float32)
+        stacked_perts = tf.stack([perts_zeros_pad, self.non_zero_perturbations])
         # Identity matrix lets us tile the perturbations and simultaneously
         # put zeros in all the symbol locations not being perturbed.
         gathered_perts = tf.gather(
             stacked_perts, tf.eye(n_symbols, dtype=tf.int32))
         transposed_perts = tf.transpose(gathered_perts, [0, 2, 1])
-        reshaped_perts = tf.reshape(
-            transposed_perts, [n_non_zero_perturbations * n_symbols, n_symbols])
+        reshaped_perts = tf.reshape(transposed_perts, [base_m_tile, n_symbols])
         symbol_zeros_pad = tf.zeros([1, n_symbols])
         single_program_perts = tf.cond(
             self.n_non_zero_perturbations < self.n_perturbations,
@@ -158,7 +157,7 @@ class LinearCombination(differentiator.Differentiator):
         single_program_mapper = tf.concat(
             [tiled_zero_weights, reshaped_weights], 1)
         # Mapping is also the same for each program.
-        batch_mapper = tf.expand_dims(
+        batch_mapper = tf.tile(tf.expand_dims(
             single_program_mapper, 0), [n_programs, 1, 1])
 
         return (

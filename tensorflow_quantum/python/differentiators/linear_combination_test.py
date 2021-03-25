@@ -65,7 +65,7 @@ class LinearCombinationTest(tf.test.TestCase, parameterized.TestCase):
             linear_combination.LinearCombination([1, 1, 1], [1, 0])
         with self.assertRaisesRegex(ValueError, expected_regex="unique"):
             linear_combination.LinearCombination([1, 1], [1, 1])
-        with self.assertRaisesRegex(TypeError,
+        with self.assertRaisesRegex(ValueError,
                                     expected_regex="at least two"):
             linear_combination.LinearCombination([1], [1])
 
@@ -253,8 +253,8 @@ class LinearCombinationTest(tf.test.TestCase, parameterized.TestCase):
         (
             test_batch_programs, test_new_symbol_names,
             test_batch_symbol_values, test_batch_mapper
-        ) = test_linear_combination.get_intermediate_logic(
-             test_programs, test_symbol_names, test_symbol_values)
+        ) = diff.get_gradient_circuits(
+             input_programs, input_symbol_names, input_symbol_values)
         self.assertAllEqual(expected_batch_programs, test_batch_programs)
         self.assertAllEqual(expected_new_symbol_names,
                             test_new_symbol_names)
@@ -276,7 +276,7 @@ class LinearCombinationTest(tf.test.TestCase, parameterized.TestCase):
                     'n_ops': [3],
                     'symbol_names': [['a', 'b']]
                 })))
-    def test_gradient_circuits_grad_comparison(self, diff):
+    def test_gradient_circuits_grad_comparison(self, differentiator, n_qubits, n_programs, n_ops, symbol_names):
         """Test that analytic gradient agrees with the one from grad circuits"""
         # Get random circuits to check.
         qubits = cirq.GridQubit.rect(1, n_qubits)
@@ -321,8 +321,8 @@ class LinearCombinationTest(tf.test.TestCase, parameterized.TestCase):
             tf.einsum('ikm,imp->ikp', batch_mapper, batch_expectations), -1)
 
         # Get gradients using autodiff.
-        diff.refresh()
-        differentiable_op = diff.generate_differentiable_op(
+        differentiator.refresh()
+        differentiable_op = differentiator.generate_differentiable_op(
             analytic_op=analytic_op)
         with tf.GradientTape() as g:
             g.watch(symbol_values_tensor)
