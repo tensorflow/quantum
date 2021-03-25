@@ -93,8 +93,10 @@ class LinearCombination(differentiator.Differentiator):
         if not len(list(set(perturbations))) == len(perturbations):
             raise ValueError("All values in perturbations must be unique.")
         if len(perturbations) < 2:
-            # This is so that tensor squeezing does not cause a problem later.
-            raise ValueError("Must specify at least two perturbations.")
+            raise ValueError("Must specify at least two perturbations. "
+                             "Providing only one perturbation is the same as "
+                             "evaluating the circuit at a single location, "
+                             "which is insufficient for differentiation.")
         self.weights = tf.constant(weights, dtype=tf.float32)
         self.n_perturbations = tf.constant(len(perturbations))
         self.perturbations = tf.constant(perturbations, dtype=tf.float32)
@@ -105,7 +107,8 @@ class LinearCombination(differentiator.Differentiator):
         self.zero_weights = tf.boolean_mask(self.weights,
                                             tf.math.logical_not(mask))
         self.non_zero_perturbations = tf.boolean_mask(self.perturbations, mask)
-        self.n_non_zero_perturbations = tf.shape(self.non_zero_perturbations)[0]
+        self.n_non_zero_perturbations = tf.gather(
+            tf.shape(self.non_zero_perturbations), 0)
         if self.n_perturbations - self.n_non_zero_perturbations > 1:
             raise ValueError("There can only be one zero perturbation.")
 
