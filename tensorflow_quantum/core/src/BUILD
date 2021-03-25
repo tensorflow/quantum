@@ -6,18 +6,28 @@ licenses(["notice"])
 exports_files(["__init__.py"])
 
 cc_library(
+    name = "src",
+    deps = [
+        ":adj_util",
+        ":circuit_parser_qsim",
+        ":program_resolution",
+        ":util_qsim",
+    ],
+)
+
+cc_library(
     name = "adj_util",
     srcs = ["adj_util.cc"],
     hdrs = ["adj_util.h"],
     deps = [
+        ":circuit_parser_qsim",
         "@qsim//lib:circuit",
-        "@qsim//lib:gates_cirq",
-        "@qsim//lib:gate",
         "@qsim//lib:fuser",
         "@qsim//lib:fuser_basic",
+        "@qsim//lib:gate",
+        "@qsim//lib:gates_cirq",
         "@qsim//lib:io",
         "@qsim//lib:matrix",
-        ":circuit_parser_qsim",
     ],
 )
 
@@ -26,11 +36,11 @@ cc_test(
     srcs = ["adj_util_test.cc"],
     deps = [
         ":adj_util",
+        ":circuit_parser_qsim",
+        "@com_google_googletest//:gtest_main",
         "@qsim//lib:gates_cirq",
         "@qsim//lib:matrix",
-        "@com_google_googletest//:gtest_main",
-        ":circuit_parser_qsim",
-    ]
+    ],
 )
 
 cc_library(
@@ -47,38 +57,11 @@ cc_library(
         "@qsim//lib:channels_cirq",
         "@qsim//lib:circuit",
         "@qsim//lib:circuit_noisy",
-        "@qsim//lib:gates_cirq",
         "@qsim//lib:fuser",
         "@qsim//lib:fuser_basic",
-        "@qsim//lib:io"  
+        "@qsim//lib:gates_cirq",
+        "@qsim//lib:io",
     ],
-)
-
-cc_library(
-    name = "util_qsim",
-    srcs = [],
-    hdrs = ["util_qsim.h"],
-    deps = [
-        ":circuit_parser_qsim",
-        "@local_config_tf//:libtensorflow_framework",
-        "@local_config_tf//:tf_header_lib",
-        "@com_google_absl//absl/container:inlined_vector",  # unclear why needed.
-        "//tensorflow_quantum/core/proto:pauli_sum_cc_proto",
-        "@qsim//lib:qsim_lib",
-    ]
-)
-
-cc_test(
-    name = "util_qsim_test",
-    size = "small",
-    srcs = ["util_qsim_test.cc"],
-    linkstatic = 0,
-    deps = [
-        ":util_qsim",
-        "@com_google_absl//absl/container:flat_hash_map",
-        "@qsim//lib:qsim_lib",
-        "@com_google_googletest//:gtest_main",
-    ]
 )
 
 cc_test(
@@ -96,9 +79,35 @@ cc_test(
         "@local_config_tf//:libtensorflow_framework",
         "@local_config_tf//:tf_header_lib",
         "@qsim//lib:circuit",
-        "@qsim//lib:gates_cirq",
         "@qsim//lib:fuser",
+        "@qsim//lib:gates_cirq",
+    ],
+)
 
+cc_library(
+    name = "util_qsim",
+    srcs = [],
+    hdrs = ["util_qsim.h"],
+    deps = [
+        ":circuit_parser_qsim",
+        "//tensorflow_quantum/core/proto:pauli_sum_cc_proto",
+        "@com_google_absl//absl/container:inlined_vector",  # unclear why needed.
+        "@local_config_tf//:libtensorflow_framework",
+        "@local_config_tf//:tf_header_lib",
+        "@qsim//lib:qsim_lib",
+    ],
+)
+
+cc_test(
+    name = "util_qsim_test",
+    size = "small",
+    srcs = ["util_qsim_test.cc"],
+    linkstatic = 0,
+    deps = [
+        ":util_qsim",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_googletest//:gtest_main",
+        "@qsim//lib:qsim_lib",
     ],
 )
 

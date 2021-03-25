@@ -1,3 +1,5 @@
+# load op_wrapper
+
 package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
@@ -57,12 +59,16 @@ cc_binary(
     }),
     linkshared = 1,
     deps = [
+        # cirq cc proto
         "//tensorflow_quantum/core/ops:parse_context",
         "//tensorflow_quantum/core/ops:tfq_simulate_utils",
         "//tensorflow_quantum/core/src:adj_util",
         "//tensorflow_quantum/core/src:circuit_parser_qsim",
         "//tensorflow_quantum/core/src:util_qsim",
         "@qsim//lib:qsim_lib",
+        # tensorflow core framework
+        # tensorflow core lib
+        # tensorflow core protos
     ],
 )
 
