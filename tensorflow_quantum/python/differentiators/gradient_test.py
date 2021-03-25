@@ -36,8 +36,8 @@ ANALYTIC_DIFFS = [
 ]
 
 SAMPLED_DIFFS = [
-    linear_combination.ForwardDifference(grid_spacing=0.1),
-    linear_combination.CentralDifference(grid_spacing=0.1),
+    linear_combination.ForwardDifference(grid_spacing=0.05),
+    linear_combination.CentralDifference(grid_spacing=0.05),
     parameter_shift.ParameterShift(),
 ]
 
@@ -45,16 +45,12 @@ SAMPLED_DIFFS_TOLS = [0.5, 0.5, 0.2]
 
 ANALYTIC_OPS = [
     circuit_execution_ops.get_expectation_op(cirq.sim.Simulator()),  # WF
-    circuit_execution_ops.get_expectation_op(
-        cirq.DensityMatrixSimulator()),  # DM
     circuit_execution_ops.get_expectation_op()  # C++
 ]
 
 SAMPLED_OPS = [
     circuit_execution_ops.get_sampled_expectation_op(
         cirq.sim.Simulator()),  # WF
-    circuit_execution_ops.get_sampled_expectation_op(
-        cirq.DensityMatrixSimulator()),  # DM
     circuit_execution_ops.get_sampled_expectation_op()  # C++
 ]
 
