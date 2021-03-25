@@ -6,13 +6,25 @@ licenses(["notice"])
 exports_files(["__init__.py"])
 
 py_library(
+    name = "datasets",
+    srcs = ["__init__.py"],
+    srcs_version = "PY3",
+    deps = [
+        ":cluster_state",
+        ":spin_system",
+    ],
+)
+
+py_library(
     name = "cluster_state",
     srcs = ["cluster_state.py"],
+    srcs_version = "PY3",
 )
 
 py_library(
     name = "spin_system",
     srcs = ["spin_system.py"],
+    srcs_version = "PY3",
 )
 
 py_test(
@@ -26,6 +38,7 @@ py_test(
 
 py_test(
     name = "spin_system_test",
+    timeout = "eternal",
     srcs = ["spin_system_test.py"],
     python_version = "PY3",
     deps = [
