@@ -6,8 +6,22 @@ licenses(["notice"])
 exports_files(["__init__.py"])
 
 py_library(
+    name = "differentiators",
+    srcs = ["__init__.py"],
+    srcs_version = "PY3",
+    deps = [
+        ":adjoint",
+        ":differentiator",
+        ":linear_combination",
+        ":parameter_shift",
+        ":parameter_shift_util",
+    ],
+)
+
+py_library(
     name = "adjoint",
     srcs = ["adjoint.py"],
+    srcs_version = "PY3",
     deps = [
         ":differentiator",
         "//tensorflow_quantum/core/ops:tfq_adj_grad_op_py",
@@ -17,21 +31,23 @@ py_library(
 py_test(
     name = "adjoint_test",
     srcs = ["adjoint_test.py"],
+    python_version = "PY3",
     deps = [
         ":adjoint",
         "//tensorflow_quantum/core/ops:circuit_execution_ops",
     ],
 )
 
-
 py_library(
     name = "differentiator",
     srcs = ["differentiator.py"],
+    srcs_version = "PY3",
 )
 
 py_library(
     name = "linear_combination",
     srcs = ["linear_combination.py"],
+    srcs_version = "PY3",
     deps = [
         ":differentiator",
     ],
@@ -40,6 +56,7 @@ py_library(
 py_library(
     name = "parameter_shift",
     srcs = ["parameter_shift.py"],
+    srcs_version = "PY3",
     deps = [
         ":differentiator",
         ":parameter_shift_util",
@@ -49,6 +66,7 @@ py_library(
 py_library(
     name = "parameter_shift_util",
     srcs = ["parameter_shift_util.py"],
+    srcs_version = "PY3",
     deps = [
         "//tensorflow_quantum/core/ops:tfq_ps_util_ops_py",
     ],
