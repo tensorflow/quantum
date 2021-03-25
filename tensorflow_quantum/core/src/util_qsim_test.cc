@@ -714,5 +714,36 @@ TEST(UtilQsimTest, BalanceTrajectoryFewHigh) {
   AssertWellBalanced(n_reps, num_threads, offsets);
 }
 
+TEST(UtilQsimTest, BalanceTrajectory1D) {
+  const int n_reps = 100;
+  const int num_threads = 5;
+  // [num_threads, n_reps.size()]
+  std::vector<std::vector<int>> offsets = {{0, 0, 0, 0, 0, 0, 0},
+                                           {0, 0, 0, 0, 0, 0, 0},
+                                           {0, 0, 0, 0, 0, 0, 0},
+                                           {0, 0, 0, 0, 0, 0, 0},
+                                           {0, 0, 0, 0, 0, 0, 0}};
+
+  std::vector<std::vector<int>> tmp(offsets[0].size(),
+                                    std::vector<int>(2, n_reps));
+  BalanceTrajectory(n_reps, num_threads, &offsets);
+  AssertWellBalanced(tmp, num_threads, offsets);
+}
+
+TEST(UtilQsimTest, BalanceTrajectory1D_2) {
+  const int n_reps = 11;
+  const int num_threads = 10;
+  // [num_threads, n_reps.size()]
+  std::vector<std::vector<int>> offsets = {
+      {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0},
+      {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0},
+      {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}};
+
+  std::vector<std::vector<int>> tmp(offsets[0].size(),
+                                    std::vector<int>(2, n_reps));
+  BalanceTrajectory(n_reps, num_threads, &offsets);
+  AssertWellBalanced(tmp, num_threads, offsets);
+}
+
 }  // namespace
 }  // namespace tfq
