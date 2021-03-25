@@ -65,8 +65,8 @@ class TfqResolveParametersOp : public tensorflow::OpKernel {
       std::string temp;
       for (int i = start; i < end; i++) {
         Program program = programs[i];
-        NESTED_FN_STATUS_SYNC(parse_status,
-                              ResolveSymbols(maps[i], &program, false), p_lock);
+        Status local = ResolveSymbols(maps[i], &program, false);
+        NESTED_FN_STATUS_SYNC(parse_status, local, p_lock);
         program.SerializeToString(&temp);
         output_tensor(i) = temp;
       }

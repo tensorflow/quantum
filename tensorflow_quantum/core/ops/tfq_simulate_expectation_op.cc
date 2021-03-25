@@ -90,11 +90,10 @@ class TfqSimulateExpectationOp : public tensorflow::OpKernel {
     auto p_lock = tensorflow::mutex();
     auto construct_f = [&](int start, int end) {
       for (int i = start; i < end; i++) {
-        NESTED_FN_STATUS_SYNC(
-            parse_status,
+        Status local =
             QsimCircuitFromProgram(programs[i], maps[i], num_qubits[i],
-                                   &qsim_circuits[i], &fused_circuits[i]),
-            p_lock);
+                                   &qsim_circuits[i], &fused_circuits[i]);
+        NESTED_FN_STATUS_SYNC(parse_status, local, p_lock);
       }
     };
 

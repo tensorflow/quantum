@@ -103,12 +103,10 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
     auto p_lock = tensorflow::mutex();
     auto construct_f = [&](int start, int end) {
       for (int i = start; i < end; i++) {
-        NESTED_FN_STATUS_SYNC(
-            parse_status,
-            QsimCircuitFromProgram(programs[i], maps[i], num_qubits[i],
-                                   &qsim_circuits[i], &full_fuse[i],
-                                   &gate_meta[i]),
-            p_lock);
+        Status local = QsimCircuitFromProgram(programs[i], maps[i],
+                                              num_qubits[i], &qsim_circuits[i],
+                                              &full_fuse[i], &gate_meta[i]);
+        NESTED_FN_STATUS_SYNC(parse_status, local, p_lock);
         CreateGradientCircuit(qsim_circuits[i], gate_meta[i],
                               &partial_fused_circuits[i], &gradient_gates[i]);
       }
