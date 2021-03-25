@@ -102,9 +102,57 @@ class LinearCombination(differentiator.Differentiator):
     @tf.function
     def get_gradient_circuits(self, programs, symbol_names, symbol_values):
         """See base class description."""
-        raise NotImplementedError(
-            "Gradient circuits are not currently available for "
-            "LinearCombination.")
+        n_programs = tf.gather(tf.shape(programs), 0)
+        n_symbols = tf.gather(tf.shape(symbol_names), 0)
+        mask = tf.not_equal(self.perturbations,
+                            tf.zeros_like(self.perturbations))
+        non_zero_perturbations = tf.boolean_mask(self.perturbations, mask)
+        non_zero_weights = tf.boolean_mask(self.weights, mask)
+        n_non_zero_perturbations = tf.gather(tf.shape(non_zero_perturbations),
+                                             0)
+
+        # A new copy of each program is run for each symbol and each
+        # non-zero perturbation, plus one more if there is a zero perturbation.
+        n_tiles = tf.cond(
+            n_non_zero_perturbations < tf.shape(mask)[0],
+            lambda: n_symbols * n_non_zero_perturbations + 1,
+            lambda: n_symbols * n_non_zero_perturbations)
+        batch_programs = tf.tile(tf.expand_dims(programs, 1), [1, n_tiles])
+
+        # LinearCombination does not add new symbols to the gradient circuits.
+        new_symbol_names = tf.identity(symbol_names)
+
+        # Build a two-entry list where the first entry is all zeros and the
+        # second entry is the non-zero perturbations.
+        perts_zeros_pad = tf.zeros([n_non_zero_perturbations])
+        stacked_perts = tf.stack([perts_zeros_pad, non_zero_perturbations])
+        # Identity matrix lets us tile the perturbations and simultaneously
+        # put zeros in all the symbol locations not being perturbed.
+        gathered_perts = tf.gather(
+            stacked_perts, tf.eye(n_symbols, dtype=tf.int32))
+        # Make the symbol index the column index rather than row index.
+        transposed_perts = tf.transpose(gathered_perts, [0, 2, 1])
+        # Complete the perturbation tensor for a single input program.
+        reshaped_perts = tf.reshape(
+            transposed_perts, [n_non_zero_perturbations * n_symbols, n_symbols])
+        symbol_zeros_pad = tf.zeros([1, n_symbols])
+        single_program_perts = tf.cond(
+            n_non_zero_perturbations < tf.shape(mask)[0],
+            lambda: tf.concat([symbol_zeros_pad, reshaped_perts], 0),
+            lambda: reshaped_perts)
+        # Make a copy of the perturbations tensor for each input program.
+        all_perts = tf.tile(
+            tf.expand_dims(single_program_perts, 0), [n_programs, 1, 1])
+        # Apply perturbations to the forward pass symbol values.
+        bare_symbol_values = tf.tile(
+            tf.expand_dims(symbol_values, 1), [1, n_tiles, 1])
+        batch_symbol_values = bare_symbol_values + all_perts
+
+        # Weights go into the mapping, tiled the same as the
+        batch_mapper =
+
+        return (
+            batch_programs, new_symbol_names, batch_symbol_values, batch_mapper)
 
     @differentiator.catch_empty_inputs
     @tf.function

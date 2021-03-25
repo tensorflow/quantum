@@ -194,6 +194,70 @@ class LinearCombinationTest(tf.test.TestCase, parameterized.TestCase):
                             atol=1e-1,
                             rtol=1e-1)
 
+    def test_get_gradient_circuits(self):
+        """Test that the correct objects are returned."""
+
+        # Minimal linear combination.
+        input_weights = [1.0, -0.5]
+        input_perturbations = [1.0, -1.5]
+        diff = linear_combination.LinearCombination(
+            input_weights, input_perturbations)
+
+        # Circuits to differentiate.
+        symbols = [sympy.Symbol("s0"), sympy.Symbol("s1")]
+        q0 = cirq.GridQubit(0, 0)
+        q1 = cirq.GridQubit(1, 2)
+        input_programs = util.convert_to_tensor([
+            cirq.Circuit(cirq.X(q0)**symbols[0],
+                         cirq.ry(symbols[1])(q1)),
+            cirq.Circuit(cirq.rx(symbols[0])(q0),
+                         cirq.Y(q1)**symbols[1]),
+        ])
+        input_symbol_names = tf.constant([str(s) for s in symbols])
+        input_symbol_values = tf.constant([[1.5, -2.7], [-0.3, 0.9]])
+
+        # For each program in the input batch: LinearCombination creates a copy
+        # of that program for each symbol in the batch; then for each symbol,
+        # the program is copied for each non-zero perturbation; finally, a
+        # single copy is added for the zero perturbation (no zero pert here).
+        expected_batch_programs = tf.stack([
+            [input_programs[0]] * 2, [input_programs[1]] * 2])
+        expected_new_symbol_names = input_symbol_names
+
+        # For each program in the input batch: first, the input symbol_values
+        # for the program are tiled to the number of copies in the output.
+        tiled_symbol_values = tf.stack([
+            [input_symbol_values[0]] * 2, [input_symbol_values[1]] * 2])
+        # Then we create the tensor of perturbations to apply to these symbol
+        # values: for each symbol we tile out the non-zero perturbations at that
+        # symbol's index, keeping all the other symbol perturbations at zero.
+        tiled_perturbations = tf.stack([
+            [[input_perturbations[0], 0.0], [0.0, input_perturbations[1]]],
+            [[input_perturbations[0], 0.0], [0.0, input_perturbations[1]]]])
+        # Finally we add the perturbations to the original symbol values.
+        expected_batch_symbol_values = tiled_symbol_values + tiled_perturbations
+
+        # The map for LinearCombination is the same for every program.
+        individual_batch_mapper = tf.stack([
+            [input_weights[0], input_weights[1], 0.0, 0.0],
+            [0.0, 0.0, input_weights[0], input_weights[1]]
+        ])
+        expected_batch_mapper = tf.stack([
+            individual_batch_mapper, individual_batch_mapper])
+
+        (
+            test_batch_programs, test_new_symbol_names,
+            test_batch_symbol_values, test_batch_mapper
+        ) = test_linear_combination.get_intermediate_logic(
+             test_programs, test_symbol_names, test_symbol_values)
+        self.assertAllEqual(expected_batch_programs, test_batch_programs)
+        self.assertAllEqual(expected_new_symbol_names,
+                            test_new_symbol_names)
+        self.assertAllClose(expected_batch_symbol_values,
+                            test_batch_symbol_values,
+                            atol=1e-6)
+        self.assertAllClose(expected_batch_mapper, test_batch_mapper, atol=1e-6)
+
     @parameterized.parameters(
         list(
             util.kwargs_cartesian_product(
