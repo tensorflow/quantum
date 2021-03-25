@@ -221,19 +221,24 @@ class LinearCombinationTest(tf.test.TestCase, parameterized.TestCase):
         # the program is copied for each non-zero perturbation; finally, a
         # single copy is added for the zero perturbation (no zero pert here).
         expected_batch_programs = tf.stack([
-            [input_programs[0]] * 2, [input_programs[1]] * 2])
+            [input_programs[0]] * 4, [input_programs[1]] * 4])
         expected_new_symbol_names = input_symbol_names
 
         # For each program in the input batch: first, the input symbol_values
         # for the program are tiled to the number of copies in the output.
         tiled_symbol_values = tf.stack([
-            [input_symbol_values[0]] * 2, [input_symbol_values[1]] * 2])
+            [input_symbol_values[0]] * 4, [input_symbol_values[1]] * 4])
         # Then we create the tensor of perturbations to apply to these symbol
         # values: for each symbol we tile out the non-zero perturbations at that
         # symbol's index, keeping all the other symbol perturbations at zero.
+        # Perturbations are the same for each program.
+        single_program_perturbations = tf.stack([
+            [input_perturbations[0], 0.0],
+            [input_perturbations[1], 0.0],
+            [0.0, input_perturbations[0]],
+            [0.0, input_perturbations[1]]])
         tiled_perturbations = tf.stack([
-            [[input_perturbations[0], 0.0], [0.0, input_perturbations[1]]],
-            [[input_perturbations[0], 0.0], [0.0, input_perturbations[1]]]])
+            single_program_perturbations, single_program_perturbations])
         # Finally we add the perturbations to the original symbol values.
         expected_batch_symbol_values = tiled_symbol_values + tiled_perturbations
 
