@@ -568,7 +568,8 @@ def _get_cirq_simulate_state(simulator=cirq.Simulator()):
     of all the input circuits.
 
     Args:
-        simulator: `cirq.Simulator` object to use for circuit execution.
+        simulator: `cirq.Simulator` object to use for circuit execution.  Can be
+            any `cirq.SimulatesFinalState`.
 
     Returns:
         `callable` that is a Tensorflow op for calculating states.
