@@ -221,41 +221,6 @@ def _state_worker_func(indices, programs, params):
         _update_complex_np(x_np, index, final_array)
 
 
-def _analytical_expectation_worker_func(indices, programs, params, ops):
-    """Compute the expectation of the op[batch_index], w.r.t
-    circuit[batch_index] where batch_index is calculated from indices."""
-    x_np = _convert_simple_view_to_np(INFO_DICT['arr'], np.float32,
-                                      INFO_DICT['shape'])
-    simulator = INFO_DICT['sim']
-
-    # TODO: remove this when picklable.
-    for i in range(len(ops)):
-        for j in range(len(ops[i])):
-            ops[i][j] = serializer.deserialize_paulisum(ops[i][j])
-
-    old_batch_index = -2
-    state = -1
-    for i, index_tuple in enumerate(indices):
-        batch_index = index_tuple[0]
-        op_index = index_tuple[1]
-        # (#679) Just ignore empty programs.
-        if len(programs[batch_index].all_qubits()) == 0:
-            continue
-
-        if old_batch_index != batch_index:
-            # must compute a new state vector.
-            qubit_oder = dict(
-                zip(sorted(programs[batch_index].all_qubits()),
-                    list(range(len(programs[batch_index].all_qubits())))))
-            state = simulator.simulate(programs[batch_index],
-                                       params[batch_index])
-
-        result = INFO_DICT['post_process'](ops[batch_index][op_index], state,
-                                           qubit_oder)
-        _pointwise_update_simple_np(x_np, batch_index, op_index, result)
-        old_batch_index = batch_index
-
-
 def _sample_expectation_worker_func(indices, programs, params, ops, n_samples):
     x_np = _convert_simple_view_to_np(INFO_DICT['arr'], np.float32,
                                       INFO_DICT['shape'])
@@ -333,6 +298,17 @@ def _validate_inputs(circuits, param_resolvers, simulator, sim_type):
             raise TypeError('For analytic operations only'
                             ' cirq.SimulatesFinalState'
                             ' is required. Given: {}'.format(type(simulator)))
+
+    elif sim_type == 'expectation':
+        if not isinstance(simulator,
+                          (cirq.sim.simulator.SimulatesExpectationValues,
+                           cirq.DensityMatrixSimulator)):
+            # TODO(zaqqwerty): remove DM sim check once cirq #3964 is resolved.
+            raise TypeError('For expectation operations a '
+                            'cirq.sim.simulator.SimulatesExpectationValues '
+                            'or cirq.DensityMatrixSimulator'
+                            'is required.  Given: {}'.format(type(simulator)))
+
     elif sim_type == 'sample':
         if not isinstance(simulator, cirq.Sampler):
             raise TypeError('For sample based operations a cirq.Sampler is '
@@ -406,7 +382,7 @@ def batch_calculate_state(circuits, param_resolvers, simulator):
 
 
 def batch_calculate_expectation(circuits, param_resolvers, ops, simulator):
-    """Compute expectations from circuits using parallel processing.
+    """Compute expectations from a batch of circuits.
 
     Returns a `np.ndarray` containing the expectation values of `ops`
     applied to a specific circuit in `circuits`, given that the
@@ -414,8 +390,7 @@ def batch_calculate_expectation(circuits, param_resolvers, ops, simulator):
     any symbols in the circuit. Specifically the returned array at index `i,j`
     will be equal to the expectation value of `ops[i][j]` on `circuits[i]` with
     `param_resolvers[i]` used to resolve any symbols in `circuits[i]`.
-    Expectation calculations will be carried out using the simulator object
-    (`cirq.DensityMatrixSimulator` and `cirq.Simulator` are currently supported)
+    Expectation calculations will be carried out using the simulator object.
 
     Args:
         circuits: Python `list` of `cirq.Circuit`s.
@@ -425,14 +400,16 @@ def batch_calculate_expectation(circuits, param_resolvers, ops, simulator):
             be used to calculate the expectation on `circuits[i]` for all `j`,
             after `param_resolver[i]` is used to resolve any parameters
             in the circuit.
-        simulator: Simulator object. Currently supported are
-            `cirq.DensityMatrixSimulator` and `cirq.Simulator`.
+        simulator: Simulator object. Must inherit
+            `cirq.sim.simulator.SimulatesExpectationValues` or
+            `cirq.DensityMatrixSimulator`.
 
     Returns:
         `np.ndarray` containing the expectation values. Shape is:
             [len(circuits), len(ops[0])]
     """
-    _validate_inputs(circuits, param_resolvers, simulator, 'analytic')
+    _validate_inputs(circuits, param_resolvers, simulator, 'expectation')
+
     if _check_empty(circuits):
         return np.zeros((0, 0), dtype=np.float32)
 
@@ -451,45 +428,28 @@ def batch_calculate_expectation(circuits, param_resolvers, ops, simulator):
                 raise TypeError('ops must contain only cirq.PauliSum objects.'
                                 ' Given: {}'.format(type(x)))
 
-    return_mem_shape = (len(circuits), len(ops[0]))
-    if isinstance(simulator, cirq.DensityMatrixSimulator):
-        post_process = lambda op, state, order: sum(
-            x._expectation_from_density_matrix_no_validation(
-                state.final_density_matrix, order) for x in op).real
-    elif isinstance(simulator, cirq.Simulator):
-        post_process = \
-            lambda op, state, order: op.expectation_from_state_vector(
-                state.final_state_vector, order).real
-    else:
-        raise TypeError('Simulator {} is not supported by '
-                        'batch_calculate_expectation.'.format(type(simulator)))
+    all_exp_vals = np.ones(shape=(len(circuits), len(ops[0])),
+                           dtype=np.float32) * -2
+    for i, (c, p, op_row) in enumerate(zip(circuits, param_resolvers, ops)):
+        # Convention in TFQ is to set expectations of empty circuits to -2.
+        if len(c) == 0:
+            continue
+        # TODO(zaqqwerty): remove DM sim check once cirq #3964 is resolved.
+        if isinstance(simulator, cirq.DensityMatrixSimulator):
+            qubits = c.all_qubits()
+            pairs = zip(sorted(qubits), list(range(len(qubits))))
+            qubit_order = dict(pairs)
+            sim_result = simulator.simulate(c, p)
+            for j, op in enumerate(op_row):
+                dm = sim_result.final_density_matrix
+                all_exp_vals[i][j] = op.expectation_from_density_matrix(
+                    dm, qubit_order, check_preconditions=False)
+        else:
+            # Valid observables always have real expectation values.
+            all_exp_vals[i] = np.real(
+                np.asarray(simulator.simulate_expectation_values(c, op_row, p)))
 
-    shared_array = _make_simple_view(return_mem_shape, -2, np.float32, 'f')
-
-    # avoid mutating ops array
-    ops = np.copy(ops)
-    # TODO (mbbrough): make cirq PauliSUms pickable at some point ?
-    for i in range(len(ops)):
-        for j in range(len(ops[i])):
-            ops[i][j] = serializer.serialize_paulisum(ops[i][j])
-
-    input_args = list(
-        _prep_pool_input_args(list(
-            itertools.product(range(len(circuits)), range(len(ops[0])))),
-                              circuits,
-                              param_resolvers,
-                              ops,
-                              slice_args=False))
-
-    with ProcessPool(processes=None,
-                     initializer=_setup_dict,
-                     initargs=(shared_array, return_mem_shape, simulator,
-                               post_process)) as pool:
-
-        pool.starmap(_analytical_expectation_worker_func, input_args)
-
-    return _convert_simple_view_to_result(shared_array, np.float32,
-                                          return_mem_shape)
+    return all_exp_vals
 
 
 def batch_calculate_sampled_expectation(circuits, param_resolvers, ops,
