@@ -120,7 +120,7 @@ class NoisySamplingTest(tf.test.TestCase, parameterized.TestCase):
                                      [num_samples])
 
         with self.assertRaisesRegex(Exception, 'junk'):
-            # num_samples tensor has the wrong shape.
+            # num_samples tensor has the wrong type.
             noisy_samples_op.samples(util.convert_to_tensor(circuit_batch),
                                      symbol_names, symbol_values_array,
                                      ['junk'])
@@ -236,18 +236,21 @@ class NoisySamplingTest(tf.test.TestCase, parameterized.TestCase):
         qubits1 = cirq.GridQubit.rect(1, n_qubits)
         qubits2 = cirq.GridQubit.rect(1, n_qubits + 1)
 
-        circuit_batch1, resolver_batch = \
+        circuit_batch1, resolver_batch1 = \
             util.random_circuit_resolver_batch(
                 qubits1, batch_size, include_channels=True)
 
-        circuit_batch2, _ = \
+        circuit_batch2, resolver_batch2 = \
             util.random_circuit_resolver_batch(
                 qubits2, batch_size, include_channels=True)
 
-        symbol_values_array = np.array(
-            [[resolver[symbol]
-              for symbol in symbol_names]
-             for resolver in resolver_batch] * 2)
+        p1 = [[resolver[symbol]
+               for symbol in symbol_names]
+              for resolver in resolver_batch1]
+        p2 = [[resolver[symbol]
+               for symbol in symbol_names]
+              for resolver in resolver_batch2]
+        symbol_values_array = np.array(p1 + p2)
 
         n_samples = 10
 

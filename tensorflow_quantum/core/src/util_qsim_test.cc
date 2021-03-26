@@ -717,7 +717,7 @@ TEST(UtilQsimTest, BalanceTrajectoryFewHigh) {
 TEST(UtilQsimTest, BalanceTrajectory1D) {
   const int n_reps = 100;
   const int num_threads = 5;
-  // [num_threads, n_reps.size()]
+  // [num_threads, batch_size]
   std::vector<std::vector<int>> offsets = {{0, 0, 0, 0, 0, 0, 0},
                                            {0, 0, 0, 0, 0, 0, 0},
                                            {0, 0, 0, 0, 0, 0, 0},
@@ -733,7 +733,7 @@ TEST(UtilQsimTest, BalanceTrajectory1D) {
 TEST(UtilQsimTest, BalanceTrajectory1D_2) {
   const int n_reps = 11;
   const int num_threads = 10;
-  // [num_threads, n_reps.size()]
+  // [num_threads, batch_size]
   std::vector<std::vector<int>> offsets = {
       {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0},
       {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0},
