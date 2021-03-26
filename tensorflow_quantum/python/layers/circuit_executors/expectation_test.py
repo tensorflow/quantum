@@ -62,7 +62,7 @@ class ExpectationTest(tf.test.TestCase):
             expectation.Expectation(backend=MySampler())
 
         with self.assertRaisesRegex(
-                TypeError, expected_regex="SimulatesFinalState or None"):
+                TypeError, expected_regex="SimulatesExpectationValues or None"):
             expectation.Expectation(backend='junk')
 
         with self.assertRaisesRegex(

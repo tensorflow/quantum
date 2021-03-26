@@ -6,8 +6,19 @@ licenses(["notice"])
 exports_files(["__init__.py"])
 
 py_library(
+    name = "high_level",
+    srcs = ["__init__.py"],
+    srcs_version = "PY3",
+    deps = [
+        ":controlled_pqc",
+        ":pqc",
+    ],
+)
+
+py_library(
     name = "controlled_pqc",
     srcs = ["controlled_pqc.py"],
+    srcs_version = "PY3",
     deps = [
         "//tensorflow_quantum/python:util",
         "//tensorflow_quantum/python/layers/circuit_construction:elementary",
@@ -19,6 +30,7 @@ py_library(
 py_library(
     name = "pqc",
     srcs = ["pqc.py"],
+    srcs_version = "PY3",
     deps = [
         "//tensorflow_quantum/python:util",
         "//tensorflow_quantum/python/layers/circuit_construction:elementary",

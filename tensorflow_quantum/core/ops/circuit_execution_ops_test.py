@@ -95,7 +95,8 @@ class OpGetterInputChecks(tf.test.TestCase):
                                                  processor_id='test',
                                                  gate_set=cirq.google.XMON))
         with self.assertRaisesRegex(
-                TypeError, expected_regex="a Cirq.SimulatesFinalState"):
+                TypeError,
+                expected_regex="cirq.sim.simulator.SimulatesExpectationValues"):
             circuit_execution_ops.get_expectation_op(backend="junk")
 
         with self.assertRaisesRegex(TypeError,

@@ -128,7 +128,9 @@ def _get_cirq_analytical_expectation(simulator=cirq.Simulator()):
     values.
 
     Args:
-        simulator: `cirq.Simulator` object to use for circuit execution.
+        simulator: `cirq.Simulator` object to use for circuit execution.  Can be
+            `cirq.DensityMatrixSimulator` or any
+            `cirq.sim.simulator.SimulatesExpectationValues`.
 
     Returns:
         `callable` that is a TensorFlow op for computing expectation.
@@ -209,8 +211,11 @@ def _get_cirq_analytical_expectation(simulator=cirq.Simulator()):
 
         return expectations
 
-    if not isinstance(simulator, cirq.SimulatesFinalState):
-        raise TypeError("simulator must inherit cirq.SimulatesFinalState.")
+    if not isinstance(simulator, (cirq.sim.simulator.SimulatesExpectationValues,
+                                  cirq.DensityMatrixSimulator)):
+        raise TypeError(
+            "simulator must be cirq.DensityMatrixSimulator or inherit "
+            "cirq.sim.simulator.SimulatesExpectationValues.")
 
     @_upgrade_inputs
     def expectation_generator(programs_tf, symbol_names_tf, symbol_values_tf,
