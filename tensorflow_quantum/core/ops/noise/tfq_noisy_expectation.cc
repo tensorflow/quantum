@@ -107,17 +107,20 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
     std::vector<NoisyQsimCircuit> qsim_circuits(programs.size(),
                                                 NoisyQsimCircuit());
 
+    Status parse_status = Status::OK();
+    auto p_lock = tensorflow::mutex();
     auto construct_f = [&](int start, int end) {
       for (int i = start; i < end; i++) {
-        OP_REQUIRES_OK(context, NoisyQsimCircuitFromProgram(
-                                    programs[i], maps[i], num_qubits[i], false,
-                                    &qsim_circuits[i]));
+        Status local = NoisyQsimCircuitFromProgram(
+            programs[i], maps[i], num_qubits[i], false, &qsim_circuits[i]);
+        NESTED_FN_STATUS_SYNC(parse_status, local, p_lock);
       }
     };
 
     const int num_cycles = 1000;
     context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
         programs.size(), num_cycles, construct_f);
+    OP_REQUIRES_OK(context, parse_status);
 
     int max_num_qubits = 0;
     for (const int num : num_qubits) {
@@ -262,6 +265,9 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
     BalanceTrajectory(num_samples, num_threads, &rep_offsets);
 
     output_tensor->setZero();
+
+    Status compute_status = Status::OK();
+    auto c_lock = tensorflow::mutex();
     auto DoWork = [&](int start, int end) {
       // Begin simulation.
       const auto tfq_for = qsim::SequentialFor(1);
@@ -315,9 +321,11 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
               continue;
             }
             float exp_v = 0.0;
-            OP_REQUIRES_OK(context,
-                           ComputeExpectationQsim(pauli_sums[i][j], sim, ss, sv,
-                                                  scratch, &exp_v));
+            NESTED_FN_STATUS_SYNC(
+                compute_status,
+                ComputeExpectationQsim(pauli_sums[i][j], sim, ss, sv, scratch,
+                                       &exp_v),
+                c_lock);
             rolling_sums[j] += static_cast<double>(exp_v);
             run_samples[j]++;
           }
@@ -351,6 +359,7 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
         absl::nullopt, 1);
     context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
         num_threads, scheduling_params, DoWork);
+    OP_REQUIRES_OK(context, compute_status);
   }
 };
 

@@ -85,12 +85,7 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
       for (int i = start; i < end; i++) {
         auto r = NoisyQsimCircuitFromProgram(
             programs[i], maps[i], num_qubits[i], true, &qsim_circuits[i]);
-        if (!r.ok()) {
-          p_lock.lock();
-          parse_status = r;
-          p_lock.unlock();
-          return;
-        }
+        NESTED_FN_STATUS_SYNC(parse_status, r, p_lock);
       }
     };
 
