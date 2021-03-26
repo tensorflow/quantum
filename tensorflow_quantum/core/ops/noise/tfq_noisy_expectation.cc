@@ -112,7 +112,7 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
     auto construct_f = [&](int start, int end) {
       for (int i = start; i < end; i++) {
         Status local = NoisyQsimCircuitFromProgram(
-            programs[i], maps[i], num_qubits[i], &qsim_circuits[i]);
+            programs[i], maps[i], num_qubits[i], false, &qsim_circuits[i]);
         NESTED_FN_STATUS_SYNC(parse_status, local, p_lock);
       }
     };
