@@ -180,7 +180,8 @@ def random_circuit_resolver_batch(qubits,
                 # skip adding gates in small case.
                 continue
             locs = tuple(random.sample(qubits, n_qubits))
-            if isinstance(op, cirq.IdentityGate):
+            if isinstance(op, cirq.IdentityGate) or \
+                any(isinstance(op, x) for x in _SUPPORTED_CHANNELS):
                 circuit[:i] += op.on(*locs)
                 continue
             full_gate = (op**np.random.random()).on(*locs)
