@@ -665,6 +665,7 @@ tensorflow::Status ParseAppendChannel(const Operation& op,
 tensorflow::Status NoisyQsimCircuitFromProgram(const Program& program,
                                                const SymbolMap& param_map,
                                                const int num_qubits,
+                                               const bool add_tmeasures,
                                                NoisyQsimCircuit* ncircuit) {
   // Special case empty.
   ncircuit->num_qubits = num_qubits;
@@ -700,6 +701,17 @@ tensorflow::Status NoisyQsimCircuitFromProgram(const Program& program,
       }
     }
     time++;
+  }
+
+  // Optionally add terminal measurements.
+  if (add_tmeasures) {
+    std::vector<unsigned int> all_qbs(num_qubits);
+    std::iota(all_qbs.begin(), all_qbs.end(), 0);
+    ncircuit->channels.push_back(
+        {{qsim::KrausOperator<QsimGate>::kMeasurement,
+          1,
+          1.0,
+          {qsim::gate::Measurement<QsimGate>::Create(time, all_qbs)}}});
   }
 
   return Status::OK();
