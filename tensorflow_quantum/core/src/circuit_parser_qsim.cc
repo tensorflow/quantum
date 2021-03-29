@@ -646,8 +646,6 @@ inline Status ResetChannel(const Operation& op, const unsigned int num_qubits,
                            NoisyQsimCircuit* ncircuit) {
   int q;
   bool unused;
-  float p;
-  Status u;
   unused = absl::SimpleAtoi(op.qubits(0).id(), &q);
 
   auto chan = qsim::Cirq::ResetChannel<float>::Create(time, num_qubits - q - 1);
