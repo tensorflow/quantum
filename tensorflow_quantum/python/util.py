@@ -28,7 +28,9 @@ from tensorflow_quantum.core.serialize import serializer
 
 # Can't use set() since channels don't give proper support.
 _SUPPORTED_CHANNELS = [
-    cirq.DepolarizingChannel, cirq.AsymmetricDepolarizingChannel
+    cirq.DepolarizingChannel,
+    cirq.AsymmetricDepolarizingChannel,
+    cirq.BitFlipChannel,
 ]
 
 
@@ -73,6 +75,7 @@ def get_supported_channels():
     channel_mapping = dict()
     channel_mapping[cirq.DepolarizingChannel(0.01)] = 1
     channel_mapping[cirq.AsymmetricDepolarizingChannel(0.01, 0.02, 0.03)] = 1
+    channel_mapping[cirq.BitFlipChannel(0.01)] = 1
 
     return channel_mapping
 
@@ -492,6 +495,11 @@ def _expression_approx_eq(exp_1, exp_2, atol):
 # TODO: replace with cirq.approx_eq once
 # https://github.com/quantumlib/Cirq/issues/3886 is resolved for all channels.
 def _channel_approx_eq(op_true, op_deser, atol=1e-5):
+
+    if isinstance(op_true, cirq.BitFlipChannel):
+        if isinstance(op_deser, cirq.BitFlipChannel):
+            return abs(op_true.p - op_deser.p) < atol
+
     if isinstance(op_true, cirq.DepolarizingChannel):
         if isinstance(op_deser, cirq.DepolarizingChannel):
             return abs(op_true.p - op_deser.p) < atol

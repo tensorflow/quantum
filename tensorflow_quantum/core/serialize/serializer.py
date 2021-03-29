@@ -231,6 +231,39 @@ def _depolarize_channel_deserializer():
         args=args)
 
 
+def _bit_flip_channel_serializer():
+    """Make standard serializer for BitFlip channel."""
+
+    args = [
+        # cirq channels can't contain symbols.
+        cirq.google.SerializingArg(serialized_name="p",
+                                   serialized_type=float,
+                                   op_getter=lambda x: x.gate.p),
+        cirq.google.SerializingArg(serialized_name="control_qubits",
+                                   serialized_type=str,
+                                   op_getter=lambda x: ''),
+        cirq.google.SerializingArg(serialized_name="control_values",
+                                   serialized_type=str,
+                                   op_getter=lambda x: '')
+    ]
+    return cirq.google.GateOpSerializer(gate_type=cirq.BitFlipChannel,
+                                        serialized_gate_id="BF",
+                                        args=args,
+                                        can_serialize_predicate=_CONSTANT_TRUE)
+
+
+def _bit_flip_channel_deserializer():
+    """Make standard deserializer for depolarization channel."""
+
+    args = [
+        cirq.google.DeserializingArg(serialized_name="p",
+                                     constructor_arg_name="p")
+    ]
+    return cirq.google.GateOpDeserializer(serialized_gate_id="BF",
+                                          gate_constructor=cirq.BitFlipChannel,
+                                          args=args)
+
+
 def _eigen_gate_serializer(gate_type, serialized_id):
     """Make standard serializer for eigen gates."""
 
@@ -530,6 +563,7 @@ SERIALIZERS = [
     for g, g_name in PHASED_EIGEN_GATES_DICT.items()
 ] + [
     _asymmetric_depolarize_serializer(),
+    _bit_flip_channel_serializer(),
     _depolarize_channel_serializer(),
     _fsim_gate_serializer(),
     _identity_gate_serializer()
@@ -543,6 +577,7 @@ DESERIALIZERS = [
     for g, g_name in PHASED_EIGEN_GATES_DICT.items()
 ] + [
     _asymmetric_depolarize_deserializer(),
+    _bit_flip_channel_deserializer(),
     _depolarize_channel_deserializer(),
     _fsim_gate_deserializer(),
     _identity_gate_deserializer()
