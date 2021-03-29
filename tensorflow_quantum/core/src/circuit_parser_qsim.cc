@@ -641,6 +641,26 @@ inline Status DepolarizingChannel(const Operation& op,
   return Status::OK();
 }
 
+inline Status AmplitudeDampingChannel(const Operation& op,
+                                      const unsigned int num_qubits,
+                                      const unsigned int time,
+                                      NoisyQsimCircuit* ncircuit) {
+  int q;
+  bool unused;
+  float gamma;
+  Status u;
+  unused = absl::SimpleAtoi(op.qubits(0).id(), &q);
+
+  u = ParseProtoArg(op, "gamma", {}, &gamma);
+  if (!u.ok()) {
+    return u;
+  }
+  auto chan = qsim::Cirq::AmplitudeDampingChannel<float>::Create(
+      time, num_qubits - q - 1, gamma);
+  ncircuit->channels.push_back(chan);
+  return Status::OK();
+}
+
 tensorflow::Status ParseAppendChannel(const Operation& op,
                                       const unsigned int num_qubits,
                                       const unsigned int time,
@@ -650,7 +670,8 @@ tensorflow::Status ParseAppendChannel(const Operation& op,
       std::string, std::function<Status(const Operation&, const unsigned int,
                                         const unsigned int, NoisyQsimCircuit*)>>
       chan_func_map = {{"DP", &DepolarizingChannel},
-                       {"ADP", &AsymmetricDepolarizingChannel}};
+                       {"ADP", &AsymmetricDepolarizingChannel},
+                       {"AD", &AmplitudeDampingChannel}};
 
   auto build_f = chan_func_map.find(op.gate().id());
   if (build_f == chan_func_map.end()) {

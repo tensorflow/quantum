@@ -28,7 +28,8 @@ from tensorflow_quantum.core.serialize import serializer
 
 # Can't use set() since channels don't give proper support.
 _SUPPORTED_CHANNELS = [
-    cirq.DepolarizingChannel, cirq.AsymmetricDepolarizingChannel
+    cirq.DepolarizingChannel, cirq.AsymmetricDepolarizingChannel,
+    cirq.AmplitudeDampingChannel
 ]
 
 
@@ -73,6 +74,7 @@ def get_supported_channels():
     channel_mapping = dict()
     channel_mapping[cirq.DepolarizingChannel(0.01)] = 1
     channel_mapping[cirq.AsymmetricDepolarizingChannel(0.01, 0.02, 0.03)] = 1
+    channel_mapping[cirq.AmplitudeDampingChannel(0.01)] = 1
 
     return channel_mapping
 
@@ -501,6 +503,10 @@ def _channel_approx_eq(op_true, op_deser, atol=1e-5):
             return abs(op_true.p_x - op_deser.p_x) < atol and \
                    abs(op_true.p_y - op_deser.p_y) < atol and \
                    abs(op_true.p_z - op_deser.p_z) < atol
+
+    if isinstance(op_true, cirq.AmplitudeDampingChannel):
+        if isinstance(op_deser, cirq.AmplitudeDampingChannel):
+            return abs(op_true.gamma - op_deser.gamma) < atol
 
     return False
 
