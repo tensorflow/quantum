@@ -249,6 +249,40 @@ def _reset_channel_serializer():
                                         can_serialize_predicate=_CONSTANT_TRUE)
 
 
+def _amplitude_damp_channel_serializer():
+    """Make standard serializer for AmplitudeDamp channel."""
+
+    args = [
+        # cirq channels can't contain symbols.
+        cirq.google.SerializingArg(serialized_name="gamma",
+                                   serialized_type=float,
+                                   op_getter=lambda x: x.gate.gamma),
+        cirq.google.SerializingArg(serialized_name="control_qubits",
+                                   serialized_type=str,
+                                   op_getter=lambda x: ''),
+        cirq.google.SerializingArg(serialized_name="control_values",
+                                   serialized_type=str,
+                                   op_getter=lambda x: '')
+    ]
+    return cirq.google.GateOpSerializer(gate_type=cirq.AmplitudeDampingChannel,
+                                        serialized_gate_id="AD",
+                                        args=args,
+                                        can_serialize_predicate=_CONSTANT_TRUE)
+
+
+def _amplitude_damp_channel_deserializer():
+    """Make standard deserializer for depolarization channel."""
+
+    args = [
+        cirq.google.DeserializingArg(serialized_name="gamma",
+                                     constructor_arg_name="gamma")
+    ]
+    return cirq.google.GateOpDeserializer(
+        serialized_gate_id="AD",
+        gate_constructor=cirq.AmplitudeDampingChannel,
+        args=args)
+
+                                        
 def _reset_channel_deserializer():
     """Make standard deserializer for reset channel."""
 
@@ -556,6 +590,7 @@ SERIALIZERS = [
     _phased_eigen_gate_serializer(g, g_name)
     for g, g_name in PHASED_EIGEN_GATES_DICT.items()
 ] + [
+    _amplitude_damp_channel_serializer(),
     _asymmetric_depolarize_serializer(),
     _depolarize_channel_serializer(),
     _fsim_gate_serializer(),
@@ -570,6 +605,7 @@ DESERIALIZERS = [
     _phased_eigen_gate_deserializer(g, g_name)
     for g, g_name in PHASED_EIGEN_GATES_DICT.items()
 ] + [
+    _amplitude_damp_channel_deserializer(),
     _asymmetric_depolarize_deserializer(),
     _depolarize_channel_deserializer(),
     _fsim_gate_deserializer(),
