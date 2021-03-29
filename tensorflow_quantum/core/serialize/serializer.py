@@ -231,6 +231,40 @@ def _depolarize_channel_deserializer():
         args=args)
 
 
+def _phase_flip_channel_serializer():
+    """Make standard serializer for PhaseFlip channel."""
+
+    args = [
+        # cirq channels can't contain symbols.
+        cirq.google.SerializingArg(serialized_name="p",
+                                   serialized_type=float,
+                                   op_getter=lambda x: x.gate.p),
+        cirq.google.SerializingArg(serialized_name="control_qubits",
+                                   serialized_type=str,
+                                   op_getter=lambda x: ''),
+        cirq.google.SerializingArg(serialized_name="control_values",
+                                   serialized_type=str,
+                                   op_getter=lambda x: '')
+    ]
+    return cirq.google.GateOpSerializer(gate_type=cirq.PhaseFlipChannel,
+                                        serialized_gate_id="PF",
+                                        args=args,
+                                        can_serialize_predicate=_CONSTANT_TRUE)
+
+
+def _phase_flip_channel_deserializer():
+    """Make standard deserializer for PhaseFlip channel."""
+
+    args = [
+        cirq.google.DeserializingArg(serialized_name="p",
+                                     constructor_arg_name="p")
+    ]
+    return cirq.google.GateOpDeserializer(
+        serialized_gate_id="PF",
+        gate_constructor=cirq.PhaseFlipChannel,
+        args=args)
+
+
 def _eigen_gate_serializer(gate_type, serialized_id):
     """Make standard serializer for eigen gates."""
 
@@ -532,7 +566,8 @@ SERIALIZERS = [
     _asymmetric_depolarize_serializer(),
     _depolarize_channel_serializer(),
     _fsim_gate_serializer(),
-    _identity_gate_serializer()
+    _identity_gate_serializer(),
+    _phase_flip_channel_serializer()
 ]
 
 DESERIALIZERS = [
@@ -545,7 +580,8 @@ DESERIALIZERS = [
     _asymmetric_depolarize_deserializer(),
     _depolarize_channel_deserializer(),
     _fsim_gate_deserializer(),
-    _identity_gate_deserializer()
+    _identity_gate_deserializer(),
+    _phase_flip_channel_deserializer()
 ]
 
 SERIALIZER = cirq.google.SerializableGateSet(gate_set_name="tfq_gate_set",
