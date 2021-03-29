@@ -63,10 +63,10 @@ class LinearCombinationTest(tf.test.TestCase, parameterized.TestCase):
             linear_combination.LinearCombination([1, 1], [1, "junk"])
         with self.assertRaisesRegex(ValueError, expected_regex="length"):
             linear_combination.LinearCombination([1, 1, 1], [1, 0])
-        with self.assertRaisesRegex(ValueError, expected_regex="unique"):
-            linear_combination.LinearCombination([1, 1], [1, 1])
         with self.assertRaisesRegex(ValueError, expected_regex="at least two"):
             linear_combination.LinearCombination([1], [1])
+        with self.assertRaisesRegex(ValueError, expected_regex="unique"):
+            linear_combination.LinearCombination([1, 1], [1, 1])
 
     def test_forward_instantiate(self):
         """Test ForwardDifference type checking."""

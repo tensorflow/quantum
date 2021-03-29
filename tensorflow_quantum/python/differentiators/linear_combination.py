@@ -90,8 +90,6 @@ class LinearCombination(differentiator.Differentiator):
         if not len(weights) == len(perturbations):
             raise ValueError("weights and perturbations must have the same "
                              "length.")
-        if not len(list(set(perturbations))) == len(perturbations):
-            raise ValueError("All values in perturbations must be unique.")
         if len(perturbations) < 2:
             raise ValueError("Must specify at least two perturbations. "
                              "Providing only one perturbation is the same as "
@@ -101,6 +99,9 @@ class LinearCombination(differentiator.Differentiator):
         self.n_perturbations = tf.constant(len(perturbations))
         self.perturbations = tf.constant(perturbations, dtype=tf.float32)
 
+        # Uniqueness in particular ensures there at most one zero perturbation.
+        if not len(list(set(perturbations))) == len(perturbations):
+            raise ValueError("All values in perturbations must be unique.")
         mask = tf.not_equal(self.perturbations,
                             tf.zeros_like(self.perturbations))
         self.non_zero_weights = tf.boolean_mask(self.weights, mask)
@@ -109,8 +110,6 @@ class LinearCombination(differentiator.Differentiator):
         self.non_zero_perturbations = tf.boolean_mask(self.perturbations, mask)
         self.n_non_zero_perturbations = tf.gather(
             tf.shape(self.non_zero_perturbations), 0)
-        if self.n_perturbations - self.n_non_zero_perturbations > 1:
-            raise ValueError("There can only be one zero perturbation.")
 
     @tf.function
     def get_gradient_circuits(self, programs, symbol_names, symbol_values):
