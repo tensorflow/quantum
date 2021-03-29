@@ -413,7 +413,10 @@ def _get_noise_proto_pairs():
         (cirq.Circuit(
             cirq.asymmetric_depolarize(p_x=0.1, p_y=0.2, p_z=0.3)(q0)),
          _build_op_proto("ADP", ['p_x', 'p_y', 'p_z'], [0.1, 0.2, 0.3],
-                         ['0_0']))
+                         ['0_0'])),
+
+        # Reset.
+        (cirq.Circuit(cirq.reset(q0)), _build_op_proto("RST", [], [], ['0_0']))
     ]
     return pairs
 
