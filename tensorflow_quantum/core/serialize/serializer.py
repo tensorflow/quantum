@@ -253,7 +253,7 @@ def _bit_flip_channel_serializer():
 
 
 def _bit_flip_channel_deserializer():
-    """Make standard deserializer for depolarization channel."""
+    """Make standard deserializer for BitFlip channel."""
 
     args = [
         cirq.google.DeserializingArg(serialized_name="p",
