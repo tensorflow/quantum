@@ -1225,11 +1225,13 @@ TEST(QsimCircuitParserTest, CompoundCircuit) {
 
   NoisyQsimCircuit test_circuit;
 
-  ASSERT_EQ(NoisyQsimCircuitFromProgram(program_proto, {}, 2, &test_circuit),
-            tensorflow::Status::OK());
+  ASSERT_EQ(
+      NoisyQsimCircuitFromProgram(program_proto, {}, 2, true, &test_circuit),
+      tensorflow::Status::OK());
   AssertChannelEqual(test_circuit.channels[0], ref_chan);
   AssertOneQubitEqual(test_circuit.channels[1][0].ops[0], ref_gate);
-  ASSERT_EQ(test_circuit.channels.size(), 2);
+  ASSERT_EQ(test_circuit.channels.size(),
+            3);  // 2 gates + 1 layer of measurement.
   ASSERT_EQ(test_circuit.num_qubits, 2);
 }
 
@@ -1266,8 +1268,9 @@ TEST(QsimCircuitParserTest, AsymmetricDepolarizing) {
 
   NoisyQsimCircuit test_circuit;
 
-  ASSERT_EQ(NoisyQsimCircuitFromProgram(program_proto, {}, 1, &test_circuit),
-            tensorflow::Status::OK());
+  ASSERT_EQ(
+      NoisyQsimCircuitFromProgram(program_proto, {}, 1, false, &test_circuit),
+      tensorflow::Status::OK());
   AssertChannelEqual(test_circuit.channels[0], reference);
   ASSERT_EQ(test_circuit.channels.size(), 1);
   ASSERT_EQ(test_circuit.num_qubits, 1);
@@ -1301,8 +1304,9 @@ TEST(QsimCircuitParserTest, Depolarizing) {
 
   NoisyQsimCircuit test_circuit;
 
-  ASSERT_EQ(NoisyQsimCircuitFromProgram(program_proto, {}, 1, &test_circuit),
-            tensorflow::Status::OK());
+  ASSERT_EQ(
+      NoisyQsimCircuitFromProgram(program_proto, {}, 1, false, &test_circuit),
+      tensorflow::Status::OK());
   AssertChannelEqual(test_circuit.channels[0], reference);
   ASSERT_EQ(test_circuit.channels.size(), 1);
   ASSERT_EQ(test_circuit.num_qubits, 1);
@@ -1315,8 +1319,9 @@ TEST(QsimCircuitParserTest, NoisyEmpty) {
   Moment* moments_proto = circuit_proto->add_moments();
 
   NoisyQsimCircuit test_circuit;
-  ASSERT_EQ(NoisyQsimCircuitFromProgram(program_proto, {}, 0, &test_circuit),
-            tensorflow::Status::OK());
+  ASSERT_EQ(
+      NoisyQsimCircuitFromProgram(program_proto, {}, 0, false, &test_circuit),
+      tensorflow::Status::OK());
   ASSERT_EQ(test_circuit.channels.size(), 0);
   ASSERT_EQ(test_circuit.num_qubits, 0);
 }
@@ -1333,9 +1338,10 @@ TEST(QsimCircuitParserTest, NoisyBadProto) {
   gate_proto->set_id("ABCDEFG");
 
   NoisyQsimCircuit test_circuit;
-  ASSERT_EQ(NoisyQsimCircuitFromProgram(program_proto, {}, 1, &test_circuit),
-            tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
-                               "Could not parse channel id: ABCDEFG"));
+  ASSERT_EQ(
+      NoisyQsimCircuitFromProgram(program_proto, {}, 1, false, &test_circuit),
+      tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
+                         "Could not parse channel id: ABCDEFG"));
 }
 
 TEST(QsimCircuitParserTest, CircuitFromPauliTermPauli) {

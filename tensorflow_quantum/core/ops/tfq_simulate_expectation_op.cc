@@ -28,6 +28,7 @@ limitations under the License.
 #include "tensorflow/core/lib/core/error_codes.pb.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow/core/lib/core/threadpool.h"
+#include "tensorflow/core/platform/mutex.h"
 #include "tensorflow_quantum/core/ops/parse_context.h"
 #include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
 #include "tensorflow_quantum/core/src/util_qsim.h"
@@ -85,17 +86,21 @@ class TfqSimulateExpectationOp : public tensorflow::OpKernel {
     std::vector<std::vector<qsim::GateFused<QsimGate>>> fused_circuits(
         programs.size(), std::vector<qsim::GateFused<QsimGate>>({}));
 
+    Status parse_status = Status::OK();
+    auto p_lock = tensorflow::mutex();
     auto construct_f = [&](int start, int end) {
       for (int i = start; i < end; i++) {
-        OP_REQUIRES_OK(context, QsimCircuitFromProgram(
-                                    programs[i], maps[i], num_qubits[i],
-                                    &qsim_circuits[i], &fused_circuits[i]));
+        Status local =
+            QsimCircuitFromProgram(programs[i], maps[i], num_qubits[i],
+                                   &qsim_circuits[i], &fused_circuits[i]);
+        NESTED_FN_STATUS_SYNC(parse_status, local, p_lock);
       }
     };
 
     const int num_cycles = 1000;
     context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
         programs.size(), num_cycles, construct_f);
+    OP_REQUIRES_OK(context, parse_status);
 
     int max_num_qubits = 0;
     for (const int num : num_qubits) {
@@ -181,6 +186,8 @@ class TfqSimulateExpectationOp : public tensorflow::OpKernel {
 
     const int output_dim_op_size = output_tensor->dimension(1);
 
+    Status compute_status = Status::OK();
+    auto c_lock = tensorflow::mutex();
     auto DoWork = [&](int start, int end) {
       int old_batch_index = -2;
       int cur_batch_index = -1;
@@ -220,9 +227,11 @@ class TfqSimulateExpectationOp : public tensorflow::OpKernel {
         }
 
         float exp_v = 0.0;
-        OP_REQUIRES_OK(context, ComputeExpectationQsim(
-                                    pauli_sums[cur_batch_index][cur_op_index],
-                                    sim, ss, sv, scratch, &exp_v));
+        NESTED_FN_STATUS_SYNC(
+            compute_status,
+            ComputeExpectationQsim(pauli_sums[cur_batch_index][cur_op_index],
+                                   sim, ss, sv, scratch, &exp_v),
+            c_lock);
         (*output_tensor)(cur_batch_index, cur_op_index) = exp_v;
         old_batch_index = cur_batch_index;
       }
@@ -232,6 +241,7 @@ class TfqSimulateExpectationOp : public tensorflow::OpKernel {
         200 * (int64_t(1) << static_cast<int64_t>(max_num_qubits));
     context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
         fused_circuits.size() * output_dim_op_size, num_cycles, DoWork);
+    OP_REQUIRES_OK(context, compute_status);
   }
 };
 

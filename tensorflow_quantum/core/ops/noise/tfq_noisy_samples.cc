@@ -17,9 +17,15 @@ limitations under the License.
 
 #include <string>
 
+#include "../qsim/lib/channel.h"
+#include "../qsim/lib/channels_cirq.h"
 #include "../qsim/lib/circuit.h"
+#include "../qsim/lib/circuit_noisy.h"
+#include "../qsim/lib/fuser_mqubit.h"
 #include "../qsim/lib/gate_appl.h"
 #include "../qsim/lib/gates_cirq.h"
+#include "../qsim/lib/io.h"
+#include "../qsim/lib/qtrajectory.h"
 #include "../qsim/lib/seqfor.h"
 #include "../qsim/lib/simmux.h"
 #include "cirq/google/api/v2/program.pb.h"
@@ -29,7 +35,6 @@ limitations under the License.
 #include "tensorflow/core/lib/core/error_codes.pb.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow/core/lib/core/threadpool.h"
-#include "tensorflow/core/platform/mutex.h"
 #include "tensorflow_quantum/core/ops/parse_context.h"
 #include "tensorflow_quantum/core/src/circuit_parser_qsim.h"
 #include "tensorflow_quantum/core/src/util_qsim.h"
@@ -41,10 +46,11 @@ using ::tensorflow::Status;
 
 typedef qsim::Cirq::GateCirq<float> QsimGate;
 typedef qsim::Circuit<QsimGate> QsimCircuit;
+typedef qsim::NoisyCircuit<QsimGate> NoisyQsimCircuit;
 
-class TfqSimulateSamplesOp : public tensorflow::OpKernel {
+class TfqNoisySamplesOp : public tensorflow::OpKernel {
  public:
-  explicit TfqSimulateSamplesOp(tensorflow::OpKernelConstruction* context)
+  explicit TfqNoisySamplesOp(tensorflow::OpKernelConstruction* context)
       : OpKernel(context) {}
 
   void Compute(tensorflow::OpKernelContext* context) override {
@@ -70,18 +76,16 @@ class TfqSimulateSamplesOp : public tensorflow::OpKernel {
     OP_REQUIRES_OK(context, GetIndividualSample(context, &num_samples));
 
     // Construct qsim circuits.
-    std::vector<QsimCircuit> qsim_circuits(programs.size(), QsimCircuit());
-    std::vector<std::vector<qsim::GateFused<QsimGate>>> fused_circuits(
-        programs.size(), std::vector<qsim::GateFused<QsimGate>>({}));
+    std::vector<NoisyQsimCircuit> qsim_circuits(programs.size(),
+                                                NoisyQsimCircuit());
 
     Status parse_status = Status::OK();
     auto p_lock = tensorflow::mutex();
     auto construct_f = [&](int start, int end) {
       for (int i = start; i < end; i++) {
-        Status local =
-            QsimCircuitFromProgram(programs[i], maps[i], num_qubits[i],
-                                   &qsim_circuits[i], &fused_circuits[i]);
-        NESTED_FN_STATUS_SYNC(parse_status, local, p_lock);
+        auto r = NoisyQsimCircuitFromProgram(
+            programs[i], maps[i], num_qubits[i], true, &qsim_circuits[i]);
+        NESTED_FN_STATUS_SYNC(parse_status, r, p_lock);
       }
     };
 
@@ -90,8 +94,6 @@ class TfqSimulateSamplesOp : public tensorflow::OpKernel {
         programs.size(), num_cycles, construct_f);
     OP_REQUIRES_OK(context, parse_status);
 
-    // Find largest circuit for tensor size padding and allocate
-    // the output tensor.
     int max_num_qubits = 0;
     for (const int num : num_qubits) {
       max_num_qubits = std::max(max_num_qubits, num);
@@ -107,7 +109,7 @@ class TfqSimulateSamplesOp : public tensorflow::OpKernel {
     OP_REQUIRES_OK(context, context->allocate_output(0, output_shape, &output));
     auto output_tensor = output->tensor<int8_t, 3>();
 
-    if (num_samples == 0) {
+    if (num_samples == 0 || output_dim_size == 0 || max_num_qubits == 0) {
       return;  // bug in qsim dependency we can't control.
     }
 
@@ -116,56 +118,72 @@ class TfqSimulateSamplesOp : public tensorflow::OpKernel {
     // e2s2 = 2 CPU, 8GB -> Can safely do 25 since Memory = 4GB
     // e2s4 = 4 CPU, 16GB -> Can safely do 25 since Memory = 8GB
     // ...
-    if (max_num_qubits >= 26 || programs.size() == 1) {
-      ComputeLarge(num_qubits, max_num_qubits, num_samples, fused_circuits,
+    if (max_num_qubits >= 26) {
+      ComputeLarge(num_qubits, max_num_qubits, num_samples, qsim_circuits,
                    context, &output_tensor);
     } else {
-      ComputeSmall(num_qubits, max_num_qubits, num_samples, fused_circuits,
+      ComputeSmall(num_qubits, max_num_qubits, num_samples, qsim_circuits,
                    context, &output_tensor);
     }
   }
 
  private:
-  void ComputeLarge(
-      const std::vector<int>& num_qubits, const int max_num_qubits,
-      const int num_samples,
-      const std::vector<std::vector<qsim::GateFused<QsimGate>>>& fused_circuits,
-      tensorflow::OpKernelContext* context,
-      tensorflow::TTypes<int8_t, 3>::Tensor* output_tensor) {
+  void ComputeLarge(const std::vector<int>& num_qubits,
+                    const int max_num_qubits, const int num_samples,
+                    const std::vector<NoisyQsimCircuit>& ncircuits,
+                    tensorflow::OpKernelContext* context,
+                    tensorflow::TTypes<int8_t, 3>::Tensor* output_tensor) {
     // Instantiate qsim objects.
     const auto tfq_for = tfq::QsimFor(context);
     using Simulator = qsim::Simulator<const tfq::QsimFor&>;
     using StateSpace = Simulator::StateSpace;
+    using QTSimulator =
+        qsim::QuantumTrajectorySimulator<qsim::IO, QsimGate,
+                                         qsim::MultiQubitGateFuser, Simulator>;
 
     // Begin simulation.
     int largest_nq = 1;
     Simulator sim = Simulator(tfq_for);
     StateSpace ss = StateSpace(tfq_for);
     auto sv = ss.Create(largest_nq);
+    auto scratch = ss.Create(largest_nq);
 
     // Simulate programs one by one. Parallelizing over state vectors
     // we no longer parallelize over circuits. Each time we encounter a
     // a larger circuit we will grow the Statevector as nescessary.
-    for (int i = 0; i < fused_circuits.size(); i++) {
+    for (int i = 0; i < ncircuits.size(); i++) {
       int nq = num_qubits[i];
 
       if (nq > largest_nq) {
         // need to switch to larger statespace.
         largest_nq = nq;
         sv = ss.Create(largest_nq);
-      }
-      ss.SetStateZero(sv);
-      for (int j = 0; j < fused_circuits[i].size(); j++) {
-        qsim::ApplyFusedGate(sim, fused_circuits[i][j], sv);
+        scratch = ss.Create(largest_nq);
       }
 
-      auto samples = ss.Sample(sv, num_samples, rand() % 123456);
+      QTSimulator::Parameter param;
+      param.collect_kop_stat = false;
+      param.collect_mea_stat = true;
+      param.normalize_before_mea_gates = true;
+
+      // Track op-wise stats.
+      std::vector<uint64_t> gathered_samples;
+
       for (int j = 0; j < num_samples; j++) {
+        ss.SetStateZero(sv);
+        // time since epoch seeds random generator.
+        unsigned long r_seed =
+            std::chrono::duration_cast<std::chrono::milliseconds>(
+                std::chrono::system_clock::now().time_since_epoch())
+                .count();
+
+        QTSimulator::RunOnce(param, ncircuits[i], r_seed, ss, sim, scratch, sv,
+                             gathered_samples);
         uint64_t q_ind = 0;
         uint64_t mask = 1;
         bool val = 0;
         while (q_ind < nq) {
-          val = samples[j] & mask;
+          val = gathered_samples[0] & mask;
           (*output_tensor)(
               i, j, static_cast<ptrdiff_t>(max_num_qubits - q_ind - 1)) = val;
           q_ind++;
@@ -180,41 +198,85 @@ class TfqSimulateSamplesOp : public tensorflow::OpKernel {
     }
   }
 
-  void ComputeSmall(
-      const std::vector<int>& num_qubits, const int max_num_qubits,
-      const int num_samples,
-      const std::vector<std::vector<qsim::GateFused<QsimGate>>>& fused_circuits,
-      tensorflow::OpKernelContext* context,
-      tensorflow::TTypes<int8_t, 3>::Tensor* output_tensor) {
-    const auto tfq_for = qsim::SequentialFor(1);
+  void ComputeSmall(const std::vector<int>& num_qubits,
+                    const int max_num_qubits, const int num_samples,
+                    const std::vector<NoisyQsimCircuit>& ncircuits,
+                    tensorflow::OpKernelContext* context,
+                    tensorflow::TTypes<int8_t, 3>::Tensor* output_tensor) {
     using Simulator = qsim::Simulator<const qsim::SequentialFor&>;
     using StateSpace = Simulator::StateSpace;
+    using QTSimulator =
+        qsim::QuantumTrajectorySimulator<qsim::IO, QsimGate,
+                                         qsim::MultiQubitGateFuser, Simulator>;
+
+    const int output_dim_batch_size = output_tensor->dimension(0);
+    const int num_threads = context->device()
+                                ->tensorflow_cpu_worker_threads()
+                                ->workers->NumThreads();
+
+    // [num_threads, batch_size].
+    std::vector<std::vector<int>> rep_offsets(
+        num_threads, std::vector<int>(output_dim_batch_size, 0));
+    BalanceTrajectory(num_samples, num_threads, &rep_offsets);
+
+    // [num_threads, batch_size] stores the number of
+    // samples written by thread range [0, i].
+    std::vector<std::vector<long>> offset_prefix_sum(
+        num_threads, std::vector<long>(output_dim_batch_size, 0));
+
+    for (int i = 0; i < output_dim_batch_size; i++) {
+      int p_reps = (num_samples + num_threads - 1) / num_threads;
+      offset_prefix_sum[0][i] = rep_offsets[0][i] + p_reps;
+      for (int j = 1; j < num_threads; j++) {
+        offset_prefix_sum[j][i] += offset_prefix_sum[j - 1][i];
+        offset_prefix_sum[j][i] += rep_offsets[j][i] + p_reps;
+      }
+    }
 
     auto DoWork = [&](int start, int end) {
+      // Begin simulation.
+      const auto tfq_for = qsim::SequentialFor(1);
       int largest_nq = 1;
       Simulator sim = Simulator(tfq_for);
       StateSpace ss = StateSpace(tfq_for);
       auto sv = ss.Create(largest_nq);
-      for (int i = start; i < end; i++) {
+      auto scratch = ss.Create(largest_nq);
+
+      for (int i = 0; i < ncircuits.size(); i++) {
         int nq = num_qubits[i];
+        int j = start > 0 ? offset_prefix_sum[start - 1][i] : 0;
+        int needed_samples = offset_prefix_sum[start][i] - j;
 
         if (nq > largest_nq) {
-          // need to switch to larger statespace.
           largest_nq = nq;
           sv = ss.Create(largest_nq);
+          scratch = ss.Create(largest_nq);
         }
-        ss.SetStateZero(sv);
-        for (int j = 0; j < fused_circuits[i].size(); j++) {
-          qsim::ApplyFusedGate(sim, fused_circuits[i][j], sv);
-        }
+        QTSimulator::Parameter param;
+        param.collect_kop_stat = false;
+        param.collect_mea_stat = true;
+        param.normalize_before_mea_gates = true;
 
-        auto samples = ss.Sample(sv, num_samples, rand() % 123456);
-        for (int j = 0; j < num_samples; j++) {
+        // Track op-wise stats.
+        std::vector<uint64_t> gathered_samples;
+        int run_samples = 0;
+
+        while (1) {
+          ss.SetStateZero(sv);
+          // time since epoch seeds random generator.
+          unsigned long r_seed =
+              std::chrono::duration_cast<std::chrono::milliseconds>(
+                  std::chrono::system_clock::now().time_since_epoch())
+                  .count();
+
+          QTSimulator::RunOnce(param, ncircuits[i], r_seed, ss, sim, scratch,
+                               sv, gathered_samples);
+
           uint64_t q_ind = 0;
           uint64_t mask = 1;
           bool val = 0;
           while (q_ind < nq) {
-            val = samples[j] & mask;
+            val = gathered_samples[0] & mask;
             (*output_tensor)(
                 i, j, static_cast<ptrdiff_t>(max_num_qubits - q_ind - 1)) = val;
             q_ind++;
@@ -225,22 +287,31 @@ class TfqSimulateSamplesOp : public tensorflow::OpKernel {
                 i, j, static_cast<ptrdiff_t>(max_num_qubits - q_ind - 1)) = -2;
             q_ind++;
           }
+
+          j++;
+          run_samples++;
+
+          // Check if we have gathered enough samples.
+          if (run_samples >= needed_samples) {
+            break;
+          }
         }
       }
     };
 
-    const int64_t num_cycles =
-        200 * (int64_t(1) << static_cast<int64_t>(max_num_qubits));
+    // block_size = 1.
+    tensorflow::thread::ThreadPool::SchedulingParams scheduling_params(
+        tensorflow::thread::ThreadPool::SchedulingStrategy::kFixedBlockSize,
+        absl::nullopt, 1);
     context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
-        fused_circuits.size(), num_cycles, DoWork);
+        num_threads, scheduling_params, DoWork);
   }
 };
 
-REGISTER_KERNEL_BUILDER(
-    Name("TfqSimulateSamples").Device(tensorflow::DEVICE_CPU),
-    TfqSimulateSamplesOp);
+REGISTER_KERNEL_BUILDER(Name("TfqNoisySamples").Device(tensorflow::DEVICE_CPU),
+                        TfqNoisySamplesOp);
 
-REGISTER_OP("TfqSimulateSamples")
+REGISTER_OP("TfqNoisySamples")
     .Input("programs: string")
     .Input("symbol_names: string")
     .Input("symbol_values: float")

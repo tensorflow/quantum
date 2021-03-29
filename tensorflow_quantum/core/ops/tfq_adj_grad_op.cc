@@ -28,6 +28,7 @@ limitations under the License.
 #include "tensorflow/core/lib/core/error_codes.pb.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow/core/lib/core/threadpool.h"
+#include "tensorflow/core/platform/mutex.h"
 #include "tensorflow_quantum/core/ops/parse_context.h"
 #include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
 #include "tensorflow_quantum/core/src/adj_util.h"
@@ -98,12 +99,14 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
     std::vector<std::vector<GradientOfGate>> gradient_gates(
         programs.size(), std::vector<GradientOfGate>({}));
 
+    Status parse_status = Status::OK();
+    auto p_lock = tensorflow::mutex();
     auto construct_f = [&](int start, int end) {
       for (int i = start; i < end; i++) {
-        OP_REQUIRES_OK(
-            context, QsimCircuitFromProgram(programs[i], maps[i], num_qubits[i],
-                                            &qsim_circuits[i], &full_fuse[i],
-                                            &gate_meta[i]));
+        Status local = QsimCircuitFromProgram(programs[i], maps[i],
+                                              num_qubits[i], &qsim_circuits[i],
+                                              &full_fuse[i], &gate_meta[i]);
+        NESTED_FN_STATUS_SYNC(parse_status, local, p_lock);
         CreateGradientCircuit(qsim_circuits[i], gate_meta[i],
                               &partial_fused_circuits[i], &gradient_gates[i]);
       }
@@ -112,6 +115,7 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
     const int num_cycles = 1000;
     context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
         programs.size(), num_cycles, construct_f);
+    OP_REQUIRES_OK(context, parse_status);
 
     // Get downstream gradients.
     std::vector<std::vector<float>> downstream_grads;
