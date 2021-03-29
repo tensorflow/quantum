@@ -282,7 +282,7 @@ def _amplitude_damp_channel_deserializer():
         gate_constructor=cirq.AmplitudeDampingChannel,
         args=args)
 
-                                        
+
 def _reset_channel_deserializer():
     """Make standard deserializer for reset channel."""
 
