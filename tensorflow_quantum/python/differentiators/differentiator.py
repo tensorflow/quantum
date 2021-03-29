@@ -244,7 +244,7 @@ class Differentiator(metaclass=abc.ABCMeta):
         >>> batch_expectations = tf.reshape(
         ...     batch_expectations, tf.shape(batch_pauli_sums))
         >>> grad_manual = tf.reduce_sum(
-        ...     tf.einsum('ikm,jmp->ikp', batch_mapper, batch_expectations), -1)
+        ...     tf.einsum('ikm,imp->ikp', batch_mapper, batch_expectations), -1)
 
 
         To perform the same gradient calculation automatically:
