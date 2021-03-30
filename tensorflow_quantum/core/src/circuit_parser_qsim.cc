@@ -690,7 +690,6 @@ inline Status AmplitudeDampingChannel(const Operation& op,
   if (!u.ok()) {
     return u;
   }
-
   auto chan = qsim::Cirq::AmplitudeDampingChannel<float>::Create(
       time, num_qubits - q - 1, gamma);
   ncircuit->channels.push_back(chan);

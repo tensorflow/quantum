@@ -287,7 +287,6 @@ def _amplitude_damp_channel_serializer():
                                    serialized_type=str,
                                    op_getter=lambda x: '')
     ]
-
     return cirq.google.GateOpSerializer(gate_type=cirq.AmplitudeDampingChannel,
                                         serialized_gate_id="AD",
                                         args=args,
@@ -669,11 +668,10 @@ SERIALIZERS = [
     _asymmetric_depolarize_serializer(),
     _depolarize_channel_serializer(),
     _fsim_gate_serializer(),
-    _identity_gate_serializer(),
     _gad_channel_serializer(),
     _identity_gate_serializer(),
     _phase_damp_channel_serializer(),
-    _reset_channel_serializer(),
+    _reset_channel_serializer()
 ]
 
 DESERIALIZERS = [

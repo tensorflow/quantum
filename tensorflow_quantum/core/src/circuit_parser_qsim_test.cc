@@ -1363,7 +1363,6 @@ TEST(QsimCircuitParserTest, GeneralizedAmplitudeDamping) {
   // Add channel.
   Operation* operations_proto = moments_proto->add_operations();
   Gate* gate_proto = operations_proto->mutable_gate();
-
   gate_proto->set_id("GAD");
 
   // Set the args.
