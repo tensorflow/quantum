@@ -415,6 +415,10 @@ def _get_noise_proto_pairs():
          _build_op_proto("ADP", ['p_x', 'p_y', 'p_z'], [0.1, 0.2, 0.3],
                          ['0_0'])),
 
+        # Generalized Amplitude damp.
+        (cirq.Circuit(cirq.generalized_amplitude_damp(p=0.1, gamma=0.2)(q0)),
+         _build_op_proto("GAD", ['p', 'gamma'], [0.1, 0.2], ['0_0'])),
+
         # Amplitude damp.
         (cirq.Circuit(cirq.amplitude_damp(gamma=0.1)(q0)),
          _build_op_proto("AD", ['gamma'], [0.1], ['0_0'])),

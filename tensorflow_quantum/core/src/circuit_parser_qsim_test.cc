@@ -1349,6 +1349,45 @@ TEST(QsimCircuitParserTest, Depolarizing) {
   ASSERT_EQ(test_circuit.num_qubits, 1);
 }
 
+TEST(QsimCircuitParserTest, GeneralizedAmplitudeDamping) {
+  float p = 0.123;
+  float gamma = 0.456;
+  auto reference =
+      qsim::Cirq::GeneralizedAmplitudeDampingChannel<float>::Create(0, 0, p,
+                                                                    gamma);
+  Program program_proto;
+  Circuit* circuit_proto = program_proto.mutable_circuit();
+  circuit_proto->set_scheduling_strategy(circuit_proto->MOMENT_BY_MOMENT);
+  Moment* moments_proto = circuit_proto->add_moments();
+
+  // Add channel.
+  Operation* operations_proto = moments_proto->add_operations();
+  Gate* gate_proto = operations_proto->mutable_gate();
+  gate_proto->set_id("GAD");
+
+  // Set the args.
+  google::protobuf::Map<std::string, Arg>* args_proto =
+      operations_proto->mutable_args();
+  (*args_proto)["p"] = MakeArg(p);
+  (*args_proto)["gamma"] = MakeArg(gamma);
+
+  // Set the control args.
+  (*args_proto)["control_qubits"] = MakeControlArg("");
+  (*args_proto)["control_values"] = MakeControlArg("");
+
+  // Set the qubits.
+  Qubit* qubits_proto = operations_proto->add_qubits();
+  qubits_proto->set_id("0");
+
+  NoisyQsimCircuit test_circuit;
+
+  ASSERT_EQ(
+      NoisyQsimCircuitFromProgram(program_proto, {}, 1, false, &test_circuit),
+      tensorflow::Status::OK());
+  AssertChannelEqual(test_circuit.channels[0], reference);
+  ASSERT_EQ(test_circuit.channels.size(), 1);
+  ASSERT_EQ(test_circuit.num_qubits, 1);
+}
 TEST(QsimCircuitParserTest, Reset) {
   auto reference = qsim::Cirq::ResetChannel<float>::Create(0, 0);
   Program program_proto;
