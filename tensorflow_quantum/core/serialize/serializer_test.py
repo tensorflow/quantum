@@ -424,7 +424,11 @@ def _get_noise_proto_pairs():
          _build_op_proto("AD", ['gamma'], [0.1], ['0_0'])),
 
         # Reset.
-        (cirq.Circuit(cirq.reset(q0)), _build_op_proto("RST", [], [], ['0_0']))
+        (cirq.Circuit(cirq.reset(q0)), _build_op_proto("RST", [], [], ['0_0'])),
+
+        # Phase damp.
+        (cirq.Circuit(cirq.phase_damp(gamma=0.1)(q0)),
+         _build_op_proto("PD", ['gamma'], [0.1], ['0_0']))
     ]
     return pairs
 
