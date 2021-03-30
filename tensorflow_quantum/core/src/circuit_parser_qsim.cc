@@ -653,7 +653,6 @@ inline Status GADChannel(const Operation& op, const unsigned int num_qubits,
   if (!u.ok()) {
     return u;
   }
-
   u = ParseProtoArg(op, "gamma", {}, &gamma);
   if (!u.ok()) {
     return u;
