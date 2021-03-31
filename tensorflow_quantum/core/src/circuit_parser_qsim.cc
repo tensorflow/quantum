@@ -717,6 +717,27 @@ inline Status PhaseDampingChannel(const Operation& op,
   return Status::OK();
 }
 
+inline Status PhaseFlipChannel(const Operation& op,
+                               const unsigned int num_qubits,
+                               const unsigned int time,
+                               NoisyQsimCircuit* ncircuit) {
+  int q;
+  bool unused;
+  float p;
+  Status u;
+  unused = absl::SimpleAtoi(op.qubits(0).id(), &q);
+
+  u = ParseProtoArg(op, "p", {}, &p);
+  if (!u.ok()) {
+    return u;
+  }
+
+  auto chan =
+      qsim::Cirq::PhaseFlipChannel<float>::Create(time, num_qubits - q - 1, p);
+  ncircuit->channels.push_back(chan);
+  return Status::OK();
+}
+
 tensorflow::Status ParseAppendChannel(const Operation& op,
                                       const unsigned int num_qubits,
                                       const unsigned int time,
@@ -729,7 +750,7 @@ tensorflow::Status ParseAppendChannel(const Operation& op,
           {"DP", &DepolarizingChannel}, {"ADP", &AsymmetricDepolarizingChannel},
           {"GAD", &GADChannel},         {"AD", &AmplitudeDampingChannel},
           {"RST", &ResetChannel},       {"PD", &PhaseDampingChannel},
-      };
+          {"PF", &PhaseFlipChannel}};
 
   auto build_f = chan_func_map.find(op.gate().id());
   if (build_f == chan_func_map.end()) {

@@ -34,6 +34,7 @@ _SUPPORTED_CHANNELS = [
     cirq.GeneralizedAmplitudeDampingChannel,
     cirq.ResetChannel,
     cirq.PhaseDampingChannel,
+    cirq.PhaseFlipChannel,
 ]
 
 
@@ -82,6 +83,7 @@ def get_supported_channels():
     channel_mapping[cirq.AmplitudeDampingChannel(0.01)] = 1
     channel_mapping[cirq.ResetChannel()] = 1
     channel_mapping[cirq.PhaseDampingChannel(0.01)] = 1
+    channel_mapping[cirq.PhaseFlipChannel(0.01)] = 1
 
     return channel_mapping
 
@@ -527,6 +529,10 @@ def _channel_approx_eq(op_true, op_deser, atol=1e-5):
     if isinstance(op_true, cirq.PhaseDampingChannel):
         if isinstance(op_deser, cirq.PhaseDampingChannel):
             return abs(op_true.gamma - op_deser.gamma) < atol
+
+    if isinstance(op_true, cirq.PhaseFlipChannel):
+        if isinstance(op_deser, cirq.PhaseFlipChannel):
+            return abs(op_true.p - op_deser.p) < atol
 
     return False
 
