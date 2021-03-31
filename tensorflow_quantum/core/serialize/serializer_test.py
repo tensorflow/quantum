@@ -432,7 +432,11 @@ def _get_noise_proto_pairs():
 
         # Phase flip.
         (cirq.Circuit(cirq.phase_flip(p=0.1)(q0)),
-         _build_op_proto("PF", ['p'], [0.1], ['0_0']))
+         _build_op_proto("PF", ['p'], [0.1], ['0_0'])),
+
+        # Bit flip.
+        (cirq.Circuit(cirq.bit_flip(p=0.1)(q0)),
+         _build_op_proto("BF", ['p'], [0.1], ['0_0']))
     ]
     return pairs
 

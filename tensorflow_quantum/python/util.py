@@ -35,6 +35,7 @@ _SUPPORTED_CHANNELS = [
     cirq.ResetChannel,
     cirq.PhaseDampingChannel,
     cirq.PhaseFlipChannel,
+    cirq.BitFlipChannel,
 ]
 
 
@@ -84,6 +85,7 @@ def get_supported_channels():
     channel_mapping[cirq.ResetChannel()] = 1
     channel_mapping[cirq.PhaseDampingChannel(0.01)] = 1
     channel_mapping[cirq.PhaseFlipChannel(0.01)] = 1
+    channel_mapping[cirq.BitFlipChannel(0.01)] = 1
 
     return channel_mapping
 
@@ -532,6 +534,10 @@ def _channel_approx_eq(op_true, op_deser, atol=1e-5):
 
     if isinstance(op_true, cirq.PhaseFlipChannel):
         if isinstance(op_deser, cirq.PhaseFlipChannel):
+            return abs(op_true.p - op_deser.p) < atol
+
+    if isinstance(op_true, cirq.BitFlipChannel):
+        if isinstance(op_deser, cirq.BitFlipChannel):
             return abs(op_true.p - op_deser.p) < atol
 
     return False
