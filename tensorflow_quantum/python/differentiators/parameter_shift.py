@@ -56,7 +56,6 @@ class ParameterShift(differentiator.Differentiator):
 
     """
 
-    @tf.function
     def get_gradient_circuits(self, programs, symbol_names, symbol_values):
         """See base class description."""
         # these get used a lot
@@ -79,7 +78,7 @@ class ParameterShift(differentiator.Differentiator):
         # [n_programs, n_symbols, n_param_gates, n_shifts],
         # then reshape to the correct batch size
         batch_programs = tf.reshape(
-            tf.transpose(new_programs, [1, 0, 3, 4]), [n_programs, m_tile])
+            tf.transpose(new_programs, [1, 0, 2, 3]), [n_programs, m_tile])
 
         weights = tf.transpose(weights, [0, 2, 3, 1])
         shifts = tf.transpose(shifts, [0, 2, 3, 1])
