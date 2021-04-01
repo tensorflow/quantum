@@ -59,9 +59,51 @@ class ParameterShift(differentiator.Differentiator):
     @tf.function
     def get_gradient_circuits(self, programs, symbol_names, symbol_values):
         """See base class description."""
-        raise NotImplementedError(
-            "Gradient circuits are not currently available for "
-            "ParameterShift.")
+        # these get used a lot
+        n_symbols = tf.gather(tf.shape(symbol_names), 0)
+        n_programs = tf.gather(tf.shape(programs), 0)
+
+        # Assume cirq.decompose() generates gates with at most two distinct
+        # eigenvalues, which results in two parameter shifts.
+        n_shifts = 2
+
+        # These new_programs are parameter shifted.
+        # shapes: [n_symbols, n_programs, n_param_gates, n_shifts]
+        (new_programs, weights, shifts,
+         n_param_gates) = parameter_shift_util.parse_programs(
+             programs, symbol_names, symbol_values, n_symbols)
+
+        m_tile = n_shifts * n_param_gates * n_symbols
+
+        # Transpose to correct shape,
+        # [n_programs, n_symbols, n_param_gates, n_shifts],
+        # then reshape to the correct batch size
+        batch_programs = tf.reshape(
+            tf.transpose(new_programs, [1, 0, 3, 4]), [n_programs, m_tile])
+
+        weights = tf.transpose(weights, [0, 2, 3, 1])
+        shifts = tf.transpose(shifts, [0, 2, 3, 1])
+
+
+        # # tile up and then reshape to order ops correctly
+        # flat_perturbations = tf.concat([
+        #     tf.reshape(
+        #         tf.tile(tf.expand_dims(symbol_values, 0),
+        #                 tf.stack([n_tile, 1, 1])), [total_programs, n_symbols]),
+        #     tf.expand_dims(flat_shifts, axis=1)
+        # ],
+        #                                axis=1)
+
+        # Append impurity symbol into symbol name
+        new_symbol_names = tf.concat([
+            symbol_names,
+            tf.expand_dims(tf.constant(
+                parameter_shift_util._PARAMETER_IMPURITY_NAME),
+                           axis=0)
+        ],
+                                     axis=0)
+
+        return (batch_programs, new_symbol_names, None, None)
 
     @differentiator.catch_empty_inputs
     @tf.function
