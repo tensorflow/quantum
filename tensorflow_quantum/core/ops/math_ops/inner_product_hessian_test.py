@@ -47,7 +47,7 @@ _TWO_EIGEN_GATES = [
     cirq.FSimGate,
 ]
 
-_ATOL_FOR_COMPLEX_GATE = 1e-1
+_ATOL_FOR_COMPLEX_GATE = 1e-2
 _COMPLEX_GATES = [
     cirq.PhasedXPowGate,
 ]
@@ -72,11 +72,8 @@ def get_gate(gate, symbol_names, qubits):
 
 def get_shifted_resolved_circuit(circuit, name_j, name_k, dx_j, dx_k, resolver):
     new_resolver = copy.deepcopy(resolver)
-    if name_j == name_k:
-        new_resolver.param_dict[name_j] += (dx_j + dx_k)
-    else:
-        new_resolver.param_dict[name_j] += dx_j
-        new_resolver.param_dict[name_k] += dx_k
+    new_resolver.param_dict[name_j] += dx_j
+    new_resolver.param_dict[name_k] += dx_k
     return cirq.resolve_parameters(circuit, new_resolver)
 
 
@@ -91,8 +88,7 @@ def get_finite_difference_hessian(circuit, name_j, name_k, resolver):
     final_circuit_pm = get_shifted_resolved_circuit(
         circuit, name_j, name_k, dx, -dx, resolver)
     final_circuit_mm = get_shifted_resolved_circuit(
-        circuit, name_j, name_k, -dx, -dx,
-        resolver)
+        circuit, name_j, name_k, -dx, -dx, resolver)
     final_wf_pp = inv_square_two_dx * cirq.final_state_vector(final_circuit_pp)
     final_wf_mp = inv_square_two_dx * cirq.final_state_vector(final_circuit_mp)
     final_wf_pm = inv_square_two_dx * cirq.final_state_vector(final_circuit_pm)
@@ -312,21 +308,21 @@ class InnerProductAdjHessianTest(tf.test.TestCase, parameterized.TestCase):
             'batch_size': 1,
             'inner_dim_size': 5
         },
-        # {
-        #     'n_qubits': 5,
-        #     'batch_size': 10,
-        #     'inner_dim_size': 1
-        # },
-        # {
-        #     'n_qubits': 10,
-        #     'batch_size': 10,
-        #     'inner_dim_size': 2
-        # },
-        # {
-        #     'n_qubits': 5,
-        #     'batch_size': 10,
-        #     'inner_dim_size': 5
-        # },
+        {
+            'n_qubits': 5,
+            'batch_size': 10,
+            'inner_dim_size': 1
+        },
+        {
+            'n_qubits': 10,
+            'batch_size': 10,
+            'inner_dim_size': 2
+        },
+        {
+            'n_qubits': 5,
+            'batch_size': 10,
+            'inner_dim_size': 5
+        },
     ])
     def correctness_with_symbols(self, n_qubits, batch_size,
                                       inner_dim_size):
@@ -336,7 +332,7 @@ class InnerProductAdjHessianTest(tf.test.TestCase, parameterized.TestCase):
         qubits = cirq.GridQubit.rect(1, n_qubits)
         circuit_batch, resolver_batch = \
           util.random_symbol_circuit_resolver_batch(
-              qubits, symbol_names, batch_size, n_moments=2)
+              qubits, symbol_names, batch_size)
         print(circuit_batch)
 
         other_batch = [
@@ -494,33 +490,15 @@ class InnerProductHessianOnGates(tf.test.TestCase, parameterized.TestCase):
 
     @parameterized.parameters([
         {
-            'gate': [cirq.XPowGate],
-            'symbol_names': ['alpha','beta','gamma']# names
-        }]) # for gate in _ONE_EIGEN_GATES + _TWO_EIGEN_GATES for names in _SYMBOL_NAMES])
+            'gate': gate,
+            'symbol_names': names
+        } for gate in _ONE_EIGEN_GATES + _TWO_EIGEN_GATES
+        for names in _SYMBOL_NAMES])
     def test_correctness_one_qubit_gate_with_symbols(self, gate, symbol_names):
         """Tests that inner_product works with symbols."""
         n_params = len(symbol_names)
-        qubits = cirq.GridQubit.rect(1, 5) # 2 if gate in _TWO_EIGEN_GATES else 1)
-        # circuit_batch = [cirq.Circuit(get_gate(gate, symbol_names, qubits))]
-        circuit_batch = [cirq.Circuit([
-            cirq.Moment(
-                (cirq.H**sympy.Mul(sympy.Float('0.96078327350981163', precision=53), sympy.Symbol('gamma'))).on(cirq.GridQubit(0, 0)),
-                (cirq.Y**sympy.Mul(sympy.Float('0.73193316007366105', precision=53), sympy.Symbol('alpha'))).on(cirq.GridQubit(0, 3)),
-            ),
-            cirq.Moment(
-                cirq.Y(cirq.GridQubit(0, 1)),
-                cirq.FSimGate(theta=0.123, phi=0.456).on(cirq.GridQubit(0, 4), cirq.GridQubit(0, 3)),
-                cirq.PhasedXPowGate(phase_exponent=0.123).on(cirq.GridQubit(0, 0)),
-            ),
-            cirq.Moment(
-                cirq.Y(cirq.GridQubit(0, 4)),
-                cirq.FSimGate(theta=0.123, phi=0.456).on(cirq.GridQubit(0, 2), cirq.GridQubit(0, 3)),
-            ),
-            cirq.Moment(
-                (cirq.H**sympy.Symbol('beta')).on(cirq.GridQubit(0, 0)),
-            ),
-        ])]
-
+        qubits = cirq.GridQubit.rect(1, 2 if gate in _TWO_EIGEN_GATES else 1)
+        circuit_batch = [cirq.Circuit(get_gate(gate, symbol_names, qubits))]
         resolver_batch = [cirq.ParamResolver({name: 0.123 for name in symbol_names})]
 
         symbol_values_array = np.array(
@@ -560,15 +538,12 @@ class InnerProductHessianOnGates(tf.test.TestCase, parameterized.TestCase):
                 else:
                     weighted_internal_wf += internal_wf
             for j, name_j in enumerate(symbol_names):
-                out_arr[i][j][j] = inner_product_op._inner_product_grad(
-                    programs, symbol_names_tensor, symbol_values, other_programs,
-                    other_programs_coeffs)[i][j]
-                # for k, name_k in enumerate(symbol_names):
-                #     final_wf_grad = get_finite_difference_hessian(
-                #         circuit_batch[i], name_j, name_k, resolver)
-                #     out_arr[i][j][k] += (
-                #         programs_coeffs[i] *
-                #         np.vdot(final_wf_grad, weighted_internal_wf))
+                for k, name_k in enumerate(symbol_names):
+                    final_wf_grad = get_finite_difference_hessian(
+                        circuit_batch[i], name_j, name_k, resolver)
+                    out_arr[i][j][k] += (
+                        programs_coeffs[i] *
+                        np.vdot(final_wf_grad, weighted_internal_wf))
 
         # Elapsed time should be less than 5% of cirq version.
         # (at least 20x speedup)

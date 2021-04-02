@@ -312,21 +312,6 @@ class TfqInnerProductHessianOp : public tensorflow::OpKernel {
           std::cout << ">>>>>>... " << k << "th gradient gate is applied" << std::endl;
           qsim::ApplyGate(sim, hessian_gates[i][l - 1].grad_gates[k], scratch2);
 
-          auto ptr = scratch2.get();
-          auto ptr_size = 2 << scratch2.num_qubits();
-          std::cout << "Statevector" << std::endl;
-          for (int i = 0; i < ptr_size; i++) {
-            std::cout << ptr[i] << ",";
-          }
-          std::cout << std::endl;
-
-          ptr = scratch.get();
-          ptr_size = 2 << scratch.num_qubits();
-          std::cout << "Other Statevector" << std::endl;
-          for (int i = 0; i < ptr_size; i++) {
-            std::cout << ptr[i] << ",";
-          }
-          std::cout << std::endl;
           // don't need not-found check since this is done upstream already.
           auto symbol = hessian_gates[i][l - 1].params[k];
           std::cout << ">>>>>>... " << k << "th symbol = " << symbol << std::endl;
@@ -389,7 +374,7 @@ class TfqInnerProductHessianOp : public tensorflow::OpKernel {
                                        other_fused_circuits[i], sim, ss,
                                        scratch2, scratch);
       // now sv is |psi>
-      // scratch contains sum_j other_programs_coeffs[i][j]*|phi[i][j]>
+      // other_sv contains sum_j other_programs_coeffs[i][j]*|phi[i][j]>
       // Start adjoint differentiation on two gates
       // m is the index for the first gate
       std::cout << ">>> Start two gates hessian" << std::endl;
@@ -414,30 +399,28 @@ class TfqInnerProductHessianOp : public tensorflow::OpKernel {
           mask_m |= uint64_t{1} << control_loc;
           cbits_m |= ((cur_gate_m.cmask >> k) & 1) << control_loc;
         }
+
+        ss.Copy(scratch, scratch4);
+        ss.Copy(sv, scratch2);
         for (std::vector<QsimGate>::size_type p = 0;
              p < gradient_gates[i][m - 1].grad_gates.size(); p++) {
           // Copy sv onto scratch2 in anticipation of the first non-unitary
           // "gradient gate".
-          ss.Copy(sv, scratch2);
           if (!cur_gate_m.controlled_by.empty()) {
             // Gradient of controlled gates puts zeros on diagonal which is
             // the same as collapsing the state and then applying the
             // non-controlled version of the gradient gate.
-            ss.BulkSetAmpl(scratch2, mask_m, cbits_m, 0, 0, true);
+            ss.BulkSetAmpl(scratch4, mask_m, cbits_m, 0, 0, true);
           }
           std::cout << ">>>>>>(1)... p=" << p << "th gradient gate is applied" << std::endl;
-          qsim::ApplyGate(sim, gradient_gates[i][m - 1].grad_gates[p],
-                          scratch2);
+          qsim::ApplyGateDagger(sim, gradient_gates[i][m - 1].grad_gates[p],
+                                scratch4);
 
           // don't need not-found check since this is done upstream already.
           const auto it = maps[i].find(gradient_gates[i][m - 1].params[p]);
           std::cout << ">>>>>>(1)... p=" << p << "th symbol = " << gradient_gates[i][m - 1].params[p] << std::endl;
           const int loc_m = it->second.first;
 
-          // scratch2 is now (d/dsymbol[p])|psi>
-          // Copy scratch onto scratch4.
-          ss.Copy(scratch, scratch4);
-          // ApplyGateDagger(sim, cur_gate_m, scratch4);
           // n is the index for the second gate
           for (int n = m - 1; n >= 0; n--) {
             std::cout << ">>>>>>---(2) " << n << "th partial fused circuit is applied" << std::endl;
@@ -455,6 +438,7 @@ class TfqInnerProductHessianOp : public tensorflow::OpKernel {
             }
 
             // Hit a parameterized gate.
+            std::cout << "n-th gate index = " << gradient_gates[i][n - 1].index << std::endl;
             auto cur_gate_n =
                 qsim_circuits[i].gates[gradient_gates[i][n - 1].index];
             ApplyGateDagger(sim, cur_gate_n, scratch2);
@@ -485,6 +469,21 @@ class TfqInnerProductHessianOp : public tensorflow::OpKernel {
               qsim::ApplyGate(sim, gradient_gates[i][n - 1].grad_gates[q],
                               scratch3);
 
+              auto ptr = scratch3.get();
+              auto ptr_size = 2 << scratch3.num_qubits();
+              std::cout << "Statevector" << std::endl;
+              for (int i = 0; i < ptr_size; i++) {
+                std::cout << ptr[i] << ",";
+              }
+              std::cout << std::endl;
+
+              ptr = scratch4.get();
+              ptr_size = 2 << scratch4.num_qubits();
+              std::cout << "Other Statevector" << std::endl;
+              for (int i = 0; i < ptr_size; i++) {
+                std::cout << ptr[i] << ",";
+              }
+              std::cout << std::endl;
               // don't need not-found check since this is done upstream already.
               const auto it = maps[i].find(gradient_gates[i][n - 1].params[q]);
               std::cout << ">>>>>>---(2)... q=" << q << "th symbol = " << gradient_gates[i][n - 1].params[q] << std::endl;
@@ -543,7 +542,6 @@ class TfqInnerProductHessianOp : public tensorflow::OpKernel {
       Simulator sim = Simulator(tfq_for);
       StateSpace ss = StateSpace(tfq_for);
       auto sv = ss.Create(largest_nq);
-      auto sv_adj = ss.Create(largest_nq);
       auto scratch = ss.Create(largest_nq);
       auto scratch2 = ss.Create(largest_nq);
       auto scratch3 = ss.Create(largest_nq);
@@ -560,7 +558,6 @@ class TfqInnerProductHessianOp : public tensorflow::OpKernel {
           if (nq > largest_nq) {
             largest_nq = nq;
             sv = ss.Create(largest_nq);
-            sv_adj = ss.Create(largest_nq);
             scratch = ss.Create(largest_nq);
             scratch2 = ss.Create(largest_nq);
           }

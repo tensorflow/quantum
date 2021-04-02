@@ -389,21 +389,23 @@ void PopulateHessianPhasedXPhasedExponent(const std::string& symbol,
                                           float gs, GradientOfGate* grad) {
   grad->params.push_back(symbol);
   grad->index = location;
-  auto left = qsim::Cirq::PhasedXPowGate<float>::Create(
-      0, qid, (pexp + _HESS_EPS) * pexp_s, exp * exp_s, gs);
-  auto center = qsim::Cirq::PhasedXPowGate<float>::Create(0, qid, pexp * pexp_s,
-                                                          exp * exp_s, gs);
-  auto right = qsim::Cirq::PhasedXPowGate<float>::Create(
-      0, qid, (pexp - _HESS_EPS) * pexp_s, exp * exp_s, gs);
-  // Due to precision issue, multiply weights first.
-  qsim::MatrixScalarMultiply(_INVERSE_HESS_EPS_SQUARE, left.matrix);
-  qsim::MatrixScalarMultiply(_INVERSE_HESS_EPS_SQUARE, right.matrix);
-  qsim::MatrixScalarMultiply(_INVERSE_HESS_EPS_SQUARE, center.matrix);
-  Matrix2Add(right.matrix,
-             left.matrix);  // left's entries have right added.
-  qsim::MatrixScalarMultiply(2.0, center.matrix);
-  Matrix2Diff(center.matrix,
-              left.matrix);  // left's entries have center subtracted.
+//  auto left = qsim::Cirq::PhasedXPowGate<float>::Create(
+//      0, qid, (pexp + _HESS_EPS) * pexp_s, exp * exp_s, gs);
+//  auto center = qsim::Cirq::PhasedXPowGate<float>::Create(0, qid, pexp * pexp_s,
+//                                                          exp * exp_s, gs);
+//  auto right = qsim::Cirq::PhasedXPowGate<float>::Create(
+//      0, qid, (pexp - _HESS_EPS) * pexp_s, exp * exp_s, gs);
+//  // Due to precision issue, multiply weights first.
+//  qsim::MatrixScalarMultiply(_INVERSE_HESS_EPS_SQUARE, left.matrix);
+//  qsim::MatrixScalarMultiply(_INVERSE_HESS_EPS_SQUARE, right.matrix);
+//  qsim::MatrixScalarMultiply(_INVERSE_HESS_EPS_SQUARE, center.matrix);
+//  Matrix2Add(right.matrix,
+//             left.matrix);  // left's entries have right added.
+//  qsim::MatrixScalarMultiply(2.0, center.matrix);
+//  Matrix2Diff(center.matrix,
+//              left.matrix);  // left's entries have center subtracted.
+  auto left = D2PhasedExponentPhasedXPowGate<float>::Create(
+      0, qid, pexp, pexp_s, exp*exp_s, gs);
   grad->grad_gates.push_back(left);
 }
 
@@ -414,21 +416,23 @@ void PopulateHessianPhasedXExponent(const std::string& symbol,
                                     GradientOfGate* grad) {
   grad->params.push_back(symbol);
   grad->index = location;
-  auto left = qsim::Cirq::PhasedXPowGate<float>::Create(
-      0, qid, pexp * pexp_s, (exp + _HESS_EPS) * exp_s, gs);
-  auto center = qsim::Cirq::PhasedXPowGate<float>::Create(0, qid, pexp * pexp_s,
-                                                          exp * exp_s, gs);
-  auto right = qsim::Cirq::PhasedXPowGate<float>::Create(
-      0, qid, pexp * pexp_s, (exp - _HESS_EPS) * exp_s, gs);
-  // Due to precision issue, multiply weights first.
-  qsim::MatrixScalarMultiply(_INVERSE_HESS_EPS_SQUARE, left.matrix);
-  qsim::MatrixScalarMultiply(_INVERSE_HESS_EPS_SQUARE, right.matrix);
-  qsim::MatrixScalarMultiply(_INVERSE_HESS_EPS_SQUARE, center.matrix);
-  Matrix2Add(right.matrix,
-             left.matrix);  // left's entries have right added.
-  qsim::MatrixScalarMultiply(2.0, center.matrix);
-  Matrix2Diff(center.matrix,
-              left.matrix);  // left's entries have center subtracted.
+//  auto left = qsim::Cirq::PhasedXPowGate<float>::Create(
+//      0, qid, pexp * pexp_s, (exp + _HESS_EPS) * exp_s, gs);
+//  auto center = qsim::Cirq::PhasedXPowGate<float>::Create(0, qid, pexp * pexp_s,
+//                                                          exp * exp_s, gs);
+//  auto right = qsim::Cirq::PhasedXPowGate<float>::Create(
+//      0, qid, pexp * pexp_s, (exp - _HESS_EPS) * exp_s, gs);
+//  // Due to precision issue, multiply weights first.
+//  qsim::MatrixScalarMultiply(_INVERSE_HESS_EPS_SQUARE, left.matrix);
+//  qsim::MatrixScalarMultiply(_INVERSE_HESS_EPS_SQUARE, right.matrix);
+//  qsim::MatrixScalarMultiply(_INVERSE_HESS_EPS_SQUARE, center.matrix);
+//  Matrix2Add(right.matrix,
+//             left.matrix);  // left's entries have right added.
+//  qsim::MatrixScalarMultiply(2.0, center.matrix);
+//  Matrix2Diff(center.matrix,
+//              left.matrix);  // left's entries have center subtracted.
+  auto left = D2ExponentPhasedXPowGate<float>::Create(
+      0, qid, pexp * pexp_s, exp, exp_s, gs);
   grad->grad_gates.push_back(left);
 }
 
@@ -437,24 +441,26 @@ void PopulateCrossTermPhasedXPhasedExponentExponent(
     float exp, float exp_s, float gs, GradientOfGate* grad) {
   grad->params.push_back(kUsePrevTwoSymbols);
   grad->index = location;
-  auto left = qsim::Cirq::PhasedXPowGate<float>::Create(
-      0, qid, (pexp + _GRAD_EPS) * pexp_s, (exp + _GRAD_EPS) * exp_s, gs);
-  auto left_center = qsim::Cirq::PhasedXPowGate<float>::Create(
-      0, qid, (pexp + _GRAD_EPS) * pexp_s, (exp - _GRAD_EPS) * exp_s, gs);
-  auto right_center = qsim::Cirq::PhasedXPowGate<float>::Create(
-      0, qid, (pexp - _GRAD_EPS) * pexp_s, (exp + _GRAD_EPS) * exp_s, gs);
-  auto right = qsim::Cirq::PhasedXPowGate<float>::Create(
-      0, qid, (pexp - _GRAD_EPS) * pexp_s, (exp - _GRAD_EPS) * exp_s, gs);
-  // Due to precision issue, multiply weights first.
-  qsim::MatrixScalarMultiply(_INVERSE_HESS_EPS_SQUARE, left.matrix);
-  qsim::MatrixScalarMultiply(_INVERSE_HESS_EPS_SQUARE, right.matrix);
-  qsim::MatrixScalarMultiply(_INVERSE_HESS_EPS_SQUARE, left_center.matrix);
-  qsim::MatrixScalarMultiply(_INVERSE_HESS_EPS_SQUARE, right_center.matrix);
-  Matrix2Add(right.matrix,
-             left.matrix);  // left's entries have right added.
-  Matrix2Add(right_center.matrix, left_center.matrix);
-  Matrix2Diff(left_center.matrix,
-              left.matrix);  // left's entries have left_center subtracted.
+//  auto left = qsim::Cirq::PhasedXPowGate<float>::Create(
+//      0, qid, (pexp + _GRAD_EPS) * pexp_s, (exp + _GRAD_EPS) * exp_s, gs);
+//  auto left_center = qsim::Cirq::PhasedXPowGate<float>::Create(
+//      0, qid, (pexp + _GRAD_EPS) * pexp_s, (exp - _GRAD_EPS) * exp_s, gs);
+//  auto right_center = qsim::Cirq::PhasedXPowGate<float>::Create(
+//      0, qid, (pexp - _GRAD_EPS) * pexp_s, (exp + _GRAD_EPS) * exp_s, gs);
+//  auto right = qsim::Cirq::PhasedXPowGate<float>::Create(
+//      0, qid, (pexp - _GRAD_EPS) * pexp_s, (exp - _GRAD_EPS) * exp_s, gs);
+//  // Due to precision issue, multiply weights first.
+//  qsim::MatrixScalarMultiply(_INVERSE_HESS_EPS_SQUARE, left.matrix);
+//  qsim::MatrixScalarMultiply(_INVERSE_HESS_EPS_SQUARE, right.matrix);
+//  qsim::MatrixScalarMultiply(_INVERSE_HESS_EPS_SQUARE, left_center.matrix);
+//  qsim::MatrixScalarMultiply(_INVERSE_HESS_EPS_SQUARE, right_center.matrix);
+//  Matrix2Add(right.matrix,
+//             left.matrix);  // left's entries have right added.
+//  Matrix2Add(right_center.matrix, left_center.matrix);
+//  Matrix2Diff(left_center.matrix,
+//              left.matrix);  // left's entries have left_center subtracted.
+  auto left = DPhasedExponentDExponentPhasedXPowGate<float>::Create(
+      0, qid, pexp, pexp_s, exp, exp_s, gs);
   grad->grad_gates.push_back(left);
 }
 
