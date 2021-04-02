@@ -30,6 +30,8 @@ limitations under the License.
 
 namespace tfq {
 
+static const float _GRAD_EPS = 5e-3;
+
 struct GradientOfGate {
   // name of parameters used by gate.
   std::vector<std::string> params;
@@ -100,7 +102,7 @@ void PopulateGradientPhasedISwapExponent(const std::string& symbol,
                                          float pexp, float pexp_s, float exp,
                                          float exp_s, GradientOfGate* grad);
 
-// does matrix elementiwse subtraction dest -= source.
+// does matrix elementwise subtraction dest -= source.
 template <typename Array2>
 void Matrix2Diff(Array2& source, Array2& dest) {
   for (unsigned i = 0; i < 8; i++) {
@@ -108,7 +110,7 @@ void Matrix2Diff(Array2& source, Array2& dest) {
   }
 }
 
-// does matrix elementiwse subtraction dest -= source.
+// does matrix elementwise subtraction dest -= source.
 template <typename Array2>
 void Matrix4Diff(Array2& source, Array2& dest) {
   for (unsigned i = 0; i < 32; i++) {

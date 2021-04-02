@@ -20,6 +20,58 @@ from tensorflow_quantum.core.ops.load_module import load_module
 MATH_OP_MODULE = load_module(os.path.join("math_ops", "_tfq_math_ops.so"))
 
 
+def inner_product_hessian(programs, symbol_names, symbol_values, other_programs,
+                          programs_coeffs, other_programs_coeffs):
+    """Calculate the adjoint Hessian of the inner product between circuits.
+
+  Compute the gradients of the (potentially many) inner products between
+  the given circuits and the symbol free comparison circuits.
+
+  Calculates out[i][j][k] = $\text{programs_coeffs[i]} \times \langle
+  \frac{\partial^2  \psi_{\text{programs[i]}}(\text{symbol_values[i]})}
+  {\partial \text{symbol_names[j]}\partial \text{symbol_names[k]}} |
+  \sum_l \text{other_programs_coeffs[l]}\times |
+  \psi_{\text{other_programs[l]}}  \rangle$
+
+
+  Note: `other_programs` must not contain any free symbols. These can
+      be resolved beforehand with `tfq.resolve_parameters`.
+
+  Note: len(symbol_names) (=n_params) should be a positive integer.
+
+  Args:
+      programs: `tf.Tensor` of strings with shape [batch_size] containing
+          the string representations of the circuits
+      symbol_names: `tf.Tensor` of strings with shape [n_params], which
+          is used to specify the order in which the values in
+          `symbol_values` should be placed inside of the circuits in
+          `programs`.
+      symbol_values: `tf.Tensor` of real numbers with shape
+          [batch_size, n_params] specifying parameter values to resolve
+          into the circuits specificed by programs, following the ordering
+          dictated by `symbol_names`.
+      other_programs: `tf.Tensor` of strings with shape [batch_size, n_others]
+          containing the string representations of the circuits with which to
+          compute the overlap on `programs` with. Must not contain any free
+          symbols.
+      programs_coeffs: `tf.Tensor` of real numbers with shape [batch_size]
+          of weights on `programs`.
+      other_programs_coeffs: `tf.Tensor` of real numbers with shape
+          [batch_size, n_others] of weights on `other_programs`.
+
+  Returns:
+      tf.Tensor` with shape [batch_size, n_symbols, n_symbols] where `out[i]` is
+      equal to the hessian of the inner product between programs[i] and all
+      other_programs[i] w.r.t. `symbol_names[j]` and `symbol_names[k]`.
+      `programs[i]` is resolved with `symbol_values[i]` and each
+      (other_)programs[i] is weighted by (other_)programs_coeffs[i].
+  """
+    return MATH_OP_MODULE.tfq_inner_product_hessian(
+            programs, symbol_names, tf.cast(symbol_values, tf.float32),
+            other_programs, tf.cast(programs_coeffs, tf.float32),
+            tf.cast(other_programs_coeffs, tf.float32))
+
+
 def _inner_product_grad(programs, symbol_names, symbol_values, other_programs,
                         prev_grad):
     """Calculate the adjoint gradients of the inner product between circuits.
@@ -27,9 +79,10 @@ def _inner_product_grad(programs, symbol_names, symbol_values, other_programs,
     Compute the gradients of the (potentially many) inner products between
     the given circuits and the symbol free comparison circuits.
 
-    Calculates out[i][j][k] = $ \frac{\langle \psi_{\text{programs[i]}} \\
-        (\text{symbol_values[i]})}{\partial \text{symbol_names[k]}} | \\
-        \psi_{\text{other_programs[j]}} \rangle $
+    Calculates out[i][j][k] = $\langle \frac{\partial  \psi_{\text{programs[i]}}
+    (\text{symbol_values[i]})}{\partial \text{symbol_names[j]}} | \sum_k
+    \text{prev_grad[i][k]}\times | \psi_{\text{other_programs[k]}}
+    \rangle$
 
 
     Note: `other_programs` must not contain any free symbols. These can
@@ -40,7 +93,7 @@ def _inner_product_grad(programs, symbol_names, symbol_values, other_programs,
     Args:
         programs: `tf.Tensor` of strings with shape [batch_size] containing
             the string representations of the circuits
-        symbol_names: `tf.Tensor` of strings with shape [n_params], which
+        symbol_names: `tf.Tensor` of strings with shape [n_symbols], which
             is used to specify the order in which the values in
             `symbol_values` should be placed inside of the circuits in
             `programs`.
@@ -52,7 +105,7 @@ def _inner_product_grad(programs, symbol_names, symbol_values, other_programs,
             containing the string representations of the circuits with which to
             compute the overlap on `programs` with. Must not contain any free
             symbols.
-        prev_grad: `tf.Tensor` of real numbers with shape [batch_size, n_ops]
+        prev_grad: `tf.Tensor` of real numbers with shape [batch_size, n_others]
             backprop of values from downstream in the compute graph.
 
     Returns:

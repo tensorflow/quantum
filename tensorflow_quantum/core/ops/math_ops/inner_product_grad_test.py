@@ -27,7 +27,7 @@ class InnerProductAdjGradTest(tf.test.TestCase, parameterized.TestCase):
     """Tests tfq_inner_product_grad."""
 
     def test_inner_product_grad_inputs(self):
-        """Makes sure that inner_product_adj_grad fails on bad inputs."""
+        """Makes sure that inner_product_grad fails on bad inputs."""
         n_qubits = 5
         batch_size = 5
         n_other_programs = 3
@@ -232,7 +232,7 @@ class InnerProductAdjGradTest(tf.test.TestCase, parameterized.TestCase):
     ])
     def test_correctness_with_symbols(self, n_qubits, batch_size,
                                       inner_dim_size):
-        """Tests that inner_product works with symbols."""
+        """Tests that inner_product_grad works with symbols."""
         symbol_names = ['alpha', 'beta', 'gamma']
         n_params = len(symbol_names)
         qubits = cirq.GridQubit.rect(1, n_qubits)
@@ -242,7 +242,7 @@ class InnerProductAdjGradTest(tf.test.TestCase, parameterized.TestCase):
 
         other_batch = [
             util.random_circuit_resolver_batch(qubits, inner_dim_size)[0]
-            for i in range(batch_size)
+            for _ in range(batch_size)
         ]
 
         symbol_values_array = np.array(
@@ -312,7 +312,7 @@ class InnerProductAdjGradTest(tf.test.TestCase, parameterized.TestCase):
     ])
     def test_correctness_without_symbols(self, n_qubits, batch_size,
                                          inner_dim_size):
-        """Tests that inner_product_adj_grad works without symbols."""
+        """Tests that inner_product_grad works without symbols."""
         qubits = cirq.GridQubit.rect(1, n_qubits)
         circuit_batch, _ = \
           util.random_circuit_resolver_batch(
@@ -320,7 +320,7 @@ class InnerProductAdjGradTest(tf.test.TestCase, parameterized.TestCase):
 
         other_batch = [
             util.random_circuit_resolver_batch(qubits, inner_dim_size)[0]
-            for i in range(batch_size)
+            for _ in range(batch_size)
         ]
 
         programs = util.convert_to_tensor(circuit_batch)

@@ -110,6 +110,11 @@ tensorflow::Status GetPrevGrads(
     tensorflow::OpKernelContext* context,
     std::vector<std::vector<float>>* parsed_prev_grads);
 
+// Parses coefficients of programs & other_programs. Used by adjoint Hessian op.
+tensorflow::Status GetProgramsCoefficients(
+    tensorflow::OpKernelContext* context, std::vector<float>* programs_coeffs,
+    std::vector<std::vector<float>>* other_programs_coeffs);
+
 }  // namespace tfq
 
 #endif  // TFQ_CORE_OPS_PARSE_CONTEXT

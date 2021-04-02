@@ -43,7 +43,7 @@ class InnerProductTest(tf.test.TestCase, parameterized.TestCase):
 
         other_batch = [
             util.random_circuit_resolver_batch(qubits, 3)[0]
-            for i in range(batch_size)
+            for _ in range(batch_size)
         ]
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
@@ -239,7 +239,7 @@ class InnerProductTest(tf.test.TestCase, parameterized.TestCase):
 
         other_batch = [
             util.random_circuit_resolver_batch(qubits, inner_dim_size)[0]
-            for i in range(batch_size)
+            for _ in range(batch_size)
         ]
 
         symbol_values_array = np.array(
@@ -299,7 +299,7 @@ class InnerProductTest(tf.test.TestCase, parameterized.TestCase):
 
         other_batch = [
             util.random_circuit_resolver_batch(qubits, inner_dim_size)[0]
-            for i in range(batch_size)
+            for _ in range(batch_size)
         ]
 
         programs = util.convert_to_tensor(circuit_batch)
@@ -368,7 +368,7 @@ class InnerProductTest(tf.test.TestCase, parameterized.TestCase):
 
         other_batch = [
             util.random_circuit_resolver_batch(qubits, inner_dim_size)[0]
-            for i in range(batch_size)
+            for _ in range(batch_size)
         ]
 
         symbol_values_array = np.array(
@@ -434,7 +434,7 @@ class InnerProductTest(tf.test.TestCase, parameterized.TestCase):
 
         other_batch = [
             util.random_circuit_resolver_batch(qubits, inner_dim_size)[0]
-            for i in range(batch_size)
+            for _ in range(batch_size)
         ]
 
         programs = util.convert_to_tensor(circuit_batch)

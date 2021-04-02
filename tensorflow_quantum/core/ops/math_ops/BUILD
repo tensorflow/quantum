@@ -17,6 +17,7 @@ cc_binary(
     srcs = [
         "tfq_inner_product.cc",
         "tfq_inner_product_grad.cc",
+        "tfq_inner_product_hessian.cc",
     ],
     copts = select({
         ":windows": [
@@ -62,6 +63,7 @@ cc_binary(
         # cirq cc proto
         "//tensorflow_quantum/core/ops:parse_context",
         "//tensorflow_quantum/core/ops:tfq_simulate_utils",
+        "//tensorflow_quantum/core/src:adj_hessian_util",
         "//tensorflow_quantum/core/src:adj_util",
         "//tensorflow_quantum/core/src:circuit_parser_qsim",
         "//tensorflow_quantum/core/src:util_qsim",
@@ -94,6 +96,16 @@ py_test(
 py_test(
     name = "inner_product_grad_test",
     srcs = ["inner_product_grad_test.py"],
+    python_version = "PY3",
+    deps = [
+        ":inner_product_op_py",
+        "//tensorflow_quantum/python:util",
+    ],
+)
+
+py_test(
+    name = "inner_product_hessian_test",
+    srcs = ["inner_product_hessian_test.py"],
     python_version = "PY3",
     deps = [
         ":inner_product_op_py",
