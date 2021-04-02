@@ -80,7 +80,7 @@ class ParameterShift(differentiator.Differentiator):
         batch_programs = tf.reshape(
             tf.transpose(new_programs, [1, 0, 2, 3]), [n_programs, m_tile])
         weights = tf.reshape(
-            tf.transpose(weights, [1, 0, 2, 3]), [n_programs, m_tile])
+            tf.transpose(weights, [1, 0, 2, 3]), [n_programs, n_symbols, n_param_gates * n_shifts])
         shifts = tf.reshape(
             tf.transpose(shifts, [1, 0, 2, 3]), [n_programs, m_tile, 1])
 
@@ -95,7 +95,9 @@ class ParameterShift(differentiator.Differentiator):
             tf.expand_dims(symbol_values, 1), [1, m_tile, 1])
         batch_symbol_values = tf.concat([tiled_symbol_values, shifts], 2)
 
-        return (batch_programs, new_symbol_names, batch_symbol_values, None)
+        batch_mapper = tf.tile(tiled_expectation)
+
+        return (batch_programs, new_symbol_names, batch_symbol_values, batch_mapper)
 
     @differentiator.catch_empty_inputs
     @tf.function

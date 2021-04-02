@@ -171,18 +171,15 @@ class ParameterShiftTest(tf.test.TestCase, parameterized.TestCase):
               [-0.3, 0.9, 0.9],
               [-0.3, 0.9, 0.9]]])
 
+        #
+
+
         (test_batch_programs, test_new_symbol_names, test_batch_symbol_values,
          test_batch_mapper) = diff.get_gradient_circuits(
              input_programs, input_symbol_names, input_symbol_values)
         for i in range(tf.shape(input_programs)[0]):
           self.assertAllEqual(util.from_tensor(expected_batch_programs[i]),
                               util.from_tensor(test_batch_programs[i]))
-        for i in range(tf.shape(expected_batch_symbol_values)[0]):
-          for j in range(tf.shape(expected_batch_symbol_values[i])[0]):
-            print(f"{i,j}:")
-            print(expected_batch_symbol_values[i][j])
-            print(test_batch_symbol_values[i][j])
-            print()
         self.assertAllEqual(expected_new_symbol_names, test_new_symbol_names)
         self.assertAllClose(expected_batch_symbol_values,
                             test_batch_symbol_values,
