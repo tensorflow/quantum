@@ -79,28 +79,23 @@ class ParameterShift(differentiator.Differentiator):
         # then reshape to the correct batch size
         batch_programs = tf.reshape(
             tf.transpose(new_programs, [1, 0, 2, 3]), [n_programs, m_tile])
-
-        weights = tf.transpose(weights, [0, 2, 3, 1])
-        shifts = tf.transpose(shifts, [0, 2, 3, 1])
-
-
-        # # tile up and then reshape to order ops correctly
-        # flat_perturbations = tf.concat([
-        #     tf.reshape(
-        #         tf.tile(tf.expand_dims(symbol_values, 0),
-        #                 tf.stack([n_tile, 1, 1])), [total_programs, n_symbols]),
-        #     tf.expand_dims(flat_shifts, axis=1)
-        # ],
-        #                                axis=1)
+        weights = tf.reshape(
+            tf.transpose(weights, [1, 0, 2, 3]), [n_programs, m_tile])
+        shifts = tf.reshape(
+            tf.transpose(shifts, [1, 0, 2, 3]), [n_programs, m_tile])
 
         # Append impurity symbol into symbol name
-        new_symbol_names = tf.concat([
+        expected_new_symbol_names = tf.concat([
             symbol_names,
-            tf.expand_dims(tf.constant(
-                parameter_shift_util._PARAMETER_IMPURITY_NAME),
-                           axis=0)
-        ],
-                                     axis=0)
+            tf.constant([parameter_shift_util._PARAMETER_IMPURITY_NAME])], 0)
+
+        # Symbol values are the input symbol values, tiled according to
+        # `batch_programs`, with the shift values appended.
+        tiled_symbol_names = tf.tile(
+            tf.expand_dims(symbol_values, 1), [1, m_tile, 1])
+        tiled_shifts =  tf.expand_dims(shifts, 1)
+        batch_symbol_values = tf.concat(
+            [tiled_symbol_names, tiled_symbol_values], 2)
 
         return (batch_programs, new_symbol_names, None, None)
 

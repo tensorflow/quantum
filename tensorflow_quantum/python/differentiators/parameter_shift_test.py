@@ -148,16 +148,40 @@ class ParameterShiftTest(tf.test.TestCase, parameterized.TestCase):
         expected_new_symbol_names = tf.concat([
             input_symbol_names, tf.constant([impurity_symbol_name])], 0)
 
+        # The batch symbol values are the input symbol values, tiled and with
+        # shifts appended.  Locations that have empty programs should also have
+        # zero for the shift.
+        # The shift values are the shifted symbol value, plus 1/2 divided by the
+        # `exponent_scalar` of the gates.
+        expected_batch_symbol_values = tf.constant(
+            [[[1.5, -2.7, 1.5 + 0.5],
+              [1.5, -2.7, 1.5 - 0.5],
+              [1.5, -2.7, 1.5 + 0.5],
+              [1.5, -2.7, 1.5 - 0.5],
+              [1.5, -2.7, -2.7 + 1/(2*np.pi)],
+              [1.5, -2.7, -2.7 - 1/(2*np.pi)],
+              [1.5, -2.7, 0.0],
+              [1.5, -2.7, 0.0]],
+             [[-0.3, 0.9, 0.0],
+              [-0.3, 0.9, 0.0],
+              [-0.3, 0.9, 0.0],
+              [-0.3, 0.9, 0.0],
+              [-0.3, 0.9, 0.9 + 0.5],
+              [-0.3, 0.9, 0.9 - 0.5],
+              [-0.3, 0.9, 0.0],
+              [-0.3, 0.9, 0.0]]])
+
+        #
         (test_batch_programs, test_new_symbol_names, test_batch_symbol_values,
          test_batch_mapper) = diff.get_gradient_circuits(
              input_programs, input_symbol_names, input_symbol_values)
-        for i in range(2):
+        for i in range(tf.shape(input_programs)[0]):
           self.assertAllEqual(util.from_tensor(expected_batch_programs[i]),
                               util.from_tensor(test_batch_programs[i]))
         self.assertAllEqual(expected_new_symbol_names, test_new_symbol_names)
-#        self.assertAllClose(expected_batch_symbol_values,
-#                            test_batch_symbol_values,
-#                            atol=1e-6)
+        self.assertAllClose(expected_batch_symbol_values,
+                            test_batch_symbol_values,
+                            atol=1e-6)
 #        self.assertAllClose(expected_batch_mapper, test_batch_mapper, atol=1e-6)
 
     # @parameterized.parameters(
