@@ -82,22 +82,20 @@ class ParameterShift(differentiator.Differentiator):
         weights = tf.reshape(
             tf.transpose(weights, [1, 0, 2, 3]), [n_programs, m_tile])
         shifts = tf.reshape(
-            tf.transpose(shifts, [1, 0, 2, 3]), [n_programs, m_tile])
+            tf.transpose(shifts, [1, 0, 2, 3]), [n_programs, m_tile, 1])
 
         # Append impurity symbol into symbol name
-        expected_new_symbol_names = tf.concat([
+        new_symbol_names = tf.concat([
             symbol_names,
             tf.constant([parameter_shift_util._PARAMETER_IMPURITY_NAME])], 0)
 
         # Symbol values are the input symbol values, tiled according to
         # `batch_programs`, with the shift values appended.
-        tiled_symbol_names = tf.tile(
+        tiled_symbol_values = tf.tile(
             tf.expand_dims(symbol_values, 1), [1, m_tile, 1])
-        tiled_shifts =  tf.expand_dims(shifts, 1)
-        batch_symbol_values = tf.concat(
-            [tiled_symbol_names, tiled_symbol_values], 2)
+        batch_symbol_values = tf.concat([tiled_symbol_values, shifts], 2)
 
-        return (batch_programs, new_symbol_names, None, None)
+        return (batch_programs, new_symbol_names, batch_symbol_values, None)
 
     @differentiator.catch_empty_inputs
     @tf.function
