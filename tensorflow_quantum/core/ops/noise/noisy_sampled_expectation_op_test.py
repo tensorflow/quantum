@@ -252,7 +252,7 @@ class NoisyExpectationCalculationTest(tf.test.TestCase, parameterized.TestCase):
         pauli_sums1 = util.random_pauli_sums(qubits, 3, batch_size)
         pauli_sums2 = util.random_pauli_sums(qubits, 3, batch_size)
         batch_pauli_sums = [[x, y] for x, y in zip(pauli_sums1, pauli_sums2)]
-        num_samples = [[20000] * 2] * batch_size
+        num_samples = [[10000] * 2] * batch_size
 
         op_exps = noisy_sampled_expectation_op.sampled_expectation(
             util.convert_to_tensor(circuit_batch),
@@ -262,7 +262,7 @@ class NoisyExpectationCalculationTest(tf.test.TestCase, parameterized.TestCase):
         cirq_exps = batch_util.batch_calculate_expectation(
             circuit_batch, resolver_batch, batch_pauli_sums,
             cirq.DensityMatrixSimulator() if noisy else cirq.Simulator())
-        tol = 0.35
+        tol = 0.5
         self.assertAllClose(cirq_exps, op_exps, atol=tol, rtol=tol)
 
     @parameterized.parameters([{
@@ -290,7 +290,7 @@ class NoisyExpectationCalculationTest(tf.test.TestCase, parameterized.TestCase):
         pauli_sums1 = util.random_pauli_sums(qubits, 3, batch_size)
         pauli_sums2 = util.random_pauli_sums(qubits, 3, batch_size)
         batch_pauli_sums = [[x, y] for x, y in zip(pauli_sums1, pauli_sums2)]
-        num_samples = [[50000] * 2] * batch_size
+        num_samples = [[20000] * 2] * batch_size
 
         op_exps = noisy_sampled_expectation_op.sampled_expectation(
             util.convert_to_tensor(circuit_batch),
@@ -301,7 +301,7 @@ class NoisyExpectationCalculationTest(tf.test.TestCase, parameterized.TestCase):
             circuit_batch, resolver_batch, batch_pauli_sums,
             cirq.DensityMatrixSimulator())
 
-        self.assertAllClose(cirq_exps, op_exps, atol=0.25, rtol=0.25)
+        self.assertAllClose(cirq_exps, op_exps, atol=0.35, rtol=0.35)
 
     def test_correctness_empty(self):
         """Test the expectation for empty circuits."""

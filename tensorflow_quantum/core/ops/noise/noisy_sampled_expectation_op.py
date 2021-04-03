@@ -22,7 +22,7 @@ NOISY_OP_MODULE = load_module(os.path.join("noise", "_tfq_noise_ops.so"))
 
 def sampled_expectation(programs, symbol_names, symbol_values, pauli_sums,
                         num_samples):
-    """Estimate (via sampling) expectation values using monte-carlo simulation.
+    """Estimates (via sampling) expectation values using monte-carlo simulation.
 
     Simulate the final state of `programs` given `symbol_values` are placed
     inside of the symbols with the name in `symbol_names` in each circuit.
