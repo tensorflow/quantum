@@ -248,7 +248,7 @@ class SampledExpectationTest(tf.test.TestCase):
                 mse = tf.square(tf.reduce_sum(tf.subtract(circuit_out, -1)))
             grads = tape.gradient(mse, layer.trainable_weights)
             optimizer.apply_gradients(zip(grads, layer.trainable_weights))
-        self.assertAllClose(mse.numpy(), 0, atol=1e-3)
+        self.assertAllClose(mse.numpy(), 0, atol=1e-2)
 
 
 class SampledExpectationFunctionalTests(tf.test.TestCase):

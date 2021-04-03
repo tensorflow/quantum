@@ -222,8 +222,11 @@ tensorflow::Status ComputeSampledExpectationQsim(
     if (!status.ok()) {
       return status;
     }
-
-    const int seed = 1234;
+    unsigned long r_seed =
+        std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::system_clock::now().time_since_epoch())
+            .count();
+    const unsigned int seed = static_cast<unsigned int>(r_seed);
     std::vector<uint64_t> state_samples = ss.Sample(scratch, num_samples, seed);
 
     // Find qubits on which to measure parity

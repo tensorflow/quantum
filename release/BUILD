@@ -42,6 +42,7 @@ sh_binary(
         "//tensorflow_quantum/core/ops/math_ops:inner_product_op_py",
         "//tensorflow_quantum/core/ops/noise:noisy_samples_op_py",
         "//tensorflow_quantum/core/ops/noise:noisy_expectation_op_py",
+        "//tensorflow_quantum/core/ops/noise:noisy_sampled_expectation_op_py",
         "//tensorflow_quantum/core/serialize:serializer",
         "//tensorflow_quantum/datasets:cluster_state",
         "//tensorflow_quantum/datasets:spin_system",

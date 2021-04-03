@@ -39,6 +39,7 @@ def test_imports():
 
     # Noisy simulation ops.
     _ = tfq.noise.expectation
+    _ = tfq.noise.sampled_expectation
     _ = tfq.noise.samples
 
     # Util functions.
