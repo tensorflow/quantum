@@ -67,9 +67,9 @@ def inner_product_hessian(programs, symbol_names, symbol_values, other_programs,
       (other_)programs[i] is weighted by (other_)programs_coeffs[i].
   """
     return MATH_OP_MODULE.tfq_inner_product_hessian(
-            programs, symbol_names, tf.cast(symbol_values, tf.float32),
-            other_programs, tf.cast(programs_coeffs, tf.float32),
-            tf.cast(other_programs_coeffs, tf.float32))
+        programs, symbol_names, tf.cast(symbol_values, tf.float32),
+        other_programs, tf.cast(programs_coeffs, tf.float32),
+        tf.cast(other_programs_coeffs, tf.float32))
 
 
 def _inner_product_grad(programs, symbol_names, symbol_values, other_programs,

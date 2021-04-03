@@ -26,14 +26,14 @@ from tensorflow_quantum.core.ops.math_ops import inner_product_op
 from tensorflow_quantum.python import util
 
 _INVERSE_SPEEDUP = 1 / 20.0
-_ATOL = 3e-3
+_ATOL = 0.2
+_RTOL = 0.3
 _SYMBOL_NAMES = [['alpha'], ['alpha', 'beta']]
 _ONE_EIGEN_GATES = [
     cirq.XPowGate,
     cirq.YPowGate,
     cirq.ZPowGate,
     cirq.HPowGate,
-    cirq.PhasedXPowGate,
 ]
 _TWO_EIGEN_GATES = [
     cirq.XXPowGate,
@@ -46,9 +46,7 @@ _TWO_EIGEN_GATES = [
     cirq.PhasedISwapPowGate,
     cirq.FSimGate,
 ]
-
-_ATOL_FOR_COMPLEX_GATE = 1e-2
-_COMPLEX_GATES = [
+_UNSUPPORTED_GATES = [
     cirq.PhasedXPowGate,
 ]
 
@@ -60,14 +58,20 @@ def get_gate(gate, symbol_names, qubits):
     else:
         a, b = symbols
     if gate == cirq.PhasedXPowGate or gate == cirq.PhasedISwapPowGate:
-        return [gate(phase_exponent=0.1 * a, exponent=0.2*b).on(*qubits),
-                gate(phase_exponent=0.3 * b, exponent=0.4*a).on(*qubits)]
+        return [
+            gate(phase_exponent=0.1 * a, exponent=0.2 * b).on(*qubits),
+            gate(phase_exponent=0.3 * b, exponent=0.4 * a).on(*qubits)
+        ]
     if gate == cirq.FSimGate:
-        return [gate(theta=0.1 * a, phi=0.2*b).on(*qubits),
-                gate(theta=0.3 * b, phi=0.4*a).on(*qubits)]
+        return [
+            gate(theta=0.1 * a, phi=0.2 * b).on(*qubits),
+            gate(theta=0.3 * b, phi=0.4 * a).on(*qubits)
+        ]
 
-    return [gate(exponent=0.1 * a).on(*qubits),
-            gate(exponent=0.2 * b).on(*qubits)]
+    return [
+        gate(exponent=0.1 * a).on(*qubits),
+        gate(exponent=0.2 * b).on(*qubits)
+    ]
 
 
 def get_shifted_resolved_circuit(circuit, name_j, name_k, dx_j, dx_k, resolver):
@@ -80,15 +84,15 @@ def get_shifted_resolved_circuit(circuit, name_j, name_k, dx_j, dx_k, resolver):
 def get_finite_difference_hessian(circuit, name_j, name_k, resolver):
     # dx came from _GRAD_EPS of core/src/adj_util.cc
     dx = 5e-3
-    inv_square_two_dx = np.asarray([1e4+0.j], dtype=np.complex64)
-    final_circuit_pp = get_shifted_resolved_circuit(
-        circuit, name_j, name_k, dx, dx, resolver)
-    final_circuit_mp = get_shifted_resolved_circuit(
-        circuit, name_j, name_k, -dx, dx, resolver)
-    final_circuit_pm = get_shifted_resolved_circuit(
-        circuit, name_j, name_k, dx, -dx, resolver)
-    final_circuit_mm = get_shifted_resolved_circuit(
-        circuit, name_j, name_k, -dx, -dx, resolver)
+    inv_square_two_dx = np.asarray([1e4 + 0.j], dtype=np.complex64)
+    final_circuit_pp = get_shifted_resolved_circuit(circuit, name_j, name_k, dx,
+                                                    dx, resolver)
+    final_circuit_mp = get_shifted_resolved_circuit(circuit, name_j, name_k,
+                                                    -dx, dx, resolver)
+    final_circuit_pm = get_shifted_resolved_circuit(circuit, name_j, name_k, dx,
+                                                    -dx, resolver)
+    final_circuit_mm = get_shifted_resolved_circuit(circuit, name_j, name_k,
+                                                    -dx, -dx, resolver)
     final_wf_pp = inv_square_two_dx * cirq.final_state_vector(final_circuit_pp)
     final_wf_mp = inv_square_two_dx * cirq.final_state_vector(final_circuit_mp)
     final_wf_pm = inv_square_two_dx * cirq.final_state_vector(final_circuit_pm)
@@ -324,16 +328,15 @@ class InnerProductAdjHessianTest(tf.test.TestCase, parameterized.TestCase):
             'inner_dim_size': 5
         },
     ])
-    def correctness_with_symbols(self, n_qubits, batch_size,
+    def test_correctness_with_symbols(self, n_qubits, batch_size,
                                       inner_dim_size):
         """Tests that inner_product works with symbols."""
-        symbol_names = ['alpha', 'beta', 'gamma']
+        symbol_names = ['alpha', 'beta', 'gamma', 'delta', 'eta', 'kappa']
         n_params = len(symbol_names)
         qubits = cirq.GridQubit.rect(1, n_qubits)
         circuit_batch, resolver_batch = \
           util.random_symbol_circuit_resolver_batch(
-              qubits, symbol_names, batch_size)
-        print(circuit_batch)
+              qubits, symbol_names, batch_size, exclude_gates=_UNSUPPORTED_GATES)
 
         other_batch = [
             util.random_circuit_resolver_batch(qubits, inner_dim_size)[0]
@@ -381,152 +384,146 @@ class InnerProductAdjHessianTest(tf.test.TestCase, parameterized.TestCase):
 
         # Elapsed time should be less than 5% of cirq version.
         # (at least 20x speedup)
-        self.assertLess(t1, t2*_INVERSE_SPEEDUP)
-        self.assertAllClose(out, out_arr, atol=_ATOL)
+        self.assertLess(t1, t2 * _INVERSE_SPEEDUP)
+        self.assertAllClose(out, out_arr, atol=_ATOL, rtol=_RTOL)
 
-    #
-    # @parameterized.parameters([
-    #     {
-    #         'n_qubits': 5,
-    #         'batch_size': 1,
-    #         'inner_dim_size': 5
-    #     },
-    #     {
-    #         'n_qubits': 5,
-    #         'batch_size': 10,
-    #         'inner_dim_size': 1
-    #     },
-    #     {
-    #         'n_qubits': 10,
-    #         'batch_size': 10,
-    #         'inner_dim_size': 2
-    #     },
-    #     {
-    #         'n_qubits': 5,
-    #         'batch_size': 10,
-    #         'inner_dim_size': 5
-    #     },
-    # ])
-    # def test_correctness_without_symbols(self, n_qubits, batch_size,
-    #                                      inner_dim_size):
-    #     """Tests that inner_product_adj_grad works without symbols."""
-    #     qubits = cirq.GridQubit.rect(1, n_qubits)
-    #     circuit_batch, _ = \
-    #       util.random_circuit_resolver_batch(
-    #           qubits, batch_size)
-    #
-    #     other_batch = [
-    #         util.random_circuit_resolver_batch(qubits, inner_dim_size)[0]
-    #         for _ in range(batch_size)
-    #     ]
-    #
-    #     programs = util.convert_to_tensor(circuit_batch)
-    #     other_programs = util.convert_to_tensor(other_batch)
-    #     symbol_names = tf.convert_to_tensor([], dtype=tf.dtypes.string)
-    #     symbol_values = tf.convert_to_tensor([[] for _ in range(batch_size)])
-    #     progams_coeffs = np.ones((batch_size,))
-    #     other_programs_coeffs = np.ones((batch_size, inner_dim_size))
-    #
-    #     with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
-    #                                 'symbols must be a positive integer'):
-    #         inner_product_op.inner_product_hessian(programs, symbol_names,
-    #                                                symbol_values,
-    #                                                other_programs,
-    #                                                progams_coeffs,
-    #                                                other_programs_coeffs)
+    @parameterized.parameters([
+        {
+            'n_qubits': 5,
+            'batch_size': 1,
+            'inner_dim_size': 5
+        },
+        {
+            'n_qubits': 5,
+            'batch_size': 10,
+            'inner_dim_size': 1
+        },
+        {
+            'n_qubits': 10,
+            'batch_size': 10,
+            'inner_dim_size': 2
+        },
+        {
+            'n_qubits': 5,
+            'batch_size': 10,
+            'inner_dim_size': 5
+        },
+    ])
+    def correctness_without_symbols(self, n_qubits, batch_size, inner_dim_size):
+        """Tests that inner_product_adj_grad works without symbols."""
+        qubits = cirq.GridQubit.rect(1, n_qubits)
+        circuit_batch, _ = \
+          util.random_circuit_resolver_batch(
+              qubits, batch_size)
 
-    # def test_correctness_empty(self):
-    #     """Tests the inner product adj grad between two empty circuits."""
-    #     symbol_names = ['alpha', 'beta']
-    #     empty_cicuit = util.convert_to_tensor([cirq.Circuit()])
-    #     empty_symbols = tf.convert_to_tensor([], dtype=tf.dtypes.string)
-    #     empty_values = tf.convert_to_tensor([[]])
-    #     other_program = util.convert_to_tensor([[cirq.Circuit()]])
-    #     program_coeffs = np.ones((1,))
-    #     other_program_coeffs = np.ones((1, 1))
-    #
-    #     with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
-    #                                 'symbols must be a positive integer'):
-    #         inner_product_op.inner_product_hessian(empty_cicuit, empty_symbols,
-    #                                                empty_values, other_program,
-    #                                                program_coeffs,
-    #                                                other_program_coeffs)
-    #
-    #     empty_cicuit = util.convert_to_tensor([cirq.Circuit()])
-    #     symbol_names = tf.convert_to_tensor(symbol_names,
-    #                                         dtype=tf.dtypes.string)
-    #     symbol_values = tf.convert_to_tensor([[0.0 for _ in range(2)]])
-    #     other_program = util.convert_to_tensor([[cirq.Circuit()]])
-    #
-    #     out = inner_product_op.inner_product_hessian(empty_cicuit, symbol_names,
-    #                                                  symbol_values,
-    #                                                  other_program,
-    #                                                  program_coeffs,
-    #                                                  other_program_coeffs)
-    #     expected = np.zeros((1, len(symbol_names)), dtype=np.complex64)
-    #     self.assertAllClose(out, expected)
+        other_batch = [
+            util.random_circuit_resolver_batch(qubits, inner_dim_size)[0]
+            for _ in range(batch_size)
+        ]
 
-    # def test_correctness_no_circuit(self):
-    #     """Test the inner product grad between no circuits."""
-    #
-    #     empty_circuit = tf.raw_ops.Empty(shape=(0,), dtype=tf.string)
-    #     empty_symbols = tf.raw_ops.Empty(shape=(0,), dtype=tf.string)
-    #     empty_values = tf.raw_ops.Empty(shape=(0, 0), dtype=tf.float32)
-    #     other_program = tf.raw_ops.Empty(shape=(0, 0), dtype=tf.string)
-    #     empty_program_coeffs = tf.raw_ops.Empty(shape=(0,), dtype=tf.float32)
-    #     empty_other_program_coeffs = tf.raw_ops.Empty(shape=(0, 0),
-    #                                                   dtype=tf.float32)
-    #
-    #     with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
-    #                                 'number of symbols must be a positive'):
-    #         # When using `tf.gradients`, a user will never encounter this error
-    #         # thanks to the `tf.cond` inside of the custom gradient.
-    #         _ = inner_product_op.inner_product_hessian(
-    #             empty_circuit, empty_symbols, empty_values, other_program,
-    #             empty_program_coeffs, empty_other_program_coeffs)
+        programs = util.convert_to_tensor(circuit_batch)
+        other_programs = util.convert_to_tensor(other_batch)
+        symbol_names = tf.convert_to_tensor([], dtype=tf.dtypes.string)
+        symbol_values = tf.convert_to_tensor([[] for _ in range(batch_size)])
+        progams_coeffs = np.ones((batch_size,))
+        other_programs_coeffs = np.ones((batch_size, inner_dim_size))
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'symbols must be a positive integer'):
+            inner_product_op.inner_product_hessian(programs, symbol_names,
+                                                   symbol_values,
+                                                   other_programs,
+                                                   progams_coeffs,
+                                                   other_programs_coeffs)
+
+    def correctness_empty(self):
+        """Tests the inner product adj grad between two empty circuits."""
+        symbol_names = ['alpha', 'beta']
+        n_params = len(symbol_names)
+        empty_cicuit = util.convert_to_tensor([cirq.Circuit()])
+        empty_symbols = tf.convert_to_tensor([], dtype=tf.dtypes.string)
+        empty_values = tf.convert_to_tensor([[]])
+        other_program = util.convert_to_tensor([[cirq.Circuit()]])
+        program_coeffs = np.ones((1,))
+        other_program_coeffs = np.ones((1, 1))
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'symbols must be a positive integer'):
+            inner_product_op.inner_product_hessian(empty_cicuit, empty_symbols,
+                                                   empty_values, other_program,
+                                                   program_coeffs,
+                                                   other_program_coeffs)
+
+        empty_cicuit = util.convert_to_tensor([cirq.Circuit()])
+        symbol_names = tf.convert_to_tensor(symbol_names,
+                                            dtype=tf.dtypes.string)
+        symbol_values = tf.convert_to_tensor([[0.0 for _ in range(2)]])
+        other_program = util.convert_to_tensor([[cirq.Circuit()]])
+
+        out = inner_product_op.inner_product_hessian(empty_cicuit, symbol_names,
+                                                     symbol_values,
+                                                     other_program,
+                                                     program_coeffs,
+                                                     other_program_coeffs)
+        expected = np.zeros((1, n_params, n_params), dtype=np.complex64)
+        self.assertAllClose(out, expected)
+
+    def correctness_no_circuit(self):
+        """Test the inner product grad between no circuits."""
+
+        empty_circuit = tf.raw_ops.Empty(shape=(0,), dtype=tf.string)
+        empty_symbols = tf.raw_ops.Empty(shape=(0,), dtype=tf.string)
+        empty_values = tf.raw_ops.Empty(shape=(0, 0), dtype=tf.float32)
+        other_program = tf.raw_ops.Empty(shape=(0, 0), dtype=tf.string)
+        empty_program_coeffs = tf.raw_ops.Empty(shape=(0,), dtype=tf.float32)
+        empty_other_program_coeffs = tf.raw_ops.Empty(shape=(0, 0),
+                                                      dtype=tf.float32)
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'number of symbols must be a positive'):
+            # When using `tf.gradients`, a user will never encounter this error
+            # thanks to the `tf.cond` inside of the custom gradient.
+            _ = inner_product_op.inner_product_hessian(
+                empty_circuit, empty_symbols, empty_values, other_program,
+                empty_program_coeffs, empty_other_program_coeffs)
 
 
 class InnerProductHessianOnGates(tf.test.TestCase, parameterized.TestCase):
 
-    @parameterized.parameters([
-        {
-            'gate': gate,
-            'symbol_names': names
-        } for gate in _ONE_EIGEN_GATES + _TWO_EIGEN_GATES
-        for names in _SYMBOL_NAMES])
-    def test_correctness_one_qubit_gate_with_symbols(self, gate, symbol_names):
+    @parameterized.parameters([{
+        'gate': gate,
+        'symbol_names': names
+    }
+                               for gate in _ONE_EIGEN_GATES + _TWO_EIGEN_GATES
+                               for names in _SYMBOL_NAMES])
+    def correctness_one_qubit_gate_with_symbols(self, gate, symbol_names):
         """Tests that inner_product works with symbols."""
         n_params = len(symbol_names)
         qubits = cirq.GridQubit.rect(1, 2 if gate in _TWO_EIGEN_GATES else 1)
         circuit_batch = [cirq.Circuit(get_gate(gate, symbol_names, qubits))]
-        resolver_batch = [cirq.ParamResolver({name: 0.123 for name in symbol_names})]
+        resolver_batch = [
+            cirq.ParamResolver({name: 0.123 for name in symbol_names})
+        ]
 
         symbol_values_array = np.array(
             [[resolver[symbol]
               for symbol in symbol_names]
              for resolver in resolver_batch])
         other_batch = [
-            [cirq.Circuit(cirq.H.on_each(*qubits))]
-            for _ in circuit_batch
+            [cirq.Circuit(cirq.H.on_each(*qubits))] for _ in circuit_batch
         ]
         programs = util.convert_to_tensor(circuit_batch)
         other_programs = util.convert_to_tensor(other_batch)
         symbol_names_tensor = tf.convert_to_tensor(symbol_names,
                                                    dtype=tf.dtypes.string)
         symbol_values = tf.convert_to_tensor(symbol_values_array)
-        programs_coeffs = tf.cast(tf.ones((1,)), tf.complex64)
-        other_programs_coeffs = tf.cast(tf.ones((1, 1)), tf.complex64)
-        # programs_coeffs = tf.cast(tf.random.normal((1,)), tf.complex64)
-        # other_programs_coeffs = tf.cast(
-        #     tf.random.normal((1, 1)), tf.complex64)
+        programs_coeffs = tf.cast(tf.random.normal((1,)), tf.complex64)
+        other_programs_coeffs = tf.cast(tf.random.normal((1, 1)), tf.complex64)
 
-        t1 = time.time()
         out = inner_product_op.inner_product_hessian(
             programs, symbol_names_tensor, symbol_values, other_programs,
             programs_coeffs, other_programs_coeffs)
-        t1 = time.time() - t1
 
-        t2 = time.time()
         out_arr = np.zeros((1, n_params, n_params), dtype=np.complex64)
         for i, resolver in enumerate(resolver_batch):
             weighted_internal_wf = None
@@ -545,10 +542,40 @@ class InnerProductHessianOnGates(tf.test.TestCase, parameterized.TestCase):
                         programs_coeffs[i] *
                         np.vdot(final_wf_grad, weighted_internal_wf))
 
-        # Elapsed time should be less than 5% of cirq version.
-        # (at least 20x speedup)
-        self.assertLess(t1, t2*_INVERSE_SPEEDUP)
-        self.assertAllClose(out, out_arr, atol=_ATOL_FOR_COMPLEX_GATE if gate in _COMPLEX_GATES else _ATOL)
+        self.assertAllClose(out, out_arr, atol=_ATOL, rtol=_RTOL)
+
+    @parameterized.parameters([{
+        'gate': gate,
+    } for gate in _UNSUPPORTED_GATES for names in _SYMBOL_NAMES])
+    def unsupported_gate_with_symbols(self, gate):
+        """Tests that inner_product works with symbols."""
+        symbol_names = ['alpha']
+        qubits = cirq.GridQubit.rect(1, 2 if gate in _TWO_EIGEN_GATES else 1)
+        circuit_batch = [cirq.Circuit(get_gate(gate, symbol_names, qubits))]
+        resolver_batch = [
+            cirq.ParamResolver({name: 0.123 for name in symbol_names})
+        ]
+
+        symbol_values_array = np.array(
+            [[resolver[symbol]
+              for symbol in symbol_names]
+             for resolver in resolver_batch])
+        other_batch = [
+            [cirq.Circuit(cirq.H.on_each(*qubits))] for _ in circuit_batch
+        ]
+        programs = util.convert_to_tensor(circuit_batch)
+        other_programs = util.convert_to_tensor(other_batch)
+        symbol_names_tensor = tf.convert_to_tensor(symbol_names,
+                                                   dtype=tf.dtypes.string)
+        symbol_values = tf.convert_to_tensor(symbol_values_array)
+        programs_coeffs = tf.cast(tf.random.normal((1,)), tf.complex64)
+        other_programs_coeffs = tf.cast(tf.random.normal((1, 1)), tf.complex64)
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'is currently not supported'):
+            _ = inner_product_op.inner_product_hessian(
+                programs, symbol_names_tensor, symbol_values, other_programs,
+                programs_coeffs, other_programs_coeffs)
 
 
 if __name__ == "__main__":

@@ -36,7 +36,8 @@ void CreateHessianCircuit(
     const QsimCircuit& circuit, const std::vector<GateMetaData>& metadata,
     std::vector<std::vector<qsim::GateFused<QsimGate>>>* partial_fuses,
     std::vector<GradientOfGate>* grad_gates) {
-  for (std::vector<tfq::GateMetaData>::size_type i = 0; i < metadata.size(); i++) {
+  for (std::vector<tfq::GateMetaData>::size_type i = 0; i < metadata.size();
+       i++) {
     if (metadata[i].symbol_values.empty()) {
       continue;
     }
@@ -73,37 +74,10 @@ void CreateHessianCircuit(
       grad_gates->push_back(grad);
     }
 
-    // PhasedX
+    // Due to the large error from the 2nd order finite differencing
+    // PhasedXPowGate, we rejected the circuit if it contains the gate.
     else if (circuit.gates[i].kind == qsim::Cirq::GateKind::kPhasedXPowGate) {
-      // Process potentially several symbols.
-      bool symbolic_pexp = false;
-      bool symbolic_exp = false;
-      for (std::vector<std::basic_string<char> >::size_type j = 0; j < metadata[i].symbol_values.size(); j++) {
-        if (metadata[i].placeholder_names[j] ==
-            GateParamNames::kPhaseExponent) {
-          symbolic_pexp = true;
-          PopulateHessianPhasedXPhasedExponent(
-              metadata[i].symbol_values[j], i, circuit.gates[i].qubits[0],
-              metadata[i].gate_params[0], metadata[i].gate_params[1],
-              metadata[i].gate_params[2], metadata[i].gate_params[3],
-              metadata[i].gate_params[4], &grad);
-        } else if (metadata[i].placeholder_names[j] ==
-                   GateParamNames::kExponent) {
-          symbolic_exp = true;
-          PopulateHessianPhasedXExponent(
-              metadata[i].symbol_values[j], i, circuit.gates[i].qubits[0],
-              metadata[i].gate_params[0], metadata[i].gate_params[1],
-              metadata[i].gate_params[2], metadata[i].gate_params[3],
-              metadata[i].gate_params[4], &grad);
-        }
-      }
-      if (symbolic_pexp && symbolic_exp) {
-        PopulateCrossTermPhasedXPhasedExponentExponent(
-            i, circuit.gates[i].qubits[0], metadata[i].gate_params[0],
-            metadata[i].gate_params[1], metadata[i].gate_params[2],
-            metadata[i].gate_params[3], metadata[i].gate_params[4], &grad);
-      }
-      grad_gates->push_back(grad);
+      // TODO(jaeyoo) : Add PhasedXPowGate hessian terms w/ small error.
     }
 
     // Fsim
@@ -113,7 +87,8 @@ void CreateHessianCircuit(
       bool swapq = circuit.gates[i].swapped;
       bool symbolic_theta = false;
       bool symbolic_phi = false;
-      for (std::vector<std::basic_string<char> >::size_type j = 0; j < metadata[i].symbol_values.size(); j++) {
+      for (std::vector<std::basic_string<char>>::size_type j = 0;
+           j < metadata[i].symbol_values.size(); j++) {
         if (metadata[i].placeholder_names[j] == GateParamNames::kTheta) {
           symbolic_theta = true;
           PopulateHessianFsimTheta(
@@ -150,7 +125,8 @@ void CreateHessianCircuit(
       bool swapq = circuit.gates[i].swapped;
       bool symbolic_pexp = false;
       bool symbolic_exp = false;
-      for (std::vector<std::basic_string<char> >::size_type j = 0; j < metadata[i].symbol_values.size(); j++) {
+      for (std::vector<std::basic_string<char>>::size_type j = 0;
+           j < metadata[i].symbol_values.size(); j++) {
         if (metadata[i].placeholder_names[j] ==
             GateParamNames::kPhaseExponent) {
           symbolic_pexp = true;
@@ -190,7 +166,8 @@ void CreateHessianCircuit(
 
   partial_fuses->assign(grad_gates->size() + 1,
                         std::vector<qsim::GateFused<QsimGate>>({}));
-  for (std::vector<GradientOfGate>::size_type i = 0; i < grad_gates->size(); i++) {
+  for (std::vector<GradientOfGate>::size_type i = 0; i < grad_gates->size();
+       i++) {
     right = circuit.gates.begin() + (*grad_gates)[i].index;
     (*partial_fuses)[i] =
         fuser.FuseGates(qsim::BasicGateFuser<qsim::IO, QsimGate>::Parameter(),
@@ -218,77 +195,11 @@ void PopulateHessianSingleEigen(
   qsim::MatrixScalarMultiply(_INVERSE_HESS_EPS_SQUARE, left.matrix);
   qsim::MatrixScalarMultiply(_INVERSE_HESS_EPS_SQUARE, right.matrix);
   qsim::MatrixScalarMultiply(_INVERSE_HESS_EPS_SQUARE, center.matrix);
-  std::cout << "left = [";
-  int size = 8;
-  for (int i = 0; i < size; i++) {
-    char buf[100];
-    auto val = left.matrix[i];
-    std::sprintf(buf, "%.7e", val);
-    auto ending = (
-        (i % 2 == 0) ? ((val > 0) ? "+" : "") :
-                       ((i == size - 1) ? "j" : "j,"));
-    std::cout << buf << ending;
-  }
-  std::cout << "]" << std::endl;
-  std::cout << "right = [";
-  for (int i = 0; i < size; i++) {
-    char buf[100];
-    auto val = right.matrix[i];
-    std::sprintf(buf, "%.7e", val);
-    auto ending = (
-        (i % 2 == 0) ? ((val > 0) ? "+" : "") :
-                       ((i == size - 1) ? "j" : "j,"));
-    std::cout << buf << ending;
-  }
-  std::cout << "]" << std::endl;
-  std::cout << "center = [";
-  for (int i = 0; i < size; i++) {
-    char buf[100];
-    auto val = center.matrix[i];
-    std::sprintf(buf, "%.7e", val);
-    auto ending = (
-        (i % 2 == 0) ? ((val > 0) ? "+" : "") :
-                       ((i == size - 1) ? "j" : "j,"));
-    std::cout << buf << ending;
-  }
-  std::cout << "]" << std::endl;
   Matrix2Add(right.matrix,
              left.matrix);  // left's entries have right added
-  std::cout << "left_plus_right = [";
-  for (int i = 0; i < size; i++) {
-    char buf[100];
-    auto val = left.matrix[i];
-    std::sprintf(buf, "%.7e", val);
-    auto prefix = (val > 0) ? ((i % 2 == 1) ? "+" : "") : "";
-    auto ending = (i % 2 == 0) ? "" : ((i == size - 1) ? "j" : "j,");
-    std::cout << prefix << buf << ending;
-  }
-  std::cout << "]" << std::endl;
   qsim::MatrixScalarMultiply(2.0, center.matrix);
-  std::cout << "twice_center = [";
-  for (int i = 0; i < size; i++) {
-    char buf[100];
-    auto val = center.matrix[i];
-    std::sprintf(buf, "%.7e", val);
-    auto ending = (
-        (i % 2 == 0) ? ((val > 0) ? "+" : "") :
-                       ((i == size - 1) ? "j" : "j,"));
-    std::cout << buf << ending;
-  }
-  std::cout << "]" << std::endl;
   Matrix2Diff(center.matrix,
               left.matrix);  // left's entries have center subtracted.
-  std::cout << "left_plus_right_minus_twice_center = [";
-  for (int i = 0; i < size; i++) {
-    char buf[100];
-    auto val = left.matrix[i];
-    std::sprintf(buf, "%.7e", val);
-    auto ending = (
-        (i % 2 == 0) ? ((val > 0) ? "+" : "") :
-                       ((i == size - 1) ? "j" : "j,"));
-    std::cout << buf << ending;
-  }
-  std::cout << "]" << std::endl;
   grad->grad_gates.push_back(left);
 }
 
@@ -306,161 +217,11 @@ void PopulateHessianTwoEigen(
   qsim::MatrixScalarMultiply(_INVERSE_HESS_EPS_SQUARE, left.matrix);
   qsim::MatrixScalarMultiply(_INVERSE_HESS_EPS_SQUARE, right.matrix);
   qsim::MatrixScalarMultiply(_INVERSE_HESS_EPS_SQUARE, center.matrix);
-  std::cout << "PopulateHessianTwoEigen" << std::endl;
-  int size = 32;
-  std::cout << "left = [";
-  for (int i = 0; i < size; i++) {
-    char buf[100];
-    auto val = left.matrix[i];
-    std::sprintf(buf, "%.7e", val);
-    auto ending = (
-        (i % 2 == 0) ? ((val > 0) ? "+" : "") :
-                       ((i == size - 1) ? "j" : "j,"));
-    std::cout << buf << ending;
-  }
-  std::cout << "]" << std::endl;
-  std::cout << "center = [";
-  for (int i = 0; i < size; i++) {
-    char buf[100];
-    auto val = center.matrix[i];
-    std::sprintf(buf, "%.7e", val);
-    auto ending = (
-        (i % 2 == 0) ? ((val > 0) ? "+" : "") :
-                       ((i == size - 1) ? "j" : "j,"));
-    std::cout << buf << ending;
-  }
-  std::cout << "]" << std::endl;
-  std::cout << "right = [";
-  for (int i = 0; i < size; i++) {
-    char buf[100];
-    auto val = right.matrix[i];
-    std::sprintf(buf, "%.7e", val);
-    auto ending = (
-        (i % 2 == 0) ? ((val > 0) ? "+" : "") :
-                       ((i == size - 1) ? "j" : "j,"));
-    std::cout << buf << ending;
-  }
-  std::cout << "]" << std::endl;
   Matrix4Add(right.matrix,
              left.matrix);  // left's entries have right added.
-  std::cout << "left_plus_right = [";
-  for (int i = 0; i < size; i++) {
-    char buf[100];
-    auto val = left.matrix[i];
-    std::sprintf(buf, "%.7e", val);
-    auto ending = (
-        (i % 2 == 0) ? ((val > 0) ? "+" : "") :
-                       ((i == size - 1) ? "j" : "j,"));
-    std::cout << buf << ending;
-  }
-  std::cout << "]" << std::endl;
   qsim::MatrixScalarMultiply(2.0, center.matrix);
-  std::cout << "twice_center = [";
-  for (int i = 0; i < size; i++) {
-    char buf[100];
-    auto val = center.matrix[i];
-    std::sprintf(buf, "%.7e", val);
-    auto ending = (
-        (i % 2 == 0) ? ((val > 0) ? "+" : "") :
-                       ((i == size - 1) ? "j" : "j,"));
-    std::cout << buf << ending;
-  }
-  std::cout << "]" << std::endl;
   Matrix4Diff(center.matrix,
               left.matrix);  // left's entries have center subtracted.
-  std::cout << "left_plus_right_minus_twice_center = [";
-  for (int i = 0; i < size; i++) {
-    char buf[100];
-    auto val = left.matrix[i];
-    std::sprintf(buf, "%.7e", val);
-    auto ending = (
-        (i % 2 == 0) ? ((val > 0) ? "+" : "") :
-                       ((i == size - 1) ? "j" : "j,"));
-    std::cout << buf << ending;
-  }
-  std::cout << "]" << std::endl;
-  grad->grad_gates.push_back(left);
-}
-
-void PopulateHessianPhasedXPhasedExponent(const std::string& symbol,
-                                          unsigned int location,
-                                          unsigned int qid, float pexp,
-                                          float pexp_s, float exp, float exp_s,
-                                          float gs, GradientOfGate* grad) {
-  grad->params.push_back(symbol);
-  grad->index = location;
-//  auto left = qsim::Cirq::PhasedXPowGate<float>::Create(
-//      0, qid, (pexp + _HESS_EPS) * pexp_s, exp * exp_s, gs);
-//  auto center = qsim::Cirq::PhasedXPowGate<float>::Create(0, qid, pexp * pexp_s,
-//                                                          exp * exp_s, gs);
-//  auto right = qsim::Cirq::PhasedXPowGate<float>::Create(
-//      0, qid, (pexp - _HESS_EPS) * pexp_s, exp * exp_s, gs);
-//  // Due to precision issue, multiply weights first.
-//  qsim::MatrixScalarMultiply(_INVERSE_HESS_EPS_SQUARE, left.matrix);
-//  qsim::MatrixScalarMultiply(_INVERSE_HESS_EPS_SQUARE, right.matrix);
-//  qsim::MatrixScalarMultiply(_INVERSE_HESS_EPS_SQUARE, center.matrix);
-//  Matrix2Add(right.matrix,
-//             left.matrix);  // left's entries have right added.
-//  qsim::MatrixScalarMultiply(2.0, center.matrix);
-//  Matrix2Diff(center.matrix,
-//              left.matrix);  // left's entries have center subtracted.
-  auto left = D2PhasedExponentPhasedXPowGate<float>::Create(
-      0, qid, pexp, pexp_s, exp*exp_s, gs);
-  grad->grad_gates.push_back(left);
-}
-
-void PopulateHessianPhasedXExponent(const std::string& symbol,
-                                    unsigned int location, unsigned int qid,
-                                    float pexp, float pexp_s, float exp,
-                                    float exp_s, float gs,
-                                    GradientOfGate* grad) {
-  grad->params.push_back(symbol);
-  grad->index = location;
-//  auto left = qsim::Cirq::PhasedXPowGate<float>::Create(
-//      0, qid, pexp * pexp_s, (exp + _HESS_EPS) * exp_s, gs);
-//  auto center = qsim::Cirq::PhasedXPowGate<float>::Create(0, qid, pexp * pexp_s,
-//                                                          exp * exp_s, gs);
-//  auto right = qsim::Cirq::PhasedXPowGate<float>::Create(
-//      0, qid, pexp * pexp_s, (exp - _HESS_EPS) * exp_s, gs);
-//  // Due to precision issue, multiply weights first.
-//  qsim::MatrixScalarMultiply(_INVERSE_HESS_EPS_SQUARE, left.matrix);
-//  qsim::MatrixScalarMultiply(_INVERSE_HESS_EPS_SQUARE, right.matrix);
-//  qsim::MatrixScalarMultiply(_INVERSE_HESS_EPS_SQUARE, center.matrix);
-//  Matrix2Add(right.matrix,
-//             left.matrix);  // left's entries have right added.
-//  qsim::MatrixScalarMultiply(2.0, center.matrix);
-//  Matrix2Diff(center.matrix,
-//              left.matrix);  // left's entries have center subtracted.
-  auto left = D2ExponentPhasedXPowGate<float>::Create(
-      0, qid, pexp * pexp_s, exp, exp_s, gs);
-  grad->grad_gates.push_back(left);
-}
-
-void PopulateCrossTermPhasedXPhasedExponentExponent(
-    unsigned int location, unsigned int qid, float pexp, float pexp_s,
-    float exp, float exp_s, float gs, GradientOfGate* grad) {
-  grad->params.push_back(kUsePrevTwoSymbols);
-  grad->index = location;
-//  auto left = qsim::Cirq::PhasedXPowGate<float>::Create(
-//      0, qid, (pexp + _GRAD_EPS) * pexp_s, (exp + _GRAD_EPS) * exp_s, gs);
-//  auto left_center = qsim::Cirq::PhasedXPowGate<float>::Create(
-//      0, qid, (pexp + _GRAD_EPS) * pexp_s, (exp - _GRAD_EPS) * exp_s, gs);
-//  auto right_center = qsim::Cirq::PhasedXPowGate<float>::Create(
-//      0, qid, (pexp - _GRAD_EPS) * pexp_s, (exp + _GRAD_EPS) * exp_s, gs);
-//  auto right = qsim::Cirq::PhasedXPowGate<float>::Create(
-//      0, qid, (pexp - _GRAD_EPS) * pexp_s, (exp - _GRAD_EPS) * exp_s, gs);
-//  // Due to precision issue, multiply weights first.
-//  qsim::MatrixScalarMultiply(_INVERSE_HESS_EPS_SQUARE, left.matrix);
-//  qsim::MatrixScalarMultiply(_INVERSE_HESS_EPS_SQUARE, right.matrix);
-//  qsim::MatrixScalarMultiply(_INVERSE_HESS_EPS_SQUARE, left_center.matrix);
-//  qsim::MatrixScalarMultiply(_INVERSE_HESS_EPS_SQUARE, right_center.matrix);
-//  Matrix2Add(right.matrix,
-//             left.matrix);  // left's entries have right added.
-//  Matrix2Add(right_center.matrix, left_center.matrix);
-//  Matrix2Diff(left_center.matrix,
-//              left.matrix);  // left's entries have left_center subtracted.
-  auto left = DPhasedExponentDExponentPhasedXPowGate<float>::Create(
-      0, qid, pexp, pexp_s, exp, exp_s, gs);
   grad->grad_gates.push_back(left);
 }
 

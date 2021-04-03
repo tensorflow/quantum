@@ -15,7 +15,6 @@ limitations under the License.
 
 #include <memory>
 #include <vector>
-#include <iostream>
 
 #include "../qsim/lib/circuit.h"
 #include "../qsim/lib/gate_appl.h"
@@ -134,6 +133,20 @@ class TfqInnerProductHessianOp : public tensorflow::OpKernel {
             &fused_circuits[i], &gate_meta[i]);
         NESTED_FN_STATUS_SYNC(parse_status, local, p_lock);
 
+        for (std::vector<tfq::GateMetaData>::size_type j = 0;
+             j < gate_meta[i].size(); j++) {
+          if (gate_meta[i][j].symbol_values.empty()) {
+            continue;
+          }
+          if (qsim_circuits[i].gates[j].kind ==
+              qsim::Cirq::GateKind::kPhasedXPowGate) {
+            NESTED_FN_STATUS_SYNC(parse_status,
+                                  Status(tensorflow::error::INVALID_ARGUMENT,
+                                         "the circuit with PhasedXPowGate is "
+                                         "currently not supported."),
+                                  p_lock);
+          }
+        }
         CreateGradientCircuit(qsim_circuits[i], gate_meta[i],
                               &partial_fused_grad_circuits[i],
                               &gradient_gates[i]);
@@ -193,10 +206,10 @@ class TfqInnerProductHessianOp : public tensorflow::OpKernel {
 
     // Cross reference with standard google cloud compute instances
     // Memory ~= 2 * num_threads * (2 * 64 * 2 ** num_qubits in circuits)
-    // e2s2 = 2 CPU, 8GB -> Can safely do 22 since Memory = 4GB
-    // e2s4 = 4 CPU, 16GB -> Can safely do 22 since Memory = 8GB
+    // e2s2 = 2 CPU, 8GB -> Can safely do 20 since Memory = 4GB
+    // e2s4 = 4 CPU, 16GB -> Can safely do 20 since Memory = 8GB
     // ...
-    if (true || max_num_qubits >= 22 || output_dim_batch_size == 1) {
+    if (max_num_qubits >= 20 || output_dim_batch_size == 1) {
       ComputeLarge(num_qubits, maps, qsim_circuits, fused_circuits,
                    partial_fused_grad_circuits, partial_fused_hess_circuits,
                    gradient_gates, hessian_gates, other_fused_circuits,
@@ -270,9 +283,7 @@ class TfqInnerProductHessianOp : public tensorflow::OpKernel {
       // now sv is |psi>
       // scratch contains sum_j other_programs_coeffs[i][j]*|phi[i][j]>
       // Start adjoint differentiation on a single gate
-      std::cout << ">>> Start a single gate hessian" << std::endl;
       for (int l = partial_fused_hess_circuits[i].size() - 1; l >= 0; l--) {
-        std::cout << ">>>>>> " << l << "th partial fused circuit is applied" << std::endl;
         for (int k = partial_fused_hess_circuits[i][l].size() - 1; k >= 0;
              k--) {
           ApplyFusedGateDagger(sim, partial_fused_hess_circuits[i][l][k], sv);
@@ -309,19 +320,16 @@ class TfqInnerProductHessianOp : public tensorflow::OpKernel {
             // non-controlled version of the gradient gate.
             ss.BulkSetAmpl(scratch2, mask, cbits, 0, 0, true);
           }
-          std::cout << ">>>>>>... " << k << "th gradient gate is applied" << std::endl;
           qsim::ApplyGate(sim, hessian_gates[i][l - 1].grad_gates[k], scratch2);
 
           // don't need not-found check since this is done upstream already.
           auto symbol = hessian_gates[i][l - 1].params[k];
-          std::cout << ">>>>>>... " << k << "th symbol = " << symbol << std::endl;
           double coeff = static_cast<double>(programs_coeffs[i]);
           if (symbol == kUsePrevTwoSymbols) {
             // Apply second-order finite difference w.r.t. two symbols
             // That is, CrossTerm w.r.t. two symbols in one gate.
             auto symbol1 = hessian_gates[i][l - 1].params[k - 2];
             auto symbol2 = hessian_gates[i][l - 1].params[k - 1];
-            std::cout << ">>>>>>... CrossTerm : two symbols are " << symbol1 << " and " << symbol2 << std::endl;
             auto it = maps[i].find(symbol1);
             const int loc1 = it->second.first;
             it = maps[i].find(symbol2);
@@ -332,17 +340,13 @@ class TfqInnerProductHessianOp : public tensorflow::OpKernel {
             // parameter-shift we need to apply a single `gradient_gate`
             // per a symbol.
             std::complex<double> result = ss.InnerProduct(scratch2, scratch);
-            auto val = (
-                   std::complex<float>(static_cast<float>(coeff * result.real()),
-                                       static_cast<float>(coeff * result.imag())));
+            auto val = (std::complex<float>(
+                static_cast<float>(coeff * result.real()),
+                static_cast<float>(coeff * result.imag())));
             // Because Hessian is symmetric.
-            std::cout << ">>>>>>... value" << val << std::endl;
             (*output_tensor)(i, loc1, loc2) += val;
-            std::cout << ">>>>>>... (*output_tensor)(i, loc1, loc2)" << (*output_tensor)(i, loc1, loc2) << std::endl;
             (*output_tensor)(i, loc2, loc1) += val;
-            std::cout << ">>>>>>... (*output_tensor)(i, loc2, loc1)" << (*output_tensor)(i, loc2, loc1) << std::endl;
           } else {
-            std::cout << ">>>>>>... One gate " << symbol << std::endl;
             // Apply second-order finite difference w.r.t. one symbol
             const auto it = maps[i].find(symbol);
             const int loc = it->second.first;
@@ -352,11 +356,9 @@ class TfqInnerProductHessianOp : public tensorflow::OpKernel {
             // parameter-shift we need to apply a single `gradient_gate`
             // per a symbol.
             std::complex<double> result = ss.InnerProduct(scratch2, scratch);
-            auto val =
-                (
-                 std::complex<float>(static_cast<float>(coeff * result.real()),
-                                     static_cast<float>(coeff * result.imag())));
-            std::cout << ">>>>>>... value" << val << std::endl;
+            auto val = (std::complex<float>(
+                static_cast<float>(coeff * result.real()),
+                static_cast<float>(coeff * result.imag())));
             (*output_tensor)(i, loc, loc) += val;
           }
         }
@@ -377,9 +379,7 @@ class TfqInnerProductHessianOp : public tensorflow::OpKernel {
       // other_sv contains sum_j other_programs_coeffs[i][j]*|phi[i][j]>
       // Start adjoint differentiation on two gates
       // m is the index for the first gate
-      std::cout << ">>> Start two gates hessian" << std::endl;
       for (int m = partial_fused_grad_circuits[i].size() - 1; m >= 1; m--) {
-        std::cout << ">>>>>>(1) m=" << m << "th partial fused circuit is applied" << std::endl;
         for (int k = partial_fused_grad_circuits[i][m].size() - 1; k >= 0;
              k--) {
           ApplyFusedGateDagger(sim, partial_fused_grad_circuits[i][m][k], sv);
@@ -412,18 +412,15 @@ class TfqInnerProductHessianOp : public tensorflow::OpKernel {
             // non-controlled version of the gradient gate.
             ss.BulkSetAmpl(scratch4, mask_m, cbits_m, 0, 0, true);
           }
-          std::cout << ">>>>>>(1)... p=" << p << "th gradient gate is applied" << std::endl;
           qsim::ApplyGateDagger(sim, gradient_gates[i][m - 1].grad_gates[p],
                                 scratch4);
 
           // don't need not-found check since this is done upstream already.
           const auto it = maps[i].find(gradient_gates[i][m - 1].params[p]);
-          std::cout << ">>>>>>(1)... p=" << p << "th symbol = " << gradient_gates[i][m - 1].params[p] << std::endl;
           const int loc_m = it->second.first;
 
           // n is the index for the second gate
           for (int n = m - 1; n >= 0; n--) {
-            std::cout << ">>>>>>---(2) " << n << "th partial fused circuit is applied" << std::endl;
             for (int k = partial_fused_grad_circuits[i][n].size() - 1; k >= 0;
                  k--) {
               ApplyFusedGateDagger(sim, partial_fused_grad_circuits[i][n][k],
@@ -432,13 +429,11 @@ class TfqInnerProductHessianOp : public tensorflow::OpKernel {
                                    scratch4);
             }
             if (n == 0) {
-              std::cout << ">>>>>>---(2) no just quit." << std::endl;
               // last layer will have no parametrized gates so can break.
               break;
             }
 
             // Hit a parameterized gate.
-            std::cout << "n-th gate index = " << gradient_gates[i][n - 1].index << std::endl;
             auto cur_gate_n =
                 qsim_circuits[i].gates[gradient_gates[i][n - 1].index];
             ApplyGateDagger(sim, cur_gate_n, scratch2);
@@ -465,28 +460,11 @@ class TfqInnerProductHessianOp : public tensorflow::OpKernel {
                 ss.BulkSetAmpl(scratch3, mask_n, cbits_n, 0, 0, true);
               }
 
-              std::cout << ">>>>>>---(2)... q=" << q << "th gradient gate is applied" << std::endl;
               qsim::ApplyGate(sim, gradient_gates[i][n - 1].grad_gates[q],
                               scratch3);
 
-              auto ptr = scratch3.get();
-              auto ptr_size = 2 << scratch3.num_qubits();
-              std::cout << "Statevector" << std::endl;
-              for (int i = 0; i < ptr_size; i++) {
-                std::cout << ptr[i] << ",";
-              }
-              std::cout << std::endl;
-
-              ptr = scratch4.get();
-              ptr_size = 2 << scratch4.num_qubits();
-              std::cout << "Other Statevector" << std::endl;
-              for (int i = 0; i < ptr_size; i++) {
-                std::cout << ptr[i] << ",";
-              }
-              std::cout << std::endl;
               // don't need not-found check since this is done upstream already.
               const auto it = maps[i].find(gradient_gates[i][n - 1].params[q]);
-              std::cout << ">>>>>>---(2)... q=" << q << "th symbol = " << gradient_gates[i][n - 1].params[q] << std::endl;
               const int loc_n = it->second.first;
               // Apply finite differencing for adjoint gradients.
               // Finite differencing enables applying multiple `gradient_gate`
@@ -495,11 +473,9 @@ class TfqInnerProductHessianOp : public tensorflow::OpKernel {
               // per a symbol.
               double coeff = static_cast<double>(programs_coeffs[i]);
               std::complex<double> result = ss.InnerProduct(scratch3, scratch4);
-              auto val =
-                  (
-                   std::complex<float>(static_cast<float>(coeff * result.real()),
-                                       static_cast<float>(coeff * result.imag())));
-              std::cout << ">>>>>>>>>... value" << val << std::endl;
+              auto val = (std::complex<float>(
+                  static_cast<float>(coeff * result.real()),
+                  static_cast<float>(coeff * result.imag())));
               (*output_tensor)(i, loc_m, loc_n) += val;
               (*output_tensor)(i, loc_n, loc_m) += val;
             }
@@ -533,7 +509,7 @@ class TfqInnerProductHessianOp : public tensorflow::OpKernel {
 
     const int output_dim_internal_size = other_fused_circuits[0].size();
 
-    auto DoWork = [&](int start, int end) {
+    auto DoWork1 = [&](int start, int end) {
       int old_batch_index = -2;
       int cur_batch_index = -1;
       int largest_nq = 1;
@@ -542,13 +518,12 @@ class TfqInnerProductHessianOp : public tensorflow::OpKernel {
       Simulator sim = Simulator(tfq_for);
       StateSpace ss = StateSpace(tfq_for);
       auto sv = ss.Create(largest_nq);
+      auto sv_adj = ss.Create(largest_nq);
       auto scratch = ss.Create(largest_nq);
       auto scratch2 = ss.Create(largest_nq);
-      auto scratch3 = ss.Create(largest_nq);
-      auto scratch4 = ss.Create(largest_nq);
-      for (int i = start; i < end; i++) {
-        cur_batch_index = i / output_dim_internal_size;
-        cur_internal_index = i % output_dim_internal_size;
+      for (int ii = start; ii < end; ii++) {
+        cur_batch_index = ii / output_dim_internal_size;
+        cur_internal_index = ii % output_dim_internal_size;
 
         const int nq = num_qubits[cur_batch_index];
 
@@ -558,6 +533,7 @@ class TfqInnerProductHessianOp : public tensorflow::OpKernel {
           if (nq > largest_nq) {
             largest_nq = nq;
             sv = ss.Create(largest_nq);
+            sv_adj = ss.Create(largest_nq);
             scratch = ss.Create(largest_nq);
             scratch2 = ss.Create(largest_nq);
           }
@@ -581,12 +557,18 @@ class TfqInnerProductHessianOp : public tensorflow::OpKernel {
         // now sv is |psi>
         // scratch contains |phi>
         // Start adjoint differentiation on a single gate
-        for (int l = partial_fused_hess_circuits[cur_batch_index].size() - 1; l >= 0; l--) {
-          for (int k = partial_fused_hess_circuits[cur_batch_index][l].size() - 1; k >= 0;
-               k--) {
-            ApplyFusedGateDagger(sim, partial_fused_hess_circuits[cur_batch_index][l][k], sv);
-            ApplyFusedGateDagger(sim, partial_fused_hess_circuits[cur_batch_index][l][k],
-                                 scratch);
+        ss.Copy(sv, sv_adj);
+        for (int l = partial_fused_hess_circuits[cur_batch_index].size() - 1;
+             l >= 0; l--) {
+          for (int k =
+                   partial_fused_hess_circuits[cur_batch_index][l].size() - 1;
+               k >= 0; k--) {
+            ApplyFusedGateDagger(
+                sim, partial_fused_hess_circuits[cur_batch_index][l][k],
+                sv_adj);
+            ApplyFusedGateDagger(
+                sim, partial_fused_hess_circuits[cur_batch_index][l][k],
+                scratch);
           }
           if (l == 0) {
             // last layer will have no parametrized gates so can break.
@@ -594,8 +576,10 @@ class TfqInnerProductHessianOp : public tensorflow::OpKernel {
           }
 
           // Hit a parameterized gate.
-          auto cur_gate = qsim_circuits[cur_batch_index].gates[hessian_gates[cur_batch_index][l - 1].index];
-          ApplyGateDagger(sim, cur_gate, sv);
+          auto cur_gate =
+              qsim_circuits[cur_batch_index]
+                  .gates[hessian_gates[cur_batch_index][l - 1].index];
+          ApplyGateDagger(sim, cur_gate, sv_adj);
 
           // if applicable compute control qubit mask and control value bits.
           uint64_t mask = 0;
@@ -608,25 +592,34 @@ class TfqInnerProductHessianOp : public tensorflow::OpKernel {
           }
 
           for (std::vector<QsimGate>::size_type k = 0;
-               k < hessian_gates[cur_batch_index][l - 1].grad_gates.size(); k++) {
+               k < hessian_gates[cur_batch_index][l - 1].grad_gates.size();
+               k++) {
             // Copy sv onto scratch2 in anticipation of non-unitary "gradient
             // gate".
-            ss.Copy(sv, scratch2);
+            ss.Copy(sv_adj, scratch2);
             if (!cur_gate.controlled_by.empty()) {
               // Gradient of controlled gates puts zeros on diagonal which is
               // the same as collapsing the state and then applying the
               // non-controlled version of the gradient gate.
               ss.BulkSetAmpl(scratch2, mask, cbits, 0, 0, true);
             }
-            qsim::ApplyGate(sim, hessian_gates[cur_batch_index][l - 1].grad_gates[k], scratch2);
+            qsim::ApplyGate(sim,
+                            hessian_gates[cur_batch_index][l - 1].grad_gates[k],
+                            scratch2);
 
             // don't need not-found check since this is done upstream already.
             auto symbol = hessian_gates[cur_batch_index][l - 1].params[k];
+            double coeff1 =
+                static_cast<double>(programs_coeffs[cur_batch_index]);
+            double coeff2 = static_cast<double>(
+                other_programs_coeffs[cur_batch_index][cur_internal_index]);
             if (symbol == kUsePrevTwoSymbols) {
               // Apply second-order finite difference w.r.t. two symbols
               // That is, CrossTerm w.r.t. two symbols in one gate.
-              auto symbol1 = hessian_gates[cur_batch_index][l - 1].params[k - 2];
-              auto symbol2 = hessian_gates[cur_batch_index][l - 1].params[k - 1];
+              auto symbol1 =
+                  hessian_gates[cur_batch_index][l - 1].params[k - 2];
+              auto symbol2 =
+                  hessian_gates[cur_batch_index][l - 1].params[k - 1];
               auto it = maps[cur_batch_index].find(symbol1);
               const int loc1 = it->second.first;
               it = maps[cur_batch_index].find(symbol2);
@@ -637,9 +630,9 @@ class TfqInnerProductHessianOp : public tensorflow::OpKernel {
               // parameter-shift we need to apply a single `gradient_gate`
               // per a symbol.
               std::complex<double> result = ss.InnerProduct(scratch2, scratch);
-              auto val = (programs_coeffs[cur_batch_index] * other_programs_coeffs[cur_batch_index][cur_internal_index] *
-                     std::complex<float>(static_cast<float>(result.real()),
-                                         static_cast<float>(result.imag())));
+              auto val = (std::complex<float>(
+                  static_cast<float>(coeff1 * coeff2 * result.real()),
+                  static_cast<float>(coeff1 * coeff2 * result.imag())));
               // Because Hessian is symmetric.
               (*output_tensor)(cur_batch_index, loc1, loc2) += val;
               (*output_tensor)(cur_batch_index, loc2, loc1) += val;
@@ -654,35 +647,94 @@ class TfqInnerProductHessianOp : public tensorflow::OpKernel {
               // per a symbol.
               std::complex<double> result = ss.InnerProduct(scratch2, scratch);
               (*output_tensor)(cur_batch_index, loc, loc) +=
-                  (programs_coeffs[cur_batch_index] * other_programs_coeffs[cur_batch_index][cur_internal_index] *
-                   std::complex<float>(static_cast<float>(result.real()),
-                                       static_cast<float>(result.imag())));
+                  (std::complex<float>(
+                      static_cast<float>(coeff1 * coeff2 * result.real()),
+                      static_cast<float>(coeff1 * coeff2 * result.imag())));
             }
           }
           ApplyGateDagger(sim, cur_gate, scratch);
         }
+        old_batch_index = cur_batch_index;
+      }
+    };
+
+    int64_t num_cycles =
+        200 * (int64_t(1) << static_cast<int64_t>(max_num_qubits));
+    context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
+        fused_circuits.size() * output_dim_internal_size, num_cycles, DoWork1);
+
+    auto DoWork2 = [&](int start, int end) {
+      int old_batch_index = -2;
+      int cur_batch_index = -1;
+      int largest_nq = 1;
+      int cur_internal_index;
+
+      Simulator sim = Simulator(tfq_for);
+      StateSpace ss = StateSpace(tfq_for);
+      auto sv = ss.Create(largest_nq);
+      auto sv_adj = ss.Create(largest_nq);
+      auto scratch = ss.Create(largest_nq);
+      auto scratch2 = ss.Create(largest_nq);
+      auto scratch3 = ss.Create(largest_nq);
+      auto scratch4 = ss.Create(largest_nq);
+      for (int ii = start; ii < end; ii++) {
+        cur_batch_index = ii / output_dim_internal_size;
+        cur_internal_index = ii % output_dim_internal_size;
+
+        const int nq = num_qubits[cur_batch_index];
+
+        if (cur_batch_index != old_batch_index) {
+          // We've run into a new state vector we must compute.
+          // Only compute a new state vector when we have to.
+          if (nq > largest_nq) {
+            largest_nq = nq;
+            sv = ss.Create(largest_nq);
+            sv_adj = ss.Create(largest_nq);
+            scratch = ss.Create(largest_nq);
+            scratch2 = ss.Create(largest_nq);
+            scratch3 = ss.Create(largest_nq);
+            scratch4 = ss.Create(largest_nq);
+          }
+          ss.SetStateZero(sv);
+          for (std::vector<qsim::GateFused<QsimGate>>::size_type j = 0;
+               j < fused_circuits[cur_batch_index].size(); j++) {
+            qsim::ApplyFusedGate(sim, fused_circuits[cur_batch_index][j], sv);
+          }
+        }
+
+        ss.SetStateZero(scratch);
+        for (std::vector<qsim::GateFused<QsimGate>>::size_type k = 0;
+             k <
+             other_fused_circuits[cur_batch_index][cur_internal_index].size();
+             k++) {
+          qsim::ApplyFusedGate(
+              sim, other_fused_circuits[cur_batch_index][cur_internal_index][k],
+              scratch);
+        }
 
         // Re-initialize statevectors to save memory.
-        ss.SetStateZero(sv);
-        for (std::vector<qsim::GateFused<QsimGate>>::size_type j = 0;
-             j < fused_circuits[cur_batch_index].size(); j++) {
-          qsim::ApplyFusedGate(sim, fused_circuits[cur_batch_index][j], sv);
-        }
+        ss.Copy(sv, sv_adj);
 
         // now sv is |psi>
         // scratch contains |phi>
         // Start adjoint differentiation on two gates
         // m is the index for the first gate
-        for (int m = partial_fused_grad_circuits[cur_batch_index].size() - 1; m >= 1; m--) {
-          for (int k = partial_fused_grad_circuits[cur_batch_index][m].size() - 1; k >= 0;
-               k--) {
-            ApplyFusedGateDagger(sim, partial_fused_grad_circuits[cur_batch_index][m][k], sv);
-            ApplyFusedGateDagger(sim, partial_fused_grad_circuits[cur_batch_index][m][k],
-                                 scratch);
+        for (int m = partial_fused_grad_circuits[cur_batch_index].size() - 1;
+             m >= 1; m--) {
+          for (int k =
+                   partial_fused_grad_circuits[cur_batch_index][m].size() - 1;
+               k >= 0; k--) {
+            ApplyFusedGateDagger(
+                sim, partial_fused_grad_circuits[cur_batch_index][m][k],
+                sv_adj);
+            ApplyFusedGateDagger(
+                sim, partial_fused_grad_circuits[cur_batch_index][m][k],
+                scratch);
           }
           auto cur_gate_m =
-              qsim_circuits[cur_batch_index].gates[gradient_gates[cur_batch_index][m - 1].index];
-          ApplyGateDagger(sim, cur_gate_m, sv);
+              qsim_circuits[cur_batch_index]
+                  .gates[gradient_gates[cur_batch_index][m - 1].index];
+          ApplyGateDagger(sim, cur_gate_m, sv_adj);
 
           // if applicable compute control qubit mask and control value bits.
           uint64_t mask_m = 0;
@@ -693,34 +745,41 @@ class TfqInnerProductHessianOp : public tensorflow::OpKernel {
             mask_m |= uint64_t{1} << control_loc;
             cbits_m |= ((cur_gate_m.cmask >> k) & 1) << control_loc;
           }
+
+          ss.Copy(scratch, scratch4);
+          ss.Copy(sv_adj, scratch2);
           for (std::vector<QsimGate>::size_type p = 0;
-               p < gradient_gates[cur_batch_index][m - 1].grad_gates.size(); p++) {
+               p < gradient_gates[cur_batch_index][m - 1].grad_gates.size();
+               p++) {
             // Copy sv onto scratch2 in anticipation of the first non-unitary
             // "gradient gate".
-            ss.Copy(sv, scratch2);
             if (!cur_gate_m.controlled_by.empty()) {
               // Gradient of controlled gates puts zeros on diagonal which is
               // the same as collapsing the state and then applying the
               // non-controlled version of the gradient gate.
-              ss.BulkSetAmpl(scratch2, mask_m, cbits_m, 0, 0, true);
+              ss.BulkSetAmpl(scratch4, mask_m, cbits_m, 0, 0, true);
             }
-            qsim::ApplyGate(sim, gradient_gates[cur_batch_index][m - 1].grad_gates[p],
-                            scratch2);
+            qsim::ApplyGateDagger(
+                sim, gradient_gates[cur_batch_index][m - 1].grad_gates[p],
+                scratch4);
 
             // don't need not-found check since this is done upstream already.
-            const auto it = maps[cur_batch_index].find(gradient_gates[cur_batch_index][m - 1].params[p]);
+            const auto it = maps[cur_batch_index].find(
+                gradient_gates[cur_batch_index][m - 1].params[p]);
             const int loc_m = it->second.first;
 
-            // Copy scratch onto scratch4.
-            ss.Copy(scratch, scratch4);
             // n is the index for the second gate
             for (int n = m - 1; n >= 0; n--) {
-              for (int k = partial_fused_grad_circuits[cur_batch_index][n].size() - 1; k >= 0;
-                   k--) {
-                ApplyFusedGateDagger(sim, partial_fused_grad_circuits[cur_batch_index][n][k],
-                                     scratch2);
-                ApplyFusedGateDagger(sim, partial_fused_grad_circuits[cur_batch_index][n][k],
-                                     scratch4);
+              for (int k =
+                       partial_fused_grad_circuits[cur_batch_index][n].size() -
+                       1;
+                   k >= 0; k--) {
+                ApplyFusedGateDagger(
+                    sim, partial_fused_grad_circuits[cur_batch_index][n][k],
+                    scratch2);
+                ApplyFusedGateDagger(
+                    sim, partial_fused_grad_circuits[cur_batch_index][n][k],
+                    scratch4);
               }
               if (n == 0) {
                 // last layer will have no parametrized gates so can break.
@@ -729,10 +788,12 @@ class TfqInnerProductHessianOp : public tensorflow::OpKernel {
 
               // Hit a parameterized gate.
               auto cur_gate_n =
-                  qsim_circuits[cur_batch_index].gates[gradient_gates[cur_batch_index][n - 1].index];
+                  qsim_circuits[cur_batch_index]
+                      .gates[gradient_gates[cur_batch_index][n - 1].index];
               ApplyGateDagger(sim, cur_gate_n, scratch2);
 
-              // if applicable compute control qubit mask and control value bits.
+              // if applicable compute control qubit mask and control value
+              // bits.
               uint64_t mask_n = 0;
               uint64_t cbits_n = 0;
               for (std::vector<unsigned int>::size_type k = 0;
@@ -743,36 +804,43 @@ class TfqInnerProductHessianOp : public tensorflow::OpKernel {
               }
 
               for (std::vector<QsimGate>::size_type q = 0;
-                   q < gradient_gates[cur_batch_index][n - 1].grad_gates.size(); q++) {
+                   q < gradient_gates[cur_batch_index][n - 1].grad_gates.size();
+                   q++) {
                 // Copy scratch2 onto scratch3 in anticipation of the second
                 // non-unitary "gradient gate".
                 ss.Copy(scratch2, scratch3);
                 if (!cur_gate_n.controlled_by.empty()) {
-                  // Gradient of controlled gates puts zeros on diagonal which is
-                  // the same as collapsing the state and then applying the
+                  // Gradient of controlled gates puts zeros on diagonal which
+                  // is the same as collapsing the state and then applying the
                   // non-controlled version of the gradient gate.
                   ss.BulkSetAmpl(scratch3, mask_n, cbits_n, 0, 0, true);
                 }
-                qsim::ApplyGate(sim, gradient_gates[cur_batch_index][n - 1].grad_gates[q],
-                                scratch3);
 
-                // don't need not-found check since this is done upstream already.
-                const auto it = maps[cur_batch_index].find(gradient_gates[cur_batch_index][n - 1].params[q]);
+                qsim::ApplyGate(
+                    sim, gradient_gates[cur_batch_index][n - 1].grad_gates[q],
+                    scratch3);
+
+                // don't need not-found check since this is done upstream
+                // already.
+                const auto it = maps[cur_batch_index].find(
+                    gradient_gates[cur_batch_index][n - 1].params[q]);
                 const int loc_n = it->second.first;
                 // Apply finite differencing for adjoint gradients.
                 // Finite differencing enables applying multiple `gradient_gate`
                 // of a symbol at the same circuit. For analytic methods like
                 // parameter-shift we need to apply a single `gradient_gate`
                 // per a symbol.
-                std::complex<double> result = ss.InnerProduct(scratch3, scratch4);
-                auto val =
-                    (programs_coeffs[cur_batch_index] * other_programs_coeffs[cur_batch_index][cur_internal_index] *
-                     std::complex<float>(static_cast<float>(result.real()),
-                                         static_cast<float>(result.imag())));
+                double coeff1 =
+                    static_cast<double>(programs_coeffs[cur_batch_index]);
+                double coeff2 = static_cast<double>(
+                    other_programs_coeffs[cur_batch_index][cur_internal_index]);
+                std::complex<double> result =
+                    ss.InnerProduct(scratch3, scratch4);
+                auto val = (std::complex<float>(
+                    static_cast<float>(coeff1 * coeff2 * result.real()),
+                    static_cast<float>(coeff1 * coeff2 * result.imag())));
                 (*output_tensor)(cur_batch_index, loc_m, loc_n) += val;
-                if (loc_m != loc_n) {
-                  (*output_tensor)(cur_batch_index, loc_n, loc_m) += val;
-                }
+                (*output_tensor)(cur_batch_index, loc_n, loc_m) += val;
               }
               ApplyGateDagger(sim, cur_gate_n, scratch4);
             }
@@ -783,10 +851,9 @@ class TfqInnerProductHessianOp : public tensorflow::OpKernel {
       }
     };
 
-    const int64_t num_cycles =
-        200 * (int64_t(1) << static_cast<int64_t>(max_num_qubits));
+    num_cycles = 500 * (int64_t(1) << static_cast<int64_t>(max_num_qubits));
     context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
-        fused_circuits.size() * output_dim_internal_size, num_cycles, DoWork);
+        fused_circuits.size() * output_dim_internal_size, num_cycles, DoWork2);
   }
 };
 
