@@ -334,7 +334,7 @@ class InnerProductAdjHessianTest(tf.test.TestCase, parameterized.TestCase):
     def test_correctness_with_symbols(self, n_qubits, batch_size,
                                       inner_dim_size):
         """Tests that inner_product_hessian works with symbols."""
-        symbol_names = ['alpha', 'beta', 'gamma', 'delta', 'eta', 'kappa']
+        symbol_names = ['alpha', 'beta', 'gamma']
         n_params = len(symbol_names)
         qubits = cirq.GridQubit.rect(1, n_qubits)
         circuit_batch, resolver_batch = \
