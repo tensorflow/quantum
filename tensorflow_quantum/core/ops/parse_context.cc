@@ -217,7 +217,7 @@ tensorflow::Status GetProgramsAndNumQubits(
   if (programs->size() != other_programs->size()) {
     return Status(tensorflow::error::INVALID_ARGUMENT,
                   absl::StrCat("programs and other_programs batch dimension",
-                               " do not match. Foud: ", programs->size(),
+                               " do not match. Found: ", programs->size(),
                                " and ", other_programs->size()));
   }
 

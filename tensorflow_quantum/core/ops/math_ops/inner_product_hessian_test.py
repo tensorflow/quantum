@@ -51,7 +51,7 @@ _UNSUPPORTED_GATES = [
 ]
 
 
-def get_gate(gate, symbol_names, qubits):
+def _get_gate(gate, symbol_names, qubits):
     """Generates a gate operation."""
     symbols = sympy.symbols(symbol_names)
     if len(symbols) == 1:
@@ -75,7 +75,8 @@ def get_gate(gate, symbol_names, qubits):
     ]
 
 
-def get_shifted_resolved_circuit(circuit, name_j, name_k, dx_j, dx_k, resolver):
+def _get_shifted_resolved_circuit(circuit, name_j, name_k, dx_j, dx_k,
+                                  resolver):
     """Generates a state vector with shifted values."""
     new_resolver = copy.deepcopy(resolver)
     new_resolver.param_dict[name_j] += dx_j
@@ -88,14 +89,14 @@ def get_finite_difference_hessian(circuit, name_j, name_k, resolver):
     # dx came from _GRAD_EPS of core/src/adj_util.cc
     dx = 5e-3
     inv_square_two_dx = np.asarray([1e4 + 0.j], dtype=np.complex64)
-    final_circuit_pp = get_shifted_resolved_circuit(circuit, name_j, name_k, dx,
-                                                    dx, resolver)
-    final_circuit_mp = get_shifted_resolved_circuit(circuit, name_j, name_k,
-                                                    -dx, dx, resolver)
-    final_circuit_pm = get_shifted_resolved_circuit(circuit, name_j, name_k, dx,
-                                                    -dx, resolver)
-    final_circuit_mm = get_shifted_resolved_circuit(circuit, name_j, name_k,
-                                                    -dx, -dx, resolver)
+    final_circuit_pp = _get_shifted_resolved_circuit(circuit, name_j, name_k,
+                                                     dx, dx, resolver)
+    final_circuit_mp = _get_shifted_resolved_circuit(circuit, name_j, name_k,
+                                                     -dx, dx, resolver)
+    final_circuit_pm = _get_shifted_resolved_circuit(circuit, name_j, name_k,
+                                                     dx, -dx, resolver)
+    final_circuit_mm = _get_shifted_resolved_circuit(circuit, name_j, name_k,
+                                                     -dx, -dx, resolver)
     final_wf_pp = inv_square_two_dx * cirq.final_state_vector(final_circuit_pp)
     final_wf_mp = inv_square_two_dx * cirq.final_state_vector(final_circuit_mp)
     final_wf_pm = inv_square_two_dx * cirq.final_state_vector(final_circuit_pm)
@@ -119,7 +120,8 @@ class InnerProductAdjHessianTest(tf.test.TestCase, parameterized.TestCase):
         other_programs_coeffs = np.ones((batch_size, n_other_programs))
         circuit_batch, resolver_batch = \
           util.random_symbol_circuit_resolver_batch(
-              qubits, symbol_names, batch_size)
+              qubits, symbol_names, batch_size,
+              exclude_gates=_UNSUPPORTED_GATES)
 
         symbol_values_array = np.array(
             [[resolver[symbol]
@@ -413,7 +415,8 @@ class InnerProductAdjHessianTest(tf.test.TestCase, parameterized.TestCase):
             'inner_dim_size': 5
         },
     ])
-    def correctness_without_symbols(self, n_qubits, batch_size, inner_dim_size):
+    def test_correctness_without_symbols(self, n_qubits, batch_size,
+                                         inner_dim_size):
         """Tests that inner_product_hessian works without symbols."""
         qubits = cirq.GridQubit.rect(1, n_qubits)
         circuit_batch, _ = \
@@ -440,7 +443,7 @@ class InnerProductAdjHessianTest(tf.test.TestCase, parameterized.TestCase):
                                                    progams_coeffs,
                                                    other_programs_coeffs)
 
-    def correctness_empty(self):
+    def test_correctness_empty(self):
         """Tests the inner product hessian between two empty circuits."""
         symbol_names = ['alpha', 'beta']
         n_params = len(symbol_names)
@@ -472,7 +475,7 @@ class InnerProductAdjHessianTest(tf.test.TestCase, parameterized.TestCase):
         expected = np.zeros((1, n_params, n_params), dtype=np.complex64)
         self.assertAllClose(out, expected)
 
-    def correctness_no_circuit(self):
+    def test_correctness_no_circuit(self):
         """Test the inner product hessian between no circuits."""
         empty_circuit = tf.raw_ops.Empty(shape=(0,), dtype=tf.string)
         empty_symbols = tf.raw_ops.Empty(shape=(0,), dtype=tf.string)
@@ -490,72 +493,14 @@ class InnerProductAdjHessianTest(tf.test.TestCase, parameterized.TestCase):
                 empty_circuit, empty_symbols, empty_values, other_program,
                 empty_program_coeffs, empty_other_program_coeffs)
 
-
-class InnerProductHessianOnGates(tf.test.TestCase, parameterized.TestCase):
-    """Tests inner_product_hessian on a single gate."""
-
-    @parameterized.parameters([{
-        'gate': gate,
-        'symbol_names': names
-    }
-                               for gate in _ONE_EIGEN_GATES + _TWO_EIGEN_GATES
-                               for names in _SYMBOL_NAMES])
-    def correctness_one_gate_with_symbols(self, gate, symbol_names):
-        """Tests that inner_product_hessian works with one gate."""
-        n_params = len(symbol_names)
-        qubits = cirq.GridQubit.rect(1, 2 if gate in _TWO_EIGEN_GATES else 1)
-        circuit_batch = [cirq.Circuit(get_gate(gate, symbol_names, qubits))]
-        resolver_batch = [
-            cirq.ParamResolver({name: 0.123 for name in symbol_names})
-        ]
-
-        symbol_values_array = np.array(
-            [[resolver[symbol]
-              for symbol in symbol_names]
-             for resolver in resolver_batch])
-        other_batch = [
-            [cirq.Circuit(cirq.H.on_each(*qubits))] for _ in circuit_batch
-        ]
-        programs = util.convert_to_tensor(circuit_batch)
-        other_programs = util.convert_to_tensor(other_batch)
-        symbol_names_tensor = tf.convert_to_tensor(symbol_names,
-                                                   dtype=tf.dtypes.string)
-        symbol_values = tf.convert_to_tensor(symbol_values_array)
-        programs_coeffs = tf.cast(tf.random.normal((1,)), tf.complex64)
-        other_programs_coeffs = tf.cast(tf.random.normal((1, 1)), tf.complex64)
-
-        out = inner_product_op.inner_product_hessian(
-            programs, symbol_names_tensor, symbol_values, other_programs,
-            programs_coeffs, other_programs_coeffs)
-
-        out_arr = np.zeros((1, n_params, n_params), dtype=np.complex64)
-        for i, resolver in enumerate(resolver_batch):
-            weighted_internal_wf = None
-            for l, other in enumerate(other_batch[i]):
-                internal_wf = (other_programs_coeffs[i][l] *
-                               cirq.final_state_vector(other))
-                if l == 0:
-                    weighted_internal_wf = internal_wf
-                else:
-                    weighted_internal_wf += internal_wf
-            for j, name_j in enumerate(symbol_names):
-                for k, name_k in enumerate(symbol_names):
-                    final_wf_grad = get_finite_difference_hessian(
-                        circuit_batch[i], name_j, name_k, resolver)
-                    out_arr[i][j][k] += (
-                        programs_coeffs[i] *
-                        np.vdot(final_wf_grad, weighted_internal_wf))
-
-        self.assertAllClose(out, out_arr, atol=_ATOL, rtol=_RTOL)
-
     @parameterized.parameters([{
         'gate': gate,
     } for gate in _UNSUPPORTED_GATES for names in _SYMBOL_NAMES])
-    def unsupported_gate_with_symbols(self, gate):
+    def test_unsupported_gate_with_symbols(self, gate):
         """Tests that inner_product_hessian deals with unsupported gates."""
         symbol_names = ['alpha']
         qubits = cirq.GridQubit.rect(1, 2 if gate in _TWO_EIGEN_GATES else 1)
-        circuit_batch = [cirq.Circuit(get_gate(gate, symbol_names, qubits))]
+        circuit_batch = [cirq.Circuit(_get_gate(gate, symbol_names, qubits))]
         resolver_batch = [
             cirq.ParamResolver({name: 0.123 for name in symbol_names})
         ]
