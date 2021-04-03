@@ -117,7 +117,7 @@ def _inner_product_grad(programs, symbol_names, symbol_values, other_programs,
     Compute the gradients of the (potentially many) inner products between
     the given circuits and the symbol free comparison circuits.
 
-    Calculates out[i][j][k] = $\langle \frac{\partial  \psi_{\text{programs[i]}}
+    Calculates out[i][j] = $\langle \frac{\partial  \psi_{\text{programs[i]}}
     (\text{symbol_values[i]})}{\partial \text{symbol_names[j]}} | \sum_k
     \text{prev_grad[i][k]}\times | \psi_{\text{other_programs[k]}}
     \rangle$
@@ -131,7 +131,7 @@ def _inner_product_grad(programs, symbol_names, symbol_values, other_programs,
     Args:
         programs: `tf.Tensor` of strings with shape [batch_size] containing
             the string representations of the circuits
-        symbol_names: `tf.Tensor` of strings with shape [n_symbols], which
+        symbol_names: `tf.Tensor` of strings with shape [n_params], which
             is used to specify the order in which the values in
             `symbol_values` should be placed inside of the circuits in
             `programs`.
@@ -147,7 +147,7 @@ def _inner_product_grad(programs, symbol_names, symbol_values, other_programs,
             backprop of values from downstream in the compute graph.
 
     Returns:
-        tf.Tensor` with shape [batch_size, n_symbols] where `out[i][j]` is equal
+        tf.Tensor` with shape [batch_size, n_params] where `out[i][j]` is equal
         to the gradient of the inner product between programs[i] and all
         other_programs[i] w.r.t. `symbol_names[j]` and `programs[i]` is resolved
         with `symbol_values[i]`.
