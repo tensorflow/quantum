@@ -509,6 +509,7 @@ class TfqInnerProductHessianOp : public tensorflow::OpKernel {
 
     const int output_dim_internal_size = other_fused_circuits[0].size();
 
+    auto c_lock = tensorflow::mutex();
     auto DoWork1 = [&](int start, int end) {
       int old_batch_index = -2;
       int cur_batch_index = -1;
@@ -634,8 +635,10 @@ class TfqInnerProductHessianOp : public tensorflow::OpKernel {
                   static_cast<float>(coeff1 * coeff2 * result.real()),
                   static_cast<float>(coeff1 * coeff2 * result.imag())));
               // Because Hessian is symmetric.
+              c_lock.lock();
               (*output_tensor)(cur_batch_index, loc1, loc2) += val;
               (*output_tensor)(cur_batch_index, loc2, loc1) += val;
+              c_lock.unlock();
             } else {
               // Apply second-order finite difference w.r.t. one symbol
               const auto it = maps[cur_batch_index].find(symbol);
@@ -646,10 +649,12 @@ class TfqInnerProductHessianOp : public tensorflow::OpKernel {
               // parameter-shift we need to apply a single `gradient_gate`
               // per a symbol.
               std::complex<double> result = ss.InnerProduct(scratch2, scratch);
+              c_lock.lock();
               (*output_tensor)(cur_batch_index, loc, loc) +=
                   (std::complex<float>(
                       static_cast<float>(coeff1 * coeff2 * result.real()),
                       static_cast<float>(coeff1 * coeff2 * result.imag())));
+              c_lock.unlock();
             }
           }
           ApplyGateDagger(sim, cur_gate, scratch);
@@ -839,8 +844,10 @@ class TfqInnerProductHessianOp : public tensorflow::OpKernel {
                 auto val = (std::complex<float>(
                     static_cast<float>(coeff1 * coeff2 * result.real()),
                     static_cast<float>(coeff1 * coeff2 * result.imag())));
+                c_lock.lock();
                 (*output_tensor)(cur_batch_index, loc_m, loc_n) += val;
                 (*output_tensor)(cur_batch_index, loc_n, loc_m) += val;
+                c_lock.unlock();
               }
               ApplyGateDagger(sim, cur_gate_n, scratch4);
             }
