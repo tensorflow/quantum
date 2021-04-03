@@ -52,6 +52,7 @@ _UNSUPPORTED_GATES = [
 
 
 def get_gate(gate, symbol_names, qubits):
+    """Generates a gate operation."""
     symbols = sympy.symbols(symbol_names)
     if len(symbols) == 1:
         a, b = symbols * 2
@@ -75,6 +76,7 @@ def get_gate(gate, symbol_names, qubits):
 
 
 def get_shifted_resolved_circuit(circuit, name_j, name_k, dx_j, dx_k, resolver):
+    """Generates a state vector with shifted values."""
     new_resolver = copy.deepcopy(resolver)
     new_resolver.param_dict[name_j] += dx_j
     new_resolver.param_dict[name_k] += dx_k
@@ -82,6 +84,7 @@ def get_shifted_resolved_circuit(circuit, name_j, name_k, dx_j, dx_k, resolver):
 
 
 def get_finite_difference_hessian(circuit, name_j, name_k, resolver):
+    """Generates finite difference hessian."""
     # dx came from _GRAD_EPS of core/src/adj_util.cc
     dx = 5e-3
     inv_square_two_dx = np.asarray([1e4 + 0.j], dtype=np.complex64)
@@ -103,209 +106,209 @@ def get_finite_difference_hessian(circuit, name_j, name_k, resolver):
 
 
 class InnerProductAdjHessianTest(tf.test.TestCase, parameterized.TestCase):
-    """Tests tfq_inner_product_hessian."""
-    #
-    # def test_inner_product_hessian_inputs(self):
-    #     """Makes sure that inner_product_adj_hessian fails on bad inputs."""
-    #     n_qubits = 5
-    #     batch_size = 5
-    #     n_other_programs = 3
-    #     symbol_names = ['alpha']
-    #     qubits = cirq.GridQubit.rect(1, n_qubits)
-    #     programs_coeffs = np.ones((batch_size,))
-    #     other_programs_coeffs = np.ones((batch_size, n_other_programs))
-    #     circuit_batch, resolver_batch = \
-    #       util.random_symbol_circuit_resolver_batch(
-    #           qubits, symbol_names, batch_size)
-    #
-    #     symbol_values_array = np.array(
-    #         [[resolver[symbol]
-    #           for symbol in symbol_names]
-    #          for resolver in resolver_batch])
-    #
-    #     other_batch = [
-    #         util.random_circuit_resolver_batch(qubits, n_other_programs)[0]
-    #         for _ in range(batch_size)
-    #     ]
-    #
-    #     with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
-    #                                 'programs must be rank 1'):
-    #         # Circuit tensor has too many dimensions.
-    #         inner_product_op.inner_product_hessian(
-    #             util.convert_to_tensor([circuit_batch]),
-    #             symbol_names, symbol_values_array,
-    #             util.convert_to_tensor(other_batch), programs_coeffs,
-    #             other_programs_coeffs)
-    #
-    #     with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
-    #                                 'symbol_names must be rank 1.'):
-    #         # symbol_names tensor has too many dimensions.
-    #         inner_product_op.inner_product_hessian(
-    #             util.convert_to_tensor(circuit_batch),
-    #             np.array([symbol_names]), symbol_values_array,
-    #             util.convert_to_tensor(other_batch), programs_coeffs,
-    #             other_programs_coeffs)
-    #
-    #     with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
-    #                                 'symbol_values must be rank 2.'):
-    #         # symbol_values_array tensor has too many dimensions.
-    #         inner_product_op.inner_product_hessian(
-    #             util.convert_to_tensor(circuit_batch), symbol_names,
-    #             np.array([symbol_values_array]),
-    #             util.convert_to_tensor(other_batch), programs_coeffs,
-    #             other_programs_coeffs)
-    #
-    #     with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
-    #                                 'symbol_values must be rank 2.'):
-    #         # symbol_values_array tensor has too few dimensions.
-    #         inner_product_op.inner_product_hessian(
-    #             util.convert_to_tensor(circuit_batch),
-    #             symbol_names, symbol_values_array[0],
-    #             util.convert_to_tensor(other_batch), programs_coeffs,
-    #             other_programs_coeffs)
-    #
-    #     with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
-    #                                 'other_programs must be rank 2.'):
-    #         # other_programs tensor has too few dimensions.
-    #         inner_product_op.inner_product_hessian(
-    #             util.convert_to_tensor(circuit_batch),
-    #             symbol_names, symbol_values_array,
-    #             util.convert_to_tensor(circuit_batch), programs_coeffs,
-    #             other_programs_coeffs)
-    #
-    #     with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
-    #                                 'other_programs must be rank 2.'):
-    #         # pauli_sums tensor has too many dimensions.
-    #         inner_product_op.inner_product_hessian(
-    #             util.convert_to_tensor(circuit_batch), symbol_names,
-    #             symbol_values_array,
-    #             util.convert_to_tensor([[x] for x in other_batch]),
-    #             programs_coeffs, other_programs_coeffs)
-    #
-    #     with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
-    #                                 'Unparseable proto'):
-    #         # circuit tensor has the right type but invalid values.
-    #         inner_product_op.inner_product_hessian(
-    #             ['junk'] * batch_size, symbol_names, symbol_values_array,
-    #             util.convert_to_tensor(other_batch), programs_coeffs,
-    #             other_programs_coeffs)
-    #
-    #     with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
-    #                                 'Could not find symbol in parameter map'):
-    #         # symbol_names tensor has the right type but invalid values.
-    #         inner_product_op.inner_product_hessian(
-    #             util.convert_to_tensor(circuit_batch),
-    #             ['junk'], symbol_values_array,
-    #             util.convert_to_tensor(other_batch), programs_coeffs,
-    #             other_programs_coeffs)
-    #
-    #     with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
-    #                                 'not found in reference circuit'):
-    #         # other_programs tensor has the right type but operates on
-    #         # qubits that the reference ciruit doesn't have.
-    #         new_qubits = [cirq.GridQubit(5, 5), cirq.GridQubit(9, 9)]
-    #         new_circuits, _ = util.random_circuit_resolver_batch(
-    #             new_qubits, batch_size)
-    #         inner_product_op.inner_product_hessian(
-    #             util.convert_to_tensor(circuit_batch), symbol_names,
-    #             symbol_values_array,
-    #             util.convert_to_tensor([[x] for x in new_circuits]),
-    #             programs_coeffs, other_programs_coeffs)
-    #
-    #     with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
-    #                                 'not found in paired circuit'):
-    #         # other_programs tensor has the right type but operates on
-    #         # qubits that the reference ciruit doesn't have.
-    #         new_qubits = cirq.GridQubit.rect(1, n_qubits - 1)
-    #         new_circuits, _ = util.random_circuit_resolver_batch(
-    #             new_qubits, batch_size)
-    #         inner_product_op.inner_product_hessian(
-    #             util.convert_to_tensor(circuit_batch), symbol_names,
-    #             symbol_values_array,
-    #             util.convert_to_tensor([[x] for x in new_circuits]),
-    #             programs_coeffs, other_programs_coeffs)
-    #
-    #     with self.assertRaisesRegex(TypeError, 'Cannot convert'):
-    #         # circuits tensor has the wrong type.
-    #         inner_product_op.inner_product_hessian(
-    #             [1.0] * batch_size, symbol_names, symbol_values_array,
-    #             util.convert_to_tensor(other_batch), programs_coeffs,
-    #             other_programs_coeffs)
-    #
-    #     with self.assertRaisesRegex(TypeError, 'Cannot convert'):
-    #         # symbol_names tensor has the wrong type.
-    #         inner_product_op.inner_product_hessian(
-    #             util.convert_to_tensor(circuit_batch),
-    #             [0.1234], symbol_values_array,
-    #             util.convert_to_tensor(other_batch), programs_coeffs,
-    #             other_programs_coeffs)
-    #
-    #     with self.assertRaisesRegex(tf.errors.UnimplementedError, ''):
-    #         # symbol_values tensor has the wrong type.
-    #         inner_product_op.inner_product_hessian(
-    #             util.convert_to_tensor(circuit_batch),
-    #             symbol_names, [['junk']] * batch_size,
-    #             util.convert_to_tensor(other_batch), programs_coeffs,
-    #             other_programs_coeffs)
-    #
-    #     with self.assertRaisesRegex(TypeError, 'Cannot convert'):
-    #         # other_programs tensor has the wrong type.
-    #         inner_product_op.inner_product_hessian(
-    #             util.convert_to_tensor(circuit_batch), symbol_names,
-    #             symbol_values_array, [[1.0]] * batch_size, programs_coeffs,
-    #             other_programs_coeffs)
-    #
-    #     with self.assertRaisesRegex(TypeError, 'missing'):
-    #         # we are missing an argument.
-    #         # pylint: disable=no-value-for-parameter
-    #         inner_product_op.inner_product_hessian(
-    #             util.convert_to_tensor(circuit_batch), symbol_names,
-    #             symbol_values_array, programs_coeffs, other_programs_coeffs)
-    #         # pylint: enable=no-value-for-parameter
-    #
-    #     with self.assertRaisesRegex(TypeError, 'positional arguments'):
-    #         # pylint: disable=too-many-function-args
-    #         inner_product_op.inner_product_hessian(
-    #             util.convert_to_tensor(circuit_batch),
-    #             symbol_names, symbol_values_array,
-    #             util.convert_to_tensor(other_batch), programs_coeffs,
-    #             other_programs_coeffs, [])
-    #
-    #     with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
-    #                                 expected_regex='do not match'):
-    #         # batch programs has wrong batch size.
-    #         inner_product_op.inner_product_hessian(
-    #             util.convert_to_tensor(circuit_batch), symbol_names,
-    #             symbol_values_array,
-    #             util.convert_to_tensor(other_batch[:int(batch_size * 0.5)]),
-    #             programs_coeffs, other_programs_coeffs)
-    #
-    #     with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
-    #                                 expected_regex='do not match'):
-    #         # batch programs has wrong batch size.
-    #         inner_product_op.inner_product_hessian(
-    #             util.convert_to_tensor(circuit_batch), symbol_names,
-    #             symbol_values_array[::int(batch_size * 0.5)],
-    #             util.convert_to_tensor(other_batch), programs_coeffs,
-    #             other_programs_coeffs)
-    #
-    #     with self.assertRaisesRegex(
-    #             tf.errors.InvalidArgumentError,
-    #             expected_regex='Found symbols in other_programs'):
-    #         # other_programs has symbols.
-    #         inner_product_op.inner_product_hessian(
-    #             util.convert_to_tensor(circuit_batch), symbol_names,
-    #             symbol_values_array,
-    #             util.convert_to_tensor([[x] for x in circuit_batch]),
-    #             programs_coeffs, other_programs_coeffs)
-    #
-    #     res = inner_product_op.inner_product_hessian(
-    #         util.convert_to_tensor(circuit_batch), symbol_names,
-    #         symbol_values_array.astype(np.float64),
-    #         util.convert_to_tensor(other_batch), programs_coeffs,
-    #         other_programs_coeffs)
-    #     self.assertDTypeEqual(res, np.complex64)
-    #
+    """Tests tfq_inner_product_hessian."""s
+
+    def test_inner_product_hessian_inputs(self):
+        """Makes sure that inner_product_adj_hessian fails on bad inputs."""
+        n_qubits = 5
+        batch_size = 5
+        n_other_programs = 3
+        symbol_names = ['alpha']
+        qubits = cirq.GridQubit.rect(1, n_qubits)
+        programs_coeffs = np.ones((batch_size,))
+        other_programs_coeffs = np.ones((batch_size, n_other_programs))
+        circuit_batch, resolver_batch = \
+          util.random_symbol_circuit_resolver_batch(
+              qubits, symbol_names, batch_size)
+
+        symbol_values_array = np.array(
+            [[resolver[symbol]
+              for symbol in symbol_names]
+             for resolver in resolver_batch])
+
+        other_batch = [
+            util.random_circuit_resolver_batch(qubits, n_other_programs)[0]
+            for _ in range(batch_size)
+        ]
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'programs must be rank 1'):
+            # Circuit tensor has too many dimensions.
+            inner_product_op.inner_product_hessian(
+                util.convert_to_tensor([circuit_batch]),
+                symbol_names, symbol_values_array,
+                util.convert_to_tensor(other_batch), programs_coeffs,
+                other_programs_coeffs)
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'symbol_names must be rank 1.'):
+            # symbol_names tensor has too many dimensions.
+            inner_product_op.inner_product_hessian(
+                util.convert_to_tensor(circuit_batch),
+                np.array([symbol_names]), symbol_values_array,
+                util.convert_to_tensor(other_batch), programs_coeffs,
+                other_programs_coeffs)
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'symbol_values must be rank 2.'):
+            # symbol_values_array tensor has too many dimensions.
+            inner_product_op.inner_product_hessian(
+                util.convert_to_tensor(circuit_batch), symbol_names,
+                np.array([symbol_values_array]),
+                util.convert_to_tensor(other_batch), programs_coeffs,
+                other_programs_coeffs)
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'symbol_values must be rank 2.'):
+            # symbol_values_array tensor has too few dimensions.
+            inner_product_op.inner_product_hessian(
+                util.convert_to_tensor(circuit_batch),
+                symbol_names, symbol_values_array[0],
+                util.convert_to_tensor(other_batch), programs_coeffs,
+                other_programs_coeffs)
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'other_programs must be rank 2.'):
+            # other_programs tensor has too few dimensions.
+            inner_product_op.inner_product_hessian(
+                util.convert_to_tensor(circuit_batch),
+                symbol_names, symbol_values_array,
+                util.convert_to_tensor(circuit_batch), programs_coeffs,
+                other_programs_coeffs)
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'other_programs must be rank 2.'):
+            # pauli_sums tensor has too many dimensions.
+            inner_product_op.inner_product_hessian(
+                util.convert_to_tensor(circuit_batch), symbol_names,
+                symbol_values_array,
+                util.convert_to_tensor([[x] for x in other_batch]),
+                programs_coeffs, other_programs_coeffs)
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'Unparseable proto'):
+            # circuit tensor has the right type but invalid values.
+            inner_product_op.inner_product_hessian(
+                ['junk'] * batch_size, symbol_names, symbol_values_array,
+                util.convert_to_tensor(other_batch), programs_coeffs,
+                other_programs_coeffs)
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'Could not find symbol in parameter map'):
+            # symbol_names tensor has the right type but invalid values.
+            inner_product_op.inner_product_hessian(
+                util.convert_to_tensor(circuit_batch),
+                ['junk'], symbol_values_array,
+                util.convert_to_tensor(other_batch), programs_coeffs,
+                other_programs_coeffs)
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'not found in reference circuit'):
+            # other_programs tensor has the right type but operates on
+            # qubits that the reference ciruit doesn't have.
+            new_qubits = [cirq.GridQubit(5, 5), cirq.GridQubit(9, 9)]
+            new_circuits, _ = util.random_circuit_resolver_batch(
+                new_qubits, batch_size)
+            inner_product_op.inner_product_hessian(
+                util.convert_to_tensor(circuit_batch), symbol_names,
+                symbol_values_array,
+                util.convert_to_tensor([[x] for x in new_circuits]),
+                programs_coeffs, other_programs_coeffs)
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'not found in paired circuit'):
+            # other_programs tensor has the right type but operates on
+            # qubits that the reference ciruit doesn't have.
+            new_qubits = cirq.GridQubit.rect(1, n_qubits - 1)
+            new_circuits, _ = util.random_circuit_resolver_batch(
+                new_qubits, batch_size)
+            inner_product_op.inner_product_hessian(
+                util.convert_to_tensor(circuit_batch), symbol_names,
+                symbol_values_array,
+                util.convert_to_tensor([[x] for x in new_circuits]),
+                programs_coeffs, other_programs_coeffs)
+
+        with self.assertRaisesRegex(TypeError, 'Cannot convert'):
+            # circuits tensor has the wrong type.
+            inner_product_op.inner_product_hessian(
+                [1.0] * batch_size, symbol_names, symbol_values_array,
+                util.convert_to_tensor(other_batch), programs_coeffs,
+                other_programs_coeffs)
+
+        with self.assertRaisesRegex(TypeError, 'Cannot convert'):
+            # symbol_names tensor has the wrong type.
+            inner_product_op.inner_product_hessian(
+                util.convert_to_tensor(circuit_batch),
+                [0.1234], symbol_values_array,
+                util.convert_to_tensor(other_batch), programs_coeffs,
+                other_programs_coeffs)
+
+        with self.assertRaisesRegex(tf.errors.UnimplementedError, ''):
+            # symbol_values tensor has the wrong type.
+            inner_product_op.inner_product_hessian(
+                util.convert_to_tensor(circuit_batch),
+                symbol_names, [['junk']] * batch_size,
+                util.convert_to_tensor(other_batch), programs_coeffs,
+                other_programs_coeffs)
+
+        with self.assertRaisesRegex(TypeError, 'Cannot convert'):
+            # other_programs tensor has the wrong type.
+            inner_product_op.inner_product_hessian(
+                util.convert_to_tensor(circuit_batch), symbol_names,
+                symbol_values_array, [[1.0]] * batch_size, programs_coeffs,
+                other_programs_coeffs)
+
+        with self.assertRaisesRegex(TypeError, 'missing'):
+            # we are missing an argument.
+            # pylint: disable=no-value-for-parameter
+            inner_product_op.inner_product_hessian(
+                util.convert_to_tensor(circuit_batch), symbol_names,
+                symbol_values_array, programs_coeffs, other_programs_coeffs)
+            # pylint: enable=no-value-for-parameter
+
+        with self.assertRaisesRegex(TypeError, 'positional arguments'):
+            # pylint: disable=too-many-function-args
+            inner_product_op.inner_product_hessian(
+                util.convert_to_tensor(circuit_batch),
+                symbol_names, symbol_values_array,
+                util.convert_to_tensor(other_batch), programs_coeffs,
+                other_programs_coeffs, [])
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    expected_regex='do not match'):
+            # batch programs has wrong batch size.
+            inner_product_op.inner_product_hessian(
+                util.convert_to_tensor(circuit_batch), symbol_names,
+                symbol_values_array,
+                util.convert_to_tensor(other_batch[:int(batch_size * 0.5)]),
+                programs_coeffs, other_programs_coeffs)
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    expected_regex='do not match'):
+            # batch programs has wrong batch size.
+            inner_product_op.inner_product_hessian(
+                util.convert_to_tensor(circuit_batch), symbol_names,
+                symbol_values_array[::int(batch_size * 0.5)],
+                util.convert_to_tensor(other_batch), programs_coeffs,
+                other_programs_coeffs)
+
+        with self.assertRaisesRegex(
+                tf.errors.InvalidArgumentError,
+                expected_regex='Found symbols in other_programs'):
+            # other_programs has symbols.
+            inner_product_op.inner_product_hessian(
+                util.convert_to_tensor(circuit_batch), symbol_names,
+                symbol_values_array,
+                util.convert_to_tensor([[x] for x in circuit_batch]),
+                programs_coeffs, other_programs_coeffs)
+
+        res = inner_product_op.inner_product_hessian(
+            util.convert_to_tensor(circuit_batch), symbol_names,
+            symbol_values_array.astype(np.float64),
+            util.convert_to_tensor(other_batch), programs_coeffs,
+            other_programs_coeffs)
+        self.assertDTypeEqual(res, np.complex64)
+
     @parameterized.parameters([
         {
             'n_qubits': 5,
@@ -330,13 +333,14 @@ class InnerProductAdjHessianTest(tf.test.TestCase, parameterized.TestCase):
     ])
     def test_correctness_with_symbols(self, n_qubits, batch_size,
                                       inner_dim_size):
-        """Tests that inner_product works with symbols."""
+        """Tests that inner_product_hessian works with symbols."""
         symbol_names = ['alpha', 'beta', 'gamma', 'delta', 'eta', 'kappa']
         n_params = len(symbol_names)
         qubits = cirq.GridQubit.rect(1, n_qubits)
         circuit_batch, resolver_batch = \
           util.random_symbol_circuit_resolver_batch(
-              qubits, symbol_names, batch_size, exclude_gates=_UNSUPPORTED_GATES)
+              qubits, symbol_names, batch_size,
+              exclude_gates=_UNSUPPORTED_GATES)
 
         other_batch = [
             util.random_circuit_resolver_batch(qubits, inner_dim_size)[0]
@@ -410,7 +414,7 @@ class InnerProductAdjHessianTest(tf.test.TestCase, parameterized.TestCase):
         },
     ])
     def correctness_without_symbols(self, n_qubits, batch_size, inner_dim_size):
-        """Tests that inner_product_adj_grad works without symbols."""
+        """Tests that inner_product_hessian works without symbols."""
         qubits = cirq.GridQubit.rect(1, n_qubits)
         circuit_batch, _ = \
           util.random_circuit_resolver_batch(
@@ -437,7 +441,7 @@ class InnerProductAdjHessianTest(tf.test.TestCase, parameterized.TestCase):
                                                    other_programs_coeffs)
 
     def correctness_empty(self):
-        """Tests the inner product adj grad between two empty circuits."""
+        """Tests the inner product hessian between two empty circuits."""
         symbol_names = ['alpha', 'beta']
         n_params = len(symbol_names)
         empty_cicuit = util.convert_to_tensor([cirq.Circuit()])
@@ -469,8 +473,7 @@ class InnerProductAdjHessianTest(tf.test.TestCase, parameterized.TestCase):
         self.assertAllClose(out, expected)
 
     def correctness_no_circuit(self):
-        """Test the inner product grad between no circuits."""
-
+        """Test the inner product hessian between no circuits."""
         empty_circuit = tf.raw_ops.Empty(shape=(0,), dtype=tf.string)
         empty_symbols = tf.raw_ops.Empty(shape=(0,), dtype=tf.string)
         empty_values = tf.raw_ops.Empty(shape=(0, 0), dtype=tf.float32)
@@ -489,6 +492,7 @@ class InnerProductAdjHessianTest(tf.test.TestCase, parameterized.TestCase):
 
 
 class InnerProductHessianOnGates(tf.test.TestCase, parameterized.TestCase):
+    """Tests inner_product_hessian on a single gate."""
 
     @parameterized.parameters([{
         'gate': gate,
@@ -496,8 +500,8 @@ class InnerProductHessianOnGates(tf.test.TestCase, parameterized.TestCase):
     }
                                for gate in _ONE_EIGEN_GATES + _TWO_EIGEN_GATES
                                for names in _SYMBOL_NAMES])
-    def correctness_one_qubit_gate_with_symbols(self, gate, symbol_names):
-        """Tests that inner_product works with symbols."""
+    def correctness_one_gate_with_symbols(self, gate, symbol_names):
+        """Tests that inner_product_hessian works with one gate."""
         n_params = len(symbol_names)
         qubits = cirq.GridQubit.rect(1, 2 if gate in _TWO_EIGEN_GATES else 1)
         circuit_batch = [cirq.Circuit(get_gate(gate, symbol_names, qubits))]
@@ -548,7 +552,7 @@ class InnerProductHessianOnGates(tf.test.TestCase, parameterized.TestCase):
         'gate': gate,
     } for gate in _UNSUPPORTED_GATES for names in _SYMBOL_NAMES])
     def unsupported_gate_with_symbols(self, gate):
-        """Tests that inner_product works with symbols."""
+        """Tests that inner_product_hessian deals with unsupported gates."""
         symbol_names = ['alpha']
         qubits = cirq.GridQubit.rect(1, 2 if gate in _TWO_EIGEN_GATES else 1)
         circuit_batch = [cirq.Circuit(get_gate(gate, symbol_names, qubits))]
