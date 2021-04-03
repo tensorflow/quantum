@@ -31,6 +31,7 @@ limitations under the License.
 
 namespace tfq {
 
+static const float _GRAD_EPS = 5e-3;
 static const float _HESS_EPS = 1e-2;
 static const float _INVERSE_HESS_EPS_SQUARE = 1e4;
 static const std::string kUsePrevTwoSymbols = "use_prev_two_symbols";
@@ -58,11 +59,6 @@ void PopulateHessianTwoEigen(
 
 // Note: all methods below expect gate qubit indices to have been swapped so
 // qid < qid2.
-
-void PopulateCrossTermPhasedXPhasedExponentExponent(
-    unsigned int location, unsigned int qid, float pexp, float pexp_s,
-    float exp, float exp_s, float gs, GradientOfGate* grad);
-
 void PopulateHessianFsimTheta(const std::string& symbol, unsigned int location,
                               unsigned int qid, unsigned qid2, float theta,
                               float theta_s, float phi, float phi_s,
@@ -93,6 +89,7 @@ void PopulateCrossTermPhasedISwapPhasedExponentExponent(
     unsigned int location, unsigned int qid, unsigned int qid2, float pexp,
     float pexp_s, float exp, float exp_s, GradientOfGate* grad);
 
+// does matrix elementwise addition dest += source.
 template <typename Array2>
 void Matrix2Add(Array2& source, Array2& dest) {
   for (unsigned i = 0; i < 8; i++) {

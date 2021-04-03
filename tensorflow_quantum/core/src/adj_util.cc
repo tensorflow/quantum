@@ -29,6 +29,8 @@ limitations under the License.
 
 namespace tfq {
 
+static const float _GRAD_EPS = 5e-3;
+
 typedef qsim::Cirq::GateCirq<float> QsimGate;
 typedef qsim::Circuit<QsimGate> QsimCircuit;
 

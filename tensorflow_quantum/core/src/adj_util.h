@@ -30,8 +30,6 @@ limitations under the License.
 
 namespace tfq {
 
-static const float _GRAD_EPS = 5e-3;
-
 struct GradientOfGate {
   // name of parameters used by gate.
   std::vector<std::string> params;
