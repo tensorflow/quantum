@@ -29,13 +29,13 @@ _INVERSE_SPEEDUP = 1 / 20.0
 _ATOL = 0.2
 _RTOL = 0.3
 _SYMBOL_NAMES = [['alpha'], ['alpha', 'beta']]
-_ONE_EIGEN_GATES = [
+_ONE_QUBIT_GATES = [
     cirq.XPowGate,
     cirq.YPowGate,
     cirq.ZPowGate,
     cirq.HPowGate,
 ]
-_TWO_EIGEN_GATES = [
+_TWO_QUBIT_GATES = [
     cirq.XXPowGate,
     cirq.YYPowGate,
     cirq.ZZPowGate,
@@ -499,7 +499,7 @@ class InnerProductAdjHessianTest(tf.test.TestCase, parameterized.TestCase):
     def test_unsupported_gate_with_symbols(self, gate):
         """Tests that inner_product_hessian deals with unsupported gates."""
         symbol_names = ['alpha']
-        qubits = cirq.GridQubit.rect(1, 2 if gate in _TWO_EIGEN_GATES else 1)
+        qubits = cirq.GridQubit.rect(1, 2 if gate in _TWO_QUBIT_GATES else 1)
         circuit_batch = [cirq.Circuit(_get_gate(gate, symbol_names, qubits))]
         resolver_batch = [
             cirq.ParamResolver({name: 0.123 for name in symbol_names})
