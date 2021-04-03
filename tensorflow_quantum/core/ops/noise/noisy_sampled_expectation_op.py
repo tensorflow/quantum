@@ -32,6 +32,39 @@ def sampled_expectation(programs, symbol_names, symbol_values, pauli_sums,
     calculated after each run. Once all the runs are finished, these quantities
     are averaged together.
 
+
+    >>> # Prepare some inputs.
+    >>> qubit = cirq.GridQubit(0, 0)
+    >>> my_symbol = sympy.Symbol('alpha')
+    >>> my_circuit_tensor = tfq.convert_to_tensor([
+    ...     cirq.Circuit(
+    ...         cirq.H(qubit) ** my_symbol,
+    ...         cirq.depolarize(0.01)(qubit)
+    ...     )
+    ... ])
+    >>> my_values = np.array([[0.123]])
+    >>> my_paulis = tfq.convert_to_tensor([[
+    ...     3.5 * cirq.X(qubit) - 2.2 * cirq.Y(qubit)
+    ... ]])
+    >>> my_num_samples = np.array([[100]])
+    >>> # This op can now be run with:
+    >>> output = tfq.noise.sampled_expectation(
+    ...     my_circuit_tensor, ['alpha'], my_values, my_paulis, my_num_samples)
+    >>> output
+    tf.Tensor([[0.71530885]], shape=(1, 1), dtype=float32)
+
+
+    In order to make the op differentiable, a `tfq.differentiator` object is
+    needed. see `tfq.differentiators` for more details. Below is a simple
+    example of how to make the from the above code block differentiable:
+
+
+    >>> diff = tfq.differentiators.ForwardDifference()
+    >>> my_differentiable_op = diff.generate_differentiable_op(
+    ...     sampled_op=tfq.noise.sampled_expectation
+    ... )
+
+
     Args:
         programs: `tf.Tensor` of strings with shape [batch_size] containing
             the string representations of the circuits to be executed.

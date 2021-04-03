@@ -262,7 +262,7 @@ class NoisyExpectationCalculationTest(tf.test.TestCase, parameterized.TestCase):
         cirq_exps = batch_util.batch_calculate_expectation(
             circuit_batch, resolver_batch, batch_pauli_sums,
             cirq.DensityMatrixSimulator() if noisy else cirq.Simulator())
-        tol = 0.35 if noisy else 0.25
+        tol = 0.35
         self.assertAllClose(cirq_exps, op_exps, atol=tol, rtol=tol)
 
     @parameterized.parameters([{
