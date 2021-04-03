@@ -14,5 +14,5 @@
 # ==============================================================================
 """Module for tfq.core.ops.math_ops.*"""
 
-from tensorflow_quantum.core.ops.math_ops.inner_product_op import inner_product
-from tensorflow_quantum.core.ops.math_ops.inner_product_op import inner_product_hessian
+from tensorflow_quantum.core.ops.math_ops.inner_product_op import (
+  inner_product, inner_product_hessian)

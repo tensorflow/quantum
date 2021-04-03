@@ -106,7 +106,7 @@ def get_finite_difference_hessian(circuit, name_j, name_k, resolver):
 
 
 class InnerProductAdjHessianTest(tf.test.TestCase, parameterized.TestCase):
-    """Tests tfq_inner_product_hessian."""s
+    """Tests tfq_inner_product_hessian."""
 
     def test_inner_product_hessian_inputs(self):
         """Makes sure that inner_product_adj_hessian fails on bad inputs."""
