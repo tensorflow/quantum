@@ -134,7 +134,7 @@ class TfqNoisySampledExpectationOp : public tensorflow::OpKernel {
     // e2s4 = 4 CPU, 16GB -> Can safely do 25 since Memory = 8GB
     // ...
     if (max_num_qubits >= 26) {
-      // If the number of qubits is lager than 24, we switch to an
+      // If the number of qubits is lager than 25, we switch to an
       // alternate parallelization scheme with runtime:
       // O(n_circuits * max_j(num_samples[i])) with parallelization being
       // multiple threads per wavefunction.
