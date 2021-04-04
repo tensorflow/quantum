@@ -16,6 +16,7 @@ cc_binary(
     name = "_tfq_noise_ops.so",
     srcs = [
         "tfq_noisy_expectation.cc",
+        "tfq_noisy_sampled_expectation.cc",
         "tfq_noisy_samples.cc"
     ],
     copts = select({
@@ -86,6 +87,26 @@ py_test(
     python_version = "PY3",
     deps = [
         ":noisy_expectation_op_py",
+        "//tensorflow_quantum/core/ops:batch_util",
+        "//tensorflow_quantum/python:util",
+    ],
+)
+
+py_library(
+    name = "noisy_sampled_expectation_op_py",
+    srcs = ["noisy_sampled_expectation_op.py"],
+    data = [":_tfq_noise_ops.so"],
+    deps = [
+        "//tensorflow_quantum/core/ops:load_module",
+    ],
+)
+
+py_test(
+    name = "noisy_sampled_expectation_op_test",
+    srcs = ["noisy_sampled_expectation_op_test.py"],
+    python_version = "PY3",
+    deps = [
+        ":noisy_sampled_expectation_op_py",
         "//tensorflow_quantum/core/ops:batch_util",
         "//tensorflow_quantum/python:util",
     ],

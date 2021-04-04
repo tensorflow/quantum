@@ -172,9 +172,9 @@ class LinearCombinationTest(tf.test.TestCase, parameterized.TestCase):
                             rtol=1e-2)
 
     @parameterized.parameters([{
-        'diff': linear_combination.ForwardDifference()
+        'diff': linear_combination.ForwardDifference(grid_spacing=0.01)
     }, {
-        'diff': linear_combination.CentralDifference()
+        'diff': linear_combination.CentralDifference(grid_spacing=0.01)
     }])
     def test_sampled_functional(self, diff):
         """Test that the differentiate_sampled function WORKS."""

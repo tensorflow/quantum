@@ -91,7 +91,7 @@ TEST_P(TwoTermSampledExpectationFixture, CorrectnessTest) {
   Status s = tfq::ComputeSampledExpectationQsim(p_sum, sim, ss, sv, scratch,
                                                 1000000, &exp_v);
 
-  EXPECT_NEAR(exp_v, std::get<1>(GetParam()), 1e-3);
+  EXPECT_NEAR(exp_v, std::get<1>(GetParam()), 1e-2);
 }
 
 // clang-format off
@@ -277,7 +277,7 @@ TEST(UtilQsimTest, SampledCompoundCase) {
   Status s = tfq::ComputeSampledExpectationQsim(p_sum, sim, ss, sv, scratch,
                                                 10000000, &exp_v);
 
-  EXPECT_NEAR(exp_v, 4.1234, 1e-3);
+  EXPECT_NEAR(exp_v, 4.1234, 1e-2);
 }
 
 TEST(UtilQsimTest, CompoundCase) {
