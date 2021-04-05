@@ -240,22 +240,31 @@ class LinearCombinationTest(tf.test.TestCase, parameterized.TestCase):
         # Finally we add the perturbations to the original symbol values.
         expected_batch_symbol_values = tiled_symbol_values + tiled_perturbations
 
-        # The map for LinearCombination is the same for every program.
-        individual_batch_mapper = tf.stack(
-            [[input_weights[0], input_weights[1], 0.0, 0.0],
-             [0.0, 0.0, input_weights[0], input_weights[1]]])
-        expected_batch_mapper = tf.stack(
-            [individual_batch_mapper, individual_batch_mapper])
+        # The weights for LinearCombination is the same for every program.
+        individual_batch_weights = tf.stack(
+            [[input_weights[0], input_weights[1]],
+             [input_weights[0], input_weights[1]]])
+        expected_batch_weights = tf.stack(
+            [individual_batch_weights, individual_batch_weights])
+
+        # The mapper selects the expectations.
+        single_program_mapper = tf.constant([[0, 1],
+                                             [2, 3]])
+        expected_batch_mapper = tf.tile(
+            tf.expand_dims(single_program_mapper, 0), [2, 1, 1])
 
         (test_batch_programs, test_new_symbol_names, test_batch_symbol_values,
-         test_batch_mapper) = diff.get_gradient_circuits(
+         test_batch_weights, test_batch_mapper) = diff.get_gradient_circuits(
              input_programs, input_symbol_names, input_symbol_values)
         self.assertAllEqual(expected_batch_programs, test_batch_programs)
         self.assertAllEqual(expected_new_symbol_names, test_new_symbol_names)
         self.assertAllClose(expected_batch_symbol_values,
                             test_batch_symbol_values,
                             atol=1e-6)
-        self.assertAllClose(expected_batch_mapper, test_batch_mapper, atol=1e-6)
+        self.assertAllClose(expected_batch_weights,
+                            test_batch_weights,
+                            atol=1e-6)
+        self.assertAllEqual(expected_batch_mapper, test_batch_mapper)
 
     @parameterized.parameters(
         list(
@@ -296,11 +305,11 @@ class LinearCombinationTest(tf.test.TestCase, parameterized.TestCase):
 
         # Get gradients using expectations of gradient circuits.
         (batch_programs, new_symbol_names, batch_symbol_values,
-         batch_mapper) = differentiator.get_gradient_circuits(
+         batch_weights, batch_mapper) = differentiator.get_gradient_circuits(
              programs, symbol_names_tensor, symbol_values_tensor)
         analytic_op = circuit_execution_ops.get_expectation_op()
         batch_pauli_sums = tf.tile(tf.expand_dims(ops_tensor, 1),
-                                   [1, tf.shape(batch_mapper)[2], 1])
+                                   [1, tf.shape(batch_programs)[1], 1])
         n_batch_programs = tf.reduce_prod(tf.shape(batch_programs))
         n_symbols = len(symbol_names)
         batch_expectations = analytic_op(
@@ -309,8 +318,12 @@ class LinearCombinationTest(tf.test.TestCase, parameterized.TestCase):
             tf.reshape(batch_pauli_sums, [n_batch_programs, n_ops]))
         batch_expectations = tf.reshape(batch_expectations,
                                         tf.shape(batch_pauli_sums))
-        grad_manual = tf.reduce_sum(
-            tf.einsum('ikm,imp->ikp', batch_mapper, batch_expectations), -1)
+
+        batch_jacobian = tf.map_fn(
+            lambda x: tf.einsum('km,kmp->kp', x[0], tf.gather(x[1], x[2])),
+            (batch_weights, batch_expectations, batch_mapper),
+            fn_output_signature=tf.float32)
+        grad_manual = tf.reduce_sum(batch_jacobian, -1)
 
         # Get gradients using autodiff.
         differentiator.refresh()
