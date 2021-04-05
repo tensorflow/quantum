@@ -248,8 +248,7 @@ class LinearCombinationTest(tf.test.TestCase, parameterized.TestCase):
             [individual_batch_weights, individual_batch_weights])
 
         # The mapper selects the expectations.
-        single_program_mapper = tf.constant([[0, 1],
-                                             [2, 3]])
+        single_program_mapper = tf.constant([[0, 1], [2, 3]])
         expected_batch_mapper = tf.tile(
             tf.expand_dims(single_program_mapper, 0), [2, 1, 1])
 
@@ -304,8 +303,8 @@ class LinearCombinationTest(tf.test.TestCase, parameterized.TestCase):
         ops_tensor = util.convert_to_tensor(psums)
 
         # Get gradients using expectations of gradient circuits.
-        (batch_programs, new_symbol_names, batch_symbol_values,
-         batch_weights, batch_mapper) = differentiator.get_gradient_circuits(
+        (batch_programs, new_symbol_names, batch_symbol_values, batch_weights,
+         batch_mapper) = differentiator.get_gradient_circuits(
              programs, symbol_names_tensor, symbol_values_tensor)
         analytic_op = circuit_execution_ops.get_expectation_op()
         batch_pauli_sums = tf.tile(tf.expand_dims(ops_tensor, 1),

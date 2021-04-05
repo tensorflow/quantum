@@ -151,11 +151,12 @@ class LinearCombination(differentiator.Differentiator):
         batch_symbol_values = bare_symbol_values + all_perts
 
         # The weights for all the programs.
-        tiled_weights = tf.tile(tf.expand_dims(self.non_zero_weights, 0), [n_symbols, 1])
+        tiled_weights = tf.tile(tf.expand_dims(self.non_zero_weights, 0),
+                                [n_symbols, 1])
         tiled_zero_weights = tf.tile(tf.expand_dims(self.zero_weights, 0),
                                      [n_symbols, 1])
-        single_program_weights = tf.concat(
-            [tiled_zero_weights, tiled_weights], 1)
+        single_program_weights = tf.concat([tiled_zero_weights, tiled_weights],
+                                           1)
         # Mapping is also the same for each program.
         batch_weights = tf.tile(tf.expand_dims(single_program_weights, 0),
                                 [n_programs, 1, 1])
@@ -166,9 +167,12 @@ class LinearCombination(differentiator.Differentiator):
             [n_symbols, self.n_non_zero_perturbations])
         single_program_mapper = tf.cond(
             self.n_non_zero_perturbations < self.n_perturbations,
-            lambda: tf.concat([tf.zeros([n_symbols, 1], dtype=tf.int32), single_program_mapper_base + 1], 1),
-            lambda: single_program_mapper_base)
-        batch_mapper = tf.tile(tf.expand_dims(single_program_mapper, 0), [n_programs, 1, 1])
+            lambda: tf.concat([
+                tf.zeros([n_symbols, 1], dtype=tf.int32),
+                single_program_mapper_base + 1
+            ], 1), lambda: single_program_mapper_base)
+        batch_mapper = tf.tile(tf.expand_dims(single_program_mapper, 0),
+                               [n_programs, 1, 1])
 
         return (batch_programs, new_symbol_names, batch_symbol_values,
                 batch_weights, batch_mapper)
