@@ -171,7 +171,12 @@ class ParameterShiftTest(tf.test.TestCase, parameterized.TestCase):
               [-0.3, 0.9, 0.9],
               [-0.3, 0.9, 0.9]]])
 
-        expected_batch_weights =
+        # Empty program locations are given zero weight.
+        expected_batch_weights = tf.constant(
+            [[[np.pi/2, -np.pi/2, np.pi/2, -np.pi/2],
+              [0.5, -0.5, 0.0, 0.0]],
+             [[0.0, 0.0, 0.0, 0.0],
+              [np.pi/2, -np.pi/2, 0.0, 0.0]]])
 
 
         (test_batch_programs, test_new_symbol_names, test_batch_symbol_values,
@@ -183,6 +188,9 @@ class ParameterShiftTest(tf.test.TestCase, parameterized.TestCase):
         self.assertAllEqual(expected_new_symbol_names, test_new_symbol_names)
         self.assertAllClose(expected_batch_symbol_values,
                             test_batch_symbol_values,
+                            atol=1e-6)
+        self.assertAllClose(expected_batch_weights,
+                            test_batch_weights,
                             atol=1e-6)
 #        self.assertAllClose(expected_batch_mapper, test_batch_mapper, atol=1e-6)
 

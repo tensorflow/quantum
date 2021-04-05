@@ -78,6 +78,7 @@ def parse_programs(programs, symbol_names, symbol_values, n_symbols,
     n_param_gates = tf.cast(tf.gather(tf.shape(new_programs), 2),
                             dtype=tf.int32)
 
+    # This is a tensor of the `exponent_scalar`s of the shifted gates.
     coeff = tf.expand_dims(tf.transpose(
         tfq_ps_util_ops.tfq_ps_weights_from_symbols(decomposed_programs,
                                                     symbols), [1, 0, 2]),
