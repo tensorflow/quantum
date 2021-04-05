@@ -171,7 +171,7 @@ class ParameterShiftTest(tf.test.TestCase, parameterized.TestCase):
               [-0.3, 0.9, 0.9],
               [-0.3, 0.9, 0.9]]])
 
-        #
+        expected_batch_weights =
 
 
         (test_batch_programs, test_new_symbol_names, test_batch_symbol_values,
