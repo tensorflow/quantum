@@ -178,6 +178,11 @@ class ParameterShiftTest(tf.test.TestCase, parameterized.TestCase):
              [[0.0, 0.0, 0.0, 0.0],
               [np.pi/2, -np.pi/2, 0.0, 0.0]]])
 
+        expected_batch_mapper = tf.constant(
+            [[[0, 1, 2, 3],
+              [4, 5, 6, 7]],
+             [[0, 1, 2, 3],
+              [4, 5, 6, 7]]])
 
         (test_batch_programs, test_new_symbol_names, test_batch_symbol_values,
          test_batch_weights, test_batch_mapper) = diff.get_gradient_circuits(
@@ -192,7 +197,7 @@ class ParameterShiftTest(tf.test.TestCase, parameterized.TestCase):
         self.assertAllClose(expected_batch_weights,
                             test_batch_weights,
                             atol=1e-6)
-#        self.assertAllClose(expected_batch_mapper, test_batch_mapper, atol=1e-6)
+        self.assertAllEqual(expected_batch_mapper, test_batch_mapper)
 
     @parameterized.parameters(
         list(
