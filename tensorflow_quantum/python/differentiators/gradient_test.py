@@ -14,12 +14,13 @@
 # ==============================================================================
 """Testing for gradient calculation consistency in TFQ."""
 import copy
-import cirq
+
 import numpy as np
 import sympy
 import tensorflow as tf
 from absl.testing import parameterized
 
+import cirq
 from tensorflow_quantum.python import util
 from tensorflow_quantum.python.differentiators import adjoint
 from tensorflow_quantum.python.differentiators import linear_combination

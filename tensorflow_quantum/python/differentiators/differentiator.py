@@ -128,7 +128,7 @@ class Differentiator(metaclass=abc.ABCMeta):
                                      'Given arg: {}.'.format(str(key)) + ''
                                      'The signature should contain: {}.'.format(
                                          list(expected_signature)) + ''
-                                     ' Given: {}'.format(list(signature))
+                                     ' Given: {}'.format(list(signature)) + ''
                                      'Note: noisy ops should use sampled_op')
 
             if 'num_samples' in signature:
