@@ -14,6 +14,7 @@ limitations under the License.
 ==============================================================================*/
 
 #include <memory>
+#include <random>
 #include <vector>
 
 #include "../qsim/lib/channel.h"
@@ -170,6 +171,14 @@ class TfqNoisySampledExpectationOp : public tensorflow::OpKernel {
     auto sv = ss.Create(largest_nq);
     auto scratch = ss.Create(largest_nq);
 
+    // time since epoch seeds random generator.
+    unsigned long r_seed =
+        std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::system_clock::now().time_since_epoch())
+            .count();
+    std::mt19937 gen(r_seed);
+    std::uniform_int_distribution<> distrib(1, 1 << 30);
+
     // Simulate programs one by one. Parallelizing over state vectors
     // we no longer parallelize over circuits. Each time we encounter a
     // a larger circuit we will grow the Statevector as necessary.
@@ -200,13 +209,9 @@ class TfqNoisySampledExpectationOp : public tensorflow::OpKernel {
 
       while (1) {
         ss.SetStateZero(sv);
-        // time since epoch seeds random generator.
-        unsigned long r_seed =
-            std::chrono::duration_cast<std::chrono::milliseconds>(
-                std::chrono::system_clock::now().time_since_epoch())
-                .count();
-        QTSimulator::RunOnce(param, ncircuits[i], r_seed, ss, sim, scratch, sv,
-                             unused_stats);
+
+        QTSimulator::RunOnce(param, ncircuits[i], distrib(gen), ss, sim,
+                             scratch, sv, unused_stats);
 
         // Use this trajectory as a source for all expectation calculations.
         for (int j = 0; j < pauli_sums[i].size(); j++) {
@@ -214,9 +219,9 @@ class TfqNoisySampledExpectationOp : public tensorflow::OpKernel {
             continue;
           }
           float exp_v = 0.0;
-          OP_REQUIRES_OK(
-              context, ComputeSampledExpectationQsim(pauli_sums[i][j], sim, ss,
-                                                     sv, scratch, 1, &exp_v));
+          OP_REQUIRES_OK(context, ComputeSampledExpectationQsim(
+                                      pauli_sums[i][j], sim, ss, sv, scratch, 1,
+                                      gen, &exp_v));
           rolling_sums[j] += static_cast<double>(exp_v);
           run_samples[j]++;
         }
@@ -267,6 +272,11 @@ class TfqNoisySampledExpectationOp : public tensorflow::OpKernel {
 
     output_tensor->setZero();
 
+    unsigned long r_seed =
+        std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::system_clock::now().time_since_epoch())
+            .count();
+
     Status compute_status = Status::OK();
     auto c_lock = tensorflow::mutex();
     auto DoWork = [&](int start, int end) {
@@ -277,6 +287,10 @@ class TfqNoisySampledExpectationOp : public tensorflow::OpKernel {
       StateSpace ss = StateSpace(tfq_for);
       auto sv = ss.Create(largest_nq);
       auto scratch = ss.Create(largest_nq);
+
+      // time since epoch seeds random generator.
+      std::mt19937 gen(r_seed + start);
+      std::uniform_int_distribution<> distrib(1, 1 << 30);
 
       for (int i = 0; i < ncircuits.size(); i++) {
         int nq = num_qubits[i];
@@ -306,14 +320,9 @@ class TfqNoisySampledExpectationOp : public tensorflow::OpKernel {
 
         while (1) {
           ss.SetStateZero(sv);
-          // time since epoch seeds random generator.
-          unsigned long r_seed =
-              std::chrono::duration_cast<std::chrono::milliseconds>(
-                  std::chrono::system_clock::now().time_since_epoch())
-                  .count();
 
-          QTSimulator::RunOnce(param, ncircuits[i], r_seed, ss, sim, scratch,
-                               sv, unused_stats);
+          QTSimulator::RunOnce(param, ncircuits[i], distrib(gen), ss, sim,
+                               scratch, sv, unused_stats);
 
           // Compute expectations across all ops using this trajectory.
           for (int j = 0; j < pauli_sums[i].size(); j++) {
@@ -325,7 +334,7 @@ class TfqNoisySampledExpectationOp : public tensorflow::OpKernel {
             NESTED_FN_STATUS_SYNC(
                 compute_status,
                 ComputeSampledExpectationQsim(pauli_sums[i][j], sim, ss, sv,
-                                              scratch, 1, &exp_v),
+                                              scratch, 1, gen, &exp_v),
                 c_lock);
             rolling_sums[j] += static_cast<double>(exp_v);
             run_samples[j]++;
