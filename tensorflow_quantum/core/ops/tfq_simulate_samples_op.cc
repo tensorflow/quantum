@@ -15,6 +15,7 @@ limitations under the License.
 
 #include <stdlib.h>
 
+#include <random>
 #include <string>
 
 #include "../qsim/lib/circuit.h"
@@ -143,6 +144,13 @@ class TfqSimulateSamplesOp : public tensorflow::OpKernel {
     StateSpace ss = StateSpace(tfq_for);
     auto sv = ss.Create(largest_nq);
 
+    unsigned long r_seed =
+        std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::system_clock::now().time_since_epoch())
+            .count();
+    std::mt19937 gen(r_seed);
+    std::uniform_int_distribution<> distrib(1, 1 << 30);
+
     // Simulate programs one by one. Parallelizing over state vectors
     // we no longer parallelize over circuits. Each time we encounter a
     // a larger circuit we will grow the Statevector as nescessary.
@@ -159,7 +167,7 @@ class TfqSimulateSamplesOp : public tensorflow::OpKernel {
         qsim::ApplyFusedGate(sim, fused_circuits[i][j], sv);
       }
 
-      auto samples = ss.Sample(sv, num_samples, rand() % 123456);
+      auto samples = ss.Sample(sv, num_samples, distrib(gen));
       for (int j = 0; j < num_samples; j++) {
         uint64_t q_ind = 0;
         uint64_t mask = 1;
@@ -190,11 +198,20 @@ class TfqSimulateSamplesOp : public tensorflow::OpKernel {
     using Simulator = qsim::Simulator<const qsim::SequentialFor&>;
     using StateSpace = Simulator::StateSpace;
 
+    unsigned long r_seed =
+        std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::system_clock::now().time_since_epoch())
+            .count();
+
     auto DoWork = [&](int start, int end) {
       int largest_nq = 1;
       Simulator sim = Simulator(tfq_for);
       StateSpace ss = StateSpace(tfq_for);
       auto sv = ss.Create(largest_nq);
+
+      std::mt19937 gen(r_seed + start);
+      std::uniform_int_distribution<> distrib(1, 1 << 30);
+
       for (int i = start; i < end; i++) {
         int nq = num_qubits[i];
 
@@ -208,7 +225,7 @@ class TfqSimulateSamplesOp : public tensorflow::OpKernel {
           qsim::ApplyFusedGate(sim, fused_circuits[i][j], sv);
         }
 
-        auto samples = ss.Sample(sv, num_samples, rand() % 123456);
+        auto samples = ss.Sample(sv, num_samples, distrib(gen));
         for (int j = 0; j < num_samples; j++) {
           uint64_t q_ind = 0;
           uint64_t mask = 1;

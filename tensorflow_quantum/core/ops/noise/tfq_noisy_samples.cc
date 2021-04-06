@@ -15,6 +15,7 @@ limitations under the License.
 
 #include <stdlib.h>
 
+#include <random>
 #include <string>
 
 #include "../qsim/lib/channel.h"
@@ -148,6 +149,13 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
     auto sv = ss.Create(largest_nq);
     auto scratch = ss.Create(largest_nq);
 
+    unsigned long r_seed =
+        std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::system_clock::now().time_since_epoch())
+            .count();
+    std::mt19937 gen(r_seed);
+    std::uniform_int_distribution<> distrib(1, 1 << 30);
+
     // Simulate programs one by one. Parallelizing over state vectors
     // we no longer parallelize over circuits. Each time we encounter a
     // a larger circuit we will grow the Statevector as nescessary.
@@ -171,14 +179,9 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
 
       for (int j = 0; j < num_samples; j++) {
         ss.SetStateZero(sv);
-        // time since epoch seeds random generator.
-        unsigned long r_seed =
-            std::chrono::duration_cast<std::chrono::milliseconds>(
-                std::chrono::system_clock::now().time_since_epoch())
-                .count();
 
-        QTSimulator::RunOnce(param, ncircuits[i], r_seed, ss, sim, scratch, sv,
-                             gathered_samples);
+        QTSimulator::RunOnce(param, ncircuits[i], distrib(gen), ss, sim,
+                             scratch, sv, gathered_samples);
         uint64_t q_ind = 0;
         uint64_t mask = 1;
         bool val = 0;
@@ -233,6 +236,11 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
       }
     }
 
+    unsigned long r_seed =
+        std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::system_clock::now().time_since_epoch())
+            .count();
+
     auto DoWork = [&](int start, int end) {
       // Begin simulation.
       const auto tfq_for = qsim::SequentialFor(1);
@@ -241,6 +249,9 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
       StateSpace ss = StateSpace(tfq_for);
       auto sv = ss.Create(largest_nq);
       auto scratch = ss.Create(largest_nq);
+
+      std::mt19937 gen(r_seed + start);
+      std::uniform_int_distribution<> distrib(1, 1 << 30);
 
       for (int i = 0; i < ncircuits.size(); i++) {
         int nq = num_qubits[i];
@@ -263,14 +274,8 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
 
         while (1) {
           ss.SetStateZero(sv);
-          // time since epoch seeds random generator.
-          unsigned long r_seed =
-              std::chrono::duration_cast<std::chrono::milliseconds>(
-                  std::chrono::system_clock::now().time_since_epoch())
-                  .count();
-
-          QTSimulator::RunOnce(param, ncircuits[i], r_seed, ss, sim, scratch,
-                               sv, gathered_samples);
+          QTSimulator::RunOnce(param, ncircuits[i], distrib(gen), ss, sim,
+                               scratch, sv, gathered_samples);
 
           uint64_t q_ind = 0;
           uint64_t mask = 1;

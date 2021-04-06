@@ -18,6 +18,7 @@ limitations under the License.
 
 #include <bitset>
 #include <cstdint>
+#include <random>
 #include <vector>
 
 #include "../qsim/lib/circuit.h"
@@ -189,7 +190,9 @@ template <typename SimT, typename StateSpaceT, typename StateT>
 tensorflow::Status ComputeSampledExpectationQsim(
     const tfq::proto::PauliSum& p_sum, const SimT& sim, const StateSpaceT& ss,
     StateT& state, StateT& scratch, const int num_samples,
-    float* expectation_value) {
+    std::mt19937& random_source, float* expectation_value) {
+  std::uniform_int_distribution<> distrib(1, 1 << 30);
+
   if (num_samples == 0) {
     return tensorflow::Status::OK();
   }
@@ -222,12 +225,8 @@ tensorflow::Status ComputeSampledExpectationQsim(
     if (!status.ok()) {
       return status;
     }
-    unsigned long r_seed =
-        std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::system_clock::now().time_since_epoch())
-            .count();
-    const unsigned int seed = static_cast<unsigned int>(r_seed);
-    std::vector<uint64_t> state_samples = ss.Sample(scratch, num_samples, seed);
+    std::vector<uint64_t> state_samples =
+        ss.Sample(scratch, num_samples, distrib(random_source));
 
     // Find qubits on which to measure parity
     std::vector<unsigned int> parity_bits;

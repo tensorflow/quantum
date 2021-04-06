@@ -14,6 +14,7 @@ limitations under the License.
 ==============================================================================*/
 
 #include <memory>
+#include <random>
 #include <vector>
 
 #include "../qsim/lib/channel.h"
@@ -169,6 +170,13 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
     auto sv = ss.Create(largest_nq);
     auto scratch = ss.Create(largest_nq);
 
+    unsigned long r_seed =
+        std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::system_clock::now().time_since_epoch())
+            .count();
+    std::mt19937 gen(r_seed);
+    std::uniform_int_distribution<> distrib(1, 1 << 30);
+
     // Simulate programs one by one. Parallelizing over state vectors
     // we no longer parallelize over circuits. Each time we encounter a
     // a larger circuit we will grow the Statevector as necessary.
@@ -199,13 +207,9 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
 
       while (1) {
         ss.SetStateZero(sv);
-        // time since epoch seeds random generator.
-        unsigned long r_seed =
-            std::chrono::duration_cast<std::chrono::milliseconds>(
-                std::chrono::system_clock::now().time_since_epoch())
-                .count();
-        QTSimulator::RunOnce(param, ncircuits[i], r_seed, ss, sim, scratch, sv,
-                             unused_stats);
+
+        QTSimulator::RunOnce(param, ncircuits[i], distrib(gen), ss, sim,
+                             scratch, sv, unused_stats);
 
         // Use this trajectory as a source for all expectation calculations.
         for (int j = 0; j < pauli_sums[i].size(); j++) {
@@ -266,6 +270,11 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
 
     output_tensor->setZero();
 
+    unsigned long r_seed =
+        std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::system_clock::now().time_since_epoch())
+            .count();
+
     Status compute_status = Status::OK();
     auto c_lock = tensorflow::mutex();
     auto DoWork = [&](int start, int end) {
@@ -276,6 +285,9 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
       StateSpace ss = StateSpace(tfq_for);
       auto sv = ss.Create(largest_nq);
       auto scratch = ss.Create(largest_nq);
+
+      std::mt19937 gen(r_seed + start);
+      std::uniform_int_distribution<> distrib(1, 1 << 30);
 
       for (int i = 0; i < ncircuits.size(); i++) {
         int nq = num_qubits[i];
@@ -305,14 +317,9 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
 
         while (1) {
           ss.SetStateZero(sv);
-          // time since epoch seeds random generator.
-          unsigned long r_seed =
-              std::chrono::duration_cast<std::chrono::milliseconds>(
-                  std::chrono::system_clock::now().time_since_epoch())
-                  .count();
 
-          QTSimulator::RunOnce(param, ncircuits[i], r_seed, ss, sim, scratch,
-                               sv, unused_stats);
+          QTSimulator::RunOnce(param, ncircuits[i], distrib(gen), ss, sim,
+                               scratch, sv, unused_stats);
 
           // Compute expectations across all ops using this trajectory.
           for (int j = 0; j < pauli_sums[i].size(); j++) {
