@@ -14,6 +14,7 @@ limitations under the License.
 ==============================================================================*/
 
 #include <memory>
+#include <random>
 #include <vector>
 
 #include "../qsim/lib/circuit.h"
@@ -157,6 +158,12 @@ class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
     auto sv = ss.Create(largest_nq);
     auto scratch = ss.Create(largest_nq);
 
+    unsigned long r_seed =
+        std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::system_clock::now().time_since_epoch())
+            .count();
+    std::mt19937 gen(r_seed);
+
     // Simulate programs one by one. Parallelizing over state vectors
     // we no longer parallelize over circuits. Each time we encounter a
     // a larger circuit we will grow the Statevector as necessary.
@@ -185,7 +192,7 @@ class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
         float exp_v = 0.0;
         OP_REQUIRES_OK(context, ComputeSampledExpectationQsim(
                                     pauli_sums[i][j], sim, ss, sv, scratch,
-                                    num_samples[i][j], &exp_v));
+                                    num_samples[i][j], gen, &exp_v));
         (*output_tensor)(i, j) = exp_v;
       }
     }
@@ -204,6 +211,11 @@ class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
 
     const int output_dim_op_size = output_tensor->dimension(1);
 
+    unsigned long r_seed =
+        std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::system_clock::now().time_since_epoch())
+            .count();
+
     Status compute_status = Status::OK();
     auto c_lock = tensorflow::mutex();
     auto DoWork = [&](int start, int end) {
@@ -216,6 +228,9 @@ class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
       StateSpace ss = StateSpace(tfq_for);
       auto sv = ss.Create(largest_nq);
       auto scratch = ss.Create(largest_nq);
+
+      std::mt19937 gen(r_seed + start);
+
       for (int i = start; i < end; i++) {
         cur_batch_index = i / output_dim_op_size;
         cur_op_index = i % output_dim_op_size;
@@ -249,7 +264,7 @@ class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
             compute_status,
             ComputeSampledExpectationQsim(
                 pauli_sums[cur_batch_index][cur_op_index], sim, ss, sv, scratch,
-                num_samples[cur_batch_index][cur_op_index], &exp_v),
+                num_samples[cur_batch_index][cur_op_index], gen, &exp_v),
             c_lock);
 
         (*output_tensor)(cur_batch_index, cur_op_index) = exp_v;
