@@ -14,18 +14,19 @@
 # ==============================================================================
 """Testing for gradient calculation consistency in TFQ."""
 import copy
-
+import cirq
 import numpy as np
 import sympy
 import tensorflow as tf
 from absl.testing import parameterized
 
-import cirq
 from tensorflow_quantum.python import util
 from tensorflow_quantum.python.differentiators import adjoint
 from tensorflow_quantum.python.differentiators import linear_combination
 from tensorflow_quantum.python.differentiators import parameter_shift
 from tensorflow_quantum.core.ops import circuit_execution_ops, batch_util
+from tensorflow_quantum.core.ops.noise import noisy_expectation_op
+from tensorflow_quantum.core.ops.noise import noisy_sampled_expectation_op
 
 ANALYTIC_DIFFS = [
     linear_combination.ForwardDifference(grid_spacing=0.0001),
@@ -54,15 +55,20 @@ SAMPLED_OPS = [
     circuit_execution_ops.get_sampled_expectation_op()  # C++
 ]
 
+NOISY_OPS = [
+    noisy_sampled_expectation_op.sampled_expectation,
+    noisy_expectation_op.expectation
+]
+
 
 def _cirq_simple_finite_difference(circuit_batch,
                                    resolvers,
                                    symbol_names,
                                    op_batch,
+                                   simulator,
                                    grid_spacing=0.0001):
     """A simple finite difference code that calculates the gradient of a
     batch of circuits using cirq."""
-    simulator = cirq.sim.Simulator()
 
     init_vals = batch_util.batch_calculate_expectation(circuit_batch, resolvers,
                                                        op_batch, simulator)
@@ -197,7 +203,8 @@ class AnalyticGradientCorrectnessTest(tf.test.TestCase, parameterized.TestCase):
         # scheme
         cirq_grads = _cirq_simple_finite_difference(circuit_batch,
                                                     resolver_batch,
-                                                    symbol_names, psums)
+                                                    symbol_names, psums,
+                                                    cirq.Simulator())
 
         # will this be too tight? time will tell.
         self.assertAllClose(cirq_grads, tfq_grads, rtol=2e-2, atol=2e-2)
@@ -260,7 +267,7 @@ class AnalyticGradientCorrectnessTest(tf.test.TestCase, parameterized.TestCase):
 
 
 class SampledGradientCorrectnessTest(tf.test.TestCase, parameterized.TestCase):
-    """Test approximate correctness to analytical methods."""
+    """Test approximate correctness to sampled methods."""
 
     @parameterized.parameters(
         list(
@@ -268,7 +275,7 @@ class SampledGradientCorrectnessTest(tf.test.TestCase, parameterized.TestCase):
                 **{
                     'differentiator': SAMPLED_DIFFS,
                     'op': SAMPLED_OPS,
-                    'num_samples': [10000]
+                    'num_samples': [20000]
                 })))
     def test_sampled_value_with_simple_circuit(self, differentiator, op,
                                                num_samples):
@@ -346,7 +353,8 @@ class SampledGradientCorrectnessTest(tf.test.TestCase, parameterized.TestCase):
         # scheme
         cirq_grads = _cirq_simple_finite_difference(circuit_batch,
                                                     resolver_batch,
-                                                    symbol_names, psums)
+                                                    symbol_names, psums,
+                                                    cirq.Simulator())
 
         self.assertAllClose(cirq_grads, tfq_grads, rtol=tol, atol=tol)
 
@@ -355,6 +363,122 @@ class SampledGradientCorrectnessTest(tf.test.TestCase, parameterized.TestCase):
             util.kwargs_cartesian_product(**{
                 'differentiator': SAMPLED_DIFFS,
                 'op': SAMPLED_OPS,
+            })))
+    def test_empty_circuit_sampled_grad(self, differentiator, op):
+        """Test that providing no circuits will fail gracefully."""
+        differentiator.refresh()
+        op = differentiator.generate_differentiable_op(sampled_op=op)
+        circuit = tf.convert_to_tensor([], dtype=tf.string)
+        psums = tf.raw_ops.Empty(shape=(0, 0), dtype=tf.string)
+
+        # Calculate tfq gradient.
+        symbol_values_tensor = tf.raw_ops.Empty(shape=(0, 0), dtype=tf.float32)
+        symbol_names_tensor = tf.convert_to_tensor([], dtype=tf.string)
+        n_samples_tensor = tf.raw_ops.Empty(shape=(0, 0), dtype=tf.int32)
+        with tf.GradientTape() as g:
+            g.watch(symbol_values_tensor)
+            expectations = op(circuit, symbol_names_tensor,
+                              symbol_values_tensor, psums, n_samples_tensor)
+        grads = g.gradient(expectations, symbol_values_tensor)
+        self.assertShapeEqual(grads.numpy(),
+                              tf.raw_ops.Empty(shape=(0, 0), dtype=tf.float32))
+
+
+class NoisyGradientCorrectnessTest(tf.test.TestCase, parameterized.TestCase):
+    """Test approximate correctness of noisy methods."""
+
+    @parameterized.parameters(
+        list(
+            util.kwargs_cartesian_product(
+                **{
+                    'differentiator': SAMPLED_DIFFS,
+                    'op': NOISY_OPS,
+                    'num_samples': [20000]
+                })))
+    def test_sampled_value_with_simple_circuit(self, differentiator, op,
+                                               num_samples):
+        """Test the value of sampled differentiator with simple circuit."""
+        # Get an expectation op, with this differentiator attached.
+        differentiator.refresh()
+        op = differentiator.generate_differentiable_op(sampled_op=op)
+        qubit = cirq.GridQubit(0, 0)
+        circuit = util.convert_to_tensor(
+            [cirq.Circuit(cirq.X(qubit)**sympy.Symbol('alpha'))])
+        psums = util.convert_to_tensor([[cirq.Z(qubit)]])
+        symbol_values_array = np.array([[0.123]], dtype=np.float32)
+        # Calculate tfq gradient.
+        symbol_values_tensor = tf.convert_to_tensor(symbol_values_array)
+        with tf.GradientTape() as g:
+            g.watch(symbol_values_tensor)
+            expectations = op(circuit, tf.convert_to_tensor(['alpha']),
+                              symbol_values_tensor, psums,
+                              tf.convert_to_tensor([[num_samples]]))
+        grads = g.gradient(expectations, symbol_values_tensor)
+        ground_truth_grads = np.array([[-1.1839752]])
+        self.assertAllClose(ground_truth_grads, grads, rtol=0.2, atol=0.2)
+
+    @parameterized.parameters(
+        list(
+            util.kwargs_cartesian_product(
+                **{
+                    'diff_and_tol': zip(SAMPLED_DIFFS, SAMPLED_DIFFS_TOLS),
+                    'op': NOISY_OPS,
+                    'n_qubits': [5],
+                    'n_programs': [5],
+                    'n_ops': [2],
+                    'symbol_names': [['a', 'b']],
+                    'num_samples': [30000]
+                })))
+    def test_approx_equality_shallow(self, diff_and_tol, op, n_qubits,
+                                     symbol_names, n_ops, n_programs,
+                                     num_samples):
+        """Test small circuits with limited depth."""
+        differentiator, tol = diff_and_tol
+        differentiator.refresh()
+        op = differentiator.generate_differentiable_op(sampled_op=op)
+
+        qubits = cirq.GridQubit.rect(1, n_qubits)
+        circuit_batch, resolver_batch = \
+            util.random_symbol_circuit_resolver_batch(
+                cirq.GridQubit.rect(1, n_qubits), symbol_names, n_programs,
+                include_channels=True)
+
+        # Prepare random pauli sums and add initial superposition gates.
+        psums = []
+        for i in range(len(circuit_batch)):
+            psums.append(util.random_pauli_sums(qubits, 1, n_ops))
+            circuit_batch[i] = cirq.Circuit(
+                cirq.H.on_each(qubits)) + circuit_batch[i]
+
+        symbol_values_array = np.array(
+            [[resolver[symbol]
+              for symbol in symbol_names]
+             for resolver in resolver_batch],
+            dtype=np.float32)
+
+        # calculate tfq gradient
+        symbol_values_tensor = tf.convert_to_tensor(symbol_values_array)
+        programs = util.convert_to_tensor(circuit_batch)
+        ops = util.convert_to_tensor(psums)
+        with tf.GradientTape() as g:
+            g.watch(symbol_values_tensor)
+            expectations = op(
+                programs, tf.convert_to_tensor(symbol_names),
+                symbol_values_tensor, ops,
+                tf.convert_to_tensor([[num_samples] * n_ops] * n_programs))
+        tfq_grads = g.gradient(expectations, symbol_values_tensor)
+
+        cirq_grads = _cirq_simple_finite_difference(
+            circuit_batch, resolver_batch, symbol_names, psums,
+            cirq.DensityMatrixSimulator())
+
+        self.assertAllClose(cirq_grads, tfq_grads, rtol=tol, atol=tol)
+
+    @parameterized.parameters(
+        list(
+            util.kwargs_cartesian_product(**{
+                'differentiator': SAMPLED_DIFFS,
+                'op': NOISY_OPS,
             })))
     def test_empty_circuit_sampled_grad(self, differentiator, op):
         """Test that providing no circuits will fail gracefully."""

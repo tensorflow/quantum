@@ -128,12 +128,14 @@ class Differentiator(metaclass=abc.ABCMeta):
                                      'Given arg: {}.'.format(str(key)) + ''
                                      'The signature should contain: {}.'.format(
                                          list(expected_signature)) + ''
-                                     ' Given: {}'.format(list(signature)))
+                                     ' Given: {}'.format(list(signature))
+                                     'Note: noisy ops should use sampled_op')
 
             if 'num_samples' in signature:
                 raise ValueError('found num_samples in analytic_op. Please '
                                  'ensure that you are providing an analytical '
-                                 'expectation op in the analytic_op arg.')
+                                 'expectation op in the analytic_op arg.'
+                                 'Note: noisy ops should use sampled_op')
 
         if sampled_op is not None:
             signature = inspect.signature(sampled_op).parameters
