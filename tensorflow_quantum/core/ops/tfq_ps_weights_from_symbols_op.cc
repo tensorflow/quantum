@@ -71,7 +71,9 @@ class TfqPsWeightsFromSymbolOp : public tensorflow::OpKernel {
     for (int i = 0; i < n_symbols; i++) {
       symbols_map[symbols(i)] = i;
     }
-    std::vector<std::string> ignore_list = {"I", "ISP", "PXP", "FSIM", "PISP"};
+    std::vector<std::string> ignore_list = {"I",  "ISP", "PXP", "FSIM", "PISP",
+                                            "AD", "ADP", "DP",  "GAD",  "BF",
+                                            "PF", "PD",  "RST"};
     absl::flat_hash_set<std::string> ignored_symbol_set(ignore_list.begin(),
                                                         ignore_list.end());
 

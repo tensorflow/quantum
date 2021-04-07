@@ -126,6 +126,8 @@ py_test(
         ":parameter_shift",
         "//tensorflow_quantum/core/ops:batch_util",
         "//tensorflow_quantum/core/ops:circuit_execution_ops",
+        "//tensorflow_quantum/core/ops/noise:noisy_expectation_op_py",
+        "//tensorflow_quantum/core/ops/noise:noisy_sampled_expectation_op_py",
         "//tensorflow_quantum/python:util",
     ],
 )
