@@ -88,7 +88,7 @@ class ParameterShift(differentiator.Differentiator):
         # Append impurity symbol into symbol name
         new_symbol_names = tf.concat([
             symbol_names,
-            tf.constant([parameter_shift_util._PARAMETER_IMPURITY_NAME])
+            tf.constant([parameter_shift_util.PARAMETER_IMPURITY_NAME])
         ], 0)
 
         # Symbol values are the input symbol values, tiled according to
@@ -201,7 +201,7 @@ class ParameterShift(differentiator.Differentiator):
         new_symbol_names = tf.concat([
             symbol_names,
             tf.expand_dims(tf.constant(
-                parameter_shift_util._PARAMETER_IMPURITY_NAME),
+                parameter_shift_util.PARAMETER_IMPURITY_NAME),
                            axis=0)
         ],
                                      axis=0)
@@ -347,7 +347,7 @@ class ParameterShift(differentiator.Differentiator):
         new_symbol_names = tf.concat([
             symbol_names,
             tf.expand_dims(tf.constant(
-                parameter_shift_util._PARAMETER_IMPURITY_NAME),
+                parameter_shift_util.PARAMETER_IMPURITY_NAME),
                            axis=0)
         ],
                                      axis=0)
