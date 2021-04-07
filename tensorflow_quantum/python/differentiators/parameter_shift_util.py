@@ -18,7 +18,7 @@ import tensorflow as tf
 
 from tensorflow_quantum.core.ops import tfq_ps_util_ops
 
-_PARAMETER_IMPURITY_NAME = '_param_shift'
+PARAMETER_IMPURITY_NAME = '_impurity_for_param_shift'
 
 
 @tf.function
@@ -65,7 +65,7 @@ def parse_programs(programs, symbol_names, symbol_values, n_symbols,
 
     # Collecting doped programs with impurity sympy.Symbol from all programs
     # with parameterized gates.
-    impurity = tf.tile(tf.convert_to_tensor([_PARAMETER_IMPURITY_NAME]),
+    impurity = tf.tile(tf.convert_to_tensor([PARAMETER_IMPURITY_NAME]),
                        [n_symbols])
     symbols = tf.convert_to_tensor(symbol_names)
 
