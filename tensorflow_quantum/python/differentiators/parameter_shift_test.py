@@ -108,7 +108,7 @@ class ParameterShiftTest(tf.test.TestCase, parameterized.TestCase):
         # programs are parameter shifted versions of `input_programs[p]` and the
         # remaining programs are empty.
         # Here, `n_param_gates` is 2.
-        impurity_symbol_name = "_param_shift"
+        impurity_symbol_name = "_impurity_for_param_shift"
         impurity_symbol = sympy.Symbol(impurity_symbol_name)
         expected_batch_programs_0 = util.convert_to_tensor([
             cirq.Circuit(
