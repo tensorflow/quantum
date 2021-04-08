@@ -177,6 +177,7 @@ class LinearCombination(differentiator.Differentiator):
         return (batch_programs, new_symbol_names, batch_symbol_values,
                 batch_weights, batch_mapper)
 
+
 class ForwardDifference(LinearCombination):
     """Differentiate a circuit using forward differencing.
 

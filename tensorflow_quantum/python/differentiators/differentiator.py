@@ -188,9 +188,11 @@ class Differentiator(metaclass=abc.ABCMeta):
 
     def _differentiate_ana(self, programs, symbol_names, symbol_values,
                            pauli_sums, forward_pass_vals, grad):
-        return None, None, self.differentiate_analytic(
-            programs, symbol_names, symbol_values,
-            pauli_sums, forward_pass_vals, grad), None
+        return None, None, self.differentiate_analytic(programs, symbol_names,
+                                                       symbol_values,
+                                                       pauli_sums,
+                                                       forward_pass_vals,
+                                                       grad), None
 
     def _differentiate_sam(self, programs, symbol_names, symbol_values,
                            pauli_sums, num_samples, forward_pass_vals, grad):
@@ -351,7 +353,8 @@ class Differentiator(metaclass=abc.ABCMeta):
             you are differentiating through.
         """
         (batch_programs, new_symbol_names, batch_symbol_values, batch_weights,
-         batch_mapper) = self.get_gradient_circuits(programs, symbol_names, symbol_values)
+         batch_mapper) = self.get_gradient_circuits(programs, symbol_names,
+                                                    symbol_values)
         batch_pauli_sums = tf.tile(tf.expand_dims(pauli_sums, 1),
                                    [1, tf.shape(batch_programs)[1], 1])
         n_batch_programs = tf.reduce_prod(tf.shape(batch_programs))
@@ -415,7 +418,8 @@ class Differentiator(metaclass=abc.ABCMeta):
             you are differentiating through.
         """
         (batch_programs, new_symbol_names, batch_symbol_values, batch_weights,
-         batch_mapper) = self.get_gradient_circuits(programs, symbol_names, symbol_values)
+         batch_mapper) = self.get_gradient_circuits(programs, symbol_names,
+                                                    symbol_values)
         m_i = tf.shape(batch_programs)[1]
         batch_pauli_sums = tf.tile(tf.expand_dims(pauli_sums, 1), [1, m_i, 1])
         batch_num_samples = tf.tile(tf.expand_dims(num_samples, 1), [1, m_i, 1])
