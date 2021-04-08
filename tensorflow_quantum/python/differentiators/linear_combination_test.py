@@ -21,6 +21,7 @@ import cirq
 
 from tensorflow_quantum.core.ops import circuit_execution_ops
 from tensorflow_quantum.python import util
+from tensorflow_quantum.python.differentiators import adjoint
 from tensorflow_quantum.python.differentiators import linear_combination
 
 
@@ -325,8 +326,7 @@ class LinearCombinationTest(tf.test.TestCase, parameterized.TestCase):
         grad_manual = tf.reduce_sum(batch_jacobian, -1)
 
         # Get gradients using autodiff.
-        differentiator.refresh()
-        differentiable_op = differentiator.generate_differentiable_op(
+        differentiable_op = adjoint.Adjoint().generate_differentiable_op(
             analytic_op=analytic_op)
         with tf.GradientTape() as g:
             g.watch(symbol_values_tensor)
