@@ -188,11 +188,10 @@ class Differentiator(metaclass=abc.ABCMeta):
 
     def _differentiate_ana(self, programs, symbol_names, symbol_values,
                            pauli_sums, forward_pass_vals, grad):
-        return None, None, self.differentiate_analytic(programs, symbol_names,
-                                                       symbol_values,
-                                                       pauli_sums,
-                                                       forward_pass_vals,
-                                                       grad), None
+        return None, None, self.differentiate_analytic(
+            programs, symbol_names, symbol_values,
+            pauli_sums, forward_pass_vals, grad), \
+               None
 
     def _differentiate_sam(self, programs, symbol_names, symbol_values,
                            pauli_sums, num_samples, forward_pass_vals, grad):
