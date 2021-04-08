@@ -86,7 +86,6 @@ py_test(
     srcs = ["linear_combination_test.py"],
     python_version = "PY3",
     deps = [
-        ":adjoint",
         ":linear_combination",
         "//tensorflow_quantum/core/ops:circuit_execution_ops",
         "//tensorflow_quantum/python:util",
@@ -99,7 +98,6 @@ py_test(
     srcs = ["parameter_shift_test.py"],
     python_version = "PY3",
     deps = [
-        ":adjoint",
         ":parameter_shift",
         "//tensorflow_quantum/core/ops:circuit_execution_ops",
         "//tensorflow_quantum/core/ops:tfq_utility_ops_py",
