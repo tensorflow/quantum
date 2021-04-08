@@ -375,7 +375,6 @@ class Differentiator(metaclass=abc.ABCMeta):
         # now apply the chain rule
         return tf.einsum('pso,po->ps', batch_jacobian, grad)
 
-
     @catch_empty_inputs
     @tf.function
     def differentiate_sampled(self, programs, symbol_names, symbol_values,
