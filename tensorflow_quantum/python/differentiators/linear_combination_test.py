@@ -333,7 +333,7 @@ class LinearCombinationTest(tf.test.TestCase, parameterized.TestCase):
             exact_outputs = differentiable_op(programs, symbol_names_tensor,
                                               symbol_values_tensor, ops_tensor)
         grad_auto = g.gradient(exact_outputs, symbol_values_tensor)
-        self.assertAllClose(grad_manual, grad_auto)
+        self.assertAllClose(grad_manual, grad_auto, atol=1e-5)
 
 
 if __name__ == "__main__":
