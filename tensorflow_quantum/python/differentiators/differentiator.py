@@ -380,12 +380,11 @@ class Differentiator(metaclass=abc.ABCMeta):
     @tf.function
     def differentiate_sampled(self, programs, symbol_names, symbol_values,
                               pauli_sums, num_samples, forward_pass_vals, grad):
-        """Specify how to differentiate a circuit with sampled expectation.
+        """Differentiate a circuit with sampled expectation.
 
         This is called at graph runtime by TensorFlow. `differentiate_sampled`
-        should calculate the gradient of a batch of circuits and return it
-        formatted as indicated below. See
-        `tfq.differentiators.ForwardDifference` for an example.
+        calls he inheriting differentiator's `get_gradient_circuits` and uses
+        those components to construct the gradient.
 
         Args:
             programs: `tf.Tensor` of strings with shape [batch_size] containing
