@@ -190,8 +190,7 @@ class Differentiator(metaclass=abc.ABCMeta):
                            pauli_sums, forward_pass_vals, grad):
         return None, None, self.differentiate_analytic(
             programs, symbol_names, symbol_values,
-            pauli_sums, forward_pass_vals, grad), \
-               None
+            pauli_sums, forward_pass_vals, grad), None
 
     def _differentiate_sam(self, programs, symbol_names, symbol_values,
                            pauli_sums, num_samples, forward_pass_vals, grad):
@@ -315,15 +314,15 @@ class Differentiator(metaclass=abc.ABCMeta):
                 the output `batch_weights`.
         """
 
-    @abc.abstractmethod
+    @catch_empty_inputs
+    @tf.function
     def differentiate_analytic(self, programs, symbol_names, symbol_values,
                                pauli_sums, forward_pass_vals, grad):
-        """Specify how to differentiate a circuit with analytical expectation.
+        """Differentiate a circuit with analytical expectation.
 
         This is called at graph runtime by TensorFlow. `differentiate_analytic`
-        should calculate the gradient of a batch of circuits and return it
-        formatted as indicated below. See
-        `tfq.differentiators.ForwardDifference` for an example.
+        calls he inheriting differentiator's `get_gradient_circuits` and uses
+        those components to construct the gradient.
 
         Args:
             programs: `tf.Tensor` of strings with shape [batch_size] containing
@@ -351,8 +350,32 @@ class Differentiator(metaclass=abc.ABCMeta):
             the gradient backpropageted to the `symbol_values` input of the op
             you are differentiating through.
         """
+        (batch_programs, new_symbol_names, batch_symbol_values, batch_weights,
+         batch_mapper) = self.get_gradient_circuits(programs, symbol_names, symbol_values)
+        batch_pauli_sums = tf.tile(tf.expand_dims(pauli_sums, 1),
+                                   [1, tf.shape(batch_programs)[1], 1])
+        n_batch_programs = tf.reduce_prod(tf.shape(batch_programs))
+        n_symbols = tf.shape(new_symbol_names)[0]
+        n_ops = tf.shape(pauli_sums)[1]
+        batch_expectations = self.expectation_op(
+            tf.reshape(batch_programs, [n_batch_programs]), new_symbol_names,
+            tf.reshape(batch_symbol_values, [n_batch_programs, n_symbols]),
+            tf.reshape(batch_pauli_sums, [n_batch_programs, n_ops]))
+        batch_expectations = tf.reshape(batch_expectations,
+                                        tf.shape(batch_pauli_sums))
 
-    @abc.abstractmethod
+        # has shape [n_programs, n_symbols, n_ops]
+        batch_jacobian = tf.map_fn(
+            lambda x: tf.einsum('sm,smo->so', x[0], tf.gather(x[1], x[2])),
+            (batch_weights, batch_expectations, batch_mapper),
+            fn_output_signature=tf.float32)
+
+        # now apply the chain rule
+        return tf.einsum('pso,po->ps', batch_jacobian, grad)
+
+
+    @catch_empty_inputs
+    @tf.function
     def differentiate_sampled(self, programs, symbol_names, symbol_values,
                               pauli_sums, num_samples, forward_pass_vals, grad):
         """Specify how to differentiate a circuit with sampled expectation.
@@ -391,3 +414,27 @@ class Differentiator(metaclass=abc.ABCMeta):
             the gradient backpropageted to the `symbol_values` input of the op
             you are differentiating through.
         """
+        (batch_programs, new_symbol_names, batch_symbol_values, batch_weights,
+         batch_mapper) = self.get_gradient_circuits(programs, symbol_names, symbol_values)
+        m_i = tf.shape(batch_programs)[1]
+        batch_pauli_sums = tf.tile(tf.expand_dims(pauli_sums, 1), [1, m_i, 1])
+        batch_num_samples = tf.tile(tf.expand_dims(num_samples, 1), [1, m_i, 1])
+        n_batch_programs = tf.reduce_prod(tf.shape(batch_programs))
+        n_symbols = tf.shape(new_symbol_names)[0]
+        n_ops = tf.shape(pauli_sums)[1]
+        batch_expectations = self.expectation_op(
+            tf.reshape(batch_programs, [n_batch_programs]), new_symbol_names,
+            tf.reshape(batch_symbol_values, [n_batch_programs, n_symbols]),
+            tf.reshape(batch_pauli_sums, [n_batch_programs, n_ops]),
+            tf.reshape(batch_num_samples, [n_batch_programs, n_ops]))
+        batch_expectations = tf.reshape(batch_expectations,
+                                        tf.shape(batch_pauli_sums))
+
+        # has shape [n_programs, n_symbols, n_ops]
+        batch_jacobian = tf.map_fn(
+            lambda x: tf.einsum('sm,smo->so', x[0], tf.gather(x[1], x[2])),
+            (batch_weights, batch_expectations, batch_mapper),
+            fn_output_signature=tf.float32)
+
+        # now apply the chain rule
+        return tf.einsum('pso,po->ps', batch_jacobian, grad)
