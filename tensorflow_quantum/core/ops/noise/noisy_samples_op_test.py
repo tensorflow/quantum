@@ -175,7 +175,7 @@ class NoisySamplingTest(tf.test.TestCase, parameterized.TestCase):
               for symbol in symbol_names]
              for resolver in resolver_batch])
 
-        n_samples = 20000
+        n_samples = 10000
         op_samples = noisy_samples_op.samples(
             util.convert_to_tensor(circuit_batch), symbol_names,
             symbol_values_array, [n_samples]).to_list()
@@ -187,7 +187,7 @@ class NoisySamplingTest(tf.test.TestCase, parameterized.TestCase):
             cirq.DensityMatrixSimulator() if noisy else cirq.Simulator())
 
         cirq_hists = self._compute_hists(cirq_samples, n_qubits)
-        tol = 1.3 if noisy else 1.0
+        tol = 1.5 if noisy else 1.0
         for a, b in zip(op_hists, cirq_hists):
             self.assertLess(stats.entropy(a + 1e-8, b + 1e-8), tol)
 
