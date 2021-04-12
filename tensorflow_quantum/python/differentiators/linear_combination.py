@@ -151,20 +151,32 @@ class LinearCombination(differentiator.Differentiator):
                                      [1, m_tile, 1])
         batch_symbol_values = bare_symbol_values + all_perts
 
-        stacked_weights = tf.stack([perts_zeros_pad, self.non_zero_weights])
-        gathered_weights = tf.gather(stacked_weights,
-                                     tf.eye(n_symbols, dtype=tf.int32))
-        reshaped_weights = tf.concat(tf.unstack(gathered_weights), 1)
+        # The weights for all the programs.
+        tiled_weights = tf.tile(tf.expand_dims(self.non_zero_weights, 0),
+                                [n_symbols, 1])
         tiled_zero_weights = tf.tile(tf.expand_dims(self.zero_weights, 0),
                                      [n_symbols, 1])
-        single_program_mapper = tf.concat(
-            [tiled_zero_weights, reshaped_weights], 1)
+        single_program_weights = tf.concat([tiled_zero_weights, tiled_weights],
+                                           1)
         # Mapping is also the same for each program.
+        batch_weights = tf.tile(tf.expand_dims(single_program_weights, 0),
+                                [n_programs, 1, 1])
+
+        # The mapper selects the zero weight if it exists.
+        single_program_mapper_base = tf.reshape(
+            tf.range(n_symbols * self.n_non_zero_perturbations),
+            [n_symbols, self.n_non_zero_perturbations])
+        single_program_mapper = tf.cond(
+            self.n_non_zero_perturbations < self.n_perturbations,
+            lambda: tf.concat([
+                tf.zeros([n_symbols, 1], dtype=tf.int32),
+                single_program_mapper_base + 1
+            ], 1), lambda: single_program_mapper_base)
         batch_mapper = tf.tile(tf.expand_dims(single_program_mapper, 0),
                                [n_programs, 1, 1])
 
         return (batch_programs, new_symbol_names, batch_symbol_values,
-                batch_mapper)
+                batch_weights, batch_mapper)
 
     @differentiator.catch_empty_inputs
     @tf.function
