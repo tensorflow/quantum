@@ -175,7 +175,7 @@ class NoisySamplingTest(tf.test.TestCase, parameterized.TestCase):
               for symbol in symbol_names]
              for resolver in resolver_batch])
 
-        n_samples = 20000
+        n_samples = 10000
         op_samples = noisy_samples_op.samples(
             util.convert_to_tensor(circuit_batch), symbol_names,
             symbol_values_array, [n_samples]).to_list()
