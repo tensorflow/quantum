@@ -75,15 +75,20 @@ class SampledExpectationTest(parameterized.TestCase, tf.test.TestCase):
                 TypeError, expected_regex="tfq.differentiators.Differentiator"):
             sampled_expectation.SampledExpectation(differentiator='junk')
 
-    @parameterized.parameters([{
-        'backend': 'noisy'
-    }, {
-        'backend': 'noiseless'
-    }, {
-        'backend': cirq.Simulator()
-    }, {
-        'backend': None # older API usage.
-    }])
+    @parameterized.parameters([
+        {
+            'backend': 'noisy'
+        },
+        {
+            'backend': 'noiseless'
+        },
+        {
+            'backend': cirq.Simulator()
+        },
+        {
+            'backend': None  # older API usage.
+        }
+    ])
     def test_sampled_expectation_type_inputs_error(self, backend):
         """Test that SampledExpectation errors within Keras call."""
 
@@ -115,15 +120,20 @@ class SampledExpectationTest(parameterized.TestCase, tf.test.TestCase):
             sampled_expectation.SampledExpectation(backend=backend)(
                 reg_circuit, operators=test_psum, repetitions='junk')
 
-    @parameterized.parameters([{
-        'backend': 'noisy'
-    }, {
-        'backend': 'noiseless'
-    }, {
-        'backend': cirq.Simulator()
-    }, {
-        'backend': None # older API usage.
-    }])
+    @parameterized.parameters([
+        {
+            'backend': 'noisy'
+        },
+        {
+            'backend': 'noiseless'
+        },
+        {
+            'backend': cirq.Simulator()
+        },
+        {
+            'backend': None  # older API usage.
+        }
+    ])
     def test_sampled_expectation_op_error(self, backend):
         """Test that expectation errors within underlying ops correctly."""
         # Note the expected_regex is left blank here since there is a
@@ -185,15 +195,20 @@ class SampledExpectationTest(parameterized.TestCase, tf.test.TestCase):
                 operators=test_psum,
                 repetitions=5)
 
-    @parameterized.parameters([{
-        'backend': 'noisy'
-    }, {
-        'backend': 'noiseless'
-    }, {
-        'backend': cirq.Simulator()
-    }, {
-        'backend': None # older API usage.
-    }])
+    @parameterized.parameters([
+        {
+            'backend': 'noisy'
+        },
+        {
+            'backend': 'noiseless'
+        },
+        {
+            'backend': cirq.Simulator()
+        },
+        {
+            'backend': None  # older API usage.
+        }
+    ])
     def test_static_cases(self, backend):
         """Run inputs through in complex cases."""
 
