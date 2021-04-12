@@ -218,6 +218,15 @@ class Differentiator(metaclass=abc.ABCMeta):
         `tf.Tensor` objects give all necessary information to recreate the
         internal logic of the differentiator.
 
+        This base class defines the standard way to use the outputs of this
+        function to obtain either analytic gradients or sample gradients.
+        Below is code that is copied directly from the `differentiate_analytic`
+        default implementation, which is then compared to how one could
+        automatically get this gradient.  The point is that the derivatives of
+        some functions cannot be calculated via the available auto-diff (such
+        as when the function is not expressible efficiently as a PauliSum),
+        and then one would need to use `get_gradient_circuits` the manual way.
+
         Suppose we have some inputs `programs`, `symbol_names`, and
         `symbol_values`.  To get the derivative of the expectation values of a
         tensor of PauliSums `pauli_sums` with respect to these inputs, do:
@@ -226,7 +235,7 @@ class Differentiator(metaclass=abc.ABCMeta):
         >>> diff = <some differentiator>()
         >>> (
         ...     batch_programs, new_symbol_names, batch_symbol_values,
-        ...     batch_mapper
+        ...     batch_weights, batch_mapper
         ... ) = diff.get_gradient_circuits(
         ...     programs, symbol_names, symbol_values)
         >>> exp_layer = tfq.layers.Expectation()
@@ -325,6 +334,10 @@ class Differentiator(metaclass=abc.ABCMeta):
         calls he inheriting differentiator's `get_gradient_circuits` and uses
         those components to construct the gradient.
 
+        Note: the default implementation does not use `forward_pass_vals`; the
+        inheriting differentiator is free to override the default implementation
+        and use this argument if desired.
+
         Args:
             programs: `tf.Tensor` of strings with shape [batch_size] containing
                 the string representations of the circuits to be executed.
@@ -354,8 +367,8 @@ class Differentiator(metaclass=abc.ABCMeta):
         (batch_programs, new_symbol_names, batch_symbol_values, batch_weights,
          batch_mapper) = self.get_gradient_circuits(programs, symbol_names,
                                                     symbol_values)
-        batch_pauli_sums = tf.tile(tf.expand_dims(pauli_sums, 1),
-                                   [1, tf.shape(batch_programs)[1], 1])
+        m_i = tf.shape(batch_programs)[1]
+        batch_pauli_sums = tf.tile(tf.expand_dims(pauli_sums, 1), [1, m_i, 1])
         n_batch_programs = tf.reduce_prod(tf.shape(batch_programs))
         n_symbols = tf.shape(new_symbol_names)[0]
         n_ops = tf.shape(pauli_sums)[1]
@@ -384,6 +397,10 @@ class Differentiator(metaclass=abc.ABCMeta):
         This is called at graph runtime by TensorFlow. `differentiate_sampled`
         calls he inheriting differentiator's `get_gradient_circuits` and uses
         those components to construct the gradient.
+
+        Note: the default implementation does not use `forward_pass_vals`; the
+        inheriting differentiator is free to override the default implementation
+        and use this argument if desired.
 
         Args:
             programs: `tf.Tensor` of strings with shape [batch_size] containing
