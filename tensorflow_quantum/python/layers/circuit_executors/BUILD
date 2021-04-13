@@ -48,6 +48,7 @@ py_library(
     srcs_version = "PY3",
     deps = [
         ":input_checks",
+        "//tensorflow_quantum/core/ops/noise:noisy_sampled_expectation_op_py",
         "//tensorflow_quantum/core/ops:circuit_execution_ops",
         "//tensorflow_quantum/python:util",
         "//tensorflow_quantum/python/differentiators:differentiator",
