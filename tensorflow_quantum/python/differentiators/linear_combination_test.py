@@ -259,10 +259,10 @@ class LinearCombinationTest(tf.test.TestCase, parameterized.TestCase):
         self.assertAllEqual(expected_new_symbol_names, test_new_symbol_names)
         self.assertAllClose(expected_batch_symbol_values,
                             test_batch_symbol_values,
-                            atol=1e-6)
+                            atol=1e-5)
         self.assertAllClose(expected_batch_weights,
                             test_batch_weights,
-                            atol=1e-6)
+                            atol=1e-5)
         self.assertAllEqual(expected_batch_mapper, test_batch_mapper)
 
     @parameterized.parameters(
@@ -333,7 +333,7 @@ class LinearCombinationTest(tf.test.TestCase, parameterized.TestCase):
             exact_outputs = differentiable_op(programs, symbol_names_tensor,
                                               symbol_values_tensor, ops_tensor)
         grad_auto = g.gradient(exact_outputs, symbol_values_tensor)
-        self.assertAllClose(grad_manual, grad_auto)
+        self.assertAllClose(grad_manual, grad_auto, atol=1e-5)
 
 
 if __name__ == "__main__":
