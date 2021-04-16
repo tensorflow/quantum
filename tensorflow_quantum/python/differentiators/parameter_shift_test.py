@@ -188,10 +188,10 @@ class ParameterShiftTest(tf.test.TestCase, parameterized.TestCase):
         self.assertAllEqual(expected_new_symbol_names, test_new_symbol_names)
         self.assertAllClose(expected_batch_symbol_values,
                             test_batch_symbol_values,
-                            atol=1e-6)
+                            atol=1e-5)
         self.assertAllClose(expected_batch_weights,
                             test_batch_weights,
-                            atol=1e-6)
+                            atol=1e-5)
         self.assertAllEqual(expected_batch_mapper, test_batch_mapper)
 
 

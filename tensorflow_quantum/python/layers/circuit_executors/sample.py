@@ -18,6 +18,7 @@ import numbers
 import tensorflow as tf
 
 from tensorflow_quantum.core.ops import circuit_execution_ops
+from tensorflow_quantum.core.ops.noise import noisy_samples_op
 from tensorflow_quantum.python.layers.circuit_executors import input_checks
 
 
@@ -138,7 +139,7 @@ class Sample(tf.keras.layers.Layer):
 
     """
 
-    def __init__(self, backend=None, **kwargs):
+    def __init__(self, backend='noiseless', **kwargs):
         """Instantiate this Layer.
 
         Create a layer that will output bitstring samples taken from either a
@@ -146,12 +147,20 @@ class Sample(tf.keras.layers.Layer):
 
         Args:
             backend: Optional Backend to use to simulate this state. Defaults
-                to the native Tensorflow simulator (None), however users may
-                also specify a preconfigured cirq execution object to use
-                instead, which must inherit `cirq.Sampler`.
+                to the noiseless simulator. Options are {'noisy', 'noiseless'},
+                however users may also specify a preconfigured cirq execution
+                object to use instead, which must inherit `cirq.Sampler`.
         """
         super().__init__(**kwargs)
-        self.sample_op = circuit_execution_ops.get_sampling_op(backend)
+        used_op = None
+        if backend == 'noiseless':
+            used_op = circuit_execution_ops.get_sampling_op(None)
+        elif backend == 'noisy':
+            used_op = noisy_samples_op.samples
+        else:
+            used_op = circuit_execution_ops.get_sampling_op(backend)
+
+        self.sample_op = used_op
 
     def call(self,
              inputs,

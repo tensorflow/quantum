@@ -310,7 +310,8 @@ def _get_cirq_sampled_expectation(simulator=cirq.Simulator()):
         _input_check_helper(programs, symbol_names, symbol_values)
         if not (pauli_sums.dtype == tf.dtypes.string):
             raise TypeError('pauli_sums tensor must be of type string.')
-        if not (pauli_sums.shape[0] == programs.shape[0]):
+        if not (pauli_sums.shape[0] == programs.shape[0]) or \
+            len(pauli_sums.shape) != 2:
             raise TypeError('pauli_sums tensor must have the same batch shape '
                             'as programs tensor.')
 
