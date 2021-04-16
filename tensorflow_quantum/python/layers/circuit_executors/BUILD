@@ -64,6 +64,7 @@ py_library(
     deps = [
         ":input_checks",
         "//tensorflow_quantum/core/ops:circuit_execution_ops",
+        "//tensorflow_quantum/core/ops/noise:noisy_samples_op_py",
     ],
 )
 

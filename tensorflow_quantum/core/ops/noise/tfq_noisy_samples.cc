@@ -257,6 +257,9 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
         int nq = num_qubits[i];
         int j = start > 0 ? offset_prefix_sum[start - 1][i] : 0;
         int needed_samples = offset_prefix_sum[start][i] - j;
+        if (needed_samples <= 0) {
+          continue;
+        }
 
         if (nq > largest_nq) {
           largest_nq = nq;
