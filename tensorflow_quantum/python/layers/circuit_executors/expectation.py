@@ -222,7 +222,7 @@ class Expectation(tf.keras.layers.Layer):
                 derivative values of given operators_to_measure and circuit,
                 which must inherit `tfq.differentiators.Differentiator` and
                 implements `differentiate_analytic` method. Defaults to None,
-                which uses `linear_combination.ForwardDifference()`. If
+                which uses `tfq.differentiators.ParameterShift()`. If
                 `backend` is also 'noiseless' then default is
                 `tfq.differentiators.Adjoint`.
 
