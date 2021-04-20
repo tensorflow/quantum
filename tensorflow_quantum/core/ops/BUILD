@@ -80,6 +80,7 @@ cc_binary(
     deps = [
         ":parse_context",
         # cirq cc proto
+        # pauli sum cc proto
         ":tfq_simulate_utils",
         "//tensorflow_quantum/core/src:adj_util",
         "//tensorflow_quantum/core/src:circuit_parser_qsim",
@@ -266,6 +267,7 @@ cc_binary(
         ":tfq_simulate_utils",
         # cirq cc proto
         "//tensorflow_quantum/core/proto:program_cc_proto",
+        "//tensorflow_quantum/core/src:program_resolution",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/container:inlined_vector",
         "@com_google_absl//absl/types:optional",
@@ -369,8 +371,9 @@ py_library(
     data = [":_tfq_adj_grad.so"],
     srcs_version = "PY3",
     deps = [
-        # tensorflow framework for wrappers
         ":load_module",
+        # pauli sum cc proto
+        # tensorflow framework for wrappers
     ],
 )
 
