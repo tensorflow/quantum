@@ -325,8 +325,8 @@ class Expectation(tf.keras.layers.Layer):
                                                    dtype=tf.dtypes.int32)
 
             if reps_need_tile:
-                # Don't tile up if the user gave a python list that was precisely
-                # the correct size to match circuits outer batch dim.
+                # Don't tile up if the user gave a python list that was
+                # precisely the correct size to match circuits outer batch dim.
                 repetitions = tf.tile(repetitions, [circuit_batch_dim, 1])
 
             if not tf.is_tensor(repetitions):
