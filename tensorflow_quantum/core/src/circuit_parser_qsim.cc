@@ -156,7 +156,7 @@ inline Status SingleConstantGate(
     const unsigned int num_qubits, const unsigned int time,
     QsimCircuit* circuit, std::vector<GateMetaData>* metadata) {
   unsigned int q0;
-  bool unused = absl::SimpleAtoi(op.qubits(0).id(), &q0);
+  (void) absl::SimpleAtoi(op.qubits(0).id(), &q0);
   auto gate = create_f(time, num_qubits - q0 - 1);
   Status s = OptionalInsertControls(op, num_qubits, &gate);
   if (!s.ok()) {
@@ -810,7 +810,7 @@ tensorflow::Status NoisyQsimCircuitFromProgram(const Program& program,
       } else if (status.ok()) {
         // gate found. succeeded in parsing.
         ncircuit->channels.push_back(
-            std::move(qsim::MakeChannelFromGate(time, placeholder.gates[0])));
+            qsim::MakeChannelFromGate(time, placeholder.gates[0]));
       } else {
         // got not found. Attempt to find and append channel.
         status = ParseAppendChannel(op, num_qubits, time, ncircuit);
