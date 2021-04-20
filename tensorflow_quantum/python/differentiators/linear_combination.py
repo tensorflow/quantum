@@ -111,6 +111,7 @@ class LinearCombination(differentiator.Differentiator):
         self.n_non_zero_perturbations = tf.gather(
             tf.shape(self.non_zero_perturbations), 0)
 
+    @tf.function
     def get_gradient_circuits(self, programs, symbol_names, symbol_values):
         """See base class description."""
         n_programs = tf.gather(tf.shape(programs), 0)
