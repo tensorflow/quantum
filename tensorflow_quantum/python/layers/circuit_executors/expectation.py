@@ -239,27 +239,25 @@ class Expectation(tf.keras.layers.Layer):
         used_op = None
         self.noisy = False
         if backend == 'noiseless':
-            used_op = circuit_execution_ops.get_expectation_op(backend=None)
-        elif backend == 'noisy':
-            used_op = noisy_expectation_op.expectation
-            self.noisy = True
-        else:
-            used_op = circuit_execution_ops.get_expectation_op(backend=backend)
+            backend = None
 
         # Ingest differentiator.
         if differentiator is None:
             differentiator = parameter_shift.ParameterShift()
-            if backend == 'noiseless':
+            if backend is None:
                 differentiator = adjoint.Adjoint()
 
         if not isinstance(differentiator, diff.Differentiator):
             raise TypeError("Differentiator must inherit from "
                             "tfq.differentiators.Differentiator")
 
-        if self.noisy:
+        if backend == 'noisy':
+            used_op = noisy_expectation_op.expectation
             self._expectation_op = differentiator.generate_differentiable_op(
                 sampled_op=used_op)
+            self.noisy = True
         else:
+            used_op = circuit_execution_ops.get_expectation_op(backend=backend)
             self._expectation_op = differentiator.generate_differentiable_op(
                 analytic_op=used_op)
 
