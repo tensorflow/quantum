@@ -156,7 +156,7 @@ inline Status SingleConstantGate(
     const unsigned int num_qubits, const unsigned int time,
     QsimCircuit* circuit, std::vector<GateMetaData>* metadata) {
   unsigned int q0;
-  (void) absl::SimpleAtoi(op.qubits(0).id(), &q0);
+  (void)absl::SimpleAtoi(op.qubits(0).id(), &q0);
   auto gate = create_f(time, num_qubits - q0 - 1);
   Status s = OptionalInsertControls(op, num_qubits, &gate);
   if (!s.ok()) {
