@@ -261,9 +261,11 @@ class ExpectationTest(tf.test.TestCase):
             [symb_circuit, symb_circuit],
             symbol_names=[symbol],
             symbol_values=[[0.5], [0.4]],
-            operators=[[-1.0 * cirq.Z(bit),
-                       cirq.X(bit) + 2.0 * cirq.Z(bit), cirq.Z(bit)],
-                       [cirq.Z(bit), cirq.Z(bit), cirq.Z(bit)]],
+            operators=[[
+                -1.0 * cirq.Z(bit),
+                cirq.X(bit) + 2.0 * cirq.Z(bit),
+                cirq.Z(bit)
+            ], [cirq.Z(bit), cirq.Z(bit), cirq.Z(bit)]],
             repetitions=[[1, 2, 3], [4, 5, 6]])
 
     def test_expectation_simple_tf_train(self):
