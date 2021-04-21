@@ -215,7 +215,7 @@ class Expectation(tf.keras.layers.Layer):
             backend: Optional Backend to use to simulate states. Defaults to
                 the 'noiseless' simulator, options include {'noiseless',
                 'noisy'}. In the noisy case a `repetitions` call argument
-                must be provided. Ysers may also specify a preconfigured cirq
+                must be provided. Users may also specify a preconfigured cirq
                 object to use instead, which must inherit
                 `cirq.sim.simulator.SimulatesExpectationValues`.
             differentiator: Optional Differentiator to use to calculate analytic

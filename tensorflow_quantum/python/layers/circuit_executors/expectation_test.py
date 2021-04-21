@@ -45,6 +45,8 @@ class ExpectationTest(tf.test.TestCase):
 
     def test_expectation_instantiate(self):
         """Test that Expectation instantiates correctly."""
+        expectation.Expectation()
+        expectation.Expectation(backend=None)
         expectation.Expectation(backend='noisy')
         expectation.Expectation(backend='noiseless')
         expectation.Expectation(backend=cirq.Simulator())
@@ -191,7 +193,7 @@ class ExpectationTest(tf.test.TestCase):
                                   symbol_values=[[0.5]],
                                   operators=test_psum)
 
-    def test_static_cases_nois(self):
+    def test_static_cases_noisy(self):
         """Test that the noisy trajectory backend works in complex cases."""
         bit = cirq.GridQubit(0, 0)
         symbol = sympy.Symbol('alpha')
@@ -254,6 +256,16 @@ class ExpectationTest(tf.test.TestCase):
                        cirq.X(bit) + 2.0 * cirq.Z(bit)],
             repetitions=[5, 1])
 
+        # Test 2d repetitions.
+        expectation.Expectation(backend='noisy')(
+            [symb_circuit, symb_circuit],
+            symbol_names=[symbol],
+            symbol_values=[[0.5], [0.4]],
+            operators=[[-1.0 * cirq.Z(bit),
+                       cirq.X(bit) + 2.0 * cirq.Z(bit), cirq.Z(bit)],
+                       [cirq.Z(bit), cirq.Z(bit), cirq.Z(bit)]],
+            repetitions=[[1, 2, 3], [4, 5, 6]])
+
     def test_expectation_simple_tf_train(self):
         """Train a layer using standard tf (not keras).
         This is a subtle test that will work since we don't use keras compile.
@@ -296,8 +308,7 @@ class ExpectationFunctionalTests(parameterized.TestCase, tf.test.TestCase):
         noisy = backend == 'noisy'
         bit = cirq.GridQubit(0, 0)
         symbols = sympy.symbols('x y z')
-        circuit = _gen_single_bit_rotation_problem(bit, symbols,
-                                                   True if noisy else False)
+        circuit = _gen_single_bit_rotation_problem(bit, symbols, noisy)
 
         inputs = tf.keras.Input(shape=(1,), dtype=tf.dtypes.float64)
         datum = tf.keras.Input(shape=(), dtype=tf.dtypes.string)
