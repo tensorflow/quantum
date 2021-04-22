@@ -248,9 +248,9 @@ class SampledExpectation(tf.keras.layers.Layer):
 
         used_op = None
         if backend == 'noiseless':
-            used_op = circuit_execution_ops.get_sampled_expectation_op(
-                backend=None)
-        elif backend == 'noisy':
+            backend = None
+
+        if backend == 'noisy':
             used_op = noisy_sampled_expectation_op.sampled_expectation
         else:
             used_op = circuit_execution_ops.get_sampled_expectation_op(

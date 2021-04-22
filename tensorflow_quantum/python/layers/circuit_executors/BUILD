@@ -35,10 +35,11 @@ py_library(
     deps = [
         ":input_checks",
         "//tensorflow_quantum/core/ops:circuit_execution_ops",
+        "//tensorflow_quantum/core/ops/noise:noisy_expectation_op_py",
         "//tensorflow_quantum/python:util",
         "//tensorflow_quantum/python/differentiators:adjoint",
         "//tensorflow_quantum/python/differentiators:differentiator",
-        "//tensorflow_quantum/python/differentiators:linear_combination",
+        "//tensorflow_quantum/python/differentiators:parameter_shift",
     ],
 )
 
