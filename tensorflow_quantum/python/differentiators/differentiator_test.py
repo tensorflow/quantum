@@ -23,14 +23,6 @@ class WorkingDifferentiator(differentiator.Differentiator):
     def get_gradient_circuits(self, programs, symbol_names, symbol_values):
         """test."""
 
-    def differentiate_analytic(self, programs, symbol_names, symbol_values,
-                               pauli_sums, forward_pass_vals, grad):
-        """test."""
-
-    def differentiate_sampled(self, programs, symbol_names, symbol_values,
-                              num_samples, pauli_sums, forward_pass_vals, grad):
-        """test."""
-
 
 class DifferentiatorTest(tf.test.TestCase):
     """Test that we can properly subclass differentiator."""
