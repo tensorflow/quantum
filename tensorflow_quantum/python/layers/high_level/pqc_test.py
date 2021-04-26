@@ -34,6 +34,15 @@ class PQCTest(tf.test.TestCase, parameterized.TestCase):
         pqc.PQC(learnable_flip, cirq.Z(qubit))
         pqc.PQC(learnable_flip, cirq.Z(qubit), repetitions=500)
 
+    def test_pqc_noisy_error(self):
+        """Refer to noisy layer."""
+        symbol = sympy.Symbol('alpha')
+        qubit = cirq.GridQubit(0, 0)
+        learnable_flip = cirq.Circuit(cirq.X(qubit)**symbol)
+        with self.assertRaisesRegex(ValueError,
+                                    expected_regex='tfq.layers.NoisyPQC'):
+            pqc.PQC(learnable_flip, cirq.Z(qubit), backend='noisy')
+
     def test_pqc_model_circuit_error(self):
         """Test that invalid circuits error properly."""
         qubit = cirq.GridQubit(0, 0)
@@ -102,6 +111,11 @@ class PQCTest(tf.test.TestCase, parameterized.TestCase):
             def run_sweep(self):
                 """do nothing."""
                 return
+
+        with self.assertRaisesRegex(
+                TypeError,
+                expected_regex="cirq.sim.simulator.SimulatesExpectation"):
+            pqc.PQC(learnable_flip, cirq.Z(qubit), backend='junk')
 
         with self.assertRaisesRegex(TypeError, expected_regex="cirq.Sampler"):
             pqc.PQC(learnable_flip,

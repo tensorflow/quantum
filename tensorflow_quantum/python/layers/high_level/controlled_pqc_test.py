@@ -36,6 +36,17 @@ class ControlledPQCTest(tf.test.TestCase, parameterized.TestCase):
                                      cirq.Z(bit),
                                      repetitions=500)
 
+    def test_controlled_pqc_noisy_error(self):
+        """Ensure error refers to alternate layer."""
+        symbol = sympy.Symbol('alpha')
+        qubit = cirq.GridQubit(0, 0)
+        learnable_flip = cirq.Circuit(cirq.X(qubit)**symbol)
+        with self.assertRaisesRegex(
+                ValueError, expected_regex='tfq.layers.NoisyControlledPQC'):
+            controlled_pqc.ControlledPQC(learnable_flip,
+                                         cirq.Z(qubit),
+                                         backend='noisy')
+
     def test_controlled_pqc_backend_error(self):
         """Test that invalid backends error properly."""
         symbol = sympy.Symbol('alpha')
