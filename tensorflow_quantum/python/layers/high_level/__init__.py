@@ -16,5 +16,6 @@
 
 # pylint: disable=line-too-long
 from tensorflow_quantum.python.layers.high_level.controlled_pqc import ControlledPQC
+from tensorflow_quantum.python.layers.high_level.noisy_pqc import NoisyPQC
 from tensorflow_quantum.python.layers.high_level.pqc import PQC
 # pylint: enable=line-too-long
