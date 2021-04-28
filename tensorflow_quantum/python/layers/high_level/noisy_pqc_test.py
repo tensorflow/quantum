@@ -31,8 +31,10 @@ class NoisyPQCTest(tf.test.TestCase, parameterized.TestCase):
         symbol = sympy.Symbol('alpha')
         qubit = cirq.GridQubit(0, 0)
         learnable_flip = cirq.Circuit(cirq.X(qubit)**symbol)
-        noisy_pqc.NoisyPQC(
-            learnable_flip, cirq.Z(qubit), repetitions=1000, sample_based=False)
+        noisy_pqc.NoisyPQC(learnable_flip,
+                           cirq.Z(qubit),
+                           repetitions=1000,
+                           sample_based=False)
 
     def test_noisy_pqc_model_circuit_error(self):
         """Test that invalid circuits error properly."""
@@ -42,14 +44,18 @@ class NoisyPQCTest(tf.test.TestCase, parameterized.TestCase):
         with self.assertRaisesRegex(
                 TypeError,
                 expected_regex="model_circuit must be a cirq.Circuit"):
-            noisy_pqc.NoisyPQC(
-                'junk', cirq.Z(qubit), repetitions=1000, sample_based=False)
+            noisy_pqc.NoisyPQC('junk',
+                               cirq.Z(qubit),
+                               repetitions=1000,
+                               sample_based=False)
 
         with self.assertRaisesRegex(
                 ValueError,
                 expected_regex="model_circuit has no sympy.Symbols"):
-            noisy_pqc.NoisyPQC(
-                no_symbols, cirq.Z(qubit), repetitions=1000, sample_based=False)
+            noisy_pqc.NoisyPQC(no_symbols,
+                               cirq.Z(qubit),
+                               repetitions=1000,
+                               sample_based=False)
 
     def test_noisy_pqc_operators_error(self):
         """Test that invalid operators error properly."""
@@ -59,14 +65,20 @@ class NoisyPQCTest(tf.test.TestCase, parameterized.TestCase):
 
         with self.assertRaisesRegex(
                 TypeError, expected_regex="cirq.PauliSum or cirq.PauliString"):
-            noisy_pqc.NoisyPQC(
-                learnable_flip, 'junk', repetitions=1000, sample_based=False)
+            noisy_pqc.NoisyPQC(learnable_flip,
+                               'junk',
+                               repetitions=1000,
+                               sample_based=False)
 
         with self.assertRaisesRegex(TypeError, expected_regex="Each element"):
-            noisy_pqc.NoisyPQC(learnable_flip, [[cirq.Z(qubit)]], repetitions=1000, sample_based=False)
+            noisy_pqc.NoisyPQC(learnable_flip, [[cirq.Z(qubit)]],
+                               repetitions=1000,
+                               sample_based=False)
 
         with self.assertRaisesRegex(TypeError, expected_regex="Each element"):
-            noisy_pqc.NoisyPQC(learnable_flip, [cirq.Z(qubit), 'bad'], repetitions=1000, sample_based=False)
+            noisy_pqc.NoisyPQC(learnable_flip, [cirq.Z(qubit), 'bad'],
+                               repetitions=1000,
+                               sample_based=False)
 
     def test_noisy_pqc_repetitions_error(self):
         """Test that invalid repetitions error properly."""
@@ -76,20 +88,30 @@ class NoisyPQCTest(tf.test.TestCase, parameterized.TestCase):
 
         with self.assertRaisesRegex(TypeError,
                                     expected_regex="positive integer value"):
-            noisy_pqc.NoisyPQC(learnable_flip, cirq.Z(qubit), repetitions='junk', sample_based=False)
+            noisy_pqc.NoisyPQC(learnable_flip,
+                               cirq.Z(qubit),
+                               repetitions='junk',
+                               sample_based=False)
 
         with self.assertRaisesRegex(ValueError,
                                     expected_regex="greater than zero."):
-            noisy_pqc.NoisyPQC(learnable_flip, cirq.Z(qubit), repetitions=-100, sample_based=False)
+            noisy_pqc.NoisyPQC(learnable_flip,
+                               cirq.Z(qubit),
+                               repetitions=-100,
+                               sample_based=False)
 
         with self.assertRaisesRegex(ValueError,
                                     expected_regex="greater than zero."):
-            noisy_pqc.NoisyPQC(learnable_flip, cirq.Z(qubit), repetitions=0, sample_based=False)
+            noisy_pqc.NoisyPQC(learnable_flip,
+                               cirq.Z(qubit),
+                               repetitions=0,
+                               sample_based=False)
 
         with self.assertRaisesRegex(ValueError,
                                     expected_regex="must be provided"):
-            noisy_pqc.NoisyPQC(learnable_flip, cirq.Z(qubit), sample_based=False)
-
+            noisy_pqc.NoisyPQC(learnable_flip,
+                               cirq.Z(qubit),
+                               sample_based=False)
 
     def test_noisy_pqc_sample_based_error(self):
         """Test that invalid sampled_based values error properly."""
@@ -98,11 +120,14 @@ class NoisyPQCTest(tf.test.TestCase, parameterized.TestCase):
         learnable_flip = cirq.Circuit(cirq.X(qubit)**symbol)
 
         with self.assertRaisesRegex(TypeError, expected_regex="True or False"):
-            noisy_pqc.NoisyPQC(learnable_flip, cirq.Z(qubit), repetitions=10, sample_based='junk')
+            noisy_pqc.NoisyPQC(learnable_flip,
+                               cirq.Z(qubit),
+                               repetitions=10,
+                               sample_based='junk')
 
-        with self.assertRaisesRegex(ValueError, expected_regex="specify use_sampled=False"):
+        with self.assertRaisesRegex(ValueError,
+                                    expected_regex="specify use_sampled=False"):
             noisy_pqc.NoisyPQC(learnable_flip, cirq.Z(qubit), repetitions=10)
-
 
     def test_noisy_pqc_initializer(self):
         """Test action of initializer."""
@@ -113,12 +138,15 @@ class NoisyPQCTest(tf.test.TestCase, parameterized.TestCase):
              cirq.Y(qubit)**b,
              cirq.Z(qubit)**c])
         mpqc_zeros = noisy_pqc.NoisyPQC(three_parameters,
-                             cirq.Z(qubit),
-                             repetitions=100,
-                             sample_based=False,
-                             initializer='zeros')
-        mpqc_ones = noisy_pqc.NoisyPQC(
-            three_parameters, cirq.Z(qubit), initializer='ones', repetitions=100, sample_based=False)
+                                        cirq.Z(qubit),
+                                        repetitions=100,
+                                        sample_based=False,
+                                        initializer='zeros')
+        mpqc_ones = noisy_pqc.NoisyPQC(three_parameters,
+                                       cirq.Z(qubit),
+                                       initializer='ones',
+                                       repetitions=100,
+                                       sample_based=False)
         self.assertAllEqual([[0, 0, 0]], mpqc_zeros.get_weights())
         self.assertAllEqual([[1, 1, 1]], mpqc_ones.get_weights())
 
@@ -130,10 +158,15 @@ class NoisyPQCTest(tf.test.TestCase, parameterized.TestCase):
             [cirq.X(qubit)**a,
              cirq.Y(qubit)**b,
              cirq.Z(qubit)**c])
-        mpqc = noisy_pqc.NoisyPQC(
-            three_parameters, cirq.Z(qubit), repetitions=100, sample_based=False)
-        mpqc_r = noisy_pqc.NoisyPQC(
-            three_parameters, cirq.Z(qubit), regularizer='l2', repetitions=100, sample_based=False)
+        mpqc = noisy_pqc.NoisyPQC(three_parameters,
+                                  cirq.Z(qubit),
+                                  repetitions=100,
+                                  sample_based=False)
+        mpqc_r = noisy_pqc.NoisyPQC(three_parameters,
+                                    cirq.Z(qubit),
+                                    regularizer='l2',
+                                    repetitions=100,
+                                    sample_based=False)
         self.assertEqual(0, len(mpqc.losses))
         self.assertEqual(1, len(mpqc_r.losses))
 
@@ -147,10 +180,10 @@ class NoisyPQCTest(tf.test.TestCase, parameterized.TestCase):
              cirq.Y(qubit)**b,
              cirq.Z(qubit)**c])
         mpqc = noisy_pqc.NoisyPQC(three_parameters,
-                       cirq.Z(qubit),
-                       repetitions=100,
-                       sample_based=False,
-                       constraint=my_constraint)
+                                  cirq.Z(qubit),
+                                  repetitions=100,
+                                  sample_based=False,
+                                  constraint=my_constraint)
         self.assertEqual(my_constraint, mpqc.parameters.constraint)
 
     def test_noisy_pqc_symbols_property(self):
@@ -162,8 +195,10 @@ class NoisyPQCTest(tf.test.TestCase, parameterized.TestCase):
             cirq.Z(bit)**b,
             cirq.X(bit)**d,
             cirq.Y(bit)**c)
-        layer = noisy_pqc.NoisyPQC(
-            test_circuit, cirq.Z(bit), repetitions=100, sample_based=False)
+        layer = noisy_pqc.NoisyPQC(test_circuit,
+                                   cirq.Z(bit),
+                                   repetitions=100,
+                                   sample_based=False)
         self.assertEqual(layer.symbols, [a, b, c, d])
 
     def test_noisy_pqc_symbol_values(self):
@@ -176,11 +211,12 @@ class NoisyPQCTest(tf.test.TestCase, parameterized.TestCase):
             cirq.X(bit)**d,
             cirq.Y(bit)**c)
         init_vals = [1, 2, 3, 4]
-        layer = noisy_pqc.NoisyPQC(test_circuit,
-                        cirq.Z(bit),
-                        repetitions=1000,
-                        sample_based=False,
-                        initializer=tf.constant_initializer(init_vals))
+        layer = noisy_pqc.NoisyPQC(
+            test_circuit,
+            cirq.Z(bit),
+            repetitions=1000,
+            sample_based=False,
+            initializer=tf.constant_initializer(init_vals))
         expected_vals = dict(zip([a, b, c, d], init_vals))
         self.assertAllClose(layer.symbol_values(), expected_vals)
 
@@ -189,15 +225,17 @@ class NoisyPQCTest(tf.test.TestCase, parameterized.TestCase):
         """Test a simple learning scenario using analytic and sample expectation
         on many backends."""
         qubit = cirq.GridQubit(0, 0)
-        circuit = cirq.Circuit(cirq.X(qubit)**sympy.Symbol('bit'),
+        circuit = cirq.Circuit(
+            cirq.X(qubit)**sympy.Symbol('bit'),
             cirq.depolarize(0.01)(qubit))
 
         quantum_datum = tf.keras.Input(shape=(), dtype=tf.dtypes.string)
-        mpqc = noisy_pqc.NoisyPQC(circuit,
-                       cirq.Z(qubit),
-                       repetitions=5000,
-                       sample_based=sample_based,
-                       initializer=tf.keras.initializers.Constant(value=0.5))
+        mpqc = noisy_pqc.NoisyPQC(
+            circuit,
+            cirq.Z(qubit),
+            repetitions=5000,
+            sample_based=sample_based,
+            initializer=tf.keras.initializers.Constant(value=0.5))
         outputs = mpqc(quantum_datum)
         model = tf.keras.Model(inputs=quantum_datum, outputs=outputs)
 

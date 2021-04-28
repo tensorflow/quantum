@@ -233,7 +233,7 @@ class NoisyPQC(tf.keras.layers.Layer):
         if not isinstance(sample_based, bool):
             raise TypeError("sampled_based must be either True or False."
                             " received: {}".format(type(sample_based)))
-        
+
         if not sample_based:
             self._executor = differentiator.generate_differentiable_op(
                 sampled_op=noisy_expectation_op.expectation)
@@ -288,11 +288,8 @@ class NoisyPQC(tf.keras.layers.Layer):
         tiled_up_parameters = tf.tile([self.parameters], [circuit_batch_dim, 1])
         tiled_up_operators = tf.tile(self._operators, [circuit_batch_dim, 1])
 
-
         tiled_up_repetitions = tf.tile(self._repetitions,
                                        [circuit_batch_dim, 1])
-        return self._executor(model_appended,
-                              self._symbols,
-                              tiled_up_parameters,
-                              tiled_up_operators,
+        return self._executor(model_appended, self._symbols,
+                              tiled_up_parameters, tiled_up_operators,
                               tiled_up_repetitions)
