@@ -217,7 +217,7 @@ tensorflow::Status GetProgramsAndNumQubits(
   if (programs->size() != other_programs->size()) {
     return Status(tensorflow::error::INVALID_ARGUMENT,
                   absl::StrCat("programs and other_programs batch dimension",
-                               " do not match. Foud: ", programs->size(),
+                               " do not match. Found: ", programs->size(),
                                " and ", other_programs->size()));
   }
 
@@ -420,6 +420,56 @@ tensorflow::Status GetPrevGrads(
       sub_parsed_grads.push_back(grad_v);
     }
     parsed_prev_grads->push_back(sub_parsed_grads);
+  }
+
+  return Status::OK();
+}
+
+// used by adj_hessian_op.
+tensorflow::Status GetProgramsCoefficients(
+    tensorflow::OpKernelContext* context, std::vector<float>* programs_coeffs,
+    std::vector<std::vector<float>>* other_programs_coeffs) {
+  const Tensor* input_grads;
+  Status status = context->input("programs_coeffs", &input_grads);
+  if (!status.ok()) {
+    return status;
+  }
+
+  if (input_grads->dims() != 1) {
+    return Status(tensorflow::error::INVALID_ARGUMENT,
+                  absl::StrCat("programs_coeffs must be rank 1. Got rank ",
+                               input_grads->dims(), "."));
+  }
+
+  const auto vec_coeff = input_grads->vec<float>();
+  programs_coeffs->reserve(vec_coeff.dimension(0));
+  for (unsigned int i = 0; i < vec_coeff.dimension(0); i++) {
+    const float grad_v = vec_coeff(i);
+    programs_coeffs->push_back(grad_v);
+  }
+
+  status = context->input("other_programs_coeffs", &input_grads);
+  if (!status.ok()) {
+    return status;
+  }
+
+  if (input_grads->dims() != 2) {
+    return Status(tensorflow::error::INVALID_ARGUMENT,
+                  absl::StrCat("other_programs_coeffs must be rank 2. "
+                               "Got rank ",
+                               input_grads->dims(), "."));
+  }
+
+  const auto matrix_coeffs = input_grads->matrix<float>();
+  other_programs_coeffs->reserve(matrix_coeffs.dimension(0));
+  for (unsigned int i = 0; i < matrix_coeffs.dimension(0); i++) {
+    std::vector<float> sub_coeffs;
+    sub_coeffs.reserve(matrix_coeffs.dimension(1));
+    for (unsigned int j = 0; j < matrix_coeffs.dimension(1); j++) {
+      const float coeff = matrix_coeffs(i, j);
+      sub_coeffs.push_back(coeff);
+    }
+    other_programs_coeffs->push_back(sub_coeffs);
   }
 
   return Status::OK();

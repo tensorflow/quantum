@@ -31,6 +31,23 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "adj_hessian_util",
+    srcs = ["adj_hessian_util.cc"],
+    hdrs = ["adj_hessian_util.h"],
+    deps = [
+        ":adj_util",
+        ":circuit_parser_qsim",
+        "@qsim//lib:circuit",
+        "@qsim//lib:fuser",
+        "@qsim//lib:fuser_basic",
+        "@qsim//lib:gate",
+        "@qsim//lib:gates_cirq",
+        "@qsim//lib:io",
+        "@qsim//lib:matrix",
+    ],
+)
+
 cc_test(
     name = "adj_util_test",
     srcs = ["adj_util_test.cc"],

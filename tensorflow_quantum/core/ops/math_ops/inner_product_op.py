@@ -20,6 +20,96 @@ from tensorflow_quantum.core.ops.load_module import load_module
 MATH_OP_MODULE = load_module(os.path.join("math_ops", "_tfq_math_ops.so"))
 
 
+def inner_product_hessian(programs, symbol_names, symbol_values, other_programs,
+                          programs_coeffs, other_programs_coeffs):
+    """Calculate the adjoint Hessian of the inner product between circuits.
+
+    Compute the gradients of the (potentially many) inner products between
+    the given circuits and the symbol free comparison circuits.
+
+    Calculates out[i][j][k] = $\text{programs_coeffs[i]} \times \langle
+    \frac{\partial^2  \psi_{\text{programs[i]}}(\text{symbol_values[i]})}
+    {\partial \text{symbol_names[j]}\partial \text{symbol_names[k]}} |
+    \sum_l \text{other_programs_coeffs[l]}\times |
+    \psi_{\text{other_programs[l]}}  \rangle$
+
+
+    >>> symbols = sympy.symbols('alpha beta')
+    >>> qubits = cirq.GridQubit.rect(1, 2)
+    >>> reference_circuits = [
+    ...     cirq.Circuit((cirq.H**symbols[0]).on_each(qubits)),
+    ...     cirq.Circuit(
+    ...         cirq.X(qubits[0]) ** symbols[0],
+    ...         cirq.Y(qubits[1]) ** symbols[1])
+    ... ]
+    >>> other_circuits = [
+    ...     cirq.Circuit(cirq.X.on_each(qubits)),
+    ...     cirq.Circuit((cirq.Y**0.125).on_each(qubits)),
+    ...     cirq.Circuit((cirq.X**0.5).on_each(qubits))
+    ... ]
+    >>> reference_tensor = tfq.convert_to_tensor(reference_circuits)
+    >>> symbol_tensor = tf.convert_to_tensor([s.name for s in symbols])
+    >>> values_tensor = tf.convert_to_tensor(np.arange(4).reshape(2, 2))
+    >>> other_tensor = tfq.convert_to_tensor([other_circuits, other_circuits])
+    >>> reference_coeff_tensor = tf.ones((len(reference_circuits,)))
+    >>> other_coeff_tensor = tf.ones((len(reference_circuits),
+    ...                               len(other_circuits)))
+    >>> ip = tfq.math.inner_product_hessian(reference_tensor, symbol_tensor,
+    ...                                     values_tensor, other_tensor,
+    ...                                     reference_coeff_tensor,
+    ...                                     other_coeff_tensor)
+    >>> ip
+    tf.Tensor(
+    [[[ 0.6069082-1.0185852j  0.       +0.j       ]
+      [ 0.       +0.j         0.       +0.j       ]]
+
+     [[-2.7567296-1.7676406j -0.8554697+1.0770144j]
+      [-0.8554697+1.0770144j  4.0239005+7.6238985j]]], shape=(2, 2, 2),
+      dtype=complex64)
+
+
+
+    Note: `other_programs` must not contain any free symbols. These can
+        be resolved beforehand with `tfq.resolve_parameters`.
+
+    Note: `programs` must not contain `cirq.PhasedXPowGate` due to precision
+        issue.
+
+    Note: len(symbol_names) (=n_params) should be a positive integer.
+
+    Args:
+        programs: `tf.Tensor` of strings with shape [batch_size] containing
+            the string representations of the circuits
+        symbol_names: `tf.Tensor` of strings with shape [n_params], which
+            is used to specify the order in which the values in
+            `symbol_values` should be placed inside of the circuits in
+            `programs`.
+        symbol_values: `tf.Tensor` of real numbers with shape
+            [batch_size, n_params] specifying parameter values to resolve
+            into the circuits specificed by programs, following the ordering
+            dictated by `symbol_names`.
+        other_programs: `tf.Tensor` of strings with shape [batch_size, n_others]
+            containing the string representations of the circuits with which to
+            compute the overlap on `programs` with. Must not contain any free
+            symbols.
+        programs_coeffs: `tf.Tensor` of real numbers with shape [batch_size]
+            of weights on `programs`.
+        other_programs_coeffs: `tf.Tensor` of real numbers with shape
+            [batch_size, n_others] of weights on `other_programs`.
+
+    Returns:
+        tf.Tensor` with shape [batch_size, n_params, n_params] where `out[i]`
+        is equal to the hessian of the inner product between programs[i] and all
+        other_programs[i] w.r.t. `symbol_names[j]` and `symbol_names[k]`.
+        `programs[i]` is resolved with `symbol_values[i]` and each
+        (other_)programs[i] is weighted by (other_)programs_coeffs[i].
+    """
+    return MATH_OP_MODULE.tfq_inner_product_hessian(
+        programs, symbol_names, tf.cast(symbol_values, tf.float32),
+        other_programs, tf.cast(programs_coeffs, tf.float32),
+        tf.cast(other_programs_coeffs, tf.float32))
+
+
 def _inner_product_grad(programs, symbol_names, symbol_values, other_programs,
                         prev_grad):
     """Calculate the adjoint gradients of the inner product between circuits.
@@ -27,9 +117,10 @@ def _inner_product_grad(programs, symbol_names, symbol_values, other_programs,
     Compute the gradients of the (potentially many) inner products between
     the given circuits and the symbol free comparison circuits.
 
-    Calculates out[i][j][k] = $ \frac{\langle \psi_{\text{programs[i]}} \\
-        (\text{symbol_values[i]})}{\partial \text{symbol_names[k]}} | \\
-        \psi_{\text{other_programs[j]}} \rangle $
+    Calculates out[i][j] = $\langle \frac{\partial  \psi_{\text{programs[i]}}
+    (\text{symbol_values[i]})}{\partial \text{symbol_names[j]}} | \sum_k
+    \text{prev_grad[i][k]}\times | \psi_{\text{other_programs[k]}}
+    \rangle$
 
 
     Note: `other_programs` must not contain any free symbols. These can
@@ -52,11 +143,11 @@ def _inner_product_grad(programs, symbol_names, symbol_values, other_programs,
             containing the string representations of the circuits with which to
             compute the overlap on `programs` with. Must not contain any free
             symbols.
-        prev_grad: `tf.Tensor` of real numbers with shape [batch_size, n_ops]
+        prev_grad: `tf.Tensor` of real numbers with shape [batch_size, n_others]
             backprop of values from downstream in the compute graph.
 
     Returns:
-        tf.Tensor` with shape [batch_size, n_symbols] where `out[i][j]` is equal
+        tf.Tensor` with shape [batch_size, n_params] where `out[i][j]` is equal
         to the gradient of the inner product between programs[i] and all
         other_programs[i] w.r.t. `symbol_names[j]` and `programs[i]` is resolved
         with `symbol_values[i]`.

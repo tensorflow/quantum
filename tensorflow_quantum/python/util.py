@@ -39,7 +39,7 @@ _SUPPORTED_CHANNELS = [
 ]
 
 
-def get_supported_gates():
+def get_supported_gates(exclude_gates=None):
     """A helper to get gates supported by TFQ.
 
     Returns a dictionary mapping from supported gate types
@@ -50,8 +50,10 @@ def get_supported_gates():
     supported.
     """
     supported_ops = serializer.SERIALIZER.supported_gate_types()
-    supported_gates = filter(lambda x: x not in _SUPPORTED_CHANNELS,
-                             supported_ops)
+    exclude_gates = exclude_gates if exclude_gates else []
+    supported_gates = filter(
+        lambda x: not (x in _SUPPORTED_CHANNELS or x in exclude_gates),
+        supported_ops)
     gate_arity_mapping_dict = dict()
     for gate in supported_gates:
         if gate is cirq.IdentityGate:
@@ -123,14 +125,15 @@ def random_symbol_circuit(qubits,
                           n_moments=15,
                           p=0.9,
                           include_scalars=True,
-                          include_channels=False):
+                          include_channels=False,
+                          exclude_gates=None):
     """Generates a random circuit including some parameterized gates.
 
     Symbols are randomly included in the gates of the first `n_moments` moments
     of the resulting circuit.  Then, parameterized H gates are added as
     subsequent moments for any remaining unused symbols.
     """
-    supported_ops = get_supported_gates()
+    supported_ops = get_supported_gates(exclude_gates)
     if include_channels:
         for chan, n in get_supported_channels().items():
             supported_ops[chan] = n
@@ -217,7 +220,8 @@ def random_symbol_circuit_resolver_batch(qubits,
                                          n_moments=15,
                                          p=0.9,
                                          include_scalars=True,
-                                         include_channels=False):
+                                         include_channels=False,
+                                         exclude_gates=None):
     """Generate a batch of random circuits and resolvers."""
     return_circuits = []
     return_resolvers = []
@@ -228,7 +232,8 @@ def random_symbol_circuit_resolver_batch(qubits,
                                   n_moments=n_moments,
                                   p=p,
                                   include_scalars=include_scalars,
-                                  include_channels=include_channels))
+                                  include_channels=include_channels,
+                                  exclude_gates=exclude_gates))
 
         return_resolvers.append(
             cirq.ParamResolver(
