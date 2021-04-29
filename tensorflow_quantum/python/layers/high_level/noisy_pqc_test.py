@@ -125,8 +125,8 @@ class NoisyPQCTest(tf.test.TestCase, parameterized.TestCase):
                                repetitions=10,
                                sample_based='junk')
 
-        with self.assertRaisesRegex(ValueError,
-                                    expected_regex="specify sample_based=False"):
+        with self.assertRaisesRegex(
+                ValueError, expected_regex="specify sample_based=False"):
             noisy_pqc.NoisyPQC(learnable_flip, cirq.Z(qubit), repetitions=10)
 
     def test_noisy_pqc_initializer(self):
