@@ -159,7 +159,7 @@ class NoisyPQC(tf.keras.layers.Layer):
             used as observables at the end of the model circuit.
         repetitions: Python `int` indicating how many trajectories to use
             when estimating expectation values.
-        use_sampled: Python `bool` indicating whether to use sampling to
+        sample_based: Python `bool` indicating whether to use sampling to
             estimate expectations or analytic calculations with each
             trajectory.
         differentiator: Optional `tfq.differentiator` object to specify how
@@ -226,10 +226,10 @@ class NoisyPQC(tf.keras.layers.Layer):
 
         # Ingest and promote sample based.
         if sample_based is None:
-            raise ValueError("Please specify use_sampled=False for analytic "
+            raise ValueError("Please specify sampled_based=False for analytic "
                              "calculations based on monte-carlo trajectories,"
-                             " or use_sampled=True for measurement based noisy"
-                             " estimates.")
+                             " or sampled_based=True for measurement based "
+                             "noisy estimates.")
         if not isinstance(sample_based, bool):
             raise TypeError("sampled_based must be either True or False."
                             " received: {}".format(type(sample_based)))
