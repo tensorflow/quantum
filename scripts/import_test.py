@@ -57,7 +57,10 @@ def test_imports():
     _ = tfq.layers.Sample
     _ = tfq.layers.State
     _ = tfq.layers.SampledExpectation
+
+    # High level layers.
     _ = tfq.layers.ControlledPQC
+    _ = tfq.layers.NoisyControlledPQC
     _ = tfq.layers.PQC
 
     # Differentiators.

@@ -57,6 +57,7 @@ sh_binary(
         "//tensorflow_quantum/python/layers/circuit_executors:sampled_expectation",
         "//tensorflow_quantum/python/layers/circuit_executors:unitary",
         "//tensorflow_quantum/python/layers/high_level:controlled_pqc",
+        "//tensorflow_quantum/python/layers/high_level:noisy_controlled_pqc",
         "//tensorflow_quantum/python/layers/high_level:pqc",
         "//tensorflow_quantum/python:quantum_context",
         "//tensorflow_quantum/python:util",
