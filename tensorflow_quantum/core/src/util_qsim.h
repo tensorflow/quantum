@@ -28,6 +28,7 @@ limitations under the License.
 #include "../qsim/lib/matrix.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/lib/core/status.h"
+#include "tensorflow/core/lib/random/simple_philox.h"
 #include "tensorflow/core/platform/threadpool.h"
 #include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
 #include "tensorflow_quantum/core/src/circuit_parser_qsim.h"
@@ -190,7 +191,7 @@ template <typename SimT, typename StateSpaceT, typename StateT>
 tensorflow::Status ComputeSampledExpectationQsim(
     const tfq::proto::PauliSum& p_sum, const SimT& sim, const StateSpaceT& ss,
     StateT& state, StateT& scratch, const int num_samples,
-    std::mt19937& random_source, float* expectation_value) {
+    tensorflow::random::SimplePhilox& random_source, float* expectation_value) {
   std::uniform_int_distribution<> distrib(1, 1 << 30);
 
   if (num_samples == 0) {
@@ -226,7 +227,7 @@ tensorflow::Status ComputeSampledExpectationQsim(
       return status;
     }
     std::vector<uint64_t> state_samples =
-        ss.Sample(scratch, num_samples, distrib(random_source));
+        ss.Sample(scratch, num_samples, random_source.Rand32());
 
     // Find qubits on which to measure parity
     std::vector<unsigned int> parity_bits;
