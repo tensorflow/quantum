@@ -229,9 +229,9 @@ class FidelityTest(tf.test.TestCase, parameterized.TestCase):
                     # Performs central finite difference.
                     for j in range(inner_dim_size):
                         internal_wf = cirq.final_state_vector(other_batch[i][j])
-                        fid_a = cirq.fidelity(final_wf_p, internal_wf)
-                        fid_b = cirq.fidelity(final_wf_m, internal_wf)
-                        grad_fid = 0.5 * (fid_a - fid_b) / dx
+                        fid_p = cirq.fidelity(final_wf_p, internal_wf)
+                        fid_m = cirq.fidelity(final_wf_m, internal_wf)
+                        grad_fid = 0.5 * (fid_p - fid_m) / dx
                         out_arr[i][k] += grad_fid
 
         self.assertAllClose(out, out_arr, atol=1e-3)
