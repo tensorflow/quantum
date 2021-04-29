@@ -226,12 +226,12 @@ class NoisyPQC(tf.keras.layers.Layer):
 
         # Ingest and promote sample based.
         if sample_based is None:
-            raise ValueError("Please specify sampled_based=False for analytic "
+            raise ValueError("Please specify sample_based=False for analytic "
                              "calculations based on monte-carlo trajectories,"
                              " or sampled_based=True for measurement based "
                              "noisy estimates.")
         if not isinstance(sample_based, bool):
-            raise TypeError("sampled_based must be either True or False."
+            raise TypeError("sample_based must be either True or False."
                             " received: {}".format(type(sample_based)))
 
         if not sample_based:
