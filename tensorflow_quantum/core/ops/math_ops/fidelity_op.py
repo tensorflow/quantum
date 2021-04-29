@@ -82,4 +82,4 @@ def fidelity(programs, symbol_names, symbol_values, other_programs):
     ip = inner_product_op.inner_product(programs, symbol_names,
                                         tf.cast(symbol_values, tf.float32),
                                         other_programs)
-    return tf.math.abs(ip) ** 2
+    return tf.math.abs(ip)**2
