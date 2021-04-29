@@ -29,10 +29,10 @@ from tensorflow_quantum.python import util
 class NoisyControlledPQC(tf.keras.layers.Layer):
     """Noisy Controlled Parametrized Quantum Circuit (PQC) Layer.
 
-    The `NoisyControlledPQC` layer is noisy variant of the `ControlledPQC` layer. but
-    with one major difference. The `NoisyControlledPQC` layer requires the caller
-    of the layer to provide the control parameter inputs for `model_circuit`.
-    You can see how this works through a simple example:
+    The `NoisyControlledPQC` layer is the noisy variant of the `ControlledPQC`
+    layer. This layer uses monte carlo trajectory simulation to support noisy
+    simulation functionality for the `ControlledPQC` layer. Here is a simple
+    example you can use to get started:
 
 
     >>> bit = cirq.GridQubit(0, 0)
