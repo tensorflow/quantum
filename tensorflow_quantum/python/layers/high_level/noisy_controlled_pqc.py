@@ -255,8 +255,5 @@ class NoisyControlledPQC(tf.keras.layers.Layer):
 
         tiled_up_repetitions = tf.tile(self._repetitions,
                                        [circuit_batch_dim, 1])
-        return self._executor(model_appended,
-                              self._symbols,
-                              inputs[1],
-                              tiled_up_operators,
-                              tiled_up_repetitions)
+        return self._executor(model_appended, self._symbols, inputs[1],
+                              tiled_up_operators, tiled_up_repetitions)
