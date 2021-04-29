@@ -59,9 +59,6 @@ def test_imports():
     _ = tfq.layers.State
     _ = tfq.layers.SampledExpectation
 
-    # High level layers.
-    _ = tfq.layers.ControlledPQC
-
     # High level Keras layers.
     _ = tfq.layers.ControlledPQC
     _ = tfq.layers.NoisyControlledPQC
