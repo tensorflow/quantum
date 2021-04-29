@@ -50,9 +50,10 @@ typedef qsim::Cirq::GateCirq<float> QsimGate;
 typedef qsim::Circuit<QsimGate> QsimCircuit;
 typedef qsim::NoisyCircuit<QsimGate> NoisyQsimCircuit;
 
-class TfqNoisyExpectationOp : public tensorflow::OpKernel {
+class TfqNoisySampledExpectationOp : public tensorflow::OpKernel {
  public:
-  explicit TfqNoisyExpectationOp(tensorflow::OpKernelConstruction* context)
+  explicit TfqNoisySampledExpectationOp(
+      tensorflow::OpKernelConstruction* context)
       : OpKernel(context) {}
 
   void Compute(tensorflow::OpKernelContext* context) override {
@@ -134,7 +135,7 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
     // e2s4 = 4 CPU, 16GB -> Can safely do 25 since Memory = 8GB
     // ...
     if (max_num_qubits >= 26) {
-      // If the number of qubits is lager than 24, we switch to an
+      // If the number of qubits is lager than 25, we switch to an
       // alternate parallelization scheme with runtime:
       // O(n_circuits * max_j(num_samples[i])) with parallelization being
       // multiple threads per wavefunction.
@@ -170,6 +171,7 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
     auto sv = ss.Create(largest_nq);
     auto scratch = ss.Create(largest_nq);
 
+    // time since epoch seeds random generator.
     unsigned long r_seed =
         std::chrono::duration_cast<std::chrono::milliseconds>(
             std::chrono::system_clock::now().time_since_epoch())
@@ -217,9 +219,9 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
             continue;
           }
           float exp_v = 0.0;
-          OP_REQUIRES_OK(context,
-                         ComputeExpectationQsim(pauli_sums[i][j], sim, ss, sv,
-                                                scratch, &exp_v));
+          OP_REQUIRES_OK(context, ComputeSampledExpectationQsim(
+                                      pauli_sums[i][j], sim, ss, sv, scratch, 1,
+                                      gen, &exp_v));
           rolling_sums[j] += static_cast<double>(exp_v);
           run_samples[j]++;
         }
@@ -286,6 +288,7 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
       auto sv = ss.Create(largest_nq);
       auto scratch = ss.Create(largest_nq);
 
+      // time since epoch seeds random generator.
       std::mt19937 gen(r_seed + start);
       std::uniform_int_distribution<> distrib(1, 1 << 30);
 
@@ -330,8 +333,8 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
             float exp_v = 0.0;
             NESTED_FN_STATUS_SYNC(
                 compute_status,
-                ComputeExpectationQsim(pauli_sums[i][j], sim, ss, sv, scratch,
-                                       &exp_v),
+                ComputeSampledExpectationQsim(pauli_sums[i][j], sim, ss, sv,
+                                              scratch, 1, gen, &exp_v),
                 c_lock);
             rolling_sums[j] += static_cast<double>(exp_v);
             run_samples[j]++;
@@ -371,10 +374,10 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
 };
 
 REGISTER_KERNEL_BUILDER(
-    Name("TfqNoisyExpectation").Device(tensorflow::DEVICE_CPU),
-    TfqNoisyExpectationOp);
+    Name("TfqNoisySampledExpectation").Device(tensorflow::DEVICE_CPU),
+    TfqNoisySampledExpectationOp);
 
-REGISTER_OP("TfqNoisyExpectation")
+REGISTER_OP("TfqNoisySampledExpectation")
     .Input("programs: string")
     .Input("symbol_names: string")
     .Input("symbol_values: float")

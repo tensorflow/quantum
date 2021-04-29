@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""Module for high performance noisy circuit simulation ops."""
+"""Module for high performance noisy circuit sampled epxectation ops."""
 import os
 import tensorflow as tf
 from tensorflow_quantum.core.ops.load_module import load_module
@@ -20,18 +20,17 @@ from tensorflow_quantum.core.ops.load_module import load_module
 NOISY_OP_MODULE = load_module(os.path.join("noise", "_tfq_noise_ops.so"))
 
 
-def expectation(programs, symbol_names, symbol_values, pauli_sums, num_samples):
-    """Calculate the analytic expectation values using monte-carlo trajectories.
+def sampled_expectation(programs, symbol_names, symbol_values, pauli_sums,
+                        num_samples):
+    """Estimates (via sampling) expectation values using monte-carlo simulation.
 
     Simulate the final state of `programs` given `symbol_values` are placed
     inside of the symbols with the name in `symbol_names` in each circuit.
     Channels in this simulation will be "tossed" to a certain realization
     during simulation. This simulation is repeated `num_samples` times and
-    analytic expectation calculations with the given `pauli_sums` are calculated
-    after each run. Once all the runs are finished, these quantities are
-    averaged together. This process can be thought of as analyical expectation
-    calculation done using monte carlo state vector simulation to account
-    for noisy operations in the given circuits.
+    bitstring based expectation calculations with the given `pauli_sums` are
+    calculated after each run. Once all the runs are finished, these quantities
+    are averaged together.
 
 
     >>> # Prepare some inputs.
@@ -49,7 +48,7 @@ def expectation(programs, symbol_names, symbol_values, pauli_sums, num_samples):
     ... ]])
     >>> my_num_samples = np.array([[100]])
     >>> # This op can now be run with:
-    >>> output = tfq.noise.expectation(
+    >>> output = tfq.noise.sampled_expectation(
     ...     my_circuit_tensor, ['alpha'], my_values, my_paulis, my_num_samples)
     >>> output
     tf.Tensor([[0.71530885]], shape=(1, 1), dtype=float32)
@@ -62,7 +61,7 @@ def expectation(programs, symbol_names, symbol_values, pauli_sums, num_samples):
 
     >>> diff = tfq.differentiators.ForwardDifference()
     >>> my_differentiable_op = diff.generate_differentiable_op(
-    ...     sampled_op=tfq.noise.expectation
+    ...     sampled_op=tfq.noise.sampled_expectation
     ... )
 
 
@@ -93,6 +92,6 @@ def expectation(programs, symbol_names, symbol_values, pauli_sums, num_samples):
             expectation value for each circuit with each op applied to it
             (after resolving the corresponding parameters in).
     """
-    return NOISY_OP_MODULE.tfq_noisy_expectation(
+    return NOISY_OP_MODULE.tfq_noisy_sampled_expectation(
         programs, symbol_names, tf.cast(symbol_values, tf.float32), pauli_sums,
         tf.cast(num_samples, dtype=tf.int32))

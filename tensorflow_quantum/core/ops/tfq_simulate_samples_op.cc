@@ -15,6 +15,7 @@ limitations under the License.
 
 #include <stdlib.h>
 
+#include <random>
 #include <string>
 
 #include "../qsim/lib/circuit.h"
@@ -29,6 +30,7 @@ limitations under the License.
 #include "tensorflow/core/lib/core/error_codes.pb.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow/core/lib/core/threadpool.h"
+#include "tensorflow/core/platform/mutex.h"
 #include "tensorflow_quantum/core/ops/parse_context.h"
 #include "tensorflow_quantum/core/src/circuit_parser_qsim.h"
 #include "tensorflow_quantum/core/src/util_qsim.h"
@@ -73,17 +75,21 @@ class TfqSimulateSamplesOp : public tensorflow::OpKernel {
     std::vector<std::vector<qsim::GateFused<QsimGate>>> fused_circuits(
         programs.size(), std::vector<qsim::GateFused<QsimGate>>({}));
 
+    Status parse_status = Status::OK();
+    auto p_lock = tensorflow::mutex();
     auto construct_f = [&](int start, int end) {
       for (int i = start; i < end; i++) {
-        OP_REQUIRES_OK(context, QsimCircuitFromProgram(
-                                    programs[i], maps[i], num_qubits[i],
-                                    &qsim_circuits[i], &fused_circuits[i]));
+        Status local =
+            QsimCircuitFromProgram(programs[i], maps[i], num_qubits[i],
+                                   &qsim_circuits[i], &fused_circuits[i]);
+        NESTED_FN_STATUS_SYNC(parse_status, local, p_lock);
       }
     };
 
     const int num_cycles = 1000;
     context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
         programs.size(), num_cycles, construct_f);
+    OP_REQUIRES_OK(context, parse_status);
 
     // Find largest circuit for tensor size padding and allocate
     // the output tensor.
@@ -138,6 +144,13 @@ class TfqSimulateSamplesOp : public tensorflow::OpKernel {
     StateSpace ss = StateSpace(tfq_for);
     auto sv = ss.Create(largest_nq);
 
+    unsigned long r_seed =
+        std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::system_clock::now().time_since_epoch())
+            .count();
+    std::mt19937 gen(r_seed);
+    std::uniform_int_distribution<> distrib(1, 1 << 30);
+
     // Simulate programs one by one. Parallelizing over state vectors
     // we no longer parallelize over circuits. Each time we encounter a
     // a larger circuit we will grow the Statevector as nescessary.
@@ -154,7 +167,7 @@ class TfqSimulateSamplesOp : public tensorflow::OpKernel {
         qsim::ApplyFusedGate(sim, fused_circuits[i][j], sv);
       }
 
-      auto samples = ss.Sample(sv, num_samples, rand() % 123456);
+      auto samples = ss.Sample(sv, num_samples, distrib(gen));
       for (int j = 0; j < num_samples; j++) {
         uint64_t q_ind = 0;
         uint64_t mask = 1;
@@ -185,11 +198,20 @@ class TfqSimulateSamplesOp : public tensorflow::OpKernel {
     using Simulator = qsim::Simulator<const qsim::SequentialFor&>;
     using StateSpace = Simulator::StateSpace;
 
+    unsigned long r_seed =
+        std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::system_clock::now().time_since_epoch())
+            .count();
+
     auto DoWork = [&](int start, int end) {
       int largest_nq = 1;
       Simulator sim = Simulator(tfq_for);
       StateSpace ss = StateSpace(tfq_for);
       auto sv = ss.Create(largest_nq);
+
+      std::mt19937 gen(r_seed + start);
+      std::uniform_int_distribution<> distrib(1, 1 << 30);
+
       for (int i = start; i < end; i++) {
         int nq = num_qubits[i];
 
@@ -203,7 +225,7 @@ class TfqSimulateSamplesOp : public tensorflow::OpKernel {
           qsim::ApplyFusedGate(sim, fused_circuits[i][j], sv);
         }
 
-        auto samples = ss.Sample(sv, num_samples, rand() % 123456);
+        auto samples = ss.Sample(sv, num_samples, distrib(gen));
         for (int j = 0; j < num_samples; j++) {
           uint64_t q_ind = 0;
           uint64_t mask = 1;

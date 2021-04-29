@@ -21,6 +21,7 @@ import tensorflow as tf
 
 import cirq
 from tensorflow_quantum.core.ops import circuit_execution_ops
+from tensorflow_quantum.core.ops.noise import noisy_sampled_expectation_op
 from tensorflow_quantum.python.differentiators import differentiator as diff
 from tensorflow_quantum.python.differentiators import parameter_shift
 from tensorflow_quantum.python.layers.circuit_executors import input_checks
@@ -212,30 +213,24 @@ class SampledExpectation(tf.keras.layers.Layer):
 
     """
 
-    def __init__(self, backend=None, differentiator=None, **kwargs):
+    def __init__(self, backend='noiseless', differentiator=None, **kwargs):
         """Instantiate this Layer.
 
         Create a layer that will output expectation values gained from
         simulating a quantum circuit.
 
         Args:
-            backend: Optional Backend to use to simulate states. Defaults to
-                the native TensorFlow simulator (None), however users may also
+            backend: Optional Backend to use to simulate states. Can be either
+                {'noiseless', 'noisy'} users may also
                 specify a preconfigured cirq simulation object to use instead,
-                which must inherit `cirq.SimulatesFinalState`.
+                which must inherit `cirq.Sampler`.
             differentiator: Optional Differentiator to use to calculate analytic
                 derivative values of given operators_to_measure and circuit,
                 which must inherit `tfq.differentiators.Differentiator`.
-                Defaults to None, which uses `parameter_shift.ParameterShift()`.
+                Defaults to `parameter_shift.ParameterShift()` (None argument).
 
         """
         super().__init__(**kwargs)
-
-        # Ingest backend.
-        if not isinstance(backend, cirq.Sampler) and \
-                isinstance(backend, cirq.SimulatesFinalState):
-            raise TypeError("Backend implements cirq.SimulatesFinalState but "
-                            "not cirq.Sampler. Please use Expectation instead.")
 
         # Ingest differentiator.
         if differentiator is None:
@@ -245,9 +240,24 @@ class SampledExpectation(tf.keras.layers.Layer):
             raise TypeError("Differentiator must inherit from "
                             "tfq.differentiators.Differentiator")
 
+        # Ingest backend.
+        if not isinstance(backend, cirq.Sampler) and \
+                isinstance(backend, cirq.SimulatesFinalState):
+            raise TypeError("Backend implements cirq.SimulatesFinalState but "
+                            "not cirq.Sampler. Please use Expectation instead.")
+
+        used_op = None
+        if backend == 'noiseless':
+            backend = None
+
+        if backend == 'noisy':
+            used_op = noisy_sampled_expectation_op.sampled_expectation
+        else:
+            used_op = circuit_execution_ops.get_sampled_expectation_op(
+                backend=backend)
+
         self._expectation_op = differentiator.generate_differentiable_op(
-            sampled_op=circuit_execution_ops.get_sampled_expectation_op(
-                backend=backend))
+            sampled_op=used_op)
 
         self._w = None
 

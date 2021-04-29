@@ -12,29 +12,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""Module for tfq.python.layers.high_level.pqc layer."""
+"""Module for tfq.python.layers.high_level.noisy_pqc layer."""
 import numbers
 import numpy as np
 import tensorflow as tf
 
 import cirq
 import sympy
-from tensorflow_quantum.python.layers.circuit_executors import \
-    expectation, sampled_expectation
+from tensorflow_quantum.core.ops.noise import \
+    noisy_expectation_op, noisy_sampled_expectation_op
+from tensorflow_quantum.python.differentiators import parameter_shift
 from tensorflow_quantum.python.layers.circuit_construction import elementary
 from tensorflow_quantum.python import util
 
 
-class PQC(tf.keras.layers.Layer):
-    """Parametrized Quantum Circuit (PQC) Layer.
+class NoisyPQC(tf.keras.layers.Layer):
+    """Noisy Parametrized Quantum Circuit (PQC) Layer.
 
-    This layer is for training parameterized quantum models.
+    This layer is for training **noisy** parameterized quantum models.
     Given a parameterized circuit, this layer initializes the parameters
     and manages them in a Keras native way.
 
     We start by defining a simple quantum circuit on one qubit.
     This circuit parameterizes an arbitrary rotation on the Bloch sphere in
-    terms of the three angles a, b, and c:
+    terms of the three angles a, b, and c, along with some noise:
 
 
     >>> q = cirq.GridQubit(0, 0)
@@ -44,7 +45,8 @@ class PQC(tf.keras.layers.Layer):
     ...     cirq.rx(b)(q),
     ...     cirq.rz(c)(q),
     ...     cirq.rx(-b)(q),
-    ...     cirq.rz(-a)(q)
+    ...     cirq.rz(-a)(q),
+    ...     cirq.depolarize(0.01)(q)
     ... )
 
 
@@ -56,7 +58,12 @@ class PQC(tf.keras.layers.Layer):
     one will be the negative of the other since `cirq.X(q)` causes a bit flip:
 
 
-    >>> outputs = tfq.layers.PQC(circuit, cirq.Z(q))
+    >>> outputs = tfq.layers.NoisyPQC(
+    ...     circuit,
+    ...     cirq.Z(q),
+    ...     repetitions=1000,
+    ...     sample_based=False
+    ... )
     >>> quantum_data = tfq.convert_to_tensor([
     ...     cirq.Circuit(),
     ...     cirq.Circuit(cirq.X(q))
@@ -68,16 +75,20 @@ class PQC(tf.keras.layers.Layer):
            [-0.8722095]], dtype=float32)>
 
 
-    We can also choose to measure the three pauli matrices, sufficient to
-    fully characterize the operation of our model, or choose to simulate
-    sampled expectation values by specifying a number of measurement shots
-    (repetitions) to average over.  Notice that using only 200 repetitions
-    introduces variation between the two rows of data, due to the
-    probabilistic nature of measurement.
+    In the above example we estimate the value of the expectation using
+    monte-carlo trajectory simulations and analytic expectation calculation.
+    To emulate the process used when sampling from a truly noisy device, we
+    set `sampled_based=True` to estimate the expectation value via noisy
+    bitstring sampling.
 
 
     >>> measurement = [cirq.X(q), cirq.Y(q), cirq.Z(q)]
-    >>> outputs = tfq.layers.PQC(circuit, measurement, repetitions=200)
+    >>> outputs = tfq.layers.NoisyPQC(
+    ...     circuit,
+    ...     measurement,
+    ...     repetitions=5000,
+    ...     sample_based=True
+    ... )
     >>> quantum_data = tfq.convert_to_tensor([
     ...     cirq.Circuit(),
     ...     cirq.Circuit(cirq.X(q))
@@ -89,30 +100,20 @@ class PQC(tf.keras.layers.Layer):
            [ 0.19, -0.95, -0.35]], dtype=float32)>
 
 
-    A value for `backend` can also be supplied in the layer constructor
-    arguments to indicate which supported backend you would like to use.
-    A value for `differentiator` can also be supplied in the constructor
-    to indicate the differentiation scheme this `PQC` layer should use.
-    Here's how you would take the gradients of the above example using a
-    `cirq.Simulator` backend (which is slower than the default
-    `backend='noiseless'` which uses C++):
+    Unlike `tfq.layers.PQC` no value for `backend` can be supplied in the
+    layer constructor. If you want to use a custom backend please use
+    `tfq.layers.PQC` instead. A value for `differentiator` can also be
+    supplied in the constructor to indicate the differentiation scheme this
+    `NoisyPQC` layer should use. Here's how you would take the gradients of
+    the above example using a `tfq.layers.ParameterShift` differentiator.
 
 
-    >>> q = cirq.GridQubit(0, 0)
-    >>> (a, b, c) = sympy.symbols("a b c")
-    >>> circuit = cirq.Circuit(
-    ...     cirq.rz(a)(q),
-    ...     cirq.rx(b)(q),
-    ...     cirq.rz(c)(q),
-    ...     cirq.rx(-b)(q),
-    ...     cirq.rz(-a)(q)
-    ... )
     >>> measurement = [cirq.X(q), cirq.Y(q), cirq.Z(q)]
-    >>> outputs = tfq.layers.PQC(
+    >>> outputs = tfq.layers.NoisyPQC(
     ...     circuit,
     ...     measurement,
     ...     repetitions=5000,
-    ...     backend=cirq.Simulator(),
+    ...     sample_based=True,
     ...     differentiator=tfq.differentiators.ParameterShift())
     >>> quantum_data = tfq.convert_to_tensor([
     ...     cirq.Circuit(),
@@ -125,9 +126,9 @@ class PQC(tf.keras.layers.Layer):
            [ 0.5728,  0.1944, -0.7848]], dtype=float32)>
 
 
-    Lastly, like all layers in TensorFlow the `PQC` layer can be called on any
-    `tf.Tensor` as long as it is the right shape. This means you could replace
-    replace `quantum_data` with values fed in from a `tf.keras.Input`.
+    Lastly, like all layers in TensorFlow the `NoisyPQC` layer can be called on
+    any `tf.Tensor` as long as it is the right shape. This means you could
+    replace replace `quantum_data` with values fed in from a `tf.keras.Input`.
     """
 
     def __init__(
@@ -136,7 +137,7 @@ class PQC(tf.keras.layers.Layer):
             operators,
             *,
             repetitions=None,
-            backend='noiseless',
+            sample_based=None,
             differentiator=None,
             initializer=tf.keras.initializers.RandomUniform(0, 2 * np.pi),
             regularizer=None,
@@ -145,7 +146,7 @@ class PQC(tf.keras.layers.Layer):
     ):
         """Instantiate this layer.
 
-        Create a layer that will output expectation values of the given
+        Create a layer that will output noisy expectation values of the given
         operators when fed quantum data to it's input layer. This layer will
         accept one input tensor representing a quantum data source (these
         circuits must not contain any symbols) and append the model_circuit to
@@ -156,16 +157,11 @@ class PQC(tf.keras.layers.Layer):
             used as the model which will be fed quantum data inputs.
         operators: `cirq.PauliSum` or Python `list` of `cirq.PauliSum` objects
             used as observables at the end of the model circuit.
-        repetitions: Optional Python `int` indicating how many samples to use
-            when estimating expectation values.  If `None` analytic expectation
-            calculation is used.
-        backend: Optional Backend to use to simulate states. Defaults to
-            the noiseless TensorFlow simulator, however users may also
-            specify a preconfigured cirq simulation object to use instead.
-            If a cirq object is given it must inherit either
-            `cirq.sim.simulator.SimulatesExpectationValues` if analytic
-            expectations are desired or `cirq.Sampler` if sampled expectations
-            are desired.
+        repetitions: Python `int` indicating how many trajectories to use
+            when estimating expectation values.
+        sample_based: Python `bool` indicating whether to use sampling to
+            estimate expectations or analytic calculations with each
+            trajectory.
         differentiator: Optional `tfq.differentiator` object to specify how
             gradients of `model_circuit` should be calculated.
         initializer: Optional `tf.keras.initializer` object to specify how the
@@ -211,47 +207,39 @@ class PQC(tf.keras.layers.Layer):
         self._operators = util.convert_to_tensor([operators])
 
         # Ingest and promote repetitions.
-        self._analytic = False
         if repetitions is None:
-            self._analytic = True
-        if not self._analytic and not isinstance(repetitions, numbers.Integral):
+            raise ValueError("Value for repetitions must be provided when "
+                             "using noisy simulation.")
+        if not isinstance(repetitions, numbers.Integral):
             raise TypeError("repetitions must be a positive integer value."
                             " Given: ".format(repetitions))
-        if not self._analytic and repetitions <= 0:
+        if repetitions <= 0:
             raise ValueError("Repetitions must be greater than zero.")
-        if not self._analytic:
-            self._repetitions = tf.constant(
-                [[repetitions for _ in range(len(operators))]],
-                dtype=tf.dtypes.int32)
 
-        # Set backend and differentiator.
-        if backend == 'noisy':
-            raise ValueError("noisy backend value is not supported in "
-                             "tfq.layers.PQC. Please use tfq.layers.NoisyPQC "
-                             "instead.")
+        self._repetitions = tf.constant(
+            [[repetitions for _ in range(len(operators))]],
+            dtype=tf.dtypes.int32)
 
-        not_default = backend is not 'noiseless'
-        not_default &= backend is not None  # legacy backend=None support.
-        if not isinstance(
-                backend,
-                cirq.Sampler) and repetitions is not None and not_default:
-            raise TypeError("provided backend does not inherit cirq.Sampler "
-                            "and repetitions!=None. Please provide a backend "
-                            "that inherits cirq.Sampler or set "
-                            "repetitions=None.")
-        if not isinstance(backend, cirq.sim.simulator.SimulatesExpectationValues
-                         ) and repetitions is None and not_default:
-            raise TypeError("provided backend does not inherit "
-                            "cirq.sim.simulator.SimulatesExpectationValues and "
-                            "repetitions=None. Please provide a backend that "
-                            "inherits "
-                            "cirq.sim.simulator.SimulatesExpectationValues.")
-        if self._analytic:
-            self._executor = expectation.Expectation(
-                backend=backend, differentiator=differentiator)
+        # Ingest differentiator.
+        if differentiator is None:
+            differentiator = parameter_shift.ParameterShift()
+
+        # Ingest and promote sample based.
+        if sample_based is None:
+            raise ValueError("Please specify sample_based=False for analytic "
+                             "calculations based on monte-carlo trajectories,"
+                             " or sampled_based=True for measurement based "
+                             "noisy estimates.")
+        if not isinstance(sample_based, bool):
+            raise TypeError("sample_based must be either True or False."
+                            " received: {}".format(type(sample_based)))
+
+        if not sample_based:
+            self._executor = differentiator.generate_differentiable_op(
+                sampled_op=noisy_expectation_op.expectation)
         else:
-            self._executor = sampled_expectation.SampledExpectation(
-                backend=backend, differentiator=differentiator)
+            self._executor = differentiator.generate_differentiable_op(
+                sampled_op=noisy_sampled_expectation_op.sampled_expectation)
 
         self._append_layer = elementary.AddCircuit()
 
@@ -300,19 +288,8 @@ class PQC(tf.keras.layers.Layer):
         tiled_up_parameters = tf.tile([self.parameters], [circuit_batch_dim, 1])
         tiled_up_operators = tf.tile(self._operators, [circuit_batch_dim, 1])
 
-        # this is disabled to make autograph compilation easier.
-        # pylint: disable=no-else-return
-        if self._analytic:
-            return self._executor(model_appended,
-                                  symbol_names=self._symbols,
-                                  symbol_values=tiled_up_parameters,
-                                  operators=tiled_up_operators)
-        else:
-            tiled_up_repetitions = tf.tile(self._repetitions,
-                                           [circuit_batch_dim, 1])
-            return self._executor(model_appended,
-                                  symbol_names=self._symbols,
-                                  symbol_values=tiled_up_parameters,
-                                  operators=tiled_up_operators,
-                                  repetitions=tiled_up_repetitions)
-        # pylint: enable=no-else-return
+        tiled_up_repetitions = tf.tile(self._repetitions,
+                                       [circuit_batch_dim, 1])
+        return self._executor(model_appended, self._symbols,
+                              tiled_up_parameters, tiled_up_operators,
+                              tiled_up_repetitions)

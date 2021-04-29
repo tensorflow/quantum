@@ -18,6 +18,7 @@ limitations under the License.
 
 #include <bitset>
 #include <cstdint>
+#include <random>
 #include <vector>
 
 #include "../qsim/lib/circuit.h"
@@ -189,7 +190,9 @@ template <typename SimT, typename StateSpaceT, typename StateT>
 tensorflow::Status ComputeSampledExpectationQsim(
     const tfq::proto::PauliSum& p_sum, const SimT& sim, const StateSpaceT& ss,
     StateT& state, StateT& scratch, const int num_samples,
-    float* expectation_value) {
+    std::mt19937& random_source, float* expectation_value) {
+  std::uniform_int_distribution<> distrib(1, 1 << 30);
+
   if (num_samples == 0) {
     return tensorflow::Status::OK();
   }
@@ -222,9 +225,8 @@ tensorflow::Status ComputeSampledExpectationQsim(
     if (!status.ok()) {
       return status;
     }
-
-    const int seed = 1234;
-    std::vector<uint64_t> state_samples = ss.Sample(scratch, num_samples, seed);
+    std::vector<uint64_t> state_samples =
+        ss.Sample(scratch, num_samples, distrib(random_source));
 
     // Find qubits on which to measure parity
     std::vector<unsigned int> parity_bits;
@@ -365,6 +367,45 @@ static void BalanceTrajectory(const std::vector<std::vector<int>>& num_samples,
   for (int j = 0; j < num_samples.size(); j++) {
     int run_ceiling = ((rep_limits[j] + num_threads - 1) / num_threads);
     int num_lo = num_threads * run_ceiling - rep_limits[j];
+    int num_hi = num_threads - num_lo;
+    int cur_max = prev_max_height;
+    for (int i = 0; i < num_threads; i++) {
+      if (height[i] == cur_max && num_lo) {
+        // previously had extra work on this thread and
+        // have remaining low budget to give.
+        height[i]++;
+        (*thread_offsets)[i][j] = -1;
+        num_lo--;
+      } else if (height[i] == cur_max - 1 && num_hi) {
+        // previously had less work on this thread and
+        // remaining high budget to give.
+        height[i] += 2;
+        (*thread_offsets)[i][j] = 0;
+        num_hi--;
+      } else if (num_hi) {
+        height[i] += 2;
+        (*thread_offsets)[i][j] = 0;
+        num_hi--;
+      } else {
+        height[i]++;
+        (*thread_offsets)[i][j] = -1;
+        num_lo--;
+      }
+      prev_max_height = std::max(height[i], prev_max_height);
+    }
+  }
+}
+
+// Simpler case of TrajectoryBalance where num_samples is fixed
+// across all circuits.
+static void BalanceTrajectory(const int& num_samples, const int& num_threads,
+                              std::vector<std::vector<int>>* thread_offsets) {
+  std::vector<int> height(num_threads, 0);
+
+  int prev_max_height = -1;
+  for (int j = 0; j < (*thread_offsets)[0].size(); j++) {
+    int run_ceiling = ((num_samples + num_threads - 1) / num_threads);
+    int num_lo = num_threads * run_ceiling - num_samples;
     int num_hi = num_threads - num_lo;
     int cur_max = prev_max_height;
     for (int i = 0; i < num_threads; i++) {
