@@ -28,5 +28,6 @@ from tensorflow_quantum.python.layers.circuit_executors import (
 from tensorflow_quantum.python.layers.high_level import (
     ControlledPQC,
     NoisyControlledPQC,
+    NoisyPQC,
     PQC,
 )

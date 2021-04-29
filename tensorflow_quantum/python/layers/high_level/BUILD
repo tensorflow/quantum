@@ -13,6 +13,7 @@ py_library(
         ":controlled_pqc",
         ":noisy_controlled_pqc",
         ":pqc",
+        ":noisy_pqc",
     ],
 )
 
@@ -53,6 +54,19 @@ py_library(
     ],
 )
 
+py_library(
+    name = "noisy_pqc",
+    srcs = ["noisy_pqc.py"],
+    srcs_version = "PY3",
+    deps = [
+        "//tensorflow_quantum/python:util",
+        "//tensorflow_quantum/python/layers/circuit_construction:elementary",
+        "//tensorflow_quantum/core/ops/noise:noisy_expectation_op_py",
+        "//tensorflow_quantum/core/ops/noise:noisy_sampled_expectation_op_py",
+        "//tensorflow_quantum/python/differentiators:parameter_shift",
+    ],
+)
+
 py_test(
     name = "controlled_pqc_test",
     srcs = ["controlled_pqc_test.py"],
@@ -79,6 +93,16 @@ py_test(
     python_version = "PY3",
     deps = [
         ":noisy_controlled_pqc",
+        "//tensorflow_quantum/python:util",
+    ],
+)
+      
+py_test(
+    name = "noisy_pqc_test",
+    srcs = ["noisy_pqc_test.py"],
+    python_version = "PY3",
+    deps = [
+        ":noisy_pqc",
         "//tensorflow_quantum/python:util",
     ],
 )
