@@ -216,10 +216,12 @@ class FidelityTest(tf.test.TestCase, parameterized.TestCase):
         for i in range(batch_size):
             for k, name in enumerate(symbol_names):
                 if name in resolver_batch[i].param_dict:
-                    final_circuit_p = cirq.resolve_parameters(
-                        circuit_batch[i], resolver_batch[i])
                     new_resolver = copy.deepcopy(resolver_batch[i])
                     new_resolver.param_dict[name] += dx
+                    final_circuit_p = cirq.resolve_parameters(
+                        circuit_batch[i], new_resolver)
+                    new_resolver = copy.deepcopy(resolver_batch[i])
+                    new_resolver.param_dict[name] -= dx
                     final_circuit_m = cirq.resolve_parameters(
                         circuit_batch[i], new_resolver)
                     final_wf_p = cirq.final_state_vector(final_circuit_p)
@@ -229,7 +231,7 @@ class FidelityTest(tf.test.TestCase, parameterized.TestCase):
                         internal_wf = cirq.final_state_vector(other_batch[i][j])
                         fid_a = cirq.fidelity(final_wf_p, internal_wf)
                         fid_b = cirq.fidelity(final_wf_m, internal_wf)
-                        grad_fid = (fid_b - fid_a) / dx
+                        grad_fid = 0.5 * (fid_a - fid_b) / dx
                         out_arr[i][k] += grad_fid
 
         self.assertAllClose(out, out_arr, atol=1e-3)
