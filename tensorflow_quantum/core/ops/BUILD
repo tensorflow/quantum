@@ -28,6 +28,7 @@ py_library(
         ":tfq_utility_ops_py",
         # test addons
         "//tensorflow_quantum/core/ops/math_ops:inner_product_op_py",
+        "//tensorflow_quantum/core/ops/math_ops:fidelity_op_py",
         "//tensorflow_quantum/core/ops/noise:noisy_expectation_op_py",
     ],
 )
