@@ -19,8 +19,8 @@ import tensorflow as tf
 
 import cirq
 import sympy
-from tensorflow_quantum.core.ops.noise import \
-    noisy_expectation_op, noisy_sampled_expectation_op
+from tensorflow_quantum.core.ops.noise import noisy_expectation_op
+from tensorflow_quantum.core.ops.noise import noisy_sampled_expectation_op
 from tensorflow_quantum.python.differentiators import parameter_shift
 from tensorflow_quantum.python.layers.circuit_construction import elementary
 from tensorflow_quantum.python import util
@@ -75,7 +75,7 @@ class NoisyControlledPQC(tf.keras.layers.Layer):
     ...     cirq.Z(bit) ** sympy.Symbol('beta'),
     ...     cirq.depolarize(0.01)(bit)
     ... )
-    >>> outputs = tfq.layers.ControlledPQC(
+    >>> outputs = tfq.layers.NoisyControlledPQC(
     ...     model,
     ...     [cirq.Z(bit), cirq.X(bit), cirq.Y(bit)],
     ...     repetitions=1000,
@@ -107,7 +107,7 @@ class NoisyControlledPQC(tf.keras.layers.Layer):
     ...     cirq.Z(bit) ** sympy.Symbol('beta'),
     ...     cirq.depolarize(0.01)(bit)
     ... )
-    >>> outputs = tfq.layers.ControlledPQC(
+    >>> outputs = tfq.layers.NoisyControlledPQC(
     ...     model,
     ...     [cirq.Z(bit), cirq.X(bit), cirq.Y(bit)],
     ...     repetitions=5000,
