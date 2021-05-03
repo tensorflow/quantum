@@ -61,6 +61,7 @@ def test_imports():
 
     # High level Keras layers.
     _ = tfq.layers.ControlledPQC
+    _ = tfq.layers.NoisyControlledPQC
     _ = tfq.layers.NoisyPQC
     _ = tfq.layers.PQC
 
