@@ -73,6 +73,14 @@ cc_binary(
 )
 
 py_library(
+    name = "fidelity_op_py",
+    srcs = ["fidelity_op.py"],
+    deps = [
+        ":inner_product_op_py",
+    ],
+)
+
+py_library(
     name = "inner_product_op_py",
     srcs = ["inner_product_op.py"],
     data = [":_tfq_math_ops.so"],
@@ -87,6 +95,15 @@ py_test(
     python_version = "PY3",
     deps = [
         ":inner_product_op_py",
+        "//tensorflow_quantum/python:util",
+    ],
+)
+
+py_test(
+    name = "fidelity_op_test",
+    srcs = ["fidelity_op_test.py"],
+    deps = [
+        ":fidelity_op_py",
         "//tensorflow_quantum/python:util",
     ],
 )
