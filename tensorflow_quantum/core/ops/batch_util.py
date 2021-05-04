@@ -339,7 +339,9 @@ def batch_calculate_state(circuits, param_resolvers, simulator):
         circuits: Python `list` of `cirq.Circuit`s.
         param_resolvers: Python `list` of `cirq.ParamResolver`s, where
             `param_resolvers[i]` is the resolver to be used with `circuits[i]`.
-        simulator: Simulator object.  Can be any `cirq.SimulatesFinalState`.
+        simulator: Simulator object.  Can be any `cirq.SimulatesFinalState`;
+            if `simulator` is not a `cirq.DensityMatrixSimulator`, this function
+            assumes all final states are dense state vectors.
 
     Returns:
         `np.ndarray` containing the resulting state information. The array will
@@ -360,43 +362,20 @@ def batch_calculate_state(circuits, param_resolvers, simulator):
         return_mem_shape = (len(circuits), 1 << biggest_circuit,
                             1 << biggest_circuit)
         post_process = lambda x: x.final_density_matrix
-    elif isinstance(simulator, cirq.Simulator):
+    # Assumes anything else is a state vector simulator.
+    else:
         return_mem_shape = (len(circuits), 1 << biggest_circuit)
         post_process = lambda x: x.final_state_vector
-    else:
-        raise TypeError('Simulator {} is not supported by '
-                        'batch_calculate_state.'.format(type(simulator)))
-
-        all_exp_vals = np.ones(shape=(len(circuits), len(ops[0])),
-                           dtype=np.float32) * -2
-    for i, (c, p, op_row) in enumerate(zip(circuits, param_resolvers, ops)):
-        # Convention in TFQ is to set expectations of empty circuits to -2.
-        if len(c) == 0:
-            continue
-        # TODO(zaqqwerty): remove DM sim check once cirq #3964 is resolved.
-        if isinstance(simulator, cirq.DensityMatrixSimulator):
-            qubits = c.all_qubits()
-            pairs = zip(sorted(qubits), list(range(len(qubits))))
-            qubit_order = dict(pairs)
-            sim_result = simulator.simulate(c, p)
-            for j, op in enumerate(op_row):
-                dm = sim_result.final_density_matrix
-                all_exp_vals[i][j] = op.expectation_from_density_matrix(
-                    dm, qubit_order, check_preconditions=False)
-        else:
-            # Valid observables always have real expectation values.
-            all_exp_vals[i] = np.real(
-                np.asarray(simulator.simulate_expectation_values(c, op_row, p)))
 
     shared_array = _make_complex_view(return_mem_shape, -2)
     input_args = _prep_pool_input_args(range(len(circuits)), circuits,
                                        param_resolvers)
-    with ProcessPool(processes=None,
-                     initializer=_setup_dict,
-                     initargs=(shared_array, return_mem_shape, simulator,
-                               post_process)) as pool:
 
-        pool.starmap(_state_worker_func, list(input_args))
+    x_np = _convert_complex_view_to_np(shared_array, return_mem_shape)
+    for index, (program, param) in enumerate(zip(circuits, param_resolvers)):
+        result = simulator.simulate(program, param)
+        final_array = post_process(result).astype(np.complex64)
+        _update_complex_np(x_np, index, final_array)
 
     return _convert_complex_view_to_result(shared_array, return_mem_shape)
 
