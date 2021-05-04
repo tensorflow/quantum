@@ -578,18 +578,15 @@ def batch_sample(circuits, param_resolvers, n_samples, simulator):
 
     x_np = _convert_simple_view_to_np(shared_array, np.int32,
                                       return_mem_shape)
-    measure_circuits = []
-    qubit_list = []
-    for c in circuits:
-      qubit_list.append(sorted(c.all_qubits()))
-      measure_circuits.append(c + [cirq.measure(q) for q in qubit_list[-1]])
-    result_lists = simulator.run_batch(measure_circuits, param_resolvers, n_samples)
-    for index, result_pd in enumerate(result_lists):
-        # Each entry of `param_resolver` specifies only a single setpoint.
-        samples = result_pd[0].to_numpy().astype(np.int32)
+    for index, (circ, params) in enumerate(zip(circuits, param_resolvers)):
+        qubits = sorted(circ.all_qubits())
+        if len(qubits) == 0:
+            continue
+        measurements = [cirq.measure(q) for q in qubits]
+        samples = simulator.sample(circ + measurements, repetitions=n_samples, params=params).to_numpy().astype(np.int32)
         _batch_update_simple_np(
             x_np, index,
-            np.pad(samples, ((0, 0), (x_np.shape[2] - len(qubit_list[index]), 0)),
+            np.pad(samples, ((0, 0), (x_np.shape[2] - len(qubits), 0)),
                    'constant',
                    constant_values=-2))
 
