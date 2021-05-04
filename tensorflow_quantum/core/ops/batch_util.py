@@ -241,27 +241,6 @@ def _sample_expectation_worker_func(indices, programs, params, ops, n_samples):
         _pointwise_update_simple_np(x_np, batch_index, op_index, result)
 
 
-def _sample_worker_func(indices, programs, params, n_samples):
-    """Sample n_samples from progams[i] with params[i] placed in it."""
-    x_np = _convert_simple_view_to_np(INFO_DICT['arr'], np.int32,
-                                      INFO_DICT['shape'])
-    simulator = INFO_DICT['sim']
-
-    for i, index in enumerate(indices):
-        qubits = sorted(programs[i].all_qubits())
-        # (#679) Just ignore empty programs.
-        if len(qubits) == 0:
-            continue
-        state = simulator.simulate(programs[i], params[i])
-        samples = INFO_DICT['post_process'](state, len(qubits),
-                                            n_samples[i]).astype(np.int32)
-        _batch_update_simple_np(
-            x_np, index,
-            np.pad(samples, ((0, 0), (x_np.shape[2] - len(qubits), 0)),
-                   'constant',
-                   constant_values=-2))
-
-
 def _validate_inputs(circuits, param_resolvers, simulator, sim_type):
     """Type check and sanity check inputs."""
     if not isinstance(circuits, (list, tuple, np.ndarray)):
@@ -574,21 +553,17 @@ def batch_sample(circuits, param_resolvers, n_samples, simulator):
 
     biggest_circuit = max(len(circuit.all_qubits()) for circuit in circuits)
     return_mem_shape = (len(circuits), n_samples, biggest_circuit)
-    shared_array = _make_simple_view(return_mem_shape, -2, np.int32, 'i')
-
-    x_np = _convert_simple_view_to_np(shared_array, np.int32,
-                                      return_mem_shape)
+    return_array = np.full(return_mem_shape, -2, np.int32)
     for index, (circ, params) in enumerate(zip(circuits, param_resolvers)):
         qubits = sorted(circ.all_qubits())
         if len(qubits) == 0:
             continue
         measurements = [cirq.measure(q) for q in qubits]
-        samples = simulator.sample(circ + measurements, repetitions=n_samples, params=params).to_numpy().astype(np.int32)
-        _batch_update_simple_np(
-            x_np, index,
-            np.pad(samples, ((0, 0), (x_np.shape[2] - len(qubits), 0)),
+        samples_pd = simulator.run(circ + measurements, params, n_samples).data
+        samples = samples_pd.to_numpy().astype(np.int32)
+        padded_samples = np.pad(samples, ((0, 0), (biggest_circuit - len(qubits), 0)),
                    'constant',
-                   constant_values=-2))
+                   constant_values=-2)
+        return_array[index] = padded_samples
 
-    return _convert_simple_view_to_result(shared_array, np.int32,
-                                          return_mem_shape)
+    return return_array
