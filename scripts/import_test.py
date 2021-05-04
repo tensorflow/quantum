@@ -36,6 +36,7 @@ def test_imports():
 
     # Math ops.
     _ = tfq.math.inner_product
+    _ = tfq.math.fidelity
 
     # Noisy simulation ops.
     _ = tfq.noise.expectation
@@ -60,6 +61,7 @@ def test_imports():
 
     # High level Keras layers.
     _ = tfq.layers.ControlledPQC
+    _ = tfq.layers.NoisyControlledPQC
     _ = tfq.layers.NoisyPQC
     _ = tfq.layers.PQC
 

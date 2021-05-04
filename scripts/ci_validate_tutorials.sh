@@ -15,7 +15,7 @@
 # ==============================================================================
 
 # Run the tutorials using the installed pip package
-pip install jupyter nbformat==4.4.0 nbconvert==5.5.0 jupyter-client==6.1.12
+pip install jupyter nbformat==4.4.0 nbconvert==5.5.0 jupyter-client==6.1.12 ipython==7.22.0
 # Workaround for ipykernel - see https://github.com/ipython/ipykernel/issues/422
 pip install ipykernel==5.1.1
 # Leave the quantum directory, otherwise errors may occur
