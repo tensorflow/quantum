@@ -334,8 +334,6 @@ def batch_calculate_state(circuits, param_resolvers, simulator):
         post_process = lambda x: x.final_state_vector
 
     shared_array = _make_complex_view(return_mem_shape, -2)
-    input_args = _prep_pool_input_args(range(len(circuits)), circuits,
-                                       param_resolvers)
 
     x_np = _convert_complex_view_to_np(shared_array, return_mem_shape)
     for index, (program, param) in enumerate(zip(circuits, param_resolvers)):
@@ -561,9 +559,10 @@ def batch_sample(circuits, param_resolvers, n_samples, simulator):
         measurements = [cirq.measure(q) for q in qubits]
         samples_pd = simulator.run(circ + measurements, params, n_samples).data
         samples = samples_pd.to_numpy().astype(np.int32)
-        padded_samples = np.pad(samples, ((0, 0), (biggest_circuit - len(qubits), 0)),
-                   'constant',
-                   constant_values=-2)
+        padded_samples = np.pad(samples,
+                                ((0, 0), (biggest_circuit - len(qubits), 0)),
+                                'constant',
+                                constant_values=-2)
         return_array[index] = padded_samples
 
     return return_array
