@@ -210,17 +210,6 @@ def _setup_dict(array_view, view_shape, simulator, post_process):
     INFO_DICT['post_process'] = post_process
 
 
-def _state_worker_func(indices, programs, params):
-    """Compute the state vector for each program in indices."""
-    x_np = _convert_complex_view_to_np(INFO_DICT['arr'], INFO_DICT['shape'])
-    simulator = INFO_DICT['sim']
-
-    for i, index in enumerate(indices):
-        result = simulator.simulate(programs[i], params[i])
-        final_array = INFO_DICT['post_process'](result).astype(np.complex64)
-        _update_complex_np(x_np, index, final_array)
-
-
 def _sample_expectation_worker_func(indices, programs, params, ops, n_samples):
     x_np = _convert_simple_view_to_np(INFO_DICT['arr'], np.float32,
                                       INFO_DICT['shape'])
@@ -323,17 +312,16 @@ def _check_empty(circuits):
 
 
 def batch_calculate_state(circuits, param_resolvers, simulator):
-    """Compute states using a given simulator using parallel processing.
+    """Compute states from a batch of circuits.
 
     Returns a NumPy array containing the final circuit state for each
     `cirq.Circuit` in `circuits`, given that the corresponding
     `cirq.ParamResolver` in `param_resolvers` was used to resolve any symbols
     in it. If simulator is a `cirq.DensityMatrixSimulator` this final state will
-    be a density matrix, if simulator is a `cirq.Simulator` this final state
-    will be a state vector. More specifically for a given `i`
-    `batch_calculate_state` will use `param_resolvers[i]` to resolve the symbols
-    in `circuits[i]` and then place the final state in the return list at index
-    `i`.
+    be a density matrix, else this final state will be a state vector. More
+    specifically, for a given `i`, `batch_calculate_state` will use
+    `param_resolvers[i]` to resolve the symbols in `circuits[i]` and then place
+    the final state in the return list at index `i`.
 
     Args:
         circuits: Python `list` of `cirq.Circuit`s.
@@ -344,11 +332,10 @@ def batch_calculate_state(circuits, param_resolvers, simulator):
             assumes all final states are dense state vectors.
 
     Returns:
-        `np.ndarray` containing the resulting state information. The array will
-        have dimensions: [len(circuits), <size of biggest state>] in the
-        case of `cirq.Simulator`. In the case of `cirq.DensityMatrixSimulator`
-        the shape is
-         [len(circuits), <size of biggest state>, <size of biggest state>]
+        `np.ndarray` containing the resulting state information. In the case of
+        `cirq.DensityMatrixSimulator` the shape is
+        [len(circuits), <size of biggest state>, <size of biggest state>], else
+        the shape is [len(circuits), <size of biggest state>].
     """
     _validate_inputs(circuits, param_resolvers, simulator, 'analytic')
     if _check_empty(circuits):
@@ -362,7 +349,7 @@ def batch_calculate_state(circuits, param_resolvers, simulator):
         return_mem_shape = (len(circuits), 1 << biggest_circuit,
                             1 << biggest_circuit)
         post_process = lambda x: x.final_density_matrix
-    # Assumes anything else is a state vector simulator.
+    # Assumes anything else returns a state vector.
     else:
         return_mem_shape = (len(circuits), 1 << biggest_circuit)
         post_process = lambda x: x.final_state_vector
@@ -546,15 +533,14 @@ def batch_calculate_sampled_expectation(circuits, param_resolvers, ops,
 
 
 def batch_sample(circuits, param_resolvers, n_samples, simulator):
-    """Sample from circuits using parallel processing.
+    """Draw samples from a batch of circuits.
 
-    Returns a `np.ndarray` containing n_samples samples from all the circuits in
-    circuits given that the corresponding `cirq.ParamResolver` in
+    Returns a `np.ndarray` containing `n_samples` samples from all the circuits
+    in `circuits` given that the corresponding `cirq.ParamResolver` in
     `param_resolvers` was used to resolve any symbols. Specifically the
     returned array at index `i,j` will correspond to a `np.ndarray` of
     booleans representing bitstring `j` that was sampled from `circuits[i]`.
-    Samples are drawn using the provided simulator object (Currently supported
-    are `cirq.DensityMatrixSimulator` and `cirq.Simulator`).
+    Samples are drawn using the provided simulator object.
 
     Note: In order to keep numpy shape consistent, smaller circuits will
         have sample bitstrings padded with -2 on "qubits that don't exist
@@ -566,8 +552,7 @@ def batch_sample(circuits, param_resolvers, n_samples, simulator):
             `param_resolvers[i]` is the resolver to be used with `circuits[i]`.
         n_samples: `int` describing number of samples to draw from each
             circuit.
-        simulator: Simulator object. Currently
-            supported are `cirq.DensityMatrixSimulator` and `cirq.Simulator`.
+        simulator: Anything that inherits `cirq.Sampler`.
 
     Returns:
         `np.ndarray` containing the samples with invalid qubits blanked out.
@@ -591,28 +576,18 @@ def batch_sample(circuits, param_resolvers, n_samples, simulator):
     return_mem_shape = (len(circuits), n_samples, biggest_circuit)
     shared_array = _make_simple_view(return_mem_shape, -2, np.int32, 'i')
 
-    if isinstance(simulator, cirq.DensityMatrixSimulator):
-        post_process = lambda state, size, n_samples: \
-            cirq.sample_density_matrix(
-                state.final_density_matrix, [i for i in range(size)],
-                repetitions=n_samples)
-    elif isinstance(simulator, cirq.Simulator):
-        post_process = lambda state, size, n_samples: cirq.sample_state_vector(
-            state.final_state_vector, list(range(size)), repetitions=n_samples)
-    else:
-        raise TypeError('Simulator {} is not supported by batch_sample.'.format(
-            type(simulator)))
-
-    input_args = list(
-        _prep_pool_input_args(range(len(circuits)), circuits, param_resolvers,
-                              [n_samples] * len(circuits)))
-
-    with ProcessPool(processes=None,
-                     initializer=_setup_dict,
-                     initargs=(shared_array, return_mem_shape, simulator,
-                               post_process)) as pool:
-
-        pool.starmap(_sample_worker_func, input_args)
+    x_np = _convert_simple_view_to_np(shared_array, np.int32,
+                                      return_mem_shape)
+    result_lists = simulator.run_batch(circuits, param_resolvers, n_samples)
+    for index, result_pd in enumerate(result_lists):
+        qubits = sorted(circuits[index].all_qubits())
+        # Each entry of `param_resolver` specifies only a single setpoint.
+        samples = result_pd[0].to_numpy().astype(np.int32)
+        _batch_update_simple_np(
+            x_np, index,
+            np.pad(samples, ((0, 0), (x_np.shape[2] - len(qubits), 0)),
+                   'constant',
+                   constant_values=-2))
 
     return _convert_simple_view_to_result(shared_array, np.int32,
                                           return_mem_shape)
