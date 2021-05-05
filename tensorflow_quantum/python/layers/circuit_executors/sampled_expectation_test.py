@@ -27,7 +27,7 @@ from tensorflow_quantum.python import util
 
 
 class CustomSampler(cirq.Sampler):
-    """Wrapper for cirq.Simulator to comfirm that custom samplers work."""
+    """Wrapper for cirq.Simulator to confirm that custom samplers work."""
 
     def __init__(self):
         """Initialize a simulator to use internally."""
