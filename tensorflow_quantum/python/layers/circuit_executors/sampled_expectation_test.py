@@ -28,8 +28,15 @@ from tensorflow_quantum.python import util
 
 class CustomSampler(cirq.Sampler):
     """Wrapper for cirq.Simulator to comfirm that custom samplers work."""
-    def run_sweep(program, params, repetitions):
-        return cirq.Simulator().run_sweep(program, params, repetitions)
+
+    def __init__(self):
+        """Initialize a simulator to use internally."""
+        super().__init__()
+        self._internal_sim = cirq.Simulator()
+
+    def run_sweep(self, program, params, repetitions=1):
+        """Simple pass-through to default cirq simulator."""
+        return self._internal_sim.run_sweep(program, params, repetitions)
 
 
 def _gen_single_bit_rotation_problem(bit, symbols, noisy):
