@@ -487,24 +487,16 @@ def batch_calculate_sampled_expectation(circuits, param_resolvers, ops,
     x_np = _convert_simple_view_to_np(shared_array, np.float32,
                                       return_mem_shape)
 
-    # avoid mutating ops array
-    ops = np.copy(ops)
-    # TODO (mbbrough): make cirq PauliSums pickable at some point ?
-    for i in range(len(ops)):
-        for j in range(len(ops[i])):
-            ops[i][j] = serializer.serialize_paulisum(ops[i][j])
-
     for c_index, (c, params) in enumerate(zip(circuits, param_resolvers)):
         # (#679) Just ignore empty programs.
         if len(c.all_qubits()) == 0:
             continue
         circuit = cirq.resolve_parameters(c, params)
-
         for op_index, op in enumerate(ops[c_index]):
             collector = TFQPauliSumCollector(
                 circuit, op, samples_per_term=n_samples[c_index][op_index])
             asyncio.set_event_loop(asyncio.new_event_loop())
-            sampler.collect(collector, concurrency=1)
+            collector.collect(sampler, concurrency=1)
             result = collector.estimated_energy().real
 
             _pointwise_update_simple_np(x_np, c_index, op_index, result)
