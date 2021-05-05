@@ -221,37 +221,6 @@ def _state_worker_func(indices, programs, params):
         _update_complex_np(x_np, index, final_array)
 
 
-def _sample_expectation_worker_func(indices, programs, params, ops, n_samples):
-    x_np = _convert_simple_view_to_np(INFO_DICT['arr'], np.float32,
-                                      INFO_DICT['shape'])
-    simulator = INFO_DICT['sim']
-
-    # TODO: remove this when picklable.
-    for i in range(len(ops)):
-        for j in range(len(ops[i])):
-            ops[i][j] = serializer.deserialize_paulisum(ops[i][j])
-
-    for i, index_tuple in enumerate(indices):
-        batch_index = index_tuple[0]
-        op_index = index_tuple[1]
-        # (#679) Just ignore empty programs.
-        if len(programs[batch_index].all_qubits()) == 0:
-            continue
-        circuit = cirq.resolve_parameters(programs[batch_index],
-                                          params[batch_index])
-
-        sampler = TFQPauliSumCollector(
-            circuit,
-            ops[batch_index][op_index],
-            samples_per_term=n_samples[batch_index][op_index])
-
-        asyncio.set_event_loop(asyncio.new_event_loop())
-        sampler.collect(simulator, concurrency=1)
-        result = sampler.estimated_energy().real
-
-        _pointwise_update_simple_np(x_np, batch_index, op_index, result)
-
-
 def _sample_worker_func(indices, programs, params, n_samples):
     """Sample n_samples from progams[i] with params[i] placed in it."""
     x_np = _convert_simple_view_to_np(INFO_DICT['arr'], np.int32,
