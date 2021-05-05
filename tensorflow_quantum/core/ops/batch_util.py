@@ -22,8 +22,6 @@ from multiprocessing.pool import Pool as ProcessPool
 import numpy as np
 import cirq
 
-from tensorflow_quantum.core.serialize import serializer
-
 
 # TODO (#563): Remove this workaround class once cirq.PauliSumCollector can
 #   be used end to end with engine. This current issue is that
