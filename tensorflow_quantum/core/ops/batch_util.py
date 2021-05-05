@@ -454,7 +454,7 @@ def batch_calculate_expectation(circuits, param_resolvers, ops, simulator):
 
 def batch_calculate_sampled_expectation(circuits, param_resolvers, ops,
                                         n_samples, simulator):
-    """Compute expectations from sampling circuits using parallel processing.
+    """Compute expectations from sampling a batch of circuits.
 
     Returns a `np.ndarray` containing the expectation values of `ops`
     applied to a specific circuit in `circuits`, given that the
@@ -518,6 +518,8 @@ def batch_calculate_sampled_expectation(circuits, param_resolvers, ops,
 
     return_mem_shape = (len(circuits), len(ops[0]))
     shared_array = _make_simple_view(return_mem_shape, -2, np.float32, 'f')
+    x_np = _convert_simple_view_to_np(shared_array, np.float32,
+                                      return_mem_shape)
 
     # avoid mutating ops array
     ops = np.copy(ops)
@@ -526,21 +528,23 @@ def batch_calculate_sampled_expectation(circuits, param_resolvers, ops,
         for j in range(len(ops[i])):
             ops[i][j] = serializer.serialize_paulisum(ops[i][j])
 
-    input_args = list(
-        _prep_pool_input_args(list(
-            itertools.product(range(len(circuits)), range(len(ops[0])))),
-                              circuits,
-                              param_resolvers,
-                              ops,
-                              n_samples,
-                              slice_args=False))
+    for c_index, (c, params) in enumerate(zip(circuits, param_resolvers)):
+        batch_index = index_tuple[0]
+        op_index = index_tuple[1]
+        # (#679) Just ignore empty programs.
+        if len(c.all_qubits()) == 0:
+            continue
+        circuit = cirq.resolve_parameters(c, params)
 
-    with ProcessPool(processes=None,
-                     initializer=_setup_dict,
-                     initargs=(shared_array, return_mem_shape, simulator,
-                               None)) as pool:
+        for op_index, op in enumerate(ops[c_index]):
+            sampler = TFQPauliSumCollector(
+                circuit, op, samples_per_term=n_samples[c_index][op_index])
 
-        pool.starmap(_sample_expectation_worker_func, input_args)
+            asyncio.set_event_loop(asyncio.new_event_loop())
+            sampler.collect(simulator, concurrency=1)
+            result = sampler.estimated_energy().real
+
+            _pointwise_update_simple_np(x_np, c_index, op_index, result)
 
     return _convert_simple_view_to_result(shared_array, np.float32,
                                           return_mem_shape)
