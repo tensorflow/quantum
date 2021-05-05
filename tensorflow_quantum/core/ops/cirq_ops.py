@@ -345,7 +345,7 @@ def _get_cirq_sampled_expectation(sampler=cirq.Simulator()):
 
         return expectations
 
-    if not isinstance(simulator, cirq.Sampler):
+    if not isinstance(sampler, cirq.Sampler):
         raise TypeError("cirq.Sampler is required for sampled expectation.")
 
     @_upgrade_inputs
