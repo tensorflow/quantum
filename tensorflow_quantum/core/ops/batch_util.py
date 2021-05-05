@@ -15,7 +15,6 @@
 """A module to for running Cirq Simulators in parallel."""
 import asyncio
 import collections
-import itertools
 import os
 
 import multiprocessing as mp
@@ -422,7 +421,7 @@ def batch_calculate_expectation(circuits, param_resolvers, ops, simulator):
 
 
 def batch_calculate_sampled_expectation(circuits, param_resolvers, ops,
-                                        n_samples, simulator):
+                                        n_samples, sampler):
     """Compute expectations from sampling a batch of circuits.
 
     Returns a `np.ndarray` containing the expectation values of `ops`
@@ -431,9 +430,8 @@ def batch_calculate_sampled_expectation(circuits, param_resolvers, ops,
     any symbols in the circuit. Specifically the returned array at index `i,j`
     will be equal to the expectation value of `ops[i][j]` on `circuits[i]` with
     `param_resolvers[i]` used to resolve any symbols in `circuits[i]`.
-    Expectation estimations will be carried out using the simulator object
-    (`cirq.DensityMatrixSimulator` and `cirq.Simulator` are currently supported)
-    . Expectations for ops[i][j] are estimated by drawing n_samples[i][j]
+    Expectation estimations will be carried out using the sampler object.
+    Expectations for ops[i][j] are estimated by drawing n_samples[i][j]
     samples.
 
     Args:
@@ -447,14 +445,13 @@ def batch_calculate_sampled_expectation(circuits, param_resolvers, ops,
         n_samples: 2d Python `list` of `int`s where `n_samples[i][j]` is
             equal to the number of samples to draw in each term of `ops[i][j]`
             when estimating the expectation.
-        simulator: Simulator object. Currently supported are
-            `cirq.DensityMatrixSimulator` and `cirq.Simulator`.
+        sampler: Anything inheriting `cirq.Sampler`.
 
     Returns:
         `np.ndarray` containing the expectation values. Shape is:
             [len(circuits), len(ops[0])]
     """
-    _validate_inputs(circuits, param_resolvers, simulator, 'sample')
+    _validate_inputs(circuits, param_resolvers, sampler, 'sample')
     if _check_empty(circuits):
         return np.zeros((0, 0), dtype=np.float32)
 
@@ -498,20 +495,17 @@ def batch_calculate_sampled_expectation(circuits, param_resolvers, ops,
             ops[i][j] = serializer.serialize_paulisum(ops[i][j])
 
     for c_index, (c, params) in enumerate(zip(circuits, param_resolvers)):
-        batch_index = index_tuple[0]
-        op_index = index_tuple[1]
         # (#679) Just ignore empty programs.
         if len(c.all_qubits()) == 0:
             continue
         circuit = cirq.resolve_parameters(c, params)
 
         for op_index, op in enumerate(ops[c_index]):
-            sampler = TFQPauliSumCollector(
+            collector = TFQPauliSumCollector(
                 circuit, op, samples_per_term=n_samples[c_index][op_index])
-
             asyncio.set_event_loop(asyncio.new_event_loop())
-            sampler.collect(simulator, concurrency=1)
-            result = sampler.estimated_energy().real
+            sampler.collect(collector, concurrency=1)
+            result = collector.estimated_energy().real
 
             _pointwise_update_simple_np(x_np, c_index, op_index, result)
 
