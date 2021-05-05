@@ -25,7 +25,7 @@ import cirq
 from tensorflow_quantum.core.serialize import serializer
 
 
-# TODO (mbbrough): Remove this workaround class once cirq.PauliSumCollector can
+# TODO (#563): Remove this workaround class once cirq.PauliSumCollector can
 #   be used end to end with engine. This current issue is that
 #   cirq.PauliSumCollector does not produce serializable gates for basis
 #   conversion.
