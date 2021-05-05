@@ -476,8 +476,72 @@ def _get_cirq_samples(sampler=cirq.Simulator()):
 
         num_samples = int(num_samples.numpy())
 
-        results = batch_util.batch_sample(programs, resolvers, num_samples,
-                                          sampler)
+        if isinstance(sampler, (cirq.Simulator, cirq.DensityMatrixSimulator)):
+            # Only local simulators can be handled by batch_sample
+            results = batch_util.batch_sample(programs, resolvers, num_samples,
+                                              sampler)
+            return np.array(results, dtype=np.int8), _no_grad
+
+        # All other samplers need terminal measurement gates.
+        programs = [
+            p + cirq.Circuit(cirq.measure(*sorted(p.all_qubits()), key='tfq'))
+            for p in programs
+        ]
+        max_n_qubits = max(len(p.all_qubits()) for p in programs)
+
+        if isinstance(sampler, cirq.google.QuantumEngineSampler):
+            # group samples from identical circuits to reduce communication
+            # overhead. Have to keep track of the order in which things came
+            # in to make sure the output is ordered correctly
+            to_be_grouped = [
+                (ser_prog.numpy(), resolver, index)
+                for index, (
+                    ser_prog,
+                    resolver) in enumerate(zip(serialized_programs, resolvers))
+            ]
+
+            grouped = _group_tuples(to_be_grouped)
+
+            # start all the necessary jobs
+            results_mapping = {}
+            for key, value in grouped.items():
+                program = programs[value[0][1]]
+                resolvers = [x[0] for x in value]
+                orders = [x[1] for x in value]
+
+                # sampler.run_sweep blocks until results are in, so go around it
+                result = sampler._engine.run_sweep(
+                    program=program,
+                    params=resolvers,
+                    repetitions=num_samples,
+                    processor_ids=sampler._processor_ids,
+                    gate_set=sampler._gate_set)
+                results_mapping[result] = orders
+
+            # get all results
+            cirq_results = [None] * len(programs)
+            for key, value in results_mapping.items():
+                this_results = key.results()
+                for result, index in zip(this_results, value):
+                    cirq_results[index] = result
+
+        else:
+            # All other cirq.Samplers handled here.
+            #TODO(zaqqwerty): replace with run_batch once Cirq #3148 is resolved
+            cirq_results = []
+            for p, r in zip(programs, resolvers):
+                cirq_results.append(sampler.run(p, r, num_samples))
+
+        results = []
+        for r in cirq_results:
+            results.append(
+                tf.keras.preprocessing.sequence.pad_sequences(
+                    r.measurements['tfq'],
+                    maxlen=max_n_qubits,
+                    dtype=np.int8,
+                    value=-2,
+                    padding='pre'))
+
         return np.array(results, dtype=np.int8), _no_grad
 
     @_upgrade_inputs
