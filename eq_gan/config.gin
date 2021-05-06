@@ -1,0 +1,30 @@
+import train
+# Config for run and plot.
+
+run.d_epoch = 1
+run.g_epoch = 1
+
+run.batchsize = 8
+run.n_data = 100
+run.c_type = 'cz'
+run.use_sampled = False
+run.log_interval = 10
+
+run.generator_initialization = None
+run.discriminator_initialization = None
+
+# set use_perfect_swap to True or False to get data for plot
+run.use_perfect_swap = False
+run.data_noise = 0.0
+
+run.n_qubits = 2
+run.d_learn = 0.001
+run.g_learn = 0.008
+run.n_episodes = 160
+run.target_quantum_data = [0.0, 0.5, 0.5]
+
+# values estimated from Fig. S2 of https://arxiv.org/pdf/2010.07965.pdf
+# format (radians): [controlled phase error, single-qubit Z phase error]
+run.gate_error_mean = [0.0, 0.06]
+run.gate_error_stdev = [0.005, 0.02]
+run.averages = 2
