@@ -14,48 +14,64 @@ import matplotlib.pyplot as plt
 
 import circuits
 import models
-
+from analyze import find_best_params
 
 def get_circuit_maker(c_type):
     """Get appropriate circuit maker for a given circuit type."""
     circuit_maker = None
-    if c_type in ["standard", "ancilla"]:
+    if c_type in ['standard', 'ancilla']:
         circuit_maker = circuits.ghz_standard
-    elif c_type == "cz":
+    elif c_type == 'cz':
         circuit_maker = circuits.ghz_cz
+    elif c_type == 'iswap':
+        circuit_maker = circuits.ghz_iswap
+    elif c_type == 'exp0':
+        circuit_maker = circuits.exp0_ansatz
+    elif c_type == 'exp1':
+        circuit_maker = circuits.exp1_ansatz
     return circuit_maker
-
 
 def get_data_maker(c_type):
     """Get appropriate dataset maker for a given circuit type."""
     data_maker = None
-    if c_type in ["standard", "ancilla"]:
+    if c_type in ['standard', 'ancilla']:
         data_maker = circuits.ghz_standard
-    elif c_type == "cz":
+    elif c_type == 'cz':
         data_maker = circuits.ghz_cz
+    elif c_type == 'iswap':
+        data_maker = circuits.ghz_iswap
+    elif c_type == 'exp0':
+        data_maker = circuits.exp0_truth
+    elif c_type == 'exp1':
+        data_maker = circuits.exp1_truth
     return data_maker
-
 
 def num_gen_parameters(c_type, n_qubits):
     """Get number of generator model parameters for a circuit type."""
-    return 3
-
+    if c_type in ['cz', 'standard', 'ancilla', 'iswap']:
+        return 3
+    elif c_type == 'exp0':
+        return n_qubits - 1
+    elif c_type == 'exp1':
+        return 2*n_qubits + 1
+    return None
 
 def num_true_parameters(c_type, n_qubits):
     """Get number of true data circuit parameters for a circuit type."""
-    return num_gen_parameters(c_type, n_qubits)
-
+    if c_type == 'exp0':
+        return n_qubits - 1
+    elif c_type == 'exp1':
+        return n_qubits - 1
+    else:
+        return num_gen_parameters(c_type, n_qubits)
 
 def num_disc_parameters(c_type, n_qubits):
     """Get number of discriminator model parameters for a circuit type."""
-    return 2 * n_qubits
-
+    return 2*n_qubits
 
 def get_rand_state(c_type, n_qubits, data_noise):
     """Get number of data preparation circuit parameters for a circuit type."""
-    return np.random.uniform(
-        -data_noise, data_noise, num_true_parameters(c_type, n_qubits)
-    )
+    return np.random.uniform(-data_noise, data_noise, num_true_parameters(c_type, n_qubits))
 
 
 # add controlled phase and Z phase errors after each CZ gate
@@ -138,6 +154,12 @@ def generate_data(
     return target_circuits, target_real_data_circuit
 
 
+# def run_experiment(d_learn, g_learn, d_epoch, g_epoch, batchsize, data_noise, n_data,
+#                    n_episodes, n_qubits, c_type, backend, use_sampled,
+#                    log_interval, target_quantum_data, generator_initialization,
+#                    discriminator_initialization, use_perfect_swap, gate_error_mean,
+#                    gate_error_stdev, seed, save):
+
 def run_experiment(
     d_learn,
     g_learn,
@@ -149,6 +171,7 @@ def run_experiment(
     n_episodes,
     n_qubits,
     c_type,
+    backend,
     use_sampled,
     log_interval,
     target_quantum_data,
@@ -158,6 +181,7 @@ def run_experiment(
     gate_error_mean,
     gate_error_stdev,
     seed,
+    save
 ):
     """Run a QGAN experiment.
 
@@ -393,59 +417,90 @@ def run_experiment(
     return g_loss, d_loss, overlap_record, param_history
 
 
-@gin.configurable
-def run(
-    d_learn,
-    g_learn,
-    d_epoch,
-    g_epoch,
-    batchsize,
-    data_noise,
-    n_data,
-    n_episodes,
-    n_qubits,
-    c_type,
-    use_sampled,
-    log_interval,
-    target_quantum_data,
-    generator_initialization,
-    discriminator_initialization,
-    use_perfect_swap,
-    gate_error_mean,
-    gate_error_stdev,
-    averages,
-):
-    """Run and plot an experiment."""
 
-    if use_perfect_swap == "both":
+
+
+
+
+@gin.configurable
+def run_and_save(d_learn, g_learn, d_epoch, g_epoch, batchsize, data_noise, n_data,
+                 n_episodes, n_qubits, c_type, backend, use_sampled,
+                 log_interval, target_quantum_data, generator_initialization,
+                 discriminator_initialization, use_perfect_swap, gate_error_mean,
+                 gate_error_stdev, averages, save):
+    """Run and plot an experiment."""
+    if backend == None:
+        backend = None
+    elif backend == 'engine_mcgee':
+        backend = testsamplerxmon_mcgee
+    elif backend == 'engine_rainbow':
+        backend = testsamplerxmon_rainbow
+    else:
+        raise ValueError('Invalid backend.')
+    
+    if use_perfect_swap == 'both':
         use_perfect_swaps = [False, True]
     else:
         use_perfect_swaps = [use_perfect_swap]
-
-
+    
+    # all history of all runs
+    all_g_loss = []
+    all_d_loss = []
+    all_overlap_record = []
+    all_g_weights = []
+    all_d_weights = []
+    
+    # relevant statistics
+    all_chosen_params = []
+    all_chosen_overlaps = []
+    
+    for j in range(len(use_perfect_swaps)):
+        all_g_loss.append([])
+        all_d_loss.append([])
+        all_overlap_record.append([])
+        all_g_weights.append([])
+        all_d_weights.append([])
+        all_chosen_params.append([])
+        all_chosen_overlaps.append([])
+    
     for i in range(averages):
         for j in range(len(use_perfect_swaps)):
             g_loss, d_loss, overlap_record, weights = run_experiment(
-                d_learn,
-                g_learn,
-                d_epoch,
-                g_epoch,
-                batchsize,
-                data_noise,
-                n_data,
-                n_episodes,
-                n_qubits,
-                c_type,
-                use_sampled,
-                log_interval,
-                target_quantum_data,
-                generator_initialization,
-                discriminator_initialization,
-                use_perfect_swaps[j],
-                gate_error_mean,
-                gate_error_stdev,
-                i,
-            )
+                d_learn, g_learn, d_epoch, g_epoch, batchsize, data_noise, n_data, n_episodes,
+                n_qubits, c_type, backend, use_sampled, log_interval,
+                target_quantum_data, generator_initialization, discriminator_initialization,
+                use_perfect_swaps[j], gate_error_mean, gate_error_stdev, i, save)
 
+            weights = np.array(weights, dtype=object)
+            g_weights = weights[:, 0]
+            d_weights = weights[:, 1]
 
+            _, chosen_params, chosen_overlap = find_best_params(overlap_record, g_weights, g_loss)
+            all_chosen_params[j].append(chosen_params)
+            all_chosen_overlaps[j].append(chosen_overlap)
+
+            all_g_loss[j].append(np.array(g_loss).flatten())
+            all_d_loss[j].append(np.array(d_loss).flatten())
+            all_overlap_record[j].append(overlap_record)
+            all_g_weights[j].append(g_weights)
+            all_d_weights[j].append(d_weights)
+    
+    if save is not None:
+        now = datetime.now()
+        date_time = now.strftime("%Y-%m-%d-%H-%M-%S")
+        for j in range(len(use_perfect_swaps)):
+            out = [np.array(all_overlap_record[j]), np.array(all_g_weights[j]),
+                    np.array(all_d_weights[j]), np.array(all_g_loss[j]), np.array(all_d_loss[j])]
+            if use_perfect_swaps[j]:
+                fname = 'out-all-perfect_swap-' + save + '-' + date_time + '.npz'
+            else:
+                fname = 'out-all-adversarial_swap-' + save + '-' + date_time + '.npz'
+            np.savez(fname, overlap_record=out[0],
+                     g_weights=out[1],
+                     d_weights=out[2],
+                     g_loss=out[3],
+                     d_loss=out[4])
+
+    print(all_chosen_overlaps)
     print("Done!")
+    return np.mean(all_chosen_overlaps)

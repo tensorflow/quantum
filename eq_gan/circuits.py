@@ -3,6 +3,7 @@
 Does minimal error checks, but is not completely comprehensive.
 """
 import cirq
+import numpy as np
 
 def ghz_standard(qubits, rotations):
     """Make a GHZ-like state with arbitrary phase.
@@ -44,6 +45,113 @@ def ghz_cz(qubits, rotations):
         u.extend([cirq.Y(q1)**0.5, cirq.X(q1), cirq.CZ(q0, q1),
                   cirq.Y(q1)**0.5, cirq.X(q1)])
     return cirq.Circuit(u)
+
+def exp0_ansatz(qubits, rotations):
+    """Make ansatz that can generate exponential distributions of type 0.
+    
+    Args:
+        qubits: Python `lst` of `cirq.GridQubit`s
+        rotations: Python `lst` indicating gate parameters.
+    """
+    u = []
+    n = len(qubits)
+    
+    u.append(cirq.Y(qubits[0])**0.5)
+    u.append(cirq.X(qubits[0])**1.0)
+    
+    for i in range(1, n):
+        u.append(cirq.ry(np.pi*rotations[i-1]).on(qubits[i]))
+    for i in range(1, n):
+        u.extend([cirq.Y(qubits[i])**0.5, cirq.X(qubits[i]),
+                      cirq.CZ(qubits[0], qubits[i]),
+                      cirq.Y(qubits[i])**0.5, cirq.X(qubits[i])])
+    
+        
+    return cirq.Circuit(u)
+
+def exp1_ansatz(qubits, rotations):
+    """Make ansatz that can generate exponential distributions of type 1.
+    
+    Args:
+        qubits: Python `lst` of `cirq.GridQubit`s
+        rotations: Python `lst` indicating gate parameters.
+    """
+    u = []
+    n = len(qubits)
+#     for i in range(1):
+    u.append(cirq.H.on(qubits[1])**rotations[-1])
+    for i in range(n):
+        u.append(cirq.ry(np.pi*rotations[i]).on(qubits[i]))
+    for i in range(2, n):
+        u.append(cirq.CX(qubits[1], qubits[i]))
+    for i in range(n):
+        u.append(cirq.X.on(qubits[i]))
+    for i in range(n):
+        u.append(cirq.X.on(qubits[i])**rotations[n + i])
+        
+    return cirq.Circuit(u)
+    
+def exp0_truth(qubits, rand_state):
+    """Make exponential distribution on qubits of type 0.
+    
+    Args:
+        qubits: Python `lst` of `cirq.GridQubit`s
+        rand_state: numpy ndarray of data noise, or 0 (no noise).
+    """
+    u = []
+    n = len(qubits)
+    alpha = 2 / 2**n
+    angles = np.arctan(np.exp(2**(n-np.arange(n-1)-1) * alpha))
+    angles += rand_state
+    j = 0
+    center = 0
+    for i in range(n):
+        if i == center:
+            u.append(cirq.Y(qubits[i])**0.5)
+            u.append(cirq.X(qubits[i])**1.0)
+        else:
+            theta = angles[j]
+            u.append(cirq.ry(2*theta).on(qubits[i]))
+            j += 1
+    for i in range(n):
+        if i != center:
+            u.extend([cirq.Y(qubits[i])**0.5, cirq.X(qubits[i]),
+                      cirq.CZ(qubits[center], qubits[i]),
+                      cirq.Y(qubits[i])**0.5, cirq.X(qubits[i])])
+    circuit = cirq.Circuit(u)
+    return circuit
+
+def exp1_truth(qubits, rand_state):
+    """Make exponential distribution on qubits of type 1.
+    
+    Args:
+        qubits: Python `lst` of `cirq.GridQubit`s
+        rand_state: numpy ndarray of data noise, or 0 (no noise).
+    """
+    u = []
+    n = len(qubits)
+    alpha = 1.5 / 2**(n-1)
+    angles = np.arctan(np.exp(2**(n-np.arange(n-2)-1) * alpha))
+    if len(np.array(rand_state).shape) == 0 and rand_state == 0:
+        rand_state = np.zeros(len(angles))
+    angles += rand_state[1:]
+    j = 0
+    center = 1
+    u.append(cirq.ry(rand_state[0]).on(qubits[0]))
+    for i in range(1, n):
+        if i == center:
+            u.append(cirq.H.on(qubits[i]))
+        else:
+            theta = angles[j]
+            u.append(cirq.ry(2*theta).on(qubits[i]))
+            j += 1
+    for i in range(1, n):
+        if i != center:
+            u.append(cirq.CX(qubits[center], qubits[i]))
+#     for i in range(n):
+#         u.append(cirq.X.on(qubits[i]))
+    circuit = cirq.Circuit(u)
+    return circuit
 
 
 def variational_swap_textbook(qubits_a, qubits_b, ancilla, rotations):

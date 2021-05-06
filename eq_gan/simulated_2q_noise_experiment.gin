@@ -1,0 +1,33 @@
+import train
+
+# Config for run and plot.
+
+run_and_save.d_epoch = 1
+run_and_save.g_epoch = 1
+
+run_and_save.batchsize = 4
+run_and_save.n_data = 1
+run_and_save.c_type = 'cz'
+run_and_save.backend = None
+run_and_save.use_sampled = False
+run_and_save.log_interval = 10
+
+run_and_save.generator_initialization = None
+run_and_save.discriminator_initialization = None
+
+# set use_perfect_swap to True or False to get data for plot
+run_and_save.use_perfect_swap = False
+run_and_save.data_noise = 0.0
+
+run_and_save.n_qubits = 2
+run_and_save.d_learn = 0.001
+run_and_save.g_learn = 0.008
+run_and_save.n_episodes = 160
+run_and_save.target_quantum_data = [0.0, 0.5, 0.5]
+
+# values estimated from Fig. S2 of https://arxiv.org/pdf/2010.07965.pdf
+# format (radians): [controlled phase error, single-qubit Z phase error]
+run_and_save.gate_error_mean = [0.0, 0.06]
+run_and_save.gate_error_stdev = [0.005, 0.02]
+run_and_save.averages = 2
+run_and_save.save = 'noisy_2q'

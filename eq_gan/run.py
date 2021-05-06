@@ -4,7 +4,7 @@ import gin
 import train
 
 def main(args):
-    train.run()
+    train.run_and_save()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
