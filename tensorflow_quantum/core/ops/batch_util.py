@@ -477,7 +477,12 @@ def batch_calculate_sampled_expectation(circuits, param_resolvers, ops,
         for op_index, op in enumerate(ops[c_index]):
             collector = TFQPauliSumCollector(
                 circuit, op, samples_per_term=n_samples[c_index][op_index])
-            asyncio.run(collector.collect_async(sampler, concurrency=1))
+            try:
+                loop = asyncio.get_running_loop()
+            except:
+                loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            collector.collect(sampler, concurrency=1)
             result = collector.estimated_energy().real
 
             _pointwise_update_simple_np(x_np, c_index, op_index, result)
