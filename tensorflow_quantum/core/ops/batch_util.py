@@ -482,7 +482,7 @@ def batch_calculate_sampled_expectation(circuits, param_resolvers, ops,
             except:
                 loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
-            collector.collect(sampler, concurrency=1)
+            asyncio.run(collector.collect_async(sampler, concurrency=1))
             result = collector.estimated_energy().real
 
             _pointwise_update_simple_np(x_np, c_index, op_index, result)
