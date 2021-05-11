@@ -423,7 +423,6 @@ def batch_sample(circuits, param_resolvers, n_samples, simulator):
         run_c = cirq.resolve_parameters(c_m, resolver)
         bits = simulator.sample(run_c, repetitions=n_samples)
         flat_m = bits[[x[1] for x in qb_keys]].to_numpy().astype(np.int8)
-        return_array[batch, :, :len(qb_keys)] = flat_m[:, ::-1]
+        return_array[batch, :, biggest_circuit - len(qb_keys):] = flat_m
 
-    # Swap big endian little endian.
-    return return_array[:, :, ::-1]
+    return return_array
