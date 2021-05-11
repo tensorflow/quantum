@@ -78,9 +78,10 @@ def get_expectation_op(
 
     Args:
         backend: Optional Python `object` that specifies what backend this op
-            should use when evaluating circuits. Can be any
-            `cirq.SimulatesFinalState`. If not provided the default C++
-            analytical expectation calculation op is returned.
+            should use when evaluating circuits. Can be
+            `cirq.DensityMatrixSimulator` or any
+            `cirq.sim.simulator.SimulatesExpectationValues`. If not provided the
+            default C++ analytical expectation calculation op is returned.
         quantum_concurrent: Optional Python `bool`. True indicates that the
             returned op should not block graph level parallelism on itself when
             executing. False indicates that graph level parallelism on itself
@@ -122,7 +123,9 @@ def get_expectation_op(
     if backend is None:
         op = TFQStateVectorSimulator.expectation
 
-    if isinstance(backend, cirq.SimulatesFinalState):
+    # TODO(zaqqwerty): remove DM check after cirq #3964
+    if isinstance(backend, (cirq.sim.simulator.SimulatesExpectationValues,
+                            cirq.DensityMatrixSimulator)):
         op = cirq_ops._get_cirq_analytical_expectation(backend)
 
     if op is not None:
@@ -141,8 +144,9 @@ def get_expectation_op(
                                   " Use "
                                   "tf.get_sampled_expectation_op() instead.")
 
-    raise TypeError("Backend {} is invalid. Expected a Cirq.SimulatesFinalState"
-                    " or None.".format(backend))
+    raise TypeError("Backend {} is invalid. Expected a "
+                    "cirq.sim.simulator.SimulatesExpectationValues "
+                    "or None.".format(backend))
 
 
 def get_sampling_op(

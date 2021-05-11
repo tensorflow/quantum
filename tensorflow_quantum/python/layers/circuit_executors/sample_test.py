@@ -76,13 +76,20 @@ class SampleTest(tf.test.TestCase, parameterized.TestCase):
                 TypeError, expected_regex="cannot be parsed to int32 tensor"):
             sampler([cirq.Circuit()], repetitions=[10])
 
-    @parameterized.parameters([{
-        'backend': None
-    }, {
-        'backend': cirq.Simulator()
-    }, {
-        'backend': cirq.DensityMatrixSimulator()
-    }])
+    @parameterized.parameters([
+        {
+            'backend': 'noiseless'
+        },
+        {
+            'backend': 'noisy'
+        },
+        {
+            'backend': cirq.Simulator()
+        },
+        {
+            'backend': None  # old API usage.
+        }
+    ])
     def test_sample_invalid_combinations(self, backend):
         """Test with valid type inputs and valid value, but incorrect combo."""
         sampler = sample.Sample(backend)
@@ -152,11 +159,10 @@ class SampleTest(tf.test.TestCase, parameterized.TestCase):
     @parameterized.parameters(
         list(
             util.kwargs_cartesian_product(
-                backend=[None,
-                         cirq.Simulator(),
-                         cirq.DensityMatrixSimulator()],
-                all_n_qubits=[[3], [8], [3, 4], [3, 4, 10]],
-                n_samples=[1, 10, 100],
+                backend=['noiseless', 'noisy',
+                         cirq.Simulator(), None],
+                all_n_qubits=[[3, 4, 10]],
+                n_samples=[1],
                 symbol_names=[[], ['a', 'b']])))
     def test_sample_output(self, backend, all_n_qubits, n_samples,
                            symbol_names):
@@ -178,6 +184,7 @@ class SampleTest(tf.test.TestCase, parameterized.TestCase):
                                symbol_names=symbol_names,
                                symbol_values=symbol_values,
                                repetitions=n_samples).to_list()
+
         self.assertEqual(expected_outputs, layer_output)
 
 

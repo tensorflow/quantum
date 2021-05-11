@@ -18,7 +18,7 @@ import tensorflow as tf
 
 from tensorflow_quantum.core.ops import tfq_ps_util_ops
 
-_PARAMETER_IMPURITY_NAME = '_param_shift'
+PARAMETER_IMPURITY_NAME = '_impurity_for_param_shift'
 
 
 @tf.function
@@ -65,7 +65,7 @@ def parse_programs(programs, symbol_names, symbol_values, n_symbols,
 
     # Collecting doped programs with impurity sympy.Symbol from all programs
     # with parameterized gates.
-    impurity = tf.tile(tf.convert_to_tensor([_PARAMETER_IMPURITY_NAME]),
+    impurity = tf.tile(tf.convert_to_tensor([PARAMETER_IMPURITY_NAME]),
                        [n_symbols])
     symbols = tf.convert_to_tensor(symbol_names)
 
@@ -78,6 +78,7 @@ def parse_programs(programs, symbol_names, symbol_values, n_symbols,
     n_param_gates = tf.cast(tf.gather(tf.shape(new_programs), 2),
                             dtype=tf.int32)
 
+    # This is a tensor of the `exponent_scalar`s of the shifted gates.
     coeff = tf.expand_dims(tf.transpose(
         tfq_ps_util_ops.tfq_ps_weights_from_symbols(decomposed_programs,
                                                     symbols), [1, 0, 2]),

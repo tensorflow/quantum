@@ -16,6 +16,15 @@ limitations under the License.
 #ifndef TFQ_CORE_OPS_PARSE_CONTEXT
 #define TFQ_CORE_OPS_PARSE_CONTEXT
 
+// Syncs a threads work status with some global status.
+#define NESTED_FN_STATUS_SYNC(global_status, local_status, global_lock) \
+  if (TF_PREDICT_FALSE(!local_status.ok())) {                           \
+    global_lock.lock();                                                 \
+    global_status = local_status;                                       \
+    global_lock.unlock();                                               \
+    return;                                                             \
+  }
+
 #include <string>
 #include <vector>
 

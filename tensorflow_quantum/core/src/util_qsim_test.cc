@@ -27,6 +27,10 @@ limitations under the License.
 #include "../qsim/lib/simmux.h"
 #include "absl/container/flat_hash_map.h"
 #include "gtest/gtest.h"
+#include "tensorflow/core/lib/random/random.h"
+#include "tensorflow/core/lib/random/simple_philox.h"
+#include "tensorflow/core/platform/mutex.h"
+#include "tensorflow/core/util/guarded_philox_random.h"
 #include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
 
 namespace tfq {
@@ -88,10 +92,14 @@ TEST_P(TwoTermSampledExpectationFixture, CorrectnessTest) {
 
   // Compute expectation and compare to reference values.
   float exp_v = 0;
+  tensorflow::GuardedPhiloxRandom random_gen;
+  random_gen.Init(tensorflow::random::New64(), tensorflow::random::New64());
+  auto local_gen = random_gen.ReserveSamples32(2 * 1000000);
+  tensorflow::random::SimplePhilox rand_source(&local_gen);
   Status s = tfq::ComputeSampledExpectationQsim(p_sum, sim, ss, sv, scratch,
-                                                1000000, &exp_v);
+                                                1000000, rand_source, &exp_v);
 
-  EXPECT_NEAR(exp_v, std::get<1>(GetParam()), 1e-3);
+  EXPECT_NEAR(exp_v, std::get<1>(GetParam()), 1e-2);
 }
 
 // clang-format off
@@ -191,8 +199,12 @@ TEST(UtilQsimTest, SampledEmptyTermCase) {
 
   // Compute expectation and compare to reference values.
   float exp_v = 0;
-  Status s = tfq::ComputeSampledExpectationQsim(p_sum_empty, sim, ss, sv,
-                                                scratch, 100, &exp_v);
+  tensorflow::GuardedPhiloxRandom random_gen;
+  random_gen.Init(tensorflow::random::New64(), tensorflow::random::New64());
+  auto local_gen = random_gen.ReserveSamples32(2 * 100);
+  tensorflow::random::SimplePhilox rand_source(&local_gen);
+  Status s = tfq::ComputeSampledExpectationQsim(
+      p_sum_empty, sim, ss, sv, scratch, 100, rand_source, &exp_v);
 
   EXPECT_NEAR(exp_v, 0.1234, 1e-5);
 }
@@ -274,10 +286,14 @@ TEST(UtilQsimTest, SampledCompoundCase) {
   p_term_scratch->set_coefficient_real(4.0);
   // Compute expectation and compare to reference values.
   float exp_v = 0;
+  tensorflow::GuardedPhiloxRandom random_gen;
+  random_gen.Init(tensorflow::random::New64(), tensorflow::random::New64());
+  auto local_gen = random_gen.ReserveSamples32(2 * 1000000);
+  tensorflow::random::SimplePhilox rand_source(&local_gen);
   Status s = tfq::ComputeSampledExpectationQsim(p_sum, sim, ss, sv, scratch,
-                                                10000000, &exp_v);
+                                                10000000, rand_source, &exp_v);
 
-  EXPECT_NEAR(exp_v, 4.1234, 1e-3);
+  EXPECT_NEAR(exp_v, 4.1234, 1e-2);
 }
 
 TEST(UtilQsimTest, CompoundCase) {
@@ -623,6 +639,126 @@ TEST(UtilQsimTest, AccumulateFusedCircuitsEmpty) {
   EXPECT_NEAR(ss.GetAmpl(dest, 2).real(), 0.0, 1e-5);
   EXPECT_NEAR(ss.GetAmpl(dest, 2).imag(), 0.0, 1e-5);
   EXPECT_NEAR(ss.GetAmpl(dest, 3).real(), 0.0, 1e-5);
+}
+
+static void AssertWellBalanced(const std::vector<std::vector<int>>& n_reps,
+                               const int& num_threads,
+                               const std::vector<std::vector<int>>& offsets) {
+  auto max_work = std::vector<int>(n_reps.size(), -1);
+  for (int i = 0; i < n_reps.size(); i++) {
+    for (int j = 0; j < n_reps[0].size(); j++) {
+      max_work[i] = std::max(max_work[i], n_reps[i][j]);
+    }
+  }
+
+  for (int i = 0; i < n_reps.size(); i++) {
+    int sum = 0;
+    int prev_local_work = 0;
+    for (int k = 0; k < num_threads; k++) {
+      int local_work = (max_work[i] + num_threads - 1) / num_threads;
+      local_work += offsets[k][i];
+      sum += local_work;
+      if (k > 0) {
+        EXPECT_LT(abs(local_work - prev_local_work), 2);
+      }
+      prev_local_work = local_work;
+    }
+    EXPECT_EQ(sum, max_work[i]);
+  }
+}
+
+TEST(UtilQsimTest, BalanceTrajectorySimple) {
+  std::vector<std::vector<int>> n_reps = {{1, 3, 5, 10, 15},
+                                          {1, 10, 20, 30, 40},
+                                          {50, 70, 100, 100, 100},
+                                          {100, 200, 200, 200, 200}};
+  const int num_threads = 3;
+  // [num_threads, n_reps.size()]
+  std::vector<std::vector<int>> offsets = {
+      {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}};
+
+  BalanceTrajectory(n_reps, num_threads, &offsets);
+  AssertWellBalanced(n_reps, num_threads, offsets);
+}
+
+TEST(UtilQsimTest, BalanceTrajectoryPreventIdle) {
+  std::vector<std::vector<int>> n_reps = {{1, 1, 1, 1, 11},
+                                          {1, 1, 1, 11, 1},
+                                          {1, 1, 11, 1, 1},
+                                          {1, 11, 1, 1, 1},
+                                          {11, 1, 1, 1, 1}};
+  const int num_threads = 10;
+  // [num_threads, n_reps.size()]
+  std::vector<std::vector<int>> offsets = {
+      {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0},
+      {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0},
+      {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}};
+
+  BalanceTrajectory(n_reps, num_threads, &offsets);
+  AssertWellBalanced(n_reps, num_threads, offsets);
+}
+
+TEST(UtilQsimTest, BalanceTrajectoryLowRep) {
+  std::vector<std::vector<int>> n_reps = {
+      {1, 1, 1, 1, 1}, {1, 1, 1, 1, 1}, {1, 1, 1, 1, 1}, {1, 1, 1, 1, 1},
+      {1, 1, 1, 1, 1}, {1, 1, 1, 1, 1}, {1, 1, 1, 1, 1}};
+  const int num_threads = 5;
+  // [num_threads, n_reps.size()]
+  std::vector<std::vector<int>> offsets = {{0, 0, 0, 0, 0, 0, 0},
+                                           {0, 0, 0, 0, 0, 0, 0},
+                                           {0, 0, 0, 0, 0, 0, 0},
+                                           {0, 0, 0, 0, 0, 0, 0},
+                                           {0, 0, 0, 0, 0, 0, 0}};
+
+  BalanceTrajectory(n_reps, num_threads, &offsets);
+  AssertWellBalanced(n_reps, num_threads, offsets);
+}
+
+TEST(UtilQsimTest, BalanceTrajectoryFewHigh) {
+  std::vector<std::vector<int>> n_reps = {
+      {1, 100, 1, 1, 1}, {1, 1, 1, 1, 1000}, {1, 1, 1, 1, 1},   {1, 1, 1, 1, 1},
+      {1, 1, 1, 1, 1},   {1, 10, 1, 1, 1},   {1, 1, 1, 1, 1000}};
+  const int num_threads = 5;
+  // [num_threads, n_reps.size()]
+  std::vector<std::vector<int>> offsets = {{0, 0, 0, 0, 0, 0, 0},
+                                           {0, 0, 0, 0, 0, 0, 0},
+                                           {0, 0, 0, 0, 0, 0, 0},
+                                           {0, 0, 0, 0, 0, 0, 0},
+                                           {0, 0, 0, 0, 0, 0, 0}};
+
+  BalanceTrajectory(n_reps, num_threads, &offsets);
+  AssertWellBalanced(n_reps, num_threads, offsets);
+}
+
+TEST(UtilQsimTest, BalanceTrajectory1D) {
+  const int n_reps = 100;
+  const int num_threads = 5;
+  // [num_threads, batch_size]
+  std::vector<std::vector<int>> offsets = {{0, 0, 0, 0, 0, 0, 0},
+                                           {0, 0, 0, 0, 0, 0, 0},
+                                           {0, 0, 0, 0, 0, 0, 0},
+                                           {0, 0, 0, 0, 0, 0, 0},
+                                           {0, 0, 0, 0, 0, 0, 0}};
+
+  std::vector<std::vector<int>> tmp(offsets[0].size(),
+                                    std::vector<int>(2, n_reps));
+  BalanceTrajectory(n_reps, num_threads, &offsets);
+  AssertWellBalanced(tmp, num_threads, offsets);
+}
+
+TEST(UtilQsimTest, BalanceTrajectory1D_2) {
+  const int n_reps = 11;
+  const int num_threads = 10;
+  // [num_threads, batch_size]
+  std::vector<std::vector<int>> offsets = {
+      {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0},
+      {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0},
+      {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}};
+
+  std::vector<std::vector<int>> tmp(offsets[0].size(),
+                                    std::vector<int>(2, n_reps));
+  BalanceTrajectory(n_reps, num_threads, &offsets);
+  AssertWellBalanced(tmp, num_threads, offsets);
 }
 
 }  // namespace

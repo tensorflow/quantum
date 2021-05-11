@@ -28,7 +28,14 @@ from tensorflow_quantum.core.serialize import serializer
 
 # Can't use set() since channels don't give proper support.
 _SUPPORTED_CHANNELS = [
-    cirq.DepolarizingChannel, cirq.AsymmetricDepolarizingChannel
+    cirq.AsymmetricDepolarizingChannel,
+    cirq.AmplitudeDampingChannel,
+    cirq.DepolarizingChannel,
+    cirq.GeneralizedAmplitudeDampingChannel,
+    cirq.ResetChannel,
+    cirq.PhaseDampingChannel,
+    cirq.PhaseFlipChannel,
+    cirq.BitFlipChannel,
 ]
 
 
@@ -73,6 +80,12 @@ def get_supported_channels():
     channel_mapping = dict()
     channel_mapping[cirq.DepolarizingChannel(0.01)] = 1
     channel_mapping[cirq.AsymmetricDepolarizingChannel(0.01, 0.02, 0.03)] = 1
+    channel_mapping[cirq.GeneralizedAmplitudeDampingChannel(0.01, 0.02)] = 1
+    channel_mapping[cirq.AmplitudeDampingChannel(0.01)] = 1
+    channel_mapping[cirq.ResetChannel()] = 1
+    channel_mapping[cirq.PhaseDampingChannel(0.01)] = 1
+    channel_mapping[cirq.PhaseFlipChannel(0.01)] = 1
+    channel_mapping[cirq.BitFlipChannel(0.01)] = 1
 
     return channel_mapping
 
@@ -180,7 +193,8 @@ def random_circuit_resolver_batch(qubits,
                 # skip adding gates in small case.
                 continue
             locs = tuple(random.sample(qubits, n_qubits))
-            if isinstance(op, cirq.IdentityGate):
+            if isinstance(op, cirq.IdentityGate) or \
+                any(isinstance(op, x) for x in _SUPPORTED_CHANNELS):
                 circuit[:i] += op.on(*locs)
                 continue
             full_gate = (op**np.random.random()).on(*locs)
@@ -500,6 +514,31 @@ def _channel_approx_eq(op_true, op_deser, atol=1e-5):
             return abs(op_true.p_x - op_deser.p_x) < atol and \
                    abs(op_true.p_y - op_deser.p_y) < atol and \
                    abs(op_true.p_z - op_deser.p_z) < atol
+
+    if isinstance(op_true, cirq.GeneralizedAmplitudeDampingChannel):
+        if isinstance(op_deser, cirq.GeneralizedAmplitudeDampingChannel):
+            return abs(op_true.p - op_deser.p) < atol and \
+                   abs(op_true.gamma - op_deser.gamma) < atol
+
+    if isinstance(op_true, cirq.AmplitudeDampingChannel):
+        if isinstance(op_deser, cirq.AmplitudeDampingChannel):
+            return abs(op_true.gamma - op_deser.gamma) < atol
+
+    if isinstance(op_true, cirq.ResetChannel):
+        if isinstance(op_deser, cirq.ResetChannel):
+            return True
+
+    if isinstance(op_true, cirq.PhaseDampingChannel):
+        if isinstance(op_deser, cirq.PhaseDampingChannel):
+            return abs(op_true.gamma - op_deser.gamma) < atol
+
+    if isinstance(op_true, cirq.PhaseFlipChannel):
+        if isinstance(op_deser, cirq.PhaseFlipChannel):
+            return abs(op_true.p - op_deser.p) < atol
+
+    if isinstance(op_true, cirq.BitFlipChannel):
+        if isinstance(op_deser, cirq.BitFlipChannel):
+            return abs(op_true.p - op_deser.p) < atol
 
     return False
 

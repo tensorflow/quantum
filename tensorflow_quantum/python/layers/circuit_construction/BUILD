@@ -6,8 +6,18 @@ licenses(["notice"])
 exports_files(["__init__.py"])
 
 py_library(
+    name = "circuit_construction",
+    srcs = ["__init__.py"],
+    srcs_version = "PY3",
+    deps = [
+        ":elementary",
+    ],
+)
+
+py_library(
     name = "elementary",
     srcs = ["elementary.py"],
+    srcs_version = "PY3",
     deps = [
         "//tensorflow_quantum/core/ops:tfq_utility_ops_py",
         "//tensorflow_quantum/python:util",
