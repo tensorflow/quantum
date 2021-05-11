@@ -345,24 +345,24 @@ def batch_calculate_state(circuits, param_resolvers, simulator):
         return empty_ret
 
     biggest_circuit = max(len(circuit.all_qubits()) for circuit in circuits)
+
+    # Default to state vector unless we see densitymatrix.
+    return_mem_shape = (len(circuits), 1 << biggest_circuit)
+    post_process = lambda x: x.final_state_vector
     if isinstance(simulator, cirq.DensityMatrixSimulator):
         return_mem_shape = (len(circuits), 1 << biggest_circuit,
                             1 << biggest_circuit)
         post_process = lambda x: x.final_density_matrix
-    # Assumes anything else returns a state vector.
-    else:
-        return_mem_shape = (len(circuits), 1 << biggest_circuit)
-        post_process = lambda x: x.final_state_vector
 
-    shared_array = _make_complex_view(return_mem_shape, -2)
-
-    x_np = _convert_complex_view_to_np(shared_array, return_mem_shape)
+    batch_states = np.ones(return_mem_shape, dtype=np.complex64) * -2
     for index, (program, param) in enumerate(zip(circuits, param_resolvers)):
         result = simulator.simulate(program, param)
-        final_array = post_process(result).astype(np.complex64)
-        _update_complex_np(x_np, index, final_array)
+        state_size = 1 << len(program.all_qubits())
+        state = post_process(result).astype(np.complex64)
+        sub_index = (slice(None, state_size, 1),) * (batch_states.ndim - 1)
+        batch_states[index][sub_index] = state
 
-    return _convert_complex_view_to_result(shared_array, return_mem_shape)
+    return batch_states
 
 
 def batch_calculate_expectation(circuits, param_resolvers, ops, simulator):
@@ -531,7 +531,7 @@ def batch_calculate_sampled_expectation(circuits, param_resolvers, ops,
 
 
 def batch_sample(circuits, param_resolvers, n_samples, simulator):
-    """Sample from circuits using parallel processing.
+    """Sample from circuits.
 
     Returns a `np.ndarray` containing n_samples samples from all the circuits in
     circuits given that the corresponding `cirq.ParamResolver` in
@@ -563,7 +563,7 @@ def batch_sample(circuits, param_resolvers, n_samples, simulator):
     """
     _validate_inputs(circuits, param_resolvers, simulator, 'sample')
     if _check_empty(circuits):
-        return np.zeros((0, 0, 0), dtype=np.int32)
+        return np.zeros((0, 0, 0), dtype=np.int8)
 
     if not isinstance(n_samples, int):
         raise TypeError('n_samples must be an int.'
@@ -574,30 +574,18 @@ def batch_sample(circuits, param_resolvers, n_samples, simulator):
 
     biggest_circuit = max(len(circuit.all_qubits()) for circuit in circuits)
     return_mem_shape = (len(circuits), n_samples, biggest_circuit)
-    shared_array = _make_simple_view(return_mem_shape, -2, np.int32, 'i')
+    return_array = np.ones(return_mem_shape, dtype=np.int8) * -2
 
-    if isinstance(simulator, cirq.DensityMatrixSimulator):
-        post_process = lambda state, size, n_samples: \
-            cirq.sample_density_matrix(
-                state.final_density_matrix, [i for i in range(size)],
-                repetitions=n_samples)
-    elif isinstance(simulator, cirq.Simulator):
-        post_process = lambda state, size, n_samples: cirq.sample_state_vector(
-            state.final_state_vector, list(range(size)), repetitions=n_samples)
-    else:
-        raise TypeError('Simulator {} is not supported by batch_sample.'.format(
-            type(simulator)))
+    for batch, (c, resolver) in enumerate(zip(circuits, param_resolvers)):
+        if len(c.all_qubits()) == 0:
+            continue
 
-    input_args = list(
-        _prep_pool_input_args(range(len(circuits)), circuits, param_resolvers,
-                              [n_samples] * len(circuits)))
+        qb_keys = [(q, str(i)) for i, q in enumerate(sorted(c.all_qubits()))]
+        c_m = c + cirq.Circuit(cirq.measure(q, key=i) for q, i in qb_keys)
+        run_c = cirq.resolve_parameters(c_m, resolver)
+        bits = simulator.sample(run_c, repetitions=n_samples)
+        flat_m = bits[[x[1] for x in qb_keys]].to_numpy().astype(np.int8)
+        return_array[batch, :, :len(qb_keys)] = flat_m[:, ::-1]
 
-    with ProcessPool(processes=None,
-                     initializer=_setup_dict,
-                     initargs=(shared_array, return_mem_shape, simulator,
-                               post_process)) as pool:
-
-        pool.starmap(_sample_worker_func, input_args)
-
-    return _convert_simple_view_to_result(shared_array, np.int32,
-                                          return_mem_shape)
+    # Swap big endian little endian.
+    return return_array[:, :, ::-1]
