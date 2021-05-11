@@ -217,13 +217,12 @@ class SampledExpectation(tf.keras.layers.Layer):
         """Instantiate this Layer.
 
         Create a layer that will output expectation values gained from
-        simulating a quantum circuit.
+        sampling a quantum circuit.
 
         Args:
             backend: Optional Backend to use to simulate states. Can be either
                 {'noiseless', 'noisy'} users may also
-                specify a preconfigured cirq simulation object to use instead,
-                which must inherit `cirq.Sampler`.
+                specify a preconfigured `cirq.Sampler` object to use instead.
             differentiator: Optional Differentiator to use to calculate analytic
                 derivative values of given operators_to_measure and circuit,
                 which must inherit `tfq.differentiators.Differentiator`.
