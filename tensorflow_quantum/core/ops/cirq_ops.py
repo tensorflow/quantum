@@ -569,7 +569,9 @@ def _get_cirq_simulate_state(simulator=cirq.Simulator()):
     of all the input circuits.
 
     Args:
-        simulator: `cirq.Simulator` object to use for circuit execution.
+        simulator: Simulator object.  Can be any `cirq.SimulatesFinalState`;
+            if `simulator` is not a `cirq.DensityMatrixSimulator`, this function
+            assumes all final states are dense state vectors.
 
     Returns:
         `callable` that is a Tensorflow op for calculating states.

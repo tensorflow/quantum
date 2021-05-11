@@ -15,7 +15,6 @@ limitations under the License.
 
 #include "tensorflow_quantum/core/src/util_qsim.h"
 
-#include <random>
 #include <vector>
 
 #include "../qsim/lib/circuit.h"
@@ -28,6 +27,10 @@ limitations under the License.
 #include "../qsim/lib/simmux.h"
 #include "absl/container/flat_hash_map.h"
 #include "gtest/gtest.h"
+#include "tensorflow/core/lib/random/random.h"
+#include "tensorflow/core/lib/random/simple_philox.h"
+#include "tensorflow/core/platform/mutex.h"
+#include "tensorflow/core/util/guarded_philox_random.h"
 #include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
 
 namespace tfq {
@@ -89,9 +92,12 @@ TEST_P(TwoTermSampledExpectationFixture, CorrectnessTest) {
 
   // Compute expectation and compare to reference values.
   float exp_v = 0;
-  std::mt19937 gen(1234);
+  tensorflow::GuardedPhiloxRandom random_gen;
+  random_gen.Init(tensorflow::random::New64(), tensorflow::random::New64());
+  auto local_gen = random_gen.ReserveSamples32(2 * 1000000);
+  tensorflow::random::SimplePhilox rand_source(&local_gen);
   Status s = tfq::ComputeSampledExpectationQsim(p_sum, sim, ss, sv, scratch,
-                                                1000000, gen, &exp_v);
+                                                1000000, rand_source, &exp_v);
 
   EXPECT_NEAR(exp_v, std::get<1>(GetParam()), 1e-2);
 }
@@ -193,9 +199,12 @@ TEST(UtilQsimTest, SampledEmptyTermCase) {
 
   // Compute expectation and compare to reference values.
   float exp_v = 0;
-  std::mt19937 gen(1234);
-  Status s = tfq::ComputeSampledExpectationQsim(p_sum_empty, sim, ss, sv,
-                                                scratch, 100, gen, &exp_v);
+  tensorflow::GuardedPhiloxRandom random_gen;
+  random_gen.Init(tensorflow::random::New64(), tensorflow::random::New64());
+  auto local_gen = random_gen.ReserveSamples32(2 * 100);
+  tensorflow::random::SimplePhilox rand_source(&local_gen);
+  Status s = tfq::ComputeSampledExpectationQsim(
+      p_sum_empty, sim, ss, sv, scratch, 100, rand_source, &exp_v);
 
   EXPECT_NEAR(exp_v, 0.1234, 1e-5);
 }
@@ -277,9 +286,12 @@ TEST(UtilQsimTest, SampledCompoundCase) {
   p_term_scratch->set_coefficient_real(4.0);
   // Compute expectation and compare to reference values.
   float exp_v = 0;
-  std::mt19937 gen(1234);
+  tensorflow::GuardedPhiloxRandom random_gen;
+  random_gen.Init(tensorflow::random::New64(), tensorflow::random::New64());
+  auto local_gen = random_gen.ReserveSamples32(2 * 1000000);
+  tensorflow::random::SimplePhilox rand_source(&local_gen);
   Status s = tfq::ComputeSampledExpectationQsim(p_sum, sim, ss, sv, scratch,
-                                                10000000, gen, &exp_v);
+                                                10000000, rand_source, &exp_v);
 
   EXPECT_NEAR(exp_v, 4.1234, 1e-2);
 }
