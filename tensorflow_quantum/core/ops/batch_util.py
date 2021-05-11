@@ -12,8 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""A module to for running Cirq Simulators in parallel."""
-import asyncio
+"""A module to for running Cirq objects."""
 import collections
 import os
 
@@ -75,6 +74,22 @@ class TFQPauliSumCollector(cirq.work.collector.Collector):
                                     fold_func=lambda bits: np.sum(bits) % 2)
         self._zeros[job_id] += parities[0]
         self._ones[job_id] += parities[1]
+
+    def collect(self, sampler):
+        """Synchronus collect."""
+        # See #562, this is a workaround to an event loop issue in the tutorials
+        # see also:
+        # https://stackoverflow.com/questions/55409641/asyncio-run-cannot-be-called-from-a-running-event-loop
+        while True:
+            next_job = self.next_job()
+            if next_job is None:
+                return
+
+            bitstrings = sampler.run(
+                next_job.circuit,
+                repetitions=next_job.repetitions
+            )
+            self.on_job_result(next_job, bitstrings)
 
     def estimated_energy(self):
         """Sums up the sampled expectations, weighted by their coefficients."""
@@ -464,10 +479,7 @@ def batch_calculate_sampled_expectation(circuits, param_resolvers, ops,
                 raise TypeError('ops must contain only cirq.PauliSum objects.'
                                 ' Given: {}'.format(type(x)))
 
-    return_mem_shape = (len(circuits), len(ops[0]))
-    shared_array = _make_simple_view(return_mem_shape, -2, np.float32, 'f')
-    x_np = _convert_simple_view_to_np(shared_array, np.float32,
-                                      return_mem_shape)
+    all_exp_vals = np.full((len(circuits), len(ops[0])), -2, dtype=np.float32)
 
     for c_index, (c, params) in enumerate(zip(circuits, param_resolvers)):
         # (#679) Just ignore empty programs.
@@ -477,18 +489,11 @@ def batch_calculate_sampled_expectation(circuits, param_resolvers, ops,
         for op_index, op in enumerate(ops[c_index]):
             collector = TFQPauliSumCollector(
                 circuit, op, samples_per_term=n_samples[c_index][op_index])
-            try:
-                loop = asyncio.get_running_loop()
-            except:
-                loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            asyncio.run(collector.collect_async(sampler, concurrency=1))
+            collector.collect(sampler)
             result = collector.estimated_energy().real
+            all_exp_vals[c_index][op_index] = result
 
-            _pointwise_update_simple_np(x_np, c_index, op_index, result)
-
-    return _convert_simple_view_to_result(shared_array, np.float32,
-                                          return_mem_shape)
+    return all_exp_vals
 
 
 def batch_sample(circuits, param_resolvers, n_samples, simulator):
