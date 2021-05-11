@@ -174,7 +174,7 @@ class BatchUtilTest(tf.test.TestCase, parameterized.TestCase):
         expected_results = _sample_helper(sim, state, len(qubits), n_samples)
 
         self.assertAllEqual(expected_results, test_results[0])
-        self.assertDTypeEqual(test_results, np.int32)
+        self.assertDTypeEqual(test_results, np.int8)
 
     @parameterized.parameters([{
         'sim': cirq.DensityMatrixSimulator()
@@ -210,7 +210,7 @@ class BatchUtilTest(tf.test.TestCase, parameterized.TestCase):
         for a, b in zip(tfq_histograms, cirq_histograms):
             self.assertLess(stats.entropy(a + 1e-8, b + 1e-8), 0.005)
 
-        self.assertDTypeEqual(results, np.int32)
+        self.assertDTypeEqual(results, np.int8)
 
     @parameterized.parameters([{
         'sim': cirq.DensityMatrixSimulator()
@@ -267,7 +267,7 @@ class BatchUtilTest(tf.test.TestCase, parameterized.TestCase):
             r = _sample_helper(sim, state, len(circuit.all_qubits()), n_samples)
             self.assertAllClose(r, a, atol=1e-5)
 
-        self.assertDTypeEqual(results, np.int32)
+        self.assertDTypeEqual(results, np.int8)
 
     @parameterized.parameters([{
         'sim': cirq.DensityMatrixSimulator()
@@ -297,7 +297,7 @@ class BatchUtilTest(tf.test.TestCase, parameterized.TestCase):
 
         # (4) Test sampling
         results = batch_util.batch_sample([], [], [], sim)
-        self.assertDTypeEqual(results, np.int32)
+        self.assertDTypeEqual(results, np.int8)
         self.assertEqual(np.zeros(shape=(0, 0, 0)).shape, results.shape)
 
 
