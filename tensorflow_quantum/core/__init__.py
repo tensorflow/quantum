@@ -23,3 +23,6 @@ from tensorflow_quantum.core.ops import (append_circuit, padded_to_ragged,
                                          padded_to_ragged2d, resolve_parameters)
 # Import math ops.
 from tensorflow_quantum.core.ops import math_ops
+
+# Import noise ops.
+from tensorflow_quantum.core.ops import noise

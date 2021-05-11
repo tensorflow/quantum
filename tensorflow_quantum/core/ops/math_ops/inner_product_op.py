@@ -138,9 +138,9 @@ def inner_product(programs, symbol_names, symbol_values, other_programs):
                                        other_programs, dy)
 
         ret_zero = tf.equal(tf.size(symbol_names), 0)
-        inner_prod_grad = tf.cond(ret_zero,
-                                  lambda: tf.zeros_like(symbol_values),
-                                  _true_grad)
+        inner_prod_grad = tf.cond(
+            ret_zero, lambda: tf.zeros_like(symbol_values, dtype=tf.complex64),
+            _true_grad)
         return [None, None, inner_prod_grad, None]
 
     return MATH_OP_MODULE.tfq_inner_product(programs, symbol_names,

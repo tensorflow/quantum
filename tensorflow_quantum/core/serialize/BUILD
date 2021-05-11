@@ -6,9 +6,18 @@ licenses(["notice"])
 exports_files(["__init__.py"])
 
 py_library(
+    name = "serialize",
+    srcs = ["__init__.py"],
+    srcs_version = "PY3",
+    deps = [":serializer"],
+)
+
+py_library(
     name = "serializer",
     srcs = ["serializer.py"],
+    srcs_version = "PY3",
     deps = [
+        # cirq proto
         "//tensorflow_quantum/core/proto:pauli_sum_py_proto",
     ],
 )
@@ -19,5 +28,7 @@ py_test(
     python_version = "PY3",
     deps = [
         ":serializer",
+        # cirq proto
+        "//tensorflow_quantum/core/proto:pauli_sum_py_proto",
     ],
 )
