@@ -12,10 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""A module to for running Cirq Simulators in parallel."""
-import asyncio
+"""A module to for running Cirq objects."""
 import collections
-import itertools
 import os
 
 import multiprocessing as mp
@@ -23,10 +21,8 @@ from multiprocessing.pool import Pool as ProcessPool
 import numpy as np
 import cirq
 
-from tensorflow_quantum.core.serialize import serializer
 
-
-# TODO (mbbrough): Remove this workaround class once cirq.PauliSumCollector can
+# TODO (#563): Remove this workaround class once cirq.PauliSumCollector can
 #   be used end to end with engine. This current issue is that
 #   cirq.PauliSumCollector does not produce serializable gates for basis
 #   conversion.
@@ -78,6 +74,20 @@ class TFQPauliSumCollector(cirq.work.collector.Collector):
                                     fold_func=lambda bits: np.sum(bits) % 2)
         self._zeros[job_id] += parities[0]
         self._ones[job_id] += parities[1]
+
+    def collect(self, sampler):
+        """Synchronus collect."""
+        # See #562, this is a workaround to an event loop issue in the tutorials
+        # see also:
+        # https://stackoverflow.com/questions/55409641/asyncio-run-cannot-be-called-from-a-running-event-loop
+        while True:
+            next_job = self.next_job()
+            if next_job is None:
+                return
+
+            bitstrings = sampler.run(next_job.circuit,
+                                     repetitions=next_job.repetitions)
+            self.on_job_result(next_job, bitstrings)
 
     def estimated_energy(self):
         """Sums up the sampled expectations, weighted by their coefficients."""
@@ -208,37 +218,6 @@ def _setup_dict(array_view, view_shape, simulator, post_process):
     INFO_DICT['shape'] = view_shape
     INFO_DICT['sim'] = simulator
     INFO_DICT['post_process'] = post_process
-
-
-def _sample_expectation_worker_func(indices, programs, params, ops, n_samples):
-    x_np = _convert_simple_view_to_np(INFO_DICT['arr'], np.float32,
-                                      INFO_DICT['shape'])
-    simulator = INFO_DICT['sim']
-
-    # TODO: remove this when picklable.
-    for i in range(len(ops)):
-        for j in range(len(ops[i])):
-            ops[i][j] = serializer.deserialize_paulisum(ops[i][j])
-
-    for i, index_tuple in enumerate(indices):
-        batch_index = index_tuple[0]
-        op_index = index_tuple[1]
-        # (#679) Just ignore empty programs.
-        if len(programs[batch_index].all_qubits()) == 0:
-            continue
-        circuit = cirq.resolve_parameters(programs[batch_index],
-                                          params[batch_index])
-
-        sampler = TFQPauliSumCollector(
-            circuit,
-            ops[batch_index][op_index],
-            samples_per_term=n_samples[batch_index][op_index])
-
-        asyncio.set_event_loop(asyncio.new_event_loop())
-        sampler.collect(simulator, concurrency=1)
-        result = sampler.estimated_energy().real
-
-        _pointwise_update_simple_np(x_np, batch_index, op_index, result)
 
 
 def _sample_worker_func(indices, programs, params, n_samples):
@@ -437,8 +416,8 @@ def batch_calculate_expectation(circuits, param_resolvers, ops, simulator):
 
 
 def batch_calculate_sampled_expectation(circuits, param_resolvers, ops,
-                                        n_samples, simulator):
-    """Compute expectations from sampling circuits using parallel processing.
+                                        n_samples, sampler):
+    """Compute expectations from sampling a batch of circuits.
 
     Returns a `np.ndarray` containing the expectation values of `ops`
     applied to a specific circuit in `circuits`, given that the
@@ -446,9 +425,8 @@ def batch_calculate_sampled_expectation(circuits, param_resolvers, ops,
     any symbols in the circuit. Specifically the returned array at index `i,j`
     will be equal to the expectation value of `ops[i][j]` on `circuits[i]` with
     `param_resolvers[i]` used to resolve any symbols in `circuits[i]`.
-    Expectation estimations will be carried out using the simulator object
-    (`cirq.DensityMatrixSimulator` and `cirq.Simulator` are currently supported)
-    . Expectations for ops[i][j] are estimated by drawing n_samples[i][j]
+    Expectation estimations will be carried out using the sampler object.
+    Expectations for ops[i][j] are estimated by drawing n_samples[i][j]
     samples.
 
     Args:
@@ -462,14 +440,13 @@ def batch_calculate_sampled_expectation(circuits, param_resolvers, ops,
         n_samples: 2d Python `list` of `int`s where `n_samples[i][j]` is
             equal to the number of samples to draw in each term of `ops[i][j]`
             when estimating the expectation.
-        simulator: Simulator object. Currently supported are
-            `cirq.DensityMatrixSimulator` and `cirq.Simulator`.
+        sampler: Anything inheriting `cirq.Sampler`.
 
     Returns:
         `np.ndarray` containing the expectation values. Shape is:
             [len(circuits), len(ops[0])]
     """
-    _validate_inputs(circuits, param_resolvers, simulator, 'sample')
+    _validate_inputs(circuits, param_resolvers, sampler, 'sample')
     if _check_empty(circuits):
         return np.zeros((0, 0), dtype=np.float32)
 
@@ -500,34 +477,21 @@ def batch_calculate_sampled_expectation(circuits, param_resolvers, ops,
                 raise TypeError('ops must contain only cirq.PauliSum objects.'
                                 ' Given: {}'.format(type(x)))
 
-    return_mem_shape = (len(circuits), len(ops[0]))
-    shared_array = _make_simple_view(return_mem_shape, -2, np.float32, 'f')
+    all_exp_vals = np.full((len(circuits), len(ops[0])), -2, dtype=np.float32)
 
-    # avoid mutating ops array
-    ops = np.copy(ops)
-    # TODO (mbbrough): make cirq PauliSums pickable at some point ?
-    for i in range(len(ops)):
-        for j in range(len(ops[i])):
-            ops[i][j] = serializer.serialize_paulisum(ops[i][j])
+    for c_index, (c, params) in enumerate(zip(circuits, param_resolvers)):
+        # (#679) Just ignore empty programs.
+        if len(c.all_qubits()) == 0:
+            continue
+        circuit = cirq.resolve_parameters(c, params)
+        for op_index, op in enumerate(ops[c_index]):
+            collector = TFQPauliSumCollector(
+                circuit, op, samples_per_term=n_samples[c_index][op_index])
+            collector.collect(sampler)
+            result = collector.estimated_energy().real
+            all_exp_vals[c_index][op_index] = result
 
-    input_args = list(
-        _prep_pool_input_args(list(
-            itertools.product(range(len(circuits)), range(len(ops[0])))),
-                              circuits,
-                              param_resolvers,
-                              ops,
-                              n_samples,
-                              slice_args=False))
-
-    with ProcessPool(processes=None,
-                     initializer=_setup_dict,
-                     initargs=(shared_array, return_mem_shape, simulator,
-                               None)) as pool:
-
-        pool.starmap(_sample_expectation_worker_func, input_args)
-
-    return _convert_simple_view_to_result(shared_array, np.float32,
-                                          return_mem_shape)
+    return all_exp_vals
 
 
 def batch_sample(circuits, param_resolvers, n_samples, simulator):

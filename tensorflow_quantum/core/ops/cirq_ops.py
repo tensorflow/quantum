@@ -235,7 +235,7 @@ def _get_cirq_analytical_expectation(simulator=cirq.Simulator()):
     return expectation_generator
 
 
-def _get_cirq_sampled_expectation(simulator=cirq.Simulator()):
+def _get_cirq_sampled_expectation(sampler=cirq.Simulator()):
     """Get a `callable` that is a TensorFlow op that outputs sampled expectation
     values.
 
@@ -244,7 +244,7 @@ def _get_cirq_sampled_expectation(simulator=cirq.Simulator()):
     expectation values.
 
     Args:
-        simulator: `cirq.Simulator` object to use for circuit execution.
+        sampler: Anything inheriting `cirq.Sampler`.
 
     Returns:
         `callable` that is a TensorFlow op for computing expectation.
@@ -341,11 +341,11 @@ def _get_cirq_sampled_expectation(simulator=cirq.Simulator()):
             sum_inputs.append(to_append)
 
         expectations = batch_util.batch_calculate_sampled_expectation(
-            programs, resolvers, sum_inputs, num_samples, simulator)
+            programs, resolvers, sum_inputs, num_samples, sampler)
 
         return expectations
 
-    if not isinstance(simulator, cirq.Sampler):
+    if not isinstance(sampler, cirq.Sampler):
         raise TypeError("cirq.Sampler is required for sampled expectation.")
 
     @_upgrade_inputs
