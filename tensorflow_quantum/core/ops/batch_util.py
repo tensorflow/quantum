@@ -14,10 +14,7 @@
 # ==============================================================================
 """A module to for running Cirq objects."""
 import collections
-import os
 
-import multiprocessing as mp
-from multiprocessing.pool import Pool as ProcessPool
 import numpy as np
 import cirq
 
@@ -116,129 +113,6 @@ def _fixed_circuit_plus_pauli_string_measurements(circuit, pauli_string):
     circuit.append(
         cirq.Moment([cirq.measure(*sorted(pauli_string.keys()), key='out')]))
     return circuit
-
-
-def _make_complex_view(shape, init_val):
-    """Build a RawArray that will map to the real and imaginary parts of a
-    complex number."""
-    shape = list(shape)
-    shape[-1] *= 2
-    data = np.ones(shape, dtype=np.float32) * init_val
-
-    flattened_size = 1
-    for dim_size in shape:
-        flattened_size *= dim_size
-    shared_mem_array = mp.RawArray('f', flattened_size)
-    np_view = np.frombuffer(shared_mem_array, dtype=np.float32).reshape(shape)
-    np.copyto(np_view, data)
-    return shared_mem_array
-
-
-def _convert_complex_view_to_np(view, shape):
-    """Get a numpy view ontop of the rawarray view. Small overhead."""
-    shape = list(shape)
-    shape[-1] *= 2
-    return np.frombuffer(view, dtype=np.float32).reshape(shape)
-
-
-def _update_complex_np(np_view, i, to_add):
-    """Update the shared memory undernath the numpy view.
-    to_add is passed by reference since we don't do much with it."""
-    np_view[i, ...] = np.pad(to_add,
-                             (0, (np_view.shape[-1] // 2 - to_add.shape[-1])),
-                             'constant',
-                             constant_values=-2).view(np.float32)
-
-
-def _convert_complex_view_to_result(view, shape):
-    """Convert a rawarray view to a numpy array and reindex so that
-    the underlying pair of double arrays are squished together to make a
-    complex array of half the underlying size."""
-    shape = list(shape)
-    shape[-1] *= 2
-    np_view = np.frombuffer(view, dtype=np.float32).reshape(shape)
-
-    # The below view will cause a re-interpretation of underlying
-    # memory so use sparingly.
-    return np_view.view(np.complex64)
-
-
-def _make_simple_view(shape, init_val, dtype, c_code):
-    """Make a shared memory view for floating type."""
-    data = np.ones(shape, dtype=dtype) * init_val
-    flattened_size = 1
-    for dim_size in shape:
-        flattened_size *= dim_size
-    shared_mem_array = mp.RawArray(c_code, flattened_size)
-    np_view = np.frombuffer(shared_mem_array, dtype=dtype).reshape(shape)
-    np.copyto(np_view, data)
-    return shared_mem_array
-
-
-def _convert_simple_view_to_np(view, dtype, shape):
-    """Create a numpy view to a float array, low overhead."""
-    return np.frombuffer(view, dtype=dtype).reshape(shape)
-
-
-def _batch_update_simple_np(np_view, i, to_add):
-    """Update the shared memory underneath the numpy view.
-    to_add is again passed by reference."""
-    np_view[i, ...] = to_add
-
-
-def _pointwise_update_simple_np(np_view, i, j, to_add):
-    """Do a batch and sub-batch index update to numpy view."""
-    np_view[i, j, ...] = to_add
-
-
-def _convert_simple_view_to_result(view, dtype, shape):
-    """Convert a RawArray view to final numpy array."""
-    return np.frombuffer(view, dtype=dtype).reshape(shape)
-
-
-def _prep_pool_input_args(indices, *args, slice_args=True):
-    """Break down a set of indices, and optional args into a generator
-    of length cpu_count."""
-    block_size = int(np.ceil(len(indices) / os.cpu_count()))
-    for i in range(0, len(indices), block_size):
-        if slice_args:
-            yield tuple([indices[i:i + block_size]] +
-                        [x[i:i + block_size] for x in args])
-        else:
-            yield tuple([indices[i:i + block_size]] + [x for x in args])
-
-
-# process are separate from all the other processes,
-# so INFO_DICTs will not step on each other.
-INFO_DICT = {}
-
-
-def _setup_dict(array_view, view_shape, simulator, post_process):
-    INFO_DICT['arr'] = array_view
-    INFO_DICT['shape'] = view_shape
-    INFO_DICT['sim'] = simulator
-    INFO_DICT['post_process'] = post_process
-
-
-def _sample_worker_func(indices, programs, params, n_samples):
-    """Sample n_samples from progams[i] with params[i] placed in it."""
-    x_np = _convert_simple_view_to_np(INFO_DICT['arr'], np.int32,
-                                      INFO_DICT['shape'])
-    simulator = INFO_DICT['sim']
-
-    for i, index in enumerate(indices):
-        qubits = sorted(programs[i].all_qubits())
-        # (#679) Just ignore empty programs.
-        if len(qubits) == 0:
-            continue
-        state = simulator.simulate(programs[i], params[i])
-        samples = INFO_DICT['post_process'](state, len(qubits),
-                                            n_samples[i]).astype(np.int32)
-        _batch_update_simple_np(
-            x_np, index,
-            np.pad(samples, ((0, 0), (x_np.shape[2] - len(qubits), 0)),
-                   'constant',
-                   constant_values=-2))
 
 
 def _validate_inputs(circuits, param_resolvers, simulator, sim_type):
