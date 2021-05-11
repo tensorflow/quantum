@@ -26,6 +26,19 @@ from tensorflow_quantum.python.differentiators import linear_combination
 from tensorflow_quantum.python import util
 
 
+class CustomSampler(cirq.Sampler):
+    """Wrapper for cirq.Simulator to confirm that custom samplers work."""
+
+    def __init__(self):
+        """Initialize a simulator to use internally."""
+        super().__init__()
+        self._internal_sim = cirq.Simulator()
+
+    def run_sweep(self, program, params, repetitions=1):
+        """Simple pass-through to default cirq simulator."""
+        return self._internal_sim.run_sweep(program, params, repetitions)
+
+
 def _gen_single_bit_rotation_problem(bit, symbols, noisy):
     """Generate a toy problem on 1 qubit."""
     starting_state = np.random.uniform(0, 2 * np.pi, 3)
@@ -51,8 +64,10 @@ class SampledExpectationTest(parameterized.TestCase, tf.test.TestCase):
         sampled_expectation.SampledExpectation(backend='noiseless')
         sampled_expectation.SampledExpectation(backend='noisy')
         sampled_expectation.SampledExpectation(backend=cirq.Simulator())
+        sampled_expectation.SampledExpectation(backend=CustomSampler())
         sampled_expectation.SampledExpectation(
             differentiator=linear_combination.ForwardDifference())
+
 
     def test_sampled_expectation_instantiate_error(self):
         """Test that SampledExpectation errors with bad inputs."""
@@ -84,6 +99,9 @@ class SampledExpectationTest(parameterized.TestCase, tf.test.TestCase):
         },
         {
             'backend': cirq.Simulator()
+        },
+        {
+            'backend': CustomSampler()
         },
         {
             'backend': None  # older API usage.
@@ -129,6 +147,9 @@ class SampledExpectationTest(parameterized.TestCase, tf.test.TestCase):
         },
         {
             'backend': cirq.Simulator()
+        },
+        {
+            'backend': CustomSampler()
         },
         {
             'backend': None  # older API usage.
@@ -204,6 +225,9 @@ class SampledExpectationTest(parameterized.TestCase, tf.test.TestCase):
         },
         {
             'backend': cirq.Simulator()
+        },
+        {
+            'backend': CustomSampler()
         },
         {
             'backend': None  # older API usage.
