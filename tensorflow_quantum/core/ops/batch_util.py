@@ -85,10 +85,8 @@ class TFQPauliSumCollector(cirq.work.collector.Collector):
             if next_job is None:
                 return
 
-            bitstrings = sampler.run(
-                next_job.circuit,
-                repetitions=next_job.repetitions
-            )
+            bitstrings = sampler.run(next_job.circuit,
+                                     repetitions=next_job.repetitions)
             self.on_job_result(next_job, bitstrings)
 
     def estimated_energy(self):
