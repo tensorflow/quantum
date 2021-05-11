@@ -60,17 +60,10 @@ http_archive(
 
 http_archive(
     name = "cirq",
-    strip_prefix = "Cirq-master/platforms/google",
-    urls = ["https://github.com/balopat/Cirq/archive/master.zip"],
+    sha256 = "9241bd0a31bfe294f76071884fcb053c63abf2b5d311e7b7f0f4e20537cc7c43",
+    strip_prefix = "Cirq-0.11.0",
+    urls = ["https://github.com/quantumlib/Cirq/archive/v0.11.0.zip"],
 )
-
-#http_archive(
-#    name = "cirq",
-#    sha256 = "fcdb5367590ad1856cc7918919a02195319be5dfe3c474b347c842e136f24d3b",
-#    strip_prefix = "Cirq-0.10.0",
-#    urls = ["https://github.com/quantumlib/Cirq/archive/v0.10.0.zip"],
-#)
-#
 
 http_archive(
     name = "qsim",
