@@ -17,5 +17,7 @@ import os
 
 
 def pytest_configure(config):
+    """Setup logic for pytest sessions."""
+
     # fail tests when using deprecated cirq functionality
     os.environ['CIRQ_TESTING'] = "true"

@@ -14,14 +14,15 @@
 """Module to ensure features deprecated in Cirq are caught early."""
 
 from cirq._compat import deprecated
-from cirq.testing import assert_deprecated
+import pytest
 
 
 def test_cirq_deprecations():
+    """Ensures that deprecated cirq functions throw error"""
 
     @deprecated(deadline="v0.12", fix="use new_func")
     def old_func():
         pass
 
-    with assert_deprecated(deadline="v0.12"):
+    with pytest.raises(ValueError, match="should not use deprecated"):
         old_func()
