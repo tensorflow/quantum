@@ -443,7 +443,7 @@ class CirqSamplesTest(tf.test.TestCase, parameterized.TestCase):
             def run_sweep(self, program, params, repetitions):
                 """Returns all ones in the correct sample shape."""
                 return [
-                    cirq.TrialResult(
+                    cirq.Result(
                         params=param,
                         measurements={
                             'tfq':
