@@ -11,12 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Module to ensure features deprecated in Cirq are caught early."""
 
 from cirq._compat import deprecated
 from cirq.testing import assert_deprecated
 
 
 def test_cirq_deprecations():
+
     @deprecated(deadline="v0.12", fix="use new_func")
     def old_func():
         pass
