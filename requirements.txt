@@ -6,10 +6,10 @@ nbformat==4.4.0
 pylint==2.4.4
 yapf==0.28.0
 tensorflow==2.5.0
-google-api-python-client==1.8.0
 # Needed for compatibility with cirq program protos.
 googleapis-common-protos==1.52.0
 google-api-core==1.21.0
 google-auth==1.18.0
-grpcio==1.30.0
+google-api-python-client==1.8.0
+grpcio==1.34.1
 protobuf==3.13.0
