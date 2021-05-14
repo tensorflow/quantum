@@ -58,7 +58,7 @@ REQUIRED_PACKAGES = [
 
 # placed as extra to not have required overwrite existing nightly installs if
 # they exist.
-EXTRA_PACKAGES = ['tensorflow == 2.4.1']
+EXTRA_PACKAGES = ['tensorflow == 2.5.0']
 CUR_VERSION = '0.5.0'
 
 
@@ -106,6 +106,7 @@ setup(
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
         'Topic :: Scientific/Engineering',
         'Topic :: Scientific/Engineering :: Artificial Intelligence',
         'Topic :: Scientific/Engineering :: Mathematics',
