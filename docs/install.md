@@ -84,7 +84,7 @@ As noted in the TensorFlow
 guide, the <a href="https://bazel.build/" class="external">Bazel</a>
 build system will be required.
 
-Our latest source builds use TensorFlow 2.5.0. To ensure compatibility we use `bazel` version 3.7.2. To remove any existing version of Bazel:
+Our latest source builds use TensorFlow 2.4.1. To ensure compatibility we use `bazel` version 3.1.0. To remove any existing version of Bazel:
 
 <!-- common_typos_disable -->
 <pre class="devsite-click-to-copy">
@@ -96,9 +96,9 @@ Download and install `bazel` version 3.1.0:
 
 <!-- common_typos_disable -->
 <pre class="devsite-click-to-copy">
-  <code class="devsite-terminal">wget https://github.com/bazelbuild/bazel/releases/download/3.7.2/bazel_3.7.2-linux-x86_64.deb
+  <code class="devsite-terminal">wget https://github.com/bazelbuild/bazel/releases/download/3.1.0/bazel_3.1.0-linux-x86_64.deb
 </code>
-  <code class="devsite-terminal">sudo dpkg -i bazel_3.7.2-linux-x86_64.deb</code>
+  <code class="devsite-terminal">sudo dpkg -i bazel_3.1.0-linux-x86_64.deb</code>
 </pre>
 <!-- common_typos_enable -->
 
@@ -122,7 +122,7 @@ Finally, confirm installation of the correct `bazel` version:
 ### 4. Build TensorFlow from source
 
 Here we adapt instructions from the TensorFlow [build from source](https://www.tensorflow.org/install/source)
-guide, see the link for further details. TensorFlow Quantum is compatible with TensorFlow version&nbsp;2.5.
+guide, see the link for further details. TensorFlow Quantum is compatible with TensorFlow version&nbsp;2.4.
 
 Download the
 <a href="https://github.com/tensorflow/tensorflow" class="external">TensorFlow source code</a>:
@@ -131,7 +131,7 @@ Download the
 <pre class="devsite-click-to-copy">
   <code class="devsite-terminal">git clone https://github.com/tensorflow/tensorflow.git</code>
   <code class="devsite-terminal">cd tensorflow</code>
-  <code class="devsite-terminal">git checkout v2.5.0</code>
+  <code class="devsite-terminal">git checkout v2.4.1</code>
 </pre>
 
 Be sure the virtual environment you created in step 2 is activated. Then, install the TensorFlow dependencies:
