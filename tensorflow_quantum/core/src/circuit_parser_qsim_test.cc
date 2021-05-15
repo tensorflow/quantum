@@ -24,7 +24,7 @@ limitations under the License.
 #include "../qsim/lib/gates_cirq.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/strings/numbers.h"
-#include "cirq/google/api/v2/program.pb.h"
+#include "cirq_google/api/v2/program.pb.h"
 #include "gtest/gtest.h"
 #include "tensorflow/core/lib/core/status.h"
 

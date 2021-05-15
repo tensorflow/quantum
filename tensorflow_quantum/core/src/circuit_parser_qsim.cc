@@ -30,7 +30,7 @@ limitations under the License.
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_split.h"
 #include "absl/types/optional.h"
-#include "cirq/google/api/v2/program.pb.h"
+#include "cirq_google/api/v2/program.pb.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
 

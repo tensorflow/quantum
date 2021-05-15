@@ -15,7 +15,7 @@ limitations under the License.
 
 #include <string>
 
-#include "cirq/google/api/v2/program.pb.h"
+#include "cirq_google/api/v2/program.pb.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/shape_inference.h"
 #include "tensorflow/core/framework/tensor_shape.h"
