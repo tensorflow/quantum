@@ -5,6 +5,16 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 http_archive(
+    name = "com_google_absl",
+    sha256 = "f368a8476f4e2e0eccf8a7318b98dafbe30b2600f4e3cf52636e5eb145aba06a",
+    strip_prefix = "abseil-cpp-df3ea785d8c30a9503321a3d35ee7d35808f190d",
+    urls = [
+        "https://storage.googleapis.com/mirror.tensorflow.org/github.com/abseil/abseil-cpp/archive/df3ea785d8c30a9503321a3d35ee7d35808f190d.tar.gz",
+        "https://github.com/abseil/abseil-cpp/archive/df3ea785d8c30a9503321a3d35ee7d35808f190d.tar.gz",
+    ],
+)
+
+http_archive(
     name = "com_google_googletest",
     sha256 = "ff7a82736e158c077e76188232eac77913a15dac0b22508c390ab3f88e6d6d86",
     strip_prefix = "googletest-b6cd405286ed8635ece71c72f118e659f4ade3fb",
@@ -43,11 +53,9 @@ protobuf_deps()
 # com_google_protobuf depends on @bazel_skylib ??
 http_archive(
     name = "bazel_skylib",
-    sha256 = "1c531376ac7e5a180e0237938a2536de0c54d93f5c278634818e0efc952dd56c",
-    urls = [
-        "https://storage.googleapis.com/mirror.tensorflow.org/github.com/bazelbuild/bazel-skylib/releases/download/1.0.3/bazel-skylib-1.0.3.tar.gz",
-        "https://github.com/bazelbuild/bazel-skylib/releases/download/1.0.3/bazel-skylib-1.0.3.tar.gz",
-    ],
+    sha256 = "bbccf674aa441c266df9894182d80de104cabd19be98be002f6d478aaa31574d",
+    strip_prefix = "bazel-skylib-2169ae1c374aab4a09aa90e65efe1a3aad4e279b",
+    urls = ["https://github.com/bazelbuild/bazel-skylib/archive/2169ae1c374aab4a09aa90e65efe1a3aad4e279b.tar.gz"],
 )
 
 http_archive(
@@ -77,28 +85,16 @@ http_archive(
 
 http_archive(
     name = "org_tensorflow",
-    sha256 = "e3d0ee227cc19bd0fa34a4539c8a540b40f937e561b4580d4bbb7f0e31c6a713",
-    strip_prefix = "tensorflow-2.5.0",
+    sha256 = "b91ec194ddf6c4a5a2f9d1db4af4daab0b187ff691e6f88142413d2c7e77a3bb",
+    strip_prefix = "tensorflow-2.4.1",
     urls = [
-        "https://github.com/tensorflow/tensorflow/archive/v2.5.0.zip",
+        "https://github.com/tensorflow/tensorflow/archive/v2.4.1.zip",
     ],
 )
 
-load("@org_tensorflow//tensorflow:workspace3.bzl", "workspace")
+load("@org_tensorflow//tensorflow:workspace.bzl", "tf_workspace")
 
-workspace()
-
-load("@org_tensorflow//tensorflow:workspace2.bzl", "workspace")
-
-workspace()
-
-load("@org_tensorflow//tensorflow:workspace1.bzl", "workspace")
-
-workspace()
-
-load("@org_tensorflow//tensorflow:workspace0.bzl", "workspace")
-
-workspace()
+tf_workspace(tf_repo_name = "@org_tensorflow")
 
 load("//third_party/tf:tf_configure.bzl", "tf_configure")
 
