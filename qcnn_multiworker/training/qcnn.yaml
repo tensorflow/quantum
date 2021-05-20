@@ -1,0 +1,70 @@
+# Copyright 2021 The TensorFlow Quantum Authors. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+
+apiVersion: kubeflow.org/v1
+kind: TFJob
+metadata:
+  name: qcnn
+  namespace: default
+spec:
+  runPolicy:
+    cleanPodPolicy: None
+  tfReplicaSpecs:
+    Worker:
+      replicas: 2
+      restartPolicy: Never
+      template:
+        metadata:
+          generateName: qcnn
+          labels:
+            app: qcnn
+        spec:
+          serviceAccountName: <service_account>
+          containers:
+          - name: tensorflow
+            image: <image_registry>
+            env:
+            - name: PYTHONUNBUFFERED
+              value: "TRUE"
+            command:
+            - "python"
+            - "qcnn.py"
+            args:
+            - "--weights-gcs-bucket=<bucket_name>"
+            - "--weights-gcs-path=qcnn_weights.h5"
+            - "--logdir=gs://<bucket_name>/<logdir_name>"
+            - "--profiler-port=2223"
+            ports:
+            - containerPort: 2222
+              name: tfjobs-port
+              protocol: TCP
+            - containerPort: 2223
+              name: profiler-port
+              protocol: TCP
+            # resources:
+            #   requests:
+            #     memory: 800M
+          affinity:
+            podAntiAffinity:
+              preferredDuringSchedulingIgnoredDuringExecution:
+              - weight: 100
+                podAffinityTerm:
+                  labelSelector:
+                    matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                      - qcnn
+                  topologyKey: kubernetes.io/hostname
