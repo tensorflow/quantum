@@ -1,0 +1,16 @@
+apiVersion: skaffold/v2beta12
+kind: Config
+metadata:
+  name: qcnn-multiworker
+build:
+  artifacts:
+  - image: gcr.io/cxing-gke-dev/qcnn
+    docker:
+      dockerfile: Dockerfile
+deploy:
+  kubectl:
+    manifests:
+    - common/sa.yaml
+    #- inference/inference.yaml
+    - training/qcnn.yaml
+    #- training/tensorboard.yaml
