@@ -26,12 +26,12 @@ This section walks through each step in detail as reference. Please feel free to
 The following variables are used in commands below:
 * `${CLUSTER_NAME}`: your Kubernetes cluster name on Google Kubernetes Engine.
 * `${PROJECT}`: your Google Cloud project ID.
-* `${NUM_NODES}`: the number of VMs in your cluster. I used 3 in my experiments, but less should work as well.
+* `${NUM_NODES}`: the number of VMs in your cluster.
 * `${MACHINE_TYPE}`: the [machine type](https://cloud.google.com/compute/docs/machine-types) of VMs. This controls the amount of CPU and memory resources for each VM.
 * `${SERVICE_ACCOUNT_NAME}`: The name of both the Google Cloud IAM service account and the associated Kubernetes service account.
 * `${ZONE}`: Google Cloud zone for the Kubernetes cluster.
 * `${BUCKET_REGION}`: Google Cloud region for Google Cloud Storage bucket. This is recommended to be the region containing your cluster’s zone. The region of a zone is the part of the zone name without the section after the last hyphen. For example, the region of zone "us-west1-a" is "us-west1".
-* `${BUCKET_NAME}`: Name of the Google Cloud Storage bucket for storing training output. The name must satisfy [Bucket naming requirements](https://cloud.google.com/storage/docs/naming-buckets#requirements). Example: `qcnn-multiworker-your-project-id`.
+* `${BUCKET_NAME}`: Name of the Google Cloud Storage bucket for storing training output. The name must satisfy [Bucket naming requirements](https://cloud.google.com/storage/docs/naming-buckets#requirements). Example: `your-project-id-qcnn-multinode`.
 
 ---
 

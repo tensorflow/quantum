@@ -24,17 +24,43 @@
 
 ### BEGIN configuration
 
+# Your Kubernetes cluster name on Google Kubernetes Engine.
 CLUSTER_NAME="qcnn-multiworker"
+
+# Your Google Cloud project ID.
 PROJECT="some-gcp-project"
+
+# The number of VMs in your cluster.
 NUM_NODES=2
+
+# The machine type of VMs. This controls the amount of CPU and memory resources
+# for each VM. See https://cloud.google.com/compute/docs/machine-types
 MACHINE_TYPE=n1-standard-2  # 2 vCPUs, 7.50GB memory
+
+# The name of both the Google Cloud IAM service account and the associated
+# Kubernetes service account.
 SERVICE_ACCOUNT_NAME="qcnn-sa"
 
+# Google Cloud zone for the Kubernetes cluster.
 ZONE="us-west1-a"
+
+# Google Cloud region for Google Cloud Storage bucket.
+# This is recommended to be the region containing your cluster’s zone. The
+# region of a zone is the part of the zone name without the section after the
+# last hyphen. For example, the region of zone "us-west1-a" is "us-west1".
 BUCKET_REGION="us-west1"
-# Bucket name must be globally unique.
+
+# Name of the Google Cloud Storage bucket for storing training output. The name
+# must satisfy Bucket Naming Requirements at
+# https://cloud.google.com/storage/docs/naming-buckets#requirements.
 BUCKET_NAME="${PROJECT}-qcnn-multinode"
+
+# Name of the directory in Cloud Storage for storing TensorFlow training summary
+# data.
 LOGDIR_NAME="qcnn-logdir"
+
+# The full tutorial container image name indicating where in Google Container
+# Registry the image should be stored.
 IMAGE_REGISTRY="gcr.io\/${PROJECT}\/qcnn:latest"
 
 ### END configuration
