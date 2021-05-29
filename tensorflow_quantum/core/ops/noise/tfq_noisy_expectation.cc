@@ -14,6 +14,7 @@ limitations under the License.
 ==============================================================================*/
 
 #include <memory>
+#include <random>
 #include <vector>
 
 #include "../qsim/lib/channel.h"
@@ -27,14 +28,17 @@ limitations under the License.
 #include "../qsim/lib/qtrajectory.h"
 #include "../qsim/lib/seqfor.h"
 #include "../qsim/lib/simmux.h"
-#include "cirq/google/api/v2/program.pb.h"
+#include "cirq_google/api/v2/program.pb.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/shape_inference.h"
 #include "tensorflow/core/framework/tensor_shape.h"
 #include "tensorflow/core/lib/core/error_codes.pb.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow/core/lib/core/threadpool.h"
+#include "tensorflow/core/lib/random/random.h"
+#include "tensorflow/core/lib/random/simple_philox.h"
 #include "tensorflow/core/platform/mutex.h"
+#include "tensorflow/core/util/guarded_philox_random.h"
 #include "tensorflow_quantum/core/ops/parse_context.h"
 #include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
 #include "tensorflow_quantum/core/src/util_qsim.h"
@@ -169,6 +173,18 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
     auto sv = ss.Create(largest_nq);
     auto scratch = ss.Create(largest_nq);
 
+    tensorflow::GuardedPhiloxRandom random_gen;
+    int max_n_shots = 1;
+    for (int i = 0; i < num_samples.size(); i++) {
+      for (int j = 0; j < num_samples[i].size(); j++) {
+        max_n_shots = std::max(max_n_shots, num_samples[i][j]);
+      }
+    }
+    random_gen.Init(tensorflow::random::New64(), tensorflow::random::New64());
+    auto local_gen =
+        random_gen.ReserveSamples128(ncircuits.size() * max_n_shots + 1);
+    tensorflow::random::SimplePhilox rand_source(&local_gen);
+
     // Simulate programs one by one. Parallelizing over state vectors
     // we no longer parallelize over circuits. Each time we encounter a
     // a larger circuit we will grow the Statevector as necessary.
@@ -199,13 +215,9 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
 
       while (1) {
         ss.SetStateZero(sv);
-        // time since epoch seeds random generator.
-        unsigned long r_seed =
-            std::chrono::duration_cast<std::chrono::milliseconds>(
-                std::chrono::system_clock::now().time_since_epoch())
-                .count();
-        QTSimulator::RunOnce(param, ncircuits[i], r_seed, ss, sim, scratch, sv,
-                             unused_stats);
+
+        QTSimulator::RunOnce(param, ncircuits[i], rand_source.Rand64(), ss, sim,
+                             scratch, sv, unused_stats);
 
         // Use this trajectory as a source for all expectation calculations.
         for (int j = 0; j < pauli_sums[i].size(); j++) {
@@ -266,6 +278,15 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
 
     output_tensor->setZero();
 
+    tensorflow::GuardedPhiloxRandom random_gen;
+    int max_n_shots = 1;
+    for (int i = 0; i < num_samples.size(); i++) {
+      for (int j = 0; j < num_samples[i].size(); j++) {
+        max_n_shots = std::max(max_n_shots, num_samples[i][j]);
+      }
+    }
+    random_gen.Init(tensorflow::random::New64(), tensorflow::random::New64());
+
     Status compute_status = Status::OK();
     auto c_lock = tensorflow::mutex();
     auto DoWork = [&](int start, int end) {
@@ -276,6 +297,12 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
       StateSpace ss = StateSpace(tfq_for);
       auto sv = ss.Create(largest_nq);
       auto scratch = ss.Create(largest_nq);
+
+      int n_rand = ncircuits.size() * max_n_shots + 1;
+      n_rand = (n_rand + num_threads) / num_threads;
+      auto local_gen =
+          random_gen.ReserveSamples128(ncircuits.size() * max_n_shots + 1);
+      tensorflow::random::SimplePhilox rand_source(&local_gen);
 
       for (int i = 0; i < ncircuits.size(); i++) {
         int nq = num_qubits[i];
@@ -305,14 +332,9 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
 
         while (1) {
           ss.SetStateZero(sv);
-          // time since epoch seeds random generator.
-          unsigned long r_seed =
-              std::chrono::duration_cast<std::chrono::milliseconds>(
-                  std::chrono::system_clock::now().time_since_epoch())
-                  .count();
 
-          QTSimulator::RunOnce(param, ncircuits[i], r_seed, ss, sim, scratch,
-                               sv, unused_stats);
+          QTSimulator::RunOnce(param, ncircuits[i], rand_source.Rand64(), ss,
+                               sim, scratch, sv, unused_stats);
 
           // Compute expectations across all ops using this trajectory.
           for (int j = 0; j < pauli_sums[i].size(); j++) {

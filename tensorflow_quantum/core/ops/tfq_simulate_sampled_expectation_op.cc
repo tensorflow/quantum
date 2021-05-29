@@ -21,14 +21,17 @@ limitations under the License.
 #include "../qsim/lib/gates_cirq.h"
 #include "../qsim/lib/seqfor.h"
 #include "../qsim/lib/simmux.h"
-#include "cirq/google/api/v2/program.pb.h"
+#include "cirq_google/api/v2/program.pb.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/shape_inference.h"
 #include "tensorflow/core/framework/tensor_shape.h"
 #include "tensorflow/core/lib/core/error_codes.pb.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow/core/lib/core/threadpool.h"
+#include "tensorflow/core/lib/random/random.h"
+#include "tensorflow/core/lib/random/simple_philox.h"
 #include "tensorflow/core/platform/mutex.h"
+#include "tensorflow/core/util/guarded_philox_random.h"
 #include "tensorflow_quantum/core/ops/parse_context.h"
 #include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
 #include "tensorflow_quantum/core/src/util_qsim.h"
@@ -157,6 +160,18 @@ class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
     auto sv = ss.Create(largest_nq);
     auto scratch = ss.Create(largest_nq);
 
+    tensorflow::GuardedPhiloxRandom random_gen;
+    random_gen.Init(tensorflow::random::New64(), tensorflow::random::New64());
+    int largest_sum = -1;
+    for (const auto& sums : pauli_sums) {
+      for (const auto& sum : sums) {
+        largest_sum = std::max(largest_sum, sum.terms().size());
+      }
+    }
+    auto local_gen = random_gen.ReserveSamples32(
+        largest_sum * pauli_sums[0].size() * fused_circuits.size() + 1);
+    tensorflow::random::SimplePhilox rand_source(&local_gen);
+
     // Simulate programs one by one. Parallelizing over state vectors
     // we no longer parallelize over circuits. Each time we encounter a
     // a larger circuit we will grow the Statevector as necessary.
@@ -185,7 +200,7 @@ class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
         float exp_v = 0.0;
         OP_REQUIRES_OK(context, ComputeSampledExpectationQsim(
                                     pauli_sums[i][j], sim, ss, sv, scratch,
-                                    num_samples[i][j], &exp_v));
+                                    num_samples[i][j], rand_source, &exp_v));
         (*output_tensor)(i, j) = exp_v;
       }
     }
@@ -204,6 +219,18 @@ class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
 
     const int output_dim_op_size = output_tensor->dimension(1);
 
+    tensorflow::GuardedPhiloxRandom random_gen;
+    random_gen.Init(tensorflow::random::New64(), tensorflow::random::New64());
+    int largest_sum = -1;
+    for (const auto& sums : pauli_sums) {
+      for (const auto& sum : sums) {
+        largest_sum = std::max(largest_sum, sum.terms().size());
+      }
+    }
+    const int num_threads = context->device()
+                                ->tensorflow_cpu_worker_threads()
+                                ->workers->NumThreads();
+
     Status compute_status = Status::OK();
     auto c_lock = tensorflow::mutex();
     auto DoWork = [&](int start, int end) {
@@ -216,6 +243,13 @@ class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
       StateSpace ss = StateSpace(tfq_for);
       auto sv = ss.Create(largest_nq);
       auto scratch = ss.Create(largest_nq);
+
+      int n_random = largest_sum * output_dim_op_size * fused_circuits.size();
+      n_random /= num_threads;
+      n_random += 1;
+      auto local_gen = random_gen.ReserveSamples32(n_random);
+      tensorflow::random::SimplePhilox rand_source(&local_gen);
+
       for (int i = start; i < end; i++) {
         cur_batch_index = i / output_dim_op_size;
         cur_op_index = i % output_dim_op_size;
@@ -249,7 +283,8 @@ class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
             compute_status,
             ComputeSampledExpectationQsim(
                 pauli_sums[cur_batch_index][cur_op_index], sim, ss, sv, scratch,
-                num_samples[cur_batch_index][cur_op_index], &exp_v),
+                num_samples[cur_batch_index][cur_op_index], rand_source,
+                &exp_v),
             c_lock);
 
         (*output_tensor)(cur_batch_index, cur_op_index) = exp_v;

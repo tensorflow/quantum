@@ -28,13 +28,16 @@ limitations under the License.
 #include "../qsim/lib/qtrajectory.h"
 #include "../qsim/lib/seqfor.h"
 #include "../qsim/lib/simmux.h"
-#include "cirq/google/api/v2/program.pb.h"
+#include "cirq_google/api/v2/program.pb.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/shape_inference.h"
 #include "tensorflow/core/framework/tensor_shape.h"
 #include "tensorflow/core/lib/core/error_codes.pb.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow/core/lib/core/threadpool.h"
+#include "tensorflow/core/lib/random/random.h"
+#include "tensorflow/core/lib/random/simple_philox.h"
+#include "tensorflow/core/util/guarded_philox_random.h"
 #include "tensorflow_quantum/core/ops/parse_context.h"
 #include "tensorflow_quantum/core/src/circuit_parser_qsim.h"
 #include "tensorflow_quantum/core/src/util_qsim.h"
@@ -148,6 +151,12 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
     auto sv = ss.Create(largest_nq);
     auto scratch = ss.Create(largest_nq);
 
+    tensorflow::GuardedPhiloxRandom random_gen;
+    random_gen.Init(tensorflow::random::New64(), tensorflow::random::New64());
+    auto local_gen =
+        random_gen.ReserveSamples32(2 * num_samples * ncircuits.size() + 2);
+    tensorflow::random::SimplePhilox rand_source(&local_gen);
+
     // Simulate programs one by one. Parallelizing over state vectors
     // we no longer parallelize over circuits. Each time we encounter a
     // a larger circuit we will grow the Statevector as nescessary.
@@ -171,14 +180,9 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
 
       for (int j = 0; j < num_samples; j++) {
         ss.SetStateZero(sv);
-        // time since epoch seeds random generator.
-        unsigned long r_seed =
-            std::chrono::duration_cast<std::chrono::milliseconds>(
-                std::chrono::system_clock::now().time_since_epoch())
-                .count();
 
-        QTSimulator::RunOnce(param, ncircuits[i], r_seed, ss, sim, scratch, sv,
-                             gathered_samples);
+        QTSimulator::RunOnce(param, ncircuits[i], rand_source.Rand64(), ss, sim,
+                             scratch, sv, gathered_samples);
         uint64_t q_ind = 0;
         uint64_t mask = 1;
         bool val = 0;
@@ -233,6 +237,9 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
       }
     }
 
+    tensorflow::GuardedPhiloxRandom random_gen;
+    random_gen.Init(tensorflow::random::New64(), tensorflow::random::New64());
+
     auto DoWork = [&](int start, int end) {
       // Begin simulation.
       const auto tfq_for = qsim::SequentialFor(1);
@@ -242,10 +249,19 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
       auto sv = ss.Create(largest_nq);
       auto scratch = ss.Create(largest_nq);
 
+      int needed_random =
+          4 * (num_samples * ncircuits.size() + num_threads) / num_threads;
+      needed_random += 4;
+      auto local_gen = random_gen.ReserveSamples32(needed_random);
+      tensorflow::random::SimplePhilox rand_source(&local_gen);
+
       for (int i = 0; i < ncircuits.size(); i++) {
         int nq = num_qubits[i];
         int j = start > 0 ? offset_prefix_sum[start - 1][i] : 0;
         int needed_samples = offset_prefix_sum[start][i] - j;
+        if (needed_samples <= 0) {
+          continue;
+        }
 
         if (nq > largest_nq) {
           largest_nq = nq;
@@ -263,14 +279,8 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
 
         while (1) {
           ss.SetStateZero(sv);
-          // time since epoch seeds random generator.
-          unsigned long r_seed =
-              std::chrono::duration_cast<std::chrono::milliseconds>(
-                  std::chrono::system_clock::now().time_since_epoch())
-                  .count();
-
-          QTSimulator::RunOnce(param, ncircuits[i], r_seed, ss, sim, scratch,
-                               sv, gathered_samples);
+          QTSimulator::RunOnce(param, ncircuits[i], rand_source.Rand64(), ss,
+                               sim, scratch, sv, gathered_samples);
 
           uint64_t q_ind = 0;
           uint64_t mask = 1;

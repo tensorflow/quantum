@@ -30,7 +30,7 @@ limitations under the License.
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_split.h"
 #include "absl/types/optional.h"
-#include "cirq/google/api/v2/program.pb.h"
+#include "cirq_google/api/v2/program.pb.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
 
@@ -156,7 +156,7 @@ inline Status SingleConstantGate(
     const unsigned int num_qubits, const unsigned int time,
     QsimCircuit* circuit, std::vector<GateMetaData>* metadata) {
   unsigned int q0;
-  bool unused = absl::SimpleAtoi(op.qubits(0).id(), &q0);
+  (void)absl::SimpleAtoi(op.qubits(0).id(), &q0);
   auto gate = create_f(time, num_qubits - q0 - 1);
   Status s = OptionalInsertControls(op, num_qubits, &gate);
   if (!s.ok()) {
@@ -641,6 +641,29 @@ inline Status DepolarizingChannel(const Operation& op,
   return Status::OK();
 }
 
+inline Status GADChannel(const Operation& op, const unsigned int num_qubits,
+                         const unsigned int time, NoisyQsimCircuit* ncircuit) {
+  int q;
+  bool unused;
+  float p, gamma;
+  Status u;
+  unused = absl::SimpleAtoi(op.qubits(0).id(), &q);
+
+  u = ParseProtoArg(op, "p", {}, &p);
+  if (!u.ok()) {
+    return u;
+  }
+  u = ParseProtoArg(op, "gamma", {}, &gamma);
+  if (!u.ok()) {
+    return u;
+  }
+
+  auto chan = qsim::Cirq::GeneralizedAmplitudeDampingChannel<float>::Create(
+      time, num_qubits - q - 1, p, gamma);
+  ncircuit->channels.push_back(chan);
+  return Status::OK();
+}
+
 inline Status ResetChannel(const Operation& op, const unsigned int num_qubits,
                            const unsigned int time,
                            NoisyQsimCircuit* ncircuit) {
@@ -673,6 +696,68 @@ inline Status AmplitudeDampingChannel(const Operation& op,
   return Status::OK();
 }
 
+inline Status PhaseDampingChannel(const Operation& op,
+                                  const unsigned int num_qubits,
+                                  const unsigned int time,
+                                  NoisyQsimCircuit* ncircuit) {
+  int q;
+  bool unused;
+  float gamma;
+  Status u;
+  unused = absl::SimpleAtoi(op.qubits(0).id(), &q);
+
+  u = ParseProtoArg(op, "gamma", {}, &gamma);
+  if (!u.ok()) {
+    return u;
+  }
+
+  auto chan = qsim::Cirq::PhaseDampingChannel<float>::Create(
+      time, num_qubits - q - 1, gamma);
+  ncircuit->channels.push_back(chan);
+  return Status::OK();
+}
+
+inline Status PhaseFlipChannel(const Operation& op,
+                               const unsigned int num_qubits,
+                               const unsigned int time,
+                               NoisyQsimCircuit* ncircuit) {
+  int q;
+  bool unused;
+  float p;
+  Status u;
+  unused = absl::SimpleAtoi(op.qubits(0).id(), &q);
+
+  u = ParseProtoArg(op, "p", {}, &p);
+  if (!u.ok()) {
+    return u;
+  }
+
+  auto chan =
+      qsim::Cirq::PhaseFlipChannel<float>::Create(time, num_qubits - q - 1, p);
+  ncircuit->channels.push_back(chan);
+  return Status::OK();
+}
+
+inline Status BitFlipChannel(const Operation& op, const unsigned int num_qubits,
+                             const unsigned int time,
+                             NoisyQsimCircuit* ncircuit) {
+  int q;
+  bool unused;
+  float p;
+  Status u;
+  unused = absl::SimpleAtoi(op.qubits(0).id(), &q);
+
+  u = ParseProtoArg(op, "p", {}, &p);
+  if (!u.ok()) {
+    return u;
+  }
+
+  auto chan =
+      qsim::Cirq::BitFlipChannel<float>::Create(time, num_qubits - q - 1, p);
+  ncircuit->channels.push_back(chan);
+  return Status::OK();
+}
+
 tensorflow::Status ParseAppendChannel(const Operation& op,
                                       const unsigned int num_qubits,
                                       const unsigned int time,
@@ -681,10 +766,11 @@ tensorflow::Status ParseAppendChannel(const Operation& op,
   static const absl::flat_hash_map<
       std::string, std::function<Status(const Operation&, const unsigned int,
                                         const unsigned int, NoisyQsimCircuit*)>>
-      chan_func_map = {{"DP", &DepolarizingChannel},
-                       {"ADP", &AsymmetricDepolarizingChannel},
-                       {"AD", &AmplitudeDampingChannel},
-                       {"RST", &ResetChannel}};
+      chan_func_map = {
+          {"DP", &DepolarizingChannel}, {"ADP", &AsymmetricDepolarizingChannel},
+          {"GAD", &GADChannel},         {"AD", &AmplitudeDampingChannel},
+          {"RST", &ResetChannel},       {"PD", &PhaseDampingChannel},
+          {"PF", &PhaseFlipChannel},    {"BF", &BitFlipChannel}};
 
   auto build_f = chan_func_map.find(op.gate().id());
   if (build_f == chan_func_map.end()) {
@@ -724,7 +810,7 @@ tensorflow::Status NoisyQsimCircuitFromProgram(const Program& program,
       } else if (status.ok()) {
         // gate found. succeeded in parsing.
         ncircuit->channels.push_back(
-            std::move(qsim::MakeChannelFromGate(time, placeholder.gates[0])));
+            qsim::MakeChannelFromGate(time, placeholder.gates[0]));
       } else {
         // got not found. Attempt to find and append channel.
         status = ParseAppendChannel(op, num_qubits, time, ncircuit);

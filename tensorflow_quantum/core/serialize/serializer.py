@@ -154,6 +154,7 @@ def _optional_control_promote(gate, qubits_message, values_message):
     return DelayedAssignmentGate(gate, qbs, vals)
 
 
+# Channels.
 def _asymmetric_depolarize_serializer():
     """Make standard serializer for asymmetric depolarization channel."""
     args = [
@@ -231,11 +232,17 @@ def _depolarize_channel_deserializer():
         args=args)
 
 
-def _reset_channel_serializer():
-    """Make standard serializer for reset channel."""
+def _gad_channel_serializer():
+    """Make standard serializer for GeneralizedAmplitudeDamping."""
 
     args = [
         # cirq channels can't contain symbols.
+        cirq.google.SerializingArg(serialized_name="p",
+                                   serialized_type=float,
+                                   op_getter=lambda x: x.gate.p),
+        cirq.google.SerializingArg(serialized_name="gamma",
+                                   serialized_type=float,
+                                   op_getter=lambda x: x.gate.gamma),
         cirq.google.SerializingArg(serialized_name="control_qubits",
                                    serialized_type=str,
                                    op_getter=lambda x: ''),
@@ -243,10 +250,26 @@ def _reset_channel_serializer():
                                    serialized_type=str,
                                    op_getter=lambda x: '')
     ]
-    return cirq.google.GateOpSerializer(gate_type=cirq.ResetChannel,
-                                        serialized_gate_id="RST",
-                                        args=args,
-                                        can_serialize_predicate=_CONSTANT_TRUE)
+    return cirq.google.GateOpSerializer(
+        gate_type=cirq.GeneralizedAmplitudeDampingChannel,
+        serialized_gate_id="GAD",
+        args=args,
+        can_serialize_predicate=_CONSTANT_TRUE)
+
+
+def _gad_channel_deserializer():
+    """Make standard deserializer for GeneralizedAmplitudeDamping."""
+
+    args = [
+        cirq.google.DeserializingArg(serialized_name="p",
+                                     constructor_arg_name="p"),
+        cirq.google.DeserializingArg(serialized_name="gamma",
+                                     constructor_arg_name="gamma")
+    ]
+    return cirq.google.GateOpDeserializer(
+        serialized_gate_id="GAD",
+        gate_constructor=cirq.GeneralizedAmplitudeDampingChannel,
+        args=args)
 
 
 def _amplitude_damp_channel_serializer():
@@ -283,6 +306,24 @@ def _amplitude_damp_channel_deserializer():
         args=args)
 
 
+def _reset_channel_serializer():
+    """Make standard serializer for reset channel."""
+
+    args = [
+        # cirq channels can't contain symbols.
+        cirq.google.SerializingArg(serialized_name="control_qubits",
+                                   serialized_type=str,
+                                   op_getter=lambda x: ''),
+        cirq.google.SerializingArg(serialized_name="control_values",
+                                   serialized_type=str,
+                                   op_getter=lambda x: '')
+    ]
+    return cirq.google.GateOpSerializer(gate_type=cirq.ResetChannel,
+                                        serialized_gate_id="RST",
+                                        args=args,
+                                        can_serialize_predicate=_CONSTANT_TRUE)
+
+
 def _reset_channel_deserializer():
     """Make standard deserializer for reset channel."""
 
@@ -292,6 +333,103 @@ def _reset_channel_deserializer():
                                           args=args)
 
 
+def _phase_damp_channel_serializer():
+    """Make standard serializer for PhaseDamp channel."""
+    args = [
+        # cirq channels can't contain symbols.
+        cirq.google.SerializingArg(serialized_name="gamma",
+                                   serialized_type=float,
+                                   op_getter=lambda x: x.gate.gamma),
+        cirq.google.SerializingArg(serialized_name="control_qubits",
+                                   serialized_type=str,
+                                   op_getter=lambda x: ''),
+        cirq.google.SerializingArg(serialized_name="control_values",
+                                   serialized_type=str,
+                                   op_getter=lambda x: '')
+    ]
+    return cirq.google.GateOpSerializer(gate_type=cirq.PhaseDampingChannel,
+                                        serialized_gate_id="PD",
+                                        args=args,
+                                        can_serialize_predicate=_CONSTANT_TRUE)
+
+
+def _phase_damp_channel_deserializer():
+    """Make standard deserializer for PhaseDamp channel."""
+    args = [
+        cirq.google.DeserializingArg(serialized_name="gamma",
+                                     constructor_arg_name="gamma")
+    ]
+    return cirq.google.GateOpDeserializer(
+        serialized_gate_id="PD",
+        gate_constructor=cirq.PhaseDampingChannel,
+        args=args)
+
+
+def _phase_flip_channel_serializer():
+    """Make standard serializer for PhaseFlip channel."""
+    args = [
+        # cirq channels can't contain symbols.
+        cirq.google.SerializingArg(serialized_name="p",
+                                   serialized_type=float,
+                                   op_getter=lambda x: x.gate.p),
+        cirq.google.SerializingArg(serialized_name="control_qubits",
+                                   serialized_type=str,
+                                   op_getter=lambda x: ''),
+        cirq.google.SerializingArg(serialized_name="control_values",
+                                   serialized_type=str,
+                                   op_getter=lambda x: '')
+    ]
+    return cirq.google.GateOpSerializer(gate_type=cirq.PhaseFlipChannel,
+                                        serialized_gate_id="PF",
+                                        args=args,
+                                        can_serialize_predicate=_CONSTANT_TRUE)
+
+
+def _phase_flip_channel_deserializer():
+    """Make standard deserializer for PhaseFlip channel."""
+
+    args = [
+        cirq.google.DeserializingArg(serialized_name="p",
+                                     constructor_arg_name="p")
+    ]
+    return cirq.google.GateOpDeserializer(
+        serialized_gate_id="PF",
+        gate_constructor=cirq.PhaseFlipChannel,
+        args=args)
+
+
+def _bit_flip_channel_serializer():
+    """Make standard serializer for BitFlip channel."""
+    args = [
+        # cirq channels can't contain symbols.
+        cirq.google.SerializingArg(serialized_name="p",
+                                   serialized_type=float,
+                                   op_getter=lambda x: x.gate.p),
+        cirq.google.SerializingArg(serialized_name="control_qubits",
+                                   serialized_type=str,
+                                   op_getter=lambda x: ''),
+        cirq.google.SerializingArg(serialized_name="control_values",
+                                   serialized_type=str,
+                                   op_getter=lambda x: '')
+    ]
+    return cirq.google.GateOpSerializer(gate_type=cirq.BitFlipChannel,
+                                        serialized_gate_id="BF",
+                                        args=args,
+                                        can_serialize_predicate=_CONSTANT_TRUE)
+
+
+def _bit_flip_channel_deserializer():
+    """Make standard deserializer for BitFlip channel."""
+    args = [
+        cirq.google.DeserializingArg(serialized_name="p",
+                                     constructor_arg_name="p")
+    ]
+    return cirq.google.GateOpDeserializer(serialized_gate_id="BF",
+                                          gate_constructor=cirq.BitFlipChannel,
+                                          args=args)
+
+
+# Gates.
 def _eigen_gate_serializer(gate_type, serialized_id):
     """Make standard serializer for eigen gates."""
 
@@ -592,10 +730,14 @@ SERIALIZERS = [
 ] + [
     _amplitude_damp_channel_serializer(),
     _asymmetric_depolarize_serializer(),
+    _bit_flip_channel_serializer(),
     _depolarize_channel_serializer(),
     _fsim_gate_serializer(),
+    _gad_channel_serializer(),
     _identity_gate_serializer(),
-    _reset_channel_serializer()
+    _phase_damp_channel_serializer(),
+    _reset_channel_serializer(),
+    _phase_flip_channel_serializer()
 ]
 
 DESERIALIZERS = [
@@ -607,10 +749,14 @@ DESERIALIZERS = [
 ] + [
     _amplitude_damp_channel_deserializer(),
     _asymmetric_depolarize_deserializer(),
+    _bit_flip_channel_deserializer(),
     _depolarize_channel_deserializer(),
     _fsim_gate_deserializer(),
+    _gad_channel_deserializer(),
     _identity_gate_deserializer(),
-    _reset_channel_deserializer()
+    _phase_damp_channel_deserializer(),
+    _reset_channel_deserializer(),
+    _phase_flip_channel_deserializer()
 ]
 
 SERIALIZER = cirq.google.SerializableGateSet(gate_set_name="tfq_gate_set",

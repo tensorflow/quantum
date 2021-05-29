@@ -107,6 +107,8 @@ cc_test(
         ":util_qsim",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_googletest//:gtest_main",
+        "@local_config_tf//:libtensorflow_framework",
+        "@local_config_tf//:tf_header_lib",
         "@qsim//lib:qsim_lib",
     ],
 )

@@ -18,7 +18,7 @@ limitations under the License.
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/strings/numbers.h"
-#include "cirq/google/api/v2/program.pb.h"
+#include "cirq_google/api/v2/program.pb.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/shape_inference.h"
 #include "tensorflow/core/framework/tensor_shape.h"
@@ -71,7 +71,9 @@ class TfqPsWeightsFromSymbolOp : public tensorflow::OpKernel {
     for (int i = 0; i < n_symbols; i++) {
       symbols_map[symbols(i)] = i;
     }
-    std::vector<std::string> ignore_list = {"I", "ISP", "PXP", "FSIM", "PISP"};
+    std::vector<std::string> ignore_list = {"I",  "ISP", "PXP", "FSIM", "PISP",
+                                            "AD", "ADP", "DP",  "GAD",  "BF",
+                                            "PF", "PD",  "RST"};
     absl::flat_hash_set<std::string> ignored_symbol_set(ignore_list.begin(),
                                                         ignore_list.end());
 
