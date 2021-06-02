@@ -159,5 +159,3 @@ plt.xlabel("Interatomic Distance (Angstroms)")
 plt.ylabel("Energy (Hartree)")
 plt.legend()
 plt.show()
-plt.savefig('oftest2')
-
