@@ -8,7 +8,7 @@ Minimal working example to recreate [SSVQE paper](https://arxiv.org/abs/1810.094
 
 ## H2 Experiment
 
-The data for H2 is already generated (and provided). To train the SSVQE on the data, run `python train.py`
+The data for H2 is already generated (and provided). To train the SSVQE on the data, download all files, then run `python train.py`
 
 ## Generate Data
 
