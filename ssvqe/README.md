@@ -16,3 +16,5 @@ To generate the data for H2 (or other molecules) there are additional dependenci
 - OpenFermion
 - OpenFermion-PySCF
 - PySCF
+
+Generate the data via `python generate_data.py`
