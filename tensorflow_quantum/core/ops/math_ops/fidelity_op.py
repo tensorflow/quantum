@@ -25,8 +25,8 @@ def fidelity(programs, symbol_names, symbol_values, other_programs):
     the symbol free comparison circuits.
 
     Calculates out[i][j] = $ | \langle \psi_{\text{programs[i]}} \\
-        (\text{symbol_values[i]}) | \psi_{\text{other_programs[j]}} \rangle \\
-        |^2 $
+     (\text{symbol\_values[i]}) | \psi_{\text{other\_programs[j]}} \rangle \\
+     |^2 $
 
 
     >>> symbols = sympy.symbols('alpha beta')
