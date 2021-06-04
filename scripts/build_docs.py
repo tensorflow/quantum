@@ -73,6 +73,11 @@ def main(unused_argv):
                 "check_commutability", "kwargs_cartesian_product",
                 "random_circuit_resolver_batch", "random_pauli_sums",
                 "random_symbol_circuit", "random_symbol_circuit_resolver_batch"
+            ],
+            "tfq.math": ["fidelity_op", "inner_product_op"],
+            "tfq.noise": [
+                "noisy_expectation_op", "noisy_sampled_expectation_op",
+                "noisy_samples_op"
             ]
         })
 
