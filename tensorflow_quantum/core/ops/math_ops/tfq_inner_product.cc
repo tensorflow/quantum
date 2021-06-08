@@ -21,7 +21,6 @@ limitations under the License.
 #include "../qsim/lib/gates_cirq.h"
 #include "../qsim/lib/seqfor.h"
 #include "../qsim/lib/simmux.h"
-#include "cirq_google/api/v2/program.pb.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/shape_inference.h"
 #include "tensorflow/core/framework/tensor_shape.h"
@@ -30,13 +29,14 @@ limitations under the License.
 #include "tensorflow/core/lib/core/threadpool.h"
 #include "tensorflow/core/platform/mutex.h"
 #include "tensorflow_quantum/core/ops/parse_context.h"
+#include "tensorflow_quantum/core/proto/program.pb.h"
 #include "tensorflow_quantum/core/src/util_qsim.h"
 
 namespace tfq {
 
-using ::cirq::google::api::v2::Program;
 using ::tensorflow::Status;
 using ::tfq::proto::PauliSum;
+using ::tfq::proto::Program;
 
 typedef qsim::Cirq::GateCirq<float> QsimGate;
 typedef qsim::Circuit<QsimGate> QsimCircuit;

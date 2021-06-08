@@ -20,8 +20,10 @@ import sympy
 import numpy as np
 
 import cirq
-import cirq.google.api.v2 as v2
+from tensorflow_quantum.core.serialize import op_serializer, op_deserializer, \
+    serializable_gate_set
 from tensorflow_quantum.core.proto import pauli_sum_pb2
+from tensorflow_quantum.core.proto import program_pb2
 
 # Needed to allow autograph to crawl AST without erroring.
 _CONSTANT_TRUE = lambda x: True
@@ -113,7 +115,7 @@ def _serialize_controls(gate):
     """Helper to serialize control qubits if applicable."""
     if hasattr(gate, '_tfq_control_qubits'):
         return ','.join(
-            v2.qubit_to_proto_id(q) for q in gate._tfq_control_qubits)
+            op_serializer.qubit_to_proto(q) for q in gate._tfq_control_qubits)
     return ''
 
 
@@ -148,7 +150,9 @@ def _optional_control_promote(gate, qubits_message, values_message):
     """Optionally promote to controlled gate based on serialized control msg."""
     if qubits_message == '' and values_message == '':
         return gate
-    qbs = [v2.qubit_from_proto_id(qb) for qb in qubits_message.split(',')]
+    qbs = [
+        op_deserializer.qubit_from_proto(qb) for qb in qubits_message.split(',')
+    ]
     vals = [int(cv) for cv in values_message.split(',')]
 
     return DelayedAssignmentGate(gate, qbs, vals)
@@ -159,23 +163,23 @@ def _asymmetric_depolarize_serializer():
     """Make standard serializer for asymmetric depolarization channel."""
     args = [
         # cirq channels can't contain symbols.
-        cirq.google.SerializingArg(serialized_name="p_x",
-                                   serialized_type=float,
-                                   op_getter=lambda x: x.gate.p_x),
-        cirq.google.SerializingArg(serialized_name="p_y",
-                                   serialized_type=float,
-                                   op_getter=lambda x: x.gate.p_y),
-        cirq.google.SerializingArg(serialized_name="p_z",
-                                   serialized_type=float,
-                                   op_getter=lambda x: x.gate.p_z),
-        cirq.google.SerializingArg(serialized_name="control_qubits",
-                                   serialized_type=str,
-                                   op_getter=lambda x: ''),
-        cirq.google.SerializingArg(serialized_name="control_values",
-                                   serialized_type=str,
-                                   op_getter=lambda x: '')
+        op_serializer.SerializingArg(serialized_name="p_x",
+                                     serialized_type=float,
+                                     op_getter=lambda x: x.gate.p_x),
+        op_serializer.SerializingArg(serialized_name="p_y",
+                                     serialized_type=float,
+                                     op_getter=lambda x: x.gate.p_y),
+        op_serializer.SerializingArg(serialized_name="p_z",
+                                     serialized_type=float,
+                                     op_getter=lambda x: x.gate.p_z),
+        op_serializer.SerializingArg(serialized_name="control_qubits",
+                                     serialized_type=str,
+                                     op_getter=lambda x: ''),
+        op_serializer.SerializingArg(serialized_name="control_values",
+                                     serialized_type=str,
+                                     op_getter=lambda x: '')
     ]
-    return cirq.google.GateOpSerializer(
+    return op_serializer.GateOpSerializer(
         gate_type=cirq.AsymmetricDepolarizingChannel,
         serialized_gate_id="ADP",
         args=args,
@@ -185,14 +189,14 @@ def _asymmetric_depolarize_serializer():
 def _asymmetric_depolarize_deserializer():
     """Make standard deserializer for asymmetric depolarization channel."""
     args = [
-        cirq.google.DeserializingArg(serialized_name="p_x",
-                                     constructor_arg_name="p_x"),
-        cirq.google.DeserializingArg(serialized_name="p_y",
-                                     constructor_arg_name="p_y"),
-        cirq.google.DeserializingArg(serialized_name="p_z",
-                                     constructor_arg_name="p_z")
+        op_deserializer.DeserializingArg(serialized_name="p_x",
+                                         constructor_arg_name="p_x"),
+        op_deserializer.DeserializingArg(serialized_name="p_y",
+                                         constructor_arg_name="p_y"),
+        op_deserializer.DeserializingArg(serialized_name="p_z",
+                                         constructor_arg_name="p_z")
     ]
-    return cirq.google.GateOpDeserializer(
+    return op_deserializer.GateOpDeserializer(
         serialized_gate_id="ADP",
         gate_constructor=cirq.AsymmetricDepolarizingChannel,
         args=args)
@@ -203,30 +207,31 @@ def _depolarize_channel_serializer():
 
     args = [
         # cirq channels can't contain symbols.
-        cirq.google.SerializingArg(serialized_name="p",
-                                   serialized_type=float,
-                                   op_getter=lambda x: x.gate.p),
-        cirq.google.SerializingArg(serialized_name="control_qubits",
-                                   serialized_type=str,
-                                   op_getter=lambda x: ''),
-        cirq.google.SerializingArg(serialized_name="control_values",
-                                   serialized_type=str,
-                                   op_getter=lambda x: '')
+        op_serializer.SerializingArg(serialized_name="p",
+                                     serialized_type=float,
+                                     op_getter=lambda x: x.gate.p),
+        op_serializer.SerializingArg(serialized_name="control_qubits",
+                                     serialized_type=str,
+                                     op_getter=lambda x: ''),
+        op_serializer.SerializingArg(serialized_name="control_values",
+                                     serialized_type=str,
+                                     op_getter=lambda x: '')
     ]
-    return cirq.google.GateOpSerializer(gate_type=cirq.DepolarizingChannel,
-                                        serialized_gate_id="DP",
-                                        args=args,
-                                        can_serialize_predicate=_CONSTANT_TRUE)
+    return op_serializer.GateOpSerializer(
+        gate_type=cirq.DepolarizingChannel,
+        serialized_gate_id="DP",
+        args=args,
+        can_serialize_predicate=_CONSTANT_TRUE)
 
 
 def _depolarize_channel_deserializer():
     """Make standard deserializer for depolarization channel."""
 
     args = [
-        cirq.google.DeserializingArg(serialized_name="p",
-                                     constructor_arg_name="p")
+        op_deserializer.DeserializingArg(serialized_name="p",
+                                         constructor_arg_name="p")
     ]
-    return cirq.google.GateOpDeserializer(
+    return op_deserializer.GateOpDeserializer(
         serialized_gate_id="DP",
         gate_constructor=cirq.DepolarizingChannel,
         args=args)
@@ -237,20 +242,20 @@ def _gad_channel_serializer():
 
     args = [
         # cirq channels can't contain symbols.
-        cirq.google.SerializingArg(serialized_name="p",
-                                   serialized_type=float,
-                                   op_getter=lambda x: x.gate.p),
-        cirq.google.SerializingArg(serialized_name="gamma",
-                                   serialized_type=float,
-                                   op_getter=lambda x: x.gate.gamma),
-        cirq.google.SerializingArg(serialized_name="control_qubits",
-                                   serialized_type=str,
-                                   op_getter=lambda x: ''),
-        cirq.google.SerializingArg(serialized_name="control_values",
-                                   serialized_type=str,
-                                   op_getter=lambda x: '')
+        op_serializer.SerializingArg(serialized_name="p",
+                                     serialized_type=float,
+                                     op_getter=lambda x: x.gate.p),
+        op_serializer.SerializingArg(serialized_name="gamma",
+                                     serialized_type=float,
+                                     op_getter=lambda x: x.gate.gamma),
+        op_serializer.SerializingArg(serialized_name="control_qubits",
+                                     serialized_type=str,
+                                     op_getter=lambda x: ''),
+        op_serializer.SerializingArg(serialized_name="control_values",
+                                     serialized_type=str,
+                                     op_getter=lambda x: '')
     ]
-    return cirq.google.GateOpSerializer(
+    return op_serializer.GateOpSerializer(
         gate_type=cirq.GeneralizedAmplitudeDampingChannel,
         serialized_gate_id="GAD",
         args=args,
@@ -261,12 +266,12 @@ def _gad_channel_deserializer():
     """Make standard deserializer for GeneralizedAmplitudeDamping."""
 
     args = [
-        cirq.google.DeserializingArg(serialized_name="p",
-                                     constructor_arg_name="p"),
-        cirq.google.DeserializingArg(serialized_name="gamma",
-                                     constructor_arg_name="gamma")
+        op_deserializer.DeserializingArg(serialized_name="p",
+                                         constructor_arg_name="p"),
+        op_deserializer.DeserializingArg(serialized_name="gamma",
+                                         constructor_arg_name="gamma")
     ]
-    return cirq.google.GateOpDeserializer(
+    return op_deserializer.GateOpDeserializer(
         serialized_gate_id="GAD",
         gate_constructor=cirq.GeneralizedAmplitudeDampingChannel,
         args=args)
@@ -277,30 +282,31 @@ def _amplitude_damp_channel_serializer():
 
     args = [
         # cirq channels can't contain symbols.
-        cirq.google.SerializingArg(serialized_name="gamma",
-                                   serialized_type=float,
-                                   op_getter=lambda x: x.gate.gamma),
-        cirq.google.SerializingArg(serialized_name="control_qubits",
-                                   serialized_type=str,
-                                   op_getter=lambda x: ''),
-        cirq.google.SerializingArg(serialized_name="control_values",
-                                   serialized_type=str,
-                                   op_getter=lambda x: '')
+        op_serializer.SerializingArg(serialized_name="gamma",
+                                     serialized_type=float,
+                                     op_getter=lambda x: x.gate.gamma),
+        op_serializer.SerializingArg(serialized_name="control_qubits",
+                                     serialized_type=str,
+                                     op_getter=lambda x: ''),
+        op_serializer.SerializingArg(serialized_name="control_values",
+                                     serialized_type=str,
+                                     op_getter=lambda x: '')
     ]
-    return cirq.google.GateOpSerializer(gate_type=cirq.AmplitudeDampingChannel,
-                                        serialized_gate_id="AD",
-                                        args=args,
-                                        can_serialize_predicate=_CONSTANT_TRUE)
+    return op_serializer.GateOpSerializer(
+        gate_type=cirq.AmplitudeDampingChannel,
+        serialized_gate_id="AD",
+        args=args,
+        can_serialize_predicate=_CONSTANT_TRUE)
 
 
 def _amplitude_damp_channel_deserializer():
     """Make standard deserializer for depolarization channel."""
 
     args = [
-        cirq.google.DeserializingArg(serialized_name="gamma",
-                                     constructor_arg_name="gamma")
+        op_deserializer.DeserializingArg(serialized_name="gamma",
+                                         constructor_arg_name="gamma")
     ]
-    return cirq.google.GateOpDeserializer(
+    return op_deserializer.GateOpDeserializer(
         serialized_gate_id="AD",
         gate_constructor=cirq.AmplitudeDampingChannel,
         args=args)
@@ -311,55 +317,56 @@ def _reset_channel_serializer():
 
     args = [
         # cirq channels can't contain symbols.
-        cirq.google.SerializingArg(serialized_name="control_qubits",
-                                   serialized_type=str,
-                                   op_getter=lambda x: ''),
-        cirq.google.SerializingArg(serialized_name="control_values",
-                                   serialized_type=str,
-                                   op_getter=lambda x: '')
+        op_serializer.SerializingArg(serialized_name="control_qubits",
+                                     serialized_type=str,
+                                     op_getter=lambda x: ''),
+        op_serializer.SerializingArg(serialized_name="control_values",
+                                     serialized_type=str,
+                                     op_getter=lambda x: '')
     ]
-    return cirq.google.GateOpSerializer(gate_type=cirq.ResetChannel,
-                                        serialized_gate_id="RST",
-                                        args=args,
-                                        can_serialize_predicate=_CONSTANT_TRUE)
+    return op_serializer.GateOpSerializer(
+        gate_type=cirq.ResetChannel,
+        serialized_gate_id="RST",
+        args=args,
+        can_serialize_predicate=_CONSTANT_TRUE)
 
 
 def _reset_channel_deserializer():
     """Make standard deserializer for reset channel."""
 
     args = []
-    return cirq.google.GateOpDeserializer(serialized_gate_id="RST",
-                                          gate_constructor=cirq.ResetChannel,
-                                          args=args)
+    return op_deserializer.GateOpDeserializer(
+        serialized_gate_id="RST", gate_constructor=cirq.ResetChannel, args=args)
 
 
 def _phase_damp_channel_serializer():
     """Make standard serializer for PhaseDamp channel."""
     args = [
         # cirq channels can't contain symbols.
-        cirq.google.SerializingArg(serialized_name="gamma",
-                                   serialized_type=float,
-                                   op_getter=lambda x: x.gate.gamma),
-        cirq.google.SerializingArg(serialized_name="control_qubits",
-                                   serialized_type=str,
-                                   op_getter=lambda x: ''),
-        cirq.google.SerializingArg(serialized_name="control_values",
-                                   serialized_type=str,
-                                   op_getter=lambda x: '')
+        op_serializer.SerializingArg(serialized_name="gamma",
+                                     serialized_type=float,
+                                     op_getter=lambda x: x.gate.gamma),
+        op_serializer.SerializingArg(serialized_name="control_qubits",
+                                     serialized_type=str,
+                                     op_getter=lambda x: ''),
+        op_serializer.SerializingArg(serialized_name="control_values",
+                                     serialized_type=str,
+                                     op_getter=lambda x: '')
     ]
-    return cirq.google.GateOpSerializer(gate_type=cirq.PhaseDampingChannel,
-                                        serialized_gate_id="PD",
-                                        args=args,
-                                        can_serialize_predicate=_CONSTANT_TRUE)
+    return op_serializer.GateOpSerializer(
+        gate_type=cirq.PhaseDampingChannel,
+        serialized_gate_id="PD",
+        args=args,
+        can_serialize_predicate=_CONSTANT_TRUE)
 
 
 def _phase_damp_channel_deserializer():
     """Make standard deserializer for PhaseDamp channel."""
     args = [
-        cirq.google.DeserializingArg(serialized_name="gamma",
-                                     constructor_arg_name="gamma")
+        op_deserializer.DeserializingArg(serialized_name="gamma",
+                                         constructor_arg_name="gamma")
     ]
-    return cirq.google.GateOpDeserializer(
+    return op_deserializer.GateOpDeserializer(
         serialized_gate_id="PD",
         gate_constructor=cirq.PhaseDampingChannel,
         args=args)
@@ -369,30 +376,31 @@ def _phase_flip_channel_serializer():
     """Make standard serializer for PhaseFlip channel."""
     args = [
         # cirq channels can't contain symbols.
-        cirq.google.SerializingArg(serialized_name="p",
-                                   serialized_type=float,
-                                   op_getter=lambda x: x.gate.p),
-        cirq.google.SerializingArg(serialized_name="control_qubits",
-                                   serialized_type=str,
-                                   op_getter=lambda x: ''),
-        cirq.google.SerializingArg(serialized_name="control_values",
-                                   serialized_type=str,
-                                   op_getter=lambda x: '')
+        op_serializer.SerializingArg(serialized_name="p",
+                                     serialized_type=float,
+                                     op_getter=lambda x: x.gate.p),
+        op_serializer.SerializingArg(serialized_name="control_qubits",
+                                     serialized_type=str,
+                                     op_getter=lambda x: ''),
+        op_serializer.SerializingArg(serialized_name="control_values",
+                                     serialized_type=str,
+                                     op_getter=lambda x: '')
     ]
-    return cirq.google.GateOpSerializer(gate_type=cirq.PhaseFlipChannel,
-                                        serialized_gate_id="PF",
-                                        args=args,
-                                        can_serialize_predicate=_CONSTANT_TRUE)
+    return op_serializer.GateOpSerializer(
+        gate_type=cirq.PhaseFlipChannel,
+        serialized_gate_id="PF",
+        args=args,
+        can_serialize_predicate=_CONSTANT_TRUE)
 
 
 def _phase_flip_channel_deserializer():
     """Make standard deserializer for PhaseFlip channel."""
 
     args = [
-        cirq.google.DeserializingArg(serialized_name="p",
-                                     constructor_arg_name="p")
+        op_deserializer.DeserializingArg(serialized_name="p",
+                                         constructor_arg_name="p")
     ]
-    return cirq.google.GateOpDeserializer(
+    return op_deserializer.GateOpDeserializer(
         serialized_gate_id="PF",
         gate_constructor=cirq.PhaseFlipChannel,
         args=args)
@@ -402,31 +410,33 @@ def _bit_flip_channel_serializer():
     """Make standard serializer for BitFlip channel."""
     args = [
         # cirq channels can't contain symbols.
-        cirq.google.SerializingArg(serialized_name="p",
-                                   serialized_type=float,
-                                   op_getter=lambda x: x.gate.p),
-        cirq.google.SerializingArg(serialized_name="control_qubits",
-                                   serialized_type=str,
-                                   op_getter=lambda x: ''),
-        cirq.google.SerializingArg(serialized_name="control_values",
-                                   serialized_type=str,
-                                   op_getter=lambda x: '')
+        op_serializer.SerializingArg(serialized_name="p",
+                                     serialized_type=float,
+                                     op_getter=lambda x: x.gate.p),
+        op_serializer.SerializingArg(serialized_name="control_qubits",
+                                     serialized_type=str,
+                                     op_getter=lambda x: ''),
+        op_serializer.SerializingArg(serialized_name="control_values",
+                                     serialized_type=str,
+                                     op_getter=lambda x: '')
     ]
-    return cirq.google.GateOpSerializer(gate_type=cirq.BitFlipChannel,
-                                        serialized_gate_id="BF",
-                                        args=args,
-                                        can_serialize_predicate=_CONSTANT_TRUE)
+    return op_serializer.GateOpSerializer(
+        gate_type=cirq.BitFlipChannel,
+        serialized_gate_id="BF",
+        args=args,
+        can_serialize_predicate=_CONSTANT_TRUE)
 
 
 def _bit_flip_channel_deserializer():
     """Make standard deserializer for BitFlip channel."""
     args = [
-        cirq.google.DeserializingArg(serialized_name="p",
-                                     constructor_arg_name="p")
+        op_deserializer.DeserializingArg(serialized_name="p",
+                                         constructor_arg_name="p")
     ]
-    return cirq.google.GateOpDeserializer(serialized_gate_id="BF",
-                                          gate_constructor=cirq.BitFlipChannel,
-                                          args=args)
+    return op_deserializer.GateOpDeserializer(
+        serialized_gate_id="BF",
+        gate_constructor=cirq.BitFlipChannel,
+        args=args)
 
 
 # Gates.
@@ -434,30 +444,32 @@ def _eigen_gate_serializer(gate_type, serialized_id):
     """Make standard serializer for eigen gates."""
 
     args = [
-        cirq.google.SerializingArg(
+        op_serializer.SerializingArg(
             serialized_name="exponent",
             serialized_type=float,
             op_getter=lambda x: _symbol_extractor(x.gate.exponent)),
-        cirq.google.SerializingArg(
+        op_serializer.SerializingArg(
             serialized_name="exponent_scalar",
             serialized_type=float,
             op_getter=lambda x: _scalar_extractor(x.gate.exponent)),
-        cirq.google.SerializingArg(
+        op_serializer.SerializingArg(
             serialized_name="global_shift",
             serialized_type=float,
             op_getter=lambda x: float(x.gate._global_shift)),
-        cirq.google.SerializingArg(serialized_name="control_qubits",
-                                   serialized_type=str,
-                                   op_getter=lambda x: _serialize_controls(x)),
-        cirq.google.SerializingArg(
+        op_serializer.SerializingArg(
+            serialized_name="control_qubits",
+            serialized_type=str,
+            op_getter=lambda x: _serialize_controls(x)),
+        op_serializer.SerializingArg(
             serialized_name="control_values",
             serialized_type=str,
             op_getter=lambda x: _serialize_control_vals(x))
     ]
-    return cirq.google.GateOpSerializer(gate_type=gate_type,
-                                        serialized_gate_id=serialized_id,
-                                        args=args,
-                                        can_serialize_predicate=_CONSTANT_TRUE)
+    return op_serializer.GateOpSerializer(
+        gate_type=gate_type,
+        serialized_gate_id=serialized_id,
+        args=args,
+        can_serialize_predicate=_CONSTANT_TRUE)
 
 
 def _eigen_gate_deserializer(gate_type, serialized_id):
@@ -482,54 +494,57 @@ def _eigen_gate_deserializer(gate_type, serialized_id):
             control_values)
 
     args = [
-        cirq.google.DeserializingArg(serialized_name="exponent",
-                                     constructor_arg_name="exponent"),
-        cirq.google.DeserializingArg(serialized_name="global_shift",
-                                     constructor_arg_name="global_shift"),
-        cirq.google.DeserializingArg(serialized_name="exponent_scalar",
-                                     constructor_arg_name="exponent_scalar"),
-        cirq.google.DeserializingArg(serialized_name="control_qubits",
-                                     constructor_arg_name="control_qubits"),
-        cirq.google.DeserializingArg(serialized_name="control_values",
-                                     constructor_arg_name="control_values")
+        op_deserializer.DeserializingArg(serialized_name="exponent",
+                                         constructor_arg_name="exponent"),
+        op_deserializer.DeserializingArg(serialized_name="global_shift",
+                                         constructor_arg_name="global_shift"),
+        op_deserializer.DeserializingArg(
+            serialized_name="exponent_scalar",
+            constructor_arg_name="exponent_scalar"),
+        op_deserializer.DeserializingArg(serialized_name="control_qubits",
+                                         constructor_arg_name="control_qubits"),
+        op_deserializer.DeserializingArg(serialized_name="control_values",
+                                         constructor_arg_name="control_values")
     ]
-    return cirq.google.GateOpDeserializer(serialized_gate_id=serialized_id,
-                                          gate_constructor=_scalar_combiner,
-                                          args=args)
+    return op_deserializer.GateOpDeserializer(serialized_gate_id=serialized_id,
+                                              gate_constructor=_scalar_combiner,
+                                              args=args)
 
 
 def _fsim_gate_serializer():
     """Make standard serializer for fsim gate."""
 
     args = [
-        cirq.google.SerializingArg(
+        op_serializer.SerializingArg(
             serialized_name="theta",
             serialized_type=float,
             op_getter=lambda x: _symbol_extractor(x.gate.theta)),
-        cirq.google.SerializingArg(
+        op_serializer.SerializingArg(
             serialized_name="phi",
             serialized_type=float,
             op_getter=lambda x: _symbol_extractor(x.gate.phi)),
-        cirq.google.SerializingArg(
+        op_serializer.SerializingArg(
             serialized_name="theta_scalar",
             serialized_type=float,
             op_getter=lambda x: _scalar_extractor(x.gate.theta)),
-        cirq.google.SerializingArg(
+        op_serializer.SerializingArg(
             serialized_name="phi_scalar",
             serialized_type=float,
             op_getter=lambda x: _scalar_extractor(x.gate.phi)),
-        cirq.google.SerializingArg(serialized_name="control_qubits",
-                                   serialized_type=str,
-                                   op_getter=lambda x: _serialize_controls(x)),
-        cirq.google.SerializingArg(
+        op_serializer.SerializingArg(
+            serialized_name="control_qubits",
+            serialized_type=str,
+            op_getter=lambda x: _serialize_controls(x)),
+        op_serializer.SerializingArg(
             serialized_name="control_values",
             serialized_type=str,
             op_getter=lambda x: _serialize_control_vals(x))
     ]
-    return cirq.google.GateOpSerializer(gate_type=cirq.FSimGate,
-                                        serialized_gate_id="FSIM",
-                                        args=args,
-                                        can_serialize_predicate=_CONSTANT_TRUE)
+    return op_serializer.GateOpSerializer(
+        gate_type=cirq.FSimGate,
+        serialized_gate_id="FSIM",
+        args=args,
+        can_serialize_predicate=_CONSTANT_TRUE)
 
 
 def _fsim_gate_deserializer():
@@ -546,22 +561,22 @@ def _fsim_gate_deserializer():
             control_values)
 
     args = [
-        cirq.google.DeserializingArg(serialized_name="theta",
-                                     constructor_arg_name="theta"),
-        cirq.google.DeserializingArg(serialized_name="phi",
-                                     constructor_arg_name="phi"),
-        cirq.google.DeserializingArg(serialized_name="theta_scalar",
-                                     constructor_arg_name="theta_scalar"),
-        cirq.google.DeserializingArg(serialized_name="phi_scalar",
-                                     constructor_arg_name="phi_scalar"),
-        cirq.google.DeserializingArg(serialized_name="control_qubits",
-                                     constructor_arg_name="control_qubits"),
-        cirq.google.DeserializingArg(serialized_name="control_values",
-                                     constructor_arg_name="control_values")
+        op_deserializer.DeserializingArg(serialized_name="theta",
+                                         constructor_arg_name="theta"),
+        op_deserializer.DeserializingArg(serialized_name="phi",
+                                         constructor_arg_name="phi"),
+        op_deserializer.DeserializingArg(serialized_name="theta_scalar",
+                                         constructor_arg_name="theta_scalar"),
+        op_deserializer.DeserializingArg(serialized_name="phi_scalar",
+                                         constructor_arg_name="phi_scalar"),
+        op_deserializer.DeserializingArg(serialized_name="control_qubits",
+                                         constructor_arg_name="control_qubits"),
+        op_deserializer.DeserializingArg(serialized_name="control_values",
+                                         constructor_arg_name="control_values")
     ]
-    return cirq.google.GateOpDeserializer(serialized_gate_id="FSIM",
-                                          gate_constructor=_scalar_combiner,
-                                          args=args)
+    return op_deserializer.GateOpDeserializer(serialized_gate_id="FSIM",
+                                              gate_constructor=_scalar_combiner,
+                                              args=args)
 
 
 def _identity_gate_serializer():
@@ -577,78 +592,81 @@ def _identity_gate_serializer():
     # Here `args` is used for two reasons. 1. GateOpSerializer doesn't work well
     # with empty arg lists. 2. It is a nice way to check identity gate size.
     args = [
-        cirq.google.SerializingArg(serialized_name="unused",
-                                   serialized_type=bool,
-                                   op_getter=_identity_check),
-        cirq.google.SerializingArg(serialized_name="control_qubits",
-                                   serialized_type=str,
-                                   op_getter=lambda x: _serialize_controls(x)),
-        cirq.google.SerializingArg(
+        op_serializer.SerializingArg(serialized_name="unused",
+                                     serialized_type=bool,
+                                     op_getter=_identity_check),
+        op_serializer.SerializingArg(
+            serialized_name="control_qubits",
+            serialized_type=str,
+            op_getter=lambda x: _serialize_controls(x)),
+        op_serializer.SerializingArg(
             serialized_name="control_values",
             serialized_type=str,
             op_getter=lambda x: _serialize_control_vals(x))
     ]
-    return cirq.google.GateOpSerializer(gate_type=cirq.IdentityGate,
-                                        serialized_gate_id="I",
-                                        args=args,
-                                        can_serialize_predicate=_CONSTANT_TRUE)
+    return op_serializer.GateOpSerializer(
+        gate_type=cirq.IdentityGate,
+        serialized_gate_id="I",
+        args=args,
+        can_serialize_predicate=_CONSTANT_TRUE)
 
 
 def _identity_gate_deserializer():
     """Make a standard deserializer for the single qubit identity."""
     args = [
-        cirq.google.DeserializingArg(serialized_name="unused",
-                                     constructor_arg_name="unused"),
-        cirq.google.DeserializingArg(serialized_name="control_qubits",
-                                     constructor_arg_name="control_qubits"),
-        cirq.google.DeserializingArg(serialized_name="control_values",
-                                     constructor_arg_name="control_values")
+        op_deserializer.DeserializingArg(serialized_name="unused",
+                                         constructor_arg_name="unused"),
+        op_deserializer.DeserializingArg(serialized_name="control_qubits",
+                                         constructor_arg_name="control_qubits"),
+        op_deserializer.DeserializingArg(serialized_name="control_values",
+                                         constructor_arg_name="control_values")
     ]
 
     def _cirq_i_workaround(unused, control_qubits, control_values):
         return _optional_control_promote(cirq.I, control_qubits, control_values)
 
-    return cirq.google.GateOpDeserializer(serialized_gate_id="I",
-                                          gate_constructor=_cirq_i_workaround,
-                                          args=args)
+    return op_deserializer.GateOpDeserializer(
+        serialized_gate_id="I", gate_constructor=_cirq_i_workaround, args=args)
 
 
 def _phased_eigen_gate_serializer(gate_type, serialized_id):
     """Make a standard serializer for phased eigen gates."""
 
     args = [
-        cirq.google.SerializingArg(
+        op_serializer.SerializingArg(
             serialized_name="phase_exponent",
             serialized_type=float,
             op_getter=lambda x: _symbol_extractor(x.gate.phase_exponent)),
-        cirq.google.SerializingArg(
+        op_serializer.SerializingArg(
             serialized_name="phase_exponent_scalar",
             serialized_type=float,
             op_getter=lambda x: _scalar_extractor(x.gate.phase_exponent)),
-        cirq.google.SerializingArg(
+        op_serializer.SerializingArg(
             serialized_name="exponent",
             serialized_type=float,
             op_getter=lambda x: _symbol_extractor(x.gate.exponent)),
-        cirq.google.SerializingArg(
+        op_serializer.SerializingArg(
             serialized_name="exponent_scalar",
             serialized_type=float,
             op_getter=lambda x: _scalar_extractor(x.gate.exponent)),
-        cirq.google.SerializingArg(
+        op_serializer.SerializingArg(
             serialized_name="global_shift",
             serialized_type=float,
             op_getter=lambda x: float(x.gate.global_shift)),
-        cirq.google.SerializingArg(serialized_name="control_qubits",
-                                   serialized_type=str,
-                                   op_getter=lambda x: _serialize_controls(x)),
-        cirq.google.SerializingArg(
+        op_serializer.SerializingArg(
+            serialized_name="control_qubits",
+            serialized_type=str,
+            op_getter=lambda x: _serialize_controls(x)),
+        op_serializer.SerializingArg(
             serialized_name="control_values",
             serialized_type=str,
             op_getter=lambda x: _serialize_control_vals(x))
     ]
-    return cirq.google.GateOpSerializer(gate_type=gate_type,
-                                        serialized_gate_id=serialized_id,
-                                        args=args,
-                                        can_serialize_predicate=_CONSTANT_TRUE)
+    return op_serializer.GateOpSerializer(
+        gate_type=gate_type,
+        serialized_gate_id=serialized_id,
+        args=args,
+        can_serialize_predicate=_CONSTANT_TRUE)
 
 
 def _phased_eigen_gate_deserializer(gate_type, serialized_id):
@@ -682,25 +700,26 @@ def _phased_eigen_gate_deserializer(gate_type, serialized_id):
             control_qubits, control_values)
 
     args = [
-        cirq.google.DeserializingArg(serialized_name="phase_exponent",
-                                     constructor_arg_name="phase_exponent"),
-        cirq.google.DeserializingArg(
+        op_deserializer.DeserializingArg(serialized_name="phase_exponent",
+                                         constructor_arg_name="phase_exponent"),
+        op_deserializer.DeserializingArg(
             serialized_name="phase_exponent_scalar",
             constructor_arg_name="phase_exponent_scalar"),
-        cirq.google.DeserializingArg(serialized_name="exponent",
-                                     constructor_arg_name="exponent"),
-        cirq.google.DeserializingArg(serialized_name="exponent_scalar",
-                                     constructor_arg_name="exponent_scalar"),
-        cirq.google.DeserializingArg(serialized_name="global_shift",
-                                     constructor_arg_name="global_shift"),
-        cirq.google.DeserializingArg(serialized_name="control_qubits",
-                                     constructor_arg_name="control_qubits"),
-        cirq.google.DeserializingArg(serialized_name="control_values",
-                                     constructor_arg_name="control_values")
+        op_deserializer.DeserializingArg(serialized_name="exponent",
+                                         constructor_arg_name="exponent"),
+        op_deserializer.DeserializingArg(
+            serialized_name="exponent_scalar",
+            constructor_arg_name="exponent_scalar"),
+        op_deserializer.DeserializingArg(serialized_name="global_shift",
+                                         constructor_arg_name="global_shift"),
+        op_deserializer.DeserializingArg(serialized_name="control_qubits",
+                                         constructor_arg_name="control_qubits"),
+        op_deserializer.DeserializingArg(serialized_name="control_values",
+                                         constructor_arg_name="control_values")
     ]
-    return cirq.google.GateOpDeserializer(serialized_gate_id=serialized_id,
-                                          gate_constructor=_scalar_combiner,
-                                          args=args)
+    return op_deserializer.GateOpDeserializer(serialized_gate_id=serialized_id,
+                                              gate_constructor=_scalar_combiner,
+                                              args=args)
 
 
 EIGEN_GATES_DICT = {
@@ -759,9 +778,10 @@ DESERIALIZERS = [
     _phase_flip_channel_deserializer()
 ]
 
-SERIALIZER = cirq.google.SerializableGateSet(gate_set_name="tfq_gate_set",
-                                             serializers=SERIALIZERS,
-                                             deserializers=DESERIALIZERS)
+SERIALIZER = serializable_gate_set.SerializableGateSet(
+    gate_set_name="tfq_gate_set",
+    serializers=SERIALIZERS,
+    deserializers=DESERIALIZERS)
 
 
 def serialize_circuit(circuit_inp):
@@ -780,7 +800,7 @@ def serialize_circuit(circuit_inp):
         circuit_inp: A `cirq.Circuit`.
 
     Returns:
-        A `cirq.google.api.v2.Program` proto.
+        A `tfq.proto.Program` proto.
     """
     circuit = copy.deepcopy(circuit_inp)
     if not isinstance(circuit, cirq.Circuit):
@@ -854,14 +874,14 @@ def deserialize_circuit(proto):
     Note that the proto must use gates valid in the tfq_gate_set.
 
     Args:
-        proto: A `cirq.google.api.v2.Program` proto
+        proto: A `tfq.proto.Program` proto
 
     Returns:
         A `cirq.Circuit`.
     """
-    if not isinstance(proto, cirq.google.api.v2.program_pb2.Program):
+    if not isinstance(proto, program_pb2.Program):
         raise TypeError("deserialize requires "
-                        "cirq.google.api.v2.program_pb2.Program object."
+                        "tfq.proto.Program object."
                         " Given: " + str(type(proto)))
 
     return SERIALIZER.deserialize(proto)
@@ -895,7 +915,7 @@ def serialize_paulisum(paulisum):
         pauliterm_proto.coefficient_imag = term.coefficient.imag
         for t in sorted(term.items()):  # sort to keep qubits ordered.
             pauliterm_proto.paulis.add(
-                qubit_id=v2.qubit_to_proto_id(t[0]),
+                qubit_id=op_serializer.qubit_to_proto(t[0]),
                 pauli_type=str(t[1]),
             )
         paulisum_proto.terms.extend([pauliterm_proto])
@@ -923,7 +943,8 @@ def deserialize_paulisum(proto):
         term = coef * cirq.PauliString()
         for pauli_qubit_pair in term_proto.paulis:
             op = _process_pauli_type(pauli_qubit_pair.pauli_type)
-            term *= op(v2.grid_qubit_from_proto_id(pauli_qubit_pair.qubit_id))
+            term *= op(
+                op_deserializer.qubit_from_proto(pauli_qubit_pair.qubit_id))
         res += term
 
     return res

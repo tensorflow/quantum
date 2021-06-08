@@ -23,22 +23,22 @@ limitations under the License.
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
-#include "cirq_google/api/v2/program.pb.h"
 #include "tensorflow/core/lib/core/error_codes.pb.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
+#include "tensorflow_quantum/core/proto/program.pb.h"
 
 namespace tfq {
 
-using cirq::google::api::v2::Arg;
-using cirq::google::api::v2::Moment;
-using cirq::google::api::v2::Operation;
-using cirq::google::api::v2::Program;
-using cirq::google::api::v2::Qubit;
 using tensorflow::Status;
+using tfq::proto::Arg;
+using tfq::proto::Moment;
+using tfq::proto::Operation;
 using tfq::proto::PauliQubitPair;
 using tfq::proto::PauliSum;
 using tfq::proto::PauliTerm;
+using tfq::proto::Program;
+using tfq::proto::Qubit;
 
 Status RegisterQubits(
     const std::string& qb_string,

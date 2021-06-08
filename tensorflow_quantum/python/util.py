@@ -24,6 +24,7 @@ import tensorflow as tf
 import cirq
 
 from tensorflow_quantum.core.proto import pauli_sum_pb2
+from tensorflow_quantum.core.proto import program_pb2
 from tensorflow_quantum.core.serialize import serializer
 
 # Can't use set() since channels don't give proper support.
@@ -329,7 +330,7 @@ def _parse_single(item):
     try:
         if b'tfq_gate_set' in item:
             # Return a circuit parsing
-            obj = cirq.google.api.v2.program_pb2.Program()
+            obj = program_pb2.Program()
             obj.ParseFromString(item)
             out = serializer.deserialize_circuit(obj)
             return out

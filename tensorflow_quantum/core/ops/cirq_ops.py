@@ -22,6 +22,7 @@ import cirq
 
 from tensorflow_quantum.core.ops import batch_util
 from tensorflow_quantum.core.proto import pauli_sum_pb2
+from tensorflow_quantum.core.proto import program_pb2
 from tensorflow_quantum.core.serialize import serializer
 
 
@@ -108,7 +109,7 @@ def _batch_deserialize_helper(programs, symbol_names, symbol_values):
         program = program.numpy()
         values = values.numpy().astype(float)
 
-        circuit_proto = cirq.google.api.v2.program_pb2.Program()
+        circuit_proto = program_pb2.Program()
         circuit_proto.ParseFromString(program)
 
         circuit = serializer.deserialize_circuit(circuit_proto)
