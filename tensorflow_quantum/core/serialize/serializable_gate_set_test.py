@@ -21,7 +21,6 @@ from tensorflow_quantum.core.serialize import op_serializer, op_deserializer, \
     serializable_gate_set
 from tensorflow_quantum.core.proto import program_pb2
 
-
 X_SERIALIZER = op_serializer.GateOpSerializer(
     gate_type=cirq.XPowGate,
     serialized_gate_id='x_pow',
