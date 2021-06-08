@@ -59,13 +59,6 @@ http_archive(
 )
 
 http_archive(
-    name = "cirq",
-    sha256 = "9241bd0a31bfe294f76071884fcb053c63abf2b5d311e7b7f0f4e20537cc7c43",
-    strip_prefix = "Cirq-0.11.0/cirq-google",
-    urls = ["https://github.com/quantumlib/Cirq/archive/v0.11.0.zip"],
-)
-
-http_archive(
     name = "qsim",
     sha256 = "d39b9c48866ce4d6a095093ae8059444d649e851219497af99e937a74f1e9a45",
     strip_prefix = "qsim-0.9.2-dev-20210317",
