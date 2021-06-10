@@ -48,6 +48,8 @@ upper_tabs:
         path: /quantum/tutorials/barren_plateaus
       - title: "Quantum CNN"
         path: /quantum/tutorials/qcnn
+      - title: "Noise"
+        path: /quantum/tutorials/noise
       - title: "Research tools"
         path: /quantum/tutorials/research_tools
       - title: "Quantum reinforcement learning"
