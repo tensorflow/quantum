@@ -64,12 +64,14 @@ def _scalar_extractor(x):
         lhs_eval, rhs_eval = _parse_mul(expr)
 
         if isinstance(lhs_eval, sympy.Symbol) and isinstance(
-                rhs_eval, (sympy.core.numbers.Float, sympy.core.numbers.Integer)):
+                rhs_eval,
+            (sympy.core.numbers.Float, sympy.core.numbers.Integer)):
             # lhs contains symbol rhs contains number.
             return _round(float(rhs_eval))
 
         if isinstance(rhs_eval, sympy.Symbol) and isinstance(
-                lhs_eval, (sympy.core.numbers.Float, sympy.core.numbers.Integer)):
+                lhs_eval,
+            (sympy.core.numbers.Float, sympy.core.numbers.Integer)):
             # lhs contains number.
             return _round(float(lhs_eval))
 
@@ -94,12 +96,14 @@ def _symbol_extractor(x):
         lhs_eval, rhs_eval = _parse_mul(expr)
 
         if isinstance(lhs_eval, sympy.Symbol) and isinstance(
-                rhs_eval, (sympy.core.numbers.Float, sympy.core.numbers.Integer)):
+                rhs_eval,
+            (sympy.core.numbers.Float, sympy.core.numbers.Integer)):
             # lhs contains symbol rhs contains number.
             return lhs_eval
 
         if isinstance(rhs_eval, sympy.Symbol) and isinstance(
-                lhs_eval, (sympy.core.numbers.Float, sympy.core.numbers.Integer)):
+                lhs_eval,
+            (sympy.core.numbers.Float, sympy.core.numbers.Integer)):
             # lhs contains number.
             return rhs_eval
 
