@@ -73,7 +73,8 @@ infra_up () {
     --workload-pool=${PROJECT}.svc.id.goog   \
     --num-nodes=${NUM_NODES}   \
     --machine-type=${MACHINE_TYPE}   \
-    --zone=${ZONE}
+    --zone=${ZONE}   \
+    --preemptible
 
   gcloud iam service-accounts create ${SERVICE_ACCOUNT_NAME}
   gcloud iam service-accounts add-iam-policy-binding   \

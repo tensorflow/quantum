@@ -45,7 +45,7 @@ The following variables are used in commands below:
   * This is for storing Docker images. Other non-Google container registries recognized by Docker works as well.
 * Google Kubernetes Engine (GKE) setup: follow the quick start guide and stop before “Creating a GKE Cluster”: https://cloud.google.com/kubernetes-engine/docs/quickstart#local-shell
 * Create a GKE cluster
-  * `gcloud container clusters create ${CLUSTER_NAME} --workload-pool=${PROJECT}.svc.id.goog --num-nodes=${NUM_NODES} --machine-type=${MACHINE_TYPE}`
+  * `gcloud container clusters create ${CLUSTER_NAME} --workload-pool=${PROJECT}.svc.id.goog --num-nodes=${NUM_NODES} --machine-type=${MACHINE_TYPE} --zone=${ZONE} --preemptible`
 * Workload identity IAM commands:
   * This feature enables the binding between Kubernetes service accounts and Google Cloud service accounts.
   * `gcloud iam service-accounts create ${SERVICE_ACCOUNT_NAME}`
@@ -61,11 +61,14 @@ The following variables are used in commands below:
 ### Billable Resources
 * Container Registry ([pricing](https://cloud.google.com/container-registry/pricing))
 * Kubernetes Engine ([pricing](https://cloud.google.com/kubernetes-engine/pricing))
-  * Kubernetes Engine follows Compute Engine [pricing] for VMs in the cluster. Specifically, the following pricing is relevant for this tutorial:
+  * Kubernetes Engine follows Compute Engine [pricing](https://cloud.google.com/compute/all-pricing) for VMs in the cluster. Specifically, the following pricing is relevant for this tutorial:
     * [VM instance pricing](https://cloud.google.com/compute/vm-instance-pricing)
     * [Network pricing](https://cloud.google.com/vpc/network-pricing)
+      * The TensorBoard Service contains a [load balancer](https://cloud.google.com/vpc/network-pricing#lb) to serve external traffic.
     * [Disk and image pricing](https://cloud.google.com/compute/disks-image-pricing)
 * Cloud Storage ([pricing](https://cloud.google.com/storage/pricing))
+
+Prices can be estimated using the [Google Cloud Pricing Calculator](https://cloud.google.com/products/calculator)
 
 
 ## Run Training
