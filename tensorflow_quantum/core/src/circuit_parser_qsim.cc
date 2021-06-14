@@ -30,17 +30,17 @@ limitations under the License.
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_split.h"
 #include "absl/types/optional.h"
-#include "cirq_google/api/v2/program.pb.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
+#include "tensorflow_quantum/core/proto/program.pb.h"
 
 namespace tfq {
 
-using ::cirq::google::api::v2::Moment;
-using ::cirq::google::api::v2::Operation;
-using ::cirq::google::api::v2::Program;
 using ::tensorflow::Status;
+using ::tfq::proto::Moment;
+using ::tfq::proto::Operation;
 using ::tfq::proto::PauliTerm;
+using ::tfq::proto::Program;
 
 namespace {
 
@@ -61,7 +61,7 @@ inline Status ParseProtoArg(
                   "Could not find arg: " + arg_name + " in op.");
   }
   // find proto arg field.
-  // ::cirq::google::api::v2::Arg
+  // ::tfq::proto::Arg
   const auto proto_arg = arg_v->second;
   *result = proto_arg.arg_value().float_value();
   if (!proto_arg.symbol().empty()) {
@@ -878,7 +878,7 @@ Status QsimCircuitFromPauliTerm(
   Program measurement_program;
   SymbolMap empty_map;
   measurement_program.mutable_circuit()->set_scheduling_strategy(
-      cirq::google::api::v2::Circuit::MOMENT_BY_MOMENT);
+      tfq::proto::Circuit::MOMENT_BY_MOMENT);
   Moment* term_moment = measurement_program.mutable_circuit()->add_moments();
   for (const tfq::proto::PauliQubitPair& pair : term.paulis()) {
     Operation* new_op = term_moment->add_operations();
@@ -912,7 +912,7 @@ Status QsimZBasisCircuitFromPauliTerm(
   Program measurement_program;
   SymbolMap empty_map;
   measurement_program.mutable_circuit()->set_scheduling_strategy(
-      cirq::google::api::v2::Circuit::MOMENT_BY_MOMENT);
+      tfq::proto::Circuit::MOMENT_BY_MOMENT);
   Moment* term_moment = measurement_program.mutable_circuit()->add_moments();
   float transform_exponent = 0.0;
   std::string gate_type;

@@ -24,9 +24,9 @@ limitations under the License.
 #include "../qsim/lib/fuser.h"
 #include "../qsim/lib/gates_cirq.h"
 #include "absl/container/flat_hash_map.h"
-#include "cirq_google/api/v2/program.pb.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
+#include "tensorflow_quantum/core/proto/program.pb.h"
 
 namespace tfq {
 
@@ -68,7 +68,7 @@ struct GateMetaData {
 // ingests a Cirq Circuit proto and produces a resolved qsim Circuit,
 // as well as a fused circuit.
 tensorflow::Status QsimCircuitFromProgram(
-    const cirq::google::api::v2::Program& program,
+    const tfq::proto::Program& program,
     const absl::flat_hash_map<std::string, std::pair<int, float>>& param_map,
     const int num_qubits, qsim::Circuit<qsim::Cirq::GateCirq<float>>* circuit,
     std::vector<qsim::GateFused<qsim::Cirq::GateCirq<float>>>* fused_circuit,
@@ -81,7 +81,7 @@ tensorflow::Status QsimCircuitFromProgram(
 // Note: no metadata or fused circuits are produced as the qsim api for
 // 	noisy simulation appears to take care of a lot of this for us.
 tensorflow::Status NoisyQsimCircuitFromProgram(
-    const cirq::google::api::v2::Program& program,
+    const tfq::proto::Program& program,
     const absl::flat_hash_map<std::string, std::pair<int, float>>& param_map,
     const int num_qubits, const bool add_tmeasures,
     qsim::NoisyCircuit<qsim::Cirq::GateCirq<float>>* ncircuit);

@@ -7,11 +7,19 @@ licenses(["notice"])
 # Export for the PIP package.
 exports_files(["__init__.py"])
 
+proto_library(
+    name = "program_proto",
+    srcs = ["program.proto"]
+)
+
+py_proto_library(
+    name = "program_py_proto",
+    srcs = ["program.proto"],
+)
+
 cc_proto_library(
     name = "program_cc_proto",
-    deps = [
-        "@cirq//cirq_google/api/v2:program_proto",
-    ],
+    deps = [":program_proto"],
 )
 
 py_proto_library(
