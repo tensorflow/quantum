@@ -493,7 +493,8 @@ TEST(UtilQsimTest, AccumulateOperatorsBasic) {
   p_term_scratch2->set_coefficient_real(-5.0);
 
   // 0.5 * (0.123ZX -3X + 4I) + 0.25 * (-5I) applied onto psi.
-  (void)AccumulateOperators({p_sum, p_sum2}, {0.5, 0.25}, sim, ss, sv, scratch, dest);
+  (void)AccumulateOperators({p_sum, p_sum2}, {0.5, 0.25}, sim, ss, sv, scratch,
+                            dest);
 
   // Check that dest got accumulated onto.
   EXPECT_NEAR(ss.GetAmpl(dest, 0).real(), 0.577925, 1e-5);
