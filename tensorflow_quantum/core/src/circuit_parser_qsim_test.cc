@@ -1535,6 +1535,7 @@ TEST(QsimCircuitParserTest, NoisyEmpty) {
   Program program_proto;
   Circuit* circuit_proto = program_proto.mutable_circuit();
   circuit_proto->set_scheduling_strategy(circuit_proto->MOMENT_BY_MOMENT);
+  (void)circuit_proto->add_moments();
 
   NoisyQsimCircuit test_circuit;
   ASSERT_EQ(
