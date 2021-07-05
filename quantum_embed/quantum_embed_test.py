@@ -82,10 +82,12 @@ class QuantumEmbedTest(tf.test.TestCase):
                         data_out,
                         epochs=1)
 
-    def _run_one_convergence_test(self, coefficients, num_repetitions):
-        num_repetitions_input = 1
+    def _run_one_convergence_test(self,
+                                  coefficients,
+                                  num_repetitions=1,
+                                  num_repetitions_input=1,
+                                  num_unitary_layers=1):
         depth_input = 1
-        num_unitary_layers = 1
         num_examples = 70
 
         data_in = np.linspace(-np.pi, np.pi, num_examples, endpoint=False)
@@ -125,6 +127,15 @@ class QuantumEmbedTest(tf.test.TestCase):
         assert not self._run_one_convergence_test([(0.15, -np.pi / 5.0),
                                                    (0.6, np.pi / 3.0)],
                                                   num_repetitions=1)
+        # Same as above, but with another circuit architecture.
+        assert self._run_one_convergence_test([(0.1, -np.pi / 3.0),
+                                               (0.2, np.pi / 7.0)],
+                                              num_repetitions_input=2,
+                                              num_unitary_layers=2)
+        assert self._run_one_convergence_test([(0.15, -np.pi / 5.0),
+                                               (0.6, np.pi / 3.0)],
+                                              num_repetitions_input=2,
+                                              num_unitary_layers=2)
 
 
 if __name__ == "__main__":
