@@ -28,6 +28,44 @@ import quantum_embed
 class QuantumEmbedTest(tf.test.TestCase):
     """Tests for the QuantumEmbed layer."""
 
+    def _check_build_param_rotator(self, x, num_repetitions_input, expected):
+        depth_input = len(x)
+        qubits = [[cirq.GridQubit(i, j)
+                   for j in range(depth_input)]
+                  for i in range(num_repetitions_input)]
+        qe = quantum_embed.QuantumEmbed(qubits,
+                                        num_repetitions_input,
+                                        depth_input,
+                                        num_unitary_layers=1,
+                                        num_repetitions=1)
+        actual = list(qe.build_param_rotator(np.asarray(x)))
+        assert actual == expected
+
+    def test_build_param_rotator(self):
+        self._check_build_param_rotator(
+            [0.2016, 0.09, 0.13],
+            num_repetitions_input=1,
+            # (0, 0)     (0, 1)     (0, 2)
+            # │          │          │
+            # Rx(0.2016) Rx(0.09)   Rx(0.13)
+            # │          │          │
+            expected=[
+                cirq.Rx(rads=0.2016).on(cirq.GridQubit(0, 0)),
+                cirq.Rx(rads=0.09).on(cirq.GridQubit(0, 1)),
+                cirq.Rx(rads=0.13).on(cirq.GridQubit(0, 2))
+            ])
+        self._check_build_param_rotator(
+            [0.87539319],
+            num_repetitions_input=2,
+            # (0, 0)         (1, 0)
+            # │              │
+            # Rx(0.87539319) Rx(0.87539319)
+            # │              │
+            expected=[
+                cirq.Rx(rads=0.87539319).on(cirq.GridQubit(0, 0)),
+                cirq.Rx(rads=0.87539319).on(cirq.GridQubit(1, 0))
+            ])
+
     def _check_build_parametrized_unitary(self, depth_input, num_unitary_layers,
                                           expected):
         num_repetitions_input = 1
