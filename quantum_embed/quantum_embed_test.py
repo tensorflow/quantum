@@ -17,6 +17,7 @@ import cirq
 import math
 import numpy as np
 import pytest
+import sympy
 
 import tensorflow as tf
 from tensorflow_quantum.python import util
@@ -26,6 +27,157 @@ import quantum_embed
 
 class QuantumEmbedTest(tf.test.TestCase):
     """Tests for the QuantumEmbed layer."""
+
+    def _check_build_parametrized_unitary(self, depth_input, num_unitary_layers,
+                                          expected):
+        num_repetitions_input = 1
+        num_repetitions = 1
+
+        qubits = [[cirq.GridQubit(i, j)
+                   for j in range(depth_input)]
+                  for i in range(num_repetitions_input)]
+        qe = quantum_embed.QuantumEmbed(qubits, num_repetitions_input,
+                                        depth_input, num_unitary_layers,
+                                        num_repetitions)
+        actual = list(qe._build_parametrized_unitary(0))
+        assert actual == expected
+
+    def test_build_unitary(self):
+        self._check_build_parametrized_unitary(
+            depth_input=1,
+            num_unitary_layers=1,
+            # (0, 0)
+            # │
+            # Rz(theta_0_0_0_0_0)
+            # │
+            # Ry(theta_0_0_0_0_1)
+            # │
+            # Rz(theta_0_0_0_0_2)
+            expected=[
+                cirq.Rz(rads=sympy.Symbol('theta_0_0_0_0_0')).on(
+                    cirq.GridQubit(0, 0)),
+                cirq.Ry(rads=sympy.Symbol('theta_0_0_0_0_1')).on(
+                    cirq.GridQubit(0, 0)),
+                cirq.Rz(rads=sympy.Symbol('theta_0_0_0_0_2')).on(
+                    cirq.GridQubit(0, 0))
+            ])
+        self._check_build_parametrized_unitary(
+            depth_input=1,
+            num_unitary_layers=2,
+            # (0, 0)
+            # │
+            # Rz(theta_0_0_0_0_0)
+            # │
+            # Ry(theta_0_0_0_0_1)
+            # │
+            # Rz(theta_0_0_0_0_2)
+            # │
+            # Rz(theta_0_0_1_0_0)
+            # │
+            # Ry(theta_0_0_1_0_1)
+            # │
+            # Rz(theta_0_0_1_0_2)
+            # │
+            expected=[
+                cirq.Rz(rads=sympy.Symbol('theta_0_0_0_0_0')).on(
+                    cirq.GridQubit(0, 0)),
+                cirq.Ry(rads=sympy.Symbol('theta_0_0_0_0_1')).on(
+                    cirq.GridQubit(0, 0)),
+                cirq.Rz(rads=sympy.Symbol('theta_0_0_0_0_2')).on(
+                    cirq.GridQubit(0, 0)),
+                cirq.Rz(rads=sympy.Symbol('theta_0_0_1_0_0')).on(
+                    cirq.GridQubit(0, 0)),
+                cirq.Ry(rads=sympy.Symbol('theta_0_0_1_0_1')).on(
+                    cirq.GridQubit(0, 0)),
+                cirq.Rz(rads=sympy.Symbol('theta_0_0_1_0_2')).on(
+                    cirq.GridQubit(0, 0))
+            ])
+        self._check_build_parametrized_unitary(
+            depth_input=2,
+            num_unitary_layers=1,
+            # (0, 0)              (0, 1)
+            # │                   │
+            # Rz(theta_0_0_0_0_0) Rz(theta_0_1_0_0_0)
+            # │                   │
+            # Ry(theta_0_0_0_0_1) Ry(theta_0_1_0_0_1)
+            # │                   │
+            # Rz(theta_0_0_0_0_2) Rz(theta_0_1_0_0_2)
+            # │                   │
+            # @───────────────────X
+            # │                   │
+            # X───────────────────@
+            # │                   │
+            expected=[
+                cirq.Rz(rads=sympy.Symbol('theta_0_0_0_0_0')).on(
+                    cirq.GridQubit(0, 0)),
+                cirq.Ry(rads=sympy.Symbol('theta_0_0_0_0_1')).on(
+                    cirq.GridQubit(0, 0)),
+                cirq.Rz(rads=sympy.Symbol('theta_0_0_0_0_2')).on(
+                    cirq.GridQubit(0, 0)),
+                cirq.Rz(rads=sympy.Symbol('theta_0_1_0_0_0')).on(
+                    cirq.GridQubit(0, 1)),
+                cirq.Ry(rads=sympy.Symbol('theta_0_1_0_0_1')).on(
+                    cirq.GridQubit(0, 1)),
+                cirq.Rz(rads=sympy.Symbol('theta_0_1_0_0_2')).on(
+                    cirq.GridQubit(0, 1)),
+                cirq.CNOT(cirq.GridQubit(0, 0), cirq.GridQubit(0, 1)),
+                cirq.CNOT(cirq.GridQubit(0, 1), cirq.GridQubit(0, 0))
+            ])
+        self._check_build_parametrized_unitary(
+            depth_input=2,
+            num_unitary_layers=2,
+            # (0, 0)              (0, 1)
+            # │                   │
+            # Rz(theta_0_0_0_0_0) Rz(theta_0_1_0_0_0)
+            # │                   │
+            # Ry(theta_0_0_0_0_1) Ry(theta_0_1_0_0_1)
+            # │                   │
+            # Rz(theta_0_0_0_0_2) Rz(theta_0_1_0_0_2)
+            # │                   │
+            # @───────────────────X
+            # │                   │
+            # X───────────────────@
+            # │                   │
+            # Rz(theta_0_0_1_0_0) Rz(theta_0_1_1_0_0)
+            # │                   │
+            # Ry(theta_0_0_1_0_1) Ry(theta_0_1_1_0_1)
+            # │                   │
+            # Rz(theta_0_0_1_0_2) Rz(theta_0_1_1_0_2)
+            # │                   │
+            # @───────────────────X
+            # │                   │
+            # X───────────────────@
+            # │                   │
+            expected=[
+                cirq.Rz(rads=sympy.Symbol('theta_0_0_0_0_0')).on(
+                    cirq.GridQubit(0, 0)),
+                cirq.Ry(rads=sympy.Symbol('theta_0_0_0_0_1')).on(
+                    cirq.GridQubit(0, 0)),
+                cirq.Rz(rads=sympy.Symbol('theta_0_0_0_0_2')).on(
+                    cirq.GridQubit(0, 0)),
+                cirq.Rz(rads=sympy.Symbol('theta_0_1_0_0_0')).on(
+                    cirq.GridQubit(0, 1)),
+                cirq.Ry(rads=sympy.Symbol('theta_0_1_0_0_1')).on(
+                    cirq.GridQubit(0, 1)),
+                cirq.Rz(rads=sympy.Symbol('theta_0_1_0_0_2')).on(
+                    cirq.GridQubit(0, 1)),
+                cirq.CNOT(cirq.GridQubit(0, 0), cirq.GridQubit(0, 1)),
+                cirq.CNOT(cirq.GridQubit(0, 1), cirq.GridQubit(0, 0)),
+                cirq.Rz(rads=sympy.Symbol('theta_0_0_1_0_0')).on(
+                    cirq.GridQubit(0, 0)),
+                cirq.Ry(rads=sympy.Symbol('theta_0_0_1_0_1')).on(
+                    cirq.GridQubit(0, 0)),
+                cirq.Rz(rads=sympy.Symbol('theta_0_0_1_0_2')).on(
+                    cirq.GridQubit(0, 0)),
+                cirq.Rz(rads=sympy.Symbol('theta_0_1_1_0_0')).on(
+                    cirq.GridQubit(0, 1)),
+                cirq.Ry(rads=sympy.Symbol('theta_0_1_1_0_1')).on(
+                    cirq.GridQubit(0, 1)),
+                cirq.Rz(rads=sympy.Symbol('theta_0_1_1_0_2')).on(
+                    cirq.GridQubit(0, 1)),
+                cirq.CNOT(cirq.GridQubit(0, 0), cirq.GridQubit(0, 1)),
+                cirq.CNOT(cirq.GridQubit(0, 1), cirq.GridQubit(0, 0))
+            ])
 
     def _train(self, num_repetitions_input, depth_input, num_unitary_layers,
                num_repetitions, num_examples, data_in, data_out, epochs):
@@ -107,9 +259,12 @@ class QuantumEmbedTest(tf.test.TestCase):
                               data_out,
                               epochs=50)
 
-        return history.history['loss'][-1] < 1e-4
+        converged = history.history['loss'][-1] < 1e-4
+        return converged
 
     def test_convergence(self):
+        """Test that depending on the dimensions, whether we can fit perfectly."""
+
         # Single sine wave, one repetition -> Should converge.
         assert self._run_one_convergence_test([(0.456, -np.pi / 3.0)],
                                               num_repetitions=1)
