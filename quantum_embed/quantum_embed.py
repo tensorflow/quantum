@@ -61,14 +61,14 @@ class QuantumEmbed(tf.keras.layers.Layer):
             sympy.symbols(f'theta_{i}_{j}_{k}_{l}_{r}')
             for r in range(3)
         ]
-                          for l in range(self._num_repetitions)]
+                          for l in range(self._num_repetitions + 1)]
                          for k in range(self._num_unitary_layers)]
                         for j in range(self._depth_input)]
                        for i in range(self._num_repetitions_input)]
 
         model_circuits = []
         self._model_circuits = []
-        for l in range(num_repetitions):
+        for l in range(num_repetitions + 1):
             circuit = cirq.Circuit(self._build_parametrized_unitary(l))
             model_circuits.append(circuit)
             self._model_circuits.append(util.convert_to_tensor([circuit]))
@@ -130,12 +130,15 @@ class QuantumEmbed(tf.keras.layers.Layer):
 
         model_appended = tf.tile(util.convert_to_tensor([cirq.Circuit()]),
                                  [num_examples])
-        for model_circuit in self._model_circuits:
-            tiled_up_model = tf.tile(model_circuit, [num_examples])
-            model_appended = self._append_layer(model_appended,
-                                                append=data_circuits)
+        for l in range(self._num_repetitions):
+            tiled_up_model = tf.tile(self._model_circuits[l], [num_examples])
             model_appended = self._append_layer(model_appended,
                                                 append=tiled_up_model)
+            model_appended = self._append_layer(model_appended,
+                                                append=data_circuits)
+        tiled_up_model = tf.tile(self._model_circuits[-1], [num_examples])
+        model_appended = self._append_layer(model_appended,
+                                            append=tiled_up_model)
 
         tiled_up_parameters = tf.tile([self.parameters], [num_examples, 1])
         tiled_up_operators = tf.tile(self._operators, [num_examples, 1])
