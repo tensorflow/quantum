@@ -172,7 +172,7 @@ def _symlink_genrule_for_dir(
 
     genrule = _genrule(
         genrule_name,
-        " && ".join(command),
+        ";\n".join(command),
         "\n".join(outs),
     )
     return genrule
