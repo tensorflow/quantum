@@ -21,6 +21,7 @@ import sympy
 
 import tensorflow as tf
 from tensorflow_quantum.python import util
+from tensorflow_quantum.python.layers.circuit_executors import expectation
 
 import quantum_embed
 
@@ -227,7 +228,17 @@ class QuantumEmbedTest(tf.test.TestCase):
                                         num_repetitions)
 
         quantum_datum = tf.keras.Input(shape=(), dtype=tf.dtypes.string)
-        outputs = qe(quantum_datum)
+        model_appended = qe(quantum_datum)
+
+        batch_size = tf.gather(tf.shape(quantum_datum), 0)
+        operators = util.convert_to_tensor([[cirq.Z(qubits[0][0])]])
+        executor = expectation.Expectation(backend='noiseless',
+                                           differentiator=None)
+        tiled_up_operators = tf.tile(qe._operators, [batch_size, 1])
+
+        outputs = executor(model_appended,
+                           symbol_names=qe.symbols,
+                           operators=tiled_up_operators)
 
         model = tf.keras.Model(inputs=quantum_datum, outputs=outputs)
         model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.3),

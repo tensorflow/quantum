@@ -81,22 +81,6 @@ class QuantumEmbed(tf.keras.layers.Layer):
                 ])))
         self._symbols = tf.constant([str(x) for x in self._symbols_list])
 
-        # Set additional parameter controls.
-        self.initializer = tf.keras.initializers.get(
-            tf.keras.initializers.RandomUniform(0, 2 * np.pi))
-        self.regularizer = tf.keras.regularizers.get(None)
-        self.constraint = tf.keras.constraints.get(None)
-
-        # Weight creation is not placed in a Build function because the number
-        # of weights is independent of the input shape.
-        self.parameters = self.add_weight('parameters',
-                                          shape=self._symbols.shape,
-                                          initializer=self.initializer,
-                                          regularizer=self.regularizer,
-                                          constraint=self.constraint,
-                                          dtype=tf.float32,
-                                          trainable=True)
-
         self._operators = util.convert_to_tensor([[cirq.Z(qubits[0][0])]])
         self._executor = expectation.Expectation(backend='noiseless',
                                                  differentiator=None)
@@ -140,12 +124,7 @@ class QuantumEmbed(tf.keras.layers.Layer):
         model_appended = self._append_layer(model_appended,
                                             append=tiled_up_model)
 
-        tiled_up_parameters = tf.tile([self.parameters], [num_examples, 1])
-        tiled_up_operators = tf.tile(self._operators, [num_examples, 1])
-        return self._executor(model_appended,
-                              symbol_names=self._symbols,
-                              symbol_values=tiled_up_parameters,
-                              operators=tiled_up_operators)
+        return model_appended
 
     def build_param_rotator(self, x):
         assert x.shape == (self._depth_input,)
