@@ -1,10 +1,12 @@
 # EQ-GAN
-Minimal working example to recreate [EQ-GAN paper](https://arxiv.org/abs/2105.00080). Run:
+Minimal working example to recreate [EQ-GAN paper](https://arxiv.org/abs/2105.00080). For a tutorial on using the EQ-GAN to mitigate unknown device noise while learning a new quantum state, see `noise_suppression.ipynb`; for a tutorial on training a quantum neural network with a learned quantum random access memory, see `variational_qram.ipynb`. The latter tutorial includes an example of switching the backend between simulation and quantum hardware.
+
+To reproduce the main plots, run:
 `pip install tensorflow`
 `pip install tensorflow-quantum`
 `pip install gin-config`
 `pip install scikit-optimize`
-(Ensure you are choosing matching TF and TFQ versions)
+(Ensure you are choosing matching TF and TFQ versions.)
 
 
 If `run_and_save.use_perfect_swap = True`, an exact swap test is implemented for all iterations. If `run_and_save.use_perfect_swap = False`, an exact swap test is implemented for the first half of training, followed by an adversarial swap test with single-qubit Z rotations to correct noise. Running the code results in data with filename `out-perfect_swap-[suffix].npy` or `out-adversarial_swap-[suffix].npy`, where `[suffix]` is set by `run_and_save.save = [suffix]`. Once both files are generated, analyze with `python3 analyze.py [suffix]` to generate plots in `./plots/`.
