@@ -193,3 +193,7 @@ class SimulateMPS1DTest(tf.test.TestCase):
             symbol_names, symbol_values_array.astype(np.float64),
             util.convert_to_tensor([[x] for x in pauli_sums]))
         self.assertDTypeEqual(res, np.float32)
+
+
+if __name__ == "__main__":
+    tf.test.main()

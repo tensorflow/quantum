@@ -42,9 +42,9 @@ using ::tfq::proto::Program;
 typedef qsim::Cirq::GateCirq<float> QsimGate;
 typedef qsim::Circuit<QsimGate> QsimCircuit;
 
-class TfqSimulateExpectationOp : public tensorflow::OpKernel {
+class TfqSimulateMPS1DOp : public tensorflow::OpKernel {
  public:
-  explicit TfqSimulateExpectationOp(tensorflow::OpKernelConstruction* context)
+  explicit TfqSimulateMPS1DOp(tensorflow::OpKernelConstruction* context)
       : OpKernel(context) {}
 
   void Compute(tensorflow::OpKernelContext* context) override {
@@ -246,10 +246,10 @@ class TfqSimulateExpectationOp : public tensorflow::OpKernel {
 };
 
 REGISTER_KERNEL_BUILDER(
-    Name("TfqSimulateExpectation").Device(tensorflow::DEVICE_CPU),
-    TfqSimulateExpectationOp);
+    Name("TfqSimulateMPS1D").Device(tensorflow::DEVICE_CPU),
+    TfqSimulateMPS1DOp);
 
-REGISTER_OP("TfqSimulateExpectation")
+REGISTER_OP("TfqSimulateMPS1D")
     .Input("programs: string")
     .Input("symbol_names: string")
     .Input("symbol_values: float")
