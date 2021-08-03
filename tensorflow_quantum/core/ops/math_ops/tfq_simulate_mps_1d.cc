@@ -48,7 +48,12 @@ typedef qsim::Circuit<QsimGate> QsimCircuit;
 class TfqSimulateMPS1DOp : public tensorflow::OpKernel {
  public:
   explicit TfqSimulateMPS1DOp(tensorflow::OpKernelConstruction* context)
-      : OpKernel(context) {}
+      : OpKernel(context) {
+
+    // Get the bond dimension of MPS
+    // Checked that bond_dim is a positive integer in the Attr definition.
+    OP_REQUIRES_OK(context, context->GetAttr("bond_dim", &bond_dim_));
+  }
 
   void Compute(tensorflow::OpKernelContext* context) override {
     // TODO (mbbrough): add more dimension checks for other inputs here.
@@ -112,14 +117,6 @@ class TfqSimulateMPS1DOp : public tensorflow::OpKernel {
       max_num_qubits = std::max(max_num_qubits, num);
     }
 
-    // Get the bond dimension of MPS
-    OP_REQUIRES_OK(context,
-                   context->GetAttr("bond_dim", &bond_dim_));
-    // Check that bond_dim is a positive integer.
-    OP_REQUIRES(context, bond_dim_ >= 1,
-                errors::InvalidArgument("Need bond_dim >= 1, got ",
-                                        bond_dim_));
-
     // Cross reference with standard google cloud compute instances
     // Memory ~= 2 * num_threads * (2 * 64 * 2 ** num_qubits in circuits)
     // e2s2 = 2 CPU, 8GB -> Can safely do 25 since Memory = 4GB
@@ -152,8 +149,8 @@ class TfqSimulateMPS1DOp : public tensorflow::OpKernel {
     int largest_nq = 1;
     Simulator sim = Simulator(tfq_for);
     StateSpace ss = StateSpace(tfq_for);
-    auto sv = ss.CreateMPS(largest_nq, bond_dim);
-    auto scratch = ss.CreateMPS(largest_nq, bond_dim);
+    auto sv = ss.CreateMPS(largest_nq, bond_dim_);
+    auto scratch = ss.CreateMPS(largest_nq, bond_dim_);
 
     // Simulate programs one by one. Parallelizing over state vectors
     // we no longer parallelize over circuits. Each time we encounter a
@@ -211,8 +208,8 @@ class TfqSimulateMPS1DOp : public tensorflow::OpKernel {
 
       Simulator sim = Simulator(tfq_for);
       StateSpace ss = StateSpace(tfq_for);
-      auto sv = ss.CreateMPS(largest_nq, bond_dim);
-      auto scratch = ss.CreateMPS(largest_nq, bond_dim);
+      auto sv = ss.CreateMPS(largest_nq, bond_dim_);
+      auto scratch = ss.CreateMPS(largest_nq, bond_dim_);
       for (int i = start; i < end; i++) {
         cur_batch_index = i / output_dim_op_size;
         cur_op_index = i % output_dim_op_size;
@@ -270,7 +267,7 @@ REGISTER_OP("TfqSimulateMPS1D")
     .Input("symbol_values: float")
     .Input("pauli_sums: string")
     .Output("expectations: float")
-    .Attr("bond_dim: int")
+    .Attr("bond_dim: int >= 1 = 1")
     .SetShapeFn([](tensorflow::shape_inference::InferenceContext* c) {
       tensorflow::shape_inference::ShapeHandle programs_shape;
       TF_RETURN_IF_ERROR(c->WithRank(c->input(0), 1, &programs_shape));

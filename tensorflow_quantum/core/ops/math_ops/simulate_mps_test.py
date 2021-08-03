@@ -159,12 +159,27 @@ class SimulateMPS1DTest(tf.test.TestCase):
                 symbol_values_array)
             # pylint: enable=no-value-for-parameter
 
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'at least minimum 1'):
+            # pylint: disable=too-many-function-args
+            simulate_mps.mps_1d(
+                util.convert_to_tensor(circuit_batch), symbol_names,
+                symbol_values_array,
+                util.convert_to_tensor([[x] for x in pauli_sums]), 0)
+
+        with self.assertRaisesRegex(TypeError, 'Expected int'):
+            # bond_dim should be int.
+            simulate_mps.mps_1d(
+                util.convert_to_tensor(circuit_batch), symbol_names,
+                symbol_values_array,
+                util.convert_to_tensor([[x] for x in pauli_sums]), [])
+
         with self.assertRaisesRegex(TypeError, 'positional arguments'):
             # pylint: disable=too-many-function-args
             simulate_mps.mps_1d(
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 symbol_values_array,
-                util.convert_to_tensor([[x] for x in pauli_sums]), [])
+                util.convert_to_tensor([[x] for x in pauli_sums]), 1, [])
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     expected_regex='do not match'):

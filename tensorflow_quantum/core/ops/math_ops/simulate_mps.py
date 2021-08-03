@@ -20,7 +20,7 @@ from tensorflow_quantum.core.ops.load_module import load_module
 MATH_OP_MODULE = load_module(os.path.join("math_ops", "_tfq_math_ops.so"))
 
 
-def mps_1d(programs, symbol_names, symbol_values, pauli_sums):
+def mps_1d(programs, symbol_names, symbol_values, pauli_sums, bond_dim=1):
     """Calculate the expectation value of circuits wrt some operator(s)
 
     Args:
@@ -37,10 +37,14 @@ def mps_1d(programs, symbol_names, symbol_values, pauli_sums):
         pauli_sums: `tf.Tensor` of strings with shape [batch_size, n_ops]
             containing the string representation of the operators that will
             be used on all of the circuits in the expectation calculations.
+        bond_dim: `tf.Tensor` for an integer representing bond dimension
+            in this 1D MPS. This will create the following MPS:
+            [2, bond_dim], [bond_dim, 2, bond_dim] ... [bond_dim, 2]
     Returns:
         `tf.Tensor` with shape [batch_size, n_ops] that holds the
             expectation value for each circuit with each op applied to it
             (after resolving the corresponding parameters in).
     """
     return MATH_OP_MODULE.tfq_simulate_mps1d(
-        programs, symbol_names, tf.cast(symbol_values, tf.float32), pauli_sums)
+        programs, symbol_names, tf.cast(symbol_values, tf.float32), pauli_sums,
+        bond_dim=bond_dim)
