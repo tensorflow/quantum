@@ -58,6 +58,27 @@ http_archive(
     urls = ["https://github.com/bazelbuild/bazel-skylib/archive/2169ae1c374aab4a09aa90e65efe1a3aad4e279b.tar.gz"],
 )
 
+EIGEN_COMMIT = "12e8d57108c50d8a63605c6eb0144c838c128337"
+EIGEN_SHA256 = "f689246e342c3955af48d26ce74ac34d21b579a00675c341721a735937919b02"
+
+
+http_archive(
+    name = "eigen",
+    build_file_content = """
+cc_library(
+  name = "eigen3",
+  textual_hdrs = glob(["Eigen/**", "unsupported/**"]),
+  visibility = ["//visibility:public"],
+)
+    """,
+    sha256 = EIGEN_SHA256,
+        strip_prefix = "eigen-{commit}".format(commit = EIGEN_COMMIT),
+        urls = [
+            "https://storage.googleapis.com/mirror.tensorflow.org/gitlab.com/libeigen/eigen/-/archive/{commit}/eigen-{commit}.tar.gz".format(commit = EIGEN_COMMIT),
+            "https://gitlab.com/libeigen/eigen/-/archive/{commit}/eigen-{commit}.tar.gz".format(commit = EIGEN_COMMIT),
+        ],
+)
+
 http_archive(
     name = "qsim",
     sha256 = "9bc32249fe83120e0d427247c4e1d4ac330bc7922fd55396b17334e1b1254f9e",

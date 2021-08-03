@@ -19,6 +19,8 @@ limitations under the License.
 #include "../qsim/lib/circuit.h"
 #include "../qsim/lib/gate_appl.h"
 #include "../qsim/lib/gates_cirq.h"
+#include "../qsim/lib/mps_simulator.h"
+#include "../qsim/lib/mps_statespace.h"
 #include "../qsim/lib/seqfor.h"
 #include "../qsim/lib/simmux.h"
 #include "tensorflow/core/framework/op_kernel.h"

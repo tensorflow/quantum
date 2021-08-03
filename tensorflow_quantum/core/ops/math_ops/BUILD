@@ -66,7 +66,10 @@ cc_binary(
         "//tensorflow_quantum/core/src:adj_util",
         "//tensorflow_quantum/core/src:circuit_parser_qsim",
         "//tensorflow_quantum/core/src:util_qsim",
+        "@qsim//lib:mps_simulator",
+        "@qsim//lib:mps_statespace",
         "@qsim//lib:qsim_lib",
+        "@eigen//:eigen3",
         # tensorflow core framework
         # tensorflow core lib
         # tensorflow core protos
