@@ -178,7 +178,6 @@ tensorflow::Status ComputeExpectationQsim(const tfq::proto::PauliSum& p_sum,
   return status;
 }
 
-
 /**
  * Applies the given fused gate to the simulator state. Ignores measurement
  *   gates.
@@ -212,9 +211,8 @@ inline void ApplyFusedGateMPS(const Simulator& simulator, const Gate& gate,
 // values in memory to be set.
 template <typename SimT, typename StateSpaceT, typename StateT>
 tensorflow::Status ComputeExpectationMPS(const tfq::proto::PauliSum& p_sum,
-                                         const SimT& sim,
-                                         const StateSpaceT& ss, StateT& state,
-                                         StateT& scratch,
+                                         const SimT& sim, const StateSpaceT& ss,
+                                         StateT& state, StateT& scratch,
                                          float* expectation_value) {
   // apply the gates of the pauliterms to a copy of the state vector
   // and add up expectation value term by term.

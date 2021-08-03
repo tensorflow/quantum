@@ -20,7 +20,10 @@ from tensorflow_quantum.core.ops.load_module import load_module
 MATH_OP_MODULE = load_module(os.path.join("math_ops", "_tfq_math_ops.so"))
 
 
-def mps_1d_expectation(programs, symbol_names, symbol_values, pauli_sums,
+def mps_1d_expectation(programs,
+                       symbol_names,
+                       symbol_values,
+                       pauli_sums,
                        bond_dim=1):
     """Calculate the expectation value of circuits wrt some operator(s)
 
@@ -46,6 +49,10 @@ def mps_1d_expectation(programs, symbol_names, symbol_values, pauli_sums,
             expectation value for each circuit with each op applied to it
             (after resolving the corresponding parameters in).
     """
-    return MATH_OP_MODULE.tfq_simulate_mps1d_expectation(
-        programs, symbol_names, tf.cast(symbol_values, tf.float32), pauli_sums,
-        bond_dim=bond_dim)
+    return MATH_OP_MODULE.tfq_simulate_mps1d_expectation(programs,
+                                                         symbol_names,
+                                                         tf.cast(
+                                                             symbol_values,
+                                                             tf.float32),
+                                                         pauli_sums,
+                                                         bond_dim=bond_dim)

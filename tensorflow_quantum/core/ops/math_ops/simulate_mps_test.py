@@ -14,7 +14,6 @@
 # ==============================================================================
 """Tests that specifically target simulate_mps."""
 import numpy as np
-from absl.testing import parameterized
 import tensorflow as tf
 import cirq
 import sympy
@@ -38,13 +37,9 @@ class SimulateMPS1DTest(tf.test.TestCase):
                 cirq.Z(qubits[1]),
                 cirq.CNOT(qubits[2], qubits[3]),
                 cirq.Y(qubits[4])**sympy.Symbol(symbol_names[0]),
-            )
-            for _ in range(batch_size)
+            ) for _ in range(batch_size)
         ]
-        resolver_batch = [
-            {symbol_names[0]: 0.123}
-            for _ in range(batch_size)
-        ]
+        resolver_batch = [{symbol_names[0]: 0.123} for _ in range(batch_size)]
 
         symbol_values_array = np.array(
             [[resolver[symbol]

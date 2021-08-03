@@ -308,7 +308,6 @@ Status ResolveSymbols(
   return Status::OK();
 }
 
-
 Status CheckQubitsIn1D(std::vector<Program>* programs) {
   for (size_t i = 0; i < programs->size(); i++) {
     // Check if (1) there are only 1-qubit or 2-qubit gates.
@@ -328,7 +327,7 @@ Status CheckQubitsIn1D(std::vector<Program>* programs) {
                                                ->at("control_qubits")
                                                .arg_value()
                                                .string_value();
-        if (!control_qubits.empty()) { 
+        if (!control_qubits.empty()) {
           std::vector<absl::string_view> control_ids =
               absl::StrSplit(control_qubits, ',');
           num_control_qubits = control_ids.size();
@@ -344,13 +343,14 @@ Status CheckQubitsIn1D(std::vector<Program>* programs) {
           if (num_qubits == 2) {
             std::cout << "num qubits == 2" << std::endl;
             auto q = *operation.mutable_qubits();
-            std::vector<Qubit> qubits(q.begin(), q.end()) ;
+            std::vector<Qubit> qubits(q.begin(), q.end());
             qubit_id0 = qubits[0].id();
             qubit_id1 = qubits[1].id();
           } else if (num_qubits == 1) {
             std::cout << "num qubits == 1" << std::endl;
             qubit_id0 = (*operation.mutable_qubits())[0].id();
-            std::vector<absl::string_view> cq = absl::StrSplit(control_qubits, ',');
+            std::vector<absl::string_view> cq =
+                absl::StrSplit(control_qubits, ',');
             qubit_id1 = cq[0];
           }
           std::cout << qubit_id0 << ", " << qubit_id1 << std::endl;

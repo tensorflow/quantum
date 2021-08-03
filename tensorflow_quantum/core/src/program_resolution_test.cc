@@ -537,7 +537,6 @@ TEST(ProgramResolutionTest, CheckQubitsIn1DFailedByOpWithMoreThan2Qubits) {
                    "An operation contains more than two qubits."));
 }
 
-
 TEST(ProgramResolutionTest, CheckQubitsIn1DFailedByNot1DTopology) {
   std::vector<Program> programs;
   Program program_not_1d;

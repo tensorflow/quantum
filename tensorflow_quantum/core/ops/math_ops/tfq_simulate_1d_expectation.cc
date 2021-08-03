@@ -47,9 +47,9 @@ typedef qsim::Circuit<QsimGate> QsimCircuit;
 
 class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
  public:
-  explicit TfqSimulateMPS1DExpectationOp(tensorflow::OpKernelConstruction* context)
+  explicit TfqSimulateMPS1DExpectationOp(
+      tensorflow::OpKernelConstruction* context)
       : OpKernel(context) {
-
     // Get the bond dimension of MPS
     // Checked that bond_dim is a positive integer in the Attr definition.
     OP_REQUIRES_OK(context, context->GetAttr("bond_dim", &bond_dim_));
@@ -178,9 +178,8 @@ class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
           continue;
         }
         float exp_v = 0.0;
-        OP_REQUIRES_OK(context,
-                       ComputeExpectationMPS(pauli_sums[i][j], sim, ss, sv,
-                                             scratch, &exp_v));
+        OP_REQUIRES_OK(context, ComputeExpectationMPS(pauli_sums[i][j], sim, ss,
+                                                      sv, scratch, &exp_v));
         (*output_tensor)(i, j) = exp_v;
       }
     }
@@ -193,7 +192,8 @@ class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
       tensorflow::OpKernelContext* context,
       tensorflow::TTypes<float, 1>::Matrix* output_tensor) {
     const auto tfq_for = qsim::SequentialFor(1);
-    using Simulator = qsim::mps::MPSSimulator<const qsim::SequentialFor&, float>;
+    using Simulator =
+        qsim::mps::MPSSimulator<const qsim::SequentialFor&, float>;
     using StateSpace = Simulator::MPSStateSpace_;
 
     const int output_dim_op_size = output_tensor->dimension(1);
