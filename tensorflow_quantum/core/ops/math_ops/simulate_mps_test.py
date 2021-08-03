@@ -17,6 +17,7 @@ import numpy as np
 from absl.testing import parameterized
 import tensorflow as tf
 import cirq
+import sympy
 
 from tensorflow_quantum.core.ops.math_ops import simulate_mps
 from tensorflow_quantum.python import util
@@ -31,9 +32,19 @@ class SimulateMPS1DTest(tf.test.TestCase):
         batch_size = 5
         symbol_names = ['alpha']
         qubits = cirq.GridQubit.rect(1, n_qubits)
-        circuit_batch, resolver_batch = \
-            util.random_symbol_circuit_resolver_batch(
-                qubits, symbol_names, batch_size)
+        circuit_batch = [
+            cirq.Circuit(
+                cirq.X(qubits[0])**sympy.Symbol(symbol_names[0]),
+                cirq.Z(qubits[1]),
+                cirq.CNOT(qubits[2], qubits[3]),
+                cirq.Y(qubits[4])**sympy.Symbol(symbol_names[0]),
+            )
+            for _ in range(batch_size)
+        ]
+        resolver_batch = [
+            {symbol_names[0]: 0.123}
+            for _ in range(batch_size)
+        ]
 
         symbol_values_array = np.array(
             [[resolver[symbol]
@@ -114,13 +125,6 @@ class SimulateMPS1DTest(tf.test.TestCase):
                 symbol_values_array,
                 util.convert_to_tensor([[x] for x in new_pauli_sums]))
 
-        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
-                                    'Unparseable proto'):
-            # pauli_sums tensor has the right type but invalid values 2.
-            simulate_mps.mps_1d(
-                util.convert_to_tensor(circuit_batch), symbol_names,
-                symbol_values_array, [['junk']] * batch_size)
-
         with self.assertRaisesRegex(TypeError, 'Cannot convert'):
             # circuits tensor has the wrong type.
             simulate_mps.mps_1d(
@@ -185,6 +189,22 @@ class SimulateMPS1DTest(tf.test.TestCase):
             noisy_circuit = cirq.Circuit(cirq.depolarize(0.3).on_each(*qubits))
             simulate_mps.mps_1d(
                 util.convert_to_tensor([noisy_circuit for _ in pauli_sums]),
+                symbol_names, symbol_values_array,
+                util.convert_to_tensor([[x] for x in pauli_sums]))
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    expected_regex='not in 1D topology'):
+            # attempting to use a circuit not in 1D topology
+            # 0--1--2--3
+            #        \-4
+            circuit_not_1d = cirq.Circuit(
+                cirq.X(qubits[0])**sympy.Symbol(symbol_names[0]),
+                cirq.Z(qubits[1])**sympy.Symbol(symbol_names[0]),
+                cirq.CNOT(qubits[2], qubits[3]),
+                cirq.CNOT(qubits[2], qubits[4]),
+            )
+            simulate_mps.mps_1d(
+                util.convert_to_tensor([circuit_not_1d for _ in pauli_sums]),
                 symbol_names, symbol_values_array,
                 util.convert_to_tensor([[x] for x in pauli_sums]))
 

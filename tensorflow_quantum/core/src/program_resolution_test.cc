@@ -103,6 +103,58 @@ const std::string valid_symbol_program = R"(
   }
 )";
 
+/* Qubit topology:
+  1 -- 0 -- 2
+       |
+       |
+       3
+*/
+const std::string resolved_qubit_program_not_1d = R"(
+  circuit {
+    moments {
+      operations {
+        args {
+          key: "control_qubits"
+          value {
+            arg_value {
+              string_value: "0"
+            }
+          }
+        }
+        qubits {
+          id: "1"
+        }
+      }
+      operations {
+        args {
+          key: "control_qubits"
+          value {
+            arg_value {
+              string_value: "0"
+            }
+          }
+        }
+        qubits {
+          id: "2"
+        }
+      }
+      operations {
+        args {
+          key: "control_qubits"
+          value {
+            arg_value {
+              string_value: "0"
+            }
+          }
+        }
+        qubits {
+          id: "3"
+        }
+      }
+    }
+  }
+)";
+
 TEST(ProgramResolutionTest, ResolveQubitIdsValid) {
   Program program;
   unsigned int qubit_count;
@@ -467,6 +519,35 @@ TEST(ProgramResolutionTest, ResolveSymbolsStrictFull) {
                 .arg_value()
                 .float_value(),
             2.0);
+}
+
+TEST(ProgramResolutionTest, CheckQubitsIn1DEmpty) {
+  std::vector<Program> empty_programs;
+  EXPECT_EQ(CheckQubitsIn1D(&empty_programs), Status::OK());
+}
+
+TEST(ProgramResolutionTest, CheckQubitsIn1DFailedByOpWithMoreThan2Qubits) {
+  std::vector<Program> programs;
+  Program program_with_3qubit_op;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      valid_program, &program_with_3qubit_op));
+  programs.push_back(program_with_3qubit_op);
+  EXPECT_EQ(CheckQubitsIn1D(&programs),
+            Status(tensorflow::error::INVALID_ARGUMENT,
+                   "An operation contains more than two qubits."));
+}
+
+
+TEST(ProgramResolutionTest, CheckQubitsIn1DFailedByNot1DTopology) {
+  std::vector<Program> programs;
+  Program program_not_1d;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      resolved_qubit_program_not_1d, &program_not_1d));
+  programs.push_back(program_not_1d);
+  EXPECT_EQ(CheckQubitsIn1D(&programs),
+            Status(tensorflow::error::INVALID_ARGUMENT,
+                   "A program is not in 1D topology. It contains an"
+                   " operation with qubits not neighbors each other."));
 }
 
 }  // namespace

@@ -309,16 +309,16 @@ Status ResolveSymbols(
 }
 
 
-Status CheckQubitsIn1D(std::vector<Program*> programs) {
-  for (size_t i = 0; i < programs.size(); i++) {
+Status CheckQubitsIn1D(std::vector<Program>* programs) {
+  for (size_t i = 0; i < programs->size(); i++) {
     // Check if (1) there are only 1-qubit or 2-qubit gates.
     //          (2) each two qubit gate has neighbor qubits only.
-    if (programs.at(i)->circuit().moments().empty()) {
+    if (programs->at(i).circuit().moments().empty()) {
       return Status::OK();
     }
 
     for (Moment& moment :
-         *(programs.at(i))->mutable_circuit()->mutable_moments()) {
+         *(programs->at(i)).mutable_circuit()->mutable_moments()) {
       for (Operation& operation : *moment.mutable_operations()) {
         // Count the number of qubits in this operation.
         unsigned int num_qubits = operation.qubits_size();
@@ -342,20 +342,24 @@ Status CheckQubitsIn1D(std::vector<Program*> programs) {
           // Now the total number of qubits == 2
           absl::string_view qubit_id0, qubit_id1;
           if (num_qubits == 2) {
+            std::cout << "num qubits == 2" << std::endl;
             auto q = *operation.mutable_qubits();
             std::vector<Qubit> qubits(q.begin(), q.end()) ;
             qubit_id0 = qubits[0].id();
             qubit_id1 = qubits[1].id();
           } else if (num_qubits == 1) {
+            std::cout << "num qubits == 1" << std::endl;
             qubit_id0 = (*operation.mutable_qubits())[0].id();
             std::vector<absl::string_view> cq = absl::StrSplit(control_qubits, ',');
             qubit_id1 = cq[0];
           }
-          int idx0, idx1;
-          absl::SimpleAtoi(qubit_id0, &idx0);
-          absl::SimpleAtoi(qubit_id1, &idx1);
+          std::cout << qubit_id0 << ", " << qubit_id1 << std::endl;
+          unsigned int idx0, idx1;
+          (void)absl::SimpleAtoi(qubit_id0, &idx0);
+          (void)absl::SimpleAtoi(qubit_id1, &idx1);
           // Are the two qubits not neighbors?
-          if (std::abs(idx0 - idx1) > 1) {
+          std::cout << idx0 << ", " << idx1 << std::endl;
+          if (std::abs((int)idx0 - (int)idx1) > 1) {
             return Status(tensorflow::error::INVALID_ARGUMENT,
                           "A program is not in 1D topology. It contains an"
                           " operation with qubits not neighbors each other.");

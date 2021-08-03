@@ -178,6 +178,79 @@ tensorflow::Status ComputeExpectationQsim(const tfq::proto::PauliSum& p_sum,
   return status;
 }
 
+
+/**
+ * Applies the given fused gate to the simulator state. Ignores measurement
+ *   gates.
+ * @param simulator Simulator object. Provides specific implementations for
+ *   applying gates.
+ * @param gate The gate to be applied.
+ * @param state The state of the system, to be updated by this method.
+ */
+template <typename Simulator, typename Gate>
+inline void ApplyFusedGateMPS(const Simulator& simulator, const Gate& gate,
+                              typename Simulator::State& state) {
+  if (gate.kind != qsim::gate::kMeasurement) {
+    auto matrix = qsim::CalculateFusedMatrix<float>(gate);
+    if (gate.parent->controlled_by.size() == 0) {
+      simulator.ApplyGate(gate.qubits, matrix.data(), state);
+    } else {
+      simulator.ApplyControlledGate(gate.qubits, gate.parent->controlled_by,
+                                    gate.parent->cmask, matrix.data(), state);
+    }
+  }
+}
+
+// bad style standards here that we are forced to follow from qsim.
+// computes the expectation value <state | p_sum | state > using
+// scratch to save on memory. Implementation does this:
+// 1. Copy state onto scratch
+// 2. Evolve scratch forward with p_sum terms
+// 3. Compute < state | scratch >
+// 4. Sum and repeat.
+// scratch is required to have memory initialized, but does not require
+// values in memory to be set.
+template <typename SimT, typename StateSpaceT, typename StateT>
+tensorflow::Status ComputeExpectationMPS(const tfq::proto::PauliSum& p_sum,
+                                         const SimT& sim,
+                                         const StateSpaceT& ss, StateT& state,
+                                         StateT& scratch,
+                                         float* expectation_value) {
+  // apply the gates of the pauliterms to a copy of the state vector
+  // and add up expectation value term by term.
+  tensorflow::Status status = tensorflow::Status::OK();
+  for (const tfq::proto::PauliTerm& term : p_sum.terms()) {
+    // catch identity terms
+    if (term.paulis_size() == 0) {
+      *expectation_value += term.coefficient_real();
+      // TODO(zaqqwerty): error somewhere if identities have any imaginary part
+      continue;
+    }
+
+    QsimCircuit main_circuit;
+    std::vector<qsim::GateFused<QsimGate>> fused_circuit;
+
+    status = QsimCircuitFromPauliTerm(term, state.num_qubits(), &main_circuit,
+                                      &fused_circuit);
+
+    if (!status.ok()) {
+      return status;
+    }
+    // copy from src to scratch.
+    ss.CopyMPS(state, scratch);
+    for (const qsim::GateFused<QsimGate>& fused_gate : fused_circuit) {
+      ApplyFusedGateMPS(sim, fused_gate, scratch);
+    }
+
+    if (!status.ok()) {
+      return status;
+    }
+    *expectation_value +=
+        term.coefficient_real() * ss.InnerProduct(state, scratch).real();
+  }
+  return status;
+}
+
 // bad style standards here that we are forced to follow from qsim.
 // computes the expectation value <state | p_sum | state > using
 // scratch to save on memory. Implementation does this:

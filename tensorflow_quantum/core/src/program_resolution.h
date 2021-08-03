@@ -58,6 +58,9 @@ tensorflow::Status ResolveSymbols(
     const absl::flat_hash_map<std::string, std::pair<int, float>>& param_map,
     tfq::proto::Program* program, bool resolve_all = true);
 
+// Checks if the qubits are in 1D topology.
+tensorflow::Status CheckQubitsIn1D(std::vector<tfq::proto::Program>* programs);
+
 }  // namespace tfq
 
 #endif  // TFQ_CORE_SRC_PROGRAM_RESOLUTION
