@@ -56,7 +56,7 @@ class SimulateMPS1DTest(tf.test.TestCase):
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'programs must be rank 1'):
             # Circuit tensor has too many dimensions.
-            simulate_mps.mps_1d(
+            simulate_mps.mps_1d_expectation(
                 util.convert_to_tensor([circuit_batch]), symbol_names,
                 symbol_values_array,
                 util.convert_to_tensor([[x] for x in pauli_sums]))
@@ -64,7 +64,7 @@ class SimulateMPS1DTest(tf.test.TestCase):
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'symbol_names must be rank 1.'):
             # symbol_names tensor has too many dimensions.
-            simulate_mps.mps_1d(
+            simulate_mps.mps_1d_expectation(
                 util.convert_to_tensor(circuit_batch), np.array([symbol_names]),
                 symbol_values_array,
                 util.convert_to_tensor([[x] for x in pauli_sums]))
@@ -72,7 +72,7 @@ class SimulateMPS1DTest(tf.test.TestCase):
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'symbol_values must be rank 2.'):
             # symbol_values_array tensor has too many dimensions.
-            simulate_mps.mps_1d(
+            simulate_mps.mps_1d_expectation(
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 np.array([symbol_values_array]),
                 util.convert_to_tensor([[x] for x in pauli_sums]))
@@ -80,7 +80,7 @@ class SimulateMPS1DTest(tf.test.TestCase):
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'symbol_values must be rank 2.'):
             # symbol_values_array tensor has too few dimensions.
-            simulate_mps.mps_1d(
+            simulate_mps.mps_1d_expectation(
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 symbol_values_array[0],
                 util.convert_to_tensor([[x] for x in pauli_sums]))
@@ -88,14 +88,14 @@ class SimulateMPS1DTest(tf.test.TestCase):
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'pauli_sums must be rank 2.'):
             # pauli_sums tensor has too few dimensions.
-            simulate_mps.mps_1d(
+            simulate_mps.mps_1d_expectation(
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 symbol_values_array, util.convert_to_tensor(list(pauli_sums)))
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'pauli_sums must be rank 2.'):
             # pauli_sums tensor has too many dimensions.
-            simulate_mps.mps_1d(
+            simulate_mps.mps_1d_expectation(
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 symbol_values_array,
                 util.convert_to_tensor([[[x]] for x in pauli_sums]))
@@ -103,14 +103,14 @@ class SimulateMPS1DTest(tf.test.TestCase):
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'Unparseable proto'):
             # circuit tensor has the right type but invalid values.
-            simulate_mps.mps_1d(
+            simulate_mps.mps_1d_expectation(
                 ['junk'] * batch_size, symbol_names, symbol_values_array,
                 util.convert_to_tensor([[x] for x in pauli_sums]))
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'Could not find symbol in parameter map'):
             # symbol_names tensor has the right type but invalid values.
-            simulate_mps.mps_1d(
+            simulate_mps.mps_1d_expectation(
                 util.convert_to_tensor(circuit_batch), ['junk'],
                 symbol_values_array,
                 util.convert_to_tensor([[x] for x in pauli_sums]))
@@ -120,41 +120,41 @@ class SimulateMPS1DTest(tf.test.TestCase):
             # pauli_sums tensor has the right type but invalid values.
             new_qubits = [cirq.GridQubit(5, 5), cirq.GridQubit(9, 9)]
             new_pauli_sums = util.random_pauli_sums(new_qubits, 2, batch_size)
-            simulate_mps.mps_1d(
+            simulate_mps.mps_1d_expectation(
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 symbol_values_array,
                 util.convert_to_tensor([[x] for x in new_pauli_sums]))
 
         with self.assertRaisesRegex(TypeError, 'Cannot convert'):
             # circuits tensor has the wrong type.
-            simulate_mps.mps_1d(
+            simulate_mps.mps_1d_expectation(
                 [1.0] * batch_size, symbol_names, symbol_values_array,
                 util.convert_to_tensor([[x] for x in pauli_sums]))
 
         with self.assertRaisesRegex(TypeError, 'Cannot convert'):
             # symbol_names tensor has the wrong type.
-            simulate_mps.mps_1d(
+            simulate_mps.mps_1d_expectation(
                 util.convert_to_tensor(circuit_batch), [0.1234],
                 symbol_values_array,
                 util.convert_to_tensor([[x] for x in pauli_sums]))
 
         with self.assertRaisesRegex(tf.errors.UnimplementedError, ''):
             # symbol_values tensor has the wrong type.
-            simulate_mps.mps_1d(
+            simulate_mps.mps_1d_expectation(
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 [['junk']] * batch_size,
                 util.convert_to_tensor([[x] for x in pauli_sums]))
 
         with self.assertRaisesRegex(TypeError, 'Cannot convert'):
             # pauli_sums tensor has the wrong type.
-            simulate_mps.mps_1d(
+            simulate_mps.mps_1d_expectation(
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 symbol_values_array, [[1.0]] * batch_size)
 
         with self.assertRaisesRegex(TypeError, 'missing'):
             # we are missing an argument.
             # pylint: disable=no-value-for-parameter
-            simulate_mps.mps_1d(
+            simulate_mps.mps_1d_expectation(
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 symbol_values_array)
             # pylint: enable=no-value-for-parameter
@@ -162,21 +162,21 @@ class SimulateMPS1DTest(tf.test.TestCase):
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'at least minimum 1'):
             # pylint: disable=too-many-function-args
-            simulate_mps.mps_1d(
+            simulate_mps.mps_1d_expectation(
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 symbol_values_array,
                 util.convert_to_tensor([[x] for x in pauli_sums]), 0)
 
         with self.assertRaisesRegex(TypeError, 'Expected int'):
             # bond_dim should be int.
-            simulate_mps.mps_1d(
+            simulate_mps.mps_1d_expectation(
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 symbol_values_array,
                 util.convert_to_tensor([[x] for x in pauli_sums]), [])
 
         with self.assertRaisesRegex(TypeError, 'positional arguments'):
             # pylint: disable=too-many-function-args
-            simulate_mps.mps_1d(
+            simulate_mps.mps_1d_expectation(
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 symbol_values_array,
                 util.convert_to_tensor([[x] for x in pauli_sums]), 1, [])
@@ -184,7 +184,7 @@ class SimulateMPS1DTest(tf.test.TestCase):
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     expected_regex='do not match'):
             # wrong op size.
-            simulate_mps.mps_1d(
+            simulate_mps.mps_1d_expectation(
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 symbol_values_array,
                 util.convert_to_tensor([[x] for x in pauli_sums
@@ -193,7 +193,7 @@ class SimulateMPS1DTest(tf.test.TestCase):
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     expected_regex='do not match'):
             # wrong symbol_values size.
-            simulate_mps.mps_1d(
+            simulate_mps.mps_1d_expectation(
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 symbol_values_array[:int(batch_size * 0.5)],
                 util.convert_to_tensor([[x] for x in pauli_sums]))
@@ -202,7 +202,7 @@ class SimulateMPS1DTest(tf.test.TestCase):
                                     expected_regex='cirq.Channel'):
             # attempting to use noisy circuit.
             noisy_circuit = cirq.Circuit(cirq.depolarize(0.3).on_each(*qubits))
-            simulate_mps.mps_1d(
+            simulate_mps.mps_1d_expectation(
                 util.convert_to_tensor([noisy_circuit for _ in pauli_sums]),
                 symbol_names, symbol_values_array,
                 util.convert_to_tensor([[x] for x in pauli_sums]))
@@ -218,12 +218,12 @@ class SimulateMPS1DTest(tf.test.TestCase):
                 cirq.CNOT(qubits[2], qubits[3]),
                 cirq.CNOT(qubits[2], qubits[4]),
             )
-            simulate_mps.mps_1d(
+            simulate_mps.mps_1d_expectation(
                 util.convert_to_tensor([circuit_not_1d for _ in pauli_sums]),
                 symbol_names, symbol_values_array,
                 util.convert_to_tensor([[x] for x in pauli_sums]))
 
-        res = simulate_mps.mps_1d(
+        res = simulate_mps.mps_1d_expectation(
             util.convert_to_tensor([cirq.Circuit() for _ in pauli_sums]),
             symbol_names, symbol_values_array.astype(np.float64),
             util.convert_to_tensor([[x] for x in pauli_sums]))

@@ -45,9 +45,9 @@ using ::tfq::proto::Program;
 typedef qsim::Cirq::GateCirq<float> QsimGate;
 typedef qsim::Circuit<QsimGate> QsimCircuit;
 
-class TfqSimulateMPS1DOp : public tensorflow::OpKernel {
+class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
  public:
-  explicit TfqSimulateMPS1DOp(tensorflow::OpKernelConstruction* context)
+  explicit TfqSimulateMPS1DExpectationOp(tensorflow::OpKernelConstruction* context)
       : OpKernel(context) {
 
     // Get the bond dimension of MPS
@@ -258,10 +258,10 @@ class TfqSimulateMPS1DOp : public tensorflow::OpKernel {
 };
 
 REGISTER_KERNEL_BUILDER(
-    Name("TfqSimulateMPS1D").Device(tensorflow::DEVICE_CPU),
-    TfqSimulateMPS1DOp);
+    Name("TfqSimulateMPS1DExpectation").Device(tensorflow::DEVICE_CPU),
+    TfqSimulateMPS1DExpectationOp);
 
-REGISTER_OP("TfqSimulateMPS1D")
+REGISTER_OP("TfqSimulateMPS1DExpectation")
     .Input("programs: string")
     .Input("symbol_names: string")
     .Input("symbol_values: float")

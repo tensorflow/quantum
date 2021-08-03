@@ -17,7 +17,7 @@ cc_binary(
     srcs = [
         "tfq_inner_product.cc",
         "tfq_inner_product_grad.cc",
-        "tfq_simulate_mps_1d.cc",
+        "tfq_simulate_1d_expectation.cc",
     ],
     copts = select({
         ":windows": [
