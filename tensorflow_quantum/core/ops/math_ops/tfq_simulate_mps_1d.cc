@@ -112,7 +112,13 @@ class TfqSimulateMPS1DOp : public tensorflow::OpKernel {
       max_num_qubits = std::max(max_num_qubits, num);
     }
 
-    int bond_dim = 1;
+    // Get the bond dimension of MPS
+    OP_REQUIRES_OK(context,
+                   context->GetAttr("bond_dim", &bond_dim_));
+    // Check that bond_dim is a positive integer.
+    OP_REQUIRES(context, bond_dim_ >= 1,
+                errors::InvalidArgument("Need bond_dim >= 1, got ",
+                                        bond_dim_));
 
     // Cross reference with standard google cloud compute instances
     // Memory ~= 2 * num_threads * (2 * 64 * 2 ** num_qubits in circuits)
@@ -121,21 +127,22 @@ class TfqSimulateMPS1DOp : public tensorflow::OpKernel {
     // ...
     if (max_num_qubits >= 26 || programs.size() == 1) {
       ComputeLarge(num_qubits, fused_circuits, pauli_sums, context,
-                   &output_tensor, bond_dim);
+                   &output_tensor);
     } else {
       ComputeSmall(num_qubits, max_num_qubits, fused_circuits, pauli_sums,
-                   context, &output_tensor, bond_dim);
+                   context, &output_tensor);
     }
   }
 
  private:
+  int bond_dim_;
+
   void ComputeLarge(
       const std::vector<int>& num_qubits,
       const std::vector<std::vector<qsim::GateFused<QsimGate>>>& fused_circuits,
       const std::vector<std::vector<PauliSum>>& pauli_sums,
       tensorflow::OpKernelContext* context,
-      tensorflow::TTypes<float, 1>::Matrix* output_tensor,
-      const int bond_dim) {
+      tensorflow::TTypes<float, 1>::Matrix* output_tensor) {
     // Instantiate qsim objects.
     const auto tfq_for = tfq::QsimFor(context);
     using Simulator = qsim::mps::MPSSimulator<const tfq::QsimFor&, float>;
@@ -157,8 +164,8 @@ class TfqSimulateMPS1DOp : public tensorflow::OpKernel {
       if (nq > largest_nq) {
         // need to switch to larger statespace.
         largest_nq = nq;
-        sv = ss.CreateMPS(largest_nq, bond_dim);
-        scratch = ss.CreateMPS(largest_nq, bond_dim);
+        sv = ss.CreateMPS(largest_nq, bond_dim_);
+        scratch = ss.CreateMPS(largest_nq, bond_dim_);
       }
       // TODO: add heuristic here so that we do not always recompute
       //  the state if there is a possibility that circuit[i] and
@@ -187,8 +194,7 @@ class TfqSimulateMPS1DOp : public tensorflow::OpKernel {
       const std::vector<std::vector<qsim::GateFused<QsimGate>>>& fused_circuits,
       const std::vector<std::vector<PauliSum>>& pauli_sums,
       tensorflow::OpKernelContext* context,
-      tensorflow::TTypes<float, 1>::Matrix* output_tensor,
-      const int bond_dim) {
+      tensorflow::TTypes<float, 1>::Matrix* output_tensor) {
     const auto tfq_for = qsim::SequentialFor(1);
     using Simulator = qsim::mps::MPSSimulator<const qsim::SequentialFor&, float>;
     using StateSpace = Simulator::MPSStateSpace_;
@@ -224,8 +230,8 @@ class TfqSimulateMPS1DOp : public tensorflow::OpKernel {
           // Only compute a new state vector when we have to.
           if (nq > largest_nq) {
             largest_nq = nq;
-            sv = ss.CreateMPS(largest_nq, bond_dim);
-            scratch = ss.CreateMPS(largest_nq, bond_dim);
+            sv = ss.CreateMPS(largest_nq, bond_dim_);
+            scratch = ss.CreateMPS(largest_nq, bond_dim_);
           }
           // no need to update scratch_state since ComputeExpectation
           // will take care of things for us.
@@ -264,6 +270,7 @@ REGISTER_OP("TfqSimulateMPS1D")
     .Input("symbol_values: float")
     .Input("pauli_sums: string")
     .Output("expectations: float")
+    .Attr("bond_dim: int")
     .SetShapeFn([](tensorflow::shape_inference::InferenceContext* c) {
       tensorflow::shape_inference::ShapeHandle programs_shape;
       TF_RETURN_IF_ERROR(c->WithRank(c->input(0), 1, &programs_shape));
