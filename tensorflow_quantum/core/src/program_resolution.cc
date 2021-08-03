@@ -308,4 +308,64 @@ Status ResolveSymbols(
   return Status::OK();
 }
 
+
+Status CheckQubitsIn1D(std::vector<Program*> programs) {
+  for (size_t i = 0; i < programs.size(); i++) {
+    // Check if (1) there are only 1-qubit or 2-qubit gates.
+    //          (2) each two qubit gate has neighbor qubits only.
+    if (programs.at(i)->circuit().moments().empty()) {
+      return Status::OK();
+    }
+
+    for (Moment& moment :
+         *(programs.at(i))->mutable_circuit()->mutable_moments()) {
+      for (Operation& operation : *moment.mutable_operations()) {
+        // Count the number of qubits in this operation.
+        unsigned int num_qubits = operation.qubits_size();
+        // Count the number of control qubits.
+        unsigned int num_control_qubits = 0;
+        absl::string_view control_qubits = operation.mutable_args()
+                                               ->at("control_qubits")
+                                               .arg_value()
+                                               .string_value();
+        if (!control_qubits.empty()) { 
+          std::vector<absl::string_view> control_ids =
+              absl::StrSplit(control_qubits, ',');
+          num_control_qubits = control_ids.size();
+        }
+        if (num_qubits + num_control_qubits > 2) {
+          return Status(tensorflow::error::INVALID_ARGUMENT,
+                        "An operation contains more than two qubits.");
+        } else if (num_qubits + num_control_qubits == 1) {
+          continue;  // all 1-qubit gate is allowed for 1D
+        } else {
+          // Now the total number of qubits == 2
+          absl::string_view qubit_id0, qubit_id1;
+          if (num_qubits == 2) {
+            auto q = *operation.mutable_qubits();
+            std::vector<Qubit> qubits(q.begin(), q.end()) ;
+            qubit_id0 = qubits[0].id();
+            qubit_id1 = qubits[1].id();
+          } else if (num_qubits == 1) {
+            qubit_id0 = (*operation.mutable_qubits())[0].id();
+            std::vector<absl::string_view> cq = absl::StrSplit(control_qubits, ',');
+            qubit_id1 = cq[0];
+          }
+          int idx0, idx1;
+          absl::SimpleAtoi(qubit_id0, &idx0);
+          absl::SimpleAtoi(qubit_id1, &idx1);
+          // Are the two qubits not neighbors?
+          if (std::abs(idx0 - idx1) > 1) {
+            return Status(tensorflow::error::INVALID_ARGUMENT,
+                          "A program is not in 1D topology. It contains an"
+                          " operation with qubits not neighbors each other.");
+          }
+        }
+      }
+    }
+  }
+
+  return Status::OK();
+}
+
 }  // namespace tfq
