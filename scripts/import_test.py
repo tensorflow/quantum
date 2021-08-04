@@ -37,6 +37,7 @@ def test_imports():
     # Math ops.
     _ = tfq.math.inner_product
     _ = tfq.math.fidelity
+    _ = tfq.math.mps_1d_expectation
 
     # Noisy simulation ops.
     _ = tfq.noise.expectation
