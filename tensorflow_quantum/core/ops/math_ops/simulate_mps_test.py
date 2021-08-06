@@ -155,12 +155,12 @@ class SimulateMPS1DTest(tf.test.TestCase):
             # pylint: enable=no-value-for-parameter
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
-                                    'at least minimum 1'):
+                                    'at least minimum 2'):
             # pylint: disable=too-many-function-args
             simulate_mps.mps_1d_expectation(
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 symbol_values_array,
-                util.convert_to_tensor([[x] for x in pauli_sums]), 0)
+                util.convert_to_tensor([[x] for x in pauli_sums]), 1)
 
         with self.assertRaisesRegex(TypeError, 'Expected int'):
             # bond_dim should be int.
@@ -212,6 +212,23 @@ class SimulateMPS1DTest(tf.test.TestCase):
                 cirq.Z(qubits[1])**sympy.Symbol(symbol_names[0]),
                 cirq.CNOT(qubits[2], qubits[3]),
                 cirq.CNOT(qubits[2], qubits[4]),
+            )
+            simulate_mps.mps_1d_expectation(
+                util.convert_to_tensor([circuit_not_1d for _ in pauli_sums]),
+                symbol_names, symbol_values_array,
+                util.convert_to_tensor([[x] for x in pauli_sums]))
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    expected_regex='not in 1D topology'):
+            # attempting to use a circuit in 1D topology, which looks in 2D.
+            # 0--1
+            #  \-2-\
+            #    3--4  == 1--0--2--4--3
+            circuit_not_1d = cirq.Circuit(
+                cirq.CNOT(qubits[0], qubits[1]),
+                cirq.CNOT(qubits[0], qubits[2]),
+                cirq.CNOT(qubits[2], qubits[4]),
+                cirq.CNOT(qubits[3], qubits[4]),
             )
             simulate_mps.mps_1d_expectation(
                 util.convert_to_tensor([circuit_not_1d for _ in pauli_sums]),

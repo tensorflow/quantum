@@ -332,33 +332,31 @@ Status CheckQubitsIn1D(std::vector<Program>* programs) {
               absl::StrSplit(control_qubits, ',');
           num_control_qubits = control_ids.size();
         }
-        if (num_qubits + num_control_qubits > 2) {
-          return Status(tensorflow::error::INVALID_ARGUMENT,
-                        "An operation contains more than two qubits.");
-        } else if (num_qubits + num_control_qubits == 1) {
+        const int total_num_qubits = num_qubits + num_control_qubits;
+        if (total_num_qubits > 2) {
+          return Status(tensorflow::error::INVALID_ARGUMENT, absl::StrCat(
+                        "1D operations only support 1 and 2 qubit gates. "
+                        "Found: ", total_num_qubits, " qubit gate."));
+        } else if (total_num_qubits == 1) {
           continue;  // all 1-qubit gate is allowed for 1D
         } else {
           // Now the total number of qubits == 2
           absl::string_view qubit_id0, qubit_id1;
           if (num_qubits == 2) {
-            std::cout << "num qubits == 2" << std::endl;
             auto q = *operation.mutable_qubits();
             std::vector<Qubit> qubits(q.begin(), q.end());
             qubit_id0 = qubits[0].id();
             qubit_id1 = qubits[1].id();
           } else if (num_qubits == 1) {
-            std::cout << "num qubits == 1" << std::endl;
             qubit_id0 = (*operation.mutable_qubits())[0].id();
             std::vector<absl::string_view> cq =
                 absl::StrSplit(control_qubits, ',');
             qubit_id1 = cq[0];
           }
-          std::cout << qubit_id0 << ", " << qubit_id1 << std::endl;
           unsigned int idx0, idx1;
           (void)absl::SimpleAtoi(qubit_id0, &idx0);
           (void)absl::SimpleAtoi(qubit_id1, &idx1);
           // Are the two qubits not neighbors?
-          std::cout << idx0 << ", " << idx1 << std::endl;
           if (std::abs((int)idx0 - (int)idx1) > 1) {
             return Status(tensorflow::error::INVALID_ARGUMENT,
                           "A program is not in 1D topology. It contains an"

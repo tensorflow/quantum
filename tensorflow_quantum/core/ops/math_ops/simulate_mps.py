@@ -24,7 +24,7 @@ def mps_1d_expectation(programs,
                        symbol_names,
                        symbol_values,
                        pauli_sums,
-                       bond_dim=1):
+                       bond_dim=2):
     """Calculate the expectation value of circuits wrt some operator(s)
 
     Args:
@@ -44,6 +44,8 @@ def mps_1d_expectation(programs,
         bond_dim: `tf.Tensor` for an integer representing bond dimension
             in this 1D MPS. This will create the following MPS:
             [2, bond_dim], [bond_dim, 2, bond_dim] ... [bond_dim, 2]
+
+            By the definition in Qsim, the `bond_dim` should be >= 2.
     Returns:
         `tf.Tensor` with shape [batch_size, n_ops] that holds the
             expectation value for each circuit with each op applied to it

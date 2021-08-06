@@ -51,7 +51,7 @@ class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
       tensorflow::OpKernelConstruction* context)
       : OpKernel(context) {
     // Get the bond dimension of MPS
-    // Checked that bond_dim is a positive integer in the Attr definition.
+    // Checked that bond_dim is a positive integer >= 2 by QSim definition.
     OP_REQUIRES_OK(context, context->GetAttr("bond_dim", &bond_dim_));
   }
 
@@ -267,7 +267,7 @@ REGISTER_OP("TfqSimulateMPS1DExpectation")
     .Input("symbol_values: float")
     .Input("pauli_sums: string")
     .Output("expectations: float")
-    .Attr("bond_dim: int >= 1 = 1")
+    .Attr("bond_dim: int >= 2 = 2")
     .SetShapeFn([](tensorflow::shape_inference::InferenceContext* c) {
       tensorflow::shape_inference::ShapeHandle programs_shape;
       TF_RETURN_IF_ERROR(c->WithRank(c->input(0), 1, &programs_shape));
