@@ -80,7 +80,7 @@ http_archive(
 
 http_archive(
     name = "org_tensorflow",
-    sha256 = "e3d0ee227cc19bd0fa34a4539c8a540b40f937e561b4580d4bbb7f0e31c6a713",
+    sha256 = "2023a377a16e5566b8981400af9e8c8e25d3367d82824ffec2b5b6b9c7dba55d",
     strip_prefix = "tensorflow-2.5.1",
     urls = [
         "https://github.com/tensorflow/tensorflow/archive/refs/tags/v2.5.1.zip",
