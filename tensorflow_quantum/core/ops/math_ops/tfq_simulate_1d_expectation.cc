@@ -122,7 +122,7 @@ class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
     // e2s2 = 2 CPU, 8GB -> Can safely do 25 since Memory = 4GB
     // e2s4 = 4 CPU, 16GB -> Can safely do 25 since Memory = 8GB
     // ...
-    if (max_num_qubits >= 26 || programs.size() == 1) {
+    if (true || max_num_qubits >= 26 || programs.size() == 1) {
       ComputeLarge(num_qubits, fused_circuits, pauli_sums, context,
                    &output_tensor);
     } else {
@@ -178,8 +178,8 @@ class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
           continue;
         }
         float exp_v = 0.0;
-        OP_REQUIRES_OK(context, ComputeExpectationMPS(pauli_sums[i][j], sim, ss,
-                                                      sv, scratch, &exp_v));
+        // OP_REQUIRES_OK(context, ComputeExpectationMPS(pauli_sums[i][j], sim, ss,
+        //                                               sv, scratch, &exp_v));
         (*output_tensor)(i, j) = exp_v;
       }
     }
@@ -234,16 +234,16 @@ class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
           // will take care of things for us.
           ss.SetMPSZero(sv);
           for (int j = 0; j < fused_circuits[cur_batch_index].size(); j++) {
-            ApplyFusedGateMPS(sim, fused_circuits[cur_batch_index][j], sv);
+            //ApplyFusedGateMPS(sim, fused_circuits[cur_batch_index][j], sv);
           }
         }
 
         float exp_v = 0.0;
-        NESTED_FN_STATUS_SYNC(
-            compute_status,
-            ComputeExpectationMPS(pauli_sums[cur_batch_index][cur_op_index],
-                                  sim, ss, sv, scratch, &exp_v),
-            c_lock);
+        // NESTED_FN_STATUS_SYNC(
+        //     compute_status,
+        //     ComputeExpectationMPS(pauli_sums[cur_batch_index][cur_op_index],
+        //                           sim, ss, sv, scratch, &exp_v),
+        //     c_lock);
         (*output_tensor)(cur_batch_index, cur_op_index) = exp_v;
         old_batch_index = cur_batch_index;
       }

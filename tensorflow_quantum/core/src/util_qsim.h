@@ -200,6 +200,7 @@ inline void ApplyFusedGateMPS(const Simulator& simulator, const Gate& gate,
   }
 }
 
+// TODO(jaeyoo) : This should be removed after Qsim MPS methods are renamed.
 // bad style standards here that we are forced to follow from qsim.
 // computes the expectation value <state | p_sum | state > using
 // scratch to save on memory. Implementation does this:

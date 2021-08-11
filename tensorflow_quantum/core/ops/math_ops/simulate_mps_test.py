@@ -22,11 +22,11 @@ from tensorflow_quantum.core.ops.math_ops import simulate_mps
 from tensorflow_quantum.python import util
 
 
-class SimulateMPS1DTest(tf.test.TestCase):
-    """Tests mps_1d."""
+class SimulateMPS1DExpectationTest(tf.test.TestCase):
+    """Tests mps_1d_expectation."""
 
-    def test_simulate_mps_1d_inputs(self):
-        """Make sure that the mps_1d op fails gracefully on bad inputs."""
+    def test_simulate_mps_1d_expectation_inputs(self):
+        """Makes sure that the op fails gracefully on bad inputs."""
         n_qubits = 5
         batch_size = 5
         symbol_names = ['alpha']
@@ -241,6 +241,38 @@ class SimulateMPS1DTest(tf.test.TestCase):
             util.convert_to_tensor([[x] for x in pauli_sums]))
         self.assertDTypeEqual(res, np.float32)
 
+    def test_simulate_mps_1d_expectation_results(self):
+        """Makes sure that the op shows the same result with Cirq."""
+        n_qubits = 5
+        batch_size = 5
+        symbol_names = ['alpha']
+        qubits = cirq.GridQubit.rect(1, n_qubits)
+        circuit_batch = [
+            cirq.Circuit(
+                cirq.X(qubits[0])**sympy.Symbol(symbol_names[0]),
+                cirq.Z(qubits[1]),
+                cirq.CNOT(qubits[2], qubits[3]),
+                cirq.Y(qubits[4])**sympy.Symbol(symbol_names[0]),
+            ) for _ in range(batch_size)
+        ]
+        resolver_batch = [{symbol_names[0]: 0.123} for _ in range(batch_size)]
+
+        symbol_values_array = np.array(
+            [[resolver[symbol]
+              for symbol in symbol_names]
+             for resolver in resolver_batch])
+
+        pauli_sums = [cirq.Y(qubits[i]) for i in range(batch_size)]
+
+        cirq_result = [
+            cirq.Simulator().simulate_expectation_values(c, p, r)
+            for c, p, r in zip(circuit_batch, pauli_sums, resolver_batch)
+        ]
+        mps_result = simulate_mps.mps_1d_expectation(
+            util.convert_to_tensor(circuit_batch),
+            symbol_names, symbol_values_array,
+            util.convert_to_tensor([[x] for x in pauli_sums]))
+        self.assertAllClose(mps_result, cirq_result)
 
 if __name__ == "__main__":
     tf.test.main()
