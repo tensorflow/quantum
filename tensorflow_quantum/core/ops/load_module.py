@@ -15,6 +15,7 @@
 """Module to load python op libraries."""
 
 import os
+import sysconfig
 from distutils.sysconfig import get_python_lib
 
 from tensorflow.python.framework import load_library
@@ -43,4 +44,6 @@ def load_module(name):
     except:
         path = os.path.join(get_python_lib(), "tensorflow_quantum/core/ops",
                             name)
+        if not os.path.exists(path):
+          path = path.replace("python3/", f"python{sysconfig.get_python_version()}/")
         return load_library.load_op_library(path)
