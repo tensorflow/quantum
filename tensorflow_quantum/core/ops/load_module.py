@@ -43,8 +43,7 @@ def load_module(name):
         return load_library.load_op_library(path)
     except:
         path = os.path.join(get_python_lib(prefix="/usr/local"),
-                            "tensorflow_quantum/core/ops",
-                            name)
+                            "tensorflow_quantum/core/ops", name)
         if not os.path.exists(path):
             path = path.replace("python3/",
                                 f"python{sysconfig.get_python_version()}/")
