@@ -321,8 +321,15 @@ Status CheckQubitsIn1D(std::vector<Program>* programs) {
       for (Operation& operation : *moment.mutable_operations()) {
         // Count the number of qubits in this operation.
         unsigned int num_qubits = operation.qubits_size();
-        unsigned int num_control_qubits = operation.mutable_args()
-                                                   ->count("control_qubits");
+        unsigned int num_control_qubits = 0;
+        if (operation.args().find("control_qubits") != operation.args().end()) {
+          absl::string_view control_qubits = operation.mutable_args()
+                                                      ->at("control_qubits")
+                                                      .arg_value()
+                                                      .string_value();
+          std::vector<absl::string_view> control_ids = absl::StrSplit(control_qubits, ',');
+          num_control_qubits = control_ids.size();
+        }
         const int total_num_qubits = num_qubits + num_control_qubits;
         if (total_num_qubits > 2) {
           return Status(tensorflow::error::INVALID_ARGUMENT, absl::StrCat(

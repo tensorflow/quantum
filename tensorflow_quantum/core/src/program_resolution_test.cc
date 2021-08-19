@@ -541,6 +541,18 @@ TEST(ProgramResolutionTest, CheckQubitsIn1DFailedByOpWithMoreThan2Qubits) {
                    "Found: 3 qubit gate."));
 }
 
+TEST(ProgramResolutionTest, CheckQubitsIn1DFailedByOpWithMoreThan2QubitsOnControlQubits) {
+  std::vector<Program> programs;
+  Program program_with_3qubit_op;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      valid_program, &program_with_3qubit_op));
+  programs.push_back(program_with_3qubit_op);
+  EXPECT_EQ(CheckQubitsIn1D(&programs),
+            Status(tensorflow::error::INVALID_ARGUMENT,
+                   "1D operations only support 1 and 2 qubit gates. "
+                   "Found: 3 qubit gate."));
+}
+
 TEST(ProgramResolutionTest, CheckQubitsIn1DFailedByNot1DTopology) {
   std::vector<Program> programs;
   Program program_not_1d;
