@@ -79,7 +79,8 @@ void CreateHessianCircuit(
       // Process potentially several symbols.
       bool symbolic_pexp = false;
       bool symbolic_exp = false;
-      for (std::vector<std::basic_string<char> >::size_type j = 0; j < metadata[i].symbol_values.size(); j++) {
+      for (std::vector<std::basic_string<char>>::size_type j = 0;
+           j < metadata[i].symbol_values.size(); j++) {
         if (metadata[i].placeholder_names[j] ==
             GateParamNames::kPhaseExponent) {
           symbolic_pexp = true;

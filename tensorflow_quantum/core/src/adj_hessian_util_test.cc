@@ -201,21 +201,21 @@ TEST(AdjHessianUtilTest, CreateHessianPhasedX) {
 
   GradientOfGate tmp;
   PopulateHessianPhasedXPhasedExponent("TheSymbol", 0, 0, 1.0, 1.0, 2.0, 1.0,
-                                        3.0, &tmp);
+                                       3.0, &tmp);
 
   Matrix2Equal(tmp.grad_gates[0].matrix, grad_gates[0].grad_gates[0].matrix,
                1e-4);
 
   GradientOfGate tmp2;
   PopulateHessianPhasedXExponent("TheSymbol2", 0, 0, 1.0, 1.0, 2.0, 1.0, 3.0,
-                                  &tmp2);
+                                 &tmp2);
 
   Matrix2Equal(tmp2.grad_gates[0].matrix, grad_gates[0].grad_gates[1].matrix,
                1e-4);
 
   GradientOfGate tmp3;
   PopulateHessianPhasedXExponent("TheSymbol31", 0, 0, 1.0, 1.0, 2.0, 1.0, 3.0,
-                                  &tmp2);
+                                 &tmp2);
 
   Matrix2Equal(tmp2.grad_gates[0].matrix, grad_gates[0].grad_gates[1].matrix,
                1e-4);
@@ -266,14 +266,14 @@ TEST(AdjHessianUtilTest, CreateHessianPhasedISwap) {
 
   GradientOfGate tmp;
   PopulateHessianPhasedISwapPhasedExponent("TheSymbol", 0, 0, 1, 1.0, 1.0, 2.0,
-                                            1.0, &tmp);
+                                           1.0, &tmp);
 
   Matrix4Equal(tmp.grad_gates[0].matrix, grad_gates[0].grad_gates[0].matrix,
                3e-2);
 
   GradientOfGate tmp2;
   PopulateHessianPhasedISwapExponent("TheSymbol2", 0, 0, 1, 1.0, 1.0, 2.0, 1.0,
-                                      &tmp2);
+                                     &tmp2);
 
   Matrix4Equal(tmp2.grad_gates[0].matrix, grad_gates[0].grad_gates[1].matrix,
                3e-2);
@@ -368,7 +368,7 @@ TEST(AdjHessianUtilTest, SingleEigenGrad) {
   GradientOfGate grad;
 
   PopulateHessianSingleEigen(&qsim::Cirq::YPowGate<float>::Create, "hello", 5,
-                              2, 0.125, 1.0, 0.0, &grad);
+                             2, 0.125, 1.0, 0.0, &grad);
 
   // Value verified from:
   /*
@@ -379,8 +379,8 @@ TEST(AdjHessianUtilTest, SingleEigenGrad) {
   array([[-4.55878779-1.88831173j,  1.88831173-4.55878779j],
          [-1.88831173+4.55878779j, -4.55878779-1.88831173j]])
   */
-  std::vector<float> expected{-4.558788 , -1.8883117,  1.8883117, -4.558788 , -1.8883117,
-        4.558788 , -4.558788 , -1.8883117};
+  std::vector<float> expected{-4.558788,  -1.8883117, 1.8883117, -4.558788,
+                              -1.8883117, 4.558788,   -4.558788, -1.8883117};
 
   EXPECT_EQ(grad.index, 5);
   EXPECT_EQ(grad.params[0], "hello");
@@ -391,7 +391,7 @@ TEST(AdjHessianUtilTest, TwoEigenGrad) {
   GradientOfGate grad;
 
   PopulateHessianTwoEigen(&qsim::Cirq::XXPowGate<float>::Create, "hi", 5, 2, 3,
-                           0.001, 1.0, 0.0, &grad);
+                          0.001, 1.0, 0.0, &grad);
 
   // Value verified from:
   /*
@@ -408,13 +408,13 @@ TEST(AdjHessianUtilTest, TwoEigenGrad) {
            [ 0.00049348+1.55031128e-06j,  0.        +0.00000000e+00j,
              0.        +0.00000000e+00j, -0.00049348-1.55031128e-06j]])
   */
-  std::vector<float> expected{-4.934372  , -0.01550184,  0.        ,  0.        ,  0.        ,
-        0.        ,  4.934372  ,  0.01550184,  0.        ,  0.        ,
-       -4.934372  , -0.01550184,  4.934372  ,  0.01550184,  0.        ,
-        0.        ,  0.        ,  0.        ,  4.934372  ,  0.01550184,
-       -4.934372  , -0.01550184,  0.        ,  0.        ,  4.934372  ,
-        0.01550184,  0.        ,  0.        ,  0.        ,  0.        ,
-       -4.934372  , -0.01550184};
+  std::vector<float> expected{
+      -4.934372, -0.01550184, 0.,        0.,          0.,        0.,
+      4.934372,  0.01550184,  0.,        0.,          -4.934372, -0.01550184,
+      4.934372,  0.01550184,  0.,        0.,          0.,        0.,
+      4.934372,  0.01550184,  -4.934372, -0.01550184, 0.,        0.,
+      4.934372,  0.01550184,  0.,        0.,          0.,        0.,
+      -4.934372, -0.01550184};
 
   EXPECT_EQ(grad.index, 5);
   EXPECT_EQ(grad.params[0], "hi");
@@ -425,17 +425,18 @@ TEST(AdjHessianUtilTest, PhasedXPhasedExponent) {
   GradientOfGate grad;
 
   PopulateHessianPhasedXPhasedExponent("hello2", 5, 2, 0.001, 1.0, 1.0, 1.0,
-                                        0.0, &grad);
+                                       0.0, &grad);
   /* Value verified from:
   (cirq.unitary(cirq.PhasedXPowGate(exponent=1.0,phase_exponent=0.001 + 1e-2))
-    + cirq.unitary(cirq.PhasedXPowGate(exponent=1.0,phase_exponent=0.001 - 1e-2))
+    + cirq.unitary(cirq.PhasedXPowGate(exponent=1.0,phase_exponent=0.001 -
+  1e-2))
     - cirq.unitary(cirq.PhasedXPowGate(exponent=1.0,phase_exponent=0.001))
-    - cirq.unitary(cirq.PhasedXPowGate(exponent=1.0,phase_exponent=0.001))) * 1e4
-    array([[ 0.        +0.j        , -9.86874398+0.03100368j],
+    - cirq.unitary(cirq.PhasedXPowGate(exponent=1.0,phase_exponent=0.001))) *
+  1e4 array([[ 0.        +0.j        , -9.86874398+0.03100368j],
            [-9.86874398-0.03100368j,  0.        +0.j        ]])
   */
-  std::vector<float> expected{0.        ,  0.        , -9.868744  ,  0.03100368, -9.868744  ,
-       -0.03100368,  0.        ,  0.       };
+  std::vector<float> expected{0.,        0.,          -9.868744, 0.03100368,
+                              -9.868744, -0.03100368, 0.,        0.};
 
   EXPECT_EQ(grad.index, 5);
   EXPECT_EQ(grad.params[0], "hello2");
@@ -446,17 +447,18 @@ TEST(AdjHessianUtilTest, PhasedXExponent) {
   GradientOfGate grad;
 
   PopulateHessianPhasedXExponent("hello3", 5, 2, 10.123, 1.0, 0.789, 1.0, 0.0,
-                                  &grad);
+                                 &grad);
   /* Value verified from:
   (cirq.unitary(cirq.PhasedXPowGate(exponent=0.789+1e-2,phase_exponent=10.123))
-    + cirq.unitary(cirq.PhasedXPowGate(exponent=0.789-1e-2,phase_exponent=10.123))
+    +
+  cirq.unitary(cirq.PhasedXPowGate(exponent=0.789-1e-2,phase_exponent=10.123))
     - cirq.unitary(cirq.PhasedXPowGate(exponent=0.789,phase_exponent=10.123))
-    - cirq.unitary(cirq.PhasedXPowGate(exponent=0.789,phase_exponent=10.123))) * 1e4
-    array([[ 3.88941758-3.03656025j, -2.45824276+4.2784705j ],
+    - cirq.unitary(cirq.PhasedXPowGate(exponent=0.789,phase_exponent=10.123))) *
+  1e4 array([[ 3.88941758-3.03656025j, -2.45824276+4.2784705j ],
            [-4.74702582+1.34685303j,  3.88941758-3.03656025j]])
   */
-  std::vector<float> expected{3.8894176, -3.0365603, -2.4582427,  4.2784705, -4.747026 ,
-        1.346853 ,  3.8894176, -3.0365603};
+  std::vector<float> expected{3.8894176, -3.0365603, -2.4582427, 4.2784705,
+                              -4.747026, 1.346853,   3.8894176,  -3.0365603};
 
   EXPECT_EQ(grad.index, 5);
   EXPECT_EQ(grad.params[0], "hello3");
@@ -465,19 +467,25 @@ TEST(AdjHessianUtilTest, PhasedXExponent) {
 
 TEST(AdjHessianUtilTest, CrossTermPhasedXPhasedExponentExponent) {
   GradientOfGate grad;
-  // Symbol is always `kUsePrevTwoSymbols`, so this has no input argument for it.
-  PopulateCrossTermPhasedXPhasedExponentExponent(5, 2, 10.123, 1.0, 0.789, 1.0, 0.0,
-                                  &grad);
+  // Symbol is always `kUsePrevTwoSymbols`, so this has no input argument for
+  // it.
+  PopulateCrossTermPhasedXPhasedExponentExponent(5, 2, 10.123, 1.0, 0.789, 1.0,
+                                                 0.0, &grad);
   /* Value verified from:
   (cirq.unitary(cirq.PhasedXPowGate(exponent=0.789+5e-3,phase_exponent=10.123+5e-3))
-    + cirq.unitary(cirq.PhasedXPowGate(exponent=0.789-5e-3,phase_exponent=10.123-5e-3))
-    - cirq.unitary(cirq.PhasedXPowGate(exponent=0.789+5e-3,phase_exponent=10.123-5e-3))
-    - cirq.unitary(cirq.PhasedXPowGate(exponent=0.789-5e-3,phase_exponent=10.123+5e-3))) * 1e4
-    array([[ 0.00000000e+00+5.55111512e-13j,  2.45824276e+00-4.27847050e+00j],
+    +
+  cirq.unitary(cirq.PhasedXPowGate(exponent=0.789-5e-3,phase_exponent=10.123-5e-3))
+    -
+  cirq.unitary(cirq.PhasedXPowGate(exponent=0.789+5e-3,phase_exponent=10.123-5e-3))
+    -
+  cirq.unitary(cirq.PhasedXPowGate(exponent=0.789-5e-3,phase_exponent=10.123+5e-3)))
+  * 1e4 array([[
+  0.00000000e+00+5.55111512e-13j,  2.45824276e+00-4.27847050e+00j],
            [-4.74702582e+00+1.34685303e+00j,  2.77555756e-13+5.55111512e-13j]])
   */
-  std::vector<float> expected{0.0000000e+00,  5.5511151e-13,  2.4582427e+00, -4.2784705e+00,
-       -4.7470260e+00,  1.3468530e+00,  2.7755576e-13,  5.5511151e-13};
+  std::vector<float> expected{0.0000000e+00,  5.5511151e-13,  2.4582427e+00,
+                              -4.2784705e+00, -4.7470260e+00, 1.3468530e+00,
+                              2.7755576e-13,  5.5511151e-13};
 
   EXPECT_EQ(grad.index, 5);
   EXPECT_EQ(grad.params[0], kUsePrevTwoSymbols);
@@ -489,9 +497,9 @@ TEST(AdjHessianUtilTest, FSimThetaGrad) {
   PopulateHessianFsimTheta("hihi", 5, 2, 3, 0.5, 1.0, 1.2, 1.0, &grad);
 
   /* Value verified from:
-  (cirq.unitary(cirq.FSimGate(theta=0.5 + 1e-2,phi=1.2)) 
+  (cirq.unitary(cirq.FSimGate(theta=0.5 + 1e-2,phi=1.2))
     + cirq.unitary(cirq.FSimGate(theta=0.5-1e-2,phi=1.2))
-    - cirq.unitary(cirq.FSimGate(theta=0.5,phi=1.2)) 
+    - cirq.unitary(cirq.FSimGate(theta=0.5,phi=1.2))
     - cirq.unitary(cirq.FSimGate(theta=0.5,phi=1.2))) * 1e4
     array([[ 0.        +0.j        ,  0.        +0.j        ,
              0.        +0.j        ,  0.        +0.j        ],
@@ -503,14 +511,10 @@ TEST(AdjHessianUtilTest, FSimThetaGrad) {
             0.        +0.j        ,  0.        +0.j        ]])
   */
   std::vector<float> expected{
-        0.        ,  0.        ,  0.        ,  0.        ,  0.        ,
-        0.        ,  0.        ,  0.        ,  0.        ,  0.        ,
-       -0.8775753 ,  0.        ,  0.        ,  0.47942156,  0.        ,
-        0.        ,  0.        ,  0.        ,  0.        ,  0.47942156,
-       -0.8775753 ,  0.        ,  0.        ,  0.        ,  0.        ,
-        0.        ,  0.        ,  0.        ,  0.        ,  0.        ,
-        0.        ,  0.       
-  };
+      0., 0., 0.,         0.,         0.,         0.,         0., 0.,
+      0., 0., -0.8775753, 0.,         0.,         0.47942156, 0., 0.,
+      0., 0., 0.,         0.47942156, -0.8775753, 0.,         0., 0.,
+      0., 0., 0.,         0.,         0.,         0.,         0., 0.};
 
   EXPECT_EQ(grad.index, 5);
   EXPECT_EQ(grad.params[0], "hihi");
@@ -522,9 +526,9 @@ TEST(AdjHessianUtilTest, FSimPhiGrad) {
   PopulateHessianFsimPhi("hihi2", 5, 2, 3, 0.5, 1.0, 1.2, 1.0, &grad);
 
   /*
-  (cirq.unitary(cirq.FSimGate(theta=0.5,phi=1.2+1e-2)) 
+  (cirq.unitary(cirq.FSimGate(theta=0.5,phi=1.2+1e-2))
     + cirq.unitary(cirq.FSimGate(theta=0.5,phi=1.2-1e-2))
-    - cirq.unitary(cirq.FSimGate(theta=0.5,phi=1.2)) 
+    - cirq.unitary(cirq.FSimGate(theta=0.5,phi=1.2))
     - cirq.unitary(cirq.FSimGate(theta=0.5,phi=1.2))) * 1e4
   array([[ 0.        +0.j        ,  0.        +0.j        ,
            0.        +0.j        ,  0.        +0.j        ],
@@ -535,14 +539,10 @@ TEST(AdjHessianUtilTest, FSimPhiGrad) {
          [ 0.        +0.j        ,  0.        +0.j        ,
            0.        +0.j        , -0.36235473+0.93203132j]])
   */
-  std::vector<float> expected{
-      0.        ,  0.        ,  0.        ,  0.        ,  0.        ,
-        0.        ,  0.        ,  0.        ,  0.        ,  0.        ,
-        0.        ,  0.        ,  0.        ,  0.        ,  0.        ,
-        0.        ,  0.        ,  0.        ,  0.        ,  0.        ,
-        0.        ,  0.        ,  0.        ,  0.        ,  0.        ,
-        0.        ,  0.        ,  0.        ,  0.        ,  0.        ,
-       -0.36235473,  0.93203133};
+  std::vector<float> expected{0., 0., 0., 0., 0., 0., 0.,          0.,
+                              0., 0., 0., 0., 0., 0., 0.,          0.,
+                              0., 0., 0., 0., 0., 0., 0.,          0.,
+                              0., 0., 0., 0., 0., 0., -0.36235473, 0.93203133};
 
   EXPECT_EQ(grad.index, 5);
   EXPECT_EQ(grad.params[0], "hihi2");
@@ -551,15 +551,18 @@ TEST(AdjHessianUtilTest, FSimPhiGrad) {
 
 TEST(AdjHessianUtilTest, CrossTermFsimThetaPhi) {
   GradientOfGate grad;
-  // Symbol is always `kUsePrevTwoSymbols`, so this has no input argument for it.
-  PopulateCrossTermFsimThetaPhi(5, 2, 10.123, 1.0, 0.789, 1.0, 0.0,
-                                  &grad);
+  // Symbol is always `kUsePrevTwoSymbols`, so this has no input argument for
+  // it.
+  PopulateCrossTermFsimThetaPhi(5, 2, 10.123, 1.0, 0.789, 1.0, 0.0, &grad);
   /* Value verified from:
   (cirq.unitary(cirq.PhasedXPowGate(exponent=0.789+5e-3,phase_exponent=10.123+5e-3))
-    + cirq.unitary(cirq.PhasedXPowGate(exponent=0.789-5e-3,phase_exponent=10.123-5e-3))
-    - cirq.unitary(cirq.PhasedXPowGate(exponent=0.789+5e-3,phase_exponent=10.123-5e-3))
-    - cirq.unitary(cirq.PhasedXPowGate(exponent=0.789-5e-3,phase_exponent=10.123+5e-3))) * 1e4
-    array([[0.00000000e+00+0.j, 0.00000000e+00+0.j, 0.00000000e+00+0.j,
+    +
+  cirq.unitary(cirq.PhasedXPowGate(exponent=0.789-5e-3,phase_exponent=10.123-5e-3))
+    -
+  cirq.unitary(cirq.PhasedXPowGate(exponent=0.789+5e-3,phase_exponent=10.123-5e-3))
+    -
+  cirq.unitary(cirq.PhasedXPowGate(exponent=0.789-5e-3,phase_exponent=10.123+5e-3)))
+  * 1e4 array([[0.00000000e+00+0.j, 0.00000000e+00+0.j, 0.00000000e+00+0.j,
             0.00000000e+00+0.j],
            [0.00000000e+00+0.j, 1.11022302e-12+0.j, 0.00000000e+00+0.j,
             0.00000000e+00+0.j],
@@ -568,14 +571,14 @@ TEST(AdjHessianUtilTest, CrossTermFsimThetaPhi) {
            [0.00000000e+00+0.j, 0.00000000e+00+0.j, 0.00000000e+00+0.j,
             0.00000000e+00+0.j]])
   */
-  std::vector<float> expected{0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00,
-       0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00,
-       0.000000e+00, 0.000000e+00, 1.110223e-12, 0.000000e+00,
-       0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00,
-       0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00,
-       1.110223e-12, 0.000000e+00, 0.000000e+00, 0.000000e+00,
-       0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00,
-       0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00};
+  std::vector<float> expected{
+      0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00,
+      0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00,
+      1.110223e-12, 0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00,
+      0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00,
+      1.110223e-12, 0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00,
+      0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00,
+      0.000000e+00, 0.000000e+00};
 
   EXPECT_EQ(grad.index, 5);
   EXPECT_EQ(grad.params[0], kUsePrevTwoSymbols);
@@ -586,14 +589,15 @@ TEST(AdjHessianUtilTest, PhasedISwapPhasedExponent) {
   GradientOfGate grad;
 
   PopulateHessianPhasedISwapPhasedExponent("h", 5, 3, 2, 8.9, 1.0, -3.2, 1.0,
-                                            &grad);
+                                           &grad);
 
   /*
   (cirq.unitary(cirq.PhasedISwapPowGate(exponent=-3.2,phase_exponent=8.9+1e-2))
   + cirq.unitary(cirq.PhasedISwapPowGate(exponent=-3.2,phase_exponent=8.9-1e-2))
   - cirq.unitary(cirq.PhasedISwapPowGate(exponent=-3.2,phase_exponent=8.9))
-  - cirq.unitary(cirq.PhasedISwapPowGate(exponent=-3.2,phase_exponent=8.9))) * 1e4
-  
+  - cirq.unitary(cirq.PhasedISwapPowGate(exponent=-3.2,phase_exponent=8.9))) *
+  1e4
+
   array([[  0.         +0.j        ,   0.         +0.j        ,
             0.         +0.j        ,   0.         +0.j        ],
          [  0.         +0.j        ,   0.         +0.j        ,
@@ -604,13 +608,9 @@ TEST(AdjHessianUtilTest, PhasedISwapPhasedExponent) {
             0.         +0.j        ,   0.         +0.j        ]])
   */
   std::vector<float> expected{
-      0.      ,   0.      ,   0.      ,   0.      ,   0.      ,
-         0.      ,   0.      ,   0.      ,   0.      ,   0.      ,
-         0.      ,   0.      , -22.061848, -30.365528,   0.      ,
-         0.      ,   0.      ,   0.      ,  22.061848, -30.365528,
-         0.      ,   0.      ,   0.      ,   0.      ,   0.      ,
-         0.      ,   0.      ,   0.      ,   0.      ,   0.      ,
-         0.      ,   0.      };
+      0., 0.,         0.,         0., 0., 0., 0., 0.,        0.,         0., 0.,
+      0., -22.061848, -30.365528, 0., 0., 0., 0., 22.061848, -30.365528, 0., 0.,
+      0., 0.,         0.,         0., 0., 0., 0., 0.,        0.,         0.};
 
   EXPECT_EQ(grad.index, 5);
   EXPECT_EQ(grad.params[0], "h");
@@ -620,17 +620,15 @@ TEST(AdjHessianUtilTest, PhasedISwapPhasedExponent) {
 TEST(AdjHessianUtilTest, PhasedISwapExponent) {
   GradientOfGate grad;
 
-  PopulateHessianPhasedISwapExponent("h2", 5, 3, 2, 8.9, 1.0, -3.2, 1.0,
-                                      &grad);
+  PopulateHessianPhasedISwapExponent("h2", 5, 3, 2, 8.9, 1.0, -3.2, 1.0, &grad);
 
   /*
   (cirq.unitary(cirq.PhasedISwapPowGate(exponent=-3.2+1e-2,phase_exponent=8.9))
   + cirq.unitary(cirq.PhasedISwapPowGate(exponent=-3.2-1e-2,phase_exponent=8.9))
   - cirq.unitary(cirq.PhasedISwapPowGate(exponent=-3.2,phase_exponent=8.9))
-  - cirq.unitary(cirq.PhasedISwapPowGate(exponent=-3.2,phase_exponent=8.9))) * 1e4
-  array([[ 0.        +0.j       ,  0.        +0.j       ,
-           0.        +0.j       ,  0.        +0.j       ],
-         [ 0.        +0.j       , -0.76245319+0.j       ,
+  - cirq.unitary(cirq.PhasedISwapPowGate(exponent=-3.2,phase_exponent=8.9))) *
+  1e4 array([[ 0.        +0.j       ,  0.        +0.j       , 0.        +0.j ,
+  0.        +0.j       ], [ 0.        +0.j       , -0.76245319+0.j       ,
           -1.37929079-1.8984309j,  0.        +0.j       ],
          [ 0.        +0.j       ,  1.37929079-1.8984309j,
           -0.76245319+0.j       ,  0.        +0.j       ],
@@ -638,13 +636,10 @@ TEST(AdjHessianUtilTest, PhasedISwapExponent) {
            0.        +0.j       ,  0.        +0.j       ]])
   */
   std::vector<float> expected{
-      0.       ,  0.       ,  0.       ,  0.       ,  0.       ,
-        0.       ,  0.       ,  0.       ,  0.       ,  0.       ,
-       -0.7624532,  0.       , -1.3792908, -1.898431 ,  0.       ,
-        0.       ,  0.       ,  0.       ,  1.3792908, -1.898431 ,
-       -0.7624532,  0.       ,  0.       ,  0.       ,  0.       ,
-        0.       ,  0.       ,  0.       ,  0.       ,  0.       ,
-        0.       ,  0.       };
+      0., 0., 0.,         0.,        0.,         0.,        0., 0.,
+      0., 0., -0.7624532, 0.,        -1.3792908, -1.898431, 0., 0.,
+      0., 0., 1.3792908,  -1.898431, -0.7624532, 0.,        0., 0.,
+      0., 0., 0.,         0.,        0.,         0.,        0., 0.};
 
   EXPECT_EQ(grad.index, 5);
   EXPECT_EQ(grad.params[0], "h2");
@@ -653,15 +648,19 @@ TEST(AdjHessianUtilTest, PhasedISwapExponent) {
 
 TEST(AdjHessianUtilTest, CrossTermPhasedISwapPhasedExponentExponent) {
   GradientOfGate grad;
-  // Symbol is always `kUsePrevTwoSymbols`, so this has no input argument for it.
-  PopulateCrossTermPhasedISwapPhasedExponentExponent(5, 3, 2, 8.9, 1.0, -3.2, 1.0,
-                                      &grad);
+  // Symbol is always `kUsePrevTwoSymbols`, so this has no input argument for
+  // it.
+  PopulateCrossTermPhasedISwapPhasedExponentExponent(5, 3, 2, 8.9, 1.0, -3.2,
+                                                     1.0, &grad);
   /* Value verified from:
   (cirq.unitary(cirq.PhasedISwapPowGate(exponent=-3.2+5e-3,phase_exponent=8.9+5e-3))
-  + cirq.unitary(cirq.PhasedISwapPowGate(exponent=-3.2-5e-3,phase_exponent=8.9-5e-3))
-  - cirq.unitary(cirq.PhasedISwapPowGate(exponent=-3.2+5e-3,phase_exponent=8.9-5e-3))
-  - cirq.unitary(cirq.PhasedISwapPowGate(exponent=-3.2-5e-3,phase_exponent=8.9+5e-3))) * 1e4
-    array([[ 0.00000000e+00+0.j        ,  0.00000000e+00+0.j        ,
+  +
+  cirq.unitary(cirq.PhasedISwapPowGate(exponent=-3.2-5e-3,phase_exponent=8.9-5e-3))
+  -
+  cirq.unitary(cirq.PhasedISwapPowGate(exponent=-3.2+5e-3,phase_exponent=8.9-5e-3))
+  -
+  cirq.unitary(cirq.PhasedISwapPowGate(exponent=-3.2-5e-3,phase_exponent=8.9+5e-3)))
+  * 1e4 array([[ 0.00000000e+00+0.j        ,  0.00000000e+00+0.j        ,
              0.00000000e+00+0.j        ,  0.00000000e+00+0.j        ],
            [ 0.00000000e+00+0.j        , -5.55111512e-13+0.j        ,
             -2.46696989e+00+1.79235854j,  0.00000000e+00+0.j        ],
@@ -670,14 +669,15 @@ TEST(AdjHessianUtilTest, CrossTermPhasedISwapPhasedExponentExponent) {
            [ 0.00000000e+00+0.j        ,  0.00000000e+00+0.j        ,
              0.00000000e+00+0.j        ,  0.00000000e+00+0.j        ]])
   */
-  std::vector<float> expected{0.0000000e+00,  0.0000000e+00,  0.0000000e+00,  0.0000000e+00,
-        0.0000000e+00,  0.0000000e+00,  0.0000000e+00,  0.0000000e+00,
-        0.0000000e+00,  0.0000000e+00, -5.5511151e-13,  0.0000000e+00,
-       -2.4669700e+00,  1.7923585e+00,  0.0000000e+00,  0.0000000e+00,
-        0.0000000e+00,  0.0000000e+00,  2.4669700e+00,  1.7923585e+00,
-       -5.5511151e-13,  0.0000000e+00,  0.0000000e+00,  0.0000000e+00,
-        0.0000000e+00,  0.0000000e+00,  0.0000000e+00,  0.0000000e+00,
-        0.0000000e+00,  0.0000000e+00,  0.0000000e+00,  0.0000000e+00};
+  std::vector<float> expected{
+      0.0000000e+00,  0.0000000e+00, 0.0000000e+00,  0.0000000e+00,
+      0.0000000e+00,  0.0000000e+00, 0.0000000e+00,  0.0000000e+00,
+      0.0000000e+00,  0.0000000e+00, -5.5511151e-13, 0.0000000e+00,
+      -2.4669700e+00, 1.7923585e+00, 0.0000000e+00,  0.0000000e+00,
+      0.0000000e+00,  0.0000000e+00, 2.4669700e+00,  1.7923585e+00,
+      -5.5511151e-13, 0.0000000e+00, 0.0000000e+00,  0.0000000e+00,
+      0.0000000e+00,  0.0000000e+00, 0.0000000e+00,  0.0000000e+00,
+      0.0000000e+00,  0.0000000e+00, 0.0000000e+00,  0.0000000e+00};
 
   EXPECT_EQ(grad.index, 5);
   EXPECT_EQ(grad.params[0], kUsePrevTwoSymbols);
