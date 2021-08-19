@@ -463,6 +463,27 @@ TEST(AdjHessianUtilTest, PhasedXExponent) {
   Matrix2Equal(grad.grad_gates[0].matrix, expected, 1e-3);
 }
 
+TEST(AdjHessianUtilTest, CrossTermPhasedXPhasedExponentExponent) {
+  GradientOfGate grad;
+  // Symbol is always `kUsePrevTwoSymbols`, so this has no input argument for it.
+  PopulateCrossTermPhasedXPhasedExponentExponent(5, 2, 10.123, 1.0, 0.789, 1.0, 0.0,
+                                  &grad);
+  /* Value verified from:
+  (cirq.unitary(cirq.PhasedXPowGate(exponent=0.789+5e-3,phase_exponent=10.123+5e-3))
+    + cirq.unitary(cirq.PhasedXPowGate(exponent=0.789-5e-3,phase_exponent=10.123-5e-3))
+    - cirq.unitary(cirq.PhasedXPowGate(exponent=0.789+5e-3,phase_exponent=10.123-5e-3))
+    - cirq.unitary(cirq.PhasedXPowGate(exponent=0.789-5e-3,phase_exponent=10.123+5e-3))) * 1e4
+    array([[ 0.00000000e+00+5.55111512e-13j,  2.45824276e+00-4.27847050e+00j],
+           [-4.74702582e+00+1.34685303e+00j,  2.77555756e-13+5.55111512e-13j]])
+  */
+  std::vector<float> expected{0.0000000e+00,  5.5511151e-13,  2.4582427e+00, -4.2784705e+00,
+       -4.7470260e+00,  1.3468530e+00,  2.7755576e-13,  5.5511151e-13};
+
+  EXPECT_EQ(grad.index, 5);
+  EXPECT_EQ(grad.params[0], kUsePrevTwoSymbols);
+  Matrix2Equal(grad.grad_gates[0].matrix, expected, 5e-3);
+}
+
 TEST(AdjHessianUtilTest, FSimThetaGrad) {
   GradientOfGate grad;
   PopulateHessianFsimTheta("hihi", 5, 2, 3, 0.5, 1.0, 1.2, 1.0, &grad);
@@ -526,6 +547,39 @@ TEST(AdjHessianUtilTest, FSimPhiGrad) {
   EXPECT_EQ(grad.index, 5);
   EXPECT_EQ(grad.params[0], "hihi2");
   Matrix4Equal(grad.grad_gates[0].matrix, expected, 5e-4);
+}
+
+TEST(AdjHessianUtilTest, CrossTermFsimThetaPhi) {
+  GradientOfGate grad;
+  // Symbol is always `kUsePrevTwoSymbols`, so this has no input argument for it.
+  PopulateCrossTermFsimThetaPhi(5, 2, 10.123, 1.0, 0.789, 1.0, 0.0,
+                                  &grad);
+  /* Value verified from:
+  (cirq.unitary(cirq.PhasedXPowGate(exponent=0.789+5e-3,phase_exponent=10.123+5e-3))
+    + cirq.unitary(cirq.PhasedXPowGate(exponent=0.789-5e-3,phase_exponent=10.123-5e-3))
+    - cirq.unitary(cirq.PhasedXPowGate(exponent=0.789+5e-3,phase_exponent=10.123-5e-3))
+    - cirq.unitary(cirq.PhasedXPowGate(exponent=0.789-5e-3,phase_exponent=10.123+5e-3))) * 1e4
+    array([[0.00000000e+00+0.j, 0.00000000e+00+0.j, 0.00000000e+00+0.j,
+            0.00000000e+00+0.j],
+           [0.00000000e+00+0.j, 1.11022302e-12+0.j, 0.00000000e+00+0.j,
+            0.00000000e+00+0.j],
+           [0.00000000e+00+0.j, 0.00000000e+00+0.j, 1.11022302e-12+0.j,
+            0.00000000e+00+0.j],
+           [0.00000000e+00+0.j, 0.00000000e+00+0.j, 0.00000000e+00+0.j,
+            0.00000000e+00+0.j]])
+  */
+  std::vector<float> expected{0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00,
+       0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00,
+       0.000000e+00, 0.000000e+00, 1.110223e-12, 0.000000e+00,
+       0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00,
+       0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00,
+       1.110223e-12, 0.000000e+00, 0.000000e+00, 0.000000e+00,
+       0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00,
+       0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00};
+
+  EXPECT_EQ(grad.index, 5);
+  EXPECT_EQ(grad.params[0], kUsePrevTwoSymbols);
+  Matrix4Equal(grad.grad_gates[0].matrix, expected, 5e-3);
 }
 
 TEST(AdjHessianUtilTest, PhasedISwapPhasedExponent) {
@@ -595,6 +649,39 @@ TEST(AdjHessianUtilTest, PhasedISwapExponent) {
   EXPECT_EQ(grad.index, 5);
   EXPECT_EQ(grad.params[0], "h2");
   Matrix4Equal(grad.grad_gates[0].matrix, expected, 2e-3);
+}
+
+TEST(AdjHessianUtilTest, CrossTermPhasedISwapPhasedExponentExponent) {
+  GradientOfGate grad;
+  // Symbol is always `kUsePrevTwoSymbols`, so this has no input argument for it.
+  PopulateCrossTermPhasedISwapPhasedExponentExponent(5, 3, 2, 8.9, 1.0, -3.2, 1.0,
+                                      &grad);
+  /* Value verified from:
+  (cirq.unitary(cirq.PhasedISwapPowGate(exponent=-3.2+5e-3,phase_exponent=8.9+5e-3))
+  + cirq.unitary(cirq.PhasedISwapPowGate(exponent=-3.2-5e-3,phase_exponent=8.9-5e-3))
+  - cirq.unitary(cirq.PhasedISwapPowGate(exponent=-3.2+5e-3,phase_exponent=8.9-5e-3))
+  - cirq.unitary(cirq.PhasedISwapPowGate(exponent=-3.2-5e-3,phase_exponent=8.9+5e-3))) * 1e4
+    array([[ 0.00000000e+00+0.j        ,  0.00000000e+00+0.j        ,
+             0.00000000e+00+0.j        ,  0.00000000e+00+0.j        ],
+           [ 0.00000000e+00+0.j        , -5.55111512e-13+0.j        ,
+            -2.46696989e+00+1.79235854j,  0.00000000e+00+0.j        ],
+           [ 0.00000000e+00+0.j        ,  2.46696989e+00+1.79235854j,
+            -5.55111512e-13+0.j        ,  0.00000000e+00+0.j        ],
+           [ 0.00000000e+00+0.j        ,  0.00000000e+00+0.j        ,
+             0.00000000e+00+0.j        ,  0.00000000e+00+0.j        ]])
+  */
+  std::vector<float> expected{0.0000000e+00,  0.0000000e+00,  0.0000000e+00,  0.0000000e+00,
+        0.0000000e+00,  0.0000000e+00,  0.0000000e+00,  0.0000000e+00,
+        0.0000000e+00,  0.0000000e+00, -5.5511151e-13,  0.0000000e+00,
+       -2.4669700e+00,  1.7923585e+00,  0.0000000e+00,  0.0000000e+00,
+        0.0000000e+00,  0.0000000e+00,  2.4669700e+00,  1.7923585e+00,
+       -5.5511151e-13,  0.0000000e+00,  0.0000000e+00,  0.0000000e+00,
+        0.0000000e+00,  0.0000000e+00,  0.0000000e+00,  0.0000000e+00,
+        0.0000000e+00,  0.0000000e+00,  0.0000000e+00,  0.0000000e+00};
+
+  EXPECT_EQ(grad.index, 5);
+  EXPECT_EQ(grad.params[0], kUsePrevTwoSymbols);
+  Matrix4Equal(grad.grad_gates[0].matrix, expected, 5e-3);
 }
 
 TEST(AdjHessianUtilTest, Matrix2Add) {
