@@ -321,24 +321,29 @@ Status CheckQubitsIn1D(std::vector<Program>* programs) {
       for (Operation& operation : *moment.mutable_operations()) {
         // Count the number of qubits in this operation.
         unsigned int num_qubits = operation.qubits_size();
-        if (operation.mutable_args()->count("control_qubits")) {
-          // Currently, gates with control_qubits are not supported
-          return Status(tensorflow::error::INVALID_ARGUMENT, absl::StrCat(
-                        "Gates with control_qubits are not supported yet."));
-        }
-        if (num_qubits > 2) {
+        unsigned int num_control_qubits = operation.mutable_args()
+                                                   ->count("control_qubits");
+        const int total_num_qubits = num_qubits + num_control_qubits;
+        if (total_num_qubits > 2) {
           return Status(tensorflow::error::INVALID_ARGUMENT, absl::StrCat(
                         "1D operations only support 1 and 2 qubit gates. "
-                        "Found: ", num_qubits, " qubit gate."));
-        } else if (num_qubits == 1) {
+                        "Found: ", total_num_qubits, " qubit gate."));
+        } else if (total_num_qubits == 1) {
           continue;  // all 1-qubit gate is allowed for 1D
         } else {
-          // Now the number of qubits == 2
+          // Now the total number of qubits == 2
           absl::string_view qubit_id0, qubit_id1;
-          auto q = *operation.mutable_qubits();
-          std::vector<Qubit> qubits(q.begin(), q.end());
-          qubit_id0 = qubits[0].id();
-          qubit_id1 = qubits[1].id();
+          if (num_control_qubits) {
+            qubit_id0 = operation.mutable_qubits()->at(0).id();
+            qubit_id1 = operation.mutable_args()->at("control_qubits")
+                                                .arg_value()
+                                                .string_value();
+          } else {
+            auto q = *operation.mutable_qubits();
+            std::vector<Qubit> qubits(q.begin(), q.end());
+            qubit_id0 = qubits[0].id();
+            qubit_id1 = qubits[1].id();
+          }
           unsigned int idx0, idx1;
           (void)absl::SimpleAtoi(qubit_id0, &idx0);
           (void)absl::SimpleAtoi(qubit_id1, &idx1);

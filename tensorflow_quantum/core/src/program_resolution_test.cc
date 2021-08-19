@@ -103,7 +103,6 @@ const std::string valid_symbol_program = R"(
   }
 )";
 
-
 const std::string three_qubit_op_program = R"(
   circuit {
     moments {
@@ -528,18 +527,6 @@ TEST(ProgramResolutionTest, ResolveSymbolsStrictFull) {
 TEST(ProgramResolutionTest, CheckQubitsIn1DEmpty) {
   std::vector<Program> empty_programs;
   EXPECT_EQ(CheckQubitsIn1D(&empty_programs), Status::OK());
-}
-
-
-TEST(ProgramResolutionTest, CheckQubitsIn1DFailedByOpWitControlQubits) {
-  std::vector<Program> programs;
-  Program program_with_control_qubit;
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
-      valid_program, &program_with_control_qubit));
-  programs.push_back(program_with_control_qubit);
-  EXPECT_EQ(CheckQubitsIn1D(&programs),
-            Status(tensorflow::error::INVALID_ARGUMENT,
-                   "Gates with control_qubits are not supported yet."));
 }
 
 TEST(ProgramResolutionTest, CheckQubitsIn1DFailedByOpWithMoreThan2Qubits) {
