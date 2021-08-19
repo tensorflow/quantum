@@ -103,6 +103,25 @@ const std::string valid_symbol_program = R"(
   }
 )";
 
+
+const std::string three_qubit_op_program = R"(
+  circuit {
+    moments {
+      operations {
+        qubits {
+          id: "0_0"
+        }
+        qubits {
+          id: "0_1"
+        }
+        qubits {
+          id: "0_2"
+        }
+      }
+    }
+  }
+)";
+
 /* Qubit topology:
   1 -- 0 -- 2
        |
@@ -113,39 +132,24 @@ const std::string resolved_qubit_program_not_1d = R"(
   circuit {
     moments {
       operations {
-        args {
-          key: "control_qubits"
-          value {
-            arg_value {
-              string_value: "0"
-            }
-          }
+        qubits {
+          id: "0"
         }
         qubits {
           id: "1"
         }
       }
       operations {
-        args {
-          key: "control_qubits"
-          value {
-            arg_value {
-              string_value: "0"
-            }
-          }
+        qubits {
+          id: "0"
         }
         qubits {
           id: "2"
         }
       }
       operations {
-        args {
-          key: "control_qubits"
-          value {
-            arg_value {
-              string_value: "0"
-            }
-          }
+        qubits {
+          id: "0"
         }
         qubits {
           id: "3"
@@ -526,15 +530,28 @@ TEST(ProgramResolutionTest, CheckQubitsIn1DEmpty) {
   EXPECT_EQ(CheckQubitsIn1D(&empty_programs), Status::OK());
 }
 
+
+TEST(ProgramResolutionTest, CheckQubitsIn1DFailedByOpWitControlQubits) {
+  std::vector<Program> programs;
+  Program program_with_control_qubit;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      valid_program, &program_with_control_qubit));
+  programs.push_back(program_with_control_qubit);
+  EXPECT_EQ(CheckQubitsIn1D(&programs),
+            Status(tensorflow::error::INVALID_ARGUMENT,
+                   "Gates with control_qubits are not supported yet."));
+}
+
 TEST(ProgramResolutionTest, CheckQubitsIn1DFailedByOpWithMoreThan2Qubits) {
   std::vector<Program> programs;
   Program program_with_3qubit_op;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
-      valid_program, &program_with_3qubit_op));
+      three_qubit_op_program, &program_with_3qubit_op));
   programs.push_back(program_with_3qubit_op);
   EXPECT_EQ(CheckQubitsIn1D(&programs),
             Status(tensorflow::error::INVALID_ARGUMENT,
-                   "An operation contains more than two qubits."));
+                   "1D operations only support 1 and 2 qubit gates. "
+                   "Found: 3 qubit gate."));
 }
 
 TEST(ProgramResolutionTest, CheckQubitsIn1DFailedByNot1DTopology) {

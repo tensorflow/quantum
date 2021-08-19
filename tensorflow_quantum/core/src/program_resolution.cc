@@ -321,38 +321,24 @@ Status CheckQubitsIn1D(std::vector<Program>* programs) {
       for (Operation& operation : *moment.mutable_operations()) {
         // Count the number of qubits in this operation.
         unsigned int num_qubits = operation.qubits_size();
-        // Count the number of control qubits.
-        unsigned int num_control_qubits = 0;
-        absl::string_view control_qubits = operation.mutable_args()
-                                               ->at("control_qubits")
-                                               .arg_value()
-                                               .string_value();
-        if (!control_qubits.empty()) {
-          std::vector<absl::string_view> control_ids =
-              absl::StrSplit(control_qubits, ',');
-          num_control_qubits = control_ids.size();
+        if (operation.mutable_args()->count("control_qubits")) {
+          // Currently, gates with control_qubits are not supported
+          return Status(tensorflow::error::INVALID_ARGUMENT, absl::StrCat(
+                        "Gates with control_qubits are not supported yet."));
         }
-        const int total_num_qubits = num_qubits + num_control_qubits;
-        if (total_num_qubits > 2) {
+        if (num_qubits > 2) {
           return Status(tensorflow::error::INVALID_ARGUMENT, absl::StrCat(
                         "1D operations only support 1 and 2 qubit gates. "
-                        "Found: ", total_num_qubits, " qubit gate."));
-        } else if (total_num_qubits == 1) {
+                        "Found: ", num_qubits, " qubit gate."));
+        } else if (num_qubits == 1) {
           continue;  // all 1-qubit gate is allowed for 1D
         } else {
-          // Now the total number of qubits == 2
+          // Now the number of qubits == 2
           absl::string_view qubit_id0, qubit_id1;
-          if (num_qubits == 2) {
-            auto q = *operation.mutable_qubits();
-            std::vector<Qubit> qubits(q.begin(), q.end());
-            qubit_id0 = qubits[0].id();
-            qubit_id1 = qubits[1].id();
-          } else if (num_qubits == 1) {
-            qubit_id0 = (*operation.mutable_qubits())[0].id();
-            std::vector<absl::string_view> cq =
-                absl::StrSplit(control_qubits, ',');
-            qubit_id1 = cq[0];
-          }
+          auto q = *operation.mutable_qubits();
+          std::vector<Qubit> qubits(q.begin(), q.end());
+          qubit_id0 = qubits[0].id();
+          qubit_id1 = qubits[1].id();
           unsigned int idx0, idx1;
           (void)absl::SimpleAtoi(qubit_id0, &idx0);
           (void)absl::SimpleAtoi(qubit_id1, &idx1);
