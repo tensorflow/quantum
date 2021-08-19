@@ -327,8 +327,10 @@ Status CheckQubitsIn1D(std::vector<Program>* programs) {
                                                       ->at("control_qubits")
                                                       .arg_value()
                                                       .string_value();
-          std::vector<absl::string_view> control_ids = absl::StrSplit(control_qubits, ',');
-          num_control_qubits = control_ids.size();
+          if (!control_qubits.empty()) {
+            std::vector<absl::string_view> control_ids = absl::StrSplit(control_qubits, ',');
+            num_control_qubits = control_ids.size();
+          }
         }
         const int total_num_qubits = num_qubits + num_control_qubits;
         if (total_num_qubits > 2) {
