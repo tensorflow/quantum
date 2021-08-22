@@ -24,6 +24,7 @@ from tensorflow_quantum.core.serialize import op_serializer, op_deserializer, \
     serializable_gate_set
 from tensorflow_quantum.core.proto import pauli_sum_pb2
 from tensorflow_quantum.core.proto import program_pb2
+from tensorflow_quantum.core.proto import projector_sum_pb2
 
 # Needed to allow autograph to crawl AST without erroring.
 _CONSTANT_TRUE = lambda x: True
@@ -962,3 +963,71 @@ def _process_pauli_type(char):
     if char == 'Y':
         return cirq.Y
     raise ValueError("Invalid pauli type.")
+
+
+def serialize_projectorsum(projectorsum):
+    """Constructs a projector_sum proto from `cirq.ProjectorSum` or `cirq.projectorString`.
+
+    Args:
+        projectorsum: A `cirq.ProjectorSum` or `cirq.ProjectorString` object.
+
+    Returns:
+        A projector_sum proto object.
+    """
+    if isinstance(projectorsum, cirq.ProjectorString):
+        projectorsum = cirq.ProjectorSum.from_pauli_strings(projectorsum)
+
+    if not isinstance(projectorsum, cirq.ProjectorSum):
+        raise TypeError("serialize requires a cirq.ProjectorSum object."
+                        " Given: " + str(type(projectorsum)))
+
+    if any(not isinstance(qubit, cirq.GridQubit)
+           for qubit in projectorsum.qubits):
+        raise ValueError("Attempted to serialize a paulisum that doesn't use "
+                         "only cirq.GridQubits.")
+
+    projectorsum_proto = projector_sum_pb2.ProjectorSum()
+    for term in projectorsum:
+        projectorterm_proto = projector_sum_pb2.ProjectorTerm()
+
+        projectorterm_proto.coefficient_real = term.coefficient.real
+        projectorterm_proto.coefficient_imag = term.coefficient.imag
+        for qubit, basis_state in sorted(
+                term.projector_dict.items()):  # sort to keep qubits ordered
+            if basis_state == 0:
+                projectorterm_proto.projector_dict.add(
+                    qubit_id=op_serializer.qubit_to_proto(qubit))
+            else:
+                projectorterm_proto.projector_dict.add(
+                    qubit_id=op_serializer.qubit_to_proto(qubit),
+                    basis_state=basis_state)
+
+        projectorsum_proto.terms.extend([projectorterm_proto])
+
+    return projectorsum_proto
+
+
+def deserialize_projectorsum(proto):
+    """Constructs a `cirq.ProjectorSum` from projector_sum proto.
+
+    Args:
+        proto: A projector_sum proto object.
+
+    Returns:
+        A `cirq.ProjectorSum` object.
+    """
+    if not isinstance(proto, projector_sum_pb2.ProjectorSum):
+        raise TypeError("deserialize requires a projector_sum_pb2 object."
+                        " Given: " + str(type(proto)))
+
+    res = cirq.ProjectorSum()
+    for term_proto in proto.terms:
+        coef = float(_round(term_proto.coefficient_real)) + \
+            1.0j * float(_round(term_proto.coefficient_imag))
+        projector_dict = {}
+        for projector_dict_entry in term_proto.projector_dict:
+            qubit = op_deserializer.qubit_from_proto(projector_dict_entry.qubit_id)
+            projector_dict[qubit] = projector_dict_entry.basis_state
+        res += cirq.ProjectorString(projector_dict, coef)
+
+    return res

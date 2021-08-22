@@ -82,6 +82,7 @@ cc_binary(
         ":parse_context",
         # cirq cc proto
         # pauli sum cc proto
+        # projector sum cc proto
         ":tfq_simulate_utils",
         "//tensorflow_quantum/core/src:adj_util",
         "//tensorflow_quantum/core/src:circuit_parser_qsim",
@@ -204,6 +205,7 @@ cc_binary(
         # cirq cc proto
         "//tensorflow_quantum/core/proto:pauli_sum_cc_proto",
         "//tensorflow_quantum/core/proto:program_cc_proto",
+        "//tensorflow_quantum/core/proto:projector_sum_cc_proto",
         "//tensorflow_quantum/core/src:circuit_parser_qsim",
         "//tensorflow_quantum/core/src:program_resolution",
         "//tensorflow_quantum/core/src:util_qsim",
@@ -286,6 +288,7 @@ cc_library(
         ":tfq_simulate_utils",
         "//tensorflow_quantum/core/proto:pauli_sum_cc_proto",
         "//tensorflow_quantum/core/proto:program_cc_proto",
+        "//tensorflow_quantum/core/proto:projector_sum_cc_proto",
         "//tensorflow_quantum/core/src:program_resolution",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/container:inlined_vector",
@@ -344,6 +347,7 @@ cc_binary(
         # cirq cc proto
         "//tensorflow_quantum/core/proto:pauli_sum_cc_proto",
         "//tensorflow_quantum/core/proto:program_cc_proto",
+        "//tensorflow_quantum/core/proto:projector_sum_cc_proto",
         "//tensorflow_quantum/core/src:circuit_parser_qsim",
         "//tensorflow_quantum/core/src:util_qsim",
         "@com_google_absl//absl/container:flat_hash_map",
@@ -374,6 +378,7 @@ py_library(
     deps = [
         ":load_module",
         # pauli sum cc proto
+        # projector sum cc proto
         # tensorflow framework for wrappers
     ],
 )
@@ -464,6 +469,7 @@ py_library(
         ":batch_util",
         "//tensorflow_quantum/core/proto:program_py_proto",
         "//tensorflow_quantum/core/proto:pauli_sum_py_proto",
+        "//tensorflow_quantum/core/proto:projector_sum_py_proto",
         "//tensorflow_quantum/core/serialize:serializer",
     ],
 )

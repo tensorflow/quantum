@@ -50,6 +50,7 @@ cc_library(
     deps = [
         "//tensorflow_quantum/core/proto:pauli_sum_cc_proto",
         "//tensorflow_quantum/core/proto:program_cc_proto",
+        "//tensorflow_quantum/core/proto:projector_sum_cc_proto",
         "@com_google_absl//absl/container:flat_hash_map",
         "@local_config_tf//:libtensorflow_framework",
         "@local_config_tf//:tf_header_lib",
@@ -73,6 +74,7 @@ cc_test(
         ":circuit_parser_qsim",
         "//tensorflow_quantum/core/proto:pauli_sum_cc_proto",
         "//tensorflow_quantum/core/proto:program_cc_proto",
+        "//tensorflow_quantum/core/proto:projector_sum_cc_proto",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
@@ -91,6 +93,7 @@ cc_library(
     deps = [
         ":circuit_parser_qsim",
         "//tensorflow_quantum/core/proto:pauli_sum_cc_proto",
+        "//tensorflow_quantum/core/proto:projector_sum_cc_proto",
         "@com_google_absl//absl/container:inlined_vector",  # unclear why needed.
         "@local_config_tf//:libtensorflow_framework",
         "@local_config_tf//:tf_header_lib",
@@ -120,6 +123,7 @@ cc_library(
     deps = [
         "//tensorflow_quantum/core/proto:pauli_sum_cc_proto",
         "//tensorflow_quantum/core/proto:program_cc_proto",
+        "//tensorflow_quantum/core/proto:projector_sum_cc_proto",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/strings",
