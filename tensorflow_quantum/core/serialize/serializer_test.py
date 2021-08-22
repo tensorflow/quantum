@@ -412,11 +412,13 @@ def _get_valid_projector_proto_pairs():
             cirq.ProjectorString(projector_dict={q0: 0})),
          _build_projector_proto([1.0], [[0]], [['0_0']])),
         (cirq.ProjectorSum.from_projector_strings(
-            cirq.ProjectorString(projector_dict={q0: 0},
-                                 coefficient=0.125j)),
+            cirq.ProjectorString(projector_dict={q0: 0}, coefficient=0.125j)),
          _build_projector_proto([0.125j], [[0]], [['0_0']])),
         (cirq.ProjectorSum.from_projector_strings([
-            cirq.ProjectorString(projector_dict={q0: 0, q1: 1}),
+            cirq.ProjectorString(projector_dict={
+                q0: 0,
+                q1: 1
+            }),
         ]), _build_projector_proto([1.0], [[0, 1]], [['0_0', '1_0']])),
     ]
 

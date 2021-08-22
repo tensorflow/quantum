@@ -966,7 +966,7 @@ def _process_pauli_type(char):
 
 
 def serialize_projectorsum(projectorsum):
-    """Constructs a projector_sum proto from `cirq.ProjectorSum` or `cirq.projectorString`.
+    """Constructs a projector_sum proto from `cirq.ProjectorSum`.
 
     Args:
         projectorsum: A `cirq.ProjectorSum` or `cirq.ProjectorString` object.
@@ -1026,7 +1026,8 @@ def deserialize_projectorsum(proto):
             1.0j * float(_round(term_proto.coefficient_imag))
         projector_dict = {}
         for projector_dict_entry in term_proto.projector_dict:
-            qubit = op_deserializer.qubit_from_proto(projector_dict_entry.qubit_id)
+            qubit = op_deserializer.qubit_from_proto(
+                projector_dict_entry.qubit_id)
             projector_dict[qubit] = projector_dict_entry.basis_state
         res += cirq.ProjectorString(projector_dict, coef)
 
