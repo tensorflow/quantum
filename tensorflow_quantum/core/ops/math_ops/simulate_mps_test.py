@@ -262,7 +262,7 @@ class SimulateMPS1DExpectationTest(tf.test.TestCase):
               for symbol in symbol_names]
              for resolver in resolver_batch])
 
-        pauli_sums = [cirq.Y(qubits[i]) for i in range(batch_size)]
+        pauli_sums = [cirq.Y(qubits[0])*cirq.X(qubits[1]) for _ in range(batch_size)]
 
         cirq_result = [
             cirq.Simulator().simulate_expectation_values(c, p, r)

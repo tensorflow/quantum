@@ -66,6 +66,8 @@ class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
     const int output_dim_batch_size = context->input(0).dim_size(0);
     const int output_dim_op_size = context->input(3).dim_size(1);
     tensorflow::TensorShape output_shape;
+    std::cout << "batch_size = " << output_dim_batch_size << std::endl;
+    std::cout << "pauli sums size = " << output_dim_op_size << std::endl;
     output_shape.AddDim(output_dim_batch_size);
     output_shape.AddDim(output_dim_op_size);
 
@@ -79,6 +81,7 @@ class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
     std::vector<std::vector<PauliSum>> pauli_sums;
     OP_REQUIRES_OK(context, GetProgramsAndNumQubits(context, &programs,
                                                     &num_qubits, &pauli_sums));
+    std::cout << "parse program protos" << std::endl;
 
     std::vector<SymbolMap> maps;
     OP_REQUIRES_OK(context, GetSymbolMaps(context, &maps));
@@ -90,12 +93,12 @@ class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
                     " symbol values.")));
 
     OP_REQUIRES_OK(context, CheckQubitsIn1D(&programs));
+    std::cout << "CheckQubitsIn1D" << std::endl;
 
     // Construct qsim circuits.
     std::vector<QsimCircuit> qsim_circuits(programs.size(), QsimCircuit());
-    std::vector<std::vector<qsim::GateFused<QsimGate>>> fused_circuits(
-        programs.size(), std::vector<qsim::GateFused<QsimGate>>({}));
-
+    std::vector<QsimFusedCircuit> fused_circuits(programs.size(),
+                                                 QsimFusedCircuit({}));
     Status parse_status = Status::OK();
     auto p_lock = tensorflow::mutex();
     auto construct_f = [&](int start, int end) {
@@ -109,8 +112,9 @@ class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
 
     const int num_cycles = 1000;
     context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
-        programs.size(), num_cycles, construct_f);
+        output_dim_batch_size, num_cycles, construct_f);
     OP_REQUIRES_OK(context, parse_status);
+    std::cout << "QsimCircuitFromProgram" << std::endl;
 
     int max_num_qubits = 0;
     for (const int num : num_qubits) {
@@ -123,10 +127,11 @@ class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
     // e2s4 = 4 CPU, 16GB -> Can safely do 25 since Memory = 8GB
     // ...
     if (true || max_num_qubits >= 26 || programs.size() == 1) {
-      ComputeLarge(num_qubits, fused_circuits, pauli_sums, context,
+      std::cout << "Enter ComputeLarge" << std::endl;
+      ComputeLarge(num_qubits, qsim_circuits, pauli_sums, context,
                    &output_tensor);
     } else {
-      ComputeSmall(num_qubits, max_num_qubits, fused_circuits, pauli_sums,
+      ComputeSmall(num_qubits, max_num_qubits, qsim_circuits, pauli_sums,
                    context, &output_tensor);
     }
   }
@@ -136,10 +141,10 @@ class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
 
   void ComputeLarge(
       const std::vector<int>& num_qubits,
-      const std::vector<std::vector<qsim::GateFused<QsimGate>>>& fused_circuits,
+      const std::vector<QsimCircuit>& qsim_circuits,
       const std::vector<std::vector<PauliSum>>& pauli_sums,
       tensorflow::OpKernelContext* context,
-      tensorflow::TTypes<float, 1>::Matrix* output_tensor) {
+      tensorflow::TTypes<float, 2>::Matrix* output_tensor) {
     // Instantiate qsim objects.
     const auto tfq_for = tfq::QsimFor(context);
     using Simulator = qsim::mps::MPSSimulator<const tfq::QsimFor&, float>;
@@ -155,7 +160,8 @@ class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
     // Simulate programs one by one. Parallelizing over state vectors
     // we no longer parallelize over circuits. Each time we encounter a
     // a larger circuit we will grow the Statevector as necessary.
-    for (int i = 0; i < fused_circuits.size(); i++) {
+    for (int i = 0; i < qsim_circuits.size(); i++) {
+      std::cout << "ComputeLarge > runs circuit" << i << std::endl;
       int nq = num_qubits[i];
 
       if (nq > largest_nq) {
@@ -168,18 +174,23 @@ class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
       //  the state if there is a possibility that circuit[i] and
       //  circuit[i + 1] produce the same state.
       ss.SetMPSZero(sv);
-      for (int j = 0; j < fused_circuits[i].size(); j++) {
-        ApplyFusedGateMPS(sim, fused_circuits[i][j], sv);
+      auto qsim_gates = qsim_circuits[i].gates;
+      std::cout << "ComputeLarge > QsimGate size = " << qsim_gates.size() << std::endl;
+      for (int j = 0; j < qsim_gates.size(); j++) {
+        std::cout << "ComputeLarge > ApplyGate " << j << " qsize = " << qsim_gates[j].qubits.size() << std:: endl;
+        sim.ApplyGate(qsim_gates[j].qubits, qsim_gates[j].matrix.data(), sv);
       }
       for (int j = 0; j < pauli_sums[i].size(); j++) {
         // (#679) Just ignore empty program
-        if (fused_circuits[i].size() == 0) {
+        if (qsim_gates.size() == 0) {
+          std::cout << "ComputeLarge > result(" << i << ", " << j << ") = -2.0" << std::endl;
           (*output_tensor)(i, j) = -2.0;
           continue;
         }
         float exp_v = 0.0;
         // OP_REQUIRES_OK(context, ComputeExpectationMPS(pauli_sums[i][j], sim, ss,
         //                                               sv, scratch, &exp_v));
+        std::cout << "ComputeLarge > result(" << i << ", " << j << ") = " << exp_v << std::endl;
         (*output_tensor)(i, j) = exp_v;
       }
     }
@@ -187,10 +198,10 @@ class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
 
   void ComputeSmall(
       const std::vector<int>& num_qubits, const int max_num_qubits,
-      const std::vector<std::vector<qsim::GateFused<QsimGate>>>& fused_circuits,
+      const std::vector<QsimCircuit>& qsim_circuits,
       const std::vector<std::vector<PauliSum>>& pauli_sums,
       tensorflow::OpKernelContext* context,
-      tensorflow::TTypes<float, 1>::Matrix* output_tensor) {
+      tensorflow::TTypes<float>::Matrix* output_tensor) {
     const auto tfq_for = qsim::SequentialFor(1);
     using Simulator =
         qsim::mps::MPSSimulator<const qsim::SequentialFor&, float>;
@@ -217,7 +228,8 @@ class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
         const int nq = num_qubits[cur_batch_index];
 
         // (#679) Just ignore empty program
-        if (fused_circuits[cur_batch_index].size() == 0) {
+        auto qsim_gates = qsim_circuits[cur_batch_index].gates;
+        if (qsim_gates.size() == 0) {
           (*output_tensor)(cur_batch_index, cur_op_index) = -2.0;
           continue;
         }
@@ -233,8 +245,8 @@ class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
           // no need to update scratch_state since ComputeExpectation
           // will take care of things for us.
           ss.SetMPSZero(sv);
-          for (int j = 0; j < fused_circuits[cur_batch_index].size(); j++) {
-            //ApplyFusedGateMPS(sim, fused_circuits[cur_batch_index][j], sv);
+          for (int j = 0; j < qsim_gates.size(); j++) {
+            //ApplyFusedGateMPS(sim, qsim_circuits[cur_batch_index][j], sv);
           }
         }
 
@@ -252,7 +264,7 @@ class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
     const int64_t num_cycles =
         200 * (int64_t(1) << static_cast<int64_t>(max_num_qubits));
     context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
-        fused_circuits.size() * output_dim_op_size, num_cycles, DoWork);
+        qsim_circuits.size() * output_dim_op_size, num_cycles, DoWork);
     OP_REQUIRES_OK(context, compute_status);
   }
 };

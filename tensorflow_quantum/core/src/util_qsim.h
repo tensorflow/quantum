@@ -178,28 +178,6 @@ tensorflow::Status ComputeExpectationQsim(const tfq::proto::PauliSum& p_sum,
   return status;
 }
 
-/**
- * Applies the given fused gate to the simulator state. Ignores measurement
- *   gates.
- * @param simulator Simulator object. Provides specific implementations for
- *   applying gates.
- * @param gate The gate to be applied.
- * @param state The state of the system, to be updated by this method.
- */
-template <typename Simulator, typename Gate>
-inline void ApplyFusedGateMPS(const Simulator& simulator, const Gate& gate,
-                              typename Simulator::State& state) {
-  if (gate.kind != qsim::gate::kMeasurement) {
-    auto matrix = qsim::CalculateFusedMatrix<float>(gate);
-    if (gate.parent->controlled_by.size() == 0) {
-      simulator.ApplyGate(gate.qubits, matrix.data(), state);
-    } else {
-      simulator.ApplyControlledGate(gate.qubits, gate.parent->controlled_by,
-                                    gate.parent->cmask, matrix.data(), state);
-    }
-  }
-}
-
 // TODO(jaeyoo) : This should be removed after Qsim MPS methods are renamed.
 // bad style standards here that we are forced to follow from qsim.
 // computes the expectation value <state | p_sum | state > using
@@ -229,23 +207,29 @@ tensorflow::Status ComputeExpectationMPS(const tfq::proto::PauliSum& p_sum,
     QsimCircuit main_circuit;
     std::vector<qsim::GateFused<QsimGate>> fused_circuit;
 
+    std::cout << "ComputeExpectationMPS > QsimCircuitFromPauliTerm" << std::endl;
     status = QsimCircuitFromPauliTerm(term, state.num_qubits(), &main_circuit,
                                       &fused_circuit);
 
     if (!status.ok()) {
+      std::cout << "ComputeExpectationMPS > QsimCircuitFromPauliTerm Status not ok!" << std::endl;
       return status;
     }
     // copy from src to scratch.
+    std::cout << "ComputeExpectationMPS > CopyMPS" << std::endl;
     ss.CopyMPS(state, scratch);
-    for (const qsim::GateFused<QsimGate>& fused_gate : fused_circuit) {
-      ApplyFusedGateMPS(sim, fused_gate, scratch);
+    std::cout << "ComputeExpectationMPS > #gates = " << main_circuit.gates.size() << std::endl;
+    int i = 0;
+    for (auto gate : main_circuit.gates) {
+      std::cout << "ComputeExpectationMPS > Apply Gate " << i++ << std::endl;
+      sim.ApplyGate(gate.qubits, gate.matrix.data(), scratch);
     }
 
-    if (!status.ok()) {
-      return status;
-    }
+    std::cout << "ComputeExpectationMPS > calculate expectation with InnerProduct" << std::endl;
     *expectation_value +=
         term.coefficient_real() * ss.InnerProduct(state, scratch).real();
+    
+    std::cout << "ComputeExpectationMPS > Done!" << std::endl;
   }
   return status;
 }
