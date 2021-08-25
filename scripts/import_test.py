@@ -36,12 +36,19 @@ def test_imports():
 
     # Math ops.
     _ = tfq.math.inner_product
+    _ = tfq.math.fidelity
+
+    # Noisy simulation ops.
+    _ = tfq.noise.expectation
+    _ = tfq.noise.sampled_expectation
+    _ = tfq.noise.samples
 
     # Util functions.
     _ = tfq.convert_to_tensor
     _ = tfq.get_quantum_concurrent_op_mode
     _ = tfq.from_tensor
     _ = tfq.set_quantum_concurrent_op_mode
+    _ = tfq.util.get_supported_channels
     _ = tfq.util.get_supported_gates
     _ = tfq.util.exponential
 
@@ -51,7 +58,11 @@ def test_imports():
     _ = tfq.layers.Sample
     _ = tfq.layers.State
     _ = tfq.layers.SampledExpectation
+
+    # High level Keras layers.
     _ = tfq.layers.ControlledPQC
+    _ = tfq.layers.NoisyControlledPQC
+    _ = tfq.layers.NoisyPQC
     _ = tfq.layers.PQC
 
     # Differentiators.

@@ -20,23 +20,23 @@ limitations under the License.
 #include <string>
 #include <vector>
 
-#include "cirq/google/api/v2/program.pb.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/lib/core/error_codes.pb.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow/core/lib/core/threadpool.h"
 #include "tensorflow_quantum/core/ops/tfq_simulate_utils.h"
 #include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
+#include "tensorflow_quantum/core/proto/program.pb.h"
 #include "tensorflow_quantum/core/src/program_resolution.h"
 
 namespace tfq {
 namespace {
 
-using ::cirq::google::api::v2::Program;
 using ::tensorflow::OpKernelContext;
 using ::tensorflow::Status;
 using ::tensorflow::Tensor;
 using ::tfq::proto::PauliSum;
+using ::tfq::proto::Program;
 
 template <typename T>
 Status ParseProto(const std::string& text, T* proto) {
@@ -234,7 +234,7 @@ tensorflow::Status GetProgramsAndNumQubits(
   };
 
   // TODO(mbbrough): Determine if this is a good cycle estimate.
-  const int cycle_estimate = 1000 * (*other_programs)[0].size();
+  const int cycle_estimate = 1000;
   context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
       num_qubits->size(), cycle_estimate, DoWork);
 

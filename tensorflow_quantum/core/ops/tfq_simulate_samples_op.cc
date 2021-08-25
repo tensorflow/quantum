@@ -22,21 +22,25 @@ limitations under the License.
 #include "../qsim/lib/gates_cirq.h"
 #include "../qsim/lib/seqfor.h"
 #include "../qsim/lib/simmux.h"
-#include "cirq/google/api/v2/program.pb.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/shape_inference.h"
 #include "tensorflow/core/framework/tensor_shape.h"
 #include "tensorflow/core/lib/core/error_codes.pb.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow/core/lib/core/threadpool.h"
+#include "tensorflow/core/lib/random/random.h"
+#include "tensorflow/core/lib/random/simple_philox.h"
+#include "tensorflow/core/platform/mutex.h"
+#include "tensorflow/core/util/guarded_philox_random.h"
 #include "tensorflow_quantum/core/ops/parse_context.h"
+#include "tensorflow_quantum/core/proto/program.pb.h"
 #include "tensorflow_quantum/core/src/circuit_parser_qsim.h"
 #include "tensorflow_quantum/core/src/util_qsim.h"
 
 namespace tfq {
 
-using ::cirq::google::api::v2::Program;
 using ::tensorflow::Status;
+using ::tfq::proto::Program;
 
 typedef qsim::Cirq::GateCirq<float> QsimGate;
 typedef qsim::Circuit<QsimGate> QsimCircuit;
@@ -73,17 +77,21 @@ class TfqSimulateSamplesOp : public tensorflow::OpKernel {
     std::vector<std::vector<qsim::GateFused<QsimGate>>> fused_circuits(
         programs.size(), std::vector<qsim::GateFused<QsimGate>>({}));
 
+    Status parse_status = Status::OK();
+    auto p_lock = tensorflow::mutex();
     auto construct_f = [&](int start, int end) {
       for (int i = start; i < end; i++) {
-        OP_REQUIRES_OK(context, QsimCircuitFromProgram(
-                                    programs[i], maps[i], num_qubits[i],
-                                    &qsim_circuits[i], &fused_circuits[i]));
+        Status local =
+            QsimCircuitFromProgram(programs[i], maps[i], num_qubits[i],
+                                   &qsim_circuits[i], &fused_circuits[i]);
+        NESTED_FN_STATUS_SYNC(parse_status, local, p_lock);
       }
     };
 
     const int num_cycles = 1000;
     context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
         programs.size(), num_cycles, construct_f);
+    OP_REQUIRES_OK(context, parse_status);
 
     // Find largest circuit for tensor size padding and allocate
     // the output tensor.
@@ -101,6 +109,10 @@ class TfqSimulateSamplesOp : public tensorflow::OpKernel {
     tensorflow::Tensor* output = nullptr;
     OP_REQUIRES_OK(context, context->allocate_output(0, output_shape, &output));
     auto output_tensor = output->tensor<int8_t, 3>();
+
+    if (num_samples == 0) {
+      return;  // bug in qsim dependency we can't control.
+    }
 
     // Cross reference with standard google cloud compute instances
     // Memory ~= 2 * num_threads * (2 * 64 * 2 ** num_qubits in circuits)
@@ -134,6 +146,11 @@ class TfqSimulateSamplesOp : public tensorflow::OpKernel {
     StateSpace ss = StateSpace(tfq_for);
     auto sv = ss.Create(largest_nq);
 
+    tensorflow::GuardedPhiloxRandom random_gen;
+    random_gen.Init(tensorflow::random::New64(), tensorflow::random::New64());
+    auto local_gen = random_gen.ReserveSamples32(fused_circuits.size() + 1);
+    tensorflow::random::SimplePhilox rand_source(&local_gen);
+
     // Simulate programs one by one. Parallelizing over state vectors
     // we no longer parallelize over circuits. Each time we encounter a
     // a larger circuit we will grow the Statevector as nescessary.
@@ -152,7 +169,7 @@ class TfqSimulateSamplesOp : public tensorflow::OpKernel {
         qsim::ApplyFusedGate(sim, fused_circuits[i][j], sv);
       }
 
-      auto samples = ss.Sample(sv, num_samples, rand() % 123456);
+      auto samples = ss.Sample(sv, num_samples, rand_source.Rand32());
       for (int j = 0; j < num_samples; j++) {
         int q_ind = 0;
         uint64_t mask = 1;
@@ -183,11 +200,18 @@ class TfqSimulateSamplesOp : public tensorflow::OpKernel {
     using Simulator = qsim::Simulator<const qsim::SequentialFor&>;
     using StateSpace = Simulator::StateSpace;
 
+    tensorflow::GuardedPhiloxRandom random_gen;
+    random_gen.Init(tensorflow::random::New64(), tensorflow::random::New64());
+
     auto DoWork = [&](int start, int end) {
       int largest_nq = 1;
       Simulator sim = Simulator(tfq_for);
       StateSpace ss = StateSpace(tfq_for);
       auto sv = ss.Create(largest_nq);
+
+      auto local_gen = random_gen.ReserveSamples32(fused_circuits.size() + 1);
+      tensorflow::random::SimplePhilox rand_source(&local_gen);
+
       for (int i = start; i < end; i++) {
         int nq = num_qubits[i];
 
@@ -202,7 +226,7 @@ class TfqSimulateSamplesOp : public tensorflow::OpKernel {
           qsim::ApplyFusedGate(sim, fused_circuits[i][j], sv);
         }
 
-        auto samples = ss.Sample(sv, num_samples, rand() % 123456);
+        auto samples = ss.Sample(sv, num_samples, rand_source.Rand32());
         for (int j = 0; j < num_samples; j++) {
           int q_ind = 0;
           uint64_t mask = 1;

@@ -22,6 +22,7 @@ import cirq
 
 from tensorflow_quantum.core.ops import batch_util
 from tensorflow_quantum.core.proto import pauli_sum_pb2
+from tensorflow_quantum.core.proto import program_pb2
 from tensorflow_quantum.core.serialize import serializer
 
 
@@ -108,7 +109,7 @@ def _batch_deserialize_helper(programs, symbol_names, symbol_values):
         program = program.numpy()
         values = values.numpy().astype(float)
 
-        circuit_proto = cirq.google.api.v2.program_pb2.Program()
+        circuit_proto = program_pb2.Program()
         circuit_proto.ParseFromString(program)
 
         circuit = serializer.deserialize_circuit(circuit_proto)
@@ -128,7 +129,9 @@ def _get_cirq_analytical_expectation(simulator=cirq.Simulator()):
     values.
 
     Args:
-        simulator: `cirq.Simulator` object to use for circuit execution.
+        simulator: `cirq.Simulator` object to use for circuit execution.  Can be
+            `cirq.DensityMatrixSimulator` or any
+            `cirq.sim.simulator.SimulatesExpectationValues`.
 
     Returns:
         `callable` that is a TensorFlow op for computing expectation.
@@ -209,8 +212,11 @@ def _get_cirq_analytical_expectation(simulator=cirq.Simulator()):
 
         return expectations
 
-    if not isinstance(simulator, cirq.SimulatesFinalState):
-        raise TypeError("simulator must inherit cirq.SimulatesFinalState.")
+    if not isinstance(simulator, (cirq.sim.simulator.SimulatesExpectationValues,
+                                  cirq.DensityMatrixSimulator)):
+        raise TypeError(
+            "simulator must be cirq.DensityMatrixSimulator or inherit "
+            "cirq.sim.simulator.SimulatesExpectationValues.")
 
     @_upgrade_inputs
     def expectation_generator(programs_tf, symbol_names_tf, symbol_values_tf,
@@ -230,7 +236,7 @@ def _get_cirq_analytical_expectation(simulator=cirq.Simulator()):
     return expectation_generator
 
 
-def _get_cirq_sampled_expectation(simulator=cirq.Simulator()):
+def _get_cirq_sampled_expectation(sampler=cirq.Simulator()):
     """Get a `callable` that is a TensorFlow op that outputs sampled expectation
     values.
 
@@ -239,7 +245,7 @@ def _get_cirq_sampled_expectation(simulator=cirq.Simulator()):
     expectation values.
 
     Args:
-        simulator: `cirq.Simulator` object to use for circuit execution.
+        sampler: Anything inheriting `cirq.Sampler`.
 
     Returns:
         `callable` that is a TensorFlow op for computing expectation.
@@ -305,7 +311,8 @@ def _get_cirq_sampled_expectation(simulator=cirq.Simulator()):
         _input_check_helper(programs, symbol_names, symbol_values)
         if not (pauli_sums.dtype == tf.dtypes.string):
             raise TypeError('pauli_sums tensor must be of type string.')
-        if not (pauli_sums.shape[0] == programs.shape[0]):
+        if not (pauli_sums.shape[0] == programs.shape[0]) or \
+            len(pauli_sums.shape) != 2:
             raise TypeError('pauli_sums tensor must have the same batch shape '
                             'as programs tensor.')
 
@@ -335,11 +342,11 @@ def _get_cirq_sampled_expectation(simulator=cirq.Simulator()):
             sum_inputs.append(to_append)
 
         expectations = batch_util.batch_calculate_sampled_expectation(
-            programs, resolvers, sum_inputs, num_samples, simulator)
+            programs, resolvers, sum_inputs, num_samples, sampler)
 
         return expectations
 
-    if not isinstance(simulator, cirq.Sampler):
+    if not isinstance(sampler, cirq.Sampler):
         raise TypeError("cirq.Sampler is required for sampled expectation.")
 
     @_upgrade_inputs
@@ -563,7 +570,9 @@ def _get_cirq_simulate_state(simulator=cirq.Simulator()):
     of all the input circuits.
 
     Args:
-        simulator: `cirq.Simulator` object to use for circuit execution.
+        simulator: Simulator object.  Can be any `cirq.SimulatesFinalState`;
+            if `simulator` is not a `cirq.DensityMatrixSimulator`, this function
+            assumes all final states are dense state vectors.
 
     Returns:
         `callable` that is a Tensorflow op for calculating states.

@@ -36,16 +36,27 @@ class ControlledPQCTest(tf.test.TestCase, parameterized.TestCase):
                                      cirq.Z(bit),
                                      repetitions=500)
 
+    def test_controlled_pqc_noisy_error(self):
+        """Ensure error refers to alternate layer."""
+        symbol = sympy.Symbol('alpha')
+        qubit = cirq.GridQubit(0, 0)
+        learnable_flip = cirq.Circuit(cirq.X(qubit)**symbol)
+        with self.assertRaisesRegex(
+                ValueError, expected_regex='tfq.layers.NoisyControlledPQC'):
+            controlled_pqc.ControlledPQC(learnable_flip,
+                                         cirq.Z(qubit),
+                                         backend='noisy')
+
     def test_controlled_pqc_backend_error(self):
         """Test that invalid backends error properly."""
         symbol = sympy.Symbol('alpha')
         bit = cirq.GridQubit(0, 0)
         learnable_flip = cirq.Circuit(cirq.X(bit)**symbol)
 
-        class MyState(cirq.SimulatesFinalState):
-            """My state simulator."""
+        class MyExpectation(cirq.sim.simulator.SimulatesExpectationValues):
+            """My expectation values simulator."""
 
-            def simulate_sweep(self):
+            def simulate_expectation_values_sweep(self):
                 """do nothing."""
                 return
 
@@ -56,14 +67,16 @@ class ControlledPQCTest(tf.test.TestCase, parameterized.TestCase):
                 """do nothing."""
                 return
 
-        with self.assertRaisesRegex(TypeError,
-                                    expected_regex="cirq.SimulatesFinalState"):
+        with self.assertRaisesRegex(
+                TypeError,
+                expected_regex="cirq.sim.simulator.SimulatesExpectation"):
             controlled_pqc.ControlledPQC(learnable_flip,
                                          cirq.Z(bit),
                                          backend='junk')
 
-        with self.assertRaisesRegex(TypeError,
-                                    expected_regex="cirq.SimulatesFinalState"):
+        with self.assertRaisesRegex(
+                TypeError,
+                expected_regex="cirq.sim.simulator.SimulatesExpectation"):
             controlled_pqc.ControlledPQC(learnable_flip,
                                          cirq.Z(bit),
                                          repetitions=None,
@@ -73,7 +86,7 @@ class ControlledPQCTest(tf.test.TestCase, parameterized.TestCase):
             controlled_pqc.ControlledPQC(learnable_flip,
                                          cirq.Z(bit),
                                          repetitions=500,
-                                         backend=MyState)
+                                         backend=MyExpectation)
 
     def test_controlled_pqc_model_circuit_error(self):
         """Test that invalid circuits error properly."""

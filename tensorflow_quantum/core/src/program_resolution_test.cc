@@ -20,16 +20,16 @@ limitations under the License.
 #include <string>
 
 #include "absl/container/flat_hash_map.h"
-#include "cirq/google/api/v2/program.pb.h"
 #include "gtest/gtest.h"
 #include "tensorflow/core/lib/core/status.h"
+#include "tensorflow_quantum/core/proto/program.pb.h"
 
 namespace tfq {
 namespace {
 
-using cirq::google::api::v2::Program;
 using tensorflow::Status;
 using tfq::proto::PauliSum;
+using tfq::proto::Program;
 
 const std::string valid_program = R"(
   circuit {

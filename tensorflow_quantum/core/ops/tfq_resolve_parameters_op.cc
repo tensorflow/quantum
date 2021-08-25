@@ -15,21 +15,22 @@ limitations under the License.
 
 #include <string>
 
-#include "cirq/google/api/v2/program.pb.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/shape_inference.h"
 #include "tensorflow/core/framework/tensor_shape.h"
 #include "tensorflow/core/lib/core/error_codes.pb.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow/core/lib/core/threadpool.h"
+#include "tensorflow/core/platform/mutex.h"
 #include "tensorflow_quantum/core/ops/parse_context.h"
 #include "tensorflow_quantum/core/ops/tfq_simulate_utils.h"
+#include "tensorflow_quantum/core/proto/program.pb.h"
 #include "tensorflow_quantum/core/src/program_resolution.h"
 
 namespace tfq {
 
-using ::cirq::google::api::v2::Program;
 using ::tensorflow::Status;
+using ::tfq::proto::Program;
 
 class TfqResolveParametersOp : public tensorflow::OpKernel {
  public:
@@ -58,11 +59,14 @@ class TfqResolveParametersOp : public tensorflow::OpKernel {
             "Number of circuits and values do not match. Got ", programs.size(),
             " circuits and ", maps.size(), " values.")));
 
+    Status parse_status = Status::OK();
+    auto p_lock = tensorflow::mutex();
     auto DoWork = [&](int start, int end) {
       std::string temp;
       for (int i = start; i < end; i++) {
         Program program = programs[i];
-        OP_REQUIRES_OK(context, ResolveSymbols(maps[i], &program, false));
+        Status local = ResolveSymbols(maps[i], &program, false);
+        NESTED_FN_STATUS_SYNC(parse_status, local, p_lock);
         program.SerializeToString(&temp);
         output_tensor(i) = temp;
       }
@@ -71,6 +75,7 @@ class TfqResolveParametersOp : public tensorflow::OpKernel {
     const int num_cycles = 1000;
     context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
         programs.size(), num_cycles, DoWork);
+    OP_REQUIRES_OK(context, parse_status);
   }
 };
 

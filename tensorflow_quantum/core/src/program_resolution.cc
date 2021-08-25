@@ -23,29 +23,29 @@ limitations under the License.
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
-#include "cirq/google/api/v2/program.pb.h"
 #include "tensorflow/core/lib/core/error_codes.pb.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
+#include "tensorflow_quantum/core/proto/program.pb.h"
 
 namespace tfq {
 
-using cirq::google::api::v2::Arg;
-using cirq::google::api::v2::Moment;
-using cirq::google::api::v2::Operation;
-using cirq::google::api::v2::Program;
-using cirq::google::api::v2::Qubit;
 using tensorflow::Status;
+using tfq::proto::Arg;
+using tfq::proto::Moment;
+using tfq::proto::Operation;
 using tfq::proto::PauliQubitPair;
 using tfq::proto::PauliSum;
 using tfq::proto::PauliTerm;
+using tfq::proto::Program;
+using tfq::proto::Qubit;
 
 Status RegisterQubits(
     const std::string& qb_string,
     absl::flat_hash_set<std::pair<std::pair<int, int>, std::string>>* id_set) {
   // Inserts qubits found in qb_string into id_set.
 
-  if (qb_string == "") {
+  if (qb_string.empty()) {
     return Status::OK();  // no control-default value specified in serializer.py
   }
 
@@ -121,7 +121,8 @@ Status ResolveQubitIds(Program* program, unsigned int* num_qubits,
       // Resolve control qubit ids found in the control_qubits arg.
       absl::string_view control_qubits =
           operation.args().at("control_qubits").arg_value().string_value();
-      if (control_qubits == "") {  // explicit empty value set in serializer.py.
+      // explicit empty value set in serializer.py.
+      if (control_qubits.empty()) {
         continue;
       }
       std::vector<absl::string_view> control_ids =
@@ -208,7 +209,8 @@ Status ResolveQubitIds(Program* program, unsigned int* num_qubits,
       // Resolve control qubit ids found in the control_qubits arg.
       absl::string_view control_qubits =
           operation.args().at("control_qubits").arg_value().string_value();
-      if (control_qubits == "") {  // explicit empty value set in serializer.py.
+      // explicit empty value set in serializer.py.
+      if (control_qubits.empty()) {
         continue;
       }
       std::vector<absl::string_view> control_ids =
@@ -247,7 +249,7 @@ Status ResolveQubitIds(Program* program, unsigned int* num_qubits,
                                                ->at("control_qubits")
                                                .arg_value()
                                                .string_value();
-        if (control_qubits == "") {  // explicit empty value.
+        if (control_qubits.empty()) {  // explicit empty value.
           continue;
         }
         std::vector<absl::string_view> control_ids =

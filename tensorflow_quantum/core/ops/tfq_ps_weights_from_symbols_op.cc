@@ -18,7 +18,6 @@ limitations under the License.
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/strings/numbers.h"
-#include "cirq/google/api/v2/program.pb.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/shape_inference.h"
 #include "tensorflow/core/framework/tensor_shape.h"
@@ -26,14 +25,15 @@ limitations under the License.
 #include "tensorflow/core/lib/core/threadpool.h"
 #include "tensorflow_quantum/core/ops/parse_context.h"
 #include "tensorflow_quantum/core/ops/tfq_simulate_utils.h"
+#include "tensorflow_quantum/core/proto/program.pb.h"
 
 namespace tfq {
 
-using ::cirq::google::api::v2::Arg;
-using ::cirq::google::api::v2::Moment;
-using ::cirq::google::api::v2::Operation;
-using ::cirq::google::api::v2::Program;
 using ::tensorflow::Tensor;
+using ::tfq::proto::Arg;
+using ::tfq::proto::Moment;
+using ::tfq::proto::Operation;
+using ::tfq::proto::Program;
 
 class TfqPsWeightsFromSymbolOp : public tensorflow::OpKernel {
  public:
@@ -71,7 +71,9 @@ class TfqPsWeightsFromSymbolOp : public tensorflow::OpKernel {
     for (int i = 0; i < n_symbols; i++) {
       symbols_map[symbols(i)] = i;
     }
-    std::vector<std::string> ignore_list = {"I", "ISP", "PXP", "FSIM", "PISP"};
+    std::vector<std::string> ignore_list = {"I",  "ISP", "PXP", "FSIM", "PISP",
+                                            "AD", "ADP", "DP",  "GAD",  "BF",
+                                            "PF", "PD",  "RST"};
     absl::flat_hash_set<std::string> ignored_symbol_set(ignore_list.begin(),
                                                         ignore_list.end());
 

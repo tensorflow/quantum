@@ -1,3 +1,5 @@
+# load op_wrapper
+
 package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
@@ -8,6 +10,27 @@ exports_files(["__init__.py"])
 config_setting(
     name = "windows",
     constraint_values = ["@bazel_tools//platforms:windows"],
+)
+
+py_library(
+    name = "ops",
+    srcs = ["__init__.py"],
+    srcs_version = "PY3",
+    deps = [
+        ":batch_util",
+        ":circuit_execution_ops",
+        ":cirq_ops",
+        ":load_module",
+        ":tfq_adj_grad_op_py",
+        ":tfq_ps_util_ops_py",
+        ":tfq_simulate_ops_py",
+        ":tfq_unitary_op_py",
+        ":tfq_utility_ops_py",
+        # test addons
+        "//tensorflow_quantum/core/ops/math_ops:inner_product_op_py",
+        "//tensorflow_quantum/core/ops/math_ops:fidelity_op_py",
+        "//tensorflow_quantum/core/ops/noise:noisy_expectation_op_py",
+    ],
 )
 
 cc_binary(
@@ -57,11 +80,16 @@ cc_binary(
     linkshared = 1,
     deps = [
         ":parse_context",
+        # cirq cc proto
+        # pauli sum cc proto
         ":tfq_simulate_utils",
-        "//tensorflow_quantum/core/src:util_qsim",
-        "//tensorflow_quantum/core/src:circuit_parser_qsim",
         "//tensorflow_quantum/core/src:adj_util",
+        "//tensorflow_quantum/core/src:circuit_parser_qsim",
+        "//tensorflow_quantum/core/src:util_qsim",
         "@qsim//lib:qsim_lib",
+        # tensorflow core framework
+        # tensorflow core lib
+        # tensorflow core protos
     ],
 )
 
@@ -115,6 +143,7 @@ cc_binary(
     deps = [
         ":parse_context",
         ":tfq_simulate_utils",
+        # cirq cc proto
         "//tensorflow_quantum/core/proto:program_cc_proto",
         "@local_config_tf//:libtensorflow_framework",
         "@local_config_tf//:tf_header_lib",
@@ -125,9 +154,9 @@ cc_binary(
     name = "_tfq_simulate_ops.so",
     srcs = [
         "tfq_simulate_expectation_op.cc",
-        "tfq_simulate_samples_op.cc",
         "tfq_simulate_sampled_expectation_op.cc",
-        "tfq_simulate_state_op.cc"
+        "tfq_simulate_samples_op.cc",
+        "tfq_simulate_state_op.cc",
     ],
     copts = select({
         ":windows": [
@@ -172,20 +201,19 @@ cc_binary(
     deps = [
         ":parse_context",
         ":tfq_simulate_utils",
-
-        "//tensorflow_quantum/core/src:util_qsim",
-        "//tensorflow_quantum/core/src:circuit_parser_qsim",
-        "@qsim//lib:qsim_lib",
-
+        # cirq cc proto
         "//tensorflow_quantum/core/proto:pauli_sum_cc_proto",
         "//tensorflow_quantum/core/proto:program_cc_proto",
+        "//tensorflow_quantum/core/src:circuit_parser_qsim",
         "//tensorflow_quantum/core/src:program_resolution",
+        "//tensorflow_quantum/core/src:util_qsim",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/container:inlined_vector",
         "@com_google_absl//absl/types:optional",
         "@com_google_absl//absl/types:span",
         "@local_config_tf//:libtensorflow_framework",
         "@local_config_tf//:tf_header_lib",
+        "@qsim//lib:qsim_lib",
     ],
 )
 
@@ -238,7 +266,9 @@ cc_binary(
     deps = [
         ":parse_context",
         ":tfq_simulate_utils",
+        # cirq cc proto
         "//tensorflow_quantum/core/proto:program_cc_proto",
+        "//tensorflow_quantum/core/src:program_resolution",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/container:inlined_vector",
         "@com_google_absl//absl/types:optional",
@@ -267,7 +297,7 @@ cc_library(
 cc_binary(
     name = "_tfq_calculate_unitary_op.so",
     srcs = [
-        "tfq_calculate_unitary_op.cc"
+        "tfq_calculate_unitary_op.cc",
     ],
     copts = select({
         ":windows": [
@@ -311,10 +341,11 @@ cc_binary(
     linkshared = 1,
     deps = [
         ":parse_context",
+        # cirq cc proto
         "//tensorflow_quantum/core/proto:pauli_sum_cc_proto",
         "//tensorflow_quantum/core/proto:program_cc_proto",
-        "//tensorflow_quantum/core/src:util_qsim",
         "//tensorflow_quantum/core/src:circuit_parser_qsim",
+        "//tensorflow_quantum/core/src:util_qsim",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/container:inlined_vector",
         "@com_google_absl//absl/types:optional",
@@ -339,16 +370,21 @@ py_library(
     name = "tfq_adj_grad_op_py",
     srcs = ["tfq_adj_grad_op.py"],
     data = [":_tfq_adj_grad.so"],
+    srcs_version = "PY3",
     deps = [
         ":load_module",
-    ]
+        # pauli sum cc proto
+        # tensorflow framework for wrappers
+    ],
 )
 
 py_library(
     name = "tfq_unitary_op_py",
     srcs = ["tfq_unitary_op.py"],
     data = [":_tfq_calculate_unitary_op.so"],
+    srcs_version = "PY3",
     deps = [
+        # tensorflow framework for wrappers
         ":load_module",
         ":tfq_utility_ops_py",
         "//tensorflow_quantum/python:quantum_context",
@@ -362,11 +398,12 @@ py_test(
     deps = [
         ":tfq_adj_grad_op_py",
         "//tensorflow_quantum/python:util",
-    ]
+    ],
 )
 
 py_test(
     name = "tfq_unitary_op_test",
+    timeout = "long",
     srcs = ["tfq_unitary_op_test.py"],
     python_version = "PY3",
     deps = [
@@ -379,7 +416,9 @@ py_library(
     name = "tfq_simulate_ops_py",
     srcs = ["tfq_simulate_ops.py"],
     data = [":_tfq_simulate_ops.so"],
+    srcs_version = "PY3",
     deps = [
+        # tensorflow framework for wrappers
         ":load_module",
     ],
 )
@@ -397,6 +436,7 @@ py_test(
 py_library(
     name = "circuit_execution_ops",
     srcs = ["circuit_execution_ops.py"],
+    srcs_version = "PY3",
     deps = [
         ":cirq_ops",
         ":tfq_simulate_ops_py",
@@ -419,8 +459,11 @@ py_test(
 py_library(
     name = "cirq_ops",
     srcs = ["cirq_ops.py"],
+    srcs_version = "PY3",
     deps = [
         ":batch_util",
+        "//tensorflow_quantum/core/proto:program_py_proto",
+        "//tensorflow_quantum/core/proto:pauli_sum_py_proto",
         "//tensorflow_quantum/core/serialize:serializer",
     ],
 )
@@ -440,6 +483,7 @@ py_test(
 py_library(
     name = "batch_util",
     srcs = ["batch_util.py"],
+    srcs_version = "PY3",
     deps = [
         "//tensorflow_quantum/core/serialize:serializer",
     ],
@@ -460,7 +504,9 @@ py_library(
     name = "tfq_ps_util_ops_py",
     srcs = ["tfq_ps_util_ops.py"],
     data = [":_tfq_ps_utils.so"],
+    srcs_version = "PY3",
     deps = [
+        # tensorflow framework for wrappers
         ":load_module",
     ],
 )
@@ -479,7 +525,9 @@ py_library(
     name = "tfq_utility_ops_py",
     srcs = ["tfq_utility_ops.py"],
     data = [":_tfq_utility_ops.so"],
+    srcs_version = "PY3",
     deps = [
+        # tensorflow framework for wrappers
         ":load_module",
     ],
 )
@@ -498,5 +546,6 @@ py_test(
 py_library(
     name = "load_module",
     srcs = ["load_module.py"],
+    srcs_version = "PY3",
     deps = [],
 )

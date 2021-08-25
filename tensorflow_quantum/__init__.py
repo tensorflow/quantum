@@ -24,6 +24,9 @@ from tensorflow_quantum.core import (append_circuit, get_expectation_op,
 # Import math ops.
 from tensorflow_quantum.core import math_ops as math
 
+# Import noise ops.
+from tensorflow_quantum.core import noise
+
 # Re-label python module as layers module.
 import tensorflow_quantum.python.layers as layers
 
@@ -61,4 +64,4 @@ del python
 del core
 # pylint: enable=undefined-variable
 
-__version__ = '0.5.0'
+__version__ = '0.6.0'

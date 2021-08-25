@@ -21,23 +21,24 @@ limitations under the License.
 #include "../qsim/lib/gates_cirq.h"
 #include "../qsim/lib/seqfor.h"
 #include "../qsim/lib/simmux.h"
-#include "cirq/google/api/v2/program.pb.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/shape_inference.h"
 #include "tensorflow/core/framework/tensor_shape.h"
 #include "tensorflow/core/lib/core/error_codes.pb.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow/core/lib/core/threadpool.h"
+#include "tensorflow/core/platform/mutex.h"
 #include "tensorflow_quantum/core/ops/parse_context.h"
 #include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
+#include "tensorflow_quantum/core/proto/program.pb.h"
 #include "tensorflow_quantum/core/src/adj_util.h"
 #include "tensorflow_quantum/core/src/util_qsim.h"
 
 namespace tfq {
 
-using ::cirq::google::api::v2::Program;
 using ::tensorflow::Status;
 using ::tfq::proto::PauliSum;
+using ::tfq::proto::Program;
 
 typedef qsim::Cirq::GateCirq<float> QsimGate;
 typedef qsim::Circuit<QsimGate> QsimCircuit;
@@ -98,12 +99,14 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
     std::vector<std::vector<GradientOfGate>> gradient_gates(
         programs.size(), std::vector<GradientOfGate>({}));
 
+    Status parse_status = Status::OK();
+    auto p_lock = tensorflow::mutex();
     auto construct_f = [&](int start, int end) {
       for (int i = start; i < end; i++) {
-        OP_REQUIRES_OK(
-            context, QsimCircuitFromProgram(programs[i], maps[i], num_qubits[i],
-                                            &qsim_circuits[i], &full_fuse[i],
-                                            &gate_meta[i]));
+        Status local = QsimCircuitFromProgram(programs[i], maps[i],
+                                              num_qubits[i], &qsim_circuits[i],
+                                              &full_fuse[i], &gate_meta[i]);
+        NESTED_FN_STATUS_SYNC(parse_status, local, p_lock);
         CreateGradientCircuit(qsim_circuits[i], gate_meta[i],
                               &partial_fused_circuits[i], &gradient_gates[i]);
       }
@@ -112,6 +115,7 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
     const int num_cycles = 1000;
     context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
         programs.size(), num_cycles, construct_f);
+    OP_REQUIRES_OK(context, parse_status);
 
     // Get downstream gradients.
     std::vector<std::vector<float>> downstream_grads;
@@ -124,11 +128,11 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
                     " circuits.")));
 
     OP_REQUIRES(
-        context, downstream_grads[0].size() == pauli_sums[0].size(),
+        context, context->input(4).dim_size(1) == context->input(3).dim_size(1),
         tensorflow::errors::InvalidArgument(absl::StrCat(
             "Number of gradients and pauli sum dimension do not match. Got ",
-            downstream_grads[0].size(), " gradient entries and ",
-            pauli_sums[0].size(), " paulis per circuit.")));
+            context->input(4).dim_size(1), " gradient entries and ",
+            context->input(3).dim_size(1), " paulis per circuit.")));
 
     int max_num_qubits = 0;
     for (const int num : num_qubits) {
@@ -206,8 +210,8 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
         // sv now contains psi
         // scratch contains (sum_j paulis_sums[i][j] * downstream_grads[j])|psi>
         // scratch2 now contains psi as well.
-        AccumulateOperators(pauli_sums[i], downstream_grads[i], sim, ss, sv,
-                            scratch2, scratch);
+        Status unused = AccumulateOperators(pauli_sums[i], downstream_grads[i],
+                                            sim, ss, sv, scratch2, scratch);
 
         for (int j = partial_fused_circuits[i].size() - 1; j >= 0; j--) {
           for (int k = partial_fused_circuits[i][j].size() - 1; k >= 0; k--) {
@@ -241,7 +245,7 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
             // gate".
             ss.Copy(sv, scratch2);
             if (!cur_gate.controlled_by.empty()) {
-              // Gradient of controlled gattes puts zeros on diagonal which is
+              // Gradient of controlled gates puts zeros on diagonal which is
               // the same as collapsing the state and then applying the
               // non-controlled version of the gradient gate.
               ss.BulkSetAmpl(scratch2, mask, cbits, 0, 0, true);
@@ -324,8 +328,8 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
       // sv now contains psi
       // scratch contains (sum_j paulis_sums[i][j] * downstream_grads[j])|psi>
       // scratch2 now contains psi as well.
-      AccumulateOperators(pauli_sums[i], downstream_grads[i], sim, ss, sv,
-                          scratch2, scratch);
+      Status unused = AccumulateOperators(pauli_sums[i], downstream_grads[i],
+                                          sim, ss, sv, scratch2, scratch);
 
       for (int j = partial_fused_circuits[i].size() - 1; j >= 0; j--) {
         for (int k = partial_fused_circuits[i][j].size() - 1; k >= 0; k--) {
@@ -358,7 +362,7 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
           // gate".
           ss.Copy(sv, scratch2);
           if (!cur_gate.controlled_by.empty()) {
-            // Gradient of controlled gattes puts zeros on diagonal which is
+            // Gradient of controlled gates puts zeros on diagonal which is
             // the same as collapsing the state and then applying the
             // non-controlled version of the gradient gate.
             ss.BulkSetAmpl(scratch2, mask, cbits, 0, 0, true);

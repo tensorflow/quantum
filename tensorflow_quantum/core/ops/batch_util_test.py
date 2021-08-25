@@ -174,7 +174,7 @@ class BatchUtilTest(tf.test.TestCase, parameterized.TestCase):
         expected_results = _sample_helper(sim, state, len(qubits), n_samples)
 
         self.assertAllEqual(expected_results, test_results[0])
-        self.assertDTypeEqual(test_results, np.int32)
+        self.assertDTypeEqual(test_results, np.int8)
 
     @parameterized.parameters([{
         'sim': cirq.DensityMatrixSimulator()
@@ -210,7 +210,7 @@ class BatchUtilTest(tf.test.TestCase, parameterized.TestCase):
         for a, b in zip(tfq_histograms, cirq_histograms):
             self.assertLess(stats.entropy(a + 1e-8, b + 1e-8), 0.005)
 
-        self.assertDTypeEqual(results, np.int32)
+        self.assertDTypeEqual(results, np.int8)
 
     @parameterized.parameters([{
         'sim': cirq.DensityMatrixSimulator()
@@ -267,7 +267,38 @@ class BatchUtilTest(tf.test.TestCase, parameterized.TestCase):
             r = _sample_helper(sim, state, len(circuit.all_qubits()), n_samples)
             self.assertAllClose(r, a, atol=1e-5)
 
-        self.assertDTypeEqual(results, np.int32)
+        self.assertDTypeEqual(results, np.int8)
+
+    @parameterized.parameters([{
+        'sim': cirq.DensityMatrixSimulator()
+    }, {
+        'sim': cirq.Simulator()
+    }])
+    def test_no_circuit(self, sim):
+        """Test functions with no circuits and empty arrays."""
+        # (1) Test expectation
+        results = batch_util.batch_calculate_expectation([], [], [[]], sim)
+        self.assertDTypeEqual(results, np.float32)
+        self.assertEqual(np.zeros(shape=(0, 0)).shape, results.shape)
+
+        # (2) Test sampled_expectation
+        results = batch_util.batch_calculate_sampled_expectation([], [], [[]],
+                                                                 [[]], sim)
+        self.assertDTypeEqual(results, np.float32)
+        self.assertEqual(np.zeros(shape=(0, 0)).shape, results.shape)
+
+        # (3) Test state
+        results = batch_util.batch_calculate_state([], [], sim)
+        self.assertDTypeEqual(results, np.complex64)
+        if isinstance(sim, cirq.Simulator):
+            self.assertEqual(np.zeros(shape=(0, 0)).shape, results.shape)
+        else:
+            self.assertEqual(np.zeros(shape=(0, 0, 0)).shape, results.shape)
+
+        # (4) Test sampling
+        results = batch_util.batch_sample([], [], [], sim)
+        self.assertDTypeEqual(results, np.int8)
+        self.assertEqual(np.zeros(shape=(0, 0, 0)).shape, results.shape)
 
 
 if __name__ == '__main__':
