@@ -90,14 +90,14 @@ inline void AssertOneQubitEqual(const QsimGate& a, const QsimGate& b) {
 
 inline void AssertChannelEqual(const QsimChannel& a, const QsimChannel& b) {
   ASSERT_EQ(a.size(), b.size());
-  for (int i = 0; i < a.size(); i++) {
+  for (long unsigned int i = 0; i < a.size(); i++) {
     ASSERT_EQ(a[i].kind, b[i].kind);
     ASSERT_EQ(a[i].unitary, b[i].unitary);
     ASSERT_NEAR(a[i].prob, b[i].prob, 1e-5);
     auto a_k_ops = a[i].ops;
     auto b_k_ops = b[i].ops;
     EXPECT_EQ(a_k_ops.size(), b_k_ops.size());
-    for (int j = 0; j < a_k_ops.size(); j++) {
+    for (long unsigned int j = 0; j < a_k_ops.size(); j++) {
       AssertOneQubitEqual(a_k_ops[j], b_k_ops[j]);
     }
   }
@@ -1536,7 +1536,7 @@ TEST(QsimCircuitParserTest, NoisyEmpty) {
   Program program_proto;
   Circuit* circuit_proto = program_proto.mutable_circuit();
   circuit_proto->set_scheduling_strategy(circuit_proto->MOMENT_BY_MOMENT);
-  (void)circuit_proto->add_moments();
+  std::ignore = circuit_proto->add_moments();
 
   NoisyQsimCircuit test_circuit;
   ASSERT_EQ(

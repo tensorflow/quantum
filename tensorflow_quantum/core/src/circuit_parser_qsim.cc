@@ -599,10 +599,9 @@ inline Status AsymmetricDepolarizingChannel(const Operation& op,
                                             const unsigned int time,
                                             NoisyQsimCircuit* ncircuit) {
   int q;
-  bool unused;
   float p_x, p_y, p_z;
   Status u;
-  unused = absl::SimpleAtoi(op.qubits(0).id(), &q);
+  std::ignore = absl::SimpleAtoi(op.qubits(0).id(), &q);
 
   u = ParseProtoArg(op, "p_x", {}, &p_x);
   u = ParseProtoArg(op, "p_y", {}, &p_y);
@@ -621,10 +620,9 @@ inline Status DepolarizingChannel(const Operation& op,
                                   const unsigned int time,
                                   NoisyQsimCircuit* ncircuit) {
   int q;
-  bool unused;
   float p;
   Status u;
-  unused = absl::SimpleAtoi(op.qubits(0).id(), &q);
+  std::ignore = absl::SimpleAtoi(op.qubits(0).id(), &q);
 
   u = ParseProtoArg(op, "p", {}, &p);
   if (!u.ok()) {
@@ -639,10 +637,9 @@ inline Status DepolarizingChannel(const Operation& op,
 inline Status GADChannel(const Operation& op, const unsigned int num_qubits,
                          const unsigned int time, NoisyQsimCircuit* ncircuit) {
   int q;
-  bool unused;
   float p, gamma;
   Status u;
-  unused = absl::SimpleAtoi(op.qubits(0).id(), &q);
+  std::ignore = absl::SimpleAtoi(op.qubits(0).id(), &q);
 
   u = ParseProtoArg(op, "p", {}, &p);
   if (!u.ok()) {
@@ -663,8 +660,7 @@ inline Status ResetChannel(const Operation& op, const unsigned int num_qubits,
                            const unsigned int time,
                            NoisyQsimCircuit* ncircuit) {
   int q;
-  bool unused;
-  unused = absl::SimpleAtoi(op.qubits(0).id(), &q);
+  std::ignore = absl::SimpleAtoi(op.qubits(0).id(), &q);
 
   auto chan = qsim::Cirq::ResetChannel<float>::Create(time, num_qubits - q - 1);
   ncircuit->channels.push_back(chan);
@@ -676,10 +672,9 @@ inline Status AmplitudeDampingChannel(const Operation& op,
                                       const unsigned int time,
                                       NoisyQsimCircuit* ncircuit) {
   int q;
-  bool unused;
   float gamma;
   Status u;
-  unused = absl::SimpleAtoi(op.qubits(0).id(), &q);
+  std::ignore = absl::SimpleAtoi(op.qubits(0).id(), &q);
 
   u = ParseProtoArg(op, "gamma", {}, &gamma);
   if (!u.ok()) {
@@ -696,10 +691,9 @@ inline Status PhaseDampingChannel(const Operation& op,
                                   const unsigned int time,
                                   NoisyQsimCircuit* ncircuit) {
   int q;
-  bool unused;
   float gamma;
   Status u;
-  unused = absl::SimpleAtoi(op.qubits(0).id(), &q);
+  std::ignore = absl::SimpleAtoi(op.qubits(0).id(), &q);
 
   u = ParseProtoArg(op, "gamma", {}, &gamma);
   if (!u.ok()) {
@@ -717,10 +711,9 @@ inline Status PhaseFlipChannel(const Operation& op,
                                const unsigned int time,
                                NoisyQsimCircuit* ncircuit) {
   int q;
-  bool unused;
   float p;
   Status u;
-  unused = absl::SimpleAtoi(op.qubits(0).id(), &q);
+  std::ignore = absl::SimpleAtoi(op.qubits(0).id(), &q);
 
   u = ParseProtoArg(op, "p", {}, &p);
   if (!u.ok()) {
@@ -737,10 +730,9 @@ inline Status BitFlipChannel(const Operation& op, const unsigned int num_qubits,
                              const unsigned int time,
                              NoisyQsimCircuit* ncircuit) {
   int q;
-  bool unused;
   float p;
   Status u;
-  unused = absl::SimpleAtoi(op.qubits(0).id(), &q);
+  std::ignore = absl::SimpleAtoi(op.qubits(0).id(), &q);
 
   u = ParseProtoArg(op, "p", {}, &p);
   if (!u.ok()) {
@@ -838,8 +830,8 @@ tensorflow::Status QsimCircuitFromProgram(
     std::vector<GateMetaData>* metadata /*=nullptr*/) {
   // Convert proto to qsim internal representation.
   circuit->num_qubits = num_qubits;
-  int time = 0;
   bool unused;
+  int time = 0;
   // Special case empty.
   if (num_qubits <= 0) {
     return Status::OK();

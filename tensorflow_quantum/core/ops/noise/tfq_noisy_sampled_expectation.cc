@@ -177,8 +177,8 @@ class TfqNoisySampledExpectationOp : public tensorflow::OpKernel {
     tensorflow::GuardedPhiloxRandom random_gen;
     int max_psum_length = 1;
     int max_n_shots = 1;
-    for (int i = 0; i < pauli_sums.size(); i++) {
-      for (int j = 0; j < pauli_sums[i].size(); j++) {
+    for (unsigned int i = 0; i < pauli_sums.size(); i++) {
+      for (unsigned int j = 0; j < pauli_sums[i].size(); j++) {
         max_psum_length =
             std::max(max_psum_length, pauli_sums[i][j].terms().size());
         max_n_shots = std::max(max_n_shots, num_samples[i][j]);
@@ -192,12 +192,12 @@ class TfqNoisySampledExpectationOp : public tensorflow::OpKernel {
     // Simulate programs one by one. Parallelizing over state vectors
     // we no longer parallelize over circuits. Each time we encounter a
     // a larger circuit we will grow the Statevector as necessary.
-    for (int i = 0; i < ncircuits.size(); i++) {
+    for (unsigned int i = 0; i < ncircuits.size(); i++) {
       int nq = num_qubits[i];
 
       // (#679) Just ignore empty program
       if (ncircuits[i].channels.empty()) {
-        for (int j = 0; j < pauli_sums[i].size(); j++) {
+        for (unsigned int j = 0; j < pauli_sums[i].size(); j++) {
           (*output_tensor)(i, j) = -2.0;
         }
         continue;
@@ -224,7 +224,7 @@ class TfqNoisySampledExpectationOp : public tensorflow::OpKernel {
                              scratch, sv, unused_stats);
 
         // Use this trajectory as a source for all expectation calculations.
-        for (int j = 0; j < pauli_sums[i].size(); j++) {
+        for (unsigned int j = 0; j < pauli_sums[i].size(); j++) {
           if (run_samples[j] >= num_samples[i][j]) {
             continue;
           }
@@ -236,14 +236,14 @@ class TfqNoisySampledExpectationOp : public tensorflow::OpKernel {
           run_samples[j]++;
         }
         bool break_loop = true;
-        for (int j = 0; j < num_samples[i].size(); j++) {
+        for (unsigned int j = 0; j < num_samples[i].size(); j++) {
           if (run_samples[j] < num_samples[i][j]) {
             break_loop = false;
             break;
           }
         }
         if (break_loop) {
-          for (int j = 0; j < num_samples[i].size(); j++) {
+          for (unsigned int j = 0; j < num_samples[i].size(); j++) {
             rolling_sums[j] /= num_samples[i][j];
             (*output_tensor)(i, j) = static_cast<float>(rolling_sums[j]);
           }
@@ -285,8 +285,8 @@ class TfqNoisySampledExpectationOp : public tensorflow::OpKernel {
     tensorflow::GuardedPhiloxRandom random_gen;
     int max_psum_length = 1;
     int max_n_shots = 1;
-    for (int i = 0; i < pauli_sums.size(); i++) {
-      for (int j = 0; j < pauli_sums[i].size(); j++) {
+    for (unsigned int i = 0; i < pauli_sums.size(); i++) {
+      for (unsigned int j = 0; j < pauli_sums[i].size(); j++) {
         max_psum_length =
             std::max(max_psum_length, pauli_sums[i][j].terms().size());
         max_n_shots = std::max(max_n_shots, num_samples[i][j]);
@@ -310,13 +310,13 @@ class TfqNoisySampledExpectationOp : public tensorflow::OpKernel {
       auto local_gen = random_gen.ReserveSamples128(num_rand);
       tensorflow::random::SimplePhilox rand_source(&local_gen);
 
-      for (int i = 0; i < ncircuits.size(); i++) {
+      for (unsigned int i = 0; i < ncircuits.size(); i++) {
         int nq = num_qubits[i];
         int rep_offset = rep_offsets[start][i];
 
         // (#679) Just ignore empty program
         if (ncircuits[i].channels.empty()) {
-          for (int j = 0; j < pauli_sums[i].size(); j++) {
+          for (unsigned int j = 0; j < pauli_sums[i].size(); j++) {
             (*output_tensor)(i, j) = -2.0;
           }
           continue;
@@ -343,7 +343,7 @@ class TfqNoisySampledExpectationOp : public tensorflow::OpKernel {
                                sim, scratch, sv, unused_stats);
 
           // Compute expectations across all ops using this trajectory.
-          for (int j = 0; j < pauli_sums[i].size(); j++) {
+          for (unsigned int j = 0; j < pauli_sums[i].size(); j++) {
             int p_reps = (num_samples[i][j] + num_threads - 1) / num_threads;
             if (run_samples[j] >= p_reps + rep_offset) {
               continue;
@@ -360,7 +360,7 @@ class TfqNoisySampledExpectationOp : public tensorflow::OpKernel {
 
           // Check if we have run enough trajectories for all ops.
           bool break_loop = true;
-          for (int j = 0; j < num_samples[i].size(); j++) {
+          for (unsigned int j = 0; j < num_samples[i].size(); j++) {
             int p_reps = (num_samples[i][j] + num_threads - 1) / num_threads;
             if (run_samples[j] < p_reps + rep_offset) {
               break_loop = false;
@@ -370,7 +370,7 @@ class TfqNoisySampledExpectationOp : public tensorflow::OpKernel {
           if (break_loop) {
             // Lock writing to this batch index in output_tensor.
             batch_locks[i].lock();
-            for (int j = 0; j < num_samples[i].size(); j++) {
+            for (unsigned int j = 0; j < num_samples[i].size(); j++) {
               rolling_sums[j] /= num_samples[i][j];
               (*output_tensor)(i, j) += static_cast<float>(rolling_sums[j]);
             }
