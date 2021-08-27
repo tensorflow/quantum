@@ -17,6 +17,7 @@ message ProjectorTerm {
 // Store a single projection.
 message ProjectorDictEntry {
   string qubit_id = 1;
-  int32 basis_state = 2;
+  // False means |0> and true means |1>.
+  bool basis_state = 2;
 }
 

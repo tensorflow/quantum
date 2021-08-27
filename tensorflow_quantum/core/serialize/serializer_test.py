@@ -494,7 +494,7 @@ def _build_projector_proto(coefs, basis_states, qubit_ids):
                 term.projector_dict.add(qubit_id=qubit_ids[i][j])
             else:
                 term.projector_dict.add(qubit_id=qubit_ids[i][j],
-                                        basis_state=basis_states[i][j])
+                                        basis_state=True)
         terms.append(term)
 
     a = projector_sum_pb2.ProjectorSum()

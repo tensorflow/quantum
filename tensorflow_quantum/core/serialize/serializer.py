@@ -994,13 +994,13 @@ def serialize_projectorsum(projectorsum):
         projectorterm_proto.coefficient_imag = term.coefficient.imag
         for qubit, basis_state in sorted(
                 term.projector_dict.items()):  # sort to keep qubits ordered
-            if basis_state == 0:
-                projectorterm_proto.projector_dict.add(
-                    qubit_id=op_serializer.qubit_to_proto(qubit))
-            else:
+            if basis_state:
                 projectorterm_proto.projector_dict.add(
                     qubit_id=op_serializer.qubit_to_proto(qubit),
                     basis_state=basis_state)
+            else:
+                projectorterm_proto.projector_dict.add(
+                    qubit_id=op_serializer.qubit_to_proto(qubit))
 
         projectorsum_proto.terms.extend([projectorterm_proto])
 
@@ -1028,7 +1028,7 @@ def deserialize_projectorsum(proto):
         for projector_dict_entry in term_proto.projector_dict:
             qubit = op_deserializer.qubit_from_proto(
                 projector_dict_entry.qubit_id)
-            projector_dict[qubit] = projector_dict_entry.basis_state
+            projector_dict[qubit] = 1 if projector_dict_entry.basis_state else 0
         res += cirq.ProjectorString(projector_dict, coef)
 
     return res
