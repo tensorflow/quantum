@@ -1,7 +1,7 @@
 # Quantum machine learning concepts
 
 Google's
-<a href="https://ai.googleblog.com/2019/10/quantum-supremacy-using-programmable.html" class="external">quantum supremacy experiment</a>
+<a href="https://ai.googleblog.com/2019/10/quantum-supremacy-using-programmable.html" class="external">quantum beyond-classical experiment</a>
 used 53&nbsp;*noisy*&nbsp;qubits to demonstrate it could perform a calculation
 in 200 seconds on a quantum computer that would take 10,000 years on the largest
 classical computer using existing algorithms. This marks the beginning of the
