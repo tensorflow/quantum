@@ -200,7 +200,8 @@ class TfqInnerProductOp : public tensorflow::OpKernel {
         }
 
         ss.SetStateZero(scratch);
-        for (QsimFusedCircuit k = 0; k < other_fused_circuits[i][j].size();
+        for (QsimFusedCircuit::size_type k = 0;
+             k < other_fused_circuits[i][j].size();
              k++) {
           qsim::ApplyFusedGate(sim, other_fused_circuits[i][j][k], scratch);
         }
