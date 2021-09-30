@@ -67,8 +67,6 @@ class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
     const int output_dim_batch_size = context->input(0).dim_size(0);
     const int output_dim_op_size = context->input(3).dim_size(1);
     tensorflow::TensorShape output_shape;
-    std::cout << "batch_size = " << output_dim_batch_size << std::endl;
-    std::cout << "pauli sums size = " << output_dim_op_size << std::endl;
     output_shape.AddDim(output_dim_batch_size);
     output_shape.AddDim(output_dim_op_size);
 
@@ -82,7 +80,6 @@ class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
     std::vector<std::vector<PauliSum>> pauli_sums;
     OP_REQUIRES_OK(context, GetProgramsAndNumQubits(context, &programs,
                                                     &num_qubits, &pauli_sums));
-    std::cout << "parse program protos" << std::endl;
 
     std::vector<SymbolMap> maps;
     OP_REQUIRES_OK(context, GetSymbolMaps(context, &maps));
@@ -94,7 +91,6 @@ class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
                     " symbol values.")));
 
     OP_REQUIRES_OK(context, CheckQubitsIn1D(&programs));
-    std::cout << "CheckQubitsIn1D" << std::endl;
 
     // Construct qsim circuits.
     std::vector<QsimCircuit> qsim_circuits(programs.size(), QsimCircuit());
@@ -115,7 +111,6 @@ class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
     context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
         output_dim_batch_size, num_cycles, construct_f);
     OP_REQUIRES_OK(context, parse_status);
-    std::cout << "QsimCircuitFromProgram" << std::endl;
 
     int max_num_qubits = 0;
     for (const int num : num_qubits) {
@@ -127,12 +122,10 @@ class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
     // e2s2 = 2 CPU, 8GB -> Can safely do 25 since Memory = 4GB
     // e2s4 = 4 CPU, 16GB -> Can safely do 25 since Memory = 8GB
     // ...
-    if (true || max_num_qubits >= 26 || programs.size() == 1) {
-      std::cout << "Enter ComputeLarge" << std::endl;
+    if (max_num_qubits >= 26 || programs.size() == 1) {
       ComputeLarge(num_qubits, qsim_circuits, pauli_sums, context,
                    &output_tensor);
     } else {
-      std::cout << "THIS SHOULD NOT BE PRINTED OUT" << std::endl;
       ComputeSmall(num_qubits, max_num_qubits, qsim_circuits, pauli_sums,
                    context, &output_tensor);
     }
@@ -164,7 +157,6 @@ class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
     // we no longer parallelize over circuits. Each time we encounter a
     // a larger circuit we will grow the Statevector as necessary.
     for (int i = 0; i < qsim_circuits.size(); i++) {
-      std::cout << "ComputeLarge > runs circuit" << i << std::endl;
       int nq = num_qubits[i];
 
       if (nq > largest_nq) {
@@ -178,33 +170,19 @@ class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
       //  circuit[i + 1] produce the same state.
       ss.SetStateZero(sv);
       auto qsim_gates = qsim_circuits[i].gates;
-      std::cout << "ComputeLarge > QsimGate size = " << qsim_gates.size() << std::endl;
       for (int j = 0; j < qsim_gates.size(); j++) {
-        std::cout << "ComputeLarge > ApplyGate " << j << " qsize = " << qsim_gates[j].qubits.size() << std:: endl;
-        std::cout << "ComputeLarge > ApplyGate > Qubits = ";
-        for (int k = 0; k < qsim_gates[j].qubits.size(); k++) {
-          std::cout << qsim_gates[j].qubits[k] << ", ";
-        }
-        std::cout << std::endl;
-        std::cout << "ComputeLarge > ApplyGate > Gate = ";
-        for (int k = 0; k < qsim_gates[j].matrix.size(); k++) {
-          std::cout << qsim_gates[j].matrix[k] << ", ";
-        }
-        std::cout << std::endl;
         sim.ApplyGate(qsim_gates[j].qubits, qsim_gates[j].matrix.data(), sv);
       }
       for (int j = 0; j < pauli_sums[i].size(); j++) {
         // (#679) Just ignore empty program
         if (qsim_gates.size() == 0) {
-          std::cout << "ComputeLarge > result(" << i << ", " << j << ") = -2.0" << std::endl;
           (*output_tensor)(i, j) = -2.0;
           continue;
         }
         float exp_v = 0.0;
-        // OP_REQUIRES_OK(context, ComputeExpectationQsim(pauli_sums[i][j], sim, ss,
-        //                                                sv, scratch, &exp_v));
-        std::cout << "ComputeLarge > result(" << i << ", " << j << ") = " << exp_v << std::endl;
-        //(*output_tensor)(i, j) = exp_v;
+        OP_REQUIRES_OK(context, ComputeExpectationMPSQsim(pauli_sums[i][j], sim, ss,
+                                                          sv, scratch, &exp_v));
+        (*output_tensor)(i, j) = exp_v;
       }
     }
   }
@@ -215,70 +193,70 @@ class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
       const std::vector<std::vector<PauliSum>>& pauli_sums,
       tensorflow::OpKernelContext* context,
       tensorflow::TTypes<float>::Matrix* output_tensor) {
-    // using Simulator = qsim::mps::MPSSimulator<qsim::For, float>;
-    // using StateSpace = Simulator::MPSStateSpace_;
+    using Simulator = qsim::mps::MPSSimulator<qsim::For, float>;
+    using StateSpace = Simulator::MPSStateSpace_;
 
-    // const int output_dim_op_size = output_tensor->dimension(1);
+    const int output_dim_op_size = output_tensor->dimension(1);
 
-    // Status compute_status = Status::OK();
-    // auto c_lock = tensorflow::mutex();
-    // auto DoWork = [&](int start, int end) {
-    //   int old_batch_index = -2;
-    //   int cur_batch_index = -1;
-    //   int largest_nq = 1;
-    //   int cur_op_index;
+    Status compute_status = Status::OK();
+    auto c_lock = tensorflow::mutex();
+    auto DoWork = [&](int start, int end) {
+      int old_batch_index = -2;
+      int cur_batch_index = -1;
+      int largest_nq = 1;
+      int cur_op_index;
 
-    //   // Note: ForArgs in MPSSimulator and MPSStateState are currently unused.
-    //   // So, this 1 is a dummy for qsim::For.
-    //   Simulator sim = Simulator(1);
-    //   StateSpace ss = StateSpace(1);
-    //   auto sv = ss.Create(largest_nq, bond_dim_);
-    //   auto scratch = ss.Create(largest_nq, bond_dim_);
-    //   for (int i = start; i < end; i++) {
-    //     cur_batch_index = i / output_dim_op_size;
-    //     cur_op_index = i % output_dim_op_size;
+      // Note: ForArgs in MPSSimulator and MPSStateState are currently unused.
+      // So, this 1 is a dummy for qsim::For.
+      Simulator sim = Simulator(1);
+      StateSpace ss = StateSpace(1);
+      auto sv = ss.Create(largest_nq, bond_dim_);
+      auto scratch = ss.Create(largest_nq, bond_dim_);
+      for (int i = start; i < end; i++) {
+        cur_batch_index = i / output_dim_op_size;
+        cur_op_index = i % output_dim_op_size;
 
-    //     const int nq = num_qubits[cur_batch_index];
+        const int nq = num_qubits[cur_batch_index];
 
-    //     // (#679) Just ignore empty program
-    //     auto qsim_gates = qsim_circuits[cur_batch_index].gates;
-    //     if (qsim_gates.size() == 0) {
-    //       (*output_tensor)(cur_batch_index, cur_op_index) = -2.0;
-    //       continue;
-    //     }
+        // (#679) Just ignore empty program
+        auto qsim_gates = qsim_circuits[cur_batch_index].gates;
+        if (qsim_gates.size() == 0) {
+          (*output_tensor)(cur_batch_index, cur_op_index) = -2.0;
+          continue;
+        }
 
-    //     if (cur_batch_index != old_batch_index) {
-    //       // We've run into a new state vector we must compute.
-    //       // Only compute a new state vector when we have to.
-    //       if (nq > largest_nq) {
-    //         largest_nq = nq;
-    //         sv = ss.Create(largest_nq, bond_dim_);
-    //         scratch = ss.Create(largest_nq, bond_dim_);
-    //       }
-    //       // no need to update scratch_state since ComputeExpectation
-    //       // will take care of things for us.
-    //       ss.SetStateZero(sv);
-    //       for (int j = 0; j < qsim_gates.size(); j++) {
-    //         //ApplyFusedGateMPS(sim, qsim_circuits[cur_batch_index][j], sv);
-    //       }
-    //     }
+        if (cur_batch_index != old_batch_index) {
+          // We've run into a new state vector we must compute.
+          // Only compute a new state vector when we have to.
+          if (nq > largest_nq) {
+            largest_nq = nq;
+            sv = ss.Create(largest_nq, bond_dim_);
+            scratch = ss.Create(largest_nq, bond_dim_);
+          }
+          // no need to update scratch_state since ComputeExpectationMPSQsim
+          // will take care of things for us.
+          ss.SetStateZero(sv);
+          for (auto gate : qsim_gates) {
+            sim.ApplyGate(gate.qubits, gate.matrix.data(), sv);
+          }
+        }
 
-    //     float exp_v = 0.0;
-    //     // NESTED_FN_STATUS_SYNC(
-    //     //     compute_status,
-    //     //     ComputeExpectationMPS(pauli_sums[cur_batch_index][cur_op_index],
-    //     //                           sim, ss, sv, scratch, &exp_v),
-    //     //     c_lock);
-    //     (*output_tensor)(cur_batch_index, cur_op_index) = exp_v;
-    //     old_batch_index = cur_batch_index;
-    //   }
-    // };
+        float exp_v = 0.0;
+        NESTED_FN_STATUS_SYNC(
+            compute_status,
+            ComputeExpectationMPSQsim(pauli_sums[cur_batch_index][cur_op_index],
+                                      sim, ss, sv, scratch, &exp_v),
+            c_lock);
+        (*output_tensor)(cur_batch_index, cur_op_index) = exp_v;
+        old_batch_index = cur_batch_index;
+      }
+    };
 
-    // const int64_t num_cycles =
-    //     200 * (int64_t(1) << static_cast<int64_t>(max_num_qubits));
-    // context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
-    //     qsim_circuits.size() * output_dim_op_size, num_cycles, DoWork);
-    // OP_REQUIRES_OK(context, compute_status);
+    const int64_t num_cycles =
+        200 * (int64_t(1) << static_cast<int64_t>(max_num_qubits));
+    context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
+        qsim_circuits.size() * output_dim_op_size, num_cycles, DoWork);
+    OP_REQUIRES_OK(context, compute_status);
   }
 };
 
