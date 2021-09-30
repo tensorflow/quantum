@@ -134,12 +134,11 @@ class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
  private:
   int bond_dim_;
 
-  void ComputeLarge(
-      const std::vector<int>& num_qubits,
-      const std::vector<QsimCircuit>& qsim_circuits,
-      const std::vector<std::vector<PauliSum>>& pauli_sums,
-      tensorflow::OpKernelContext* context,
-      tensorflow::TTypes<float, 2>::Matrix* output_tensor) {
+  void ComputeLarge(const std::vector<int>& num_qubits,
+                    const std::vector<QsimCircuit>& qsim_circuits,
+                    const std::vector<std::vector<PauliSum>>& pauli_sums,
+                    tensorflow::OpKernelContext* context,
+                    tensorflow::TTypes<float, 2>::Matrix* output_tensor) {
     // Instantiate qsim objects.
     using Simulator = qsim::mps::MPSSimulator<qsim::For, float>;
     using StateSpace = Simulator::MPSStateSpace_;
@@ -180,19 +179,20 @@ class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
           continue;
         }
         float exp_v = 0.0;
-        OP_REQUIRES_OK(context, ComputeExpectationMPSQsim(pauli_sums[i][j], sim, ss,
-                                                          sv, scratch, &exp_v));
+        OP_REQUIRES_OK(context,
+                       ComputeExpectationMPSQsim(pauli_sums[i][j], sim, ss, sv,
+                                                 scratch, &exp_v));
         (*output_tensor)(i, j) = exp_v;
       }
     }
   }
 
-  void ComputeSmall(
-      const std::vector<int>& num_qubits, const int max_num_qubits,
-      const std::vector<QsimCircuit>& qsim_circuits,
-      const std::vector<std::vector<PauliSum>>& pauli_sums,
-      tensorflow::OpKernelContext* context,
-      tensorflow::TTypes<float>::Matrix* output_tensor) {
+  void ComputeSmall(const std::vector<int>& num_qubits,
+                    const int max_num_qubits,
+                    const std::vector<QsimCircuit>& qsim_circuits,
+                    const std::vector<std::vector<PauliSum>>& pauli_sums,
+                    tensorflow::OpKernelContext* context,
+                    tensorflow::TTypes<float>::Matrix* output_tensor) {
     using Simulator = qsim::mps::MPSSimulator<qsim::For, float>;
     using StateSpace = Simulator::MPSStateSpace_;
 

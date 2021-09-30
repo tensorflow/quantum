@@ -190,8 +190,8 @@ tensorflow::Status ComputeExpectationQsim(const tfq::proto::PauliSum& p_sum,
 template <typename SimT, typename StateSpaceT, typename StateT>
 tensorflow::Status ComputeExpectationMPSQsim(const tfq::proto::PauliSum& p_sum,
                                              const SimT& sim,
-                                             const StateSpaceT& ss, StateT& state,
-                                             StateT& scratch,
+                                             const StateSpaceT& ss,
+                                             StateT& state, StateT& scratch,
                                              float* expectation_value) {
   // apply the gates of the pauliterms to a copy of the state vector
   // and add up expectation value term by term.
@@ -216,7 +216,7 @@ tensorflow::Status ComputeExpectationMPSQsim(const tfq::proto::PauliSum& p_sum,
     // copy from src to scratch.
     ss.Copy(state, scratch);
     // Note: qsim::mps::MPSSimulator doesn't support ApplyFusedGate yet.
-    for (auto gate: main_circuit.gates) {
+    for (auto gate : main_circuit.gates) {
       sim.ApplyGate(gate.qubits, gate.matrix.data(), scratch);
     }
 

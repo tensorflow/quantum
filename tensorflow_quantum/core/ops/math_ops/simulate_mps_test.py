@@ -262,7 +262,9 @@ class SimulateMPS1DExpectationTest(tf.test.TestCase):
               for symbol in symbol_names]
              for resolver in resolver_batch])
 
-        pauli_sums = [cirq.Y(qubits[0])*cirq.X(qubits[1]) for _ in range(batch_size)]
+        pauli_sums = [
+            cirq.Y(qubits[0]) * cirq.X(qubits[1]) for _ in range(batch_size)
+        ]
 
         cirq_result = [
             cirq.Simulator().simulate_expectation_values(c, p, r)
@@ -271,10 +273,12 @@ class SimulateMPS1DExpectationTest(tf.test.TestCase):
         # bond_dim=2 results into test failure with segfault.
         mps_result = simulate_mps.mps_1d_expectation(
             util.convert_to_tensor(circuit_batch),
-            symbol_names, symbol_values_array,
+            symbol_names,
+            symbol_values_array,
             util.convert_to_tensor([[x] for x in pauli_sums]),
             bond_dim=4)
         self.assertAllClose(mps_result, cirq_result)
+
 
 if __name__ == "__main__":
     tf.test.main()

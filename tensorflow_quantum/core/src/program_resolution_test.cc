@@ -541,7 +541,8 @@ TEST(ProgramResolutionTest, CheckQubitsIn1DFailedByOpWithMoreThan2Qubits) {
                    "Found: 3 qubit gate."));
 }
 
-TEST(ProgramResolutionTest, CheckQubitsIn1DFailedByOpWithMoreThan2QubitsOnControlQubits) {
+TEST(ProgramResolutionTest,
+     CheckQubitsIn1DFailedByOpWithMoreThan2QubitsOnControlQubits) {
   std::vector<Program> programs;
   Program program_with_3qubit_op;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(

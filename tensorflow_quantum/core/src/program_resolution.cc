@@ -324,19 +324,22 @@ Status CheckQubitsIn1D(std::vector<Program>* programs) {
         unsigned int num_control_qubits = 0;
         if (operation.args().find("control_qubits") != operation.args().end()) {
           absl::string_view control_qubits = operation.mutable_args()
-                                                      ->at("control_qubits")
-                                                      .arg_value()
-                                                      .string_value();
+                                                 ->at("control_qubits")
+                                                 .arg_value()
+                                                 .string_value();
           if (!control_qubits.empty()) {
-            std::vector<absl::string_view> control_ids = absl::StrSplit(control_qubits, ',');
+            std::vector<absl::string_view> control_ids =
+                absl::StrSplit(control_qubits, ',');
             num_control_qubits = control_ids.size();
           }
         }
         const int total_num_qubits = num_qubits + num_control_qubits;
         if (total_num_qubits > 2) {
-          return Status(tensorflow::error::INVALID_ARGUMENT, absl::StrCat(
-                        "1D operations only support 1 and 2 qubit gates. "
-                        "Found: ", total_num_qubits, " qubit gate."));
+          return Status(
+              tensorflow::error::INVALID_ARGUMENT,
+              absl::StrCat("1D operations only support 1 and 2 qubit gates. "
+                           "Found: ",
+                           total_num_qubits, " qubit gate."));
         } else if (total_num_qubits == 1) {
           continue;  // all 1-qubit gate is allowed for 1D
         } else {
@@ -344,9 +347,10 @@ Status CheckQubitsIn1D(std::vector<Program>* programs) {
           absl::string_view qubit_id0, qubit_id1;
           if (num_control_qubits) {
             qubit_id0 = operation.mutable_qubits()->at(0).id();
-            qubit_id1 = operation.mutable_args()->at("control_qubits")
-                                                .arg_value()
-                                                .string_value();
+            qubit_id1 = operation.mutable_args()
+                            ->at("control_qubits")
+                            .arg_value()
+                            .string_value();
           } else {
             auto q = *operation.mutable_qubits();
             std::vector<Qubit> qubits(q.begin(), q.end());
