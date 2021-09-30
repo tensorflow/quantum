@@ -278,7 +278,7 @@ REGISTER_OP("TfqSimulateMPS1DExpectation")
     .Input("symbol_values: float")
     .Input("pauli_sums: string")
     .Output("expectations: float")
-    .Attr("bond_dim: int >= 2 = 2")
+    .Attr("bond_dim: int >= 4 = 4")
     .SetShapeFn([](tensorflow::shape_inference::InferenceContext* c) {
       tensorflow::shape_inference::ShapeHandle programs_shape;
       TF_RETURN_IF_ERROR(c->WithRank(c->input(0), 1, &programs_shape));

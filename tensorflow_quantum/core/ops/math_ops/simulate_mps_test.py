@@ -155,7 +155,7 @@ class SimulateMPS1DExpectationTest(tf.test.TestCase):
             # pylint: enable=no-value-for-parameter
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
-                                    'at least minimum 2'):
+                                    'at least minimum 4'):
             # pylint: disable=too-many-function-args
             simulate_mps.mps_1d_expectation(
                 util.convert_to_tensor(circuit_batch), symbol_names,
@@ -270,13 +270,12 @@ class SimulateMPS1DExpectationTest(tf.test.TestCase):
             cirq.Simulator().simulate_expectation_values(c, p, r)
             for c, p, r in zip(circuit_batch, pauli_sums, resolver_batch)
         ]
-        # bond_dim=2 results into test failure with segfault.
+        # Default bond_dim=4
         mps_result = simulate_mps.mps_1d_expectation(
             util.convert_to_tensor(circuit_batch),
             symbol_names,
             symbol_values_array,
-            util.convert_to_tensor([[x] for x in pauli_sums]),
-            bond_dim=4)
+            util.convert_to_tensor([[x] for x in pauli_sums]))
         self.assertAllClose(mps_result, cirq_result)
 
 
