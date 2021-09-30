@@ -190,9 +190,9 @@ tensorflow::Status ApplyFusedGateMPS(const Simulator& simulator,
       simulator.ApplyGate(gate.qubits, matrix.data(), state);
     } else {
       return tensorflow::Status(
-        tensorflow::error::INVALID_ARGUMENT,
-        absl::StrCat("MPS doesn't support controlled gate. it has ",
-        gate.parent->controlled_by.size(), " control qubits."));
+          tensorflow::error::INVALID_ARGUMENT,
+          absl::StrCat("MPS doesn't support controlled gate. it has ",
+                       gate.parent->controlled_by.size(), " control qubits."));
     }
   }
   return tensorflow::Status::OK();

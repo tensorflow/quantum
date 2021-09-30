@@ -272,8 +272,7 @@ class SimulateMPS1DExpectationTest(tf.test.TestCase):
         ]
         # Default bond_dim=4
         mps_result = simulate_mps.mps_1d_expectation(
-            util.convert_to_tensor(circuit_batch),
-            symbol_names,
+            util.convert_to_tensor(circuit_batch), symbol_names,
             symbol_values_array,
             util.convert_to_tensor([[x] for x in pauli_sums]))
         self.assertAllClose(mps_result, cirq_result)

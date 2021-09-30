@@ -51,9 +51,10 @@ def mps_1d_expectation(programs,
             expectation value for each circuit with each op applied to it
             (after resolving the corresponding parameters in).
     """
-    return MATH_OP_MODULE.tfq_simulate_mps1d_expectation(
-        programs,
-        symbol_names,
-        tf.cast(symbol_values, tf.float32),
-        pauli_sums,
-        bond_dim=bond_dim)
+    return MATH_OP_MODULE.tfq_simulate_mps1d_expectation(programs,
+                                                         symbol_names,
+                                                         tf.cast(
+                                                             symbol_values,
+                                                             tf.float32),
+                                                         pauli_sums,
+                                                         bond_dim=bond_dim)
