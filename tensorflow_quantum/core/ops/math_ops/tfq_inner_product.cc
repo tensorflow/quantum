@@ -174,7 +174,7 @@ class TfqInnerProductOp : public tensorflow::OpKernel {
     // Simulate programs one by one. Parallelizing over state vectors
     // we no longer parallelize over circuits. Each time we encounter a
     // a larger circuit we will grow the Statevector as necessary.
-    for (std::vector<std::vector<qsim::GateFused<QsimGate>>>::size_type i = 0;
+    for (std::vector<QsimFusedCircuit>::size_type i = 0;
          i < fused_circuits.size(); i++) {
       int nq = num_qubits[i];
       if (nq > largest_nq) {
@@ -187,11 +187,11 @@ class TfqInnerProductOp : public tensorflow::OpKernel {
       //  the state if there is a possibility that circuit[i] and
       //  circuit[i + 1] produce the same state.
       ss.SetStateZero(sv);
-      for (std::vector<qsim::GateFused<QsimGate>>::size_type j = 0;
-           j < fused_circuits[i].size(); j++) {
+      for (QsimFusedCircuit::size_type j = 0; j < fused_circuits[i].size();
+           j++) {
         qsim::ApplyFusedGate(sim, fused_circuits[i][j], sv);
       }
-      for (std::vector<std::vector<qsim::GateFused<QsimGate>>>::size_type j = 0;
+      for (std::vector<QsimFusedCircuit>::size_type j = 0;
            j < other_fused_circuits[i].size(); j++) {
         // (#679) Just ignore empty program
         if (fused_circuits[i].size() == 0) {
@@ -200,8 +200,8 @@ class TfqInnerProductOp : public tensorflow::OpKernel {
         }
 
         ss.SetStateZero(scratch);
-        for (std::vector<qsim::GateFused<QsimGate>>::size_type k = 0;
-             k < other_fused_circuits[i][j].size(); k++) {
+        for (QsimFusedCircuit k = 0; k < other_fused_circuits[i][j].size();
+             k++) {
           qsim::ApplyFusedGate(sim, other_fused_circuits[i][j][k], scratch);
         }
 
@@ -259,14 +259,14 @@ class TfqInnerProductOp : public tensorflow::OpKernel {
           // no need to update scratch_state since ComputeExpectation
           // will take care of things for us.
           ss.SetStateZero(sv);
-          for (std::vector<qsim::GateFused<QsimGate>>::size_type j = 0;
+          for (QsimFusedCircuit::size_type j = 0;
                j < fused_circuits[cur_batch_index].size(); j++) {
             qsim::ApplyFusedGate(sim, fused_circuits[cur_batch_index][j], sv);
           }
         }
 
         ss.SetStateZero(scratch);
-        for (std::vector<qsim::GateFused<QsimGate>>::size_type k = 0;
+        for (QsimFusedCircuit::size_type k = 0;
              k <
              other_fused_circuits[cur_batch_index][cur_internal_index].size();
              k++) {
