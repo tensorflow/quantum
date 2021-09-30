@@ -2,7 +2,9 @@
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
+
     http://www.apache.org/licenses/LICENSE-2.0
+
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -232,7 +234,7 @@ tensorflow::Status ComputeSampledExpectationQsim(
       unsigned int location;
       // GridQubit id should be parsed down to integer at this upstream
       //  so it is safe to just use atoi.
-      (void)absl::SimpleAtoi(pair.qubit_id(), &location);
+      std::ignore = absl::SimpleAtoi(pair.qubit_id(), &location);
       // Parity functions use little-endian indexing
       parity_bits.push_back(state.num_qubits() - location - 1);
     }
@@ -356,13 +358,13 @@ static void BalanceTrajectory(const std::vector<std::vector<int>>& num_samples,
   std::vector<int> rep_limits(num_samples.size(), -1);
   std::vector<int> height(num_threads, 0);
 
-  for (int i = 0; i < num_samples.size(); i++) {
-    for (int j = 0; j < num_samples[i].size(); j++) {
+  for (unsigned int i = 0; i < num_samples.size(); i++) {
+    for (unsigned int j = 0; j < num_samples[i].size(); j++) {
       rep_limits[i] = std::max(rep_limits[i], num_samples[i][j]);
     }
   }
   int prev_max_height = -1;
-  for (int j = 0; j < num_samples.size(); j++) {
+  for (unsigned int j = 0; j < num_samples.size(); j++) {
     int run_ceiling = ((rep_limits[j] + num_threads - 1) / num_threads);
     int num_lo = num_threads * run_ceiling - rep_limits[j];
     int num_hi = num_threads - num_lo;
@@ -401,7 +403,7 @@ static void BalanceTrajectory(const int& num_samples, const int& num_threads,
   std::vector<int> height(num_threads, 0);
 
   int prev_max_height = -1;
-  for (int j = 0; j < (*thread_offsets)[0].size(); j++) {
+  for (unsigned int j = 0; j < (*thread_offsets)[0].size(); j++) {
     int run_ceiling = ((num_samples + num_threads - 1) / num_threads);
     int num_lo = num_threads * run_ceiling - num_samples;
     int num_hi = num_threads - num_lo;
