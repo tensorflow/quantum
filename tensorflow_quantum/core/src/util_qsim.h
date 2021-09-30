@@ -182,6 +182,56 @@ tensorflow::Status ComputeExpectationQsim(const tfq::proto::PauliSum& p_sum,
 // computes the expectation value <state | p_sum | state > using
 // scratch to save on memory. Implementation does this:
 // 1. Copy state onto scratch
+// 2. Evolve scratch forward with p_sum terms
+// 3. Compute < state | scratch >
+// 4. Sum and repeat.
+// scratch is required to have memory initialized, but does not require
+// values in memory to be set.
+template <typename SimT, typename StateSpaceT, typename StateT>
+tensorflow::Status ComputeExpectationMPSQsim(const tfq::proto::PauliSum& p_sum,
+                                             const SimT& sim,
+                                             const StateSpaceT& ss, StateT& state,
+                                             StateT& scratch,
+                                             float* expectation_value) {
+  // apply the gates of the pauliterms to a copy of the state vector
+  // and add up expectation value term by term.
+  tensorflow::Status status = tensorflow::Status::OK();
+  for (const tfq::proto::PauliTerm& term : p_sum.terms()) {
+    // catch identity terms
+    if (term.paulis_size() == 0) {
+      *expectation_value += term.coefficient_real();
+      // TODO(zaqqwerty): error somewhere if identities have any imaginary part
+      continue;
+    }
+
+    QsimCircuit main_circuit;
+    std::vector<qsim::GateFused<QsimGate>> fused_circuit;
+
+    status = QsimCircuitFromPauliTerm(term, state.num_qubits(), &main_circuit,
+                                      &fused_circuit);
+
+    if (!status.ok()) {
+      return status;
+    }
+    // copy from src to scratch.
+    ss.Copy(state, scratch);
+    for (const QsimGate& gate : main_circuit) {
+      qsim::ApplyGate(sim, gate, scratch);
+    }
+
+    if (!status.ok()) {
+      return status;
+    }
+    *expectation_value +=
+        term.coefficient_real() * ss.RealInnerProduct(state, scratch);
+  }
+  return status;
+}
+
+// bad style standards here that we are forced to follow from qsim.
+// computes the expectation value <state | p_sum | state > using
+// scratch to save on memory. Implementation does this:
+// 1. Copy state onto scratch
 // 2. Convert scratch to Z basis
 // 3. Compute < state | scratch > via sampling.
 // 4. Sum and repeat.
