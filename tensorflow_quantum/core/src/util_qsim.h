@@ -178,6 +178,28 @@ tensorflow::Status ComputeExpectationQsim(const tfq::proto::PauliSum& p_sum,
   return status;
 }
 
+// TODO(jaeyoo) : Remove this workaround after qsim==0.10.3
+//   and use qsim::ApplyFusedGate instead.
+template <typename Simulator, typename Gate>
+tensorflow::Status ApplyFusedGateMPS(const Simulator& simulator,
+                                     const Gate& gate,
+                                     typename Simulator::State& state) {
+  if (gate.kind != qsim::gate::kMeasurement) {
+    auto matrix = qsim::CalculateFusedMatrix<float>(gate);
+    if (gate.parent->controlled_by.size() == 0) {
+      simulator.ApplyGate(gate.qubits, matrix.data(), state);
+    } else {
+      return tensorflow::Status(
+        tensorflow::error::INVALID_ARGUMENT,
+        absl::StrCat("MPS doesn't support controlled gate. it has ",
+        gate.parent->controlled_by.size(), " control qubits."));
+    }
+  }
+  return tensorflow::Status::OK();
+}
+
+// TODO(jaeyoo) : Remove this workaround after qsim==0.10.3
+//   and use qsim::ApplyFusedGate instead.
 // bad style standards here that we are forced to follow from qsim.
 // computes the expectation value <state | p_sum | state > using
 // scratch to save on memory. Implementation does this:
@@ -205,19 +227,18 @@ tensorflow::Status ComputeExpectationMPSQsim(const tfq::proto::PauliSum& p_sum,
     }
 
     QsimCircuit main_circuit;
-    std::vector<qsim::GateFused<QsimGate>> unused_fused_circuit;
+    std::vector<qsim::GateFused<QsimGate>> fused_circuit;
 
     status = QsimCircuitFromPauliTerm(term, state.num_qubits(), &main_circuit,
-                                      &unused_fused_circuit);
+                                      &fused_circuit);
 
     if (!status.ok()) {
       return status;
     }
     // copy from src to scratch.
     ss.Copy(state, scratch);
-    // Note: qsim::mps::MPSSimulator doesn't support ApplyFusedGate yet.
-    for (auto gate : main_circuit.gates) {
-      sim.ApplyGate(gate.qubits, gate.matrix.data(), scratch);
+    for (auto gate : fused_circuit) {
+      ApplyFusedGateMPS(sim, gate, scratch);
     }
 
     if (!status.ok()) {
