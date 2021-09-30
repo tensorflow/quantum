@@ -155,8 +155,8 @@ class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
     int largest_nq = 1;
     Simulator sim = Simulator(tfq_for);
     StateSpace ss = StateSpace(tfq_for);
-    auto sv = ss.CreateMPS(largest_nq, bond_dim_);
-    auto scratch = ss.CreateMPS(largest_nq, bond_dim_);
+    auto sv = ss.Create(largest_nq, bond_dim_);
+    auto scratch = ss.Create(largest_nq, bond_dim_);
 
     // Simulate programs one by one. Parallelizing over state vectors
     // we no longer parallelize over circuits. Each time we encounter a
@@ -168,13 +168,13 @@ class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
       if (nq > largest_nq) {
         // need to switch to larger statespace.
         largest_nq = nq;
-        sv = ss.CreateMPS(largest_nq, bond_dim_);
-        scratch = ss.CreateMPS(largest_nq, bond_dim_);
+        sv = ss.Create(largest_nq, bond_dim_);
+        scratch = ss.Create(largest_nq, bond_dim_);
       }
       // TODO: add heuristic here so that we do not always recompute
       //  the state if there is a possibility that circuit[i] and
       //  circuit[i + 1] produce the same state.
-      ss.SetMPSZero(sv);
+      ss.SetStateZero(sv);
       auto qsim_gates = qsim_circuits[i].gates;
       std::cout << "ComputeLarge > QsimGate size = " << qsim_gates.size() << std::endl;
       for (int j = 0; j < qsim_gates.size(); j++) {
@@ -220,8 +220,8 @@ class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
 
       Simulator sim = Simulator(tfq_for);
       StateSpace ss = StateSpace(tfq_for);
-      auto sv = ss.CreateMPS(largest_nq, bond_dim_);
-      auto scratch = ss.CreateMPS(largest_nq, bond_dim_);
+      auto sv = ss.Create(largest_nq, bond_dim_);
+      auto scratch = ss.Create(largest_nq, bond_dim_);
       for (int i = start; i < end; i++) {
         cur_batch_index = i / output_dim_op_size;
         cur_op_index = i % output_dim_op_size;
@@ -240,12 +240,12 @@ class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
           // Only compute a new state vector when we have to.
           if (nq > largest_nq) {
             largest_nq = nq;
-            sv = ss.CreateMPS(largest_nq, bond_dim_);
-            scratch = ss.CreateMPS(largest_nq, bond_dim_);
+            sv = ss.Create(largest_nq, bond_dim_);
+            scratch = ss.Create(largest_nq, bond_dim_);
           }
           // no need to update scratch_state since ComputeExpectation
           // will take care of things for us.
-          ss.SetMPSZero(sv);
+          ss.SetStateZero(sv);
           for (int j = 0; j < qsim_gates.size(); j++) {
             //ApplyFusedGateMPS(sim, qsim_circuits[cur_batch_index][j], sv);
           }
