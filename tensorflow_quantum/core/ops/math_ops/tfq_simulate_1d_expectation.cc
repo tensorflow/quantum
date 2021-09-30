@@ -131,6 +131,7 @@ class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
       ComputeLarge(num_qubits, qsim_circuits, pauli_sums, context,
                    &output_tensor);
     } else {
+      std::cout << "THIS SHOULD NOT BE PRINTED OUT" << std::endl;
       ComputeSmall(num_qubits, max_num_qubits, qsim_circuits, pauli_sums,
                    context, &output_tensor);
     }
