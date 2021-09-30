@@ -205,18 +205,19 @@ tensorflow::Status ComputeExpectationMPSQsim(const tfq::proto::PauliSum& p_sum,
     }
 
     QsimCircuit main_circuit;
-    std::vector<qsim::GateFused<QsimGate>> fused_circuit;
+    std::vector<qsim::GateFused<QsimGate>> unused_fused_circuit;
 
     status = QsimCircuitFromPauliTerm(term, state.num_qubits(), &main_circuit,
-                                      &fused_circuit);
+                                      &unused_fused_circuit);
 
     if (!status.ok()) {
       return status;
     }
     // copy from src to scratch.
     ss.Copy(state, scratch);
-    for (const QsimGate& gate : main_circuit) {
-      qsim::ApplyGate(sim, gate, scratch);
+    // Note: qsim::mps::MPSSimulator doesn't support ApplyFusedGate yet.
+    for (auto gate: main_circuit.gates) {
+      sim.ApplyGate(gate.qubits, gate.matrix.data(), scratch);
     }
 
     if (!status.ok()) {
