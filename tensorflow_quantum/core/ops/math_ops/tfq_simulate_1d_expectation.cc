@@ -17,6 +17,7 @@ limitations under the License.
 #include <vector>
 
 #include "../qsim/lib/circuit.h"
+#include "../qsim/lib/formux.h"
 #include "../qsim/lib/gate_appl.h"
 #include "../qsim/lib/gates_cirq.h"
 #include "../qsim/lib/mps_simulator.h"
@@ -147,14 +148,15 @@ class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
       tensorflow::OpKernelContext* context,
       tensorflow::TTypes<float, 2>::Matrix* output_tensor) {
     // Instantiate qsim objects.
-    const auto tfq_for = tfq::QsimFor(context);
-    using Simulator = qsim::mps::MPSSimulator<const tfq::QsimFor&, float>;
-    using StateSpace = Simulator::MPSStateSpace_;
+    using Simulator = qsim::mps::MPSSimulator<qsim::For, float>;
+    using StateSpace = qsim::mps::MPSSimulator<qsim::For, float>::MPSStateSpace_;
 
-    // Begin simulation.
+    // // Begin simulation.
     int largest_nq = 1;
-    Simulator sim = Simulator(tfq_for);
-    StateSpace ss = StateSpace(tfq_for);
+    // Note: ForArgs in MPSSimulator and MPSStateState are currently unused.
+    // So, this 1 is a dummy.
+    Simulator sim = Simulator(1);
+    StateSpace ss = StateSpace(1);
     auto sv = ss.Create(largest_nq, bond_dim_);
     auto scratch = ss.Create(largest_nq, bond_dim_);
 
@@ -189,8 +191,8 @@ class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
           continue;
         }
         float exp_v = 0.0;
-        // OP_REQUIRES_OK(context, ComputeExpectationMPS(pauli_sums[i][j], sim, ss,
-        //                                               sv, scratch, &exp_v));
+        OP_REQUIRES_OK(context, ComputeExpectationQsim(pauli_sums[i][j], sim, ss,
+                                                       sv, scratch, &exp_v));
         std::cout << "ComputeLarge > result(" << i << ", " << j << ") = " << exp_v << std::endl;
         (*output_tensor)(i, j) = exp_v;
       }

@@ -178,62 +178,6 @@ tensorflow::Status ComputeExpectationQsim(const tfq::proto::PauliSum& p_sum,
   return status;
 }
 
-// TODO(jaeyoo) : This should be removed after Qsim MPS methods are renamed.
-// bad style standards here that we are forced to follow from qsim.
-// computes the expectation value <state | p_sum | state > using
-// scratch to save on memory. Implementation does this:
-// 1. Copy state onto scratch
-// 2. Evolve scratch forward with p_sum terms
-// 3. Compute < state | scratch >
-// 4. Sum and repeat.
-// scratch is required to have memory initialized, but does not require
-// values in memory to be set.
-template <typename SimT, typename StateSpaceT, typename StateT>
-tensorflow::Status ComputeExpectationMPS(const tfq::proto::PauliSum& p_sum,
-                                         const SimT& sim, const StateSpaceT& ss,
-                                         StateT& state, StateT& scratch,
-                                         float* expectation_value) {
-  // apply the gates of the pauliterms to a copy of the state vector
-  // and add up expectation value term by term.
-  tensorflow::Status status = tensorflow::Status::OK();
-  for (const tfq::proto::PauliTerm& term : p_sum.terms()) {
-    // catch identity terms
-    if (term.paulis_size() == 0) {
-      *expectation_value += term.coefficient_real();
-      // TODO(zaqqwerty): error somewhere if identities have any imaginary part
-      continue;
-    }
-
-    QsimCircuit main_circuit;
-    std::vector<qsim::GateFused<QsimGate>> fused_circuit;
-
-    std::cout << "ComputeExpectationMPS > QsimCircuitFromPauliTerm" << std::endl;
-    status = QsimCircuitFromPauliTerm(term, state.num_qubits(), &main_circuit,
-                                      &fused_circuit);
-
-    if (!status.ok()) {
-      std::cout << "ComputeExpectationMPS > QsimCircuitFromPauliTerm Status not ok!" << std::endl;
-      return status;
-    }
-    // copy from src to scratch.
-    std::cout << "ComputeExpectationMPS > CopyMPS" << std::endl;
-    ss.CopyMPS(state, scratch);
-    std::cout << "ComputeExpectationMPS > #gates = " << main_circuit.gates.size() << std::endl;
-    int i = 0;
-    for (auto gate : main_circuit.gates) {
-      std::cout << "ComputeExpectationMPS > Apply Gate " << i++ << std::endl;
-      sim.ApplyGate(gate.qubits, gate.matrix.data(), scratch);
-    }
-
-    std::cout << "ComputeExpectationMPS > calculate expectation with InnerProduct" << std::endl;
-    *expectation_value +=
-        term.coefficient_real() * ss.InnerProduct(state, scratch).real();
-    
-    std::cout << "ComputeExpectationMPS > Done!" << std::endl;
-  }
-  return status;
-}
-
 // bad style standards here that we are forced to follow from qsim.
 // computes the expectation value <state | p_sum | state > using
 // scratch to save on memory. Implementation does this:
