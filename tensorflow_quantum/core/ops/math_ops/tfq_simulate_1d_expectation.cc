@@ -170,9 +170,7 @@ class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
       ss.SetStateZero(sv);
       auto fused_gates = fused_circuits[i];
       for (auto gate : fused_gates) {
-        // TODO(jaeyoo): use qsim::ApplyFusedGate instead
-        //   when qsim==0.10.3 is up.
-        ApplyFusedGateMPS(sim, gate, sv);
+        qsim::ApplyFusedGate(sim, gate, sv);
       }
       for (int j = 0; j < pauli_sums[i].size(); j++) {
         // (#679) Just ignore empty program
@@ -181,11 +179,9 @@ class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
           continue;
         }
         float exp_v = 0.0;
-        // TODO(jaeyoo) : use ComputeExpectationQsim instead
-        //   after qsim==0.10.3
         OP_REQUIRES_OK(context,
-                       ComputeExpectationMPSQsim(pauli_sums[i][j], sim, ss, sv,
-                                                 scratch, &exp_v));
+                       ComputeExpectationQsim(pauli_sums[i][j], sim, ss, sv,
+                                              scratch, &exp_v));
         (*output_tensor)(i, j) = exp_v;
       }
     }
@@ -241,19 +237,15 @@ class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
           // will take care of things for us.
           ss.SetStateZero(sv);
           for (auto gate : fused_gates) {
-            // TODO(jaeyoo): use qsim::ApplyFusedGate instead
-            //   when qsim==0.10.3 is up.
-            ApplyFusedGateMPS(sim, gate, sv);
+            qsim::ApplyFusedGate(sim, gate, sv);
           }
         }
 
         float exp_v = 0.0;
-        // TODO(jaeyoo) : use ComputeExpectationQsim instead
-        //   after qsim==0.10.3
         NESTED_FN_STATUS_SYNC(
             compute_status,
-            ComputeExpectationMPSQsim(pauli_sums[cur_batch_index][cur_op_index],
-                                      sim, ss, sv, scratch, &exp_v),
+            ComputeExpectationQsim(pauli_sums[cur_batch_index][cur_op_index],
+                                   sim, ss, sv, scratch, &exp_v),
             c_lock);
         (*output_tensor)(cur_batch_index, cur_op_index) = exp_v;
         old_batch_index = cur_batch_index;
