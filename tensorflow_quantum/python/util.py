@@ -118,8 +118,10 @@ def _apply_random_control(gate, all_qubits):
     # TODO(tonybruguier): Here we call the parent's class controlled_by because
     # Cirq's breaking change #4167 created 3-qubit gates that cannot be
     # serialized yet. Instead, support 3-qubit gates and revert the work-around.
+    # pylint: disable=bad-super-call
     return super(type(gate), gate).controlled_by(*control_locs,
                                                  control_values=control_values)
+    # pylint: enable=bad-super-call
 
 
 def random_symbol_circuit(qubits,
