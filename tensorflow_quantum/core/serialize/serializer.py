@@ -149,11 +149,9 @@ class DelayedAssignmentGate(cirq.Gate):
         # because Cirq's breaking change #4167 created 3-qubit gates that cannot
         # be serialized yet. Instead, support 3-qubit gates and revert the
         # work-around.
-        # pylint: disable=bad-super-call
-        return super(type(gate),
-                     gate).controlled_by(*self._control_qubits,
-                                         control_values=self._control_values)
-        # pylint: enable=bad-super-call
+        return cirq.ControlledOperation(self._control_qubits,
+                                        gate,
+                                        control_values=self._control_values)
 
     # pylint: enable=invalid-name
 
