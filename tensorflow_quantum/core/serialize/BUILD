@@ -27,7 +27,8 @@ py_test(
     srcs_version = "PY3",
     deps = [
         ":op_serializer",
-        "//tensorflow_quantum/core/proto:program_py_proto"
+        "//tensorflow_quantum/core/proto:program_py_proto",
+        "//tensorflow_quantum/python:util",
     ],
 )
 

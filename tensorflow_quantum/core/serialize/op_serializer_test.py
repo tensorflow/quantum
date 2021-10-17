@@ -23,6 +23,7 @@ from absl.testing import parameterized
 from google.protobuf import json_format
 from tensorflow_quantum.core.proto import program_pb2
 from tensorflow_quantum.core.serialize import op_serializer
+from tensorflow_quantum.python import util
 
 
 def op_proto(json):
@@ -142,8 +143,12 @@ TEST_CASES = [
 class OpSerializerTest(tf.test.TestCase, parameterized.TestCase):
     """Test OpSerializer functions correctly."""
 
-    @parameterized.parameters(TEST_CASES)
-    def test_to_proto_attribute(self, val_type, val, arg_value):
+    @parameterized.parameters([
+        CASE + (x,)
+        for CASE in TEST_CASES
+        for x in [cirq.GridQubit(1, 2), cirq.LineQubit(4)]
+    ])
+    def test_to_proto_attribute(self, val_type, val, arg_value, q):
         """Test proto attribute serialization works."""
         serializer = op_serializer.GateOpSerializer(
             gate_type=GateWithAttribute,
@@ -153,7 +158,6 @@ class OpSerializerTest(tf.test.TestCase, parameterized.TestCase):
                                              serialized_type=val_type,
                                              op_getter='val')
             ])
-        q = cirq.GridQubit(1, 2)
         result = serializer.to_proto(GateWithAttribute(val)(q),
                                      arg_function_language='linear')
         expected = op_proto({
@@ -164,13 +168,17 @@ class OpSerializerTest(tf.test.TestCase, parameterized.TestCase):
                 'my_val': arg_value
             },
             'qubits': [{
-                'id': '1_2'
+                'id': '1_2' if isinstance(q, cirq.GridQubit) else '4'
             }]
         })
         self.assertEqual(result, expected)
 
-    @parameterized.parameters(TEST_CASES)
-    def test_to_proto_property(self, val_type, val, arg_value):
+    @parameterized.parameters([
+        CASE + (x,)
+        for CASE in TEST_CASES
+        for x in [cirq.GridQubit(1, 2), cirq.LineQubit(4)]
+    ])
+    def test_to_proto_property(self, val_type, val, arg_value, q):
         """Test proto property serialization works."""
         serializer = op_serializer.GateOpSerializer(
             gate_type=GateWithProperty,
@@ -180,7 +188,6 @@ class OpSerializerTest(tf.test.TestCase, parameterized.TestCase):
                                              serialized_type=val_type,
                                              op_getter='val')
             ])
-        q = cirq.GridQubit(1, 2)
         result = serializer.to_proto(GateWithProperty(val)(q),
                                      arg_function_language='linear')
         expected = op_proto({
@@ -191,13 +198,17 @@ class OpSerializerTest(tf.test.TestCase, parameterized.TestCase):
                 'my_val': arg_value
             },
             'qubits': [{
-                'id': '1_2'
+                'id': '1_2' if isinstance(q, cirq.GridQubit) else '4'
             }]
         })
         self.assertEqual(result, expected)
 
-    @parameterized.parameters(TEST_CASES)
-    def test_to_proto_callable(self, val_type, val, arg_value):
+    @parameterized.parameters([
+        CASE + (x,)
+        for CASE in TEST_CASES
+        for x in [cirq.GridQubit(1, 2), cirq.LineQubit(4)]
+    ])
+    def test_to_proto_callable(self, val_type, val, arg_value, q):
         """Test callable serialization works."""
         serializer = op_serializer.GateOpSerializer(
             gate_type=GateWithMethod,
@@ -207,7 +218,6 @@ class OpSerializerTest(tf.test.TestCase, parameterized.TestCase):
                                              serialized_type=val_type,
                                              op_getter=get_val)
             ])
-        q = cirq.GridQubit(1, 2)
         result = serializer.to_proto(GateWithMethod(val)(q),
                                      arg_function_language='linear')
         expected = op_proto({
@@ -218,12 +228,13 @@ class OpSerializerTest(tf.test.TestCase, parameterized.TestCase):
                 'my_val': arg_value
             },
             'qubits': [{
-                'id': '1_2'
+                'id': '1_2' if isinstance(q, cirq.GridQubit) else '4'
             }]
         })
         self.assertEqual(result, expected)
 
-    def test_to_proto_gate_predicate(self):
+    @parameterized.parameters([cirq.GridQubit(1, 2), cirq.LineQubit(4)])
+    def test_to_proto_gate_predicate(self, q):
         """Test can_serialize works."""
         serializer = op_serializer.GateOpSerializer(
             gate_type=GateWithAttribute,
@@ -234,7 +245,6 @@ class OpSerializerTest(tf.test.TestCase, parameterized.TestCase):
                                              op_getter='val')
             ],
             can_serialize_predicate=lambda x: x.gate.val == 1)
-        q = cirq.GridQubit(1, 2)
         self.assertIsNone(serializer.to_proto(GateWithAttribute(0)(q)))
         self.assertIsNotNone(serializer.to_proto(GateWithAttribute(1)(q)))
         self.assertFalse(
@@ -242,7 +252,8 @@ class OpSerializerTest(tf.test.TestCase, parameterized.TestCase):
         self.assertTrue(
             serializer.can_serialize_operation(GateWithAttribute(1)(q)))
 
-    def test_to_proto_gate_mismatch(self):
+    @parameterized.parameters([cirq.GridQubit(1, 2), cirq.LineQubit(4)])
+    def test_to_proto_gate_mismatch(self, q):
         """Test proto gate mismatch errors."""
         serializer = op_serializer.GateOpSerializer(
             gate_type=GateWithProperty,
@@ -252,13 +263,13 @@ class OpSerializerTest(tf.test.TestCase, parameterized.TestCase):
                                              serialized_type=float,
                                              op_getter='val')
             ])
-        q = cirq.GridQubit(1, 2)
         with self.assertRaisesRegex(
                 ValueError,
                 expected_regex='GateWithAttribute.*GateWithProperty'):
             serializer.to_proto(GateWithAttribute(1.0)(q))
 
-    def test_to_proto_unsupported_type(self):
+    @parameterized.parameters([cirq.GridQubit(1, 2), cirq.LineQubit(4)])
+    def test_to_proto_unsupported_type(self, q):
         """Test proto unsupported types errors."""
         serializer = op_serializer.GateOpSerializer(
             gate_type=GateWithProperty,
@@ -268,11 +279,11 @@ class OpSerializerTest(tf.test.TestCase, parameterized.TestCase):
                                              serialized_type=bytes,
                                              op_getter='val')
             ])
-        q = cirq.GridQubit(1, 2)
         with self.assertRaisesRegex(ValueError, expected_regex='bytes'):
             serializer.to_proto(GateWithProperty(b's')(q))
 
-    def test_to_proto_required_but_not_present(self):
+    @parameterized.parameters([cirq.GridQubit(1, 2), cirq.LineQubit(4)])
+    def test_to_proto_required_but_not_present(self, q):
         """Test required and missing args errors."""
         serializer = op_serializer.GateOpSerializer(
             gate_type=GateWithProperty,
@@ -282,11 +293,11 @@ class OpSerializerTest(tf.test.TestCase, parameterized.TestCase):
                                              serialized_type=float,
                                              op_getter=lambda x: None)
             ])
-        q = cirq.GridQubit(1, 2)
         with self.assertRaisesRegex(ValueError, expected_regex='required'):
             serializer.to_proto(GateWithProperty(1.0)(q))
 
-    def test_to_proto_no_getattr(self):
+    @parameterized.parameters([cirq.GridQubit(1, 2), cirq.LineQubit(4)])
+    def test_to_proto_no_getattr(self, q):
         """Test no op getter fails."""
         serializer = op_serializer.GateOpSerializer(
             gate_type=GateWithProperty,
@@ -296,11 +307,11 @@ class OpSerializerTest(tf.test.TestCase, parameterized.TestCase):
                                              serialized_type=float,
                                              op_getter='nope')
             ])
-        q = cirq.GridQubit(1, 2)
         with self.assertRaisesRegex(ValueError, expected_regex='does not have'):
             serializer.to_proto(GateWithProperty(1.0)(q))
 
-    def test_to_proto_not_required_ok(self):
+    @parameterized.parameters([cirq.GridQubit(1, 2), cirq.LineQubit(4)])
+    def test_to_proto_not_required_ok(self, q):
         """Test non require arg absense succeeds."""
         serializer = op_serializer.GateOpSerializer(
             gate_type=GateWithProperty,
@@ -326,15 +337,19 @@ class OpSerializerTest(tf.test.TestCase, parameterized.TestCase):
                 }
             },
             'qubits': [{
-                'id': '1_2'
+                'id': '1_2' if isinstance(q, cirq.GridQubit) else '4'
             }]
         })
 
-        q = cirq.GridQubit(1, 2)
         self.assertEqual(serializer.to_proto(GateWithProperty(0.125)(q)),
                          expected)
 
     @parameterized.parameters([{
+        **x,
+        **{
+            'q': q
+        }
+    } for x in [{
         'val_type': float,
         'val': 's'
     }, {
@@ -352,8 +367,8 @@ class OpSerializerTest(tf.test.TestCase, parameterized.TestCase):
     }, {
         'val_type': List[bool],
         'val': (1.0,)
-    }])
-    def test_to_proto_type_mismatch(self, val_type, val):
+    }] for q in [cirq.GridQubit(1, 2), cirq.LineQubit(4)]])
+    def test_to_proto_type_mismatch(self, val_type, val, q):
         """Test type mismatch fails."""
         serializer = op_serializer.GateOpSerializer(
             gate_type=GateWithProperty,
@@ -363,11 +378,11 @@ class OpSerializerTest(tf.test.TestCase, parameterized.TestCase):
                                              serialized_type=val_type,
                                              op_getter='val')
             ])
-        q = cirq.GridQubit(1, 2)
         with self.assertRaisesRegex(ValueError, expected_regex=str(type(val))):
             serializer.to_proto(GateWithProperty(val)(q))
 
-    def test_can_serialize_operation_subclass(self):
+    @parameterized.parameters([cirq.GridQubit(1, 2), cirq.LineQubit(4)])
+    def test_can_serialize_operation_subclass(self, q):
         """Test can serialize subclass."""
         serializer = op_serializer.GateOpSerializer(
             gate_type=GateWithAttribute,
@@ -378,11 +393,11 @@ class OpSerializerTest(tf.test.TestCase, parameterized.TestCase):
                                              op_getter='val')
             ],
             can_serialize_predicate=lambda x: x.gate.val == 1)
-        q = cirq.GridQubit(1, 1)
         self.assertTrue(serializer.can_serialize_operation(SubclassGate(1)(q)))
         self.assertFalse(serializer.can_serialize_operation(SubclassGate(0)(q)))
 
-    def test_defaults_not_serialized(self):
+    @parameterized.parameters([cirq.GridQubit(1, 2), cirq.LineQubit(4)])
+    def test_defaults_not_serialized(self, q):
         """Test defaults not serialized."""
         serializer = op_serializer.GateOpSerializer(
             gate_type=GateWithAttribute,
@@ -393,7 +408,6 @@ class OpSerializerTest(tf.test.TestCase, parameterized.TestCase):
                                              default=1.0,
                                              op_getter='val')
             ])
-        q = cirq.GridQubit(1, 2)
         no_default = op_proto({
             'gate': {
                 'id': 'my_gate'
@@ -406,7 +420,7 @@ class OpSerializerTest(tf.test.TestCase, parameterized.TestCase):
                 }
             },
             'qubits': [{
-                'id': '1_2'
+                'id': '1_2' if isinstance(q, cirq.GridQubit) else '4'
             }]
         })
         self.assertEqual(no_default,
@@ -416,7 +430,7 @@ class OpSerializerTest(tf.test.TestCase, parameterized.TestCase):
                 'id': 'my_gate'
             },
             'qubits': [{
-                'id': '1_2'
+                'id': '1_2' if isinstance(q, cirq.GridQubit) else '4'
             }]
         })
         self.assertEqual(with_default,
