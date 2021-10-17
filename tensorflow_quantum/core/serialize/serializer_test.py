@@ -121,7 +121,10 @@ def _make_controlled_circuit(circuit, control_qubits, control_values):
         for op in moment:
             new_op = op
             for qb, v in zip(control_qubits[::-1], control_values[::-1]):
-                new_op = new_op.controlled_by(qb, control_values=[v])
+                if len(qb) > 0:
+                    new_op = cirq.ControlledOperation(qb,
+                                                      new_op,
+                                                      control_values=[v])
             new_circuit += new_op
     return new_circuit
 
