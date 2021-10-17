@@ -96,8 +96,12 @@ TEST_CASES = [
 class OpDeserializerTest(tf.test.TestCase, parameterized.TestCase):
     """Test OpDeserializer functionality."""
 
-    @parameterized.parameters(TEST_CASES)
-    def test_from_proto(self, val_type, val, arg_value):
+    @parameterized.parameters([
+        CASE + (x,)
+        for CASE in TEST_CASES
+        for x in [cirq.GridQubit(1, 2), cirq.LineQubit(4)]
+    ])
+    def test_from_proto(self, val_type, val, arg_value, q):
         """Test from proto under many cases."""
         deserializer = op_deserializer.GateOpDeserializer(
             serialized_gate_id='my_gate',
@@ -116,10 +120,9 @@ class OpDeserializerTest(tf.test.TestCase, parameterized.TestCase):
                 'my_val': arg_value
             },
             'qubits': [{
-                'id': '1_2'
+                'id': '1_2' if isinstance(q, cirq.GridQubit) else '4'
             }]
         })
-        q = cirq.GridQubit(1, 2)
         result = deserializer.from_proto(serialized,
                                          arg_function_language='linear')
         self.assertEqual(result, GateWithAttribute(val)(q))
@@ -260,7 +263,8 @@ class OpDeserializerTest(tf.test.TestCase, parameterized.TestCase):
             _ = deserializer.from_proto(serialized,
                                         arg_function_language='linear')
 
-    def test_from_proto_value_func(self):
+    @parameterized.parameters([cirq.GridQubit(1, 2), cirq.LineQubit(4)])
+    def test_from_proto_value_func(self, q):
         """Test value func deserialization in simple case."""
         deserializer = op_deserializer.GateOpDeserializer(
             serialized_gate_id='my_gate',
@@ -282,14 +286,14 @@ class OpDeserializerTest(tf.test.TestCase, parameterized.TestCase):
                 }
             },
             'qubits': [{
-                'id': '1_2'
+                'id': '1_2' if isinstance(q, cirq.GridQubit) else '4'
             }]
         })
-        q = cirq.GridQubit(1, 2)
         result = deserializer.from_proto(serialized)
         self.assertEqual(result, GateWithAttribute(1.125)(q))
 
-    def test_from_proto_not_required_ok(self):
+    @parameterized.parameters([cirq.GridQubit(1, 2), cirq.LineQubit(4)])
+    def test_from_proto_not_required_ok(self, q):
         """Deserialization succeeds for missing not required fields."""
         deserializer = op_deserializer.GateOpDeserializer(
             serialized_gate_id='my_gate',
@@ -315,12 +319,12 @@ class OpDeserializerTest(tf.test.TestCase, parameterized.TestCase):
                 }
             },
             'qubits': [{
-                'id': '1_2'
+                'id': '1_2' if isinstance(q, cirq.GridQubit) else '4'
             }]
         })
-        q = cirq.GridQubit(1, 2)
         result = deserializer.from_proto(serialized)
         self.assertEqual(result, GateWithAttribute(0.125)(q))
+
 
     def test_from_proto_missing_required_arg(self):
         """Error raised when required field is missing."""
@@ -382,7 +386,8 @@ class OpDeserializerTest(tf.test.TestCase, parameterized.TestCase):
         with self.assertRaises(ValueError):
             deserializer.from_proto(serialized)
 
-    def test_defaults(self):
+    @parameterized.parameters([cirq.GridQubit(1, 2), cirq.LineQubit(4)])
+    def test_defaults(self, q):
         """Ensure default values still deserialize."""
         deserializer = op_deserializer.GateOpDeserializer(
             serialized_gate_id='my_gate',
@@ -402,13 +407,12 @@ class OpDeserializerTest(tf.test.TestCase, parameterized.TestCase):
             },
             'args': {},
             'qubits': [{
-                'id': '1_2'
+                'id': '1_2' if isinstance(q, cirq.GridQubit) else '4'
             }]
         })
         g = GateWithAttribute(1.0)
         g.not_req = 'hello'
-        self.assertEqual(deserializer.from_proto(serialized),
-                         g(cirq.GridQubit(1, 2)))
+        self.assertEqual(deserializer.from_proto(serialized), g(q))
 
 
 if __name__ == "__main__":
