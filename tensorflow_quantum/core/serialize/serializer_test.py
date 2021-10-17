@@ -125,10 +125,9 @@ def _make_controlled_circuit(circuit, control_qubits, control_values):
                 # controlled_by because Cirq's breaking change #4167 created
                 # 3-qubit gates that cannot be serialized yet. Instead, support
                 # 3-qubit gates and revert the work-around.
-                if len(qb) > 0:
-                    new_op = cirq.ControlledOperation(qb,
-                                                      new_op,
-                                                      control_values=[v])
+                new_op = cirq.ControlledOperation([qb],
+                                                  new_op,
+                                                  control_values=[v])
             new_circuit += new_op
     return new_circuit
 
