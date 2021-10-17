@@ -23,7 +23,6 @@ from absl.testing import parameterized
 from google.protobuf import json_format
 from tensorflow_quantum.core.proto import program_pb2
 from tensorflow_quantum.core.serialize import op_serializer
-from tensorflow_quantum.python import util
 
 
 def op_proto(json):

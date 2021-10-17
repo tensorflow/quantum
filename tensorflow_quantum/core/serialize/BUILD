@@ -28,7 +28,6 @@ py_test(
     deps = [
         ":op_serializer",
         "//tensorflow_quantum/core/proto:program_py_proto",
-        "//tensorflow_quantum/python:util",
     ],
 )
 
