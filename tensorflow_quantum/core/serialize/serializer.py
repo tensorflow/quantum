@@ -149,6 +149,8 @@ class DelayedAssignmentGate(cirq.Gate):
         # because Cirq's breaking change #4167 created 3-qubit gates that cannot
         # be serialized yet. Instead, support 3-qubit gates and revert the
         # work-around.
+        if len(self._control_qubits) == 0:
+            return gate
         return cirq.ControlledOperation(self._control_qubits,
                                         gate,
                                         control_values=self._control_values)
