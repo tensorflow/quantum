@@ -121,6 +121,10 @@ def _make_controlled_circuit(circuit, control_qubits, control_values):
         for op in moment:
             new_op = op
             for qb, v in zip(control_qubits[::-1], control_values[::-1]):
+                # TODO(tonybruguier): Here we call the parent's class
+                # controlled_by because Cirq's breaking change #4167 created
+                # 3-qubit gates that cannot be serialized yet. Instead, support
+                # 3-qubit gates and revert the work-around.
                 if len(qb) > 0:
                     new_op = cirq.ControlledOperation(qb,
                                                       new_op,
