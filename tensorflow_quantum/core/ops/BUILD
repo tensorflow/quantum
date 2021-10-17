@@ -403,6 +403,7 @@ py_test(
 
 py_test(
     name = "tfq_unitary_op_test",
+    timeout = "long",
     srcs = ["tfq_unitary_op_test.py"],
     python_version = "PY3",
     deps = [
@@ -461,6 +462,8 @@ py_library(
     srcs_version = "PY3",
     deps = [
         ":batch_util",
+        "//tensorflow_quantum/core/proto:program_py_proto",
+        "//tensorflow_quantum/core/proto:pauli_sum_py_proto",
         "//tensorflow_quantum/core/serialize:serializer",
     ],
 )

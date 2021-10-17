@@ -42,6 +42,8 @@ class ExamplesTest(tf.test.TestCase, parameterized.TestCase):
                 src = re.sub('NUM_EXAMPLES ?= ?.*', 'NUM_EXAMPLES = 10', src)
                 # For quantum_reinforcement_learning.ipynb to reduce runtime in test.
                 src = re.sub('n_episodes ?= ?.*', 'n_episodes = 50', src)
+                # For noise.ipynb to reduce runtime in test.
+                src = re.sub('n_epochs ?= ?.*', 'n_epochs = 2', src)
                 cell['source'] = src
 
         _ = nbconvert.preprocessors.execute.executenb(nb,

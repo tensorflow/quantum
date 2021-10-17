@@ -16,7 +16,6 @@ limitations under the License.
 #include <cmath>
 #include <string>
 
-#include "cirq_google/api/v2/program.pb.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/shape_inference.h"
 #include "tensorflow/core/framework/tensor_shape.h"
@@ -24,16 +23,17 @@ limitations under the License.
 #include "tensorflow/core/lib/core/threadpool.h"
 #include "tensorflow_quantum/core/ops/parse_context.h"
 #include "tensorflow_quantum/core/ops/tfq_simulate_utils.h"
+#include "tensorflow_quantum/core/proto/program.pb.h"
 
 namespace tfq {
 
-using ::cirq::google::api::v2::Arg;
-using ::cirq::google::api::v2::Circuit;
-using ::cirq::google::api::v2::Moment;
-using ::cirq::google::api::v2::Operation;
-using ::cirq::google::api::v2::Program;
 using ::tensorflow::Status;
 using ::tensorflow::Tensor;
+using ::tfq::proto::Arg;
+using ::tfq::proto::Circuit;
+using ::tfq::proto::Moment;
+using ::tfq::proto::Operation;
+using ::tfq::proto::Program;
 
 class TfqPsDecomposeOp : public tensorflow::OpKernel {
  public:

@@ -24,9 +24,9 @@ limitations under the License.
 #include "../qsim/lib/gates_cirq.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/strings/numbers.h"
-#include "cirq_google/api/v2/program.pb.h"
 #include "gtest/gtest.h"
 #include "tensorflow/core/lib/core/status.h"
+#include "tensorflow_quantum/core/proto/program.pb.h"
 
 namespace tfq {
 namespace {
@@ -37,13 +37,13 @@ typedef qsim::Cirq::GateCirq<float> QsimGate;
 typedef qsim::Circuit<QsimGate> QsimCircuit;
 typedef qsim::NoisyCircuit<QsimGate> NoisyQsimCircuit;
 
-using ::cirq::google::api::v2::Arg;
-using ::cirq::google::api::v2::Circuit;
-using ::cirq::google::api::v2::Gate;
-using ::cirq::google::api::v2::Moment;
-using ::cirq::google::api::v2::Operation;
-using ::cirq::google::api::v2::Program;
-using ::cirq::google::api::v2::Qubit;
+using ::tfq::proto::Arg;
+using ::tfq::proto::Circuit;
+using ::tfq::proto::Gate;
+using ::tfq::proto::Moment;
+using ::tfq::proto::Operation;
+using ::tfq::proto::Program;
+using ::tfq::proto::Qubit;
 
 Arg MakeArg(float val) {
   Arg arg;
@@ -1535,7 +1535,7 @@ TEST(QsimCircuitParserTest, NoisyEmpty) {
   Program program_proto;
   Circuit* circuit_proto = program_proto.mutable_circuit();
   circuit_proto->set_scheduling_strategy(circuit_proto->MOMENT_BY_MOMENT);
-  Moment* moments_proto = circuit_proto->add_moments();
+  (void)circuit_proto->add_moments();
 
   NoisyQsimCircuit test_circuit;
   ASSERT_EQ(

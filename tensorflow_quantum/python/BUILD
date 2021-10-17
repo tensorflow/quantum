@@ -36,6 +36,7 @@ py_library(
     srcs = ["util.py"],
     srcs_version = "PY3",
     deps = [
+        "//tensorflow_quantum/core/proto:program_py_proto",
         "//tensorflow_quantum/core/serialize:serializer",
     ],
 )

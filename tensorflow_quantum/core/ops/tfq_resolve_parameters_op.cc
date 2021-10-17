@@ -15,7 +15,6 @@ limitations under the License.
 
 #include <string>
 
-#include "cirq_google/api/v2/program.pb.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/shape_inference.h"
 #include "tensorflow/core/framework/tensor_shape.h"
@@ -25,12 +24,13 @@ limitations under the License.
 #include "tensorflow/core/platform/mutex.h"
 #include "tensorflow_quantum/core/ops/parse_context.h"
 #include "tensorflow_quantum/core/ops/tfq_simulate_utils.h"
+#include "tensorflow_quantum/core/proto/program.pb.h"
 #include "tensorflow_quantum/core/src/program_resolution.h"
 
 namespace tfq {
 
-using ::cirq::google::api::v2::Program;
 using ::tensorflow::Status;
+using ::tfq::proto::Program;
 
 class TfqResolveParametersOp : public tensorflow::OpKernel {
  public:
