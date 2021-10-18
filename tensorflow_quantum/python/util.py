@@ -23,6 +23,7 @@ import sympy
 import tensorflow as tf
 import cirq
 
+from google.protobuf import text_format
 from tensorflow_quantum.core.proto import pauli_sum_pb2
 from tensorflow_quantum.core.proto import program_pb2
 from tensorflow_quantum.core.serialize import serializer
@@ -345,6 +346,26 @@ def _parse_single(item):
         return out
     except Exception:
         raise TypeError('Error decoding item: ' + str(item))
+
+
+def program_from_tensor_to_ascii_proto(tensor_to_convert):
+    ascii_reprs = []
+    for index, item in np.ndenumerate(tensor_to_convert):
+        obj = program_pb2.Program()
+        obj.ParseFromString(item)
+        ascii_repr = text_format.MessageToString(obj)
+        ascii_reprs.append(f"{index}: {ascii_repr}")
+    return "\n".join(ascii_reprs)
+
+
+def paulisum_from_tensor_to_ascii_proto(tensor_to_convert):
+    ascii_reprs = []
+    for index, item in np.ndenumerate(tensor_to_convert):
+        obj = pauli_sum_pb2.PauliSum()
+        obj.ParseFromString(item)
+        ascii_repr = text_format.MessageToString(obj)
+        ascii_reprs.append(f"{index}: {ascii_repr}")
+    return "\n".join(ascii_reprs)
 
 
 def from_tensor(tensor_to_convert):

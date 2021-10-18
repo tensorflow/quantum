@@ -117,8 +117,11 @@ class AppendCircuitOpTest(tf.test.TestCase, parameterized.TestCase):
         cirq_results = [
             a + b for a, b in zip(base_circuits, circuits_to_append)
         ]
-        self.assertAllEqual(util.convert_to_tensor(tfq_results),
-                            util.convert_to_tensor(cirq_results))
+        self.assertAllEqual(
+            util.program_from_tensor_to_ascii_proto(
+                util.convert_to_tensor(tfq_results)),
+            util.program_from_tensor_to_ascii_proto(
+                util.convert_to_tensor(cirq_results)))
 
     @parameterized.parameters([{
         'padded_array': [[[1, 0, 0, 0], [1, 1, 1, 1]],

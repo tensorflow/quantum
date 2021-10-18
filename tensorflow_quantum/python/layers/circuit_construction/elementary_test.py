@@ -112,8 +112,13 @@ class AddCircuitTest(tf.test.TestCase):
         actual_prepend = util.convert_to_tensor(
             util.from_tensor(prepend_layer(circuit_a, prepend=circuit_b)))
 
-        self.assertEqual(expected_append.numpy()[0], actual_append.numpy()[0])
-        self.assertEqual(expected_prepend.numpy()[0], actual_prepend.numpy()[0])
+        self.assertEqual(
+            util.program_from_tensor_to_ascii_proto(expected_append.numpy()[0]),
+            util.program_from_tensor_to_ascii_proto(actual_append.numpy()[0]))
+        self.assertEqual(
+            util.program_from_tensor_to_ascii_proto(
+                expected_prepend.numpy()[0]),
+            util.program_from_tensor_to_ascii_proto(actual_prepend.numpy()[0]))
 
 
 if __name__ == "__main__":

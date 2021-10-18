@@ -107,7 +107,9 @@ class ExpandCircuitsTest(tf.test.TestCase):
                 ]:
                     circuit_test, names_test, values_test = \
                         input_checks.expand_circuits(circuit, names, values)
-                    self.assertAllEqual(circuit_test, circuit_tensor)
+                    self.assertAllEqual(
+                        util.program_from_tensor_to_ascii_proto(circuit_test),
+                        util.program_from_tensor_to_ascii_proto(circuit_tensor))
                     self.assertAllEqual(names_test, names_tensor)
                     self.assertAllEqual(values_test, values_tensor)
 
@@ -117,7 +119,9 @@ class ExpandCircuitsTest(tf.test.TestCase):
         for circuit in [circuit_list, circuit_tuple, circuit_tensor]:
             circuit_test, names_test, values_test = \
                 input_checks.expand_circuits(circuit)
-            self.assertAllEqual(circuit_test, circuit_tensor)
+            self.assertAllEqual(
+                util.program_from_tensor_to_ascii_proto(circuit_test),
+                util.program_from_tensor_to_ascii_proto(circuit_tensor))
             self.assertAllEqual(names_test, names_tensor)
             self.assertAllEqual(values_test, values_tensor)
 
