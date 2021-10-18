@@ -349,6 +349,24 @@ def _parse_single(item):
 
 
 def program_from_tensor_to_ascii_proto(tensor_to_convert):
+    """Converts a tensor of serialized programs to ASCII proto.
+
+    Converts a tensor containing `cirq.Circuit` item to their ASCII format. This
+    is useful for unit tests because the binary serialization is not
+    deterministic. In particular, map<> fields do not guarantee a serialization
+    with ordered keys. Thus, we convert to ASCII, which has the added benefit of
+    being human-readable.
+
+    Args:
+        tensor_to_convert: `tf.Tensor` or `np.ndarray` representation to
+            convert.
+
+    Returns:
+        A string representing the tensor.
+
+    Raises:
+        TypeError: In case of an invalid tensor passed for conversion.
+    """
     ascii_reprs = []
     for index, item in np.ndenumerate(tensor_to_convert):
         obj = program_pb2.Program()
@@ -359,6 +377,24 @@ def program_from_tensor_to_ascii_proto(tensor_to_convert):
 
 
 def paulisum_from_tensor_to_ascii_proto(tensor_to_convert):
+    """Converts a tensor of serialized programs to ASCII proto.
+
+    Converts a tensor containing `cirq.PauliSum` item to their ASCII format.
+    This is useful for unit tests because the binary serialization is not
+    deterministic. In particular, map<> fields do not guarantee a serialization
+    with ordered keys. Thus, we convert to ASCII, which has the added benefit of
+    being human-readable.
+
+    Args:
+        tensor_to_convert: `tf.Tensor` or `np.ndarray` representation to
+            convert.
+
+    Returns:
+        A string representing the tensor.
+
+    Raises:
+        TypeError: In case of an invalid tensor passed for conversion.
+    """
     ascii_reprs = []
     for index, item in np.ndenumerate(tensor_to_convert):
         obj = pauli_sum_pb2.PauliSum()
