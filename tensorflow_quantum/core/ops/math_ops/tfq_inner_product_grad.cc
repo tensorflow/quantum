@@ -477,11 +477,18 @@ REGISTER_OP("TfqInnerProductGrad")
 
       tensorflow::shape_inference::DimensionHandle output_rows =
           c->Dim(programs_shape, 0);
-      tensorflow::shape_inference::DimensionHandle output_cols =
-          c->Dim(symbol_names_shape, 0);
-      std::vector<tensorflow::shape_inference::DimensionHandle> dims = {
-          output_rows, output_cols};
-      c->set_output(0, c->MakeShape(dims));
+
+      // Use kUnknownDim instead to prevent shape inference from breaking
+      //   @tf.custom_gradient code in fidelity_op.py. The grad function has
+      //   an implicit data dependency on `sybmol_names` that shape infrence
+      //   can't (and shouldn't) see. Not specifying shape prevents this break.
+      // std::vector<tensorflow::shape_inference::DimensionHandle> dims = {
+      //     output_rows,
+      //     tensorflow::shape_inference::InferenceContext::kUnknownDim};
+      c->set_output(
+          0, c->MakeShape(
+                 {output_rows,
+                  tensorflow::shape_inference::InferenceContext::kUnknownDim}));
 
       return tensorflow::Status::OK();
     });

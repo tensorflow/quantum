@@ -18,6 +18,7 @@ from tensorflow_quantum.core.ops.math_ops import inner_product_op
 
 
 @tf.function
+@tf.custom_gradient
 def fidelity(programs, symbol_names, symbol_values, other_programs):
     """Calculate the fidelity between circuits.
 
@@ -78,7 +79,16 @@ def fidelity(programs, symbol_names, symbol_values, other_programs):
             to the fidelity of `programs[i]` with `symbol_values[i]`
             resolved in and `other_programs[i][j]`.
     """
-    ip = inner_product_op.inner_product(programs, symbol_names,
-                                        tf.cast(symbol_values, tf.float32),
+    f32_vals = tf.cast(symbol_values, tf.float32)
+    ip = inner_product_op.inner_product(programs, symbol_names, f32_vals,
                                         other_programs)
-    return tf.math.abs(ip)**2
+
+    def grad(dy):
+        ret_zero = tf.equal(tf.size(symbol_names), 0)
+        inner_prod_grad = tf.cond(
+            ret_zero, lambda: tf.zeros_like(symbol_values, dtype=tf.float32),
+            lambda: tf.math.real(2. * ip * inner_product_op._inner_product_grad(
+                programs, symbol_names, symbol_values, other_programs, dy)))
+        return [None, None, inner_prod_grad, None]
+
+    return tf.math.abs(ip)**2, grad

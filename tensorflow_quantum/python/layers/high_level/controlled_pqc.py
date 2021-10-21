@@ -215,7 +215,7 @@ class ControlledPQC(tf.keras.layers.Layer):
                              "tfq.layers.ControlledPQC. Please use "
                              "tfq.layers.NoisyControlledPQC instead.")
 
-        not_default = backend is not 'noiseless'
+        not_default = backend != 'noiseless'
         not_default &= backend is not None  # legacy backend=None support.
         if not isinstance(
                 backend,

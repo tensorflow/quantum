@@ -86,6 +86,7 @@ class FidelityTest(tf.test.TestCase, parameterized.TestCase):
                 out_arr[i][j] = np.abs(np.vdot(final_wf, internal_wf))**2
 
         self.assertAllClose(out, out_arr, atol=1e-5)
+        self.assertDTypeEqual(out, tf.float32.as_numpy_dtype)
 
     @parameterized.parameters([
         {
@@ -138,6 +139,7 @@ class FidelityTest(tf.test.TestCase, parameterized.TestCase):
                 out_arr[i][j] = np.abs(np.vdot(final_wf, internal_wf))**2
 
         self.assertAllClose(out, out_arr, atol=1e-5)
+        self.assertDTypeEqual(out, tf.float32.as_numpy_dtype)
 
     def test_correctness_empty(self):
         """Tests the fidelity with empty circuits."""
@@ -151,6 +153,7 @@ class FidelityTest(tf.test.TestCase, parameterized.TestCase):
                                    other_program)
         expected = np.array([[1.0]], dtype=np.complex64)
         self.assertAllClose(out, expected)
+        self.assertDTypeEqual(out, tf.float32.as_numpy_dtype)
 
         qubit = cirq.GridQubit(0, 0)
         non_empty_circuit = util.convert_to_tensor(
@@ -235,6 +238,7 @@ class FidelityTest(tf.test.TestCase, parameterized.TestCase):
                         out_arr[i][k] += grad_fid
 
         self.assertAllClose(out, out_arr, atol=1e-3)
+        self.assertDTypeEqual(out, tf.float32.as_numpy_dtype)
 
     @parameterized.parameters([
         {
@@ -272,6 +276,7 @@ class FidelityTest(tf.test.TestCase, parameterized.TestCase):
                                       other_programs)
         out = tape.gradient(ip, symbol_values)
         self.assertAllClose(out, tf.zeros_like(symbol_values), atol=1e-3)
+        self.assertDTypeEqual(out, tf.float32.as_numpy_dtype)
 
     def test_correctness_no_circuit(self):
         """Test the inner product between no circuits."""
@@ -284,6 +289,7 @@ class FidelityTest(tf.test.TestCase, parameterized.TestCase):
         out = fidelity_op.fidelity(empty_circuit, empty_symbols, empty_values,
                                    other_program)
         self.assertShapeEqual(np.zeros((0, 0)), out)
+        self.assertDTypeEqual(out, tf.float32.as_numpy_dtype)
 
     def test_tf_gradient_correctness_no_circuit(self):
         """Test the inner product grad between no circuits."""
@@ -299,6 +305,7 @@ class FidelityTest(tf.test.TestCase, parameterized.TestCase):
                                        empty_values, other_program)
 
         self.assertShapeEqual(np.zeros((0, 0)), out)
+        self.assertDTypeEqual(out, tf.float32.as_numpy_dtype)
 
 
 if __name__ == "__main__":
