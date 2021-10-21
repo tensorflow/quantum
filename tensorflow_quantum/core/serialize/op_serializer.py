@@ -14,6 +14,7 @@
 """op_serializer.py adapated from Cirq release 0.9.0"""
 
 from typing import List
+import cirq
 import sympy
 import numpy as np
 from tensorflow_quantum.core.proto import program_pb2
@@ -31,7 +32,11 @@ SUPPORTED_FUNCTIONS_FOR_LANGUAGE = {
 
 def qubit_to_proto(qubit):
     """Return proto representation of a GridQubit."""
-    return '{}_{}'.format(qubit.row, qubit.col)
+    if isinstance(qubit, cirq.GridQubit):
+        return '{}_{}'.format(qubit.row, qubit.col)
+    if isinstance(qubit, cirq.LineQubit):
+        return '{}'.format(qubit.x)
+    raise ValueError('Unsupported qubit type:' + str(type(qubit)))
 
 
 def _arg_to_proto(value, *, arg_function_language, out=None):
@@ -193,7 +198,7 @@ class GateOpSerializer:
 
         msg.gate.id = self.serialized_gate_id
         for qubit in op.qubits:
-            msg.qubits.add().id = '{}_{}'.format(qubit.row, qubit.col)
+            msg.qubits.add().id = qubit_to_proto(qubit)
         for arg in self.args:
             value = self._value_from_gate(op, arg)
             if value is not None and (not arg.default or value != arg.default):
