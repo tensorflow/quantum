@@ -145,8 +145,16 @@ class DelayedAssignmentGate(cirq.Gate):
     # pylint: disable=invalid-name
     def on(self, *qubits):
         """Returns gate_callable on qubits controlled by contol_qubits."""
-        return self._gate_callable(*qubits).controlled_by(
-            *self._control_qubits, control_values=self._control_values)
+        gate = self._gate_callable(*qubits)
+        # TODO(tonybruguier,#636): Here we call the parent's class controlled_by
+        # because Cirq's breaking change #4167 created 3-qubit gates that cannot
+        # be serialized yet. Instead, support 3-qubit gates and revert the
+        # work-around.
+        if len(self._control_qubits) == 0:
+            return gate
+        return cirq.ControlledOperation(self._control_qubits,
+                                        gate,
+                                        control_values=self._control_values)
 
     # pylint: enable=invalid-name
 

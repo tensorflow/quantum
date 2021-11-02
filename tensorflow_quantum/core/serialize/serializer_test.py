@@ -122,7 +122,13 @@ def _make_controlled_circuit(circuit, control_qubits, control_values):
         for op in moment:
             new_op = op
             for qb, v in zip(control_qubits[::-1], control_values[::-1]):
-                new_op = new_op.controlled_by(qb, control_values=[v])
+                # TODO(tonybruguier,#636): Here we call the parent's class
+                # controlled_by because Cirq's breaking change #4167 created
+                # 3-qubit gates that cannot be serialized yet. Instead, support
+                # 3-qubit gates and revert the work-around.
+                new_op = cirq.ControlledOperation([qb],
+                                                  new_op,
+                                                  control_values=[v])
             new_circuit += new_op
     return new_circuit
 
@@ -428,39 +434,44 @@ def _get_valid_projector_proto_pairs():
 def _get_noise_proto_pairs():
     q0 = cirq.GridQubit(0, 0)
 
+    # NOTE(tonybruguier): All the parameters are powers of 2. This is because
+    # Python only uses double, which means that Protobufs use double even if the
+    # field is a float. However, the serialization sometimes goes though C++ and
+    # thus would use float. Thus, we need to have numbers that are exactly
+    # representable on a float. Powers of 2 are a convenient subset.
     pairs = [
         # Depolarization.
-        (cirq.Circuit(cirq.depolarize(p=0.3)(q0)),
-         _build_op_proto("DP", ['p'], [0.3], ['0_0'])),
+        (cirq.Circuit(cirq.depolarize(p=0.5)(q0)),
+         _build_op_proto("DP", ['p'], [0.5], ['0_0'])),
 
         # Asymmetric depolarization.
         (cirq.Circuit(
-            cirq.asymmetric_depolarize(p_x=0.1, p_y=0.2, p_z=0.3)(q0)),
-         _build_op_proto("ADP", ['p_x', 'p_y', 'p_z'], [0.1, 0.2, 0.3],
+            cirq.asymmetric_depolarize(p_x=0.125, p_y=0.25, p_z=0.5)(q0)),
+         _build_op_proto("ADP", ['p_x', 'p_y', 'p_z'], [0.125, 0.25, 0.5],
                          ['0_0'])),
 
         # Generalized Amplitude damp.
-        (cirq.Circuit(cirq.generalized_amplitude_damp(p=0.1, gamma=0.2)(q0)),
-         _build_op_proto("GAD", ['p', 'gamma'], [0.1, 0.2], ['0_0'])),
+        (cirq.Circuit(cirq.generalized_amplitude_damp(p=0.125, gamma=0.25)(q0)),
+         _build_op_proto("GAD", ['p', 'gamma'], [0.125, 0.25], ['0_0'])),
 
         # Amplitude damp.
-        (cirq.Circuit(cirq.amplitude_damp(gamma=0.1)(q0)),
-         _build_op_proto("AD", ['gamma'], [0.1], ['0_0'])),
+        (cirq.Circuit(cirq.amplitude_damp(gamma=0.125)(q0)),
+         _build_op_proto("AD", ['gamma'], [0.125], ['0_0'])),
 
         # Reset.
         (cirq.Circuit(cirq.reset(q0)), _build_op_proto("RST", [], [], ['0_0'])),
 
         # Phase damp.
-        (cirq.Circuit(cirq.phase_damp(gamma=0.1)(q0)),
-         _build_op_proto("PD", ['gamma'], [0.1], ['0_0'])),
+        (cirq.Circuit(cirq.phase_damp(gamma=0.125)(q0)),
+         _build_op_proto("PD", ['gamma'], [0.125], ['0_0'])),
 
         # Phase flip.
-        (cirq.Circuit(cirq.phase_flip(p=0.1)(q0)),
-         _build_op_proto("PF", ['p'], [0.1], ['0_0'])),
+        (cirq.Circuit(cirq.phase_flip(p=0.125)(q0)),
+         _build_op_proto("PF", ['p'], [0.125], ['0_0'])),
 
         # Bit flip.
-        (cirq.Circuit(cirq.bit_flip(p=0.1)(q0)),
-         _build_op_proto("BF", ['p'], [0.1], ['0_0']))
+        (cirq.Circuit(cirq.bit_flip(p=0.125)(q0)),
+         _build_op_proto("BF", ['p'], [0.125], ['0_0']))
     ]
     return pairs
 
