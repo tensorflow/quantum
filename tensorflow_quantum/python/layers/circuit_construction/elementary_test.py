@@ -101,24 +101,23 @@ class AddCircuitTest(tf.test.TestCase):
         circuit_b = cirq.testing.random_circuit(bits, 10, 0.9,
                                                 util.get_supported_gates())
 
-        expected_append = util.convert_to_tensor([circuit_a + circuit_b])
-        expected_prepend = util.convert_to_tensor([circuit_b + circuit_a])
+        expected_append = util.convert_to_tensor(
+            [circuit_a + circuit_b], deterministic_proto_serialization=True)
+        expected_prepend = util.convert_to_tensor(
+            [circuit_b + circuit_a], deterministic_proto_serialization=True)
 
         append_layer = elementary.AddCircuit()
         prepend_layer = elementary.AddCircuit()
 
         actual_append = util.convert_to_tensor(
-            util.from_tensor(append_layer(circuit_a, append=circuit_b)))
+            util.from_tensor(append_layer(circuit_a, append=circuit_b)),
+            deterministic_proto_serialization=True)
         actual_prepend = util.convert_to_tensor(
-            util.from_tensor(prepend_layer(circuit_a, prepend=circuit_b)))
+            util.from_tensor(prepend_layer(circuit_a, prepend=circuit_b)),
+            deterministic_proto_serialization=True)
 
-        self.assertEqual(
-            util.program_from_tensor_to_ascii_proto(expected_append.numpy()[0]),
-            util.program_from_tensor_to_ascii_proto(actual_append.numpy()[0]))
-        self.assertEqual(
-            util.program_from_tensor_to_ascii_proto(
-                expected_prepend.numpy()[0]),
-            util.program_from_tensor_to_ascii_proto(actual_prepend.numpy()[0]))
+        self.assertEqual(expected_append.numpy()[0], actual_append.numpy()[0])
+        self.assertEqual(expected_prepend.numpy()[0], actual_prepend.numpy()[0])
 
 
 if __name__ == "__main__":

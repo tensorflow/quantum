@@ -37,15 +37,6 @@ def _exponential(theta, op):
     return np.eye(op_mat.shape[0]) * np.cos(theta) - 1j * op_mat * np.sin(theta)
 
 
-def _assert_item_equal(item_class, actual, expected):
-    if item_class == cirq.Circuit:
-        actual = util.paulisum_from_tensor_to_ascii_proto(actual)
-        expected = util.paulisum_from_tensor_to_ascii_proto(expected)
-    else:
-        actual = util.program_from_tensor_to_ascii_proto(actual)
-        expected = util.program_from_tensor_to_ascii_proto(expected)
-
-
 BITS = list(cirq.GridQubit.rect(1, 10))
 
 
@@ -91,11 +82,11 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
         nested_actual = util.convert_to_tensor(nested)
         nested_expected = np.array(
             [np.array([_single_to_tensor(x) for x in row]) for row in nested])
-        _assert_item_equal(type(item), nested_actual, nested_expected)
+        self.assertAllEqual(nested_actual, nested_expected)
         flat = [item, item]
         flat_actual = util.convert_to_tensor(flat)
         flat_expected = np.array([_single_to_tensor(x) for x in flat])
-        _assert_item_equal(type(item), flat_actual, flat_expected)
+        self.assertAllEqual(flat_actual, flat_expected)
 
     def test_convert_to_tensor_errors(self):
         """Test that convert_to_tensor fails when it should."""
@@ -121,11 +112,10 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
         item_nested_cycled = util.convert_to_tensor(
             util.from_tensor(item_nested_tensorized))
 
-        _assert_item_equal(type(item), item_nested_tensorized,
-                           item_nested_cycled)
+        self.assertAllEqual(item_nested_tensorized, item_nested_cycled)
         item_flat_cycled = util.convert_to_tensor(
             util.from_tensor(item_flat_tensorized))
-        _assert_item_equal(type(item), item_flat_tensorized, item_flat_cycled)
+        self.assertAllEqual(item_flat_tensorized, item_flat_cycled)
 
     def test_from_tensor_errors(self):
         """test that from_tensor fails when it should."""

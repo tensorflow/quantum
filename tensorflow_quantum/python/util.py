@@ -23,7 +23,6 @@ import sympy
 import tensorflow as tf
 import cirq
 
-from google.protobuf import text_format
 from tensorflow_quantum.core.proto import pauli_sum_pb2
 from tensorflow_quantum.core.proto import program_pb2
 from tensorflow_quantum.core.serialize import serializer
@@ -262,7 +261,8 @@ def random_pauli_sums(qubits, max_sum_length, n_sums):
 
 # There are no native convertible ops inside of this function.
 @tf.autograph.experimental.do_not_convert
-def convert_to_tensor(items_to_convert):
+def convert_to_tensor(items_to_convert,
+                      deterministic_proto_serialization=False):
     """Convert lists of tfq supported primitives to tensor representations.
 
     Recursively convert a nested lists of `cirq.PauliSum` or `cirq.Circuit`
@@ -294,6 +294,8 @@ def convert_to_tensor(items_to_convert):
     Args:
         items_to_convert: Python `list` or nested `list` of `cirq.Circuit`
             or `cirq.Paulisum` objects. Must be recangular.
+        cc: Whether to use a deterministic
+            serialization when calling SerializeToString().
     Returns:
         A `tf.Tensor` that represents the input items.
 
@@ -314,12 +316,14 @@ def convert_to_tensor(items_to_convert):
                     not curr_type == cirq.Circuit:
                 curr_type = cirq.PauliSum
                 tensored_items.append(
-                    serializer.serialize_paulisum(item).SerializeToString())
+                    serializer.serialize_paulisum(item).SerializeToString(
+                        deterministic=deterministic_proto_serialization))
             elif isinstance(item, cirq.Circuit) and\
                     not curr_type == cirq.PauliSum:
                 curr_type = cirq.Circuit
                 tensored_items.append(
-                    serializer.serialize_circuit(item).SerializeToString())
+                    serializer.serialize_circuit(item).SerializeToString(
+                        deterministic=deterministic_proto_serialization))
             else:
                 raise TypeError("Incompatible item passed into "
                                 "convert_to_tensor. Tensor detected type: {}. "
@@ -346,62 +350,6 @@ def _parse_single(item):
         return out
     except Exception:
         raise TypeError('Error decoding item: ' + str(item))
-
-
-def program_from_tensor_to_ascii_proto(tensor_to_convert):
-    """Converts a tensor of serialized programs to ASCII proto.
-
-    Converts a tensor containing `cirq.Circuit` item to their ASCII format. This
-    is useful for unit tests because the binary serialization is not
-    deterministic. In particular, map<> fields do not guarantee a serialization
-    with ordered keys. Thus, we convert to ASCII, which has the added benefit of
-    being human-readable.
-
-    Args:
-        tensor_to_convert: `tf.Tensor` or `np.ndarray` representation to
-            convert.
-
-    Returns:
-        A string representing the tensor.
-
-    Raises:
-        TypeError: In case of an invalid tensor passed for conversion.
-    """
-    ascii_reprs = []
-    for index, item in np.ndenumerate(tensor_to_convert):
-        obj = program_pb2.Program()
-        obj.ParseFromString(item)
-        ascii_repr = text_format.MessageToString(obj)
-        ascii_reprs.append(f"{index}: {ascii_repr}")
-    return "\n".join(ascii_reprs)
-
-
-def paulisum_from_tensor_to_ascii_proto(tensor_to_convert):
-    """Converts a tensor of serialized programs to ASCII proto.
-
-    Converts a tensor containing `cirq.PauliSum` item to their ASCII format.
-    This is useful for unit tests because the binary serialization is not
-    deterministic. In particular, map<> fields do not guarantee a serialization
-    with ordered keys. Thus, we convert to ASCII, which has the added benefit of
-    being human-readable.
-
-    Args:
-        tensor_to_convert: `tf.Tensor` or `np.ndarray` representation to
-            convert.
-
-    Returns:
-        A string representing the tensor.
-
-    Raises:
-        TypeError: In case of an invalid tensor passed for conversion.
-    """
-    ascii_reprs = []
-    for index, item in np.ndenumerate(tensor_to_convert):
-        obj = pauli_sum_pb2.PauliSum()
-        obj.ParseFromString(item)
-        ascii_repr = text_format.MessageToString(obj)
-        ascii_reprs.append(f"{index}: {ascii_repr}")
-    return "\n".join(ascii_reprs)
 
 
 def from_tensor(tensor_to_convert):
