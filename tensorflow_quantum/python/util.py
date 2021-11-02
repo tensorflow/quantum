@@ -261,8 +261,7 @@ def random_pauli_sums(qubits, max_sum_length, n_sums):
 
 # There are no native convertible ops inside of this function.
 @tf.autograph.experimental.do_not_convert
-def convert_to_tensor(items_to_convert,
-                      deterministic_proto_serialization=False):
+def convert_to_tensor(items_to_convert, deterministic_proto_serialize=False):
     """Convert lists of tfq supported primitives to tensor representations.
 
     Recursively convert a nested lists of `cirq.PauliSum` or `cirq.Circuit`
@@ -317,13 +316,13 @@ def convert_to_tensor(items_to_convert,
                 curr_type = cirq.PauliSum
                 tensored_items.append(
                     serializer.serialize_paulisum(item).SerializeToString(
-                        deterministic=deterministic_proto_serialization))
+                        deterministic=deterministic_proto_serialize))
             elif isinstance(item, cirq.Circuit) and\
                     not curr_type == cirq.PauliSum:
                 curr_type = cirq.Circuit
                 tensored_items.append(
                     serializer.serialize_circuit(item).SerializeToString(
-                        deterministic=deterministic_proto_serialization))
+                        deterministic=deterministic_proto_serialize))
             else:
                 raise TypeError("Incompatible item passed into "
                                 "convert_to_tensor. Tensor detected type: {}. "

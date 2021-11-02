@@ -24,7 +24,7 @@ from tensorflow_quantum.python import util
 def expand_circuits(inputs,
                     symbol_names=None,
                     symbol_values=None,
-                    deterministic_proto_serialization=False):
+                    deterministic_proto_serialize=False):
     """Function for consistently expanding circuit inputs.
 
     Args:
@@ -36,7 +36,7 @@ def expand_circuits(inputs,
             parameterizing the input circuits.
         symbol_values: a Python `list`, `tuple`, or `numpy.ndarray` of
             floating point values, or `tf.Tensor` of dtype `float32`.
-        deterministic_proto_serialization: Whether to use a deterministic proto
+        deterministic_proto_serialize: Whether to use a deterministic proto
             serialization.
 
     Returns:
@@ -86,16 +86,15 @@ def expand_circuits(inputs,
     if isinstance(inputs, cirq.Circuit):
         # process single circuit.
         inputs = tf.tile(
-            util.convert_to_tensor([inputs],
-                                   deterministic_proto_serialization=
-                                   deterministic_proto_serialization),
+            util.convert_to_tensor(
+                [inputs],
+                deterministic_proto_serialize=deterministic_proto_serialize),
             [symbol_batch_dim])
 
     elif isinstance(inputs, (list, tuple, np.ndarray)):
         # process list of circuits.
         inputs = util.convert_to_tensor(
-            inputs,
-            deterministic_proto_serialization=deterministic_proto_serialization)
+            inputs, deterministic_proto_serialize=deterministic_proto_serialize)
 
     if not tf.is_tensor(inputs):
         raise TypeError("circuits cannot be parsed with given input:"
@@ -113,7 +112,7 @@ def expand_circuits(inputs,
 
 def expand_operators(operators=None,
                      circuit_batch_dim=1,
-                     deterministic_proto_serialization=False):
+                     deterministic_proto_serialize=False):
     """Check and expand operators.
 
     Args:
@@ -125,7 +124,7 @@ def expand_operators(operators=None,
             or `cirq.PauliSum`s; or pre-converted `tf.Tensor` of
             `cirq.PauliString`s or `cirq.PauliSum`s.
         circuit_batch_dim: number of circuits in the final expansion
-        deterministic_proto_serialization: Whether to use a deterministic proto
+        deterministic_proto_serialize: Whether to use a deterministic proto
             serialization.
 
     Returns:
@@ -153,7 +152,7 @@ def expand_operators(operators=None,
             op_needs_tile = True
         operators = util.convert_to_tensor(
             operators,
-            deterministic_proto_serialization=deterministic_proto_serialization)
+            deterministic_proto_serialize=deterministic_proto_serialize)
 
     if op_needs_tile:
         # Don't tile up if the user gave a python list that was precisely

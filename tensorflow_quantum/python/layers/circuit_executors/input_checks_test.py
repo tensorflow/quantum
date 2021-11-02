@@ -35,7 +35,7 @@ class ExpandCircuitsTest(tf.test.TestCase):
                                             dtype=tf.dtypes.string)
         circuit_tensor = util.convert_to_tensor(
             [cirq.Circuit(cirq.H(qubit)**symbol)],
-            deterministic_proto_serialization=True)
+            deterministic_proto_serialize=True)
         values_tensor = tf.convert_to_tensor([[0.5]], dtype=tf.dtypes.float32)
 
         # Bad circuit arg
@@ -91,7 +91,7 @@ class ExpandCircuitsTest(tf.test.TestCase):
         circuit_list = [circuit_alone for _ in range(3)]
         circuit_tuple = tuple(circuit_list)
         circuit_tensor = util.convert_to_tensor(
-            circuit_list, deterministic_proto_serialization=True)
+            circuit_list, deterministic_proto_serialize=True)
         values_list = [[1], [2], [3]]
         values_tuple = tuple(values_list)
         values_ndarray = np.array(values_list)
@@ -109,7 +109,7 @@ class ExpandCircuitsTest(tf.test.TestCase):
                 ]:
                     circuit_test, names_test, values_test = \
                         input_checks.expand_circuits(circuit, names, values, \
-                        deterministic_proto_serialization=True)
+                        deterministic_proto_serialize=True)
                     self.assertAllEqual(circuit_test, circuit_tensor)
                     self.assertAllEqual(names_test, names_tensor)
                     self.assertAllEqual(values_test, values_tensor)
@@ -120,7 +120,7 @@ class ExpandCircuitsTest(tf.test.TestCase):
         for circuit in [circuit_list, circuit_tuple, circuit_tensor]:
             circuit_test, names_test, values_test = \
                 input_checks.expand_circuits(circuit, \
-                deterministic_proto_serialization=True)
+                deterministic_proto_serialize=True)
             self.assertAllEqual(circuit_test, circuit_tensor)
             self.assertAllEqual(names_test, names_tensor)
             self.assertAllEqual(values_test, values_tensor)
@@ -148,14 +148,14 @@ class ExpandOperatorsTest(tf.test.TestCase):
         shaped_list = [[bare_string]] * batch_dim
         shaped_tuple = tuple(shaped_list)
         op_tensor_single = util.convert_to_tensor(
-            [[bare_string]], deterministic_proto_serialization=True)
+            [[bare_string]], deterministic_proto_serialize=True)
         op_tensor = tf.tile(op_tensor_single, [batch_dim, 1])
         for op in [
                 bare_string, bare_sum, bare_list, bare_tuple, shaped_list,
                 shaped_tuple, op_tensor
         ]:
             op_test = input_checks.expand_operators(
-                op, batch_dim, deterministic_proto_serialization=True)
+                op, batch_dim, deterministic_proto_serialize=True)
             self.assertAllEqual(op_test, op_tensor)
 
 

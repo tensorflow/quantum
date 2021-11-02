@@ -102,19 +102,19 @@ class AddCircuitTest(tf.test.TestCase):
                                                 util.get_supported_gates())
 
         expected_append = util.convert_to_tensor(
-            [circuit_a + circuit_b], deterministic_proto_serialization=True)
+            [circuit_a + circuit_b], deterministic_proto_serialize=True)
         expected_prepend = util.convert_to_tensor(
-            [circuit_b + circuit_a], deterministic_proto_serialization=True)
+            [circuit_b + circuit_a], deterministic_proto_serialize=True)
 
         append_layer = elementary.AddCircuit()
         prepend_layer = elementary.AddCircuit()
 
         actual_append = util.convert_to_tensor(
             util.from_tensor(append_layer(circuit_a, append=circuit_b)),
-            deterministic_proto_serialization=True)
+            deterministic_proto_serialize=True)
         actual_prepend = util.convert_to_tensor(
             util.from_tensor(prepend_layer(circuit_a, prepend=circuit_b)),
-            deterministic_proto_serialization=True)
+            deterministic_proto_serialize=True)
 
         self.assertEqual(expected_append.numpy()[0], actual_append.numpy()[0])
         self.assertEqual(expected_prepend.numpy()[0], actual_prepend.numpy()[0])
