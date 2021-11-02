@@ -293,7 +293,7 @@ def convert_to_tensor(items_to_convert, deterministic_proto_serialize=False):
     Args:
         items_to_convert: Python `list` or nested `list` of `cirq.Circuit`
             or `cirq.Paulisum` objects. Must be recangular.
-        cc: Whether to use a deterministic
+        deterministic_proto_serialize: Whether to use a deterministic
             serialization when calling SerializeToString().
     Returns:
         A `tf.Tensor` that represents the input items.
