@@ -196,7 +196,7 @@ class TfqNoisySampledExpectationOp : public tensorflow::OpKernel {
       int nq = num_qubits[i];
 
       // (#679) Just ignore empty program
-      if (ncircuits[i].channels.size() == 0) {
+      if (ncircuits[i].channels.empty()) {
         for (int j = 0; j < pauli_sums[i].size(); j++) {
           (*output_tensor)(i, j) = -2.0;
         }
@@ -315,7 +315,7 @@ class TfqNoisySampledExpectationOp : public tensorflow::OpKernel {
         int rep_offset = rep_offsets[start][i];
 
         // (#679) Just ignore empty program
-        if (ncircuits[i].channels.size() == 0) {
+        if (ncircuits[i].channels.empty()) {
           for (int j = 0; j < pauli_sums[i].size(); j++) {
             (*output_tensor)(i, j) = -2.0;
           }

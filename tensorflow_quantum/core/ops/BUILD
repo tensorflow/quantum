@@ -403,6 +403,7 @@ py_test(
 
 py_test(
     name = "tfq_unitary_op_test",
+    timeout = "long",
     srcs = ["tfq_unitary_op_test.py"],
     python_version = "PY3",
     deps = [
