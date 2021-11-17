@@ -164,7 +164,7 @@ class NoisySamplingTest(tf.test.TestCase, parameterized.TestCase):
     def test_simulate_consistency(self, batch_size, n_qubits, noisy):
         """Test consistency with batch_util.py simulation."""
         symbol_names = ['alpha', 'beta']
-        qubits = cirq.GridQubit.rect(1, n_qubits)
+        qubits = cirq.LineQubit.range(n_qubits)
 
         circuit_batch, resolver_batch = \
             util.random_symbol_circuit_resolver_batch(

@@ -359,7 +359,7 @@ class ADJGradTest(tf.test.TestCase, parameterized.TestCase):
         n_qubits = 2
         batch_size = 1
         symbol_names = ['alpha', 'beta', 'gamma']
-        qubits = cirq.GridQubit.rect(1, n_qubits)
+        qubits = cirq.LineQubit.range(n_qubits)
         circuit_batch, resolver_batch = \
         [cirq.Circuit(cirq.X(qubits[0]) ** sympy.Symbol('alpha'),
             cirq.Y(qubits[1]) ** sympy.Symbol('alpha'),

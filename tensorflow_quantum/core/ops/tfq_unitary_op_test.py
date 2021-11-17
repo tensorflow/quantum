@@ -170,7 +170,7 @@ class UnitaryTest(tf.test.TestCase, parameterized.TestCase):
                                                        unitary_op):
         """Test calculate_unitary works without symbols."""
         unitary_op = tfq_unitary_op.get_unitary_op()
-        qubits = cirq.GridQubit.rect(1, n_qubits)
+        qubits = cirq.LineQubit.range(n_qubits)
         circuit_batch, _ = util.random_circuit_resolver_batch(qubits, 25)
 
         tfq_results = unitary_op(util.convert_to_tensor(circuit_batch), [],
