@@ -471,7 +471,7 @@ class PSSymbolReplaceTest(tf.test.TestCase):
 
     def test_simple_pad(self):
         """Test simple padding."""
-        bit = cirq.LineQubit(0)
+        bit = cirq.LineQubit(1)
         circuit = cirq.Circuit(
             cirq.X(bit)**sympy.Symbol('alpha'),
             cirq.Y(bit)**sympy.Symbol('alpha'),
@@ -720,7 +720,7 @@ class PSWeightsFromSymbolTest(tf.test.TestCase):
 
     def test_many_values(self):
         """Ensure that padding with few symbols and many values works."""
-        bit = cirq.LineQubit(0)
+        bit = cirq.LineQubit(1)
         circuits = [
             cirq.Circuit(
                 cirq.X(bit)**(sympy.Symbol('alpha') * 2.0),
