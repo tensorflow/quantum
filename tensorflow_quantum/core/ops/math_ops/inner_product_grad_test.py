@@ -235,7 +235,7 @@ class InnerProductAdjGradTest(tf.test.TestCase, parameterized.TestCase):
         """Tests that inner_product works with symbols."""
         symbol_names = ['alpha', 'beta', 'gamma']
         n_params = len(symbol_names)
-        qubits = cirq.GridQubit.rect(1, n_qubits)
+        qubits = cirq.LineQubit.range(n_qubits)
         circuit_batch, resolver_batch = \
           util.random_symbol_circuit_resolver_batch(
               qubits, symbol_names, batch_size)

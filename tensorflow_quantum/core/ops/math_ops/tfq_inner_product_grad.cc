@@ -477,8 +477,6 @@ REGISTER_OP("TfqInnerProductGrad")
 
       tensorflow::shape_inference::DimensionHandle output_rows =
           c->Dim(programs_shape, 0);
-      tensorflow::shape_inference::DimensionHandle output_cols =
-          c->Dim(symbol_names_shape, 0);
 
       // Use kUnknownDim instead to prevent shape inference from breaking
       //   @tf.custom_gradient code in fidelity_op.py. The grad function has

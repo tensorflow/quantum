@@ -259,7 +259,7 @@ class PSDecomposeTest(tf.test.TestCase):
         """Test Moment-structure preservation."""
         t = sympy.Symbol('t')
         r = sympy.Symbol('r')
-        qubits = cirq.GridQubit.rect(1, 6)
+        qubits = cirq.LineQubit.range(6)
         circuit_batch = [
             cirq.Circuit(
                 cirq.Moment([cirq.H(q) for q in qubits]),
@@ -471,7 +471,7 @@ class PSSymbolReplaceTest(tf.test.TestCase):
 
     def test_simple_pad(self):
         """Test simple padding."""
-        bit = cirq.GridQubit(0, 0)
+        bit = cirq.LineQubit(0)
         circuit = cirq.Circuit(
             cirq.X(bit)**sympy.Symbol('alpha'),
             cirq.Y(bit)**sympy.Symbol('alpha'),
@@ -720,7 +720,7 @@ class PSWeightsFromSymbolTest(tf.test.TestCase):
 
     def test_many_values(self):
         """Ensure that padding with few symbols and many values works."""
-        bit = cirq.GridQubit(0, 0)
+        bit = cirq.LineQubit(0)
         circuits = [
             cirq.Circuit(
                 cirq.X(bit)**(sympy.Symbol('alpha') * 2.0),

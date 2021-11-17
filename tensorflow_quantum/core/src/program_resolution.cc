@@ -40,10 +40,16 @@ using tfq::proto::PauliTerm;
 using tfq::proto::Program;
 using tfq::proto::Qubit;
 
+inline absl::string_view IntMaxStr() {
+  static constexpr char kMaxVal[] = "2147483647";
+  return kMaxVal;
+}
+
 Status RegisterQubits(
     const std::string& qb_string,
     absl::flat_hash_set<std::pair<std::pair<int, int>, std::string>>* id_set) {
   // Inserts qubits found in qb_string into id_set.
+  // Supported GridQubit wire formats and line qubit wire formats.
 
   if (qb_string.empty()) {
     return Status::OK();  // no control-default value specified in serializer.py
@@ -52,7 +58,11 @@ Status RegisterQubits(
   const std::vector<absl::string_view> qb_list = absl::StrSplit(qb_string, ',');
   for (auto qb : qb_list) {
     int r, c;
-    const std::vector<absl::string_view> splits = absl::StrSplit(qb, '_');
+    std::vector<absl::string_view> splits = absl::StrSplit(qb, '_');
+    if (splits.size() == 1) {  // Pad the front of linequbit with INTMAX.
+      splits.insert(splits.begin(), IntMaxStr());
+    }
+
     if (splits.size() != 2) {
       return Status(tensorflow::error::INVALID_ARGUMENT,
                     absl::StrCat("Unable to parse qubit: ", qb));

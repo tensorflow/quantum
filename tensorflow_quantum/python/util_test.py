@@ -37,7 +37,7 @@ def _exponential(theta, op):
     return np.eye(op_mat.shape[0]) * np.cos(theta) - 1j * op_mat * np.sin(theta)
 
 
-BITS = list(cirq.GridQubit.rect(1, 10))
+BITS = list(cirq.GridQubit.rect(1, 10) + cirq.LineQubit.range(2))
 
 
 def _items_to_tensorize():

@@ -90,7 +90,7 @@ class AppendCircuitOpTest(tf.test.TestCase, parameterized.TestCase):
         base_circuits = []
         circuits_to_append = []
         qubits = cirq.GridQubit.rect(1, max_n_bits)
-        other_qubits = cirq.GridQubit.rect(2, max_n_bits)
+        other_qubits = cirq.GridQubit.rect(2, max_n_bits) + [cirq.LineQubit(10)]
 
         base_circuits, _ = util.random_symbol_circuit_resolver_batch(
             qubits,
