@@ -804,8 +804,8 @@ def serialize_circuit(circuit_inp):
     Currently we only support scalar multiplication of symbols and
     no other more complex arithmetic expressions. This means
     we can support things like X**(3*alpha), and Rx(alpha). Because
-    we use the `cirq.Program` proto, we only support `cirq.GridQubit` instances
-    during serialization of circuits.
+    we use the `cirq.Program` proto, we only support `cirq.GridQubit`
+    and `cirq.LineQubit` instances during serialization of circuits.
 
     Note: once serialized terminal measurements are removed.
 
@@ -832,10 +832,10 @@ def serialize_circuit(circuit_inp):
         measured_qubits = set()
         for op in moment:
             for qubit in op.qubits:
-                if not isinstance(qubit, cirq.GridQubit):
+                if not isinstance(qubit, (cirq.GridQubit, cirq.LineQubit)):
                     raise ValueError(
                         "Attempted to serialize circuit that don't use "
-                        "only cirq.GridQubits.")
+                        "only cirq.GridQubits or cirq.LineQubits.")
 
             if isinstance(op.gate, cirq.MeasurementGate):
                 for qubit in op.qubits:
@@ -916,9 +916,10 @@ def serialize_paulisum(paulisum):
         raise TypeError("serialize requires a cirq.PauliSum object."
                         " Given: " + str(type(paulisum)))
 
-    if any(not isinstance(qubit, cirq.GridQubit) for qubit in paulisum.qubits):
+    if any(not isinstance(qubit, (cirq.LineQubit, cirq.GridQubit))
+           for qubit in paulisum.qubits):
         raise ValueError("Attempted to serialize a paulisum that doesn't use "
-                         "only cirq.GridQubits.")
+                         "only cirq.GridQubits or cirq.LineQubits.")
 
     paulisum_proto = pauli_sum_pb2.PauliSum()
     for term in paulisum:
