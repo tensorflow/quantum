@@ -273,7 +273,7 @@ class NoisyExpectationCalculationTest(tf.test.TestCase, parameterized.TestCase):
         symbol_names = []
         batch_size = 5
         n_qubits = 6
-        qubits = cirq.GridQubit.rect(1, n_qubits)
+        qubits = cirq.LineQubit.range(n_qubits)
 
         circuit_batch, resolver_batch = \
             util.random_circuit_resolver_batch(

@@ -175,7 +175,8 @@ class ExecutionOpsConsistentyTest(tf.test.TestCase, parameterized.TestCase):
         """Ensure that supported gates are consistent across backends."""
         op = op_and_sim[0]
         sim = op_and_sim[1]
-        qubits = cirq.GridQubit.rect(1, 5)
+        # mix qubit types.
+        qubits = cirq.GridQubit.rect(1, 4) + [cirq.LineQubit(10)]
         circuit_batch = []
 
         gate_ref = util.get_supported_gates()
@@ -345,7 +346,7 @@ class ExecutionOpsConsistentyTest(tf.test.TestCase, parameterized.TestCase):
         op = op_and_sim[0]
         sim = op_and_sim[1]
 
-        qubits = cirq.GridQubit.rect(1, n_qubits)
+        qubits = cirq.LineQubit.range(n_qubits - 1) + [cirq.GridQubit(0, 0)]
         circuit_batch, resolver_batch = \
             util.random_symbol_circuit_resolver_batch(
                 qubits, symbol_names, BATCH_SIZE)
