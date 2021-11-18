@@ -990,10 +990,10 @@ def serialize_projectorsum(projectorsum):
         raise TypeError("serialize requires a cirq.ProjectorSum object."
                         " Given: " + str(type(projectorsum)))
 
-    if any(not isinstance(qubit, cirq.GridQubit)
+    if any(not isinstance(qubit, (cirq.GridQubit, cirq.LineQubit))
            for qubit in projectorsum.qubits):
         raise ValueError("Attempted to serialize a paulisum that doesn't use "
-                         "only cirq.GridQubits.")
+                         "only cirq.GridQubit or cirq.LineQubit.")
 
     projectorsum_proto = projector_sum_pb2.ProjectorSum()
     for term in projectorsum:
@@ -1003,13 +1003,9 @@ def serialize_projectorsum(projectorsum):
         projectorterm_proto.coefficient_imag = term.coefficient.imag
         for qubit, basis_state in sorted(
                 term.projector_dict.items()):  # sort to keep qubits ordered
-            if basis_state:
-                projectorterm_proto.projector_dict.add(
-                    qubit_id=op_serializer.qubit_to_proto(qubit),
-                    basis_state=basis_state)
-            else:
-                projectorterm_proto.projector_dict.add(
-                    qubit_id=op_serializer.qubit_to_proto(qubit))
+            projectorterm_proto.projector_dict.add(
+                qubit_id=op_serializer.qubit_to_proto(qubit),
+                basis_state=basis_state)
 
         projectorsum_proto.terms.extend([projectorterm_proto])
 

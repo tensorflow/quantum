@@ -439,24 +439,32 @@ def _get_valid_pauli_proto_pairs(qubit_type='grid'):
     return pairs
 
 
-def _get_valid_projector_proto_pairs():
+def _get_valid_projector_proto_pairs(qubit_type='grid'):
     """Generate valid projectorsum proto pairs."""
     q0 = cirq.GridQubit(0, 0)
     q1 = cirq.GridQubit(1, 0)
+    q0_str = '0_0'
+    q1_str = '1_0'
+
+    if qubit_type == 'line':
+        q0 = cirq.LineQubit(0)
+        q1 = cirq.LineQubit(1)
+        q0_str = '0'
+        q1_str = '1'
 
     pairs = [
         (cirq.ProjectorSum.from_projector_strings(
             cirq.ProjectorString(projector_dict={q0: 0})),
-         _build_projector_proto([1.0], [[0]], [['0_0']])),
+         _build_projector_proto([1.0], [[0]], [[q0_str]])),
         (cirq.ProjectorSum.from_projector_strings(
             cirq.ProjectorString(projector_dict={q0: 0}, coefficient=0.125j)),
-         _build_projector_proto([0.125j], [[0]], [['0_0']])),
+         _build_projector_proto([0.125j], [[0]], [[q0_str]])),
         (cirq.ProjectorSum.from_projector_strings([
             cirq.ProjectorString(projector_dict={
                 q0: 0,
                 q1: 1
             }),
-        ]), _build_projector_proto([1.0], [[0, 1]], [['0_0', '1_0']])),
+        ]), _build_projector_proto([1.0], [[0, 1]], [[q0_str, q1_str]])),
     ]
 
     return pairs
@@ -779,26 +787,32 @@ class SerializerTest(tf.test.TestCase, parameterized.TestCase):
         with self.assertRaises(ValueError):
             serializer.serialize_projectorsum(a)
 
-    @parameterized.parameters([{
-        'sum_proto_pair': v
-    } for v in _get_valid_projector_proto_pairs()])
+    @parameterized.parameters(
+        [{
+            'sum_proto_pair': v
+        } for v in _get_valid_projector_proto_pairs(qubit_type='grid') +
+         _get_valid_projector_proto_pairs(qubit_type='line')])
     def test_serialize_projectorsum_simple(self, sum_proto_pair):
         """Ensure serialization is correct."""
         self.assertProtoEquals(
             sum_proto_pair[1],
             serializer.serialize_projectorsum(sum_proto_pair[0]))
 
-    @parameterized.parameters([{
-        'sum_proto_pair': v
-    } for v in _get_valid_projector_proto_pairs()])
+    @parameterized.parameters(
+        [{
+            'sum_proto_pair': v
+        } for v in _get_valid_projector_proto_pairs(qubit_type='grid') +
+         _get_valid_projector_proto_pairs(qubit_type='line')])
     def test_deserialize_projectorsum_simple(self, sum_proto_pair):
         """Ensure deserialization is correct."""
         self.assertEqual(serializer.deserialize_projectorsum(sum_proto_pair[1]),
                          sum_proto_pair[0])
 
-    @parameterized.parameters([{
-        'sum_proto_pair': v
-    } for v in _get_valid_projector_proto_pairs()])
+    @parameterized.parameters(
+        [{
+            'sum_proto_pair': v
+        } for v in _get_valid_projector_proto_pairs(qubit_type='grid') +
+         _get_valid_projector_proto_pairs(qubit_type='line')])
     def test_serialize_deserialize_projectorsum_consistency(
             self, sum_proto_pair):
         """Serialize and deserialize and ensure nothing changed."""
