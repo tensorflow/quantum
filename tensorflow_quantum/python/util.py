@@ -335,8 +335,8 @@ def convert_to_tensor(items_to_convert, deterministic_proto_serialize=False):
                 tensored_items.append(
                     serializer.serialize_paulisum(item).SerializeToString(
                         deterministic=deterministic_proto_serialize))
-            elif isinstance(item, (cirq.ProjectorSum, cirq.ProjectorString)) and\
-                    not curr_type == cirq.Circuit:
+            elif isinstance(item, (cirq.ProjectorSum, cirq.ProjectorString)) \
+                    and not curr_type == cirq.Circuit:
                 curr_type = cirq.ProjectorSum
                 tensored_items.append(
                     serializer.serialize_projectorsum(item).SerializeToString(
