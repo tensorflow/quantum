@@ -35,7 +35,6 @@ limitations under the License.
 namespace tfq {
 
 using ::tensorflow::Status;
-using ::tfq::proto::PauliSum;
 using ::tfq::proto::Program;
 
 typedef qsim::Cirq::GateCirq<float> QsimGate;

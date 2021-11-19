@@ -32,6 +32,7 @@ limitations under the License.
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
+#include "tensorflow_quantum/core/proto/projector_sum.pb.h"
 #include "tensorflow_quantum/core/proto/program.pb.h"
 
 namespace tfq {
@@ -64,7 +65,8 @@ typedef absl::flat_hash_map<std::string, std::pair<int, float>> SymbolMap;
 tensorflow::Status GetProgramsAndNumQubits(
     tensorflow::OpKernelContext* context,
     std::vector<tfq::proto::Program>* programs, std::vector<int>* num_qubits,
-    std::vector<std::vector<tfq::proto::PauliSum>>* p_sums = nullptr);
+    std::vector<std::vector<tfq::proto::PauliSum>>* p_sums = nullptr,
+    std::vector<std::vector<tfq::proto::ProjectorSum>>* proj_sums = nullptr);
 
 // Parses Cirq Program protos out of the 'circuit_specs' input Tensor. Also
 // resolves the QubitIds inside of the Program. This override also parses and
@@ -81,6 +83,13 @@ tensorflow::Status GetProgramsAndNumQubits(
 tensorflow::Status GetPauliSums(
     tensorflow::OpKernelContext* context,
     std::vector<std::vector<tfq::proto::PauliSum>>* p_sums);
+
+// Parses PauliSum protos out of the 'projector_sums' input tensor. Note this
+// function does NOT resolve QubitID's as any projectorsum needs a reference
+// program to "discover" all of the active qubits and define the ordering.
+tensorflow::Status GetProjectorSums(
+    tensorflow::OpKernelContext* context,
+    std::vector<std::vector<tfq::proto::ProjectorSum>>* proj_sums);
 
 // Parses the input context to construct the SymbolMaps for the entire batch.
 // The two input Tensors are expected to be of size:

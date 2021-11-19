@@ -36,6 +36,7 @@ using ::tensorflow::OpKernelContext;
 using ::tensorflow::Status;
 using ::tensorflow::Tensor;
 using ::tfq::proto::PauliSum;
+using ::tfq::proto::ProjectorSum;
 using ::tfq::proto::Program;
 
 template <typename T>
@@ -150,9 +151,11 @@ Status GetProgramsAndProgramsToAppend(
 Status GetProgramsAndNumQubits(
     OpKernelContext* context, std::vector<Program>* programs,
     std::vector<int>* num_qubits,
-    std::vector<std::vector<PauliSum>>* p_sums /*=nullptr*/) {
+    std::vector<std::vector<PauliSum>>* p_sums /*=nullptr*/,
+    std::vector<std::vector<ProjectorSum>>* proj_sums /*=nullptr*/) {
   // 1. Parse input programs
   // 2. (Optional) Parse input PauliSums
+  // 2. (Optional) Parse input ProjectorSums.
   // 3. Convert GridQubit locations to integers.
   Status status = ParsePrograms(context, "programs", programs);
   if (!status.ok()) {
@@ -170,6 +173,20 @@ Status GetProgramsAndNumQubits(
           absl::StrCat("Number of circuits and PauliSums do not match. Got ",
                        programs->size(), " circuits and ", p_sums->size(),
                        " paulisums."));
+    }
+  }
+
+  if (proj_sums) {
+    status = GetProjectorSums(context, proj_sums);
+    if (!status.ok()) {
+      return status;
+    }
+    if (programs->size() != proj_sums->size()) {
+      return Status(
+          tensorflow::error::INVALID_ARGUMENT,
+          absl::StrCat("Number of circuits and ProjectorSum do not match. Got ",
+                       programs->size(), " circuits and ", proj_sums->size(),
+                       " projectorsums."));
     }
   }
 
@@ -267,6 +284,43 @@ Status GetPauliSums(OpKernelContext* context,
       PauliSum p;
       OP_REQUIRES_OK(context, ParseProto(sum_specs(i, j), &p));
       (*p_sums)[i][j] = p;
+    }
+  };
+
+  // TODO(mbbrough): Determine if this is a good cycle estimate.
+  const int cycle_estimate = 1000;
+  context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
+      sum_specs.dimension(0) * sum_specs.dimension(1), cycle_estimate, DoWork);
+
+  return Status::OK();
+}
+
+Status GetProjectorSums(OpKernelContext* context,
+                    std::vector<std::vector<ProjectorSum>>* proj_sums) {
+  // 1. Parses ProjectorSum proto.
+  const Tensor* input;
+  Status status = context->input("projector_sums", &input);
+  if (!status.ok()) {
+    return status;
+  }
+
+  if (input->dims() != 2) {
+    return Status(tensorflow::error::INVALID_ARGUMENT,
+                  absl::StrCat("projector_sums must be rank 2. Got rank ",
+                               input->dims(), "."));
+  }
+
+  const auto sum_specs = input->matrix<tensorflow::tstring>();
+  proj_sums->assign(sum_specs.dimension(0),
+                 std::vector<ProjectorSum>(sum_specs.dimension(1), ProjectorSum()));
+  const int op_dim = sum_specs.dimension(1);
+  auto DoWork = [&](int start, int end) {
+    for (int ii = start; ii < end; ii++) {
+      const int i = ii / op_dim;
+      const int j = ii % op_dim;
+      ProjectorSum p;
+      OP_REQUIRES_OK(context, ParseProto(sum_specs(i, j), &p));
+      (*proj_sums)[i][j] = p;
     }
   };
 

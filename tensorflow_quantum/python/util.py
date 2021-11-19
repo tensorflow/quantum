@@ -25,6 +25,7 @@ import cirq
 
 from tensorflow_quantum.core.proto import pauli_sum_pb2
 from tensorflow_quantum.core.proto import program_pb2
+from tensorflow_quantum.core.proto import projector_sum_pb2
 from tensorflow_quantum.core.serialize import serializer
 
 # Can't use set() since channels don't give proper support.
@@ -259,6 +260,23 @@ def random_pauli_sums(qubits, max_sum_length, n_sums):
     return sums
 
 
+def random_projector_sums(qubits, max_sum_length, n_sums):
+    """Generate a list of random cirq projector sums of length |n_sums|."""
+    sums = []
+    for _ in range(n_sums):
+        this_sum_length = np.random.randint(1, max_sum_length + 1)
+        terms = []
+        for _ in range(this_sum_length):
+            term_length = np.random.randint(1, len(qubits) + 1)
+            this_term_qubits = random.sample(qubits, term_length)
+            this_term_ids = np.random.randint(0, 2, term_length)
+            terms.append(
+                cirq.ProjectorString(dict(zip(this_term_qubits,
+                                              this_term_ids))))
+        sums.append(cirq.ProjectorSum.from_projector_strings(terms))
+    return sums
+
+
 # There are no native convertible ops inside of this function.
 @tf.autograph.experimental.do_not_convert
 def convert_to_tensor(items_to_convert, deterministic_proto_serialize=False):
@@ -317,6 +335,12 @@ def convert_to_tensor(items_to_convert, deterministic_proto_serialize=False):
                 tensored_items.append(
                     serializer.serialize_paulisum(item).SerializeToString(
                         deterministic=deterministic_proto_serialize))
+            elif isinstance(item, (cirq.ProjectorSum, cirq.ProjectorString)) and\
+                    not curr_type == cirq.Circuit:
+                curr_type = cirq.ProjectorSum
+                tensored_items.append(
+                    serializer.serialize_projectorsum(item).SerializeToString(
+                        deterministic=deterministic_proto_serialize))
             elif isinstance(item, cirq.Circuit) and\
                     not curr_type == cirq.PauliSum:
                 curr_type = cirq.Circuit
@@ -346,6 +370,14 @@ def _parse_single(item):
         obj = pauli_sum_pb2.PauliSum()
         obj.ParseFromString(item)
         out = serializer.deserialize_paulisum(obj)
+        return out
+    except Exception:
+        pass
+    try:
+        # Return a ProjectorSum parsing.
+        obj = projector_sum_pb2.ProjectorSum()
+        obj.ParseFromString(item)
+        out = serializer.deserialize_projectorsum(obj)
         return out
     except Exception:
         raise TypeError('Error decoding item: ' + str(item))
