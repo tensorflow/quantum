@@ -36,8 +36,8 @@ using ::tensorflow::OpKernelContext;
 using ::tensorflow::Status;
 using ::tensorflow::Tensor;
 using ::tfq::proto::PauliSum;
-using ::tfq::proto::ProjectorSum;
 using ::tfq::proto::Program;
+using ::tfq::proto::ProjectorSum;
 
 template <typename T>
 Status ParseProto(const std::string& text, T* proto) {
@@ -296,7 +296,7 @@ Status GetPauliSums(OpKernelContext* context,
 }
 
 Status GetProjectorSums(OpKernelContext* context,
-                    std::vector<std::vector<ProjectorSum>>* proj_sums) {
+                        std::vector<std::vector<ProjectorSum>>* proj_sums) {
   // 1. Parses ProjectorSum proto.
   const Tensor* input;
   Status status = context->input("projector_sums", &input);
@@ -311,8 +311,9 @@ Status GetProjectorSums(OpKernelContext* context,
   }
 
   const auto sum_specs = input->matrix<tensorflow::tstring>();
-  proj_sums->assign(sum_specs.dimension(0),
-                 std::vector<ProjectorSum>(sum_specs.dimension(1), ProjectorSum()));
+  proj_sums->assign(
+      sum_specs.dimension(0),
+      std::vector<ProjectorSum>(sum_specs.dimension(1), ProjectorSum()));
   const int op_dim = sum_specs.dimension(1);
   auto DoWork = [&](int start, int end) {
     for (int ii = start; ii < end; ii++) {
