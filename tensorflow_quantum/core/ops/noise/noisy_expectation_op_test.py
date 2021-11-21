@@ -174,17 +174,18 @@ class NoisyExpectationCalculationTest(tf.test.TestCase, parameterized.TestCase):
                 util.convert_to_tensor([[x] for x in projector_sums]),
                 num_samples)
 
-        # with self.assertRaisesRegex(tf.errors.InvalidArgumentError,  # DO NOT SUBMIT re-enable
-        #                             'qubits not found in circuit'):
-        #     # pauli_sums tensor has the right type but invalid values.
-        #     new_qubits = [cirq.GridQubit(5, 5), cirq.GridQubit(9, 9)]
-        #     new_projector_sums = util.random_pauli_sums(new_qubits, 2, batch_size)
-        #     noisy_expectation_op.expectation(
-        #         util.convert_to_tensor(circuit_batch), symbol_names,
-        #         symbol_values_array,
-        #         util.convert_to_tensor([[x] for x in pauli_sums]),
-        #         util.convert_to_tensor([[x] for x in new_projector_sums]),
-        #         num_samples)
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'qubits not found in circuit'):
+            # pauli_sums tensor has the right type but invalid values.
+            new_qubits = [cirq.GridQubit(5, 5), cirq.GridQubit(9, 9)]
+            new_projector_sums = util.random_pauli_sums(new_qubits, 2,
+                                                        batch_size)
+            noisy_expectation_op.expectation(
+                util.convert_to_tensor(circuit_batch), symbol_names,
+                symbol_values_array,
+                util.convert_to_tensor([[x] for x in pauli_sums]),
+                util.convert_to_tensor([[x] for x in new_projector_sums]),
+                num_samples)
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'Unparseable proto'):

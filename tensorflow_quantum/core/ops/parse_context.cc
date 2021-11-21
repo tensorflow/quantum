@@ -197,9 +197,11 @@ Status GetProgramsAndNumQubits(
     for (int i = start; i < end; i++) {
       Program& program = (*programs)[i];
       unsigned int this_num_qubits;
-      if (p_sums) {
+      if (p_sums || proj_sums) {
+        auto iter_p_sums = p_sums ? &(p_sums->at(i)) : nullptr;
+        auto iter_proj_sums = proj_sums ? &(proj_sums->at(i)) : nullptr;
         OP_REQUIRES_OK(context, ResolveQubitIds(&program, &this_num_qubits,
-                                                &(p_sums->at(i))));
+                                                iter_p_sums, iter_proj_sums));
       } else {
         OP_REQUIRES_OK(context, ResolveQubitIds(&program, &this_num_qubits));
       }

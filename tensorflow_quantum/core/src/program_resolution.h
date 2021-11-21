@@ -25,6 +25,7 @@ limitations under the License.
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
 #include "tensorflow_quantum/core/proto/program.pb.h"
+#include "tensorflow_quantum/core/proto/projector_sum.pb.h"
 
 namespace tfq {
 
@@ -37,7 +38,8 @@ namespace tfq {
 // The number of qubits in the program is recorded in `num_qubits`.
 tensorflow::Status ResolveQubitIds(
     tfq::proto::Program* program, unsigned int* num_qubits,
-    std::vector<tfq::proto::PauliSum>* p_sums = nullptr);
+    std::vector<tfq::proto::PauliSum>* p_sums = nullptr,
+    std::vector<tfq::proto::ProjectorSum>* projector_sums = nullptr);
 
 // Overload which allows for strict resolution of multiple programs.
 // Will resolve GridQubits in `program` and then double check that
