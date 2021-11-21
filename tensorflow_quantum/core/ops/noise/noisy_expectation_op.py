@@ -20,7 +20,8 @@ from tensorflow_quantum.core.ops.load_module import load_module
 NOISY_OP_MODULE = load_module(os.path.join("noise", "_tfq_noise_ops.so"))
 
 
-def expectation(programs, symbol_names, symbol_values, pauli_sums, num_samples):
+def expectation(programs, symbol_names, symbol_values, pauli_sums,
+                projector_sums, num_samples):
     """Calculate the analytic expectation values using monte-carlo trajectories.
 
     Simulate the final state of `programs` given `symbol_values` are placed
@@ -80,6 +81,9 @@ def expectation(programs, symbol_names, symbol_values, pauli_sums, num_samples):
         pauli_sums: `tf.Tensor` of strings with shape [batch_size, n_ops]
             containing the string representation of the operators that will
             be used on all of the circuits in the expectation calculations.
+        projector_sums: `tf.Tensor` of strings with shape [batch_size, n_ops]
+            containing the string representation of the operators that will
+            be used on all of the circuits in the expectation calculations.
         num_samples: `tf.Tensor` with `num_samples[i][j]` is equal to the
             number of times `programs[i]` will be simulated to estimate
             `pauli_sums[i][j]`. Therefore, `num_samples` must have the same
@@ -95,4 +99,4 @@ def expectation(programs, symbol_names, symbol_values, pauli_sums, num_samples):
     """
     return NOISY_OP_MODULE.tfq_noisy_expectation(
         programs, symbol_names, tf.cast(symbol_values, tf.float32), pauli_sums,
-        tf.cast(num_samples, dtype=tf.int32))
+        projector_sums, tf.cast(num_samples, dtype=tf.int32))

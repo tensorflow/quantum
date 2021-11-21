@@ -48,6 +48,7 @@ namespace tfq {
 using ::tensorflow::Status;
 using ::tfq::proto::PauliSum;
 using ::tfq::proto::Program;
+using ::tfq::proto::ProjectorSum;
 
 typedef qsim::Cirq::GateCirq<float> QsimGate;
 typedef qsim::Circuit<QsimGate> QsimCircuit;
@@ -61,9 +62,9 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
   void Compute(tensorflow::OpKernelContext* context) override {
     // TODO (mbbrough): add more dimension checks for other inputs here.
     const int num_inputs = context->num_inputs();
-    OP_REQUIRES(context, num_inputs == 5,
+    OP_REQUIRES(context, num_inputs == 6,
                 tensorflow::errors::InvalidArgument(absl::StrCat(
-                    "Expected 5 inputs, got ", num_inputs, " inputs.")));
+                    "Expected 6 inputs, got ", num_inputs, " inputs.")));
 
     // Create the output Tensor.
     const int output_dim_batch_size = context->input(0).dim_size(0);
@@ -79,8 +80,10 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
     std::vector<Program> programs;
     std::vector<int> num_qubits;
     std::vector<std::vector<PauliSum>> pauli_sums;
-    OP_REQUIRES_OK(context, GetProgramsAndNumQubits(context, &programs,
-                                                    &num_qubits, &pauli_sums));
+    std::vector<std::vector<ProjectorSum>> projector_sums;
+    OP_REQUIRES_OK(context,
+                   GetProgramsAndNumQubits(context, &programs, &num_qubits,
+                                           &pauli_sums, &projector_sums));
 
     std::vector<SymbolMap> maps;
     OP_REQUIRES_OK(context, GetSymbolMaps(context, &maps));
@@ -101,11 +104,19 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
                     pauli_sums.size(), " lists of pauli sums.")));
 
     OP_REQUIRES(
-        context, context->input(4).dim_size(1) == context->input(3).dim_size(1),
+        context, context->input(5).dim_size(1) == context->input(3).dim_size(1),
         tensorflow::errors::InvalidArgument(absl::StrCat(
             "Dimension 1 of num_samples and pauli_sums do not match.", "Got ",
-            context->input(4).dim_size(1), " lists of sample sizes and ",
+            context->input(5).dim_size(1), " lists of sample sizes and ",
             context->input(3).dim_size(1), " lists of pauli sums.")));
+
+    OP_REQUIRES(
+        context, context->input(5).dim_size(1) == context->input(4).dim_size(1),
+        tensorflow::errors::InvalidArgument(absl::StrCat(
+            "Dimension 1 of num_samples and projector_sums do not match.",
+            "Got ", context->input(5).dim_size(1),
+            " lists of sample sizes and ", context->input(4).dim_size(1),
+            " lists of projector sums.")));
 
     // Construct qsim circuits.
     std::vector<NoisyQsimCircuit> qsim_circuits(programs.size(),
@@ -394,6 +405,7 @@ REGISTER_OP("TfqNoisyExpectation")
     .Input("symbol_names: string")
     .Input("symbol_values: float")
     .Input("pauli_sums: string")
+    .Input("projector_sums: string")
     .Input("num_samples: int32")
     .Output("expectations: float")
     .SetShapeFn([](tensorflow::shape_inference::InferenceContext* c) {
@@ -409,8 +421,11 @@ REGISTER_OP("TfqNoisyExpectation")
       tensorflow::shape_inference::ShapeHandle pauli_sums_shape;
       TF_RETURN_IF_ERROR(c->WithRank(c->input(3), 2, &pauli_sums_shape));
 
+      tensorflow::shape_inference::ShapeHandle projecctor_sums_shape;
+      TF_RETURN_IF_ERROR(c->WithRank(c->input(4), 2, &projecctor_sums_shape));
+
       tensorflow::shape_inference::ShapeHandle num_samples_shape;
-      TF_RETURN_IF_ERROR(c->WithRank(c->input(4), 2, &num_samples_shape));
+      TF_RETURN_IF_ERROR(c->WithRank(c->input(5), 2, &num_samples_shape));
 
       tensorflow::shape_inference::DimensionHandle output_rows =
           c->Dim(programs_shape, 0);

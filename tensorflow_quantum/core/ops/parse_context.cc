@@ -155,8 +155,8 @@ Status GetProgramsAndNumQubits(
     std::vector<std::vector<ProjectorSum>>* proj_sums /*=nullptr*/) {
   // 1. Parse input programs
   // 2. (Optional) Parse input PauliSums
-  // 2. (Optional) Parse input ProjectorSums.
-  // 3. Convert GridQubit locations to integers.
+  // 3. (Optional) Parse input ProjectorSums
+  // 4. Convert GridQubit locations to integers.
   Status status = ParsePrograms(context, "programs", programs);
   if (!status.ok()) {
     return status;
@@ -184,9 +184,10 @@ Status GetProgramsAndNumQubits(
     if (programs->size() != proj_sums->size()) {
       return Status(
           tensorflow::error::INVALID_ARGUMENT,
-          absl::StrCat("Number of circuits and ProjectorSum do not match. Got ",
-                       programs->size(), " circuits and ", proj_sums->size(),
-                       " projectorsums."));
+          absl::StrCat(
+              "Number of circuits and ProjectorSums do not match. Got ",
+              programs->size(), " circuits and ", proj_sums->size(),
+              " projectorsums."));
     }
   }
 
