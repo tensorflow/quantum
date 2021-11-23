@@ -178,6 +178,16 @@ tensorflow::Status ComputeExpectationQsim(const tfq::proto::PauliSum& p_sum,
   return status;
 }
 
+template <typename SimT, typename StateSpaceT, typename StateT>
+tensorflow::Status ComputeExpectationQsim(const tfq::proto::ProjectorSum& projector_sum,
+                                          const SimT& sim,
+                                          const StateSpaceT& ss, StateT& state,
+                                          StateT& scratch,
+                                          float* expectation_value) {
+  *expectation_value = 0.0;  // DO NOT SUBMIT
+  return tensorflow::Status::OK();  // DO NOT SUBMIT
+}
+
 // bad style standards here that we are forced to follow from qsim.
 // computes the expectation value <state | p_sum | state > using
 // scratch to save on memory. Implementation does this:

@@ -103,6 +103,12 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
                     "Got ", num_samples.size(), " lists of sample sizes and ",
                     pauli_sums.size(), " lists of pauli sums.")));
 
+    OP_REQUIRES(context, num_samples.size() == projector_sums.size(),
+                tensorflow::errors::InvalidArgument(absl::StrCat(
+                    "Dimension 0 of num_samples and projector_sums do not match.",
+                    "Got ", num_samples.size(), " lists of sample sizes and ",
+                    projector_sums.size(), " lists of projector sums.")));
+
     OP_REQUIRES(
         context, context->input(5).dim_size(1) == context->input(3).dim_size(1),
         tensorflow::errors::InvalidArgument(absl::StrCat(
@@ -152,12 +158,12 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
       // alternate parallelization scheme with runtime:
       // O(n_circuits * max_j(num_samples[i])) with parallelization being
       // multiple threads per wavefunction.
-      ComputeLarge(num_qubits, qsim_circuits, pauli_sums, num_samples, context,
+      ComputeLarge(num_qubits, qsim_circuits, pauli_sums, projector_sums, num_samples, context,
                    &output_tensor);
     } else {
       // Runtime: O(n_circuits * max_j(num_samples[i])) with parallelization
       // being done over number of trials.
-      ComputeSmall(num_qubits, max_num_qubits, qsim_circuits, pauli_sums,
+      ComputeSmall(num_qubits, max_num_qubits, qsim_circuits, pauli_sums, projector_sums,
                    num_samples, context, &output_tensor);
     }
   }
@@ -166,6 +172,7 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
   void ComputeLarge(const std::vector<int>& num_qubits,
                     const std::vector<NoisyQsimCircuit>& ncircuits,
                     const std::vector<std::vector<PauliSum>>& pauli_sums,
+                    const std::vector<std::vector<ProjectorSum>>& projector_sums,
                     const std::vector<std::vector<int>>& num_samples,
                     tensorflow::OpKernelContext* context,
                     tensorflow::TTypes<float, 1>::Matrix* output_tensor) {
@@ -242,6 +249,17 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
           rolling_sums[j] += static_cast<double>(exp_v);
           run_samples[j]++;
         }
+        for (int j = 0; j < projector_sums[i].size(); j++) {
+          if (run_samples[j] >= num_samples[i][j]) {
+            continue;
+          }
+          float exp_v = 0.0;
+          OP_REQUIRES_OK(context,
+                         ComputeExpectationQsim(projector_sums[i][j], sim, ss, sv,
+                                                scratch, &exp_v));
+          rolling_sums[j] += static_cast<double>(exp_v);
+          run_samples[j]++;
+        }
         bool break_loop = true;
         for (int j = 0; j < num_samples[i].size(); j++) {
           if (run_samples[j] < num_samples[i][j]) {
@@ -264,6 +282,7 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
                     const int max_num_qubits,
                     const std::vector<NoisyQsimCircuit>& ncircuits,
                     const std::vector<std::vector<PauliSum>>& pauli_sums,
+                    const std::vector<std::vector<ProjectorSum>>& projector_sums,
                     const std::vector<std::vector<int>>& num_samples,
                     tensorflow::OpKernelContext* context,
                     tensorflow::TTypes<float, 1>::Matrix* output_tensor) {
@@ -363,6 +382,21 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
             run_samples[j]++;
           }
 
+          for (int j = 0; j < projector_sums[i].size(); j++) {
+            int p_reps = (num_samples[i][j] + num_threads - 1) / num_threads;
+            if (run_samples[j] >= p_reps + rep_offset) {
+              continue;
+            }
+            float exp_v = 0.0;
+            NESTED_FN_STATUS_SYNC(
+                compute_status,
+                ComputeExpectationQsim(projector_sums[i][j], sim, ss, sv, scratch,
+                                       &exp_v),
+                c_lock);
+            rolling_sums[j] += static_cast<double>(exp_v);
+            run_samples[j]++;
+          }
+
           // Check if we have run enough trajectories for all ops.
           bool break_loop = true;
           for (int j = 0; j < num_samples[i].size(); j++) {
@@ -421,8 +455,8 @@ REGISTER_OP("TfqNoisyExpectation")
       tensorflow::shape_inference::ShapeHandle pauli_sums_shape;
       TF_RETURN_IF_ERROR(c->WithRank(c->input(3), 2, &pauli_sums_shape));
 
-      tensorflow::shape_inference::ShapeHandle projecctor_sums_shape;
-      TF_RETURN_IF_ERROR(c->WithRank(c->input(4), 2, &projecctor_sums_shape));
+      tensorflow::shape_inference::ShapeHandle projector_sums_shape;
+      TF_RETURN_IF_ERROR(c->WithRank(c->input(4), 2, &projector_sums_shape));
 
       tensorflow::shape_inference::ShapeHandle num_samples_shape;
       TF_RETURN_IF_ERROR(c->WithRank(c->input(5), 2, &num_samples_shape));

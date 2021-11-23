@@ -330,6 +330,7 @@ class NoisyExpectationCalculationTest(tf.test.TestCase, parameterized.TestCase):
         batch_projector_sums = [
             [x, y] for x, y in zip(projector_sums1, projector_sums2)
         ]
+        batch_both = [[x, y, z, t] for x, y, z, t in zip(pauli_sums1, pauli_sums2, projector_sums1, projector_sums2)]
         num_samples = [[10000 if noisy else 3] * 2] * batch_size
 
         op_exps = noisy_expectation_op.expectation(
@@ -338,7 +339,7 @@ class NoisyExpectationCalculationTest(tf.test.TestCase, parameterized.TestCase):
             util.convert_to_tensor(batch_projector_sums), num_samples)
 
         cirq_exps = batch_util.batch_calculate_expectation(
-            circuit_batch, resolver_batch, batch_pauli_sums,
+            circuit_batch, resolver_batch, batch_both,
             cirq.DensityMatrixSimulator() if noisy else cirq.Simulator())
         tol = 5e-2 if noisy else 5e-4
         self.assertAllClose(cirq_exps, op_exps, atol=tol, rtol=tol)
@@ -373,6 +374,7 @@ class NoisyExpectationCalculationTest(tf.test.TestCase, parameterized.TestCase):
         batch_projector_sums = [
             [x, y] for x, y in zip(projector_sums1, projector_sums2)
         ]
+        batch_both = [[x, y, z, t] for x, y, z, t in zip(pauli_sums1, pauli_sums2, projector_sums1, projector_sums2)]
         num_samples = [[10000] * 2] * batch_size
 
         op_exps = noisy_expectation_op.expectation(
@@ -381,7 +383,7 @@ class NoisyExpectationCalculationTest(tf.test.TestCase, parameterized.TestCase):
             util.convert_to_tensor(batch_projector_sums), num_samples)
 
         cirq_exps = batch_util.batch_calculate_expectation(
-            circuit_batch, resolver_batch, batch_pauli_sums,
+            circuit_batch, resolver_batch, batch_both,
             cirq.DensityMatrixSimulator())
 
         self.assertAllClose(cirq_exps, op_exps, atol=5e-2, rtol=5e-2)
