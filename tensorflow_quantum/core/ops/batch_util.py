@@ -23,7 +23,7 @@ import cirq
 #   be used end to end with engine. This current issue is that
 #   cirq.PauliSumCollector does not produce serializable gates for basis
 #   conversion.
-class TFQPauliSumCollector(cirq.work.collector.Collector):
+class TFQPauliProjectorSumCollector(cirq.work.collector.Collector):
     """Copy of cirq.PauliSumCollector with some fixes to work with engine."""
 
     def __init__(self,
@@ -261,7 +261,7 @@ def batch_calculate_expectation(circuits, param_resolvers, ops, simulator):
         if not isinstance(sub_list, (list, tuple, np.ndarray)):
             raise TypeError('elements of ops must be type list.')
         for x in sub_list:
-            if not isinstance(x, cirq.PauliSum):
+            if not isinstance(x, (cirq.PauliSum, cirq.ProjectorSum)):
                 raise TypeError('ops must contain only cirq.PauliSum objects.'
                                 ' Given: {}'.format(type(x)))
 
@@ -279,8 +279,13 @@ def batch_calculate_expectation(circuits, param_resolvers, ops, simulator):
             sim_result = simulator.simulate(c, p)
             for j, op in enumerate(op_row):
                 dm = sim_result.final_density_matrix
-                all_exp_vals[i][j] = op.expectation_from_density_matrix(
-                    dm, qubit_order, check_preconditions=False)
+                if isinstance(op, cirq.PauliSum):
+                    all_exp_vals[i][j] = op.expectation_from_density_matrix(
+                        dm, qubit_order, check_preconditions=False)
+                else:
+                    assert isinstance(op, cirq.ProjectorSum)
+                    all_exp_vals[i][j] = op.expectation_from_density_matrix(
+                        dm, qubit_order)
         else:
             # Valid observables always have real expectation values.
             all_exp_vals[i] = np.real(
@@ -359,7 +364,7 @@ def batch_calculate_sampled_expectation(circuits, param_resolvers, ops,
             continue
         circuit = cirq.resolve_parameters(c, params)
         for op_index, op in enumerate(ops[c_index]):
-            collector = TFQPauliSumCollector(
+            collector = TFQPauliProjectorSumCollector(
                 circuit, op, samples_per_term=n_samples[c_index][op_index])
             collector.collect(sampler)
             result = collector.estimated_energy().real
