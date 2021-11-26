@@ -184,8 +184,39 @@ tensorflow::Status ComputeExpectationQsim(const tfq::proto::ProjectorSum& projec
                                           const StateSpaceT& ss, StateT& state,
                                           StateT& scratch,
                                           float* expectation_value) {
-  *expectation_value = 0.0;  // DO NOT SUBMIT
-  return tensorflow::Status::OK();  // DO NOT SUBMIT
+  // apply the gates of the projector terms to a copy of the state vector
+  // and add up expectation value term by term.
+  tensorflow::Status status = tensorflow::Status::OK();
+  for (const tfq::proto::ProjectorTerm& term : projector_sum.terms()) {
+    // catch identity terms
+    if (term.projector_dict_size() == 0) {
+      *expectation_value += term.coefficient_real();
+      // TODO(tonybruguier): error somewhere if identities have any imaginary part
+      continue;
+    }
+
+    QsimCircuit main_circuit;
+    std::vector<qsim::GateFused<QsimGate>> fused_circuit;
+
+    status = QsimCircuitFromProjectorTerm(term, state.num_qubits(), &main_circuit,
+                                      &fused_circuit);
+
+    if (!status.ok()) {
+      return status;
+    }
+    // copy from src to scratch.
+    ss.Copy(state, scratch);
+    for (const qsim::GateFused<QsimGate>& fused_gate : fused_circuit) {
+      qsim::ApplyFusedGate(sim, fused_gate, scratch);
+    }
+
+    if (!status.ok()) {
+      return status;
+    }
+    *expectation_value +=
+        term.coefficient_real() * ss.RealInnerProduct(state, scratch);
+  }
+  return status;
 }
 
 // bad style standards here that we are forced to follow from qsim.

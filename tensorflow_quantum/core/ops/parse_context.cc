@@ -419,7 +419,7 @@ tensorflow::Status GetNumSamples(
       }
       sub_parsed_num_samples.push_back(num_samples);
     }
-    parsed_num_samples->push_back(sub_parsed_num_samples);
+    parsed_num_samples->emplace_back(sub_parsed_num_samples);
   }
 
   return Status::OK();

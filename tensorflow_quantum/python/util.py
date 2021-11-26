@@ -247,7 +247,7 @@ def random_pauli_sums(qubits, max_sum_length, n_sums):
     sums = []
     paulis = [cirq.I, cirq.X, cirq.Y, cirq.Z]
     for _ in range(n_sums):
-        this_sum_length = np.random.randint(1, max_sum_length + 1)
+        this_sum_length = max_sum_length  # np.random.randint(1, max_sum_length + 1)  # DO NOT SUBMIT
         terms = []
         for _ in range(this_sum_length):
             term_length = np.random.randint(1, len(qubits) + 1)

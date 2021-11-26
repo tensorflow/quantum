@@ -27,6 +27,7 @@ limitations under the License.
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
 #include "tensorflow_quantum/core/proto/program.pb.h"
+#include "tensorflow_quantum/core/proto/projector_sum.pb.h"
 
 namespace tfq {
 
@@ -90,6 +91,13 @@ tensorflow::Status NoisyQsimCircuitFromProgram(
 // into a qsim Circuit and fused circuit.
 tensorflow::Status QsimCircuitFromPauliTerm(
     const tfq::proto::PauliTerm& term, const int num_qubits,
+    qsim::Circuit<qsim::Cirq::GateCirq<float>>* circuit,
+    std::vector<qsim::GateFused<qsim::Cirq::GateCirq<float>>>* fused_circuit);
+
+// parse a serialized projectorTerm from a larger cirq.ProjectorSum proto
+// into a qsim Circuit and fused circuit.
+tensorflow::Status QsimCircuitFromProjectorTerm(
+    const tfq::proto::ProjectorTerm& term, const int num_qubits,
     qsim::Circuit<qsim::Cirq::GateCirq<float>>* circuit,
     std::vector<qsim::GateFused<qsim::Cirq::GateCirq<float>>>* fused_circuit);
 

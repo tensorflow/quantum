@@ -68,7 +68,9 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
 
     // Create the output Tensor.
     const int output_dim_batch_size = context->input(0).dim_size(0);
-    const int output_dim_op_size = context->input(3).dim_size(1);
+    const int output_dim_op_size = context->input(3).dim_size(1) + context->input(4).dim_size(1);
+    LOG(INFO) << "TONYBOOM output_dim_batch_size=" << output_dim_batch_size;
+    LOG(INFO) << "TONYBOOM output_dim_op_size=" << output_dim_op_size;
     tensorflow::TensorShape output_shape;
     output_shape.AddDim(output_dim_batch_size);
     output_shape.AddDim(output_dim_op_size);
@@ -110,19 +112,12 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
                     projector_sums.size(), " lists of projector sums.")));
 
     OP_REQUIRES(
-        context, context->input(5).dim_size(1) == context->input(3).dim_size(1),
+        context, context->input(5).dim_size(1) == context->input(3).dim_size(1) + context->input(4).dim_size(1),
         tensorflow::errors::InvalidArgument(absl::StrCat(
-            "Dimension 1 of num_samples and pauli_sums do not match.", "Got ",
+            "Dimension 1 of num_samples and pauli_sums + projector_sums do not match.", "Got ",
             context->input(5).dim_size(1), " lists of sample sizes and ",
-            context->input(3).dim_size(1), " lists of pauli sums.")));
-
-    OP_REQUIRES(
-        context, context->input(5).dim_size(1) == context->input(4).dim_size(1),
-        tensorflow::errors::InvalidArgument(absl::StrCat(
-            "Dimension 1 of num_samples and projector_sums do not match.",
-            "Got ", context->input(5).dim_size(1),
-            " lists of sample sizes and ", context->input(4).dim_size(1),
-            " lists of projector sums.")));
+            context->input(3).dim_size(1), " lists of pauli sums and ",
+            context->input(4).dim_size(1), " lists of projector sums.")));
 
     // Construct qsim circuits.
     std::vector<NoisyQsimCircuit> qsim_circuits(programs.size(),
@@ -153,6 +148,21 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
     // e2s2 = 2 CPU, 8GB -> Can safely do 25 since Memory = 4GB
     // e2s4 = 4 CPU, 16GB -> Can safely do 25 since Memory = 8GB
     // ...
+    LOG(INFO) << "TONYBOOM max_num_qubits=" << max_num_qubits;
+    for (int i = 0; i < num_samples.size(); ++i) {
+      for (int j = 0; j < num_samples[i].size(); ++j) {
+        LOG(INFO) << "TONYBOOM num_samples[" << i << "][" << j << "]=" << num_samples[i][j];
+      }
+    }
+    for (int i = 0; i < num_qubits.size(); ++i) {
+      LOG(INFO) << "TONYBOOM num_qubits[" << i << "]=" << num_qubits[i];
+    }
+    for (int i = 0; i < pauli_sums.size(); ++i) {
+      LOG(INFO) << "TONYBOOM pauli_sum[" << i << "].size()=" << pauli_sums[i].size();
+    }
+    for (int i = 0; i < projector_sums.size(); ++i) {
+      LOG(INFO) << "TONYBOOM projector_sums[" << i << "].size()=" << projector_sums[i].size();
+    }
     if (max_num_qubits >= 26) {
       // If the number of qubits is lager than 24, we switch to an
       // alternate parallelization scheme with runtime:
@@ -228,6 +238,7 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
       param.normalize_before_mea_gates = true;
       std::vector<uint64_t> unused_stats;
       // Track op-wise stats.
+      CHECK_EQ(num_samples[i].size(), pauli_sums[i].size() + projector_sums[i].size());
       std::vector<int> run_samples(num_samples[i].size(), 0);
       std::vector<double> rolling_sums(num_samples[i].size(), 0.0);
 
@@ -250,15 +261,15 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
           run_samples[j]++;
         }
         for (int j = 0; j < projector_sums[i].size(); j++) {
-          if (run_samples[j] >= num_samples[i][j]) {
+          if (run_samples[j + pauli_sums[i].size()] >= num_samples[i][j + pauli_sums[i].size()]) {
             continue;
           }
           float exp_v = 0.0;
           OP_REQUIRES_OK(context,
                          ComputeExpectationQsim(projector_sums[i][j], sim, ss, sv,
                                                 scratch, &exp_v));
-          rolling_sums[j] += static_cast<double>(exp_v);
-          run_samples[j]++;
+          rolling_sums[j + pauli_sums[i].size()] += static_cast<double>(exp_v);
+          run_samples[j + pauli_sums[i].size()]++;
         }
         bool break_loop = true;
         for (int j = 0; j < num_samples[i].size(); j++) {
@@ -334,6 +345,7 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
           random_gen.ReserveSamples128(ncircuits.size() * max_n_shots + 1);
       tensorflow::random::SimplePhilox rand_source(&local_gen);
 
+      LOG(INFO) << "TONYBOOM ncircuits.size()=" << ncircuits.size();
       for (int i = 0; i < ncircuits.size(); i++) {
         int nq = num_qubits[i];
         int rep_offset = rep_offsets[start][i];
@@ -357,6 +369,8 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
         param.normalize_before_mea_gates = true;
         std::vector<uint64_t> unused_stats;
         // Track op-wise stats.
+        LOG(INFO) << "TONYBOOM num_samples[" << i << "].size()=" << num_samples[i].size();
+        CHECK_EQ(num_samples[i].size(), pauli_sums[i].size() + projector_sums[i].size());
         std::vector<int> run_samples(num_samples[i].size(), 0);
         std::vector<double> rolling_sums(num_samples[i].size(), 0.0);
 
@@ -383,8 +397,8 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
           }
 
           for (int j = 0; j < projector_sums[i].size(); j++) {
-            int p_reps = (num_samples[i][j] + num_threads - 1) / num_threads;
-            if (run_samples[j] >= p_reps + rep_offset) {
+            int p_reps = (num_samples[i][j + pauli_sums[i].size()] + num_threads - 1) / num_threads;
+            if (run_samples[j + pauli_sums[i].size()] >= p_reps + rep_offset) {
               continue;
             }
             float exp_v = 0.0;
@@ -393,8 +407,8 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
                 ComputeExpectationQsim(projector_sums[i][j], sim, ss, sv, scratch,
                                        &exp_v),
                 c_lock);
-            rolling_sums[j] += static_cast<double>(exp_v);
-            run_samples[j]++;
+            rolling_sums[j + pauli_sums[i].size()] += static_cast<double>(exp_v);
+            run_samples[j + pauli_sums[i].size()]++;
           }
 
           // Check if we have run enough trajectories for all ops.
