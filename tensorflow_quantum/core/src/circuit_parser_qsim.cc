@@ -457,14 +457,15 @@ inline Status MatrixGate1(const Operation& op, const SymbolMap& param_map,
                           std::vector<GateMetaData>* metadata) {
   int q0;
   bool unused;
-  //float pexp, pexp_s, exp, exp_s, gs;
+  // float pexp, pexp_s, exp, exp_s, gs;
   Status u;
   unused = absl::SimpleAtoi(op.qubits(0).id(), &q0);
 
   std::vector<float> matrix;
   matrix.reserve(8);
 
-  for (const char* param_name : {"x00", "y00", "x01", "y01", "x10", "y10", "x11", "y11"}) {
+  for (const char* param_name :
+       {"x00", "y00", "x01", "y01", "x10", "y10", "x11", "y11"}) {
     float param_value;
     u = ParseProtoArg(op, param_name, param_map, &param_value);
     if (!u.ok()) {
@@ -472,8 +473,8 @@ inline Status MatrixGate1(const Operation& op, const SymbolMap& param_map,
     }
     matrix.push_back(param_value);
   }
-  auto gate = qsim::Cirq::MatrixGate1<float>::Create(
-      time, num_qubits - q0 - 1, matrix);
+  auto gate =
+      qsim::Cirq::MatrixGate1<float>::Create(time, num_qubits - q0 - 1, matrix);
   Status s = OptionalInsertControls(op, num_qubits, &gate);
   if (!s.ok()) {
     return s;
@@ -611,14 +612,14 @@ tensorflow::Status ParseAppendGate(const Operation& op,
       std::function<Status(const Operation&, const SymbolMap&,
                            const unsigned int, const unsigned int, QsimCircuit*,
                            std::vector<GateMetaData>*)>>
-      func_map = {{"I", &IGate},       {"HP", &HGate},
-                  {"XP", &XGate},      {"XXP", &XXGate},
-                  {"YP", &YGate},      {"YYP", &YYGate},
-                  {"ZP", &ZGate},      {"ZZP", &ZZGate},
-                  {"CZP", &CZGate},    {"I2", &I2Gate},
-                  {"CNP", &CXGate},    {"SP", &SwapGate},
-                  {"ISP", &ISwapGate}, {"PXP", &PhasedXGate},
-                  {"FSIM", &FsimGate}, {"PISP", &PhasedISwapGate},
+      func_map = {{"I", &IGate},        {"HP", &HGate},
+                  {"XP", &XGate},       {"XXP", &XXGate},
+                  {"YP", &YGate},       {"YYP", &YYGate},
+                  {"ZP", &ZGate},       {"ZZP", &ZZGate},
+                  {"CZP", &CZGate},     {"I2", &I2Gate},
+                  {"CNP", &CXGate},     {"SP", &SwapGate},
+                  {"ISP", &ISwapGate},  {"PXP", &PhasedXGate},
+                  {"FSIM", &FsimGate},  {"PISP", &PhasedISwapGate},
                   {"MG1", &MatrixGate1}};
 
   auto build_f = func_map.find(op.gate().id());
@@ -955,13 +956,15 @@ Status QsimCircuitFromProjectorTerm(
     new_op->add_qubits()->set_id(entry.qubit_id());
     new_op->mutable_gate()->set_id("MG1");
     auto& mutable_args = *new_op->mutable_args();
-    mutable_args["x00"].mutable_arg_value()->set_float_value(entry.basis_state() ? 0.0 : 1.0);
+    mutable_args["x00"].mutable_arg_value()->set_float_value(
+        entry.basis_state() ? 0.0 : 1.0);
     mutable_args["y00"].mutable_arg_value()->set_float_value(0.0);
     mutable_args["x01"].mutable_arg_value()->set_float_value(0.0);
     mutable_args["y01"].mutable_arg_value()->set_float_value(0.0);
     mutable_args["x10"].mutable_arg_value()->set_float_value(0.0);
     mutable_args["y10"].mutable_arg_value()->set_float_value(0.0);
-    mutable_args["x11"].mutable_arg_value()->set_float_value(entry.basis_state() ? 1.0 : 0.0);
+    mutable_args["x11"].mutable_arg_value()->set_float_value(
+        entry.basis_state() ? 1.0 : 0.0);
     mutable_args["y11"].mutable_arg_value()->set_float_value(0.0);
 
     mutable_args["control_values"].mutable_arg_value()->set_string_value("");

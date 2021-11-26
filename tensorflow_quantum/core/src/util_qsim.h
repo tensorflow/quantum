@@ -179,11 +179,10 @@ tensorflow::Status ComputeExpectationQsim(const tfq::proto::PauliSum& p_sum,
 }
 
 template <typename SimT, typename StateSpaceT, typename StateT>
-tensorflow::Status ComputeExpectationQsim(const tfq::proto::ProjectorSum& projector_sum,
-                                          const SimT& sim,
-                                          const StateSpaceT& ss, StateT& state,
-                                          StateT& scratch,
-                                          float* expectation_value) {
+tensorflow::Status ComputeExpectationQsim(
+    const tfq::proto::ProjectorSum& projector_sum, const SimT& sim,
+    const StateSpaceT& ss, StateT& state, StateT& scratch,
+    float* expectation_value) {
   // apply the gates of the projector terms to a copy of the state vector
   // and add up expectation value term by term.
   tensorflow::Status status = tensorflow::Status::OK();
@@ -191,15 +190,16 @@ tensorflow::Status ComputeExpectationQsim(const tfq::proto::ProjectorSum& projec
     // catch identity terms
     if (term.projector_dict_size() == 0) {
       *expectation_value += term.coefficient_real();
-      // TODO(tonybruguier): error somewhere if identities have any imaginary part
+      // TODO(tonybruguier): error somewhere if identities have any imaginary
+      // part
       continue;
     }
 
     QsimCircuit main_circuit;
     std::vector<qsim::GateFused<QsimGate>> fused_circuit;
 
-    status = QsimCircuitFromProjectorTerm(term, state.num_qubits(), &main_circuit,
-                                      &fused_circuit);
+    status = QsimCircuitFromProjectorTerm(term, state.num_qubits(),
+                                          &main_circuit, &fused_circuit);
 
     if (!status.ok()) {
       return status;

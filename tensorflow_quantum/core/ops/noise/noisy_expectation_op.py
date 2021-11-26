@@ -97,7 +97,6 @@ def expectation(programs, symbol_names, symbol_values, pauli_sums,
             expectation value for each circuit with each op applied to it
             (after resolving the corresponding parameters in).
     """
-    print('TONYBOOM noisy_expectation_op()')
     return NOISY_OP_MODULE.tfq_noisy_expectation(
         programs, symbol_names, tf.cast(symbol_values, tf.float32), pauli_sums,
         projector_sums, tf.cast(num_samples, dtype=tf.int32))
