@@ -1025,4 +1025,51 @@ Status QsimZBasisCircuitFromPauliTerm(
                                 circuit, fused_circuit);
 }
 
+Status QsimZBasisCircuitFromProjectorTerm(
+    const ProjectorTerm& term, const int num_qubits, QsimCircuit* circuit,
+    std::vector<qsim::GateFused<QsimGate>>* fused_circuit) {
+  Program measurement_program;
+  SymbolMap empty_map;
+  measurement_program.mutable_circuit()->set_scheduling_strategy(
+      tfq::proto::Circuit::MOMENT_BY_MOMENT);
+  Moment* term_moment = measurement_program.mutable_circuit()->add_moments();
+  // for (const tfq::proto::ProjectorDictEntry& entry : term.projector_dict()) {
+  //   Operation* new_op = term_moment->add_operations();
+
+  //   // create corresponding eigen gate op.
+  //   new_op->add_qubits()->set_id(entry.qubit_id());
+  //   new_op->mutable_gate()->set_id("MG1");
+  //   auto& mutable_args = *new_op->mutable_args();
+  //   mutable_args["x00"].mutable_arg_value()->set_float_value(
+  //       entry.basis_state() ? 0.0 : 1.0);
+  //   mutable_args["y00"].mutable_arg_value()->set_float_value(0.0);
+  //   mutable_args["x01"].mutable_arg_value()->set_float_value(0.0);
+  //   mutable_args["y01"].mutable_arg_value()->set_float_value(0.0);
+  //   mutable_args["x10"].mutable_arg_value()->set_float_value(0.0);
+  //   mutable_args["y10"].mutable_arg_value()->set_float_value(0.0);
+  //   mutable_args["x11"].mutable_arg_value()->set_float_value(
+  //       entry.basis_state() ? 1.0 : 0.0);
+  //   mutable_args["y11"].mutable_arg_value()->set_float_value(0.0);
+  // }
+  for (const tfq::proto::ProjectorDictEntry& entry : term.projector_dict()) {
+    if (!entry.basis_state()) {
+      continue;
+    }
+
+    Operation* new_op = term_moment->add_operations();
+
+    new_op->add_qubits()->set_id(entry.qubit_id());
+    new_op->mutable_gate()->set_id("XP");
+    auto& mutable_args = *new_op->mutable_args();
+    mutable_args["exponent"].mutable_arg_value()->set_float_value(0.0);
+    mutable_args["global_shift"].mutable_arg_value()->set_float_value(0.0);
+    mutable_args["exponent_scalar"].mutable_arg_value()->set_float_value(1.0);
+    mutable_args["control_values"].mutable_arg_value()->set_string_value("");
+    mutable_args["control_qubits"].mutable_arg_value()->set_string_value("");
+  }
+
+  return QsimCircuitFromProgram(measurement_program, empty_map, num_qubits,
+                                circuit, fused_circuit);
+}
+
 }  // namespace tfq

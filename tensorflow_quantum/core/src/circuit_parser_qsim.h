@@ -109,6 +109,14 @@ tensorflow::Status QsimZBasisCircuitFromPauliTerm(
     qsim::Circuit<qsim::Cirq::GateCirq<float>>* circuit,
     std::vector<qsim::GateFused<qsim::Cirq::GateCirq<float>>>* fused_circuit);
 
+// parse a serialized projectorTerm from a larger cirq.Projectorsum proto
+// into a qsim Circuit and fused circuit that represents the transformation
+// to the z basis.
+tensorflow::Status QsimZBasisCircuitFromProjectorTerm(
+    const tfq::proto::ProjectorTerm& term, const int num_qubits,
+    qsim::Circuit<qsim::Cirq::GateCirq<float>>* circuit,
+    std::vector<qsim::GateFused<qsim::Cirq::GateCirq<float>>>* fused_circuit);
+
 }  // namespace tfq
 
 #endif  // TFQ_CORE_SRC_CIRCUIT_PARSER_QSIM_H_
