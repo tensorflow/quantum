@@ -373,8 +373,8 @@ tensorflow::Status ComputeSampledExpectationQsim(
     int parity_total(0);
     int count = 0;
     for (const uint64_t state_sample : state_samples) {
-      count = std::bitset<64>(state_sample & mask).count() & 1;
-      parity_total += count ? -1 : 1;
+      count = std::bitset<64>(state_sample & mask).count() == parity_bits.size();
+      parity_total += count ? 1 : 0;
     }
     *expectation_value += static_cast<float>(parity_total) *
                           term.coefficient_real() /

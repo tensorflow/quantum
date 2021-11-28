@@ -246,8 +246,8 @@ class NoisyExpectationCalculationTest(tf.test.TestCase, parameterized.TestCase):
             # projector_sums tensor has the wrong type.
             noisy_sampled_expectation_op.sampled_expectation(
                 util.convert_to_tensor(circuit_batch), symbol_names,
-                util.convert_to_tensor([[x] for x in pauli_sums]),
                 symbol_values_array, [[1.0]] * batch_size,
+                util.convert_to_tensor([[x] for x in pauli_sums]),
                 num_samples)
 
         with self.assertRaisesRegex(TypeError, 'missing'):

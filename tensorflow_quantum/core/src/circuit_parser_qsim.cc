@@ -1032,38 +1032,32 @@ Status QsimZBasisCircuitFromProjectorTerm(
   SymbolMap empty_map;
   measurement_program.mutable_circuit()->set_scheduling_strategy(
       tfq::proto::Circuit::MOMENT_BY_MOMENT);
-  Moment* term_moment = measurement_program.mutable_circuit()->add_moments();
-  // for (const tfq::proto::ProjectorDictEntry& entry : term.projector_dict()) {
-  //   Operation* new_op = term_moment->add_operations();
 
-  //   // create corresponding eigen gate op.
-  //   new_op->add_qubits()->set_id(entry.qubit_id());
-  //   new_op->mutable_gate()->set_id("MG1");
-  //   auto& mutable_args = *new_op->mutable_args();
-  //   mutable_args["x00"].mutable_arg_value()->set_float_value(
-  //       entry.basis_state() ? 0.0 : 1.0);
-  //   mutable_args["y00"].mutable_arg_value()->set_float_value(0.0);
-  //   mutable_args["x01"].mutable_arg_value()->set_float_value(0.0);
-  //   mutable_args["y01"].mutable_arg_value()->set_float_value(0.0);
-  //   mutable_args["x10"].mutable_arg_value()->set_float_value(0.0);
-  //   mutable_args["y10"].mutable_arg_value()->set_float_value(0.0);
-  //   mutable_args["x11"].mutable_arg_value()->set_float_value(
-  //       entry.basis_state() ? 1.0 : 0.0);
-  //   mutable_args["y11"].mutable_arg_value()->set_float_value(0.0);
-  // }
+  std::map<std::string, std::pair<int, int>> qid_to_counts;
   for (const tfq::proto::ProjectorDictEntry& entry : term.projector_dict()) {
-    if (!entry.basis_state()) {
-      continue;
+    auto& counts = qid_to_counts[entry.qubit_id()];
+    if (entry.basis_state()) {
+      counts.first += 1;
+    } else {
+      counts.second += 1;
     }
+  }
 
+  Moment* term_moment = measurement_program.mutable_circuit()->add_moments();
+  for (const auto& count_pair : qid_to_counts) {
     Operation* new_op = term_moment->add_operations();
-
-    new_op->add_qubits()->set_id(entry.qubit_id());
-    new_op->mutable_gate()->set_id("XP");
+    // create corresponding eigen gate op.
+    new_op->add_qubits()->set_id(count_pair.first);
+    new_op->mutable_gate()->set_id("MG1");
     auto& mutable_args = *new_op->mutable_args();
-    mutable_args["exponent"].mutable_arg_value()->set_float_value(0.0);
-    mutable_args["global_shift"].mutable_arg_value()->set_float_value(0.0);
-    mutable_args["exponent_scalar"].mutable_arg_value()->set_float_value(1.0);
+    mutable_args["x00"].mutable_arg_value()->set_float_value(count_pair.second.first);
+    mutable_args["y00"].mutable_arg_value()->set_float_value(0.0);
+    mutable_args["x01"].mutable_arg_value()->set_float_value(count_pair.second.second);
+    mutable_args["y01"].mutable_arg_value()->set_float_value(0.0);
+    mutable_args["x10"].mutable_arg_value()->set_float_value(count_pair.second.second);
+    mutable_args["y10"].mutable_arg_value()->set_float_value(0.0);
+    mutable_args["x11"].mutable_arg_value()->set_float_value(count_pair.second.first);
+    mutable_args["y11"].mutable_arg_value()->set_float_value(0.0);
     mutable_args["control_values"].mutable_arg_value()->set_string_value("");
     mutable_args["control_qubits"].mutable_arg_value()->set_string_value("");
   }
