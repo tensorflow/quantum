@@ -89,9 +89,8 @@ class NoisyExpectationCalculationTest(tf.test.TestCase, parameterized.TestCase):
                                     'pauli_sums must be rank 2.'):
             # pauli_sums tensor has too few dimensions.
             noisy_sampled_expectation_op.sampled_expectation(
-                util.convert_to_tensor(circuit_batch),
-                symbol_names, symbol_values_array,
-                util.convert_to_tensor(list(pauli_sums)),
+                util.convert_to_tensor(circuit_batch), symbol_names,
+                symbol_values_array, util.convert_to_tensor(list(pauli_sums)),
                 util.convert_to_tensor([[x] for x in projector_sums]),
                 num_samples)
 
@@ -99,11 +98,10 @@ class NoisyExpectationCalculationTest(tf.test.TestCase, parameterized.TestCase):
                                     'projector_sums must be rank 2.'):
             # pauli_sums tensor has too few dimensions.
             noisy_sampled_expectation_op.sampled_expectation(
-                util.convert_to_tensor(circuit_batch),
-                symbol_names, symbol_values_array,
+                util.convert_to_tensor(circuit_batch), symbol_names,
+                symbol_values_array,
                 util.convert_to_tensor([[x] for x in pauli_sums]),
-                util.convert_to_tensor(list(projector_sums)),
-                num_samples)
+                util.convert_to_tensor(list(projector_sums)), num_samples)
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'pauli_sums must be rank 2.'):
@@ -180,7 +178,8 @@ class NoisyExpectationCalculationTest(tf.test.TestCase, parameterized.TestCase):
                                     'qubits not found in circuit'):
             # pauli_sums tensor has the right type but invalid values.
             new_qubits = [cirq.GridQubit(5, 5), cirq.GridQubit(9, 9)]
-            new_projector_sums = util.random_projector_sums(new_qubits, 2, batch_size)
+            new_projector_sums = util.random_projector_sums(
+                new_qubits, 2, batch_size)
             noisy_sampled_expectation_op.sampled_expectation(
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 symbol_values_array,
@@ -193,8 +192,7 @@ class NoisyExpectationCalculationTest(tf.test.TestCase, parameterized.TestCase):
             # pauli_sums tensor has the right type but invalid values 2.
             noisy_sampled_expectation_op.sampled_expectation(
                 util.convert_to_tensor(circuit_batch), symbol_names,
-                symbol_values_array,
-                [['junk']] * batch_size,
+                symbol_values_array, [['junk']] * batch_size,
                 util.convert_to_tensor([[x] for x in new_projector_sums]),
                 num_samples)
 
@@ -205,8 +203,7 @@ class NoisyExpectationCalculationTest(tf.test.TestCase, parameterized.TestCase):
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 symbol_values_array,
                 util.convert_to_tensor([[x] for x in pauli_sums]),
-                [['junk']] * batch_size,
-                num_samples)
+                [['junk']] * batch_size, num_samples)
 
         with self.assertRaisesRegex(TypeError, 'Cannot convert'):
             # circuits tensor has the wrong type.
@@ -247,8 +244,7 @@ class NoisyExpectationCalculationTest(tf.test.TestCase, parameterized.TestCase):
             noisy_sampled_expectation_op.sampled_expectation(
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 symbol_values_array, [[1.0]] * batch_size,
-                util.convert_to_tensor([[x] for x in pauli_sums]),
-                num_samples)
+                util.convert_to_tensor([[x] for x in pauli_sums]), num_samples)
 
         with self.assertRaisesRegex(TypeError, 'missing'):
             # we are missing an argument.
@@ -348,9 +344,8 @@ class NoisyExpectationCalculationTest(tf.test.TestCase, parameterized.TestCase):
         num_samples = [[10000] * 4] * batch_size
 
         op_exps = noisy_sampled_expectation_op.sampled_expectation(
-            util.convert_to_tensor(circuit_batch),
-            symbol_names, symbol_values_array,
-            util.convert_to_tensor(batch_pauli_sums),
+            util.convert_to_tensor(circuit_batch), symbol_names,
+            symbol_values_array, util.convert_to_tensor(batch_pauli_sums),
             util.convert_to_tensor(batch_projector_sums), num_samples)
 
         cirq_exps = batch_util.batch_calculate_expectation(
@@ -394,11 +389,9 @@ class NoisyExpectationCalculationTest(tf.test.TestCase, parameterized.TestCase):
         num_samples = [[20000] * 4] * batch_size
 
         op_exps = noisy_sampled_expectation_op.sampled_expectation(
-            util.convert_to_tensor(circuit_batch),
-            symbol_names, symbol_values_array,
-            util.convert_to_tensor(batch_pauli_sums),
-            util.convert_to_tensor(batch_projector_sums),
-            num_samples)
+            util.convert_to_tensor(circuit_batch), symbol_names,
+            symbol_values_array, util.convert_to_tensor(batch_pauli_sums),
+            util.convert_to_tensor(batch_projector_sums), num_samples)
 
         cirq_exps = batch_util.batch_calculate_expectation(
             circuit_batch, resolver_batch, batch_both,
@@ -416,8 +409,8 @@ class NoisyExpectationCalculationTest(tf.test.TestCase, parameterized.TestCase):
         empty_n_samples = tf.convert_to_tensor([[]], dtype=tf.int32)
 
         out = noisy_sampled_expectation_op.sampled_expectation(
-            empty_circuit, empty_symbols, empty_values, empty_paulis, empty_projectors,
-            empty_n_samples)
+            empty_circuit, empty_symbols, empty_values, empty_paulis,
+            empty_projectors, empty_n_samples)
 
         expected = np.array([[]], dtype=np.complex64)
         self.assertAllClose(out, expected)
@@ -432,8 +425,8 @@ class NoisyExpectationCalculationTest(tf.test.TestCase, parameterized.TestCase):
         empty_n_samples = tf.raw_ops.Empty(shape=(0, 0), dtype=tf.int32)
 
         out = noisy_sampled_expectation_op.sampled_expectation(
-            empty_circuit, empty_symbols, empty_values, empty_paulis, empty_projectors,
-            empty_n_samples)
+            empty_circuit, empty_symbols, empty_values, empty_paulis,
+            empty_projectors, empty_n_samples)
 
         self.assertShapeEqual(np.zeros((0, 0)), out)
 

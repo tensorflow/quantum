@@ -20,8 +20,8 @@ from tensorflow_quantum.core.ops.load_module import load_module
 NOISY_OP_MODULE = load_module(os.path.join("noise", "_tfq_noise_ops.so"))
 
 
-def sampled_expectation(programs, symbol_names, symbol_values, pauli_sums, projector_sums,
-                        num_samples):
+def sampled_expectation(programs, symbol_names, symbol_values, pauli_sums,
+                        projector_sums, num_samples):
     """Estimates (via sampling) expectation values using monte-carlo simulation.
 
     Simulate the final state of `programs` given `symbol_values` are placed
@@ -97,5 +97,4 @@ def sampled_expectation(programs, symbol_names, symbol_values, pauli_sums, proje
     """
     return NOISY_OP_MODULE.tfq_noisy_sampled_expectation(
         programs, symbol_names, tf.cast(symbol_values, tf.float32), pauli_sums,
-        projector_sums,
-        tf.cast(num_samples, dtype=tf.int32))
+        projector_sums, tf.cast(num_samples, dtype=tf.int32))

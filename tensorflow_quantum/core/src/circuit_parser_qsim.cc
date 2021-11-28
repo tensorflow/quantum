@@ -1050,13 +1050,17 @@ Status QsimZBasisCircuitFromProjectorTerm(
     new_op->add_qubits()->set_id(count_pair.first);
     new_op->mutable_gate()->set_id("MG1");
     auto& mutable_args = *new_op->mutable_args();
-    mutable_args["x00"].mutable_arg_value()->set_float_value(count_pair.second.first);
+    mutable_args["x00"].mutable_arg_value()->set_float_value(
+        count_pair.second.first);
     mutable_args["y00"].mutable_arg_value()->set_float_value(0.0);
-    mutable_args["x01"].mutable_arg_value()->set_float_value(count_pair.second.second);
+    mutable_args["x01"].mutable_arg_value()->set_float_value(
+        count_pair.second.second);
     mutable_args["y01"].mutable_arg_value()->set_float_value(0.0);
-    mutable_args["x10"].mutable_arg_value()->set_float_value(count_pair.second.second);
+    mutable_args["x10"].mutable_arg_value()->set_float_value(
+        count_pair.second.second);
     mutable_args["y10"].mutable_arg_value()->set_float_value(0.0);
-    mutable_args["x11"].mutable_arg_value()->set_float_value(count_pair.second.first);
+    mutable_args["x11"].mutable_arg_value()->set_float_value(
+        count_pair.second.first);
     mutable_args["y11"].mutable_arg_value()->set_float_value(0.0);
     mutable_args["control_values"].mutable_arg_value()->set_string_value("");
     mutable_args["control_qubits"].mutable_arg_value()->set_string_value("");

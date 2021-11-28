@@ -84,8 +84,9 @@ class TfqNoisySampledExpectationOp : public tensorflow::OpKernel {
     std::vector<int> num_qubits;
     std::vector<std::vector<PauliSum>> pauli_sums;
     std::vector<std::vector<ProjectorSum>> projector_sums;
-    OP_REQUIRES_OK(context, GetProgramsAndNumQubits(context, &programs,
-                                                    &num_qubits, &pauli_sums, &projector_sums));
+    OP_REQUIRES_OK(context,
+                   GetProgramsAndNumQubits(context, &programs, &num_qubits,
+                                           &pauli_sums, &projector_sums));
 
     std::vector<SymbolMap> maps;
     OP_REQUIRES_OK(context, GetSymbolMaps(context, &maps));
@@ -157,24 +158,25 @@ class TfqNoisySampledExpectationOp : public tensorflow::OpKernel {
       // alternate parallelization scheme with runtime:
       // O(n_circuits * max_j(num_samples[i])) with parallelization being
       // multiple threads per wavefunction.
-      ComputeLarge(num_qubits, qsim_circuits, pauli_sums, projector_sums, num_samples, context,
-                   &output_tensor);
+      ComputeLarge(num_qubits, qsim_circuits, pauli_sums, projector_sums,
+                   num_samples, context, &output_tensor);
     } else {
       // Runtime: O(n_circuits * max_j(num_samples[i])) with parallelization
       // being done over number of trials.
-      ComputeSmall(num_qubits, max_num_qubits, qsim_circuits, pauli_sums, projector_sums,
-                   num_samples, context, &output_tensor);
+      ComputeSmall(num_qubits, max_num_qubits, qsim_circuits, pauli_sums,
+                   projector_sums, num_samples, context, &output_tensor);
     }
   }
 
  private:
-  void ComputeLarge(const std::vector<int>& num_qubits,
-                    const std::vector<NoisyQsimCircuit>& ncircuits,
-                    const std::vector<std::vector<PauliSum>>& pauli_sums,
-                    const std::vector<std::vector<ProjectorSum>>& projector_sums,
-                    const std::vector<std::vector<int>>& num_samples,
-                    tensorflow::OpKernelContext* context,
-                    tensorflow::TTypes<float, 1>::Matrix* output_tensor) {
+  void ComputeLarge(
+      const std::vector<int>& num_qubits,
+      const std::vector<NoisyQsimCircuit>& ncircuits,
+      const std::vector<std::vector<PauliSum>>& pauli_sums,
+      const std::vector<std::vector<ProjectorSum>>& projector_sums,
+      const std::vector<std::vector<int>>& num_samples,
+      tensorflow::OpKernelContext* context,
+      tensorflow::TTypes<float, 1>::Matrix* output_tensor) {
     // Instantiate qsim objects.
     const auto tfq_for = tfq::QsimFor(context);
     using Simulator = qsim::Simulator<const tfq::QsimFor&>;
@@ -204,7 +206,8 @@ class TfqNoisySampledExpectationOp : public tensorflow::OpKernel {
       for (int j = 0; j < projector_sums[i].size(); j++) {
         max_psum_length =
             std::max(max_psum_length, projector_sums[i][j].terms().size());
-        max_n_shots = std::max(max_n_shots, num_samples[i][j + pauli_sums[i].size()]);
+        max_n_shots =
+            std::max(max_n_shots, num_samples[i][j + pauli_sums[i].size()]);
       }
     }
     random_gen.Init(tensorflow::random::New64(), tensorflow::random::New64());
@@ -261,13 +264,14 @@ class TfqNoisySampledExpectationOp : public tensorflow::OpKernel {
           run_samples[j]++;
         }
         for (int j = 0; j < projector_sums[i].size(); j++) {
-          if (run_samples[j + pauli_sums[i].size()] >= num_samples[i][j + pauli_sums[i].size()]) {
+          if (run_samples[j + pauli_sums[i].size()] >=
+              num_samples[i][j + pauli_sums[i].size()]) {
             continue;
           }
           float exp_v = 0.0;
           OP_REQUIRES_OK(context, ComputeSampledExpectationQsim(
-                                      projector_sums[i][j], sim, ss, sv, scratch, 1,
-                                      rand_source, &exp_v));
+                                      projector_sums[i][j], sim, ss, sv,
+                                      scratch, 1, rand_source, &exp_v));
           rolling_sums[j + pauli_sums[i].size()] += static_cast<double>(exp_v);
           run_samples[j + pauli_sums[i].size()]++;
         }
@@ -289,14 +293,14 @@ class TfqNoisySampledExpectationOp : public tensorflow::OpKernel {
     }
   }
 
-  void ComputeSmall(const std::vector<int>& num_qubits,
-                    const int max_num_qubits,
-                    const std::vector<NoisyQsimCircuit>& ncircuits,
-                    const std::vector<std::vector<PauliSum>>& pauli_sums,
-                    const std::vector<std::vector<ProjectorSum>>& projector_sums,
-                    const std::vector<std::vector<int>>& num_samples,
-                    tensorflow::OpKernelContext* context,
-                    tensorflow::TTypes<float, 1>::Matrix* output_tensor) {
+  void ComputeSmall(
+      const std::vector<int>& num_qubits, const int max_num_qubits,
+      const std::vector<NoisyQsimCircuit>& ncircuits,
+      const std::vector<std::vector<PauliSum>>& pauli_sums,
+      const std::vector<std::vector<ProjectorSum>>& projector_sums,
+      const std::vector<std::vector<int>>& num_samples,
+      tensorflow::OpKernelContext* context,
+      tensorflow::TTypes<float, 1>::Matrix* output_tensor) {
     using Simulator = qsim::Simulator<const qsim::SequentialFor&>;
     using StateSpace = Simulator::StateSpace;
     using QTSimulator =
@@ -333,7 +337,8 @@ class TfqNoisySampledExpectationOp : public tensorflow::OpKernel {
       for (int j = 0; j < projector_sums[i].size(); j++) {
         max_psum_length =
             std::max(max_psum_length, projector_sums[i][j].terms().size());
-        max_n_shots = std::max(max_n_shots, num_samples[i][j + pauli_sums[i].size()]);
+        max_n_shots =
+            std::max(max_n_shots, num_samples[i][j + pauli_sums[i].size()]);
       }
     }
     random_gen.Init(tensorflow::random::New64(), tensorflow::random::New64());
@@ -404,7 +409,9 @@ class TfqNoisySampledExpectationOp : public tensorflow::OpKernel {
             run_samples[j]++;
           }
           for (int j = 0; j < projector_sums[i].size(); j++) {
-            int p_reps = (num_samples[i][j + pauli_sums[i].size()] + num_threads - 1) / num_threads;
+            int p_reps =
+                (num_samples[i][j + pauli_sums[i].size()] + num_threads - 1) /
+                num_threads;
             if (run_samples[j + pauli_sums[i].size()] >= p_reps + rep_offset) {
               continue;
             }
@@ -414,7 +421,8 @@ class TfqNoisySampledExpectationOp : public tensorflow::OpKernel {
                 ComputeSampledExpectationQsim(projector_sums[i][j], sim, ss, sv,
                                               scratch, 1, rand_source, &exp_v),
                 c_lock);
-            rolling_sums[j + pauli_sums[i].size()] += static_cast<double>(exp_v);
+            rolling_sums[j + pauli_sums[i].size()] +=
+                static_cast<double>(exp_v);
             run_samples[j + pauli_sums[i].size()]++;
           }
 

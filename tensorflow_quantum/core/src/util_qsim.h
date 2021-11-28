@@ -312,9 +312,10 @@ tensorflow::Status ComputeSampledExpectationQsim(
 // values in memory to be set.
 template <typename SimT, typename StateSpaceT, typename StateT>
 tensorflow::Status ComputeSampledExpectationQsim(
-    const tfq::proto::ProjectorSum& projector_sum, const SimT& sim, const StateSpaceT& ss,
-    StateT& state, StateT& scratch, const int num_samples,
-    tensorflow::random::SimplePhilox& random_source, float* expectation_value) {
+    const tfq::proto::ProjectorSum& projector_sum, const SimT& sim,
+    const StateSpaceT& ss, StateT& state, StateT& scratch,
+    const int num_samples, tensorflow::random::SimplePhilox& random_source,
+    float* expectation_value) {
   std::uniform_int_distribution<> distrib(1, 1 << 30);
 
   if (num_samples == 0) {
@@ -327,7 +328,8 @@ tensorflow::Status ComputeSampledExpectationQsim(
     // catch identity terms
     if (term.projector_dict_size() == 0) {
       *expectation_value += term.coefficient_real();
-      // TODO(tonybruguier): error somewhere if identities have any imaginary part
+      // TODO(tonybruguier): error somewhere if identities have any imaginary
+      // part
       continue;
     }
 
@@ -336,7 +338,7 @@ tensorflow::Status ComputeSampledExpectationQsim(
     std::vector<qsim::GateFused<QsimGate>> fused_circuit;
 
     status = QsimZBasisCircuitFromProjectorTerm(term, state.num_qubits(),
-                                            &main_circuit, &fused_circuit);
+                                                &main_circuit, &fused_circuit);
     if (!status.ok()) {
       return status;
     }
@@ -373,7 +375,8 @@ tensorflow::Status ComputeSampledExpectationQsim(
     int parity_total(0);
     int count = 0;
     for (const uint64_t state_sample : state_samples) {
-      count = std::bitset<64>(state_sample & mask).count() == parity_bits.size();
+      count =
+          std::bitset<64>(state_sample & mask).count() == parity_bits.size();
       parity_total += count ? 1 : 0;
     }
     *expectation_value += static_cast<float>(parity_total) *
