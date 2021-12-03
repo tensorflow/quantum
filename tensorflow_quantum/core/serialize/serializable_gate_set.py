@@ -14,7 +14,6 @@
 """Support for serializing and deserializing cirq_google.api.v2 protos."""
 
 import cirq
-import cirq_google
 from tensorflow_quantum.core.proto import program_pb2
 
 LANGUAGE_ORDER = [
