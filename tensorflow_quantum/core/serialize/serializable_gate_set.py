@@ -11,9 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Support for serializing and deserializing cirq.google.api.v2 protos."""
+"""Support for serializing and deserializing cirq_google.api.v2 protos."""
 
 import cirq
+import cirq_google
 from tensorflow_quantum.core.proto import program_pb2
 
 LANGUAGE_ORDER = [
@@ -56,7 +57,7 @@ def _function_languages_from_arg(arg_proto):
 class SerializableGateSet:
     """A class for serializing and deserializing programs and operations.
 
-    This class is for cirq.google.api.v2. protos.
+    This class is for cirq_google.api.v2. protos.
     """
 
     def __init__(self, gate_set_name, serializers, deserializers):
@@ -118,7 +119,7 @@ class SerializableGateSet:
         return False
 
     def serialize(self, program, msg=None, *, arg_function_language=None):
-        """Serialize a Circuit to cirq.google.api.v2.Program proto.
+        """Serialize a Circuit to cirq_google.api.v2.Program proto.
 
         Args:
             program: The Circuit to serialize.
@@ -146,13 +147,13 @@ class SerializableGateSet:
             *,
             arg_function_language='',
     ):
-        """Serialize an Operation to cirq.google.api.v2.Operation proto.
+        """Serialize an Operation to cirq_google.api.v2.Operation proto.
 
         Args:
             op: The operation to serialize.
 
         Returns:
-            A dictionary corresponds to the cirq.google.api.v2.Operation proto.
+            A dictionary corresponds to the cirq_google.api.v2.Operation proto.
         """
         gate_type = type(op.gate)
         for gate_type_mro in gate_type.mro():
@@ -169,10 +170,10 @@ class SerializableGateSet:
             op, gate_type))
 
     def deserialize(self, proto, device=None):
-        """Deserialize a Circuit from a cirq.google.api.v2.Program.
+        """Deserialize a Circuit from a cirq_google.api.v2.Program.
 
         Args:
-            proto: A dictionary representing a cirq.google.api.v2.Program proto.
+            proto: A dictionary representing a cirq_google.api.v2.Program proto.
             device: If the proto is for a schedule, a device is required
                 Otherwise optional.
 
@@ -200,11 +201,11 @@ class SerializableGateSet:
             *,
             arg_function_language='',
     ):
-        """Deserialize an Operation from a cirq.google.api.v2.Operation.
+        """Deserialize an Operation from a cirq_google.api.v2.Operation.
 
         Args:
             operation_proto: A dictionary representing a
-                cirq.google.api.v2.Operation proto.
+                cirq_google.api.v2.Operation proto.
 
         Returns:
             The deserialized Operation.

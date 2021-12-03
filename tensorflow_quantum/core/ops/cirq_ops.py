@@ -19,6 +19,7 @@ import numbers
 import numpy as np
 import tensorflow as tf
 import cirq
+import cirq_google
 
 from tensorflow_quantum.core.ops import batch_util
 from tensorflow_quantum.core.proto import pauli_sum_pb2
@@ -490,7 +491,7 @@ def _get_cirq_samples(sampler=cirq.Simulator()):
         ]
         max_n_qubits = max(len(p.all_qubits()) for p in programs)
 
-        if isinstance(sampler, cirq.google.QuantumEngineSampler):
+        if isinstance(sampler, cirq_google.QuantumEngineSampler):
             # group samples from identical circuits to reduce communication
             # overhead. Have to keep track of the order in which things came
             # in to make sure the output is ordered correctly

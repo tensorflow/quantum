@@ -18,6 +18,7 @@ import numpy as np
 import tensorflow as tf
 from absl.testing import parameterized
 import cirq
+import cirq_google
 
 from tensorflow_quantum.core.ops import cirq_ops
 from tensorflow_quantum.core.serialize import serializer
@@ -342,9 +343,9 @@ class CirqSamplesTest(tf.test.TestCase, parameterized.TestCase):
         cirq_ops._get_cirq_samples(cirq.DensityMatrixSimulator())
         mock_engine = mock.Mock()
         cirq_ops._get_cirq_samples(
-            cirq.google.QuantumEngineSampler(engine=mock_engine,
+            cirq_google.QuantumEngineSampler(engine=mock_engine,
                                              processor_id='test',
-                                             gate_set=cirq.google.XMON))
+                                             gate_set=cirq_google.XMON))
 
     def test_cirq_sampling_op_inputs(self):
         """test input checking in the cirq sampling op."""
