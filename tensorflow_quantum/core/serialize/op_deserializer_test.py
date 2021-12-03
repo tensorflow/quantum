@@ -325,6 +325,7 @@ class OpDeserializerTest(tf.test.TestCase, parameterized.TestCase):
         result = deserializer.from_proto(serialized)
         self.assertEqual(result, GateWithAttribute(0.125)(q))
 
+
     def test_from_proto_missing_required_arg(self):
         """Error raised when required field is missing."""
         deserializer = op_deserializer.GateOpDeserializer(
