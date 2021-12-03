@@ -68,7 +68,6 @@ class SampledExpectationTest(parameterized.TestCase, tf.test.TestCase):
         sampled_expectation.SampledExpectation(
             differentiator=linear_combination.ForwardDifference())
 
-
     def test_sampled_expectation_instantiate_error(self):
         """Test that SampledExpectation errors with bad inputs."""
 
