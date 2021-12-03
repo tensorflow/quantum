@@ -20,7 +20,11 @@ from tensorflow_quantum.core.ops.load_module import load_module
 NOISY_OP_MODULE = load_module(os.path.join("noise", "_tfq_noise_ops.so"))
 
 
-def expectation(programs, symbol_names, symbol_values, pauli_sums, num_samples,
+def expectation(programs,
+                symbol_names,
+                symbol_values,
+                pauli_sums,
+                num_samples,
                 projector_sums=None):
     """Calculate the analytic expectation values using monte-carlo trajectories.
 
