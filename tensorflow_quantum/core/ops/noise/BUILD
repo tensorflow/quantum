@@ -83,6 +83,7 @@ py_library(
 
 py_test(
     name = "noisy_expectation_op_test",
+    timeout = "long",
     srcs = ["noisy_expectation_op_test.py"],
     python_version = "PY3",
     deps = [
@@ -103,6 +104,7 @@ py_library(
 
 py_test(
     name = "noisy_sampled_expectation_op_test",
+    timeout = "long",
     srcs = ["noisy_sampled_expectation_op_test.py"],
     python_version = "PY3",
     deps = [
