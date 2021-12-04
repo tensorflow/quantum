@@ -104,7 +104,10 @@ def expectation(programs,
     # TODO(tonybruguier): Always supply a projector sum to this function and
     # remove the special-casing below.
     if projector_sums is None:
-        projector_sums = pauli_sums[:, 0:0]
+        if len(pauli_sums.shape) == 1:
+            projector_sums = pauli_sums[0:0]
+        else:
+            projector_sums = pauli_sums[:, 0:0]
     return NOISY_OP_MODULE.tfq_noisy_expectation(
         programs, symbol_names, tf.cast(symbol_values, tf.float32), pauli_sums,
         projector_sums, tf.cast(num_samples, dtype=tf.int32))
