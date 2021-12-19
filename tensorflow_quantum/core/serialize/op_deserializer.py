@@ -209,7 +209,7 @@ class GateOpDeserializer:
         self.op_wrapper = op_wrapper
 
     def from_proto(self, proto, *, arg_function_language=''):
-        """Turns a cirq.google.api.v2.Operation proto into a GateOperation."""
+        """Turns a cirq_google.api.v2.Operation proto into a GateOperation."""
         qubits = [qubit_from_proto(q.id) for q in proto.qubits]
         args = self._args_from_proto(
             proto, arg_function_language=arg_function_language)

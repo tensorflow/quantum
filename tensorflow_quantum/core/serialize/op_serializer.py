@@ -182,7 +182,7 @@ class GateOpSerializer:
             *,
             arg_function_language='',
     ):
-        """Returns the cirq.google.api.v2.Operation message as a proto dict."""
+        """Returns the cirq_google.api.v2.Operation message as a proto dict."""
 
         gate = op.gate
         if not isinstance(gate, self.gate_type):
