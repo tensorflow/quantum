@@ -13,6 +13,11 @@
 # limitations under the License.
 # ==============================================================================
 """Testing for gradient calculation consistency in TFQ."""
+# Remove PYTHONPATH collisions for protobuf.
+import sys
+new_path = [x for x in sys.path if 'com_google_protobuf' not in x]
+sys.path = new_path
+
 import copy
 
 import numpy as np

@@ -13,6 +13,11 @@
 # limitations under the License.
 # ==============================================================================
 """Tests for the differentiator abstract class."""
+# Remove PYTHONPATH collisions for protobuf.
+import sys
+new_path = [x for x in sys.path if 'com_google_protobuf' not in x]
+sys.path = new_path
+
 import tensorflow as tf
 
 from tensorflow_quantum.python.differentiators import adjoint

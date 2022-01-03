@@ -13,6 +13,11 @@
 # limitations under the License.
 # ==============================================================================
 """Tests that specifically target noisy sampling."""
+# Remove PYTHONPATH collisions for protobuf.
+import sys
+new_path = [x for x in sys.path if 'com_google_protobuf' not in x]
+sys.path = new_path
+
 import numpy as np
 from scipy import stats
 from absl.testing import parameterized

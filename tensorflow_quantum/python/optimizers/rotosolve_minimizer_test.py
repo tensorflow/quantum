@@ -13,6 +13,11 @@
 # limitations under the License.
 # ==============================================================================
 """Test module for tfq.python.optimizers.rotosolve_minimizer optimizer."""
+# Remove PYTHONPATH collisions for protobuf.
+import sys
+new_path = [x for x in sys.path if 'com_google_protobuf' not in x]
+sys.path = new_path
+
 from operator import mul
 from functools import reduce
 import numpy as np

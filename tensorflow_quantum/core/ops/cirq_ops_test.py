@@ -13,6 +13,11 @@
 # limitations under the License.
 # ==============================================================================
 """Tests for the cirq simulation ops."""
+# Remove PYTHONPATH collisions for protobuf.
+import sys
+new_path = [x for x in sys.path if 'com_google_protobuf' not in x]
+sys.path = new_path
+
 from unittest import mock
 import numpy as np
 import tensorflow as tf

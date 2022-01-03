@@ -58,7 +58,7 @@ REQUIRED_PACKAGES = [
 
 # placed as extra to not have required overwrite existing nightly installs if
 # they exist.
-EXTRA_PACKAGES = ['tensorflow == 2.5.1']
+EXTRA_PACKAGES = ['tensorflow == 2.7.0']
 CUR_VERSION = '0.6.0'
 
 

@@ -13,6 +13,11 @@
 # limitations under the License.
 # ==============================================================================
 """Tests for quantum_context functions."""
+# Remove PYTHONPATH collisions for protobuf.
+import sys
+new_path = [x for x in sys.path if 'com_google_protobuf' not in x]
+sys.path = new_path
+
 
 import multiprocessing
 import tensorflow as tf

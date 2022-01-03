@@ -69,7 +69,7 @@ cc_binary(
         ],
         "//conditions:default": [
             "-pthread",
-            "-std=c++11",
+            "-std=c++14",
             "-D_GLIBCXX_USE_CXX11_ABI=0",
         ],
     }),
@@ -132,7 +132,7 @@ cc_binary(
         ],
         "//conditions:default": [
             "-pthread",
-            "-std=c++11",
+            "-std=c++14",
             "-D_GLIBCXX_USE_CXX11_ABI=0",
         ],
     }),
@@ -190,7 +190,7 @@ cc_binary(
         ],
         "//conditions:default": [
             "-pthread",
-            "-std=c++11",
+            "-std=c++14",
             "-D_GLIBCXX_USE_CXX11_ABI=0",
         ],
     }),
@@ -256,7 +256,7 @@ cc_binary(
         ],
         "//conditions:default": [
             "-pthread",
-            "-std=c++11",
+            "-std=c++14",
             "-D_GLIBCXX_USE_CXX11_ABI=0",
         ],
     }),
@@ -333,7 +333,7 @@ cc_binary(
         ],
         "//conditions:default": [
             "-pthread",
-            "-std=c++11",
+            "-std=c++14",
             "-D_GLIBCXX_USE_CXX11_ABI=0",
         ],
     }),

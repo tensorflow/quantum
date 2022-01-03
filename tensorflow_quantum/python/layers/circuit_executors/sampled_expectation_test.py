@@ -13,6 +13,11 @@
 # limitations under the License.
 # ==============================================================================
 """Tests for tensorflow_quantum.layers.circuit_executors.sampled_expectation."""
+# Remove PYTHONPATH collisions for protobuf.
+import sys
+new_path = [x for x in sys.path if 'com_google_protobuf' not in x]
+sys.path = new_path
+
 
 import numpy as np
 from absl.testing import parameterized
