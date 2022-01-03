@@ -13,9 +13,11 @@
 # limitations under the License.
 """Test serializable_gat_set.py functionality."""
 # Remove PYTHONPATH collisions for protobuf.
+# pylint: disable=wrong-import-position
 import sys
-new_path = [x for x in sys.path if 'com_google_protobuf' not in x]
-sys.path = new_path
+NEW_PATH = [x for x in sys.path if 'com_google_protobuf' not in x]
+sys.path = NEW_PATH
+# pylint: enable=wrong-import-position
 
 import tensorflow as tf
 

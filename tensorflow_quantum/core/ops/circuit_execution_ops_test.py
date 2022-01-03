@@ -14,9 +14,11 @@
 # ==============================================================================
 """Module to test consistency between Cirq and TFQ circuit execution ops."""
 # Remove PYTHONPATH collisions for protobuf.
+# pylint: disable=wrong-import-position
 import sys
-new_path = [x for x in sys.path if 'com_google_protobuf' not in x]
-sys.path = new_path
+NEW_PATH = [x for x in sys.path if 'com_google_protobuf' not in x]
+sys.path = NEW_PATH
+# pylint: enable=wrong-import-position
 
 from unittest import mock
 import numpy as np
