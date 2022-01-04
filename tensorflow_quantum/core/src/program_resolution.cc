@@ -83,7 +83,8 @@ Status RegisterQubits(
 }
 
 Status ResolveQubitIds(Program* program, unsigned int* num_qubits,
-                       std::vector<PauliSum>* p_sums /*=nullptr*/) {
+                       std::vector<PauliSum>* p_sums /*=nullptr*/,
+                       bool swap_endianness /*=false*/) {
   if (program->circuit().moments().empty()) {
     // (#679) Just ignore empty program.
     // Number of qubits in empty programs is zero.
@@ -116,6 +117,10 @@ Status ResolveQubitIds(Program* program, unsigned int* num_qubits,
                                                                id_set.end());
   std::sort(ids.begin(), ids.end());
 
+  // reverse endian.
+  if (swap_endianness) {
+    std::reverse(ids.begin(), ids.end());
+  }
   absl::flat_hash_map<std::string, std::string> id_to_index;
   for (size_t i = 0; i < ids.size(); i++) {
     id_to_index[ids[i].second] = absl::StrCat(i);
@@ -127,6 +132,11 @@ Status ResolveQubitIds(Program* program, unsigned int* num_qubits,
       // Resolve qubit ids.
       for (Qubit& qubit : *operation.mutable_qubits()) {
         qubit.set_id(id_to_index.at(qubit.id()));
+      }
+      // reverse endian.
+      if (swap_endianness) {
+        std::reverse(operation.mutable_qubits()->begin(),
+                     operation.mutable_qubits()->end());
       }
       // Resolve control qubit ids found in the control_qubits arg.
       absl::string_view control_qubits =
@@ -310,6 +320,61 @@ Status ResolveSymbols(
             continue;
           }
           arg.mutable_arg_value()->set_float_value(iter->second.second);
+        }
+      }
+    }
+  }
+
+  return Status::OK();
+}
+
+Status CheckMPSSupported(const Program& program) {
+  // Check if (1) there are only 1-qubit or 2-qubit gates.
+  //          (2) each two qubit gate has neighbor qubits only.
+  //
+  // Requires: program have qubit ids resolved.
+  if (program.circuit().moments().empty()) {
+    return Status::OK();
+  }
+
+  for (auto moment : program.circuit().moments()) {
+    for (auto operation : moment.operations()) {
+      // Count the number of qubits in this operation.
+      auto qs = operation.qubits();
+      std::vector<Qubit> qubits(qs.begin(), qs.end());
+      std::vector<absl::string_view> control_ids({});
+
+      if (operation.args().find("control_qubits") != operation.args().end()) {
+        absl::string_view control_qubits =
+            operation.args().at("control_qubits").arg_value().string_value();
+        if (!control_qubits.empty()) {
+          control_ids = absl::StrSplit(control_qubits, ',');
+        }
+      }
+      const int total_num_qubits = qubits.size() + control_ids.size();
+      if (total_num_qubits > 2) {
+        return Status(
+            tensorflow::error::INVALID_ARGUMENT,
+            absl::StrCat("1D operations only support 1 and 2 qubit gates. "
+                         "Found: ",
+                         total_num_qubits, " qubit gate."));
+      }
+
+      if (total_num_qubits == 2) {
+        int j = 0;
+        std::vector<int> qids(2, -1234);
+        for (; j < qubits.size(); j++) {
+          (void)absl::SimpleAtoi(qubits[j].id(), &qids[j]);
+        }
+        for (; j < 2; j++) {
+          (void)absl::SimpleAtoi(control_ids[j], &qids[j]);
+        }
+
+        // Are the two qubits not neighbors?
+        if (std::abs((int)qids[0] - (int)qids[1]) > 1) {
+          return Status(tensorflow::error::INVALID_ARGUMENT,
+                        "A program is not in 1D topology. It contains an"
+                        " operation with qubits not neighbors each other.");
         }
       }
     }

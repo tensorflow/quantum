@@ -17,6 +17,7 @@ cc_binary(
     srcs = [
         "tfq_inner_product.cc",
         "tfq_inner_product_grad.cc",
+        "tfq_simulate_1d_expectation.cc",
     ],
     copts = select({
         ":windows": [
@@ -65,7 +66,10 @@ cc_binary(
         "//tensorflow_quantum/core/src:adj_util",
         "//tensorflow_quantum/core/src:circuit_parser_qsim",
         "//tensorflow_quantum/core/src:util_qsim",
+        "@qsim//lib:mps_simulator",
+        "@qsim//lib:mps_statespace",
         "@qsim//lib:qsim_lib",
+        "@eigen//:eigen3",
         # tensorflow core framework
         # tensorflow core lib
         # tensorflow core protos
@@ -114,6 +118,25 @@ py_test(
     python_version = "PY3",
     deps = [
         ":inner_product_op_py",
+        "//tensorflow_quantum/python:util",
+    ],
+)
+
+py_library(
+    name = "simulate_mps_py",
+    srcs = ["simulate_mps.py"],
+    data = [":_tfq_math_ops.so"],
+    deps = [
+        "//tensorflow_quantum/core/ops:load_module",
+    ],
+)
+
+py_test(
+    name = "simulate_mps_test",
+    srcs = ["simulate_mps_test.py"],
+    python_version = "PY3",
+    deps = [
+        ":simulate_mps_py",
         "//tensorflow_quantum/python:util",
     ],
 )

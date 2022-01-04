@@ -14,5 +14,6 @@
 # ==============================================================================
 """Module for tfq.core.ops.math_ops.*"""
 
-from tensorflow_quantum.core.ops.math_ops.inner_product_op import inner_product
 from tensorflow_quantum.core.ops.math_ops.fidelity_op import fidelity
+from tensorflow_quantum.core.ops.math_ops.inner_product_op import inner_product
+from tensorflow_quantum.core.ops.math_ops.simulate_mps import mps_1d_expectation

@@ -37,7 +37,8 @@ namespace tfq {
 // The number of qubits in the program is recorded in `num_qubits`.
 tensorflow::Status ResolveQubitIds(
     tfq::proto::Program* program, unsigned int* num_qubits,
-    std::vector<tfq::proto::PauliSum>* p_sums = nullptr);
+    std::vector<tfq::proto::PauliSum>* p_sums = nullptr,
+    bool swap_endianness = false);
 
 // Overload which allows for strict resolution of multiple programs.
 // Will resolve GridQubits in `program` and then double check that
@@ -57,6 +58,9 @@ tensorflow::Status ResolveQubitIds(
 tensorflow::Status ResolveSymbols(
     const absl::flat_hash_map<std::string, std::pair<int, float>>& param_map,
     tfq::proto::Program* program, bool resolve_all = true);
+
+// Checks if the qubits are in 1D topology.
+tensorflow::Status CheckMPSSupported(const tfq::proto::Program& program);
 
 }  // namespace tfq
 
