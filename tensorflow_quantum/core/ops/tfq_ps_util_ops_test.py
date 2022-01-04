@@ -13,6 +13,13 @@
 # limitations under the License.
 # ==============================================================================
 """Test for ParameterShift specific C++ ops."""
+# Remove PYTHONPATH collisions for protobuf.
+# pylint: disable=wrong-import-position
+import sys
+NEW_PATH = [x for x in sys.path if 'com_google_protobuf' not in x]
+sys.path = NEW_PATH
+# pylint: enable=wrong-import-position
+
 import numpy as np
 import tensorflow as tf
 import sympy
@@ -259,7 +266,7 @@ class PSDecomposeTest(tf.test.TestCase):
         """Test Moment-structure preservation."""
         t = sympy.Symbol('t')
         r = sympy.Symbol('r')
-        qubits = cirq.GridQubit.rect(1, 6)
+        qubits = cirq.LineQubit.range(6)
         circuit_batch = [
             cirq.Circuit(
                 cirq.Moment([cirq.H(q) for q in qubits]),
@@ -471,7 +478,7 @@ class PSSymbolReplaceTest(tf.test.TestCase):
 
     def test_simple_pad(self):
         """Test simple padding."""
-        bit = cirq.GridQubit(0, 0)
+        bit = cirq.LineQubit(1)
         circuit = cirq.Circuit(
             cirq.X(bit)**sympy.Symbol('alpha'),
             cirq.Y(bit)**sympy.Symbol('alpha'),
@@ -720,7 +727,7 @@ class PSWeightsFromSymbolTest(tf.test.TestCase):
 
     def test_many_values(self):
         """Ensure that padding with few symbols and many values works."""
-        bit = cirq.GridQubit(0, 0)
+        bit = cirq.LineQubit(1)
         circuits = [
             cirq.Circuit(
                 cirq.X(bit)**(sympy.Symbol('alpha') * 2.0),

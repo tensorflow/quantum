@@ -27,7 +27,7 @@ py_test(
     srcs_version = "PY3",
     deps = [
         ":op_serializer",
-        "//tensorflow_quantum/core/proto:program_py_proto"
+        "//tensorflow_quantum/core/proto:program_py_proto",
     ],
 )
 
@@ -82,6 +82,7 @@ py_library(
         ":serializable_gate_set",
         "//tensorflow_quantum/core/proto:pauli_sum_py_proto",
         "//tensorflow_quantum/core/proto:program_py_proto",
+        "//tensorflow_quantum/core/proto:projector_sum_py_proto",
     ],
 )
 
@@ -93,5 +94,6 @@ py_test(
         ":serializer",
         # cirq proto
         "//tensorflow_quantum/core/proto:pauli_sum_py_proto",
+        "//tensorflow_quantum/core/proto:projector_sum_py_proto",
     ],
 )

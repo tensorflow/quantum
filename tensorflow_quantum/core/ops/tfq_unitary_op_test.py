@@ -13,6 +13,13 @@
 # limitations under the License.
 # ==============================================================================
 """Tests that specifically target tfq_unitary_op."""
+# Remove PYTHONPATH collisions for protobuf.
+# pylint: disable=wrong-import-position
+import sys
+NEW_PATH = [x for x in sys.path if 'com_google_protobuf' not in x]
+sys.path = NEW_PATH
+# pylint: enable=wrong-import-position
+
 import numpy as np
 from absl.testing import parameterized
 import tensorflow as tf
@@ -170,7 +177,7 @@ class UnitaryTest(tf.test.TestCase, parameterized.TestCase):
                                                        unitary_op):
         """Test calculate_unitary works without symbols."""
         unitary_op = tfq_unitary_op.get_unitary_op()
-        qubits = cirq.GridQubit.rect(1, n_qubits)
+        qubits = cirq.LineQubit.range(n_qubits)
         circuit_batch, _ = util.random_circuit_resolver_batch(qubits, 25)
 
         tfq_results = unitary_op(util.convert_to_tensor(circuit_batch), [],

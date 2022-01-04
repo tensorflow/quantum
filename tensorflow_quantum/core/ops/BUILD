@@ -69,7 +69,7 @@ cc_binary(
         ],
         "//conditions:default": [
             "-pthread",
-            "-std=c++11",
+            "-std=c++14",
             "-D_GLIBCXX_USE_CXX11_ABI=0",
         ],
     }),
@@ -82,6 +82,7 @@ cc_binary(
         ":parse_context",
         # cirq cc proto
         # pauli sum cc proto
+        # projector sum cc proto
         ":tfq_simulate_utils",
         "//tensorflow_quantum/core/src:adj_util",
         "//tensorflow_quantum/core/src:circuit_parser_qsim",
@@ -131,7 +132,7 @@ cc_binary(
         ],
         "//conditions:default": [
             "-pthread",
-            "-std=c++11",
+            "-std=c++14",
             "-D_GLIBCXX_USE_CXX11_ABI=0",
         ],
     }),
@@ -189,7 +190,7 @@ cc_binary(
         ],
         "//conditions:default": [
             "-pthread",
-            "-std=c++11",
+            "-std=c++14",
             "-D_GLIBCXX_USE_CXX11_ABI=0",
         ],
     }),
@@ -204,6 +205,7 @@ cc_binary(
         # cirq cc proto
         "//tensorflow_quantum/core/proto:pauli_sum_cc_proto",
         "//tensorflow_quantum/core/proto:program_cc_proto",
+        "//tensorflow_quantum/core/proto:projector_sum_cc_proto",
         "//tensorflow_quantum/core/src:circuit_parser_qsim",
         "//tensorflow_quantum/core/src:program_resolution",
         "//tensorflow_quantum/core/src:util_qsim",
@@ -254,7 +256,7 @@ cc_binary(
         ],
         "//conditions:default": [
             "-pthread",
-            "-std=c++11",
+            "-std=c++14",
             "-D_GLIBCXX_USE_CXX11_ABI=0",
         ],
     }),
@@ -282,10 +284,46 @@ cc_library(
     name = "parse_context",
     srcs = ["parse_context.cc"],
     hdrs = ["parse_context.h"],
+    copts = select({
+        ":windows": [
+            "/D__CLANG_SUPPORT_DYN_ANNOTATION__",
+            "/D_USE_MATH_DEFINES",
+            "/DEIGEN_MPL2_ONLY",
+            "/DEIGEN_MAX_ALIGN_BYTES=64",
+            "/DEIGEN_HAS_TYPE_TRAITS=0",
+            "/DTF_USE_SNAPPY",
+            "/showIncludes",
+            "/MD",
+            "/O2",
+            "/DNDEBUG",
+            "/w",
+            "-DWIN32_LEAN_AND_MEAN",
+            "-DNOGDI",
+            "/d2ReducedOptimizeHugeFunctions",
+            "/arch:AVX",
+            "/std:c++14",
+            "-DTENSORFLOW_MONOLITHIC_BUILD",
+            "/DPLATFORM_WINDOWS",
+            "/DEIGEN_HAS_C99_MATH",
+            "/DTENSORFLOW_USE_EIGEN_THREADPOOL",
+            "/DEIGEN_AVOID_STL_ARRAY",
+            "/Iexternal/gemmlowp",
+            "/wd4018",
+            "/wd4577",
+            "/DNOGDI",
+            "/UTF_COMPILE_LIBRARY",
+        ],
+        "//conditions:default": [
+            "-pthread",
+            "-std=c++14",
+            "-D_GLIBCXX_USE_CXX11_ABI=0",
+        ],
+    }),
     deps = [
         ":tfq_simulate_utils",
         "//tensorflow_quantum/core/proto:pauli_sum_cc_proto",
         "//tensorflow_quantum/core/proto:program_cc_proto",
+        "//tensorflow_quantum/core/proto:projector_sum_cc_proto",
         "//tensorflow_quantum/core/src:program_resolution",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/container:inlined_vector",
@@ -330,7 +368,7 @@ cc_binary(
         ],
         "//conditions:default": [
             "-pthread",
-            "-std=c++11",
+            "-std=c++14",
             "-D_GLIBCXX_USE_CXX11_ABI=0",
         ],
     }),
@@ -344,6 +382,7 @@ cc_binary(
         # cirq cc proto
         "//tensorflow_quantum/core/proto:pauli_sum_cc_proto",
         "//tensorflow_quantum/core/proto:program_cc_proto",
+        "//tensorflow_quantum/core/proto:projector_sum_cc_proto",
         "//tensorflow_quantum/core/src:circuit_parser_qsim",
         "//tensorflow_quantum/core/src:util_qsim",
         "@com_google_absl//absl/container:flat_hash_map",
@@ -360,6 +399,41 @@ cc_library(
     name = "tfq_simulate_utils",
     srcs = ["tfq_simulate_utils.cc"],
     hdrs = ["tfq_simulate_utils.h"],
+    copts = select({
+        ":windows": [
+            "/D__CLANG_SUPPORT_DYN_ANNOTATION__",
+            "/D_USE_MATH_DEFINES",
+            "/DEIGEN_MPL2_ONLY",
+            "/DEIGEN_MAX_ALIGN_BYTES=64",
+            "/DEIGEN_HAS_TYPE_TRAITS=0",
+            "/DTF_USE_SNAPPY",
+            "/showIncludes",
+            "/MD",
+            "/O2",
+            "/DNDEBUG",
+            "/w",
+            "-DWIN32_LEAN_AND_MEAN",
+            "-DNOGDI",
+            "/d2ReducedOptimizeHugeFunctions",
+            "/arch:AVX",
+            "/std:c++14",
+            "-DTENSORFLOW_MONOLITHIC_BUILD",
+            "/DPLATFORM_WINDOWS",
+            "/DEIGEN_HAS_C99_MATH",
+            "/DTENSORFLOW_USE_EIGEN_THREADPOOL",
+            "/DEIGEN_AVOID_STL_ARRAY",
+            "/Iexternal/gemmlowp",
+            "/wd4018",
+            "/wd4577",
+            "/DNOGDI",
+            "/UTF_COMPILE_LIBRARY",
+        ],
+        "//conditions:default": [
+            "-pthread",
+            "-std=c++14",
+            "-D_GLIBCXX_USE_CXX11_ABI=0",
+        ],
+    }),
     deps = [
         "@local_config_tf//:libtensorflow_framework",
         "@local_config_tf//:tf_header_lib",
@@ -374,6 +448,7 @@ py_library(
     deps = [
         ":load_module",
         # pauli sum cc proto
+        # projector sum cc proto
         # tensorflow framework for wrappers
     ],
 )
@@ -464,6 +539,7 @@ py_library(
         ":batch_util",
         "//tensorflow_quantum/core/proto:program_py_proto",
         "//tensorflow_quantum/core/proto:pauli_sum_py_proto",
+        "//tensorflow_quantum/core/proto:projector_sum_py_proto",
         "//tensorflow_quantum/core/serialize:serializer",
     ],
 )

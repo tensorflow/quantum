@@ -54,6 +54,29 @@ const std::string valid_program = R"(
   }
 )";
 
+const std::string valid_line_program = R"(
+  circuit {
+    moments {
+      operations {
+        args {
+          key: "control_qubits"
+          value {
+            arg_value {
+              string_value: "0_1"
+            }
+          }
+        }
+        qubits {
+          id: "1"
+        }
+        qubits {
+          id: "2"
+        }
+      }
+    }
+  }
+)";
+
 const std::string valid_psum = R"(
   terms {
     coefficient_real: 1.0
@@ -163,6 +186,26 @@ TEST(ProgramResolutionTest, ResolveQubitIdsValid) {
   unsigned int qubit_count;
   ASSERT_TRUE(
       google::protobuf::TextFormat::ParseFromString(valid_program, &program));
+
+  EXPECT_EQ(ResolveQubitIds(&program, &qubit_count), Status::OK());
+  EXPECT_EQ(qubit_count, 3);
+  EXPECT_EQ(program.circuit().moments(0).operations(0).qubits(0).id(), "1");
+  EXPECT_EQ(program.circuit().moments(0).operations(0).qubits(1).id(), "2");
+  EXPECT_EQ(program.circuit()
+                .moments(0)
+                .operations(0)
+                .args()
+                .at("control_qubits")
+                .arg_value()
+                .string_value(),
+            "0");
+}
+
+TEST(ProgramResolutionTest, ResolveQubitIdsValidLine) {
+  Program program;
+  unsigned int qubit_count;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(valid_line_program,
+                                                            &program));
 
   EXPECT_EQ(ResolveQubitIds(&program, &qubit_count), Status::OK());
   EXPECT_EQ(qubit_count, 3);

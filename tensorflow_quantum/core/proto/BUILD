@@ -38,3 +38,20 @@ cc_proto_library(
         ":pauli_sum_proto",
     ],
 )
+
+py_proto_library(
+    name = "projector_sum_py_proto",
+    srcs = ["projector_sum.proto"],
+)
+
+proto_library(
+    name = "projector_sum_proto",
+    srcs = ["projector_sum.proto"],
+)
+
+cc_proto_library(
+    name = "projector_sum_cc_proto",
+    deps = [
+        ":projector_sum_proto",
+    ],
+)

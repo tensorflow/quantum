@@ -13,6 +13,13 @@
 # limitations under the License.
 # ==============================================================================
 """Tests for TFQ utilities."""
+# Remove PYTHONPATH collisions for protobuf.
+# pylint: disable=wrong-import-position
+import sys
+NEW_PATH = [x for x in sys.path if 'com_google_protobuf' not in x]
+sys.path = NEW_PATH
+# pylint: enable=wrong-import-position
+
 import numpy as np
 import tensorflow as tf
 from absl.testing import parameterized
@@ -28,8 +35,10 @@ def _single_to_tensor(item):
         raise TypeError("Item must be a Circuit or PauliSum. Got {}.".format(
             type(item)))
     if isinstance(item, (cirq.PauliSum, cirq.PauliString)):
-        return serializer.serialize_paulisum(item).SerializeToString()
-    return serializer.serialize_circuit(item).SerializeToString()
+        return serializer.serialize_paulisum(item).SerializeToString(
+            deterministic=True)
+    return serializer.serialize_circuit(item).SerializeToString(
+        deterministic=True)
 
 
 def _exponential(theta, op):
@@ -37,7 +46,7 @@ def _exponential(theta, op):
     return np.eye(op_mat.shape[0]) * np.cos(theta) - 1j * op_mat * np.sin(theta)
 
 
-BITS = list(cirq.GridQubit.rect(1, 10))
+BITS = list(cirq.GridQubit.rect(1, 10) + cirq.LineQubit.range(2))
 
 
 def _items_to_tensorize():
@@ -79,12 +88,14 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
         """Test that the convert_to_tensor function works correctly by manually
         serializing flat and 2-deep nested lists of Circuits and PauliSums."""
         nested = [[item, item]] * 2
-        nested_actual = util.convert_to_tensor(nested)
+        nested_actual = util.convert_to_tensor(
+            nested, deterministic_proto_serialize=True)
         nested_expected = np.array(
             [np.array([_single_to_tensor(x) for x in row]) for row in nested])
         self.assertAllEqual(nested_actual, nested_expected)
         flat = [item, item]
-        flat_actual = util.convert_to_tensor(flat)
+        flat_actual = util.convert_to_tensor(flat,
+                                             deterministic_proto_serialize=True)
         flat_expected = np.array([_single_to_tensor(x) for x in flat])
         self.assertAllEqual(flat_actual, flat_expected)
 
@@ -106,15 +117,18 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
     def test_from_tensor(self, item):
         """Check from_tensor assuming convert_to_tensor works."""
 
-        item_nested_tensorized = util.convert_to_tensor([[item, item],
-                                                         [item, item]])
-        item_flat_tensorized = util.convert_to_tensor([item, item])
+        item_nested_tensorized = util.convert_to_tensor(
+            [[item, item], [item, item]], deterministic_proto_serialize=True)
+        item_flat_tensorized = util.convert_to_tensor(
+            [item, item], deterministic_proto_serialize=True)
         item_nested_cycled = util.convert_to_tensor(
-            util.from_tensor(item_nested_tensorized))
+            util.from_tensor(item_nested_tensorized),
+            deterministic_proto_serialize=True)
 
         self.assertAllEqual(item_nested_tensorized, item_nested_cycled)
         item_flat_cycled = util.convert_to_tensor(
-            util.from_tensor(item_flat_tensorized))
+            util.from_tensor(item_flat_tensorized),
+            deterministic_proto_serialize=True)
         self.assertAllEqual(item_flat_tensorized, item_flat_cycled)
 
     def test_from_tensor_errors(self):
@@ -570,7 +584,7 @@ class ExponentialUtilFunctionsTest(tf.test.TestCase):
         op1 = theta * cirq.Z(q[0]) * cirq.Z(q[1])
         op2 = theta * identity
         circuit = util.exponential(operators=[op1, op2])
-        util.convert_to_tensor([circuit])
+        util.convert_to_tensor([circuit], deterministic_proto_serialize=True)
 
 
 if __name__ == "__main__":

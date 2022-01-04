@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package tfq.proto;
+
+// Store the sum of simpler terms.
+message ProjectorSum {
+  repeated ProjectorTerm terms = 1;
+}
+
+// Store a term which is a coefficient and the qubits of the projection.
+message ProjectorTerm {
+  float coefficient_real = 1;
+  float coefficient_imag = 2;
+  repeated ProjectorDictEntry projector_dict = 3;
+}
+
+// Store a single projection.
+message ProjectorDictEntry {
+  string qubit_id = 1;
+  // False means |0> and true means |1>.
+  bool basis_state = 2;
+}
+

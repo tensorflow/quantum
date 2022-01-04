@@ -24,6 +24,7 @@ from tensorflow_quantum.core.serialize import op_serializer, op_deserializer, \
     serializable_gate_set
 from tensorflow_quantum.core.proto import pauli_sum_pb2
 from tensorflow_quantum.core.proto import program_pb2
+from tensorflow_quantum.core.proto import projector_sum_pb2
 
 # Needed to allow autograph to crawl AST without erroring.
 _CONSTANT_TRUE = lambda x: True
@@ -144,8 +145,16 @@ class DelayedAssignmentGate(cirq.Gate):
     # pylint: disable=invalid-name
     def on(self, *qubits):
         """Returns gate_callable on qubits controlled by contol_qubits."""
-        return self._gate_callable(*qubits).controlled_by(
-            *self._control_qubits, control_values=self._control_values)
+        gate = self._gate_callable(*qubits)
+        # TODO(tonybruguier,#636): Here we call the parent's class controlled_by
+        # because Cirq's breaking change #4167 created 3-qubit gates that cannot
+        # be serialized yet. Instead, support 3-qubit gates and revert the
+        # work-around.
+        if len(self._control_qubits) == 0:
+            return gate
+        return cirq.ControlledOperation(self._control_qubits,
+                                        gate,
+                                        control_values=self._control_values)
 
     # pylint: enable=invalid-name
 
@@ -795,8 +804,8 @@ def serialize_circuit(circuit_inp):
     Currently we only support scalar multiplication of symbols and
     no other more complex arithmetic expressions. This means
     we can support things like X**(3*alpha), and Rx(alpha). Because
-    we use the `cirq.Program` proto, we only support `cirq.GridQubit` instances
-    during serialization of circuits.
+    we use the `cirq.Program` proto, we only support `cirq.GridQubit`
+    and `cirq.LineQubit` instances during serialization of circuits.
 
     Note: once serialized terminal measurements are removed.
 
@@ -823,10 +832,10 @@ def serialize_circuit(circuit_inp):
         measured_qubits = set()
         for op in moment:
             for qubit in op.qubits:
-                if not isinstance(qubit, cirq.GridQubit):
+                if not isinstance(qubit, (cirq.GridQubit, cirq.LineQubit)):
                     raise ValueError(
                         "Attempted to serialize circuit that don't use "
-                        "only cirq.GridQubits.")
+                        "only cirq.GridQubits or cirq.LineQubits.")
 
             if isinstance(op.gate, cirq.MeasurementGate):
                 for qubit in op.qubits:
@@ -907,9 +916,10 @@ def serialize_paulisum(paulisum):
         raise TypeError("serialize requires a cirq.PauliSum object."
                         " Given: " + str(type(paulisum)))
 
-    if any(not isinstance(qubit, cirq.GridQubit) for qubit in paulisum.qubits):
+    if any(not isinstance(qubit, (cirq.LineQubit, cirq.GridQubit))
+           for qubit in paulisum.qubits):
         raise ValueError("Attempted to serialize a paulisum that doesn't use "
-                         "only cirq.GridQubits.")
+                         "only cirq.GridQubits or cirq.LineQubits.")
 
     paulisum_proto = pauli_sum_pb2.PauliSum()
     for term in paulisum:
@@ -962,3 +972,68 @@ def _process_pauli_type(char):
     if char == 'Y':
         return cirq.Y
     raise ValueError("Invalid pauli type.")
+
+
+def serialize_projectorsum(projectorsum):
+    """Constructs a projector_sum proto from `cirq.ProjectorSum`.
+
+    Args:
+        projectorsum: A `cirq.ProjectorSum` or `cirq.ProjectorString` object.
+
+    Returns:
+        A projector_sum proto object.
+    """
+    if isinstance(projectorsum, cirq.ProjectorString):
+        projectorsum = cirq.ProjectorSum.from_pauli_strings(projectorsum)
+
+    if not isinstance(projectorsum, cirq.ProjectorSum):
+        raise TypeError("serialize requires a cirq.ProjectorSum object."
+                        " Given: " + str(type(projectorsum)))
+
+    if any(not isinstance(qubit, (cirq.GridQubit, cirq.LineQubit))
+           for qubit in projectorsum.qubits):
+        raise ValueError("Attempted to serialize a paulisum that doesn't use "
+                         "only cirq.GridQubit or cirq.LineQubit.")
+
+    projectorsum_proto = projector_sum_pb2.ProjectorSum()
+    for term in projectorsum:
+        projectorterm_proto = projector_sum_pb2.ProjectorTerm()
+
+        projectorterm_proto.coefficient_real = term.coefficient.real
+        projectorterm_proto.coefficient_imag = term.coefficient.imag
+        for qubit, basis_state in sorted(
+                term.projector_dict.items()):  # sort to keep qubits ordered
+            projectorterm_proto.projector_dict.add(
+                qubit_id=op_serializer.qubit_to_proto(qubit),
+                basis_state=basis_state)
+
+        projectorsum_proto.terms.extend([projectorterm_proto])
+
+    return projectorsum_proto
+
+
+def deserialize_projectorsum(proto):
+    """Constructs a `cirq.ProjectorSum` from projector_sum proto.
+
+    Args:
+        proto: A projector_sum proto object.
+
+    Returns:
+        A `cirq.ProjectorSum` object.
+    """
+    if not isinstance(proto, projector_sum_pb2.ProjectorSum):
+        raise TypeError("deserialize requires a projector_sum_pb2 object."
+                        " Given: " + str(type(proto)))
+
+    res = cirq.ProjectorSum()
+    for term_proto in proto.terms:
+        coef = float(_round(term_proto.coefficient_real)) + \
+            1.0j * float(_round(term_proto.coefficient_imag))
+        projector_dict = {}
+        for projector_dict_entry in term_proto.projector_dict:
+            qubit = op_deserializer.qubit_from_proto(
+                projector_dict_entry.qubit_id)
+            projector_dict[qubit] = 1 if projector_dict_entry.basis_state else 0
+        res += cirq.ProjectorString(projector_dict, coef)
+
+    return res

@@ -13,6 +13,13 @@
 # limitations under the License.
 # ==============================================================================
 """Test module for tfq.python.layers.high_level.pqc layer."""
+# Remove PYTHONPATH collisions for protobuf.
+# pylint: disable=wrong-import-position
+import sys
+NEW_PATH = [x for x in sys.path if 'com_google_protobuf' not in x]
+sys.path = NEW_PATH
+# pylint: enable=wrong-import-position
+
 import numpy as np
 import tensorflow as tf
 from absl.testing import parameterized
