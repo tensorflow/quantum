@@ -352,6 +352,19 @@ class SimulateMPS1DExpectationTest(tf.test.TestCase):
             bond_dim=32)
         self.assertAllClose(mps_result, cirq_result, atol=1e-5)
 
+    def test_correctness_empty(self):
+        """Tests the mps op with empty circuits."""
+
+        empty_circuit = tf.raw_ops.Empty(shape=(0,), dtype=tf.string)
+        empty_symbols = tf.raw_ops.Empty(shape=(0,), dtype=tf.string)
+        empty_values = tf.raw_ops.Empty(shape=(0, 0), dtype=tf.float32)
+        empty_paulis = tf.raw_ops.Empty(shape=(0, 0), dtype=tf.string)
+
+        out = simulate_mps.mps_1d_expectation(empty_circuit, empty_symbols,
+                                              empty_values, empty_paulis, 32)
+
+        self.assertShapeEqual(np.zeros((0, 0)), out)
+
 
 if __name__ == "__main__":
     tf.test.main()

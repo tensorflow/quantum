@@ -78,6 +78,11 @@ class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
     std::vector<Program> programs;
     std::vector<int> num_qubits;
     std::vector<std::vector<PauliSum>> pauli_sums;
+
+    // TODO: remove endianness workaround introduced here:
+    // https://github.com/tensorflow/quantum/pull/610
+    // once https://github.com/quantumlib/qsim/issues/492
+    // is resolved.
     OP_REQUIRES_OK(context,
                    GetProgramsAndNumQubits(context, &programs, &num_qubits,
                                            &pauli_sums, true));
