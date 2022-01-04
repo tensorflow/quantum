@@ -26,9 +26,9 @@ cc_library(
 
 http_archive(
     name = "qsim",
-    sha256 = "91eb09b2697accab9c0f64d5ea6ff482f4772ce000af867670b4efaf06a35224",
-    strip_prefix = "qsim-0.10.3-dev-20211001",
-    urls = ["https://github.com/quantumlib/qsim/archive/refs/tags/v0.10.3-dev+20211001.zip"],
+    sha256 = "525250bafd37aab9db525d22e7b12689da617a116fe2cdf3f524ee7ea6a0ef45",
+    strip_prefix = "qsim-0.11.2-dev-20220104",
+    urls = ["https://github.com/quantumlib/qsim/archive/refs/tags/v0.11.2-dev+20220104.zip"],
 )
 
 http_archive(
