@@ -567,18 +567,16 @@ TEST(ProgramResolutionTest, ResolveSymbolsStrictFull) {
             2.0);
 }
 
-TEST(ProgramResolutionTest, CheckQubitsIn1DEmpty) {
-  std::vector<Program> empty_programs;
-  EXPECT_EQ(CheckQubitsIn1D(&empty_programs), Status::OK());
+TEST(ProgramResolutionTest, CheckMPSSupportedEmpty) {
+  Program empty;
+  EXPECT_EQ(CheckMPSSupported(empty), Status::OK());
 }
 
 TEST(ProgramResolutionTest, CheckQubitsIn1DFailedByOpWithMoreThan2Qubits) {
-  std::vector<Program> programs;
   Program program_with_3qubit_op;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       three_qubit_op_program, &program_with_3qubit_op));
-  programs.push_back(program_with_3qubit_op);
-  EXPECT_EQ(CheckQubitsIn1D(&programs),
+  EXPECT_EQ(CheckMPSSupported(program_with_3qubit_op),
             Status(tensorflow::error::INVALID_ARGUMENT,
                    "1D operations only support 1 and 2 qubit gates. "
                    "Found: 3 qubit gate."));
@@ -586,24 +584,20 @@ TEST(ProgramResolutionTest, CheckQubitsIn1DFailedByOpWithMoreThan2Qubits) {
 
 TEST(ProgramResolutionTest,
      CheckQubitsIn1DFailedByOpWithMoreThan2QubitsOnControlQubits) {
-  std::vector<Program> programs;
   Program program_with_3qubit_op;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       valid_program, &program_with_3qubit_op));
-  programs.push_back(program_with_3qubit_op);
-  EXPECT_EQ(CheckQubitsIn1D(&programs),
+  EXPECT_EQ(CheckMPSSupported(program_with_3qubit_op),
             Status(tensorflow::error::INVALID_ARGUMENT,
                    "1D operations only support 1 and 2 qubit gates. "
                    "Found: 3 qubit gate."));
 }
 
 TEST(ProgramResolutionTest, CheckQubitsIn1DFailedByNot1DTopology) {
-  std::vector<Program> programs;
   Program program_not_1d;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       resolved_qubit_program_not_1d, &program_not_1d));
-  programs.push_back(program_not_1d);
-  EXPECT_EQ(CheckQubitsIn1D(&programs),
+  EXPECT_EQ(CheckMPSSupported(program_not_1d),
             Status(tensorflow::error::INVALID_ARGUMENT,
                    "A program is not in 1D topology. It contains an"
                    " operation with qubits not neighbors each other."));

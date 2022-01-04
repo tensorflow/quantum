@@ -150,7 +150,8 @@ Status GetProgramsAndProgramsToAppend(
 Status GetProgramsAndNumQubits(
     OpKernelContext* context, std::vector<Program>* programs,
     std::vector<int>* num_qubits,
-    std::vector<std::vector<PauliSum>>* p_sums /*=nullptr*/) {
+    std::vector<std::vector<PauliSum>>* p_sums /*=nullptr*/,
+    bool swap_endianness /*=false*/) {
   // 1. Parse input programs
   // 2. (Optional) Parse input PauliSums
   // 3. Convert GridQubit locations to integers.
@@ -180,10 +181,12 @@ Status GetProgramsAndNumQubits(
       Program& program = (*programs)[i];
       unsigned int this_num_qubits;
       if (p_sums) {
-        OP_REQUIRES_OK(context, ResolveQubitIds(&program, &this_num_qubits,
-                                                &(p_sums->at(i))));
+        OP_REQUIRES_OK(context,
+                       ResolveQubitIds(&program, &this_num_qubits,
+                                       &(p_sums->at(i)), swap_endianness));
       } else {
-        OP_REQUIRES_OK(context, ResolveQubitIds(&program, &this_num_qubits));
+        OP_REQUIRES_OK(context, ResolveQubitIds(&program, &this_num_qubits,
+                                                nullptr, swap_endianness));
       }
       (*num_qubits)[i] = this_num_qubits;
     }
