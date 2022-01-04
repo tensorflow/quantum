@@ -12,12 +12,13 @@ http_archive(
 
 http_archive(
     name = "org_tensorflow",
-    sha256 = "2023a377a16e5566b8981400af9e8c8e25d3367d82824ffec2b5b6b9c7dba55d",
-    strip_prefix = "tensorflow-2.5.1",
+    sha256 = "249b48ddee927801c7a4f8e5442cf1a3c860f6f46b85a2ff7a78b501507dd561",
+    strip_prefix = "tensorflow-2.7.0",
     urls = [
-        "https://github.com/tensorflow/tensorflow/archive/refs/tags/v2.5.1.zip",
+        "https://github.com/tensorflow/tensorflow/archive/refs/tags/v2.7.0.zip",
     ],
 )
+
 
 load("@org_tensorflow//tensorflow:workspace3.bzl", "workspace")
 
@@ -50,3 +51,4 @@ bind(
     name = "six",
     actual = "@six_archive//:six",
 )
+

@@ -105,6 +105,7 @@ write_to_bazelrc "build --strategy=Genrule=standalone"
 write_to_bazelrc "build --experimental_repo_remote_exec"
 write_to_bazelrc "build -c opt"
 write_to_bazelrc "build --cxxopt=\"-D_GLIBCXX_USE_CXX11_ABI=0\""
+write_to_bazelrc "build --cxxopt=\"-std=c++14\""
 
 
 if is_windows; then
