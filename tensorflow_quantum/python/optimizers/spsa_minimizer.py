@@ -191,8 +191,8 @@ def minimize(expectation_value_function,
         max_iterations = tf.convert_to_tensor(max_iterations,
                                               name='max_iterations')
 
-        a_init = tf.convert_to_tensor(a, name='initial a', dtype='float32')
-        c_init = tf.convert_to_tensor(c, name='initial c', dtype='float32')
+        a_init = tf.convert_to_tensor(a, name='initial_a', dtype='float32')
+        c_init = tf.convert_to_tensor(c, name='initial_c', dtype='float32')
     
 
         def _spsa_once(state):
