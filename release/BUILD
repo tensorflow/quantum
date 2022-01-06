@@ -65,5 +65,6 @@ sh_binary(
         "//tensorflow_quantum/python:quantum_context",
         "//tensorflow_quantum/python:util",
         "//tensorflow_quantum/python/optimizers:rotosolve_minimizer",
+        "//tensorflow_quantum/python/optimizers:spsa_minimizer",
     ],
 )
