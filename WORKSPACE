@@ -3,21 +3,43 @@
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
+EIGEN_COMMIT = "12e8d57108c50d8a63605c6eb0144c838c128337"
+EIGEN_SHA256 = "f689246e342c3955af48d26ce74ac34d21b579a00675c341721a735937919b02"
+
+
+http_archive(
+    name = "eigen",
+    build_file_content = """
+cc_library(
+  name = "eigen3",
+  textual_hdrs = glob(["Eigen/**", "unsupported/**"]),
+  visibility = ["//visibility:public"],
+)
+    """,
+    sha256 = EIGEN_SHA256,
+        strip_prefix = "eigen-{commit}".format(commit = EIGEN_COMMIT),
+        urls = [
+            "https://storage.googleapis.com/mirror.tensorflow.org/gitlab.com/libeigen/eigen/-/archive/{commit}/eigen-{commit}.tar.gz".format(commit = EIGEN_COMMIT),
+            "https://gitlab.com/libeigen/eigen/-/archive/{commit}/eigen-{commit}.tar.gz".format(commit = EIGEN_COMMIT),
+        ],
+)
+
 http_archive(
     name = "qsim",
-    sha256 = "d39b9c48866ce4d6a095093ae8059444d649e851219497af99e937a74f1e9a45",
-    strip_prefix = "qsim-0.9.2-dev-20210317",
-    urls = ["https://github.com/quantumlib/qsim/archive/v0.9.2-dev+20210317.zip"],
+    sha256 = "525250bafd37aab9db525d22e7b12689da617a116fe2cdf3f524ee7ea6a0ef45",
+    strip_prefix = "qsim-0.11.2-dev-20220104",
+    urls = ["https://github.com/quantumlib/qsim/archive/refs/tags/v0.11.2-dev+20220104.zip"],
 )
 
 http_archive(
     name = "org_tensorflow",
-    sha256 = "2023a377a16e5566b8981400af9e8c8e25d3367d82824ffec2b5b6b9c7dba55d",
-    strip_prefix = "tensorflow-2.5.1",
+    sha256 = "249b48ddee927801c7a4f8e5442cf1a3c860f6f46b85a2ff7a78b501507dd561",
+    strip_prefix = "tensorflow-2.7.0",
     urls = [
-        "https://github.com/tensorflow/tensorflow/archive/refs/tags/v2.5.1.zip",
+        "https://github.com/tensorflow/tensorflow/archive/refs/tags/v2.7.0.zip",
     ],
 )
+
 
 load("@org_tensorflow//tensorflow:workspace3.bzl", "workspace")
 
@@ -50,3 +72,4 @@ bind(
     name = "six",
     actual = "@six_archive//:six",
 )
+

@@ -142,7 +142,8 @@ tensorflow::Status ComputeExpectationQsim(const tfq::proto::PauliSum& p_sum,
                                           const SimT& sim,
                                           const StateSpaceT& ss, StateT& state,
                                           StateT& scratch,
-                                          float* expectation_value) {
+                                          float* expectation_value,
+                                          bool fuse_paulis = true) {
   // apply the gates of the pauliterms to a copy of the state vector
   // and add up expectation value term by term.
   tensorflow::Status status = tensorflow::Status::OK();
@@ -165,8 +166,14 @@ tensorflow::Status ComputeExpectationQsim(const tfq::proto::PauliSum& p_sum,
     }
     // copy from src to scratch.
     ss.Copy(state, scratch);
-    for (const qsim::GateFused<QsimGate>& fused_gate : fused_circuit) {
-      qsim::ApplyFusedGate(sim, fused_gate, scratch);
+    if (fuse_paulis) {
+      for (const qsim::GateFused<QsimGate>& fused_gate : fused_circuit) {
+        qsim::ApplyFusedGate(sim, fused_gate, scratch);
+      }
+    } else {
+      for (const auto& unfused_gate : main_circuit.gates) {
+        qsim::ApplyGate(sim, unfused_gate, scratch);
+      }
     }
 
     if (!status.ok()) {

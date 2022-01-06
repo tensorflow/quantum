@@ -126,6 +126,61 @@ const std::string valid_symbol_program = R"(
   }
 )";
 
+const std::string three_qubit_op_program = R"(
+  circuit {
+    moments {
+      operations {
+        qubits {
+          id: "0_0"
+        }
+        qubits {
+          id: "0_1"
+        }
+        qubits {
+          id: "0_2"
+        }
+      }
+    }
+  }
+)";
+
+/* Qubit topology:
+  1 -- 0 -- 2
+       |
+       |
+       3
+*/
+const std::string resolved_qubit_program_not_1d = R"(
+  circuit {
+    moments {
+      operations {
+        qubits {
+          id: "0"
+        }
+        qubits {
+          id: "1"
+        }
+      }
+      operations {
+        qubits {
+          id: "0"
+        }
+        qubits {
+          id: "2"
+        }
+      }
+      operations {
+        qubits {
+          id: "0"
+        }
+        qubits {
+          id: "3"
+        }
+      }
+    }
+  }
+)";
+
 TEST(ProgramResolutionTest, ResolveQubitIdsValid) {
   Program program;
   unsigned int qubit_count;
@@ -510,6 +565,42 @@ TEST(ProgramResolutionTest, ResolveSymbolsStrictFull) {
                 .arg_value()
                 .float_value(),
             2.0);
+}
+
+TEST(ProgramResolutionTest, CheckMPSSupportedEmpty) {
+  Program empty;
+  EXPECT_EQ(CheckMPSSupported(empty), Status::OK());
+}
+
+TEST(ProgramResolutionTest, CheckQubitsIn1DFailedByOpWithMoreThan2Qubits) {
+  Program program_with_3qubit_op;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      three_qubit_op_program, &program_with_3qubit_op));
+  EXPECT_EQ(CheckMPSSupported(program_with_3qubit_op),
+            Status(tensorflow::error::INVALID_ARGUMENT,
+                   "1D operations only support 1 and 2 qubit gates. "
+                   "Found: 3 qubit gate."));
+}
+
+TEST(ProgramResolutionTest,
+     CheckQubitsIn1DFailedByOpWithMoreThan2QubitsOnControlQubits) {
+  Program program_with_3qubit_op;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      valid_program, &program_with_3qubit_op));
+  EXPECT_EQ(CheckMPSSupported(program_with_3qubit_op),
+            Status(tensorflow::error::INVALID_ARGUMENT,
+                   "1D operations only support 1 and 2 qubit gates. "
+                   "Found: 3 qubit gate."));
+}
+
+TEST(ProgramResolutionTest, CheckQubitsIn1DFailedByNot1DTopology) {
+  Program program_not_1d;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      resolved_qubit_program_not_1d, &program_not_1d));
+  EXPECT_EQ(CheckMPSSupported(program_not_1d),
+            Status(tensorflow::error::INVALID_ARGUMENT,
+                   "A program is not in 1D topology. It contains an"
+                   " operation with qubits not neighbors each other."));
 }
 
 }  // namespace

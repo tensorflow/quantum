@@ -13,6 +13,13 @@
 # limitations under the License.
 # ==============================================================================
 """Tests for the elementary layers."""
+# Remove PYTHONPATH collisions for protobuf.
+# pylint: disable=wrong-import-position
+import sys
+NEW_PATH = [x for x in sys.path if 'com_google_protobuf' not in x]
+sys.path = NEW_PATH
+# pylint: enable=wrong-import-position
+
 import tensorflow as tf
 import cirq
 import sympy

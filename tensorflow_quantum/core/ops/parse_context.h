@@ -66,7 +66,8 @@ tensorflow::Status GetProgramsAndNumQubits(
     tensorflow::OpKernelContext* context,
     std::vector<tfq::proto::Program>* programs, std::vector<int>* num_qubits,
     std::vector<std::vector<tfq::proto::PauliSum>>* p_sums = nullptr,
-    std::vector<std::vector<tfq::proto::ProjectorSum>>* proj_sums = nullptr);
+    std::vector<std::vector<tfq::proto::ProjectorSum>>* proj_sums = nullptr,
+    bool swap_endianness = false);
 
 // Parses Cirq Program protos out of the 'circuit_specs' input Tensor. Also
 // resolves the QubitIds inside of the Program. This override also parses and

@@ -152,7 +152,8 @@ Status GetProgramsAndNumQubits(
     OpKernelContext* context, std::vector<Program>* programs,
     std::vector<int>* num_qubits,
     std::vector<std::vector<PauliSum>>* p_sums /*=nullptr*/,
-    std::vector<std::vector<ProjectorSum>>* proj_sums /*=nullptr*/) {
+    std::vector<std::vector<ProjectorSum>>* proj_sums /*=nullptr*/,
+    bool swap_endianness /*=false*/) {
   // 1. Parse input programs
   // 2. (Optional) Parse input PauliSums
   // 3. (Optional) Parse input ProjectorSums
@@ -201,9 +202,10 @@ Status GetProgramsAndNumQubits(
         auto iter_p_sums = p_sums ? &(p_sums->at(i)) : nullptr;
         auto iter_proj_sums = proj_sums ? &(proj_sums->at(i)) : nullptr;
         OP_REQUIRES_OK(context, ResolveQubitIds(&program, &this_num_qubits,
-                                                iter_p_sums, iter_proj_sums));
+                                                iter_p_sums, iter_proj_sums, swap_endianness));
       } else {
-        OP_REQUIRES_OK(context, ResolveQubitIds(&program, &this_num_qubits));
+        OP_REQUIRES_OK(context, ResolveQubitIds(&program, &this_num_qubits,
+                                                nullptr, swap_endianness));
       }
       (*num_qubits)[i] = this_num_qubits;
     }
