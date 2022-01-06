@@ -260,9 +260,8 @@ def minimize(expectation_value_function,
             return [state]
 
         initial_state = _get_initial_state(initial_position, tolerance,
-                                           expectation_value_function, a,
-                                           alpha, c, gamma, blocking,
-                                           allowed_increase)
+                                           expectation_value_function, a, alpha,
+                                           c, gamma, blocking, allowed_increase)
 
         initial_state.objective_value.assign(
             expectation_value_function(initial_state.position))
