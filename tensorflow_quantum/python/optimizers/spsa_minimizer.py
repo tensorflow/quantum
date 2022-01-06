@@ -14,7 +14,6 @@
 # ==============================================================================
 """The SPSA minimization algorithm"""
 import collections
-import numpy as np
 import tensorflow as tf
 
 
