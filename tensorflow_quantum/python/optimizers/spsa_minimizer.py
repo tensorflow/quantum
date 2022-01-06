@@ -223,7 +223,8 @@ def minimize(expectation_value_function,
             current_obj = expectation_value_function(state.position - update)
             # state.position.assign(tf.math.floormod(state.position -
             #                                        update, 2* np.pi))
-            if state.num_objective_evaluations == 0 or state.objective_value_previous_iteration \
+            if state.num_objective_evaluations == 0 or \
+                state.objective_value_previous_iteration \
                 < current_obj + state.allowed_increase or not state.blocking:
                 state.position.assign(state.position - update)
 
