@@ -89,7 +89,8 @@ SPSAOptimizerResults = collections.namedtuple(
     ])
 
 
-def _get_initial_state(initial_position, tolerance, expectation_value_function, a, alpha, c, gamma, blocking, allowed_increase):
+def _get_initial_state(initial_position, tolerance, expectation_value_function,
+                       a, alpha, c, gamma, blocking, allowed_increase):
     """Create SPSAOptimizerResults with initial state of search."""
     init_args = {
         "converged": tf.Variable(False),
