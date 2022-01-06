@@ -194,7 +194,6 @@ def minimize(expectation_value_function,
 
         a_init = tf.convert_to_tensor(a, name='initial_a', dtype='float32')
         c_init = tf.convert_to_tensor(c, name='initial_c', dtype='float32')
-    
 
         def _spsa_once(state):
             """Caclulate single SPSA gradient estimation
@@ -230,7 +229,6 @@ def minimize(expectation_value_function,
 
             return [state]
 
-
         # The `state` here is a `SPSAOptimizerResults` tuple with
         # values for the current state of the algorithm computation.
         def _cond(state):
@@ -241,7 +239,6 @@ def minimize(expectation_value_function,
 
         def _body(state):
             """Main optimization loop."""
-            
             new_a = a_init / (
                 (tf.cast(state.num_iterations + 1, tf.float32) +
                  0.01 * tf.cast(max_iterations, tf.float32))**state.alpha)
