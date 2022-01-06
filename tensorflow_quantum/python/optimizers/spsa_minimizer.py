@@ -78,12 +78,12 @@ SPSAOptimizerResults = collections.namedtuple(
         # Specifies the learning rate
         'alpha',
         # Specifies scaling of the learning rate
-        'c', 
+        'c',
         # Specifies the size of the perturbations
         'gamma',
         # Specifies scaling of the size of the perturbations
         'blocking',
-        # If true, then the optimizer will only accept updates that improve the objective function. 
+        # If true, then the optimizer will only accept updates that improve the objective function.
         'allowed_increase'
         # Specifies maximum allowable increase in objective function (only applies if blocking is true).
     ])
@@ -206,7 +206,11 @@ def minimize(expectation_value_function,
             Returns:
                 states: A list which the first element is the new state
             """
-            delta_shift = tf.cast(2 * tf.random.uniform(shape=state.position.shape, minval=0, maxval=2, dtype=tf.int32) - 1, tf.float32)
+            delta_shift = tf.cast(
+                2 * tf.random.uniform(shape=state.position.shape,
+                                      minval=0,
+                                      maxval=2,
+                                      dtype=tf.int32) - 1, tf.float32)
 
             v_m, v_p =  expectation_value_function(state.position - state.c * delta_shift),\
                  expectation_value_function(state.position + state.c * delta_shift)
@@ -238,8 +242,11 @@ def minimize(expectation_value_function,
         def _body(state):
             """Main optimization loop."""
             
-            new_a = a_init / ((tf.cast(state.num_iterations + 1, tf.float32) + 0.01 * tf.cast(max_iterations, tf.float32))**state.alpha)
-            new_c = c_init / (tf.cast(state.num_iterations + 1, tf.float32)**state.gamma)
+            new_a = a_init / (
+                (tf.cast(state.num_iterations + 1, tf.float32) +
+                 0.01 * tf.cast(max_iterations, tf.float32))**state.alpha)
+            new_c = c_init / (tf.cast(state.num_iterations + 1, tf.float32)**
+                              state.gamma)
 
             state.a.assign(new_a)
             state.c.assign(new_c)
@@ -252,9 +259,12 @@ def minimize(expectation_value_function,
                 state.tolerance)
             return [state]
 
-        initial_state = _get_initial_state(initial_position, tolerance, expectation_value_function, a, alpha, c, gamma, blocking, allowed_increase)
+            initial_state = _get_initial_state(initial_position, tolerance,
+                                           expectation_value_function, a, alpha,
+                                           c, gamma, blocking, allowed_increase)
 
-        initial_state.objective_value.assign(expectation_value_function(initial_state.position))
+        initial_state.objective_value.assign(
+            expectation_value_function(initial_state.position))
 
         return tf.while_loop(cond=_cond,
                              body=_body,
