@@ -31,6 +31,7 @@ from tensorflow_quantum.python.layers.high_level import pqc
 from tensorflow_quantum.python import util
 from tensorflow_quantum.python.optimizers import spsa_minimizer
 
+
 def loss_function_with_model_parameters(model, loss, train_x, train_y):
     """Create a new function that assign the model parameter to the model
     and evaluate its value.
@@ -96,7 +97,6 @@ class SPSAMinimizerTest(tf.test.TestCase, parameterized.TestCase):
         self.assertAlmostEqual(func(result.position).numpy(), 0, delta=1e-4)
         self.assertTrue(result.converged)
 
-
     def test_keras_model_optimization(self):
         """Optimizate a PQC based keras model."""
 
@@ -147,7 +147,6 @@ class SPSAMinimizerTest(tf.test.TestCase, parameterized.TestCase):
 
         self.assertAlmostEqual(result.objective_value.numpy(), 0, delta=1e-4)
         self.assertTrue(result.converged)
-
 
 
 if __name__ == "__main__":
