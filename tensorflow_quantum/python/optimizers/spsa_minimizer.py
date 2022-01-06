@@ -102,9 +102,9 @@ def _get_initial_state(initial_position, tolerance, expectation_value_function, 
         "a": tf.Variable(a),
         "alpha": tf.Variable(alpha),
         "c": tf.Variable(c),
-        "gamma" : tf.Variable(gamma),
-        "blocking" : tf.Variable(blocking),
-        "allowed_increase" : tf.Variable(allowed_increase)
+        "gamma": tf.Variable(gamma),
+        "blocking": tf.Variable(blocking),
+        "allowed_increase": tf.Variable(allowed_increase)
     }
     return SPSAOptimizerResults(**init_args)
 
