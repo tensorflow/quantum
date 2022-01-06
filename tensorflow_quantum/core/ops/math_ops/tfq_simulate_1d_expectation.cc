@@ -85,7 +85,7 @@ class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
     // is resolved.
     OP_REQUIRES_OK(context,
                    GetProgramsAndNumQubits(context, &programs, &num_qubits,
-                                           &pauli_sums, true));
+                                           &pauli_sums, nullptr, true));
 
     std::vector<SymbolMap> maps;
     OP_REQUIRES_OK(context, GetSymbolMaps(context, &maps));

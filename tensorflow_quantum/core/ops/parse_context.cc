@@ -201,11 +201,13 @@ Status GetProgramsAndNumQubits(
       if (p_sums || proj_sums) {
         auto iter_p_sums = p_sums ? &(p_sums->at(i)) : nullptr;
         auto iter_proj_sums = proj_sums ? &(proj_sums->at(i)) : nullptr;
-        OP_REQUIRES_OK(context, ResolveQubitIds(&program, &this_num_qubits,
-                                                iter_p_sums, iter_proj_sums, swap_endianness));
+        OP_REQUIRES_OK(context,
+                       ResolveQubitIds(&program, &this_num_qubits, iter_p_sums,
+                                       iter_proj_sums, swap_endianness));
       } else {
-        OP_REQUIRES_OK(context, ResolveQubitIds(&program, &this_num_qubits,
-                                                nullptr, swap_endianness));
+        OP_REQUIRES_OK(context,
+                       ResolveQubitIds(&program, &this_num_qubits, nullptr,
+                                       nullptr, swap_endianness));
       }
       (*num_qubits)[i] = this_num_qubits;
     }
