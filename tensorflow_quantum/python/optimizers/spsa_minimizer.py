@@ -82,9 +82,11 @@ SPSAOptimizerResults = collections.namedtuple(
         'gamma',
         # Specifies scaling of the size of the perturbations
         'blocking',
-        # If true, then the optimizer will only accept updates that improve the objective function.
+        # If true, then the optimizer will only accept updates that improve 
+        # the objective function.
         'allowed_increase'
-        # Specifies maximum allowable increase in objective function (only applies if blocking is true).
+        # Specifies maximum allowable increase in objective function 
+        # (only applies if blocking is true).
     ])
 
 
@@ -162,13 +164,13 @@ def minimize(expectation_value_function,
         a: Scalar `tf.Tensor` of real dtype. Specifies the learning rate
         alpha: Scalar `tf.Tensor` of real dtype. Specifies scaling of the
             learning rate.
-        c: Scalar `tf.Tensor` of real dtype. Specifies the size of the 
+        c: Scalar `tf.Tensor` of real dtype. Specifies the size of the
             perturbations.
         gamma: Scalar `tf.Tensor` of real dtype. Specifies scaling of the
             size of the perturbations.
         blocking: Boolean. If true, then the optimizer will only accept
-            updates that improve the objective function. 
-        allowed_increase: Scalar `tf.Tensor` of real dtype. Specifies maximum 
+            updates that improve the objective function.
+        allowed_increase: Scalar `tf.Tensor` of real dtype. Specifies maximum
             allowable increase in objective function (only applies if blocking
             is true).
         name: (Optional) Python `str`. The name prefixed to the ops created
@@ -210,15 +212,16 @@ def minimize(expectation_value_function,
                                       maxval=2,
                                       dtype=tf.int32) - 1, tf.float32)
 
-            v_m, v_p =  expectation_value_function(state.position - state.c * delta_shift),\
-                 expectation_value_function(state.position + state.c * delta_shift)
+            v_m =  expectation_value_function(state.position - state.c * delta_shift)
+            v_p = expectation_value_function(state.position + state.c * delta_shift)
 
             gradient_estimate = (v_p - v_m) / (2 * state.c) * delta_shift
             update = state.a * gradient_estimate
 
             current_obj = expectation_value_function(state.position - update)
             #state.position.assign(tf.math.floormod(state.position - update, 2* np.pi))
-            if state.num_objective_evaluations == 0 or state.objective_value_previous_iteration < current_obj + state.allowed_increase or not state.blocking:
+            if state.num_objective_evaluations == 0 or state.objective_value_previous_iteration \
+                < current_obj + state.allowed_increase or not state.blocking:
                 state.position.assign(state.position - update)
 
             state.num_objective_evaluations.assign_add(2)
