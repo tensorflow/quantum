@@ -91,7 +91,7 @@ class SPSAMinimizerTest(tf.test.TestCase, parameterized.TestCase):
         """
         func = lambda x: x[0]**2 + x[1]**2
 
-        result = spsa_minimizer(func, tf.random.uniform(shape=[2]))
+        result = spsa_minimizer.minimize(func, tf.random.uniform(shape=[2]))
         print(func(result.position))
         self.assertAlmostEqual(func(result.position).numpy(), 0, delta=1e-4)
         self.assertTrue(result.converged)
@@ -140,7 +140,7 @@ class SPSAMinimizerTest(tf.test.TestCase, parameterized.TestCase):
         ])
 
         # Initial guess of the parameter from random number
-        result = spsa_minimizer(
+        result = spsa_minimizer.minimize(
             loss_function_with_model_parameters(model, tf.keras.losses.Hinge(),
                                                 x_circ, y),
             tf.random.uniform(shape=[2]) * 2 * np.pi)
