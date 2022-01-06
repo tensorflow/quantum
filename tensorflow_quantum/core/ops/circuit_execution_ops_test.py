@@ -13,6 +13,13 @@
 # limitations under the License.
 # ==============================================================================
 """Module to test consistency between Cirq and TFQ circuit execution ops."""
+# Remove PYTHONPATH collisions for protobuf.
+# pylint: disable=wrong-import-position
+import sys
+NEW_PATH = [x for x in sys.path if 'com_google_protobuf' not in x]
+sys.path = NEW_PATH
+# pylint: enable=wrong-import-position
+
 from unittest import mock
 import numpy as np
 import tensorflow as tf

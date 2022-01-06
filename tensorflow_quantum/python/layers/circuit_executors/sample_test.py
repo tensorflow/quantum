@@ -13,6 +13,13 @@
 # limitations under the License.
 # ==============================================================================
 """Tests for the sample layer."""
+# Remove PYTHONPATH collisions for protobuf.
+# pylint: disable=wrong-import-position
+import sys
+NEW_PATH = [x for x in sys.path if 'com_google_protobuf' not in x]
+sys.path = NEW_PATH
+# pylint: enable=wrong-import-position
+
 import numpy as np
 from absl.testing import parameterized
 import sympy
