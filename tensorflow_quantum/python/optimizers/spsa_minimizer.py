@@ -73,11 +73,11 @@ SPSAOptimizerResults = collections.namedtuple(
         # Define the stop criteria. Iteration will stop when the
         # objective value difference between two iterations is
         # smaller than tolerance
-        'a',
+        'lr',
         # Specifies the learning rate
         'alpha',
         # Specifies scaling of the learning rate
-        'c',
+        'perturb',
         # Specifies the size of the perturbations
         'gamma',
         # Specifies scaling of the size of the perturbations
@@ -91,7 +91,7 @@ SPSAOptimizerResults = collections.namedtuple(
 
 
 def _get_initial_state(initial_position, tolerance, expectation_value_function,
-                       a, alpha, c, gamma, blocking, allowed_increase):
+                       lr, alpha, perturb, gamma, blocking, allowed_increase):
     """Create SPSAOptimizerResults with initial state of search."""
     init_args = {
         "converged": tf.Variable(False),
@@ -101,9 +101,9 @@ def _get_initial_state(initial_position, tolerance, expectation_value_function,
         "objective_value": tf.Variable(0.),
         "objective_value_previous_iteration": tf.Variable(0.),
         "tolerance": tolerance,
-        "a": tf.Variable(a),
+        "lr": tf.Variable(lr),
         "alpha": tf.Variable(alpha),
-        "c": tf.Variable(c),
+        "perturb": tf.Variable(perturb),
         "gamma": tf.Variable(gamma),
         "blocking": tf.Variable(blocking),
         "allowed_increase": tf.Variable(allowed_increase)
@@ -113,13 +113,13 @@ def _get_initial_state(initial_position, tolerance, expectation_value_function,
 
 def minimize(expectation_value_function,
              initial_position,
-             tolerance=1e-7,
-             max_iterations=60,
+             tolerance=1e-5,
+             max_iterations=200,
              alpha=0.602,
-             a=1.0,
-             c=1.0,
+             lr=1.0,
+             perturb=1.0,
              gamma=0.101,
-             blocking=True,
+             blocking=False,
              allowed_increase=0.5,
              name=None):
     """Applies the SPSA algorithm.
@@ -130,30 +130,25 @@ def minimize(expectation_value_function,
 
     Usage:
 
-    Here is an example of optimize a function which consists summation of
-    a few sinusoids.
+    Here is an example of optimize a function which consists the 
+    summation of a few quadratics.
 
-    >>> n = 10  # Number of sinusoids
-    >>> coefficient = tf.random.uniform(shape=[n])
-    >>> min_value = -tf.math.reduce_sum(tf.abs(coefficient))
-    >>> func = lambda x:tf.math.reduce_sum(tf.sin(x) * coefficient)
+    >>> n = 5  # Number of quadractics
+    >>> coefficient = tf.random.uniform(minval=0, maxval=1, shape=[n])
+    >>> min_value = 0
+    >>> func = func = lambda x : tf.math.reduce_sum(np.power(x, 2) * coefficient)
     >>> # Optimize the function with SPSA, start with random parameters
-    >>> result = tfq.optimizers.SPSA_minimize(func, np.random.random(n))
+    >>> result = tfq.optimizers.spsa_minimize(func, np.random.random(n))
     >>> result.converged
     tf.Tensor(True, shape=(), dtype=bool)
     >>> result.objective_value
-    tf.Tensor(-4.7045116, shape=(), dtype=float32)
+    tf.Tensor(0.0013349084, shape=(), dtype=float32)
 
     Args:
-        expectation_value_function:  A Python callable that accepts
-            a point as a real `tf.Tensor` and returns a `tf.Tensor`s
-            of real dtype containing the value of the function.
-            The function to be minimized. The input is of shape `[n]`,
-            where `n` is the size of the trainable parameters.
-            The return value is a real `tf.Tensor` Scalar (matching shape
-            `[1]`).  This must be a linear combination of quantum
-            measurement expectation value, otherwise this algorithm cannot
-            work.
+        expectation_value_function:  Python callable that accepts a real
+            valued tf.Tensor with shape [n] where n is the number of function
+            parameters. The return value is a real `tf.Tensor` Scalar
+            (matching shape `[1]`).
         initial_position: Real `tf.Tensor` of shape `[n]`. The starting
             point, or points when using batching dimensions, of the search
             procedure. At these points the function value and the gradient
@@ -193,8 +188,8 @@ def minimize(expectation_value_function,
         max_iterations = tf.convert_to_tensor(max_iterations,
                                               name='max_iterations')
 
-        a_init = tf.convert_to_tensor(a, name='initial_a', dtype='float32')
-        c_init = tf.convert_to_tensor(c, name='initial_c', dtype='float32')
+        lr_init = tf.convert_to_tensor(lr, name='initial_a', dtype='float32')
+        perturb_init = tf.convert_to_tensor(perturb, name='initial_c', dtype='float32')
 
         def _spsa_once(state):
             """Caclulate single SPSA gradient estimation
@@ -211,18 +206,15 @@ def minimize(expectation_value_function,
                                       minval=0,
                                       maxval=2,
                                       dtype=tf.int32) - 1, tf.float32)
-
             v_m = expectation_value_function(state.position -
-                                             state.c * delta_shift)
+                                             state.perturb * delta_shift)
             v_p = expectation_value_function(state.position +
-                                             state.c * delta_shift)
+                                             state.perturb * delta_shift)
 
-            gradient_estimate = (v_p - v_m) / (2 * state.c) * delta_shift
-            update = state.a * gradient_estimate
+            gradient_estimate = (v_p - v_m) / (2 * state.perturb) * delta_shift
+            update = state.lr * gradient_estimate
 
             current_obj = expectation_value_function(state.position - update)
-            # state.position.assign(tf.math.floormod(state.position -
-            #                                        update, 2* np.pi))
             if state.num_objective_evaluations == 0 or \
                 state.objective_value_previous_iteration \
                 < current_obj + state.allowed_increase or not state.blocking:
@@ -245,14 +237,14 @@ def minimize(expectation_value_function,
 
         def _body(state):
             """Main optimization loop."""
-            new_a = a_init / (
+            new_lr = lr_init / (
                 (tf.cast(state.num_iterations + 1, tf.float32) +
                  0.01 * tf.cast(max_iterations, tf.float32))**state.alpha)
-            new_c = c_init / (tf.cast(state.num_iterations + 1, tf.float32)**
+            new_perturb = perturb_init / (tf.cast(state.num_iterations + 1, tf.float32)**
                               state.gamma)
 
-            state.a.assign(new_a)
-            state.c.assign(new_c)
+            state.lr.assign(new_lr)
+            state.perturb.assign(new_perturb)
 
             _spsa_once(state)
             state.num_iterations.assign_add(1)
@@ -263,11 +255,11 @@ def minimize(expectation_value_function,
             return [state]
 
         initial_state = _get_initial_state(initial_position, tolerance,
-                                           expectation_value_function, a, alpha,
-                                           c, gamma, blocking, allowed_increase)
+                                           expectation_value_function, lr, alpha,
+                                           perturb, gamma, blocking, allowed_increase)
 
         initial_state.objective_value.assign(
-            expectation_value_function(initial_state.position))
+            tf.cast(expectation_value_function(initial_state.position), tf.float32))
 
         return tf.while_loop(cond=_cond,
                              body=_body,
