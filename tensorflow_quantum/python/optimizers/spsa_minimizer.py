@@ -15,6 +15,7 @@
 """The SPSA minimization algorithm"""
 import collections
 import tensorflow as tf
+import numpy as np
 
 
 def prefer_static_shape(x):
@@ -131,13 +132,14 @@ def minimize(expectation_value_function,
 
     Usage:
 
-    Here is an example of optimize a function which consists the 
+    Here is an example of optimize a function which consists the
     summation of a few quadratics.
 
     >>> n = 5  # Number of quadractics
     >>> coefficient = tf.random.uniform(minval=0, maxval=1, shape=[n])
     >>> min_value = 0
-    >>> func = func = lambda x : tf.math.reduce_sum(np.power(x, 2) * coefficient)
+    >>> func = func = lambda x : tf.math.reduce_sum(np.power(x, 2) * \
+            coefficient)
     >>> # Optimize the function with SPSA, start with random parameters
     >>> result = tfq.optimizers.spsa_minimize(func, np.random.random(n))
     >>> result.converged
@@ -223,8 +225,8 @@ def minimize(expectation_value_function,
             state.num_objective_evaluations.assign_add(2)
 
             current_obj = expectation_value_function(state.position - update)
-            if state.objective_value_previous_iteration + state.allowed_increase \
-                >= current_obj or not state.blocking:
+            if state.objective_value_previous_iteration + \
+                state.allowed_increase >= current_obj or not state.blocking:
                 state.position.assign(state.position - update)
                 state.objective_value_previous_iteration.assign(
                     state.objective_value)
