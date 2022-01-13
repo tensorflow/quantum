@@ -128,8 +128,8 @@ class SPSAMinimizerTest(tf.test.TestCase, parameterized.TestCase):
         it = 50
 
         result = spsa_minimizer.minimize(func,
-                                tf.random.uniform(shape=[n]),
-                                max_iterations=it)
+                                         tf.random.uniform(shape=[n]),
+                                         max_iterations=it)
         self.assertFalse(result.converged)
         self.assertEqual(result.num_iterations, it)
 
@@ -141,22 +141,33 @@ class SPSAMinimizerTest(tf.test.TestCase, parameterized.TestCase):
 
         init = 1
         self.incr = 0
-        def func(params):
+        def block_func1(params):
             self.incr += init
             return self.incr
 
-        result = spsa_minimizer.minimize(func, tf.random.uniform(shape=[n]), blocking=True, allowed_increase=0.5, max_iterations=it)
+        result = spsa_minimizer.minimize(block_func1,
+                                         tf.random.uniform(shape=[n]),
+                                         blocking=True,
+                                         allowed_increase=0.5,
+                                         max_iterations=it)
         self.assertFalse(result.converged)
         self.assertEqual(result.num_iterations, it)
-        self.assertEqual(result.objective_value, init * 4) # function executd 3 (in step) + 1 (initial evaluation) times
+        self.assertEqual(
+            result.objective_value, init *
+            4)  # function executd 3 (in step) +
+            # 1 (initial evaluation) times
 
-        init = 1/6 * 0.49
+        init = 1 / 6 * 0.49
         self.incr = 0
-        def func(params):
+        def block_func2(params):
             self.incr += init
             return self.incr
 
-        result = spsa_minimizer.minimize(func, tf.random.uniform(shape=[n]), blocking=True, allowed_increase=0.5, max_iterations=it)
+        result = spsa_minimizer.minimize(block_func2,
+                                         tf.random.uniform(shape=[n]),
+                                         blocking=True,
+                                         allowed_increase=0.5,
+                                         max_iterations=it)
         self.assertFalse(result.converged)
         self.assertEqual(result.num_iterations, it)
         self.assertEqual(result.objective_value, init * 3 * it + init)
@@ -199,8 +210,8 @@ class SPSAMinimizerTest(tf.test.TestCase, parameterized.TestCase):
         result = spsa_minimizer.minimize(loss_function_with_model_parameters(
             model, lambda x, y: x[0][0],
             util.convert_to_tensor([cirq.Circuit()]), None),
-                                initial_point,
-                                max_iterations=100)
+                                         initial_point,
+                                         max_iterations=100)
 
         self.assertTrue(result.converged)
         self.assertLess(result.objective_value.numpy(), -0.95)
