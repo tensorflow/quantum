@@ -159,7 +159,7 @@ class SPSAMinimizerTest(tf.test.TestCase, parameterized.TestCase):
 
         init = 1 / 6 * 0.49
         self.incr = 0
-        
+
         def block_func2(params):
             self.incr += init
             return self.incr
