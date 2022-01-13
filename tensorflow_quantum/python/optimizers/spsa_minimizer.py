@@ -248,7 +248,6 @@ def minimize(expectation_value_function,
                  0.01 * tf.cast(max_iterations, tf.float32))**state.alpha)
             new_perturb = perturb_init / (tf.cast(state.num_iterations + 1,
                                                   tf.float32)**state.gamma)
- 
 
             state.lr.assign(new_lr)
             state.perturb.assign(new_perturb)
