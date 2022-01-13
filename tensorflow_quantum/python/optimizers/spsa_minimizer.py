@@ -121,6 +121,7 @@ def minimize(expectation_value_function,
              gamma=0.101,
              blocking=False,
              allowed_increase=0.5,
+             seed=None,
              name=None):
     """Applies the SPSA algorithm.
 
@@ -178,6 +179,9 @@ def minimize(expectation_value_function,
     """
 
     with tf.name_scope(name or 'minimize'):
+        if seed is not None:
+            tf.random.set_seed(seed)
+
         initial_position = tf.convert_to_tensor(initial_position,
                                                 name='initial_position',
                                                 dtype='float32')
@@ -189,7 +193,9 @@ def minimize(expectation_value_function,
                                               name='max_iterations')
 
         lr_init = tf.convert_to_tensor(lr, name='initial_a', dtype='float32')
-        perturb_init = tf.convert_to_tensor(perturb, name='initial_c', dtype='float32')
+        perturb_init = tf.convert_to_tensor(perturb,
+                                            name='initial_c',
+                                            dtype='float32')
 
         def _spsa_once(state):
             """Caclulate single SPSA gradient estimation
@@ -240,8 +246,9 @@ def minimize(expectation_value_function,
             new_lr = lr_init / (
                 (tf.cast(state.num_iterations + 1, tf.float32) +
                  0.01 * tf.cast(max_iterations, tf.float32))**state.alpha)
-            new_perturb = perturb_init / (tf.cast(state.num_iterations + 1, tf.float32)**
-                              state.gamma)
+            new_perturb = perturb_init / (tf.cast(state.num_iterations + 1,
+                                                  tf.float32)**state.gamma)
+ 
 
             state.lr.assign(new_lr)
             state.perturb.assign(new_perturb)
@@ -255,11 +262,13 @@ def minimize(expectation_value_function,
             return [state]
 
         initial_state = _get_initial_state(initial_position, tolerance,
-                                           expectation_value_function, lr, alpha,
-                                           perturb, gamma, blocking, allowed_increase)
+                                           expectation_value_function, lr,
+                                           alpha, perturb, gamma, blocking,
+                                           allowed_increase)
 
         initial_state.objective_value.assign(
-            tf.cast(expectation_value_function(initial_state.position), tf.float32))
+            tf.cast(expectation_value_function(initial_state.position),
+                    tf.float32))
 
         return tf.while_loop(cond=_cond,
                              body=_body,
