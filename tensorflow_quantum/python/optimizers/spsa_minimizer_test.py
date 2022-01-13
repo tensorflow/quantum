@@ -31,6 +31,7 @@ from tensorflow_quantum.python.layers.high_level import pqc
 from tensorflow_quantum.python import util
 from tensorflow_quantum.python.optimizers import spsa_minimizer
 
+
 def loss_function_with_model_parameters(model, loss, train_x, train_y):
     """Create a new function that assign the model parameter to the model
     and evaluate its value.
@@ -126,17 +127,44 @@ class SPSAMinimizerTest(tf.test.TestCase, parameterized.TestCase):
         func = lambda x: np.random.uniform(-10, 10, 1)[0]
         it = 50
 
-        result = spsa_minimizer(func,
+        result = spsa_minimizer.minimize(func,
                                 tf.random.uniform(shape=[n]),
                                 max_iterations=it)
         self.assertFalse(result.converged)
         self.assertEqual(result.num_iterations, it)
 
+    def test_blocking(self):
+        """Test the blocking functionality.
+        """
+        n = 10
+        it = 50
+
+        init = 1
+        self.incr = 0
+        def func(params):
+            self.incr += init
+            return self.incr
+
+        result = spsa_minimizer.minimize(func, tf.random.uniform(shape=[n]), blocking=True, allowed_increase=0.5, max_iterations=it)
+        self.assertFalse(result.converged)
+        self.assertEqual(result.num_iterations, it)
+        self.assertEqual(result.objective_value, init * 4) # function executd 3 (in step) + 1 (initial evaluation) times
+
+        init = 1/6 * 0.49
+        self.incr = 0
+        def func(params):
+            self.incr += init
+            return self.incr
+
+        result = spsa_minimizer.minimize(func, tf.random.uniform(shape=[n]), blocking=True, allowed_increase=0.5, max_iterations=it)
+        self.assertFalse(result.converged)
+        self.assertEqual(result.num_iterations, it)
+        self.assertEqual(result.objective_value, init * 3 * it + init)
+
     def test_3_qubit_circuit(self):
         """Test quantum circuit optimization, adapted from Qiskit SPSA testing
         https://github.com/Qiskit/qiskit-terra/blob/main/test/python/algorithms/optimizers/test_spsa.py#L37
         """
-        
         qubits = [cirq.GridQubit(0, i) for i in range(3)]
         params = sympy.symbols("q0:9")
         circuit = cirq.Circuit()
@@ -168,7 +196,7 @@ class SPSAMinimizerTest(tf.test.TestCase, parameterized.TestCase):
             0.62013131
         ])
 
-        result = spsa_minimizer(loss_function_with_model_parameters(
+        result = spsa_minimizer.minimize(loss_function_with_model_parameters(
             model, lambda x, y: x[0][0],
             util.convert_to_tensor([cirq.Circuit()]), None),
                                 initial_point,
@@ -176,7 +204,6 @@ class SPSAMinimizerTest(tf.test.TestCase, parameterized.TestCase):
 
         self.assertTrue(result.converged)
         self.assertLess(result.objective_value.numpy(), -0.95)
-
 
     def test_keras_model_optimization(self):
         """Optimizate a PQC based keras model."""
@@ -228,7 +255,6 @@ class SPSAMinimizerTest(tf.test.TestCase, parameterized.TestCase):
 
         self.assertAlmostEqual(result.objective_value.numpy(), 0)
         self.assertTrue(result.converged)
-
 
 
 if __name__ == "__main__":
