@@ -93,7 +93,7 @@ class SPSAMinimizerTest(tf.test.TestCase, parameterized.TestCase):
         """
         func = lambda x: x[0]**2 + x[1]**2
 
-        result = spsa_minimizer(func, tf.random.uniform(shape=[2]))
+        result = spsa_minimizer.minimize(func, tf.random.uniform(shape=[2]))
         self.assertAlmostEqual(func(result.position).numpy(), 0, delta=1e-4)
         self.assertTrue(result.converged)
 
@@ -102,9 +102,9 @@ class SPSAMinimizerTest(tf.test.TestCase, parameterized.TestCase):
         """
         n = 2
         coefficient = tf.random.uniform(minval=0, maxval=1, shape=[n])
-        func = lambda x : tf.math.reduce_sum(np.power(x, 2) * coefficient)
+        func = lambda x: tf.math.reduce_sum(np.power(x, 2) * coefficient)
 
-        result = spsa_minimizer(func, tf.random.uniform(shape=[n]))
+        result = spsa_minimizer.minimize(func, tf.random.uniform(shape=[n]))
         self.assertAlmostEqual(func(result.position).numpy(), 0, delta=2e-4)
         self.assertTrue(result.converged)
 
@@ -112,19 +112,23 @@ class SPSAMinimizerTest(tf.test.TestCase, parameterized.TestCase):
         """Test noisy ssinusoidal function
         """
         n = 10
-        func = lambda x : tf.math.reduce_sum(tf.math.sin(x) + tf.random.uniform(minval=-0.1, maxval=0.1, shape=[n]))
+        func = lambda x: tf.math.reduce_sum(
+            tf.math.sin(x) + tf.random.uniform(
+                minval=-0.1, maxval=0.1, shape=[n]))
 
-        result = spsa_minimizer(func, tf.random.uniform(shape=[n]))
+        result = spsa_minimizer.minimize(func, tf.random.uniform(shape=[n]))
         self.assertLessEqual(func(result.position).numpy(), -n + 0.1 * n)
 
     def test_failure_optimization(self):
         """Test a function that is completely random and cannot be minimized
         """
         n = 100
-        func = lambda x : np.random.uniform(-10, 10, 1)[0]
+        func = lambda x: np.random.uniform(-10, 10, 1)[0]
         it = 50
 
-        result = spsa_minimizer(func, tf.random.uniform(shape=[n]), max_iterations=it)
+        result = spsa_minimizer(func,
+                                tf.random.uniform(shape=[n]),
+                                max_iterations=it)
         self.assertFalse(result.converged)
         self.assertEqual(result.num_iterations, it)
 
@@ -137,7 +141,7 @@ class SPSAMinimizerTest(tf.test.TestCase, parameterized.TestCase):
         params = sympy.symbols("q0:9")
         circuit = cirq.Circuit()
         for i in qubits:
-            circuit += cirq.ry(np.pi/4).on(i)
+            circuit += cirq.ry(np.pi / 4).on(i)
         circuit += cirq.ry(params[0]).on(qubits[0])
         circuit += cirq.ry(params[1]).on(qubits[1])
         circuit += cirq.rz(params[2]).on(qubits[2])
@@ -154,15 +158,21 @@ class SPSAMinimizerTest(tf.test.TestCase, parameterized.TestCase):
             tf.keras.layers.Input(shape=(), dtype=tf.string),
             # The PQC layer returns the expected value of the
             # readout gate, range [-1,1].
-            pqc.PQC(circuit, cirq.Z(qubits[0]) * cirq.Z(qubits[1]), repetitions=1024),
+            pqc.PQC(circuit,
+                    cirq.Z(qubits[0]) * cirq.Z(qubits[1]),
+                    repetitions=1024),
         ])
 
-        initial_point = np.array(
-            [0.82311034, 0.02611798, 0.21077064, 0.61842177, 0.09828447, 0.62013131]
-        )
+        initial_point = np.array([
+            0.82311034, 0.02611798, 0.21077064, 0.61842177, 0.09828447,
+            0.62013131
+        ])
 
-        result = spsa_minimizer(loss_function_with_model_parameters(model, lambda x, y : x[0][0], 
-            util.convert_to_tensor([cirq.Circuit()]), None), initial_point, max_iterations=100)
+        result = spsa_minimizer(loss_function_with_model_parameters(
+            model, lambda x, y: x[0][0],
+            util.convert_to_tensor([cirq.Circuit()]), None),
+                                initial_point,
+                                max_iterations=100)
 
         self.assertTrue(result.converged)
         self.assertLess(result.objective_value.numpy(), -0.95)
@@ -211,7 +221,7 @@ class SPSAMinimizerTest(tf.test.TestCase, parameterized.TestCase):
         ])
 
         # Initial guess of the parameter from random number
-        result = spsa_minimizer(
+        result = spsa_minimizer.minimize(
             loss_function_with_model_parameters(model, tf.keras.losses.Hinge(),
                                                 x_circ, y),
             tf.random.uniform(shape=[2]) * 2 * np.pi)
