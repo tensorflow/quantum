@@ -99,7 +99,7 @@ def _get_initial_state(initial_position, tolerance, expectation_value_function,
         "num_objective_evaluations": tf.Variable(0),
         "position": tf.Variable(initial_position),
         "objective_value": tf.Variable(0.),
-        "objective_value_previous_iteration": tf.Variable(0.),
+        "objective_value_previous_iteration": tf.Variable(np.inf),
         "tolerance": tolerance,
         "lr": tf.Variable(lr),
         "alpha": tf.Variable(alpha),
@@ -220,16 +220,15 @@ def minimize(expectation_value_function,
             gradient_estimate = (v_p - v_m) / (2 * state.perturb) * delta_shift
             update = state.lr * gradient_estimate
 
-            current_obj = expectation_value_function(state.position - update)
-            if state.num_objective_evaluations == 0 or \
-                state.objective_value_previous_iteration \
-                < current_obj + state.allowed_increase or not state.blocking:
-                state.position.assign(state.position - update)
-
             state.num_objective_evaluations.assign_add(2)
-            state.objective_value_previous_iteration.assign(
-                state.objective_value)
-            state.objective_value.assign(current_obj)
+
+            current_obj = expectation_value_function(state.position - update)
+            if state.objective_value_previous_iteration + state.allowed_increase \
+                >= current_obj or not state.blocking:
+                state.position.assign(state.position - update)
+                state.objective_value_previous_iteration.assign(
+                    state.objective_value)
+                state.objective_value.assign(current_obj)
 
             return [state]
 
