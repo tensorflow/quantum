@@ -19,6 +19,7 @@ import sympy
 import cirq
 
 GRID_QUBIT_ID_PATTERN = r'^q?(-?\d+)_(-?\d+)$'
+LINE_QUBIT_ID_PATTERN = r'^q?(-?\d+)$'
 SUPPORTED_FUNCTIONS_FOR_LANGUAGE = {
     '': frozenset(),
     'linear': frozenset({'add', 'mul'}),
@@ -42,11 +43,17 @@ def qubit_from_proto(proto_id):
     """
 
     match = re.match(GRID_QUBIT_ID_PATTERN, proto_id)
-    if match is None:
-        raise ValueError(
-            f'Expected GridQubit proto w/ form [q]<int>_<int>, got {proto_id}')
-    row, col = match.groups()
-    return cirq.GridQubit(row=int(row), col=int(col))
+    if match is not None:
+        row, col = match.groups()
+        return cirq.GridQubit(row=int(row), col=int(col))
+
+    match = re.match(LINE_QUBIT_ID_PATTERN, proto_id)
+    if match is not None:
+        x, = match.groups()
+        return cirq.LineQubit(int(x))
+
+    raise ValueError('Expected GridQubit proto w/ form [q]<int>_<int>,'
+                     f' or LineQubit w/ form [q]<int> got {proto_id}')
 
 
 def _arg_from_proto(
@@ -202,7 +209,7 @@ class GateOpDeserializer:
         self.op_wrapper = op_wrapper
 
     def from_proto(self, proto, *, arg_function_language=''):
-        """Turns a cirq.google.api.v2.Operation proto into a GateOperation."""
+        """Turns a cirq_google.api.v2.Operation proto into a GateOperation."""
         qubits = [qubit_from_proto(q.id) for q in proto.qubits]
         args = self._args_from_proto(
             proto, arg_function_language=arg_function_language)

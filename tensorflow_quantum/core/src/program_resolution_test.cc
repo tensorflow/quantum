@@ -54,6 +54,29 @@ const std::string valid_program = R"(
   }
 )";
 
+const std::string valid_line_program = R"(
+  circuit {
+    moments {
+      operations {
+        args {
+          key: "control_qubits"
+          value {
+            arg_value {
+              string_value: "0_1"
+            }
+          }
+        }
+        qubits {
+          id: "1"
+        }
+        qubits {
+          id: "2"
+        }
+      }
+    }
+  }
+)";
+
 const std::string valid_psum = R"(
   terms {
     coefficient_real: 1.0
@@ -163,6 +186,26 @@ TEST(ProgramResolutionTest, ResolveQubitIdsValid) {
   unsigned int qubit_count;
   ASSERT_TRUE(
       google::protobuf::TextFormat::ParseFromString(valid_program, &program));
+
+  EXPECT_EQ(ResolveQubitIds(&program, &qubit_count), Status::OK());
+  EXPECT_EQ(qubit_count, 3);
+  EXPECT_EQ(program.circuit().moments(0).operations(0).qubits(0).id(), "1");
+  EXPECT_EQ(program.circuit().moments(0).operations(0).qubits(1).id(), "2");
+  EXPECT_EQ(program.circuit()
+                .moments(0)
+                .operations(0)
+                .args()
+                .at("control_qubits")
+                .arg_value()
+                .string_value(),
+            "0");
+}
+
+TEST(ProgramResolutionTest, ResolveQubitIdsValidLine) {
+  Program program;
+  unsigned int qubit_count;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(valid_line_program,
+                                                            &program));
 
   EXPECT_EQ(ResolveQubitIds(&program, &qubit_count), Status::OK());
   EXPECT_EQ(qubit_count, 3);
@@ -524,18 +567,16 @@ TEST(ProgramResolutionTest, ResolveSymbolsStrictFull) {
             2.0);
 }
 
-TEST(ProgramResolutionTest, CheckQubitsIn1DEmpty) {
-  std::vector<Program> empty_programs;
-  EXPECT_EQ(CheckQubitsIn1D(&empty_programs), Status::OK());
+TEST(ProgramResolutionTest, CheckMPSSupportedEmpty) {
+  Program empty;
+  EXPECT_EQ(CheckMPSSupported(empty), Status::OK());
 }
 
 TEST(ProgramResolutionTest, CheckQubitsIn1DFailedByOpWithMoreThan2Qubits) {
-  std::vector<Program> programs;
   Program program_with_3qubit_op;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       three_qubit_op_program, &program_with_3qubit_op));
-  programs.push_back(program_with_3qubit_op);
-  EXPECT_EQ(CheckQubitsIn1D(&programs),
+  EXPECT_EQ(CheckMPSSupported(program_with_3qubit_op),
             Status(tensorflow::error::INVALID_ARGUMENT,
                    "1D operations only support 1 and 2 qubit gates. "
                    "Found: 3 qubit gate."));
@@ -543,24 +584,20 @@ TEST(ProgramResolutionTest, CheckQubitsIn1DFailedByOpWithMoreThan2Qubits) {
 
 TEST(ProgramResolutionTest,
      CheckQubitsIn1DFailedByOpWithMoreThan2QubitsOnControlQubits) {
-  std::vector<Program> programs;
   Program program_with_3qubit_op;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       valid_program, &program_with_3qubit_op));
-  programs.push_back(program_with_3qubit_op);
-  EXPECT_EQ(CheckQubitsIn1D(&programs),
+  EXPECT_EQ(CheckMPSSupported(program_with_3qubit_op),
             Status(tensorflow::error::INVALID_ARGUMENT,
                    "1D operations only support 1 and 2 qubit gates. "
                    "Found: 3 qubit gate."));
 }
 
 TEST(ProgramResolutionTest, CheckQubitsIn1DFailedByNot1DTopology) {
-  std::vector<Program> programs;
   Program program_not_1d;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       resolved_qubit_program_not_1d, &program_not_1d));
-  programs.push_back(program_not_1d);
-  EXPECT_EQ(CheckQubitsIn1D(&programs),
+  EXPECT_EQ(CheckMPSSupported(program_not_1d),
             Status(tensorflow::error::INVALID_ARGUMENT,
                    "A program is not in 1D topology. It contains an"
                    " operation with qubits not neighbors each other."));

@@ -115,7 +115,10 @@ def _apply_random_control(gate, all_qubits):
         return gate
     control_locs = random.sample(open_qubits, n_open)
     control_values = random.choices([0, 1], k=n_open)
-    return gate.controlled_by(*control_locs, control_values=control_values)
+    # TODO(tonybruguier,#636): Here we call the parent's class controlled_by
+    # because Cirq's breaking change #4167 created 3-qubit gates that cannot be
+    # serialized yet. Instead, support 3-qubit gates and revert the work-around.
+    return cirq.ControlledOperation(control_locs, gate, control_values)
 
 
 def random_symbol_circuit(qubits,
@@ -258,7 +261,7 @@ def random_pauli_sums(qubits, max_sum_length, n_sums):
 
 # There are no native convertible ops inside of this function.
 @tf.autograph.experimental.do_not_convert
-def convert_to_tensor(items_to_convert):
+def convert_to_tensor(items_to_convert, deterministic_proto_serialize=False):
     """Convert lists of tfq supported primitives to tensor representations.
 
     Recursively convert a nested lists of `cirq.PauliSum` or `cirq.Circuit`
@@ -290,6 +293,8 @@ def convert_to_tensor(items_to_convert):
     Args:
         items_to_convert: Python `list` or nested `list` of `cirq.Circuit`
             or `cirq.Paulisum` objects. Must be recangular.
+        deterministic_proto_serialize: Whether to use a deterministic
+            serialization when calling SerializeToString().
     Returns:
         A `tf.Tensor` that represents the input items.
 
@@ -310,12 +315,14 @@ def convert_to_tensor(items_to_convert):
                     not curr_type == cirq.Circuit:
                 curr_type = cirq.PauliSum
                 tensored_items.append(
-                    serializer.serialize_paulisum(item).SerializeToString())
+                    serializer.serialize_paulisum(item).SerializeToString(
+                        deterministic=deterministic_proto_serialize))
             elif isinstance(item, cirq.Circuit) and\
                     not curr_type == cirq.PauliSum:
                 curr_type = cirq.Circuit
                 tensored_items.append(
-                    serializer.serialize_circuit(item).SerializeToString())
+                    serializer.serialize_circuit(item).SerializeToString(
+                        deterministic=deterministic_proto_serialize))
             else:
                 raise TypeError("Incompatible item passed into "
                                 "convert_to_tensor. Tensor detected type: {}. "

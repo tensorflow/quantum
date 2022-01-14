@@ -13,6 +13,13 @@
 # limitations under the License.
 # ==============================================================================
 """Tests for the elementary layers."""
+# Remove PYTHONPATH collisions for protobuf.
+# pylint: disable=wrong-import-position
+import sys
+NEW_PATH = [x for x in sys.path if 'com_google_protobuf' not in x]
+sys.path = NEW_PATH
+# pylint: enable=wrong-import-position
+
 import tensorflow as tf
 import cirq
 import sympy
@@ -101,16 +108,20 @@ class AddCircuitTest(tf.test.TestCase):
         circuit_b = cirq.testing.random_circuit(bits, 10, 0.9,
                                                 util.get_supported_gates())
 
-        expected_append = util.convert_to_tensor([circuit_a + circuit_b])
-        expected_prepend = util.convert_to_tensor([circuit_b + circuit_a])
+        expected_append = util.convert_to_tensor(
+            [circuit_a + circuit_b], deterministic_proto_serialize=True)
+        expected_prepend = util.convert_to_tensor(
+            [circuit_b + circuit_a], deterministic_proto_serialize=True)
 
         append_layer = elementary.AddCircuit()
         prepend_layer = elementary.AddCircuit()
 
         actual_append = util.convert_to_tensor(
-            util.from_tensor(append_layer(circuit_a, append=circuit_b)))
+            util.from_tensor(append_layer(circuit_a, append=circuit_b)),
+            deterministic_proto_serialize=True)
         actual_prepend = util.convert_to_tensor(
-            util.from_tensor(prepend_layer(circuit_a, prepend=circuit_b)))
+            util.from_tensor(prepend_layer(circuit_a, prepend=circuit_b)),
+            deterministic_proto_serialize=True)
 
         self.assertEqual(expected_append.numpy()[0], actual_append.numpy()[0])
         self.assertEqual(expected_prepend.numpy()[0], actual_prepend.numpy()[0])

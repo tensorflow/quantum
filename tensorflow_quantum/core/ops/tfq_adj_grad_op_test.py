@@ -13,6 +13,13 @@
 # limitations under the License.
 # ==============================================================================
 """Tests that specifically target tfq_unitary_op."""
+# Remove PYTHONPATH collisions for protobuf.
+# pylint: disable=wrong-import-position
+import sys
+NEW_PATH = [x for x in sys.path if 'com_google_protobuf' not in x]
+sys.path = NEW_PATH
+# pylint: enable=wrong-import-position
+
 import numpy as np
 from absl.testing import parameterized
 import tensorflow as tf
@@ -359,7 +366,7 @@ class ADJGradTest(tf.test.TestCase, parameterized.TestCase):
         n_qubits = 2
         batch_size = 1
         symbol_names = ['alpha', 'beta', 'gamma']
-        qubits = cirq.GridQubit.rect(1, n_qubits)
+        qubits = cirq.LineQubit.range(n_qubits)
         circuit_batch, resolver_batch = \
         [cirq.Circuit(cirq.X(qubits[0]) ** sympy.Symbol('alpha'),
             cirq.Y(qubits[1]) ** sympy.Symbol('alpha'),

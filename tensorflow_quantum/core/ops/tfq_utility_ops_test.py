@@ -13,6 +13,13 @@
 # limitations under the License.
 # ==============================================================================
 """Tests for tfq utility ops."""
+# Remove PYTHONPATH collisions for protobuf.
+# pylint: disable=wrong-import-position
+import sys
+NEW_PATH = [x for x in sys.path if 'com_google_protobuf' not in x]
+sys.path = NEW_PATH
+# pylint: enable=wrong-import-position
+
 import numpy as np
 import sympy
 import tensorflow as tf
@@ -90,7 +97,7 @@ class AppendCircuitOpTest(tf.test.TestCase, parameterized.TestCase):
         base_circuits = []
         circuits_to_append = []
         qubits = cirq.GridQubit.rect(1, max_n_bits)
-        other_qubits = cirq.GridQubit.rect(2, max_n_bits)
+        other_qubits = cirq.GridQubit.rect(2, max_n_bits) + [cirq.LineQubit(10)]
 
         base_circuits, _ = util.random_symbol_circuit_resolver_batch(
             qubits,
@@ -117,8 +124,11 @@ class AppendCircuitOpTest(tf.test.TestCase, parameterized.TestCase):
         cirq_results = [
             a + b for a, b in zip(base_circuits, circuits_to_append)
         ]
-        self.assertAllEqual(util.convert_to_tensor(tfq_results),
-                            util.convert_to_tensor(cirq_results))
+        self.assertAllEqual(
+            util.convert_to_tensor(tfq_results,
+                                   deterministic_proto_serialize=True),
+            util.convert_to_tensor(cirq_results,
+                                   deterministic_proto_serialize=True))
 
     @parameterized.parameters([{
         'padded_array': [[[1, 0, 0, 0], [1, 1, 1, 1]],

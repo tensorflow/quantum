@@ -13,6 +13,13 @@
 # limitations under the License.
 # ==============================================================================
 """Tests that specifically target tfq_inner_product."""
+# Remove PYTHONPATH collisions for protobuf.
+# pylint: disable=wrong-import-position
+import sys
+NEW_PATH = [x for x in sys.path if 'com_google_protobuf' not in x]
+sys.path = NEW_PATH
+# pylint: enable=wrong-import-position
+
 import copy
 import numpy as np
 from absl.testing import parameterized
@@ -113,7 +120,7 @@ class FidelityTest(tf.test.TestCase, parameterized.TestCase):
     def test_correctness_without_symbols(self, n_qubits, batch_size,
                                          inner_dim_size):
         """Tests that inner_product works without symbols."""
-        qubits = cirq.GridQubit.rect(1, n_qubits)
+        qubits = cirq.LineQubit.range(n_qubits)
         circuit_batch, _ = \
             util.random_circuit_resolver_batch(
                 qubits, batch_size)

@@ -13,6 +13,13 @@
 # limitations under the License.
 # ==============================================================================
 """Tests that specifically target noisy sampling."""
+# Remove PYTHONPATH collisions for protobuf.
+# pylint: disable=wrong-import-position
+import sys
+NEW_PATH = [x for x in sys.path if 'com_google_protobuf' not in x]
+sys.path = NEW_PATH
+# pylint: enable=wrong-import-position
+
 import numpy as np
 from scipy import stats
 from absl.testing import parameterized
@@ -164,7 +171,7 @@ class NoisySamplingTest(tf.test.TestCase, parameterized.TestCase):
     def test_simulate_consistency(self, batch_size, n_qubits, noisy):
         """Test consistency with batch_util.py simulation."""
         symbol_names = ['alpha', 'beta']
-        qubits = cirq.GridQubit.rect(1, n_qubits)
+        qubits = cirq.LineQubit.range(n_qubits)
 
         circuit_batch, resolver_batch = \
             util.random_symbol_circuit_resolver_batch(

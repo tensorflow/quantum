@@ -41,11 +41,8 @@ def mps_1d_expectation(programs,
         pauli_sums: `tf.Tensor` of strings with shape [batch_size, n_ops]
             containing the string representation of the operators that will
             be used on all of the circuits in the expectation calculations.
-        bond_dim: `tf.Tensor` for an integer representing bond dimension
-            in this 1D MPS. This will create the following MPS:
-            [2, bond_dim], [bond_dim, 2, bond_dim] ... [bond_dim, 2]
+        bond_dim: Integer value used for the bond dimension during simulation.
 
-            The `bond_dim` should be >= 4.
     Returns:
         `tf.Tensor` with shape [batch_size, n_ops] that holds the
             expectation value for each circuit with each op applied to it

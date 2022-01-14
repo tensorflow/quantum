@@ -64,7 +64,8 @@ typedef absl::flat_hash_map<std::string, std::pair<int, float>> SymbolMap;
 tensorflow::Status GetProgramsAndNumQubits(
     tensorflow::OpKernelContext* context,
     std::vector<tfq::proto::Program>* programs, std::vector<int>* num_qubits,
-    std::vector<std::vector<tfq::proto::PauliSum>>* p_sums = nullptr);
+    std::vector<std::vector<tfq::proto::PauliSum>>* p_sums = nullptr,
+    bool swap_endianness = false);
 
 // Parses Cirq Program protos out of the 'circuit_specs' input Tensor. Also
 // resolves the QubitIds inside of the Program. This override also parses and
