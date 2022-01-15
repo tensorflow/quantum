@@ -121,88 +121,19 @@ class TfqSimulateMPS1dSamplesOp : public tensorflow::OpKernel {
       return;  // bug in qsim dependency we can't control.
     }
 
-    // Cross reference with standard google cloud compute instances
-    // Memory ~= 2 * num_threads * (2 * 64 * 2 ** num_qubits in circuits)
-    // e2s2 = 2 CPU, 8GB -> Can safely do 25 since Memory = 4GB
-    // e2s4 = 4 CPU, 16GB -> Can safely do 25 since Memory = 8GB
-    // ...
-    if (max_num_qubits >= 26 || programs.size() == 1) {
-      ComputeLarge(num_qubits, max_num_qubits, num_samples, fused_circuits,
-                   context, &output_tensor);
-    } else {
-      ComputeSmall(num_qubits, max_num_qubits, num_samples, fused_circuits,
-                   context, &output_tensor);
-    }
+    // Since MPS simulations have much smaller memory footprint,
+    // we do not need a ComputeLarge like we do for state vector simulation.
+    ComputeSmall(num_qubits, max_num_qubits, num_samples, qsim_circuits,
+                 context, &output_tensor);
   }
 
  private:
   int bond_dim_;
 
-  void ComputeLarge(
-      const std::vector<int>& num_qubits, const int max_num_qubits,
-      const int num_samples,
-      const std::vector<std::vector<qsim::GateFused<QsimGate>>>& fused_circuits,
-      tensorflow::OpKernelContext* context,
-      tensorflow::TTypes<int8_t, 3>::Tensor* output_tensor) {
-    // Instantiate qsim objects.
-    using Simulator = qsim::mps::MPSSimulator<qsim::For, float>;
-    using StateSpace = Simulator::MPSStateSpace_;
-
-    // Begin simulation.
-    int largest_nq = 1;
-    Simulator sim = Simulator(1);
-    StateSpace ss = StateSpace(1);
-    auto sv = ss.Create(largest_nq, bond_dim_);
-
-    tensorflow::GuardedPhiloxRandom random_gen;
-    random_gen.Init(tensorflow::random::New64(), tensorflow::random::New64());
-    auto local_gen = random_gen.ReserveSamples32(fused_circuits.size() + 1);
-    tensorflow::random::SimplePhilox rand_source(&local_gen);
-
-    // Simulate programs one by one. Parallelizing over state vectors
-    // we no longer parallelize over circuits. Each time we encounter a
-    // a larger circuit we will grow the Statevector as nescessary.
-    for (int i = 0; i < fused_circuits.size(); i++) {
-      int nq = num_qubits[i];
-
-      if (nq > largest_nq) {
-        // need to switch to larger statespace.
-        largest_nq = nq;
-        sv = ss.Create(largest_nq, bond_dim_);
-      }
-      ss.SetStateZero(sv);
-      auto fused_gates = fused_circuits[i];
-      for (auto gate : fused_gates) {
-        // TODO(jaeyoo): use qsim::ApplyFusedGate instead
-        //   when qsim==0.10.3 is up.
-        ApplyFusedGateMPS(sim, gate, sv);
-      }
-
-      auto samples = ss.Sample(sv, num_samples, rand_source.Rand32());
-      for (int j = 0; j < num_samples; j++) {
-        uint64_t q_ind = 0;
-        uint64_t mask = 1;
-        bool val = 0;
-        while (q_ind < nq) {
-          val = samples[j] & mask;
-          (*output_tensor)(
-              i, j, static_cast<ptrdiff_t>(max_num_qubits - q_ind - 1)) = val;
-          q_ind++;
-          mask <<= 1;
-        }
-        while (q_ind < max_num_qubits) {
-          (*output_tensor)(
-              i, j, static_cast<ptrdiff_t>(max_num_qubits - q_ind - 1)) = -2;
-          q_ind++;
-        }
-      }
-    }
-  }
-
   void ComputeSmall(
       const std::vector<int>& num_qubits, const int max_num_qubits,
       const int num_samples,
-      const std::vector<std::vector<qsim::GateFused<QsimGate>>>& fused_circuits,
+      const std::vector<QsimCircuit>& unfused_circuits,
       tensorflow::OpKernelContext* context,
       tensorflow::TTypes<int8_t, 3>::Tensor* output_tensor) {
     // Instantiate qsim objects.
@@ -214,11 +145,15 @@ class TfqSimulateMPS1dSamplesOp : public tensorflow::OpKernel {
 
     auto DoWork = [&](int start, int end) {
       int largest_nq = 1;
+      // Note: ForArgs in MPSSimulator and MPSStateState are currently unused.
+      // So, this 1 is a dummy for qsim::For.
       Simulator sim = Simulator(1);
       StateSpace ss = StateSpace(1);
       auto sv = ss.Create(largest_nq, bond_dim_);
+      auto scratch = ss.Create(largest_nq, bond_dim_);
+      auto scratch2 = ss.Create(largest_nq, bond_dim_);
 
-      auto local_gen = random_gen.ReserveSamples32(fused_circuits.size() + 1);
+      auto local_gen = random_gen.ReserveSamples32(unfused_circuits.size() + 1);
       tensorflow::random::SimplePhilox rand_source(&local_gen);
 
       for (int i = start; i < end; i++) {
@@ -228,26 +163,26 @@ class TfqSimulateMPS1dSamplesOp : public tensorflow::OpKernel {
           // need to switch to larger statespace.
           largest_nq = nq;
           sv = ss.Create(largest_nq, bond_dim_);
+          scratch = ss.Create(largest_nq, bond_dim_);
+          scratch2 = ss.Create(largest_nq, bond_dim_);
         }
         ss.SetStateZero(sv);
-        auto fused_gates = fused_circuits[i];
-        for (auto gate : fused_gates) {
-            // TODO(jaeyoo): use qsim::ApplyFusedGate instead
-            //   when qsim==0.10.3 is up.
-            ApplyFusedGateMPS(sim, gate, sv);
+        auto unfused_gates = unfused_circuits[i].gates;
+        for (auto gate : unfused_gates) {
+          // Can't fuse, since this might break nearest neighbor constraints.
+          qsim::ApplyGate(sim, gate, sv);
         }
 
-        auto samples = ss.Sample(sv, num_samples, rand_source.Rand32());
+        std::vector<std::vector<bool>> results;
+
+        ss.Sample(sv, scratch, scratch2, num_samples, rand_source.Rand32(), &results);
         for (int j = 0; j < num_samples; j++) {
           uint64_t q_ind = 0;
-          uint64_t mask = 1;
-          bool val = 0;
           while (q_ind < nq) {
-            val = samples[j] & mask;
             (*output_tensor)(
-                i, j, static_cast<ptrdiff_t>(max_num_qubits - q_ind - 1)) = val;
+                i, j, static_cast<ptrdiff_t>(max_num_qubits - q_ind - 1)) = 
+                results[j][max_num_qubits - q_ind - 1];;
             q_ind++;
-            mask <<= 1;
           }
           while (q_ind < max_num_qubits) {
             (*output_tensor)(
@@ -261,7 +196,7 @@ class TfqSimulateMPS1dSamplesOp : public tensorflow::OpKernel {
     const int64_t num_cycles =
         200 * (int64_t(1) << static_cast<int64_t>(max_num_qubits));
     context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
-        fused_circuits.size(), num_cycles, DoWork);
+        unfused_circuits.size(), num_cycles, DoWork);
   }
 };
 

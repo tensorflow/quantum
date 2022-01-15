@@ -19,6 +19,7 @@ from tensorflow_quantum.core.ops.load_module import load_module
 
 MATH_OP_MODULE = load_module(os.path.join("math_ops", "_tfq_math_ops.so"))
 
+print("="*80, dir(MATH_OP_MODULE))
 
 def mps_1d_expectation(programs,
                        symbol_names,
