@@ -326,9 +326,8 @@ tensorflow::Status ComputeSampledExpectationQsim(
               &state_samples);
 
     // Find qubits on which to measure parity and compute the BitMask.
-    std::vector<bool> mask;
     const unsigned int max_num_qubits = state.num_qubits();
-    mask.reserve(max_num_qubits);
+    std::vector<bool> mask(max_num_qubits, false);
     for (const tfq::proto::PauliQubitPair& pair : term.paulis()) {
       unsigned int location;
       // GridQubit id should be parsed down to integer at this upstream

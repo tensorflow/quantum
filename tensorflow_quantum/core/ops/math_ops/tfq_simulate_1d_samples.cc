@@ -48,9 +48,9 @@ using ::tfq::proto::Program;
 typedef qsim::Cirq::GateCirq<float> QsimGate;
 typedef qsim::Circuit<QsimGate> QsimCircuit;
 
-class TfqSimulateMPS1dSamplesOp : public tensorflow::OpKernel {
+class TfqSimulateMPS1DSamplesOp : public tensorflow::OpKernel {
  public:
-  explicit TfqSimulateMPS1dSamplesOp(tensorflow::OpKernelConstruction* context)
+  explicit TfqSimulateMPS1DSamplesOp(tensorflow::OpKernelConstruction* context)
       : OpKernel(context) {
     // Get the bond dimension of MPS
     OP_REQUIRES_OK(context, context->GetAttr("bond_dim", &bond_dim_));
@@ -201,10 +201,10 @@ class TfqSimulateMPS1dSamplesOp : public tensorflow::OpKernel {
 };
 
 REGISTER_KERNEL_BUILDER(
-    Name("TfqSimulateMPS1dSamples").Device(tensorflow::DEVICE_CPU),
-    TfqSimulateMPS1dSamplesOp);
+    Name("TfqSimulateMPS1DSamples").Device(tensorflow::DEVICE_CPU),
+    TfqSimulateMPS1DSamplesOp);
 
-REGISTER_OP("TfqSimulateMPS1dSamples")
+REGISTER_OP("TfqSimulateMPS1DSamples")
     .Input("programs: string")
     .Input("symbol_names: string")
     .Input("symbol_values: float")
