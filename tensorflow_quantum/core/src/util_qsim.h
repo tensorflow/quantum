@@ -188,7 +188,6 @@ tensorflow::Status ComputeExpectationQsim(const tfq::proto::PauliSum& p_sum,
   return status;
 }
 
-
 // bad style standards here that we are forced to follow from qsim.
 // computes the expectation value <state | p_sum | state > using
 // scratch to save on memory. Implementation does this:
@@ -271,7 +270,6 @@ tensorflow::Status ComputeSampledExpectationQsim(
   return status;
 }
 
-
 // Overloading for MPS : it requires more scratch states.
 // bad style standards here that we are forced to follow from qsim.
 // computes the expectation value <state | p_sum | state > using
@@ -286,8 +284,8 @@ template <typename SimT, typename StateSpaceT, typename StateT>
 tensorflow::Status ComputeSampledExpectationQsim(
     const tfq::proto::PauliSum& p_sum, const SimT& sim, const StateSpaceT& ss,
     StateT& state, StateT& scratch, StateT& scratch2, StateT& scratch3,
-    const int num_samples,
-    tensorflow::random::SimplePhilox& random_source, float* expectation_value) {
+    const int num_samples, tensorflow::random::SimplePhilox& random_source,
+    float* expectation_value) {
   std::uniform_int_distribution<> distrib(1, 1 << 30);
 
   if (num_samples == 0) {
@@ -324,7 +322,8 @@ tensorflow::Status ComputeSampledExpectationQsim(
     }
     std::vector<std::vector<bool>> state_samples;
 
-    ss.Sample(scratch, scratch2, scratch3, num_samples, random_source.Rand32(), &state_samples);
+    ss.Sample(scratch, scratch2, scratch3, num_samples, random_source.Rand32(),
+              &state_samples);
 
     // Find qubits on which to measure parity and compute the BitMask.
     std::vector<bool> mask;
@@ -343,7 +342,9 @@ tensorflow::Status ComputeSampledExpectationQsim(
     int parity_total(0);
     int count = 0;
     for (std::vector<bool>& state_sample : state_samples) {
-      std::transform(mask.begin(), mask.end(), state_sample.begin(), state_sample.begin(), [](bool x, bool y) -> bool {return x & y;});
+      std::transform(mask.begin(), mask.end(), state_sample.begin(),
+                     state_sample.begin(),
+                     [](bool x, bool y) -> bool { return x & y; });
       count = std::accumulate(state_sample.begin(), state_sample.end(), 0);
       parity_total += (count & 1) ? -1 : 1;
     }

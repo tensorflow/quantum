@@ -50,8 +50,7 @@ typedef qsim::Circuit<QsimGate> QsimCircuit;
 
 class TfqSimulateMPS1dSamplesOp : public tensorflow::OpKernel {
  public:
-  explicit TfqSimulateMPS1dSamplesOp(
-      tensorflow::OpKernelConstruction* context)
+  explicit TfqSimulateMPS1dSamplesOp(tensorflow::OpKernelConstruction* context)
       : OpKernel(context) {
     // Get the bond dimension of MPS
     OP_REQUIRES_OK(context, context->GetAttr("bond_dim", &bond_dim_));
@@ -130,12 +129,11 @@ class TfqSimulateMPS1dSamplesOp : public tensorflow::OpKernel {
  private:
   int bond_dim_;
 
-  void ComputeSmall(
-      const std::vector<int>& num_qubits, const int max_num_qubits,
-      const int num_samples,
-      const std::vector<QsimCircuit>& unfused_circuits,
-      tensorflow::OpKernelContext* context,
-      tensorflow::TTypes<int8_t, 3>::Tensor* output_tensor) {
+  void ComputeSmall(const std::vector<int>& num_qubits,
+                    const int max_num_qubits, const int num_samples,
+                    const std::vector<QsimCircuit>& unfused_circuits,
+                    tensorflow::OpKernelContext* context,
+                    tensorflow::TTypes<int8_t, 3>::Tensor* output_tensor) {
     // Instantiate qsim objects.
     using Simulator = qsim::mps::MPSSimulator<qsim::For, float>;
     using StateSpace = Simulator::MPSStateSpace_;
@@ -175,13 +173,15 @@ class TfqSimulateMPS1dSamplesOp : public tensorflow::OpKernel {
 
         std::vector<std::vector<bool>> results;
 
-        ss.Sample(sv, scratch, scratch2, num_samples, rand_source.Rand32(), &results);
+        ss.Sample(sv, scratch, scratch2, num_samples, rand_source.Rand32(),
+                  &results);
         for (int j = 0; j < num_samples; j++) {
           uint64_t q_ind = 0;
           while (q_ind < nq) {
             (*output_tensor)(
-                i, j, static_cast<ptrdiff_t>(max_num_qubits - q_ind - 1)) = 
-                results[j][max_num_qubits - q_ind - 1];;
+                i, j, static_cast<ptrdiff_t>(max_num_qubits - q_ind - 1)) =
+                results[j][max_num_qubits - q_ind - 1];
+            ;
             q_ind++;
           }
           while (q_ind < max_num_qubits) {

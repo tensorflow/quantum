@@ -395,85 +395,80 @@ class SimulateMPS1DSamplesTest(tf.test.TestCase, parameterized.TestCase):
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'rank 1. Got rank 2'):
             # programs tensor has the wrong shape.
-            simulate_mps.mps_1d_samples(
-                util.convert_to_tensor([circuit_batch]), symbol_names,
-                symbol_values_array, [num_samples])
+            simulate_mps.mps_1d_samples(util.convert_to_tensor([circuit_batch]),
+                                        symbol_names, symbol_values_array,
+                                        [num_samples])
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'rank 1. Got rank 2'):
             # symbol_names tensor has the wrong shape.
-            simulate_mps.mps_1d_samples(
-                util.convert_to_tensor(circuit_batch), np.array([symbol_names]),
-                symbol_values_array, [num_samples])
+            simulate_mps.mps_1d_samples(util.convert_to_tensor(circuit_batch),
+                                        np.array([symbol_names]),
+                                        symbol_values_array, [num_samples])
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'rank 2. Got rank 3'):
             # symbol_values tensor has the wrong shape.
-            simulate_mps.mps_1d_samples(
-                util.convert_to_tensor(circuit_batch), symbol_names,
-                np.array([symbol_values_array]), [num_samples])
+            simulate_mps.mps_1d_samples(util.convert_to_tensor(circuit_batch),
+                                        symbol_names,
+                                        np.array([symbol_values_array]),
+                                        [num_samples])
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'rank 2. Got rank 1'):
             # symbol_values tensor has the wrong shape 2.
-            simulate_mps.mps_1d_samples(
-                util.convert_to_tensor(circuit_batch), symbol_names,
-                symbol_values_array[0], [num_samples])
+            simulate_mps.mps_1d_samples(util.convert_to_tensor(circuit_batch),
+                                        symbol_names, symbol_values_array[0],
+                                        [num_samples])
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'rank 1. Got rank 2'):
             # num_samples tensor has the wrong shape.
-            simulate_mps.mps_1d_samples(
-                util.convert_to_tensor(circuit_batch), symbol_names,
-                symbol_values_array, [[num_samples]])
+            simulate_mps.mps_1d_samples(util.convert_to_tensor(circuit_batch),
+                                        symbol_names, symbol_values_array,
+                                        [[num_samples]])
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'Unparseable proto'):
             # programs tensor has the right type, but invalid value.
-            simulate_mps.mps_1d_samples(['junk'] * batch_size,
-                                                  symbol_names,
-                                                  symbol_values_array,
-                                                  [num_samples])
+            simulate_mps.mps_1d_samples(['junk'] * batch_size, symbol_names,
+                                        symbol_values_array, [num_samples])
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'Could not find symbol in parameter map'):
             # symbol_names tensor has the right type, but invalid value.
-            simulate_mps.mps_1d_samples(
-                util.convert_to_tensor(circuit_batch), ['junk'],
-                symbol_values_array, [num_samples])
+            simulate_mps.mps_1d_samples(util.convert_to_tensor(circuit_batch),
+                                        ['junk'], symbol_values_array,
+                                        [num_samples])
 
         with self.assertRaisesRegex(TypeError, 'Cannot convert'):
             # programs tensor has the wrong type.
-            simulate_mps.mps_1d_samples([1] * batch_size,
-                                                  symbol_names,
-                                                  symbol_values_array,
-                                                  [num_samples])
+            simulate_mps.mps_1d_samples([1] * batch_size, symbol_names,
+                                        symbol_values_array, [num_samples])
 
         with self.assertRaisesRegex(TypeError, 'Cannot convert'):
             # programs tensor has the wrong type.
-            simulate_mps.mps_1d_samples(
-                util.convert_to_tensor(circuit_batch), [1], symbol_values_array,
-                [num_samples])
+            simulate_mps.mps_1d_samples(util.convert_to_tensor(circuit_batch),
+                                        [1], symbol_values_array, [num_samples])
 
         with self.assertRaisesRegex(tf.errors.UnimplementedError,
                                     'Cast string to float is not supported'):
             # programs tensor has the wrong type.
-            simulate_mps.mps_1d_samples(
-                util.convert_to_tensor(circuit_batch), symbol_names,
-                [['junk']] * batch_size, [num_samples])
+            simulate_mps.mps_1d_samples(util.convert_to_tensor(circuit_batch),
+                                        symbol_names, [['junk']] * batch_size,
+                                        [num_samples])
 
         with self.assertRaisesRegex(Exception, 'junk'):
             # num_samples tensor has the wrong shape.
-            simulate_mps.mps_1d_samples(
-                util.convert_to_tensor(circuit_batch), symbol_names,
-                symbol_values_array, ['junk'])
+            simulate_mps.mps_1d_samples(util.convert_to_tensor(circuit_batch),
+                                        symbol_names, symbol_values_array,
+                                        ['junk'])
 
         with self.assertRaisesRegex(TypeError, 'missing'):
             # too few tensors.
             # pylint: disable=no-value-for-parameter
-            simulate_mps.mps_1d_samples(
-                util.convert_to_tensor(circuit_batch), symbol_names,
-                symbol_values_array)
+            simulate_mps.mps_1d_samples(util.convert_to_tensor(circuit_batch),
+                                        symbol_names, symbol_values_array)
             # pylint: enable=no-value-for-parameter
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
@@ -494,9 +489,9 @@ class SimulateMPS1DSamplesTest(tf.test.TestCase, parameterized.TestCase):
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'at least minimum 4'):
             # pylint: disable=too-many-function-args
-            simulate_mps.mps_1d_samples(
-                util.convert_to_tensor(circuit_batch), symbol_names,
-                symbol_values_array, [num_samples], 1)
+            simulate_mps.mps_1d_samples(util.convert_to_tensor(circuit_batch),
+                                        symbol_names, symbol_values_array,
+                                        [num_samples], 1)
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     expected_regex='not in 1D topology'):
@@ -783,8 +778,7 @@ class SimulateMPS1DSampledExpectationTest(tf.test.TestCase):
             simulate_mps.mps_1d_sampled_expectation(
                 util.convert_to_tensor([circuit_not_1d for _ in pauli_sums]),
                 symbol_names, symbol_values_array,
-                util.convert_to_tensor([[x] for x in pauli_sums]),
-                num_samples)
+                util.convert_to_tensor([[x] for x in pauli_sums]), num_samples)
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     expected_regex='not in 1D topology'):
@@ -801,8 +795,7 @@ class SimulateMPS1DSampledExpectationTest(tf.test.TestCase):
             simulate_mps.mps_1d_sampled_expectation(
                 util.convert_to_tensor([circuit_not_1d for _ in pauli_sums]),
                 symbol_names, symbol_values_array,
-                util.convert_to_tensor([[x] for x in pauli_sums]),
-                num_samples)
+                util.convert_to_tensor([[x] for x in pauli_sums]), num_samples)
 
 
 class InputTypesTest(tf.test.TestCase, parameterized.TestCase):
@@ -834,12 +827,12 @@ class InputTypesTest(tf.test.TestCase, parameterized.TestCase):
         pauli_sums = util.random_pauli_sums([qubit], 3, 1)
         pauli_sums = util.convert_to_tensor([[x] for x in pauli_sums])
 
-        result = simulate_mps.mps_1d_expectation(
-            circuits, symbol_names, symbol_values, pauli_sums)
+        result = simulate_mps.mps_1d_expectation(circuits, symbol_names,
+                                                 symbol_values, pauli_sums)
         self.assertDTypeEqual(result, np.float32)
 
         result = simulate_mps.mps_1d_samples(circuits, symbol_names,
-                                                       symbol_values, [100])
+                                             symbol_values, [100])
         self.assertDTypeEqual(result, np.int8)
 
         result = simulate_mps.mps_1d_sampled_expectation(

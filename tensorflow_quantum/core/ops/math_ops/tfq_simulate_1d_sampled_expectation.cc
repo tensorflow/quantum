@@ -132,7 +132,6 @@ class TfqSimulateMPS1DSampledExpectationOp : public tensorflow::OpKernel {
       max_num_qubits = std::max(max_num_qubits, num);
     }
 
-    
     // Since MPS simulations have much smaller memory footprint,
     // we do not need a ComputeLarge like we do for state vector simulation.
     ComputeSmall(num_qubits, max_num_qubits, qsim_circuits, pauli_sums,
@@ -141,13 +140,13 @@ class TfqSimulateMPS1DSampledExpectationOp : public tensorflow::OpKernel {
 
  private:
   int bond_dim_;
-  void ComputeSmall(
-      const std::vector<int>& num_qubits, const int max_num_qubits,
-      const std::vector<QsimCircuit>& unfused_circuits,
-      const std::vector<std::vector<PauliSum>>& pauli_sums,
-      const std::vector<std::vector<int>>& num_samples,
-      tensorflow::OpKernelContext* context,
-      tensorflow::TTypes<float, 1>::Matrix* output_tensor) {
+  void ComputeSmall(const std::vector<int>& num_qubits,
+                    const int max_num_qubits,
+                    const std::vector<QsimCircuit>& unfused_circuits,
+                    const std::vector<std::vector<PauliSum>>& pauli_sums,
+                    const std::vector<std::vector<int>>& num_samples,
+                    tensorflow::OpKernelContext* context,
+                    tensorflow::TTypes<float, 1>::Matrix* output_tensor) {
     // Instantiate qsim objects.
     using Simulator = qsim::mps::MPSSimulator<qsim::For, float>;
     using StateSpace = Simulator::MPSStateSpace_;
@@ -227,9 +226,8 @@ class TfqSimulateMPS1DSampledExpectationOp : public tensorflow::OpKernel {
             compute_status,
             ComputeSampledExpectationQsim(
                 pauli_sums[cur_batch_index][cur_op_index], sim, ss, sv, scratch,
-                scratch2, scratch3,
-                num_samples[cur_batch_index][cur_op_index], rand_source,
-                &exp_v),
+                scratch2, scratch3, num_samples[cur_batch_index][cur_op_index],
+                rand_source, &exp_v),
             c_lock);
 
         (*output_tensor)(cur_batch_index, cur_op_index) = exp_v;
