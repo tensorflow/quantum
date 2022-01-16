@@ -16,6 +16,7 @@
 import os
 import tensorflow as tf
 from tensorflow_quantum.core.ops.load_module import load_module
+from tensorflow_quantum.core.ops import tfq_utility_ops
 
 MATH_OP_MODULE = load_module(os.path.join("math_ops", "_tfq_math_ops.so"))
 
@@ -57,17 +58,16 @@ def mps_1d_expectation(programs,
                                                          bond_dim=bond_dim)
 
 
-def mps_1d_samples(programs,
-                   symbol_names,
-                   symbol_values,
-                   num_samples,
-                   bond_dim=4):
-    """Generate samples using the C++ state vector simulator.
+def mps_1d_sample(programs,
+                  symbol_names,
+                  symbol_values,
+                  num_samples,
+                  bond_dim=4):
+    """Generate samples using the C++ MPS simulator.
 
     Simulate the final state of `programs` given `symbol_values` are placed
     inside of the symbols with the name in `symbol_names` in each circuit.
-    From there we will then sample from the final state using native tensorflow
-    operations.
+    From there we will then sample from the final state.
 
     Args:
         programs: `tf.Tensor` of strings with shape [batch_size] containing
@@ -85,16 +85,17 @@ def mps_1d_samples(programs,
         bond_dim: Integer value used for the bond dimension during simulation.
 
     Returns:
-        A `tf.Tensor` containing the samples taken from each circuit in
+        A `tf.RaggedTensor` containing the samples taken from each circuit in
         `programs`.
     """
-    return MATH_OP_MODULE.tfq_simulate_mps1d_samples(programs,
-                                                     symbol_names,
-                                                     tf.cast(
-                                                         symbol_values,
-                                                         tf.float32),
-                                                     num_samples,
-                                                     bond_dim=bond_dim)
+    padded_samples = MATH_OP_MODULE.tfq_simulate_mps1d_samples(
+        programs,
+        symbol_names,
+        tf.cast(symbol_values, tf.float32),
+        num_samples,
+        bond_dim=bond_dim)
+
+    return tfq_utility_ops.padded_to_ragged(padded_samples)
 
 
 def mps_1d_sampled_expectation(programs,

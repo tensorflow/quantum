@@ -120,10 +120,18 @@ class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
         output_dim_batch_size, num_cycles, construct_f);
     OP_REQUIRES_OK(context, parse_status);
 
+    // Find largest circuit for tensor size padding and allocate
+    // the output tensor.
     int max_num_qubits = 0;
+    int min_num_qubits = 1 << 30;
     for (const int num : num_qubits) {
       max_num_qubits = std::max(max_num_qubits, num);
+      min_num_qubits = std::min(min_num_qubits, num);
     }
+
+    OP_REQUIRES(context, min_num_qubits > 3,
+                tensorflow::errors::InvalidArgument(
+                    "All input circuits require minimum 3 qubits."));
 
     // Since MPS simulations have much smaller memory footprint,
     // we do not need a ComputeLarge like we do for state vector simulation.

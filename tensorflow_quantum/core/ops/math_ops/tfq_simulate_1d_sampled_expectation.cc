@@ -37,6 +37,7 @@ limitations under the License.
 #include "tensorflow_quantum/core/ops/parse_context.h"
 #include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
 #include "tensorflow_quantum/core/proto/program.pb.h"
+#include "tensorflow_quantum/core/src/program_resolution.h"
 #include "tensorflow_quantum/core/src/util_qsim.h"
 
 namespace tfq {
@@ -78,8 +79,9 @@ class TfqSimulateMPS1DSampledExpectationOp : public tensorflow::OpKernel {
     std::vector<Program> programs;
     std::vector<int> num_qubits;
     std::vector<std::vector<PauliSum>> pauli_sums;
-    OP_REQUIRES_OK(context, GetProgramsAndNumQubits(context, &programs,
-                                                    &num_qubits, &pauli_sums));
+    OP_REQUIRES_OK(context,
+                   GetProgramsAndNumQubits(context, &programs, &num_qubits,
+                                           &pauli_sums, true));
 
     std::vector<SymbolMap> maps;
     OP_REQUIRES_OK(context, GetSymbolMaps(context, &maps));
@@ -118,6 +120,10 @@ class TfqSimulateMPS1DSampledExpectationOp : public tensorflow::OpKernel {
         Status local =
             QsimCircuitFromProgram(programs[i], maps[i], num_qubits[i],
                                    &qsim_circuits[i], &fused_circuits[i]);
+        // If parsing works, check MPS constraints.
+        if (local.ok()) {
+          local = CheckMPSSupported(programs[i]);
+        }
         NESTED_FN_STATUS_SYNC(parse_status, local, p_lock);
       }
     };
@@ -127,10 +133,18 @@ class TfqSimulateMPS1DSampledExpectationOp : public tensorflow::OpKernel {
         programs.size(), num_cycles, construct_f);
     OP_REQUIRES_OK(context, parse_status);
 
+    // Find largest circuit for tensor size padding and allocate
+    // the output tensor.
     int max_num_qubits = 0;
+    int min_num_qubits = 1 << 30;
     for (const int num : num_qubits) {
       max_num_qubits = std::max(max_num_qubits, num);
+      min_num_qubits = std::min(min_num_qubits, num);
     }
+
+    OP_REQUIRES(context, min_num_qubits > 3,
+                tensorflow::errors::InvalidArgument(
+                    "All input circuits require minimum 3 qubits."));
 
     // Since MPS simulations have much smaller memory footprint,
     // we do not need a ComputeLarge like we do for state vector simulation.
@@ -224,7 +238,7 @@ class TfqSimulateMPS1DSampledExpectationOp : public tensorflow::OpKernel {
         float exp_v = 0.0;
         NESTED_FN_STATUS_SYNC(
             compute_status,
-            ComputeSampledExpectationQsim(
+            ComputeMPSSampledExpectationQsim(
                 pauli_sums[cur_batch_index][cur_op_index], sim, ss, sv, scratch,
                 scratch2, scratch3, num_samples[cur_batch_index][cur_op_index],
                 rand_source, &exp_v),

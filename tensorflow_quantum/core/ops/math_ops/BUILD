@@ -129,7 +129,9 @@ py_library(
     srcs = ["simulate_mps.py"],
     data = [":_tfq_math_ops.so"],
     deps = [
+        "//tensorflow_quantum/core/ops:batch_util",
         "//tensorflow_quantum/core/ops:load_module",
+        "//tensorflow_quantum/core/ops:tfq_utility_ops_py",
     ],
 )
 

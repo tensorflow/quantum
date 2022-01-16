@@ -38,6 +38,7 @@ limitations under the License.
 #include "tensorflow_quantum/core/ops/parse_context.h"
 #include "tensorflow_quantum/core/proto/program.pb.h"
 #include "tensorflow_quantum/core/src/circuit_parser_qsim.h"
+#include "tensorflow_quantum/core/src/program_resolution.h"
 #include "tensorflow_quantum/core/src/util_qsim.h"
 
 namespace tfq {
@@ -64,7 +65,8 @@ class TfqSimulateMPS1DSamplesOp : public tensorflow::OpKernel {
     std::vector<Program> programs;
     std::vector<int> num_qubits;
     OP_REQUIRES_OK(context,
-                   GetProgramsAndNumQubits(context, &programs, &num_qubits));
+                   GetProgramsAndNumQubits(context, &programs, &num_qubits,
+                                           nullptr, true));
 
     // Parse symbol maps for parameter resolution in the circuits.
     std::vector<SymbolMap> maps;
@@ -90,6 +92,10 @@ class TfqSimulateMPS1DSamplesOp : public tensorflow::OpKernel {
         Status local =
             QsimCircuitFromProgram(programs[i], maps[i], num_qubits[i],
                                    &qsim_circuits[i], &fused_circuits[i]);
+        // If parsing works, check MPS constraints.
+        if (local.ok()) {
+          local = CheckMPSSupported(programs[i]);
+        }
         NESTED_FN_STATUS_SYNC(parse_status, local, p_lock);
       }
     };
@@ -102,9 +108,15 @@ class TfqSimulateMPS1DSamplesOp : public tensorflow::OpKernel {
     // Find largest circuit for tensor size padding and allocate
     // the output tensor.
     int max_num_qubits = 0;
+    int min_num_qubits = 1 << 30;
     for (const int num : num_qubits) {
       max_num_qubits = std::max(max_num_qubits, num);
+      min_num_qubits = std::min(min_num_qubits, num);
     }
+
+    OP_REQUIRES(context, min_num_qubits > 3,
+                tensorflow::errors::InvalidArgument(
+                    "All input circuits require minimum 3 qubits."));
 
     const int output_dim_size = maps.size();
     tensorflow::TensorShape output_shape;
@@ -171,22 +183,21 @@ class TfqSimulateMPS1DSamplesOp : public tensorflow::OpKernel {
           qsim::ApplyGate(sim, gate, sv);
         }
 
-        std::vector<std::vector<bool>> results;
+        std::vector<std::vector<bool>> results(num_samples,
+                                               std::vector<bool>({}));
 
         ss.Sample(sv, scratch, scratch2, num_samples, rand_source.Rand32(),
                   &results);
+
         for (int j = 0; j < num_samples; j++) {
-          uint64_t q_ind = 0;
-          while (q_ind < nq) {
-            (*output_tensor)(
-                i, j, static_cast<ptrdiff_t>(max_num_qubits - q_ind - 1)) =
-                results[j][max_num_qubits - q_ind - 1];
-            ;
+          int64_t q_ind = 0;
+          while (q_ind < max_num_qubits - nq) {
+            (*output_tensor)(i, j, static_cast<ptrdiff_t>(q_ind)) = -2;
             q_ind++;
           }
           while (q_ind < max_num_qubits) {
-            (*output_tensor)(
-                i, j, static_cast<ptrdiff_t>(max_num_qubits - q_ind - 1)) = -2;
+            (*output_tensor)(i, j, static_cast<ptrdiff_t>(q_ind)) =
+                results[j][q_ind - max_num_qubits + nq];
             q_ind++;
           }
         }

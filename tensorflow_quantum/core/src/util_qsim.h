@@ -28,7 +28,6 @@ limitations under the License.
 #include "../qsim/lib/gate_appl.h"
 #include "../qsim/lib/gates_cirq.h"
 #include "../qsim/lib/matrix.h"
-#include "../qsim/lib/mps_statespace.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow/core/lib/random/simple_philox.h"
@@ -281,7 +280,7 @@ tensorflow::Status ComputeSampledExpectationQsim(
 // scratch is required to have memory initialized, but does not require
 // values in memory to be set.
 template <typename SimT, typename StateSpaceT, typename StateT>
-tensorflow::Status ComputeSampledExpectationQsim(
+tensorflow::Status ComputeMPSSampledExpectationQsim(
     const tfq::proto::PauliSum& p_sum, const SimT& sim, const StateSpaceT& ss,
     StateT& state, StateT& scratch, StateT& scratch2, StateT& scratch3,
     const int num_samples, tensorflow::random::SimplePhilox& random_source,
@@ -320,7 +319,8 @@ tensorflow::Status ComputeSampledExpectationQsim(
     if (!status.ok()) {
       return status;
     }
-    std::vector<std::vector<bool>> state_samples;
+    std::vector<std::vector<bool>> state_samples(num_samples,
+                                                 std::vector<bool>({}));
 
     ss.Sample(scratch, scratch2, scratch3, num_samples, random_source.Rand32(),
               &state_samples);
