@@ -159,10 +159,10 @@ def minimize(expectation_value_function,
         tolerance: Scalar `tf.Tensor` of real dtype. Specifies the tolerance
             for the procedure. If the supremum norm between two iteration
             vector is below this number, the algorithm is stopped.
-        a: Scalar `tf.Tensor` of real dtype. Specifies the learning rate
+        lr: Scalar `tf.Tensor` of real dtype. Specifies the learning rate
         alpha: Scalar `tf.Tensor` of real dtype. Specifies scaling of the
             learning rate.
-        c: Scalar `tf.Tensor` of real dtype. Specifies the size of the
+        perturb: Scalar `tf.Tensor` of real dtype. Specifies the size of the
             perturbations.
         gamma: Scalar `tf.Tensor` of real dtype. Specifies scaling of the
             size of the perturbations.
@@ -171,6 +171,8 @@ def minimize(expectation_value_function,
         allowed_increase: Scalar `tf.Tensor` of real dtype. Specifies maximum
             allowable increase in objective function (only applies if blocking
             is true).
+        seed: (Optional) Python integer. Used to create a random seed for the
+            perturbations.
         name: (Optional) Python `str`. The name prefixed to the ops created
             by this function. If not supplied, the default name 'minimize'
             is used.
@@ -182,7 +184,9 @@ def minimize(expectation_value_function,
 
     with tf.name_scope(name or 'minimize'):
         if seed is not None:
-            tf.random.set_seed(seed)
+            generator = tf.random.Generator.from_seed(seed)
+        else:
+            generator = tf.random
 
         initial_position = tf.convert_to_tensor(initial_position,
                                                 name='initial_position',
@@ -210,7 +214,7 @@ def minimize(expectation_value_function,
                 states: A list which the first element is the new state
             """
             delta_shift = tf.cast(
-                2 * tf.random.uniform(shape=state.position.shape,
+                2 * generator.uniform(shape=state.position.shape,
                                       minval=0,
                                       maxval=2,
                                       dtype=tf.int32) - 1, tf.float32)
