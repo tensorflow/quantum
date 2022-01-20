@@ -35,13 +35,11 @@ from tensorflow_quantum.python.optimizers import rotosolve_minimizer
 def loss_function_with_model_parameters(model, loss, train_x, train_y):
     """Create a new function that assign the model parameter to the model
     and evaluate its value.
-
     Args:
         model : an instance of `tf.keras.Model` or its subclasses.
         loss : a function with signature loss_value = loss(pred_y, true_y).
         train_x : the input part of training data.
         train_y : the output part of training data.
-
     Returns:
         A function that has a signature of:
             loss_value = f(model_parameters).
@@ -62,10 +60,8 @@ def loss_function_with_model_parameters(model, loss, train_x, train_y):
     @tf.function
     def func(params):
         """A function that can be used by tfq.optimizer.rotosolve_minimize.
-
         Args:
            params [in]: a 1D tf.Tensor.
-
         Returns:
             Loss function value
         """
