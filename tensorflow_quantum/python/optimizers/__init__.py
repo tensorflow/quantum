@@ -17,3 +17,5 @@
 # Quantum circuit specific optimizers.
 from tensorflow_quantum.python.optimizers.rotosolve_minimizer import (
     minimize as rotosolve_minimize)
+from tensorflow_quantum.python.optimizers.spsa_minimizer import (minimize as
+                                                                 spsa_minimize)

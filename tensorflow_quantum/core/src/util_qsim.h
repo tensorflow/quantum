@@ -18,6 +18,8 @@ limitations under the License.
 
 #include <bitset>
 #include <cstdint>
+#include <functional>
+#include <numeric>
 #include <random>
 #include <vector>
 
@@ -385,6 +387,91 @@ tensorflow::Status ComputeSampledExpectationQsim(
       count =
           std::bitset<64>(state_sample & mask).count() == parity_bits.size();
       parity_total += count ? 1 : 0;
+    }
+    *expectation_value += static_cast<float>(parity_total) *
+                          term.coefficient_real() /
+                          static_cast<float>(num_samples);
+  }
+  return status;
+}
+
+// Overloading for MPS : it requires more scratch states.
+// bad style standards here that we are forced to follow from qsim.
+// computes the expectation value <state | p_sum | state > using
+// scratch to save on memory. Implementation does this:
+// 1. Copy state onto scratch
+// 2. Convert scratch to Z basis
+// 3. Compute < state | scratch > via sampling.
+// 4. Sum and repeat.
+// scratch is required to have memory initialized, but does not require
+// values in memory to be set.
+template <typename SimT, typename StateSpaceT, typename StateT>
+tensorflow::Status ComputeMPSSampledExpectationQsim(
+    const tfq::proto::PauliSum& p_sum, const SimT& sim, const StateSpaceT& ss,
+    StateT& state, StateT& scratch, StateT& scratch2, StateT& scratch3,
+    const int num_samples, tensorflow::random::SimplePhilox& random_source,
+    float* expectation_value) {
+  std::uniform_int_distribution<> distrib(1, 1 << 30);
+
+  if (num_samples == 0) {
+    return tensorflow::Status::OK();
+  }
+  // apply the gates of the pauliterms to a copy of the state vector
+  // and add up expectation value term by term.
+  tensorflow::Status status = tensorflow::Status::OK();
+  for (const tfq::proto::PauliTerm& term : p_sum.terms()) {
+    // catch identity terms
+    if (term.paulis_size() == 0) {
+      *expectation_value += term.coefficient_real();
+      // TODO(zaqqwerty): error somewhere if identities have any imaginary part
+      continue;
+    }
+
+    // Transform state into the measurement basis and sample it
+    QsimCircuit main_circuit;
+    std::vector<qsim::GateFused<QsimGate>> fused_circuit;
+
+    status = QsimZBasisCircuitFromPauliTerm(term, state.num_qubits(),
+                                            &main_circuit, &fused_circuit);
+    if (!status.ok()) {
+      return status;
+    }
+    // copy from src to scratch.
+    ss.Copy(state, scratch);
+    for (const auto& unfused_gate : main_circuit.gates) {
+      qsim::ApplyGate(sim, unfused_gate, scratch);
+    }
+
+    if (!status.ok()) {
+      return status;
+    }
+    std::vector<std::vector<bool>> state_samples(num_samples,
+                                                 std::vector<bool>({}));
+
+    ss.Sample(scratch, scratch2, scratch3, num_samples, random_source.Rand32(),
+              &state_samples);
+
+    // Find qubits on which to measure parity and compute the BitMask.
+    const unsigned int max_num_qubits = state.num_qubits();
+    std::vector<bool> mask(max_num_qubits, false);
+    for (const tfq::proto::PauliQubitPair& pair : term.paulis()) {
+      unsigned int location;
+      // GridQubit id should be parsed down to integer at this upstream
+      //  so it is safe to just use atoi.
+      (void)absl::SimpleAtoi(pair.qubit_id(), &location);
+      // Parity functions use little-endian indexing
+      mask[max_num_qubits - location - 1] = 1;
+    }
+
+    // Compute the running parity.
+    int parity_total(0);
+    int count = 0;
+    for (std::vector<bool>& state_sample : state_samples) {
+      std::transform(mask.begin(), mask.end(), state_sample.begin(),
+                     state_sample.begin(),
+                     [](bool x, bool y) -> bool { return x & y; });
+      count = std::accumulate(state_sample.begin(), state_sample.end(), 0);
+      parity_total += (count & 1) ? -1 : 1;
     }
     *expectation_value += static_cast<float>(parity_total) *
                           term.coefficient_real() /

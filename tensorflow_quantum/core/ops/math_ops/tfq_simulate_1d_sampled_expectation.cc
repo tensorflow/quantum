@@ -30,7 +30,10 @@ limitations under the License.
 #include "tensorflow/core/lib/core/error_codes.pb.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow/core/lib/core/threadpool.h"
+#include "tensorflow/core/lib/random/random.h"
+#include "tensorflow/core/lib/random/simple_philox.h"
 #include "tensorflow/core/platform/mutex.h"
+#include "tensorflow/core/util/guarded_philox_random.h"
 #include "tensorflow_quantum/core/ops/parse_context.h"
 #include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
 #include "tensorflow_quantum/core/proto/program.pb.h"
@@ -46,22 +49,21 @@ using ::tfq::proto::Program;
 typedef qsim::Cirq::GateCirq<float> QsimGate;
 typedef qsim::Circuit<QsimGate> QsimCircuit;
 
-class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
+class TfqSimulateMPS1DSampledExpectationOp : public tensorflow::OpKernel {
  public:
-  explicit TfqSimulateMPS1DExpectationOp(
+  explicit TfqSimulateMPS1DSampledExpectationOp(
       tensorflow::OpKernelConstruction* context)
       : OpKernel(context) {
     // Get the bond dimension of MPS
-    // Checked that bond_dim is a positive integer >= 2 by QSim definition.
     OP_REQUIRES_OK(context, context->GetAttr("bond_dim", &bond_dim_));
   }
 
   void Compute(tensorflow::OpKernelContext* context) override {
     // TODO (mbbrough): add more dimension checks for other inputs here.
     const int num_inputs = context->num_inputs();
-    OP_REQUIRES(context, num_inputs == 4,
+    OP_REQUIRES(context, num_inputs == 5,
                 tensorflow::errors::InvalidArgument(absl::StrCat(
-                    "Expected 4 inputs, got ", num_inputs, " inputs.")));
+                    "Expected 5 inputs, got ", num_inputs, " inputs.")));
 
     // Create the output Tensor.
     const int output_dim_batch_size = context->input(0).dim_size(0);
@@ -74,18 +76,12 @@ class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
     OP_REQUIRES_OK(context, context->allocate_output(0, output_shape, &output));
     auto output_tensor = output->matrix<float>();
 
-    // Parse program protos.
     std::vector<Program> programs;
     std::vector<int> num_qubits;
     std::vector<std::vector<PauliSum>> pauli_sums;
-
-    // TODO: remove endianness workaround introduced here:
-    // https://github.com/tensorflow/quantum/pull/610
-    // once https://github.com/quantumlib/qsim/issues/492
-    // is resolved.
     OP_REQUIRES_OK(context,
                    GetProgramsAndNumQubits(context, &programs, &num_qubits,
-                                           &pauli_sums, nullptr, true));
+                                           &pauli_sums, true));
 
     std::vector<SymbolMap> maps;
     OP_REQUIRES_OK(context, GetSymbolMaps(context, &maps));
@@ -96,10 +92,27 @@ class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
                     programs.size(), " circuits and ", maps.size(),
                     " symbol values.")));
 
+    std::vector<std::vector<int>> num_samples;
+    OP_REQUIRES_OK(context, GetNumSamples(context, &num_samples));
+
+    OP_REQUIRES(context, num_samples.size() == pauli_sums.size(),
+                tensorflow::errors::InvalidArgument(absl::StrCat(
+                    "Dimension 0 of num_samples and pauli_sums do not match.",
+                    "Got ", num_samples.size(), " lists of sample sizes and ",
+                    pauli_sums.size(), " lists of pauli sums.")));
+
+    OP_REQUIRES(
+        context, context->input(4).dim_size(1) == context->input(3).dim_size(1),
+        tensorflow::errors::InvalidArgument(absl::StrCat(
+            "Dimension 1 of num_samples and pauli_sums do not match.", "Got ",
+            context->input(4).dim_size(1), " lists of sample sizes and ",
+            context->input(3).dim_size(1), " lists of pauli sums.")));
+
     // Construct qsim circuits.
     std::vector<QsimCircuit> qsim_circuits(programs.size(), QsimCircuit());
-    std::vector<QsimFusedCircuit> fused_circuits(programs.size(),
-                                                 QsimFusedCircuit({}));
+    std::vector<std::vector<qsim::GateFused<QsimGate>>> fused_circuits(
+        programs.size(), std::vector<qsim::GateFused<QsimGate>>({}));
+
     Status parse_status = Status::OK();
     auto p_lock = tensorflow::mutex();
     auto construct_f = [&](int start, int end) {
@@ -117,7 +130,7 @@ class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
 
     const int num_cycles = 1000;
     context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
-        output_dim_batch_size, num_cycles, construct_f);
+        programs.size(), num_cycles, construct_f);
     OP_REQUIRES_OK(context, parse_status);
 
     // Find largest circuit for tensor size padding and allocate
@@ -135,23 +148,36 @@ class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
 
     // Since MPS simulations have much smaller memory footprint,
     // we do not need a ComputeLarge like we do for state vector simulation.
-    ComputeSmall(num_qubits, max_num_qubits, qsim_circuits, pauli_sums, context,
-                 &output_tensor);
+    ComputeSmall(num_qubits, max_num_qubits, qsim_circuits, pauli_sums,
+                 num_samples, context, &output_tensor);
   }
 
  private:
   int bond_dim_;
-
   void ComputeSmall(const std::vector<int>& num_qubits,
                     const int max_num_qubits,
                     const std::vector<QsimCircuit>& unfused_circuits,
                     const std::vector<std::vector<PauliSum>>& pauli_sums,
+                    const std::vector<std::vector<int>>& num_samples,
                     tensorflow::OpKernelContext* context,
-                    tensorflow::TTypes<float>::Matrix* output_tensor) {
+                    tensorflow::TTypes<float, 1>::Matrix* output_tensor) {
+    // Instantiate qsim objects.
     using Simulator = qsim::mps::MPSSimulator<qsim::For, float>;
     using StateSpace = Simulator::MPSStateSpace_;
 
     const int output_dim_op_size = output_tensor->dimension(1);
+
+    tensorflow::GuardedPhiloxRandom random_gen;
+    random_gen.Init(tensorflow::random::New64(), tensorflow::random::New64());
+    int largest_sum = -1;
+    for (const auto& sums : pauli_sums) {
+      for (const auto& sum : sums) {
+        largest_sum = std::max(largest_sum, sum.terms().size());
+      }
+    }
+    const int num_threads = context->device()
+                                ->tensorflow_cpu_worker_threads()
+                                ->workers->NumThreads();
 
     Status compute_status = Status::OK();
     auto c_lock = tensorflow::mutex();
@@ -167,6 +193,15 @@ class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
       StateSpace ss = StateSpace(1);
       auto sv = ss.Create(largest_nq, bond_dim_);
       auto scratch = ss.Create(largest_nq, bond_dim_);
+      auto scratch2 = ss.Create(largest_nq, bond_dim_);
+      auto scratch3 = ss.Create(largest_nq, bond_dim_);
+
+      int n_random = largest_sum * output_dim_op_size * unfused_circuits.size();
+      n_random /= num_threads;
+      n_random += 1;
+      auto local_gen = random_gen.ReserveSamples32(n_random);
+      tensorflow::random::SimplePhilox rand_source(&local_gen);
+
       for (int i = start; i < end; i++) {
         cur_batch_index = i / output_dim_op_size;
         cur_op_index = i % output_dim_op_size;
@@ -175,6 +210,7 @@ class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
 
         // (#679) Just ignore empty program
         auto unfused_gates = unfused_circuits[cur_batch_index].gates;
+        // (#679) Just ignore empty program
         if (unfused_gates.size() == 0) {
           (*output_tensor)(cur_batch_index, cur_op_index) = -2.0;
           continue;
@@ -187,8 +223,10 @@ class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
             largest_nq = nq;
             sv = ss.Create(largest_nq, bond_dim_);
             scratch = ss.Create(largest_nq, bond_dim_);
+            scratch2 = ss.Create(largest_nq, bond_dim_);
+            scratch3 = ss.Create(largest_nq, bond_dim_);
           }
-          // no need to update scratch_state since ComputeExpectationMPSQsim
+          // no need to update scratch_state since ComputeExpectation
           // will take care of things for us.
           ss.SetStateZero(sv);
           for (auto gate : unfused_gates) {
@@ -197,13 +235,15 @@ class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
           }
         }
 
-        // Compute expectation values without fusing gates.
         float exp_v = 0.0;
         NESTED_FN_STATUS_SYNC(
             compute_status,
-            ComputeExpectationQsim(pauli_sums[cur_batch_index][cur_op_index],
-                                   sim, ss, sv, scratch, &exp_v, false),
+            ComputeMPSSampledExpectationQsim(
+                pauli_sums[cur_batch_index][cur_op_index], sim, ss, sv, scratch,
+                scratch2, scratch3, num_samples[cur_batch_index][cur_op_index],
+                rand_source, &exp_v),
             c_lock);
+
         (*output_tensor)(cur_batch_index, cur_op_index) = exp_v;
         old_batch_index = cur_batch_index;
       }
@@ -218,14 +258,15 @@ class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
 };
 
 REGISTER_KERNEL_BUILDER(
-    Name("TfqSimulateMPS1DExpectation").Device(tensorflow::DEVICE_CPU),
-    TfqSimulateMPS1DExpectationOp);
+    Name("TfqSimulateMPS1DSampledExpectation").Device(tensorflow::DEVICE_CPU),
+    TfqSimulateMPS1DSampledExpectationOp);
 
-REGISTER_OP("TfqSimulateMPS1DExpectation")
+REGISTER_OP("TfqSimulateMPS1DSampledExpectation")
     .Input("programs: string")
     .Input("symbol_names: string")
     .Input("symbol_values: float")
     .Input("pauli_sums: string")
+    .Input("num_samples: int32")
     .Output("expectations: float")
     .Attr("bond_dim: int >= 4 = 4")
     .SetShapeFn([](tensorflow::shape_inference::InferenceContext* c) {
@@ -240,6 +281,9 @@ REGISTER_OP("TfqSimulateMPS1DExpectation")
 
       tensorflow::shape_inference::ShapeHandle pauli_sums_shape;
       TF_RETURN_IF_ERROR(c->WithRank(c->input(3), 2, &pauli_sums_shape));
+
+      tensorflow::shape_inference::ShapeHandle num_samples_shape;
+      TF_RETURN_IF_ERROR(c->WithRank(c->input(4), 2, &num_samples_shape));
 
       tensorflow::shape_inference::DimensionHandle output_rows =
           c->Dim(programs_shape, 0);
