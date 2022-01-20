@@ -27,6 +27,11 @@ def mps_1d_expectation(programs,
                        pauli_sums,
                        bond_dim=4):
     """Calculate the expectation value of circuits wrt some operator(s)
+    
+    Simulate the final state of `programs` given `symbol_values` are placed
+    inside of the symbols with the name in `symbol_names` in each circuit.
+    From there we will then compute the expectation values of `pauli_sums`
+    on the final states. Note that this op requires 1D non periodic circuits.
 
     Args:
         programs: `tf.Tensor` of strings with shape [batch_size] containing
@@ -67,7 +72,8 @@ def mps_1d_sample(programs,
 
     Simulate the final state of `programs` given `symbol_values` are placed
     inside of the symbols with the name in `symbol_names` in each circuit.
-    From there we will then sample from the final state.
+    From there we will then sample from the final state. Note that this op
+    requires 1D non periodic circuits.
 
     Args:
         programs: `tf.Tensor` of strings with shape [batch_size] containing
@@ -109,7 +115,8 @@ def mps_1d_sampled_expectation(programs,
     Simulate the final state of `programs` given `symbol_values` are placed
     inside of the symbols with the name in `symbol_names` in each circuit.
     Them, sample the resulting state `num_samples` times and use these samples
-    to compute expectation values of the given `pauli_sums`.
+    to compute expectation values of the given `pauli_sums`. Note that this op
+    requires 1D non periodic circuits.
 
     Args:
         programs: `tf.Tensor` of strings with shape [batch_size] containing
