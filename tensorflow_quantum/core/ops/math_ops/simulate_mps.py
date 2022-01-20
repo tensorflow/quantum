@@ -27,7 +27,7 @@ def mps_1d_expectation(programs,
                        pauli_sums,
                        bond_dim=4):
     """Calculate the expectation value of circuits wrt some operator(s)
-    
+
     Simulate the final state of `programs` given `symbol_values` are placed
     inside of the symbols with the name in `symbol_names` in each circuit.
     From there we will then compute the expectation values of `pauli_sums`
