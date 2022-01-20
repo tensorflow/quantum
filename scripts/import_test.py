@@ -38,6 +38,8 @@ def test_imports():
     _ = tfq.math.inner_product
     _ = tfq.math.fidelity
     _ = tfq.math.mps_1d_expectation
+    _ = tfq.math.mps_1d_sample
+    _ = tfq.math.mps_1d_sampled_expectation
 
     # Noisy simulation ops.
     _ = tfq.noise.expectation
@@ -81,6 +83,7 @@ def test_imports():
 
     #Optimizers
     _ = tfq.optimizers.rotosolve_minimize
+    _ = tfq.optimizers.spsa_minimize
 
 
 if __name__ == "__main__":

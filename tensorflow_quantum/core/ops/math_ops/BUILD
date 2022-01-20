@@ -18,6 +18,8 @@ cc_binary(
         "tfq_inner_product.cc",
         "tfq_inner_product_grad.cc",
         "tfq_simulate_1d_expectation.cc",
+        "tfq_simulate_1d_samples.cc",
+        "tfq_simulate_1d_sampled_expectation.cc",
     ],
     copts = select({
         ":windows": [
@@ -127,7 +129,9 @@ py_library(
     srcs = ["simulate_mps.py"],
     data = [":_tfq_math_ops.so"],
     deps = [
+        "//tensorflow_quantum/core/ops:batch_util",
         "//tensorflow_quantum/core/ops:load_module",
+        "//tensorflow_quantum/core/ops:tfq_utility_ops_py",
     ],
 )
 
