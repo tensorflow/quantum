@@ -59,7 +59,7 @@ REQUIRED_PACKAGES = [
 # placed as extra to not have required overwrite existing nightly installs if
 # they exist.
 EXTRA_PACKAGES = ['tensorflow == 2.7.0']
-CUR_VERSION = '0.6.1'
+CUR_VERSION = '0.7.0'
 
 
 class BinaryDistribution(Distribution):
@@ -104,7 +104,6 @@ setup(
         'Intended Audience :: Education',
         'Intended Audience :: Science/Research',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
