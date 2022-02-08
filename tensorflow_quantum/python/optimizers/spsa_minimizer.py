@@ -135,7 +135,7 @@ def minimize(expectation_value_function,
     Here is an example of optimize a function which consists the
     summation of a few quadratics.
 
-    >>> n = 5  # Number of quadractics
+    >>> n = 5  # Number of quadratics
     >>> coefficient = tf.random.uniform(minval=0, maxval=1, shape=[n])
     >>> min_value = 0
     >>> func = func = lambda x : tf.math.reduce_sum(np.power(x, 2) * \
