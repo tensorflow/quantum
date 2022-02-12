@@ -10,14 +10,14 @@ There are a few ways to set up your environment to use TensorFlow Quantum (TFQ):
   Python's pip package manager.
 * Or build TensorFlow Quantum from source.
 
-TensorFlow Quantum is supported on Python 3.6, 3.7, and 3.8 and depends directly on [Cirq](https://github.com/quantumlib/Cirq).
+TensorFlow Quantum is supported on Python 3.7, 3.8, and 3.9 and depends directly on [Cirq](https://github.com/quantumlib/Cirq).
 
 ## Pip package
 
 ### Requirements
 
 * pip 19.0 or later (requires `manylinux2010` support)
-* [TensorFlow == 2.4.1](https://www.tensorflow.org/install/pip)
+* [TensorFlow == 2.7.0](https://www.tensorflow.org/install/pip)
 
 See the [TensorFlow install guide](https://www.tensorflow.org/install/pip) to
 set up your Python development environment and an (optional) virtual environment.
@@ -27,7 +27,7 @@ Upgrade `pip` and install TensorFlow
 <!-- common_typos_disable -->
 <pre class="devsite-click-to-copy">
   <code class="devsite-terminal">pip3 install --upgrade pip</code>
-  <code class="devsite-terminal">pip3 install tensorflow==2.4.1</code>
+  <code class="devsite-terminal">pip3 install tensorflow==2.7.0</code>
 </pre>
 <!-- common_typos_enable -->
 
