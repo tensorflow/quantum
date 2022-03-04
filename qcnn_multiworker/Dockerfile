@@ -13,13 +13,13 @@
 # limitations under the License.
 # ==============================================================================
 
-FROM tensorflow/tensorflow:2.4.1
+FROM tensorflow/tensorflow:2.7.0
 
 # google-cloud-core is a dependency of google-cloud-storage
 # Pinning google-cloud-core to 1.5.0 explicitly for now to bypass the
-# requirements conflict between tensorflow-quantum 0.5.0 and and the latest
+# requirements conflict between tensorflow-quantum 0.6.0 and and the latest
 # google-cloud-core (1.6.0) over the package google-auth.
-RUN pip install tensorflow-quantum==0.5.0 google-cloud-core==1.5.0 google-cloud-storage==1.38.0 tensorboard-plugin-profile==2.4.0
+RUN pip install tensorflow-quantum==0.6.0 google-cloud-core==1.5.0 google-cloud-storage==1.38.0 tensorboard-plugin-profile==2.7.0
 
 COPY training/qcnn.py .
 COPY inference/qcnn_inference.py .
