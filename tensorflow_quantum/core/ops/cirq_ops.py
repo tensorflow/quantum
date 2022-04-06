@@ -529,10 +529,11 @@ def _get_cirq_samples(sampler=cirq.Simulator()):
 
         else:
             # All other cirq.Samplers handled here.
-            #TODO(zaqqwerty): replace with run_batch once Cirq #3148 is resolved
             cirq_results = []
-            for p, r in zip(programs, resolvers):
-                cirq_results.append(sampler.run(p, r, num_samples))
+            for results in sampler.run_batch(programs,
+                                             params_list=resolvers,
+                                             repetitions=num_samples):
+                cirq_results.extend(results)
 
         results = []
         for r in cirq_results:
