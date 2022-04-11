@@ -35,7 +35,7 @@ class Sample(tf.keras.layers.Layer):
     ...     q1 = cirq.GridQubit(1, 0)
     ...     circuit = cirq.Circuit(
     ...         cirq.X(q0),
-    ...         cirq.CNOT(q1)
+    ...         cirq.CNOT(q0, q1)
     ...     )
     ...
     ...     return circuit
