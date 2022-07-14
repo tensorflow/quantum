@@ -173,11 +173,8 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
       param.collect_mea_stat = true;
       param.normalize_before_mea_gates = true;
 
-
-
       // Track op-wise stats.
       QTSimulator::Stat gathered_samples;
-      //std::vector<uint64_t> gathered_samples;
 
       for (int j = 0; j < num_samples; j++) {
         ss.SetStateZero(sv);
