@@ -108,7 +108,7 @@ def _apply_random_control(gate, all_qubits):
         A new gate with a random subset of the set difference
         between all_qubits and gate.qubits controlling `gate`.
     """
-    open_qubits = set(all_qubits) - set(gate.qubits)
+    open_qubits = list(set(all_qubits) - set(gate.qubits))
     n_open = min(len(open_qubits), 3)
     if n_open == 0:
         # No open qubits to control. Return unmodified gate.

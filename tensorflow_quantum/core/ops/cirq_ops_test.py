@@ -350,9 +350,7 @@ class CirqSamplesTest(tf.test.TestCase, parameterized.TestCase):
         cirq_ops._get_cirq_samples(cirq.DensityMatrixSimulator())
         mock_engine = mock.Mock()
         cirq_ops._get_cirq_samples(
-            cirq_google.QuantumEngineSampler(engine=mock_engine,
-                                             processor_id='test',
-                                             gate_set=cirq_google.XMON))
+            cirq_google.engine.ProcessorSampler(processor='test'))
 
     def test_cirq_sampling_op_inputs(self):
         """test input checking in the cirq sampling op."""
@@ -451,14 +449,16 @@ class CirqSamplesTest(tf.test.TestCase, parameterized.TestCase):
             def run_sweep(self, program, params, repetitions):
                 """Returns all ones in the correct sample shape."""
                 return [
-                    cirq.Result(
+                    cirq.SimulationTrialResult(
                         params=param,
                         measurements={
                             'tfq':
                                 np.array([[1] * len(program.all_qubits())] *
                                          repetitions,
                                          dtype=np.int32),
-                        }) for param in cirq.to_resolvers(params)
+                        },
+                        final_simulator_state=None)
+                    for param in cirq.to_resolvers(params)
                 ]
 
         all_n_qubits = [1, 2, 3, 4, 5]
