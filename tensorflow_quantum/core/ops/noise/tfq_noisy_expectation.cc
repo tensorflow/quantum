@@ -208,7 +208,7 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
       param.collect_kop_stat = false;
       param.collect_mea_stat = false;
       param.normalize_before_mea_gates = true;
-      std::vector<uint64_t> unused_stats;
+      QTSimulator::Stat unused_stats;
       // Track op-wise stats.
       std::vector<int> run_samples(num_samples[i].size(), 0);
       std::vector<double> rolling_sums(num_samples[i].size(), 0.0);
@@ -217,7 +217,7 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
         ss.SetStateZero(sv);
 
         QTSimulator::RunOnce(param, ncircuits[i], rand_source.Rand64(), ss, sim,
-                             scratch, sv, unused_stats);
+                             sv, unused_stats);
 
         // Use this trajectory as a source for all expectation calculations.
         for (int j = 0; j < pauli_sums[i].size(); j++) {
@@ -325,7 +325,7 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
         param.collect_kop_stat = false;
         param.collect_mea_stat = false;
         param.normalize_before_mea_gates = true;
-        std::vector<uint64_t> unused_stats;
+        QTSimulator::Stat unused_stats;
         // Track op-wise stats.
         std::vector<int> run_samples(num_samples[i].size(), 0);
         std::vector<double> rolling_sums(num_samples[i].size(), 0.0);
@@ -334,7 +334,7 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
           ss.SetStateZero(sv);
 
           QTSimulator::RunOnce(param, ncircuits[i], rand_source.Rand64(), ss,
-                               sim, scratch, sv, unused_stats);
+                               sim, sv, unused_stats);
 
           // Compute expectations across all ops using this trajectory.
           for (int j = 0; j < pauli_sums[i].size(); j++) {
