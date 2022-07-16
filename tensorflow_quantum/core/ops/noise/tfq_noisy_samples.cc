@@ -149,7 +149,6 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
     Simulator sim = Simulator(tfq_for);
     StateSpace ss = StateSpace(tfq_for);
     auto sv = ss.Create(largest_nq);
-    auto scratch = ss.Create(largest_nq);
 
     tensorflow::GuardedPhiloxRandom random_gen;
     random_gen.Init(tensorflow::random::New64(), tensorflow::random::New64());
@@ -167,7 +166,6 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
         // need to switch to larger statespace.
         largest_nq = nq;
         sv = ss.Create(largest_nq);
-        scratch = ss.Create(largest_nq);
       }
 
       QTSimulator::Parameter param;
@@ -176,18 +174,18 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
       param.normalize_before_mea_gates = true;
 
       // Track op-wise stats.
-      std::vector<uint64_t> gathered_samples;
+      QTSimulator::Stat gathered_samples;
 
       for (int j = 0; j < num_samples; j++) {
         ss.SetStateZero(sv);
 
         QTSimulator::RunOnce(param, ncircuits[i], rand_source.Rand64(), ss, sim,
-                             scratch, sv, gathered_samples);
+                             sv, gathered_samples);
         uint64_t q_ind = 0;
         uint64_t mask = 1;
         bool val = 0;
         while (q_ind < nq) {
-          val = gathered_samples[0] & mask;
+          val = gathered_samples.samples[0] & mask;
           (*output_tensor)(
               i, j, static_cast<ptrdiff_t>(max_num_qubits - q_ind - 1)) = val;
           q_ind++;
@@ -247,7 +245,6 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
       Simulator sim = Simulator(tfq_for);
       StateSpace ss = StateSpace(tfq_for);
       auto sv = ss.Create(largest_nq);
-      auto scratch = ss.Create(largest_nq);
 
       int needed_random =
           4 * (num_samples * ncircuits.size() + num_threads) / num_threads;
@@ -266,7 +263,6 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
         if (nq > largest_nq) {
           largest_nq = nq;
           sv = ss.Create(largest_nq);
-          scratch = ss.Create(largest_nq);
         }
         QTSimulator::Parameter param;
         param.collect_kop_stat = false;
@@ -274,19 +270,19 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
         param.normalize_before_mea_gates = true;
 
         // Track op-wise stats.
-        std::vector<uint64_t> gathered_samples;
+        QTSimulator::Stat gathered_samples;
         int run_samples = 0;
 
         while (1) {
           ss.SetStateZero(sv);
           QTSimulator::RunOnce(param, ncircuits[i], rand_source.Rand64(), ss,
-                               sim, scratch, sv, gathered_samples);
+                               sim, sv, gathered_samples);
 
           uint64_t q_ind = 0;
           uint64_t mask = 1;
           bool val = 0;
           while (q_ind < nq) {
-            val = gathered_samples[0] & mask;
+            val = gathered_samples.samples[0] & mask;
             (*output_tensor)(
                 i, j, static_cast<ptrdiff_t>(max_num_qubits - q_ind - 1)) = val;
             q_ind++;
