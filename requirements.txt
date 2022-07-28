@@ -5,7 +5,7 @@ numpy==1.19.5  # TensorFlow can detect if it was built against other versions.
 nbformat==4.4.0
 pylint==2.4.4
 yapf==0.28.0
-tensorflow==2.7.0
+tensorflow==2.7.2
 # Needed for compatibility with cirq program protos.
 googleapis-common-protos==1.52.0
 google-api-core==1.21.0
