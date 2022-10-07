@@ -327,8 +327,7 @@ TEST(ProgramResolutionTest, ResolveQubitIdsMultiProgram) {
       ->set_string_value("0_2");  // turn 0_0 -> 0_2!
 
   std::vector<Program> other_programs = {other, other};
-  EXPECT_EQ(ResolveQubitIds(&program, &qubit_count, &other_programs),
-            Status());
+  EXPECT_EQ(ResolveQubitIds(&program, &qubit_count, &other_programs), Status());
   EXPECT_EQ(qubit_count, 3);
   EXPECT_EQ(program.circuit().moments(0).operations(0).qubits(0).id(), "1");
   EXPECT_EQ(program.circuit().moments(0).operations(0).qubits(1).id(), "2");
