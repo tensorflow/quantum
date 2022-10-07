@@ -187,7 +187,7 @@ TEST(ProgramResolutionTest, ResolveQubitIdsValid) {
   ASSERT_TRUE(
       google::protobuf::TextFormat::ParseFromString(valid_program, &program));
 
-  EXPECT_EQ(ResolveQubitIds(&program, &qubit_count), Status::OK());
+  EXPECT_EQ(ResolveQubitIds(&program, &qubit_count), Status());
   EXPECT_EQ(qubit_count, 3);
   EXPECT_EQ(program.circuit().moments(0).operations(0).qubits(0).id(), "1");
   EXPECT_EQ(program.circuit().moments(0).operations(0).qubits(1).id(), "2");
@@ -207,7 +207,7 @@ TEST(ProgramResolutionTest, ResolveQubitIdsValidLine) {
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(valid_line_program,
                                                             &program));
 
-  EXPECT_EQ(ResolveQubitIds(&program, &qubit_count), Status::OK());
+  EXPECT_EQ(ResolveQubitIds(&program, &qubit_count), Status());
   EXPECT_EQ(qubit_count, 3);
   EXPECT_EQ(program.circuit().moments(0).operations(0).qubits(0).id(), "1");
   EXPECT_EQ(program.circuit().moments(0).operations(0).qubits(1).id(), "2");
@@ -266,7 +266,7 @@ TEST(ProgramResolutionTest, ResolveQubitIdsWithPauliSum) {
       google::protobuf::TextFormat::ParseFromString(valid_psum, &p_sum));
   std::vector<PauliSum> p_sums = {p_sum, p_sum};
 
-  EXPECT_EQ(ResolveQubitIds(&program, &qubit_count, &p_sums), Status::OK());
+  EXPECT_EQ(ResolveQubitIds(&program, &qubit_count, &p_sums), Status());
   EXPECT_EQ(qubit_count, 3);
   EXPECT_EQ(program.circuit().moments(0).operations(0).qubits(0).id(), "1");
   EXPECT_EQ(program.circuit().moments(0).operations(0).qubits(1).id(), "2");
@@ -328,7 +328,7 @@ TEST(ProgramResolutionTest, ResolveQubitIdsMultiProgram) {
 
   std::vector<Program> other_programs = {other, other};
   EXPECT_EQ(ResolveQubitIds(&program, &qubit_count, &other_programs),
-            Status::OK());
+            Status());
   EXPECT_EQ(qubit_count, 3);
   EXPECT_EQ(program.circuit().moments(0).operations(0).qubits(0).id(), "1");
   EXPECT_EQ(program.circuit().moments(0).operations(0).qubits(1).id(), "2");
@@ -488,7 +488,7 @@ TEST(ProgramResolutionTest, ResolveSymbolsPartial) {
       valid_symbol_program, &symbol_program));
   const absl::flat_hash_map<std::string, std::pair<int, float>> param_map = {
       {"v1", {0, 1.0}}};
-  EXPECT_EQ(ResolveSymbols(param_map, &symbol_program, false), Status::OK());
+  EXPECT_EQ(ResolveSymbols(param_map, &symbol_program, false), Status());
   EXPECT_EQ(symbol_program.circuit()
                 .moments(0)
                 .operations(0)
@@ -512,7 +512,7 @@ TEST(ProgramResolutionTest, ResolveSymbolsFull) {
       valid_symbol_program, &symbol_program));
   const absl::flat_hash_map<std::string, std::pair<int, float>> param_map = {
       {"v1", {0, 1.0}}, {"v2", {1, 2.0f}}};
-  EXPECT_EQ(ResolveSymbols(param_map, &symbol_program, false), Status::OK());
+  EXPECT_EQ(ResolveSymbols(param_map, &symbol_program, false), Status());
   EXPECT_EQ(symbol_program.circuit()
                 .moments(0)
                 .operations(0)
@@ -548,7 +548,7 @@ TEST(ProgramResolutionTest, ResolveSymbolsStrictFull) {
       valid_symbol_program, &symbol_program));
   const absl::flat_hash_map<std::string, std::pair<int, float>> param_map = {
       {"v1", {0, 1.0}}, {"v2", {1, 2.0f}}};
-  EXPECT_EQ(ResolveSymbols(param_map, &symbol_program, true), Status::OK());
+  EXPECT_EQ(ResolveSymbols(param_map, &symbol_program, true), Status());
   EXPECT_EQ(symbol_program.circuit()
                 .moments(0)
                 .operations(0)
@@ -569,7 +569,7 @@ TEST(ProgramResolutionTest, ResolveSymbolsStrictFull) {
 
 TEST(ProgramResolutionTest, CheckMPSSupportedEmpty) {
   Program empty;
-  EXPECT_EQ(CheckMPSSupported(empty), Status::OK());
+  EXPECT_EQ(CheckMPSSupported(empty), Status());
 }
 
 TEST(ProgramResolutionTest, CheckQubitsIn1DFailedByOpWithMoreThan2Qubits) {
