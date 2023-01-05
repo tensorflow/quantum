@@ -38,6 +38,9 @@ using tfq::proto::PauliQubitPair;
 using tfq::proto::PauliSum;
 using tfq::proto::PauliTerm;
 using tfq::proto::Program;
+using tfq::proto::ProjectorDictEntry;
+using tfq::proto::ProjectorSum;
+using tfq::proto::ProjectorTerm;
 using tfq::proto::Qubit;
 
 inline absl::string_view IntMaxStr() {
@@ -84,6 +87,7 @@ Status RegisterQubits(
 
 Status ResolveQubitIds(Program* program, unsigned int* num_qubits,
                        std::vector<PauliSum>* p_sums /*=nullptr*/,
+                       std::vector<ProjectorSum>* projector_sums /*=nullptr*/,
                        bool swap_endianness /*=false*/) {
   if (program->circuit().moments().empty()) {
     // (#679) Just ignore empty program.
@@ -169,6 +173,23 @@ Status ResolveQubitIds(Program* program, unsigned int* num_qubits,
             return Status(
                 tensorflow::error::INVALID_ARGUMENT,
                 "Found a Pauli sum operating on qubits not found in circuit.");
+          }
+          pair.set_qubit_id(result->second);
+        }
+      }
+    }
+  }
+
+  if (projector_sums) {
+    for (size_t i = 0; i < projector_sums->size(); i++) {
+      // Replace the ProjectorSum Qubit ids with the indices.
+      for (ProjectorTerm& term : *(projector_sums->at(i)).mutable_terms()) {
+        for (ProjectorDictEntry& pair : *term.mutable_projector_dict()) {
+          const auto result = id_to_index.find(pair.qubit_id());
+          if (result == id_to_index.end()) {
+            return Status(tensorflow::error::INVALID_ARGUMENT,
+                          "Found a Projector sum operating on qubits not found "
+                          "in circuit.");
           }
           pair.set_qubit_id(result->second);
         }

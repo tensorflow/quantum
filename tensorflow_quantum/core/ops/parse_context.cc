@@ -37,6 +37,7 @@ using ::tensorflow::Status;
 using ::tensorflow::Tensor;
 using ::tfq::proto::PauliSum;
 using ::tfq::proto::Program;
+using ::tfq::proto::ProjectorSum;
 
 template <typename T>
 Status ParseProto(const std::string& text, T* proto) {
@@ -151,10 +152,12 @@ Status GetProgramsAndNumQubits(
     OpKernelContext* context, std::vector<Program>* programs,
     std::vector<int>* num_qubits,
     std::vector<std::vector<PauliSum>>* p_sums /*=nullptr*/,
+    std::vector<std::vector<ProjectorSum>>* proj_sums /*=nullptr*/,
     bool swap_endianness /*=false*/) {
   // 1. Parse input programs
   // 2. (Optional) Parse input PauliSums
-  // 3. Convert GridQubit locations to integers.
+  // 3. (Optional) Parse input ProjectorSums
+  // 4. Convert GridQubit locations to integers.
   Status status = ParsePrograms(context, "programs", programs);
   if (!status.ok()) {
     return status;
@@ -174,19 +177,37 @@ Status GetProgramsAndNumQubits(
     }
   }
 
+  if (proj_sums) {
+    status = GetProjectorSums(context, proj_sums);
+    if (!status.ok()) {
+      return status;
+    }
+    if (programs->size() != proj_sums->size()) {
+      return Status(
+          tensorflow::error::INVALID_ARGUMENT,
+          absl::StrCat(
+              "Number of circuits and ProjectorSums do not match. Got ",
+              programs->size(), " circuits and ", proj_sums->size(),
+              " projectorsums."));
+    }
+  }
+
   // Resolve qubit ID's in parallel.
   num_qubits->assign(programs->size(), -1);
   auto DoWork = [&](int start, int end) {
     for (int i = start; i < end; i++) {
       Program& program = (*programs)[i];
       unsigned int this_num_qubits;
-      if (p_sums) {
+      if (p_sums || proj_sums) {
+        auto iter_p_sums = p_sums ? &(p_sums->at(i)) : nullptr;
+        auto iter_proj_sums = proj_sums ? &(proj_sums->at(i)) : nullptr;
         OP_REQUIRES_OK(context,
-                       ResolveQubitIds(&program, &this_num_qubits,
-                                       &(p_sums->at(i)), swap_endianness));
+                       ResolveQubitIds(&program, &this_num_qubits, iter_p_sums,
+                                       iter_proj_sums, swap_endianness));
       } else {
-        OP_REQUIRES_OK(context, ResolveQubitIds(&program, &this_num_qubits,
-                                                nullptr, swap_endianness));
+        OP_REQUIRES_OK(context,
+                       ResolveQubitIds(&program, &this_num_qubits, nullptr,
+                                       nullptr, swap_endianness));
       }
       (*num_qubits)[i] = this_num_qubits;
     }
@@ -281,6 +302,44 @@ Status GetPauliSums(OpKernelContext* context,
   return Status::OK();
 }
 
+Status GetProjectorSums(OpKernelContext* context,
+                        std::vector<std::vector<ProjectorSum>>* proj_sums) {
+  // 1. Parses ProjectorSum proto.
+  const Tensor* input;
+  Status status = context->input("projector_sums", &input);
+  if (!status.ok()) {
+    return status;
+  }
+
+  if (input->dims() != 2) {
+    return Status(tensorflow::error::INVALID_ARGUMENT,
+                  absl::StrCat("projector_sums must be rank 2. Got rank ",
+                               input->dims(), "."));
+  }
+
+  const auto sum_specs = input->matrix<tensorflow::tstring>();
+  proj_sums->assign(
+      sum_specs.dimension(0),
+      std::vector<ProjectorSum>(sum_specs.dimension(1), ProjectorSum()));
+  const int op_dim = sum_specs.dimension(1);
+  auto DoWork = [&](int start, int end) {
+    for (int ii = start; ii < end; ii++) {
+      const int i = ii / op_dim;
+      const int j = ii % op_dim;
+      ProjectorSum p;
+      OP_REQUIRES_OK(context, ParseProto(sum_specs(i, j), &p));
+      (*proj_sums)[i][j] = p;
+    }
+  };
+
+  // TODO(mbbrough): Determine if this is a good cycle estimate.
+  const int cycle_estimate = 1000;
+  context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
+      sum_specs.dimension(0) * sum_specs.dimension(1), cycle_estimate, DoWork);
+
+  return Status::OK();
+}
+
 Status GetSymbolMaps(OpKernelContext* context, std::vector<SymbolMap>* maps) {
   // 1. Convert to dictionary representation for param resolution.
   const Tensor* input_names;
@@ -364,7 +423,7 @@ tensorflow::Status GetNumSamples(
       }
       sub_parsed_num_samples.push_back(num_samples);
     }
-    parsed_num_samples->push_back(sub_parsed_num_samples);
+    parsed_num_samples->emplace_back(sub_parsed_num_samples);
   }
 
   return Status::OK();

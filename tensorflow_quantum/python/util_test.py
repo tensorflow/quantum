@@ -31,11 +31,15 @@ from tensorflow_quantum.python import util
 
 
 def _single_to_tensor(item):
-    if not isinstance(item, (cirq.PauliSum, cirq.PauliString, cirq.Circuit)):
+    if not isinstance(item, (cirq.PauliSum, cirq.PauliString, cirq.ProjectorSum,
+                             cirq.ProjectorString, cirq.Circuit)):
         raise TypeError("Item must be a Circuit or PauliSum. Got {}.".format(
             type(item)))
     if isinstance(item, (cirq.PauliSum, cirq.PauliString)):
         return serializer.serialize_paulisum(item).SerializeToString(
+            deterministic=True)
+    if isinstance(item, (cirq.ProjectorSum, cirq.ProjectorString)):
+        return serializer.serialize_projectorsum(item).SerializeToString(
             deterministic=True)
     return serializer.serialize_circuit(item).SerializeToString(
         deterministic=True)
@@ -53,15 +57,18 @@ def _items_to_tensorize():
     """Objects on which convert_to_tensor convert_from_tensor will be tested."""
     return [{
         'item': x
-    } for x in (util.random_pauli_sums(BITS, 5, 5) + [
-        cirq.PauliSum.from_pauli_strings([
-            cirq.PauliString(),
-            cirq.PauliString(cirq.Z(cirq.GridQubit(0, 0)))
-        ])
-    ] + [cirq.PauliString(), cirq.PauliString()] + [cirq.Circuit()] + [
-        cirq.testing.random_circuit(BITS, 25, 0.9, util.get_supported_gates())
-        for _ in range(5)
-    ])]
+    } for x in (util.random_pauli_sums(BITS, 5, 5) +
+                util.random_projector_sums(BITS, 5, 5) + [
+                    cirq.PauliSum.from_pauli_strings([
+                        cirq.PauliString(),
+                        cirq.PauliString(cirq.Z(cirq.GridQubit(0, 0)))
+                    ])
+                ] + [cirq.PauliString(), cirq.PauliString()] +
+                [cirq.Circuit()] + [
+                    cirq.testing.random_circuit(BITS, 25, 0.9,
+                                                util.get_supported_gates())
+                    for _ in range(5)
+                ])]
 
 
 class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):

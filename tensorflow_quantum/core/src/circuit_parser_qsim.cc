@@ -41,6 +41,7 @@ using ::tfq::proto::Moment;
 using ::tfq::proto::Operation;
 using ::tfq::proto::PauliTerm;
 using ::tfq::proto::Program;
+using ::tfq::proto::ProjectorTerm;
 
 namespace {
 
@@ -450,6 +451,39 @@ inline Status PhasedXGate(const Operation& op, const SymbolMap& param_map,
   return Status::OK();
 }
 
+inline Status MatrixGate1(const Operation& op, const SymbolMap& param_map,
+                          const unsigned int num_qubits,
+                          const unsigned int time, QsimCircuit* circuit,
+                          std::vector<GateMetaData>* metadata) {
+  int q0;
+  bool unused;
+  // float pexp, pexp_s, exp, exp_s, gs;
+  Status u;
+  unused = absl::SimpleAtoi(op.qubits(0).id(), &q0);
+
+  std::vector<float> matrix;
+  matrix.reserve(8);
+
+  for (const char* param_name :
+       {"x00", "y00", "x01", "y01", "x10", "y10", "x11", "y11"}) {
+    float param_value;
+    u = ParseProtoArg(op, param_name, param_map, &param_value);
+    if (!u.ok()) {
+      return u;
+    }
+    matrix.push_back(param_value);
+  }
+  auto gate =
+      qsim::Cirq::MatrixGate1<float>::Create(time, num_qubits - q0 - 1, matrix);
+  Status s = OptionalInsertControls(op, num_qubits, &gate);
+  if (!s.ok()) {
+    return s;
+  }
+  circuit->gates.push_back(gate);
+
+  return Status::OK();
+}
+
 // two qubit fsim -> Create(time, q0, q1, theta, phi)
 inline Status FsimGate(const Operation& op, const SymbolMap& param_map,
                        const unsigned int num_qubits, const unsigned int time,
@@ -578,14 +612,15 @@ tensorflow::Status ParseAppendGate(const Operation& op,
       std::function<Status(const Operation&, const SymbolMap&,
                            const unsigned int, const unsigned int, QsimCircuit*,
                            std::vector<GateMetaData>*)>>
-      func_map = {{"I", &IGate},       {"HP", &HGate},
-                  {"XP", &XGate},      {"XXP", &XXGate},
-                  {"YP", &YGate},      {"YYP", &YYGate},
-                  {"ZP", &ZGate},      {"ZZP", &ZZGate},
-                  {"CZP", &CZGate},    {"I2", &I2Gate},
-                  {"CNP", &CXGate},    {"SP", &SwapGate},
-                  {"ISP", &ISwapGate}, {"PXP", &PhasedXGate},
-                  {"FSIM", &FsimGate}, {"PISP", &PhasedISwapGate}};
+      func_map = {{"I", &IGate},        {"HP", &HGate},
+                  {"XP", &XGate},       {"XXP", &XXGate},
+                  {"YP", &YGate},       {"YYP", &YYGate},
+                  {"ZP", &ZGate},       {"ZZP", &ZZGate},
+                  {"CZP", &CZGate},     {"I2", &I2Gate},
+                  {"CNP", &CXGate},     {"SP", &SwapGate},
+                  {"ISP", &ISwapGate},  {"PXP", &PhasedXGate},
+                  {"FSIM", &FsimGate},  {"PISP", &PhasedISwapGate},
+                  {"MG1", &MatrixGate1}};
 
   auto build_f = func_map.find(op.gate().id());
   if (build_f == func_map.end()) {
@@ -885,7 +920,7 @@ Status QsimCircuitFromPauliTerm(
 
     // create corresponding eigen gate op.
     new_op->add_qubits()->set_id(pair.qubit_id());
-    new_op->mutable_gate()->set_id(pair.pauli_type() + "P");
+    new_op->mutable_gate()->set_id(absl::StrCat(pair.pauli_type(), "P"));
     (*new_op->mutable_args())["exponent"].mutable_arg_value()->set_float_value(
         1.0);
     (*new_op->mutable_args())["global_shift"]
@@ -900,6 +935,40 @@ Status QsimCircuitFromPauliTerm(
     (*new_op->mutable_args())["control_qubits"]
         .mutable_arg_value()
         ->set_string_value("");
+  }
+
+  return QsimCircuitFromProgram(measurement_program, empty_map, num_qubits,
+                                circuit, fused_circuit);
+}
+
+Status QsimCircuitFromProjectorTerm(
+    const ProjectorTerm& term, const int num_qubits, QsimCircuit* circuit,
+    std::vector<qsim::GateFused<QsimGate>>* fused_circuit) {
+  Program measurement_program;
+  SymbolMap empty_map;
+  measurement_program.mutable_circuit()->set_scheduling_strategy(
+      tfq::proto::Circuit::MOMENT_BY_MOMENT);
+  Moment* term_moment = measurement_program.mutable_circuit()->add_moments();
+  for (const tfq::proto::ProjectorDictEntry& entry : term.projector_dict()) {
+    Operation* new_op = term_moment->add_operations();
+
+    // create corresponding eigen gate op.
+    new_op->add_qubits()->set_id(entry.qubit_id());
+    new_op->mutable_gate()->set_id("MG1");
+    auto& mutable_args = *new_op->mutable_args();
+    mutable_args["x00"].mutable_arg_value()->set_float_value(
+        entry.basis_state() ? 0.0 : 1.0);
+    mutable_args["y00"].mutable_arg_value()->set_float_value(0.0);
+    mutable_args["x01"].mutable_arg_value()->set_float_value(0.0);
+    mutable_args["y01"].mutable_arg_value()->set_float_value(0.0);
+    mutable_args["x10"].mutable_arg_value()->set_float_value(0.0);
+    mutable_args["y10"].mutable_arg_value()->set_float_value(0.0);
+    mutable_args["x11"].mutable_arg_value()->set_float_value(
+        entry.basis_state() ? 1.0 : 0.0);
+    mutable_args["y11"].mutable_arg_value()->set_float_value(0.0);
+
+    mutable_args["control_values"].mutable_arg_value()->set_string_value("");
+    mutable_args["control_qubits"].mutable_arg_value()->set_string_value("");
   }
 
   return QsimCircuitFromProgram(measurement_program, empty_map, num_qubits,
@@ -950,6 +1019,51 @@ Status QsimZBasisCircuitFromPauliTerm(
     (*new_op->mutable_args())["control_qubits"]
         .mutable_arg_value()
         ->set_string_value("");
+  }
+
+  return QsimCircuitFromProgram(measurement_program, empty_map, num_qubits,
+                                circuit, fused_circuit);
+}
+
+Status QsimZBasisCircuitFromProjectorTerm(
+    const ProjectorTerm& term, const int num_qubits, QsimCircuit* circuit,
+    std::vector<qsim::GateFused<QsimGate>>* fused_circuit) {
+  Program measurement_program;
+  SymbolMap empty_map;
+  measurement_program.mutable_circuit()->set_scheduling_strategy(
+      tfq::proto::Circuit::MOMENT_BY_MOMENT);
+
+  std::map<std::string, std::pair<int, int>> qid_to_counts;
+  for (const tfq::proto::ProjectorDictEntry& entry : term.projector_dict()) {
+    auto& counts = qid_to_counts[entry.qubit_id()];
+    if (entry.basis_state()) {
+      counts.first += 1;
+    } else {
+      counts.second += 1;
+    }
+  }
+
+  Moment* term_moment = measurement_program.mutable_circuit()->add_moments();
+  for (const auto& count_pair : qid_to_counts) {
+    Operation* new_op = term_moment->add_operations();
+    // create corresponding eigen gate op.
+    new_op->add_qubits()->set_id(count_pair.first);
+    new_op->mutable_gate()->set_id("MG1");
+    auto& mutable_args = *new_op->mutable_args();
+    mutable_args["x00"].mutable_arg_value()->set_float_value(
+        count_pair.second.first);
+    mutable_args["y00"].mutable_arg_value()->set_float_value(0.0);
+    mutable_args["x01"].mutable_arg_value()->set_float_value(
+        count_pair.second.second);
+    mutable_args["y01"].mutable_arg_value()->set_float_value(0.0);
+    mutable_args["x10"].mutable_arg_value()->set_float_value(
+        count_pair.second.second);
+    mutable_args["y10"].mutable_arg_value()->set_float_value(0.0);
+    mutable_args["x11"].mutable_arg_value()->set_float_value(
+        count_pair.second.first);
+    mutable_args["y11"].mutable_arg_value()->set_float_value(0.0);
+    mutable_args["control_values"].mutable_arg_value()->set_string_value("");
+    mutable_args["control_qubits"].mutable_arg_value()->set_string_value("");
   }
 
   return QsimCircuitFromProgram(measurement_program, empty_map, num_qubits,

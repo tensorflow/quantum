@@ -81,7 +81,7 @@ class TfqSimulateMPS1DSampledExpectationOp : public tensorflow::OpKernel {
     std::vector<std::vector<PauliSum>> pauli_sums;
     OP_REQUIRES_OK(context,
                    GetProgramsAndNumQubits(context, &programs, &num_qubits,
-                                           &pauli_sums, true));
+                                           &pauli_sums, nullptr, true));
 
     std::vector<SymbolMap> maps;
     OP_REQUIRES_OK(context, GetSymbolMaps(context, &maps));

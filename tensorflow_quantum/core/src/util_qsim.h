@@ -187,6 +187,47 @@ tensorflow::Status ComputeExpectationQsim(const tfq::proto::PauliSum& p_sum,
   return status;
 }
 
+template <typename SimT, typename StateSpaceT, typename StateT>
+tensorflow::Status ComputeExpectationQsim(
+    const tfq::proto::ProjectorSum& projector_sum, const SimT& sim,
+    const StateSpaceT& ss, StateT& state, StateT& scratch,
+    float* expectation_value) {
+  // apply the gates of the projector terms to a copy of the state vector
+  // and add up expectation value term by term.
+  tensorflow::Status status = tensorflow::Status::OK();
+  for (const tfq::proto::ProjectorTerm& term : projector_sum.terms()) {
+    // catch identity terms
+    if (term.projector_dict_size() == 0) {
+      *expectation_value += term.coefficient_real();
+      // TODO(tonybruguier): error somewhere if identities have any imaginary
+      // part
+      continue;
+    }
+
+    QsimCircuit main_circuit;
+    std::vector<qsim::GateFused<QsimGate>> fused_circuit;
+
+    status = QsimCircuitFromProjectorTerm(term, state.num_qubits(),
+                                          &main_circuit, &fused_circuit);
+
+    if (!status.ok()) {
+      return status;
+    }
+    // copy from src to scratch.
+    ss.Copy(state, scratch);
+    for (const qsim::GateFused<QsimGate>& fused_gate : fused_circuit) {
+      qsim::ApplyFusedGate(sim, fused_gate, scratch);
+    }
+
+    if (!status.ok()) {
+      return status;
+    }
+    *expectation_value +=
+        term.coefficient_real() * ss.RealInnerProduct(state, scratch);
+  }
+  return status;
+}
+
 // bad style standards here that we are forced to follow from qsim.
 // computes the expectation value <state | p_sum | state > using
 // scratch to save on memory. Implementation does this:
@@ -261,6 +302,91 @@ tensorflow::Status ComputeSampledExpectationQsim(
     for (const uint64_t state_sample : state_samples) {
       count = std::bitset<64>(state_sample & mask).count() & 1;
       parity_total += count ? -1 : 1;
+    }
+    *expectation_value += static_cast<float>(parity_total) *
+                          term.coefficient_real() /
+                          static_cast<float>(num_samples);
+  }
+  return status;
+}
+
+// bad style standards here that we are forced to follow from qsim.
+// computes the expectation value <state | p_sum | state > using
+// scratch to save on memory. Implementation does this:
+// 1. Copy state onto scratch
+// 2. Convert scratch to Z basis
+// 3. Compute < state | scratch > via sampling.
+// 4. Sum and repeat.
+// scratch is required to have memory initialized, but does not require
+// values in memory to be set.
+template <typename SimT, typename StateSpaceT, typename StateT>
+tensorflow::Status ComputeSampledExpectationQsim(
+    const tfq::proto::ProjectorSum& projector_sum, const SimT& sim,
+    const StateSpaceT& ss, StateT& state, StateT& scratch,
+    const int num_samples, tensorflow::random::SimplePhilox& random_source,
+    float* expectation_value) {
+  std::uniform_int_distribution<> distrib(1, 1 << 30);
+
+  if (num_samples == 0) {
+    return tensorflow::Status::OK();
+  }
+  // apply the gates of the pauliterms to a copy of the state vector
+  // and add up expectation value term by term.
+  tensorflow::Status status = tensorflow::Status::OK();
+  for (const tfq::proto::ProjectorTerm& term : projector_sum.terms()) {
+    // catch identity terms
+    if (term.projector_dict_size() == 0) {
+      *expectation_value += term.coefficient_real();
+      // TODO(tonybruguier): error somewhere if identities have any imaginary
+      // part
+      continue;
+    }
+
+    // Transform state into the measurement basis and sample it
+    QsimCircuit main_circuit;
+    std::vector<qsim::GateFused<QsimGate>> fused_circuit;
+
+    status = QsimZBasisCircuitFromProjectorTerm(term, state.num_qubits(),
+                                                &main_circuit, &fused_circuit);
+    if (!status.ok()) {
+      return status;
+    }
+    // copy from src to scratch.
+    ss.Copy(state, scratch);
+    for (const qsim::GateFused<QsimGate>& fused_gate : fused_circuit) {
+      qsim::ApplyFusedGate(sim, fused_gate, scratch);
+    }
+
+    if (!status.ok()) {
+      return status;
+    }
+    std::vector<uint64_t> state_samples =
+        ss.Sample(scratch, num_samples, random_source.Rand32());
+
+    // Find qubits on which to measure parity
+    std::vector<unsigned int> parity_bits;
+    for (const tfq::proto::ProjectorDictEntry& entry : term.projector_dict()) {
+      unsigned int location;
+      // GridQubit id should be parsed down to integer at this upstream
+      //  so it is safe to just use atoi.
+      (void)absl::SimpleAtoi(entry.qubit_id(), &location);
+      // Parity functions use little-endian indexing
+      parity_bits.push_back(state.num_qubits() - location - 1);
+    }
+
+    // Compute the BitMask.
+    uint64_t mask = 0;
+    for (const unsigned int parity_bit : parity_bits) {
+      mask |= uint64_t(1) << uint64_t(parity_bit);
+    }
+
+    // Compute the running parity.
+    int parity_total(0);
+    int count = 0;
+    for (const uint64_t state_sample : state_samples) {
+      count =
+          std::bitset<64>(state_sample & mask).count() == parity_bits.size();
+      parity_total += count ? 1 : 0;
     }
     *expectation_value += static_cast<float>(parity_total) *
                           term.coefficient_real() /

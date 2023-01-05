@@ -49,7 +49,8 @@ class NoisyExpectationCalculationTest(tf.test.TestCase, parameterized.TestCase):
              for resolver in resolver_batch])
 
         pauli_sums = util.random_pauli_sums(qubits, 3, batch_size)
-        num_samples = [[10]] * batch_size
+        projector_sums = util.random_projector_sums(qubits, 3, batch_size)
+        num_samples = [[10, 10]] * batch_size
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'programs must be rank 1'):
@@ -57,7 +58,8 @@ class NoisyExpectationCalculationTest(tf.test.TestCase, parameterized.TestCase):
             noisy_expectation_op.expectation(
                 util.convert_to_tensor([circuit_batch]), symbol_names,
                 symbol_values_array,
-                util.convert_to_tensor([[x] for x in pauli_sums]), num_samples)
+                util.convert_to_tensor([[x] for x in pauli_sums]), num_samples,
+                util.convert_to_tensor([[x] for x in projector_sums]))
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'symbol_names must be rank 1.'):
@@ -65,7 +67,8 @@ class NoisyExpectationCalculationTest(tf.test.TestCase, parameterized.TestCase):
             noisy_expectation_op.expectation(
                 util.convert_to_tensor(circuit_batch), np.array([symbol_names]),
                 symbol_values_array,
-                util.convert_to_tensor([[x] for x in pauli_sums]), num_samples)
+                util.convert_to_tensor([[x] for x in pauli_sums]), num_samples,
+                util.convert_to_tensor([[x] for x in projector_sums]))
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'symbol_values must be rank 2.'):
@@ -73,7 +76,8 @@ class NoisyExpectationCalculationTest(tf.test.TestCase, parameterized.TestCase):
             noisy_expectation_op.expectation(
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 np.array([symbol_values_array]),
-                util.convert_to_tensor([[x] for x in pauli_sums]), num_samples)
+                util.convert_to_tensor([[x] for x in pauli_sums]), num_samples,
+                util.convert_to_tensor([[x] for x in projector_sums]))
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'symbol_values must be rank 2.'):
@@ -81,7 +85,8 @@ class NoisyExpectationCalculationTest(tf.test.TestCase, parameterized.TestCase):
             noisy_expectation_op.expectation(
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 symbol_values_array[0],
-                util.convert_to_tensor([[x] for x in pauli_sums]), num_samples)
+                util.convert_to_tensor([[x] for x in pauli_sums]), num_samples,
+                util.convert_to_tensor([[x] for x in projector_sums]))
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'pauli_sums must be rank 2.'):
@@ -89,7 +94,17 @@ class NoisyExpectationCalculationTest(tf.test.TestCase, parameterized.TestCase):
             noisy_expectation_op.expectation(
                 util.convert_to_tensor(circuit_batch),
                 symbol_names, symbol_values_array,
-                util.convert_to_tensor(list(pauli_sums)), num_samples)
+                util.convert_to_tensor(list(pauli_sums)), num_samples,
+                util.convert_to_tensor([[x] for x in projector_sums]))
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'projector_sums must be rank 2.'):
+            # pauli_sums tensor has too few dimensions.
+            noisy_expectation_op.expectation(
+                util.convert_to_tensor(circuit_batch), symbol_names,
+                symbol_values_array,
+                util.convert_to_tensor([[x] for x in pauli_sums]), num_samples,
+                util.convert_to_tensor(list(projector_sums)))
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'pauli_sums must be rank 2.'):
@@ -98,7 +113,17 @@ class NoisyExpectationCalculationTest(tf.test.TestCase, parameterized.TestCase):
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 symbol_values_array,
                 [util.convert_to_tensor([[x] for x in pauli_sums])],
-                num_samples)
+                num_samples,
+                util.convert_to_tensor([[x] for x in projector_sums]))
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'projector_sums must be rank 2.'):
+            # pauli_sums tensor has too many dimensions.
+            noisy_expectation_op.expectation(
+                util.convert_to_tensor(circuit_batch), symbol_names,
+                symbol_values_array,
+                util.convert_to_tensor([[x] for x in pauli_sums]), num_samples,
+                [util.convert_to_tensor([[x] for x in projector_sums])])
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'num_samples must be rank 2'):
@@ -107,7 +132,8 @@ class NoisyExpectationCalculationTest(tf.test.TestCase, parameterized.TestCase):
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 symbol_values_array,
                 util.convert_to_tensor([[x] for x in pauli_sums]),
-                [num_samples])
+                [num_samples],
+                util.convert_to_tensor([[x] for x in projector_sums]))
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'num_samples must be rank 2'):
@@ -116,14 +142,16 @@ class NoisyExpectationCalculationTest(tf.test.TestCase, parameterized.TestCase):
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 symbol_values_array,
                 util.convert_to_tensor([[x] for x in pauli_sums]),
-                num_samples[0])
+                num_samples[0],
+                util.convert_to_tensor([[x] for x in projector_sums]))
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'Unparseable proto'):
             # circuit tensor has the right type but invalid values.
             noisy_expectation_op.expectation(
                 ['junk'] * batch_size, symbol_names, symbol_values_array,
-                util.convert_to_tensor([[x] for x in pauli_sums]), num_samples)
+                util.convert_to_tensor([[x] for x in pauli_sums]), num_samples,
+                util.convert_to_tensor([[x] for x in projector_sums]))
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'Could not find symbol in parameter map'):
@@ -131,7 +159,8 @@ class NoisyExpectationCalculationTest(tf.test.TestCase, parameterized.TestCase):
             noisy_expectation_op.expectation(
                 util.convert_to_tensor(circuit_batch), ['junk'],
                 symbol_values_array,
-                util.convert_to_tensor([[x] for x in pauli_sums]), num_samples)
+                util.convert_to_tensor([[x] for x in pauli_sums]), num_samples,
+                util.convert_to_tensor([[x] for x in projector_sums]))
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'qubits not found in circuit'):
@@ -142,40 +171,66 @@ class NoisyExpectationCalculationTest(tf.test.TestCase, parameterized.TestCase):
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 symbol_values_array,
                 util.convert_to_tensor([[x] for x in new_pauli_sums]),
-                num_samples)
+                num_samples,
+                util.convert_to_tensor([[x] for x in projector_sums]))
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'qubits not found in circuit'):
+            # pauli_sums tensor has the right type but invalid values.
+            new_qubits = [cirq.GridQubit(5, 5), cirq.GridQubit(9, 9)]
+            new_projector_sums = util.random_pauli_sums(new_qubits, 2,
+                                                        batch_size)
+            noisy_expectation_op.expectation(
+                util.convert_to_tensor(circuit_batch), symbol_names,
+                symbol_values_array,
+                util.convert_to_tensor([[x] for x in pauli_sums]), num_samples,
+                util.convert_to_tensor([[x] for x in new_projector_sums]))
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'Unparseable proto'):
             # pauli_sums tensor has the right type but invalid values 2.
             noisy_expectation_op.expectation(
                 util.convert_to_tensor(circuit_batch), symbol_names,
-                symbol_values_array, [['junk']] * batch_size, num_samples)
+                symbol_values_array, [['junk']] * batch_size, num_samples,
+                [['junk']] * batch_size)
 
         with self.assertRaisesRegex(TypeError, 'Cannot convert'):
             # circuits tensor has the wrong type.
             noisy_expectation_op.expectation(
                 [1.0] * batch_size, symbol_names, symbol_values_array,
-                util.convert_to_tensor([[x] for x in pauli_sums]), num_samples)
+                util.convert_to_tensor([[x] for x in pauli_sums]), num_samples,
+                util.convert_to_tensor([[x] for x in projector_sums]))
 
         with self.assertRaisesRegex(TypeError, 'Cannot convert'):
             # symbol_names tensor has the wrong type.
             noisy_expectation_op.expectation(
                 util.convert_to_tensor(circuit_batch), [0.1234],
                 symbol_values_array,
-                util.convert_to_tensor([[x] for x in pauli_sums]), num_samples)
+                util.convert_to_tensor([[x] for x in pauli_sums]), num_samples,
+                util.convert_to_tensor([[x] for x in projector_sums]))
 
         with self.assertRaisesRegex(tf.errors.UnimplementedError, ''):
             # symbol_values tensor has the wrong type.
             noisy_expectation_op.expectation(
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 [['junk']] * batch_size,
-                util.convert_to_tensor([[x] for x in pauli_sums]), num_samples)
+                util.convert_to_tensor([[x] for x in pauli_sums]), num_samples,
+                util.convert_to_tensor([[x] for x in projector_sums]))
 
         with self.assertRaisesRegex(TypeError, 'Cannot convert'):
             # pauli_sums tensor has the wrong type.
             noisy_expectation_op.expectation(
                 util.convert_to_tensor(circuit_batch), symbol_names,
-                symbol_values_array, [[1.0]] * batch_size, num_samples)
+                symbol_values_array, [[1.0]] * batch_size, num_samples,
+                util.convert_to_tensor([[x] for x in projector_sums]))
+
+        with self.assertRaisesRegex(TypeError, 'Cannot convert'):
+            # pauli_sums tensor has the wrong type.
+            noisy_expectation_op.expectation(
+                util.convert_to_tensor(circuit_batch), symbol_names,
+                symbol_values_array,
+                util.convert_to_tensor([[x] for x in pauli_sums]), num_samples,
+                [[1.0]] * batch_size)
 
         with self.assertRaisesRegex(TypeError, 'missing'):
             # we are missing an argument.
@@ -190,8 +245,9 @@ class NoisyExpectationCalculationTest(tf.test.TestCase, parameterized.TestCase):
             noisy_expectation_op.expectation(
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 symbol_values_array,
-                util.convert_to_tensor([[x] for x in pauli_sums]), [],
-                num_samples)
+                util.convert_to_tensor([[x] for x in pauli_sums]),
+                util.convert_to_tensor([[x] for x in projector_sums]),
+                num_samples, [])
             # pylint: enable=too-many-function-args
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
@@ -200,7 +256,8 @@ class NoisyExpectationCalculationTest(tf.test.TestCase, parameterized.TestCase):
             noisy_expectation_op.expectation(
                 util.convert_to_tensor([cirq.Circuit()]), symbol_names,
                 symbol_values_array.astype(np.float64),
-                util.convert_to_tensor([[x] for x in pauli_sums]), num_samples)
+                util.convert_to_tensor([[x] for x in pauli_sums]), num_samples,
+                util.convert_to_tensor([[x] for x in projector_sums]))
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'greater than 0'):
@@ -209,7 +266,8 @@ class NoisyExpectationCalculationTest(tf.test.TestCase, parameterized.TestCase):
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 symbol_values_array,
                 util.convert_to_tensor([[x] for x in pauli_sums]),
-                [[-1]] * batch_size)
+                [[-1]] * batch_size,
+                util.convert_to_tensor([[x] for x in projector_sums]))
             # pylint: enable=too-many-function-args
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
@@ -218,7 +276,8 @@ class NoisyExpectationCalculationTest(tf.test.TestCase, parameterized.TestCase):
             noisy_expectation_op.expectation(
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 symbol_values_array[:int(batch_size * 0.5)],
-                util.convert_to_tensor([[x] for x in pauli_sums]), num_samples)
+                util.convert_to_tensor([[x] for x in pauli_sums]), num_samples,
+                util.convert_to_tensor([[x] for x in projector_sums]))
 
     @parameterized.parameters([
         {
@@ -259,16 +318,24 @@ class NoisyExpectationCalculationTest(tf.test.TestCase, parameterized.TestCase):
         pauli_sums1 = util.random_pauli_sums(qubits, 3, batch_size)
         pauli_sums2 = util.random_pauli_sums(qubits, 3, batch_size)
         batch_pauli_sums = [[x, y] for x, y in zip(pauli_sums1, pauli_sums2)]
-        num_samples = [[10000 if noisy else 3] * 2] * batch_size
+        projector_sums1 = util.random_projector_sums(qubits, 3, batch_size)
+        projector_sums2 = util.random_projector_sums(qubits, 3, batch_size)
+        batch_projector_sums = [
+            [x, y] for x, y in zip(projector_sums1, projector_sums2)
+        ]
+        batch_both = [[x, y, z, t] for x, y, z, t in zip(
+            pauli_sums1, pauli_sums2, projector_sums1, projector_sums2)]
+        num_samples = [[10000 if noisy else 3] * 4] * batch_size
 
         op_exps = noisy_expectation_op.expectation(
             util.convert_to_tensor(circuit_batch),
             symbol_names, symbol_values_array,
-            util.convert_to_tensor(batch_pauli_sums), num_samples)
+            util.convert_to_tensor(batch_pauli_sums), num_samples,
+            util.convert_to_tensor(batch_projector_sums))
 
         cirq_exps = batch_util.batch_calculate_expectation(
-            circuit_batch, resolver_batch, batch_pauli_sums,
-            cirq.DensityMatrixSimulator() if noisy else cirq.Simulator())
+            circuit_batch, resolver_batch, batch_both,
+            cirq.DensityMatrixSimulator())
         tol = 5e-2 if noisy else 5e-4
         self.assertAllClose(cirq_exps, op_exps, atol=tol, rtol=tol)
 
@@ -297,15 +364,23 @@ class NoisyExpectationCalculationTest(tf.test.TestCase, parameterized.TestCase):
         pauli_sums1 = util.random_pauli_sums(qubits, 3, batch_size)
         pauli_sums2 = util.random_pauli_sums(qubits, 3, batch_size)
         batch_pauli_sums = [[x, y] for x, y in zip(pauli_sums1, pauli_sums2)]
-        num_samples = [[10000] * 2] * batch_size
+        projector_sums1 = util.random_projector_sums(qubits, 3, batch_size)
+        projector_sums2 = util.random_projector_sums(qubits, 3, batch_size)
+        batch_projector_sums = [
+            [x, y] for x, y in zip(projector_sums1, projector_sums2)
+        ]
+        batch_both = [[x, y, z, t] for x, y, z, t in zip(
+            pauli_sums1, pauli_sums2, projector_sums1, projector_sums2)]
+        num_samples = [[10000] * 4] * batch_size
 
         op_exps = noisy_expectation_op.expectation(
             util.convert_to_tensor(circuit_batch),
             symbol_names, symbol_values_array,
-            util.convert_to_tensor(batch_pauli_sums), num_samples)
+            util.convert_to_tensor(batch_pauli_sums), num_samples,
+            util.convert_to_tensor(batch_projector_sums))
 
         cirq_exps = batch_util.batch_calculate_expectation(
-            circuit_batch, resolver_batch, batch_pauli_sums,
+            circuit_batch, resolver_batch, batch_both,
             cirq.DensityMatrixSimulator())
 
         self.assertAllClose(cirq_exps, op_exps, atol=5e-2, rtol=5e-2)
@@ -316,11 +391,14 @@ class NoisyExpectationCalculationTest(tf.test.TestCase, parameterized.TestCase):
         empty_symbols = tf.convert_to_tensor([], dtype=tf.dtypes.string)
         empty_values = tf.convert_to_tensor([[]])
         empty_paulis = tf.convert_to_tensor([[]], dtype=tf.dtypes.string)
+        empty_projector_sums = tf.convert_to_tensor([[]],
+                                                    dtype=tf.dtypes.string)
         empty_n_samples = tf.convert_to_tensor([[]], dtype=tf.int32)
 
         out = noisy_expectation_op.expectation(empty_circuit, empty_symbols,
                                                empty_values, empty_paulis,
-                                               empty_n_samples)
+                                               empty_n_samples,
+                                               empty_projector_sums)
 
         expected = np.array([[]], dtype=np.complex64)
         self.assertAllClose(out, expected)
@@ -331,11 +409,13 @@ class NoisyExpectationCalculationTest(tf.test.TestCase, parameterized.TestCase):
         empty_symbols = tf.raw_ops.Empty(shape=(0,), dtype=tf.string)
         empty_values = tf.raw_ops.Empty(shape=(0, 0), dtype=tf.float32)
         empty_paulis = tf.raw_ops.Empty(shape=(0, 0), dtype=tf.string)
+        empty_projector_sums = tf.raw_ops.Empty(shape=(0, 0), dtype=tf.string)
         empty_n_samples = tf.raw_ops.Empty(shape=(0, 0), dtype=tf.int32)
 
         out = noisy_expectation_op.expectation(empty_circuit, empty_symbols,
                                                empty_values, empty_paulis,
-                                               empty_n_samples)
+                                               empty_n_samples,
+                                               empty_projector_sums)
 
         self.assertShapeEqual(np.zeros((0, 0)), out)
 

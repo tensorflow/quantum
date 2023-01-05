@@ -20,8 +20,12 @@ from tensorflow_quantum.core.ops.load_module import load_module
 NOISY_OP_MODULE = load_module(os.path.join("noise", "_tfq_noise_ops.so"))
 
 
-def sampled_expectation(programs, symbol_names, symbol_values, pauli_sums,
-                        num_samples):
+def sampled_expectation(programs,
+                        symbol_names,
+                        symbol_values,
+                        pauli_sums,
+                        num_samples,
+                        projector_sums=None):
     """Estimates (via sampling) expectation values using monte-carlo simulation.
 
     Simulate the final state of `programs` given `symbol_values` are placed
@@ -87,11 +91,22 @@ def sampled_expectation(programs, symbol_names, symbol_values, pauli_sums,
             threads to TensorFlow. For best performance ensure that the
             quantities in `num_samples` are a multiple of the number of
             available threads.
+        projector_sums: `tf.Tensor` of strings with shape [batch_size, n_ops]
+            containing the string representation of the operators that will
+            be used on all of the circuits in the expectation calculations.
     Returns:
         `tf.Tensor` with shape [batch_size, n_ops] that holds the
             expectation value for each circuit with each op applied to it
             (after resolving the corresponding parameters in).
     """
+    # TODO(tonybruguier): Always supply a projector sum to this function and
+    # remove the special-casing below.
+    if projector_sums is None:
+        if len(pauli_sums.shape) == 1:
+            projector_sums = pauli_sums[0:0]
+        else:
+            projector_sums = pauli_sums[:, 0:0]
+        print(f'TONYBOOM projector_sums.shape={projector_sums.shape}')
     return NOISY_OP_MODULE.tfq_noisy_sampled_expectation(
         programs, symbol_names, tf.cast(symbol_values, tf.float32), pauli_sums,
-        tf.cast(num_samples, dtype=tf.int32))
+        projector_sums, tf.cast(num_samples, dtype=tf.int32))

@@ -66,7 +66,7 @@ class TfqSimulateMPS1DSamplesOp : public tensorflow::OpKernel {
     std::vector<int> num_qubits;
     OP_REQUIRES_OK(context,
                    GetProgramsAndNumQubits(context, &programs, &num_qubits,
-                                           nullptr, true));
+                                           nullptr, nullptr, true));
 
     // Parse symbol maps for parameter resolution in the circuits.
     std::vector<SymbolMap> maps;
