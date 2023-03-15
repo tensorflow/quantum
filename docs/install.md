@@ -141,7 +141,7 @@ Be sure the virtual environment you created in step 2 is activated. Then, instal
   <code class="devsite-terminal">pip install -U pip six numpy wheel setuptools mock 'future>=0.17.1'</code>
   <code class="devsite-terminal">pip install -U keras_applications --no-deps</code>
   <code class="devsite-terminal">pip install -U keras_preprocessing --no-deps</code>
-  <code class="devsite-terminal">pip install numpy==1.19.5</code>
+  <code class="devsite-terminal">pip install numpy==1.24.2</code>
   <code class="devsite-terminal">pip install packaging requests</code>
 </pre>
 <!-- common_typos_enable -->
