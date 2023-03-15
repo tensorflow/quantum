@@ -46,7 +46,7 @@ class ExamplesTest(tf.test.TestCase, parameterized.TestCase):
                 src = re.sub('n_epochs ?= ?.*', 'n_epochs = 2', src)
                 cell['source'] = src
 
-        _ =  nbclient.execute(nb, timeout=900, kernel_name="python3")
+        _ = nbclient.execute(nb, timeout=900, kernel_name="python3")
 
 
 if __name__ == "__main__":
