@@ -187,7 +187,7 @@ TEST(ProgramResolutionTest, ResolveQubitIdsValid) {
   ASSERT_TRUE(
       google::protobuf::TextFormat::ParseFromString(valid_program, &program));
 
-  EXPECT_EQ(ResolveQubitIds(&program, &qubit_count), Status::OK());
+  EXPECT_EQ(ResolveQubitIds(&program, &qubit_count), Status());
   EXPECT_EQ(qubit_count, 3);
   EXPECT_EQ(program.circuit().moments(0).operations(0).qubits(0).id(), "1");
   EXPECT_EQ(program.circuit().moments(0).operations(0).qubits(1).id(), "2");
@@ -207,7 +207,7 @@ TEST(ProgramResolutionTest, ResolveQubitIdsValidLine) {
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(valid_line_program,
                                                             &program));
 
-  EXPECT_EQ(ResolveQubitIds(&program, &qubit_count), Status::OK());
+  EXPECT_EQ(ResolveQubitIds(&program, &qubit_count), Status());
   EXPECT_EQ(qubit_count, 3);
   EXPECT_EQ(program.circuit().moments(0).operations(0).qubits(0).id(), "1");
   EXPECT_EQ(program.circuit().moments(0).operations(0).qubits(1).id(), "2");
@@ -235,7 +235,8 @@ TEST(ProgramResolutionTest, ResolveQubitIdsInvalidControlQubit) {
       .mutable_arg_value()
       ->set_string_value("junk");
   EXPECT_EQ(ResolveQubitIds(&program, &qubit_count),
-            tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
+            tensorflow::Status(static_cast<tensorflow::errors::Code>(
+                                   absl::StatusCode::kInvalidArgument),
                                "Unable to parse qubit: junk"));
 }
 
@@ -251,7 +252,8 @@ TEST(ProgramResolutionTest, ResolveQubitIdsInvalidQubit) {
       ->mutable_qubits(0)
       ->set_id("junk");
   EXPECT_EQ(ResolveQubitIds(&program, &qubit_count),
-            tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
+            tensorflow::Status(static_cast<tensorflow::errors::Code>(
+                                   absl::StatusCode::kInvalidArgument),
                                "Unable to parse qubit: junk"));
 }
 
@@ -266,7 +268,7 @@ TEST(ProgramResolutionTest, ResolveQubitIdsWithPauliSum) {
       google::protobuf::TextFormat::ParseFromString(valid_psum, &p_sum));
   std::vector<PauliSum> p_sums = {p_sum, p_sum};
 
-  EXPECT_EQ(ResolveQubitIds(&program, &qubit_count, &p_sums), Status::OK());
+  EXPECT_EQ(ResolveQubitIds(&program, &qubit_count, &p_sums), Status());
   EXPECT_EQ(qubit_count, 3);
   EXPECT_EQ(program.circuit().moments(0).operations(0).qubits(0).id(), "1");
   EXPECT_EQ(program.circuit().moments(0).operations(0).qubits(1).id(), "2");
@@ -300,7 +302,8 @@ TEST(ProgramResolutionTest, ResolveQubitIdsWithInvalidPauliSum) {
 
   EXPECT_EQ(ResolveQubitIds(&program, &qubit_count, &p_sums),
             tensorflow::Status(
-                tensorflow::error::INVALID_ARGUMENT,
+                static_cast<tensorflow::errors::Code>(
+                    absl::StatusCode::kInvalidArgument),
                 "Found a Pauli sum operating on qubits not found in circuit."));
 }
 
@@ -327,8 +330,7 @@ TEST(ProgramResolutionTest, ResolveQubitIdsMultiProgram) {
       ->set_string_value("0_2");  // turn 0_0 -> 0_2!
 
   std::vector<Program> other_programs = {other, other};
-  EXPECT_EQ(ResolveQubitIds(&program, &qubit_count, &other_programs),
-            Status::OK());
+  EXPECT_EQ(ResolveQubitIds(&program, &qubit_count, &other_programs), Status());
   EXPECT_EQ(qubit_count, 3);
   EXPECT_EQ(program.circuit().moments(0).operations(0).qubits(0).id(), "1");
   EXPECT_EQ(program.circuit().moments(0).operations(0).qubits(1).id(), "2");
@@ -374,7 +376,8 @@ TEST(ProgramResolutionTest, ResolveQubitIdsMultiProgramInvalid) {
       ->set_id("junk");
   std::vector<Program> others = {other, other};
   EXPECT_EQ(ResolveQubitIds(&program, &qubit_count, &others),
-            tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
+            tensorflow::Status(static_cast<tensorflow::errors::Code>(
+                                   absl::StatusCode::kInvalidArgument),
                                "Unable to parse qubit: junk"));
 }
 
@@ -394,7 +397,8 @@ TEST(ProgramResolutionTest, ResolveQubitIdsMultiProgramInvalidControl) {
       ->set_string_value("junk");
   std::vector<Program> others = {other, other};
   EXPECT_EQ(ResolveQubitIds(&program, &qubit_count, &others),
-            tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
+            tensorflow::Status(static_cast<tensorflow::errors::Code>(
+                                   absl::StatusCode::kInvalidArgument),
                                "Unable to parse qubit: junk"));
 }
 
@@ -414,7 +418,8 @@ TEST(ProgramResolutionTest, ResolveQubitIdsMultiProgramMismatch) {
   EXPECT_EQ(
       ResolveQubitIds(&program, &qubit_count, &others),
       tensorflow::Status(
-          tensorflow::error::INVALID_ARGUMENT,
+          static_cast<tensorflow::errors::Code>(
+              absl::StatusCode::kInvalidArgument),
           "A paired circuit contains qubits not found in reference circuit."));
 }
 
@@ -436,7 +441,8 @@ TEST(ProgramResolutionTest, ResolveQubitIdsMultiProgramMismatchControl) {
   EXPECT_EQ(
       ResolveQubitIds(&program, &qubit_count, &others),
       tensorflow::Status(
-          tensorflow::error::INVALID_ARGUMENT,
+          static_cast<tensorflow::errors::Code>(
+              absl::StatusCode::kInvalidArgument),
           "A paired circuit contains qubits not found in reference circuit."));
 }
 
@@ -456,7 +462,8 @@ TEST(ProgramResolutionTest, ResolveQubitIdsMultiProgramSmaller) {
   EXPECT_EQ(
       ResolveQubitIds(&program, &qubit_count, &others),
       tensorflow::Status(
-          tensorflow::error::INVALID_ARGUMENT,
+          static_cast<tensorflow::errors::Code>(
+              absl::StatusCode::kInvalidArgument),
           "A reference circuit contains qubits not found in paired circuit."));
 }
 
@@ -478,7 +485,8 @@ TEST(ProgramResolutionTest, ResolveQubitIdsMultiProgramSmallerControl) {
   EXPECT_EQ(
       ResolveQubitIds(&program, &qubit_count, &others),
       tensorflow::Status(
-          tensorflow::error::INVALID_ARGUMENT,
+          static_cast<tensorflow::errors::Code>(
+              absl::StatusCode::kInvalidArgument),
           "A reference circuit contains qubits not found in paired circuit."));
 }
 
@@ -488,7 +496,7 @@ TEST(ProgramResolutionTest, ResolveSymbolsPartial) {
       valid_symbol_program, &symbol_program));
   const absl::flat_hash_map<std::string, std::pair<int, float>> param_map = {
       {"v1", {0, 1.0}}};
-  EXPECT_EQ(ResolveSymbols(param_map, &symbol_program, false), Status::OK());
+  EXPECT_EQ(ResolveSymbols(param_map, &symbol_program, false), Status());
   EXPECT_EQ(symbol_program.circuit()
                 .moments(0)
                 .operations(0)
@@ -512,7 +520,7 @@ TEST(ProgramResolutionTest, ResolveSymbolsFull) {
       valid_symbol_program, &symbol_program));
   const absl::flat_hash_map<std::string, std::pair<int, float>> param_map = {
       {"v1", {0, 1.0}}, {"v2", {1, 2.0f}}};
-  EXPECT_EQ(ResolveSymbols(param_map, &symbol_program, false), Status::OK());
+  EXPECT_EQ(ResolveSymbols(param_map, &symbol_program, false), Status());
   EXPECT_EQ(symbol_program.circuit()
                 .moments(0)
                 .operations(0)
@@ -538,7 +546,8 @@ TEST(ProgramResolutionTest, ResolveSymbolsStrictPartial) {
   const absl::flat_hash_map<std::string, std::pair<int, float>> param_map = {
       {"v1", {0, 1.0}}};
   EXPECT_EQ(ResolveSymbols(param_map, &symbol_program, true),
-            Status(tensorflow::error::INVALID_ARGUMENT,
+            Status(static_cast<tensorflow::errors::Code>(
+                       absl::StatusCode::kInvalidArgument),
                    "Could not find symbol in parameter map: v2"));
 }
 
@@ -548,7 +557,7 @@ TEST(ProgramResolutionTest, ResolveSymbolsStrictFull) {
       valid_symbol_program, &symbol_program));
   const absl::flat_hash_map<std::string, std::pair<int, float>> param_map = {
       {"v1", {0, 1.0}}, {"v2", {1, 2.0f}}};
-  EXPECT_EQ(ResolveSymbols(param_map, &symbol_program, true), Status::OK());
+  EXPECT_EQ(ResolveSymbols(param_map, &symbol_program, true), Status());
   EXPECT_EQ(symbol_program.circuit()
                 .moments(0)
                 .operations(0)
@@ -569,7 +578,7 @@ TEST(ProgramResolutionTest, ResolveSymbolsStrictFull) {
 
 TEST(ProgramResolutionTest, CheckMPSSupportedEmpty) {
   Program empty;
-  EXPECT_EQ(CheckMPSSupported(empty), Status::OK());
+  EXPECT_EQ(CheckMPSSupported(empty), Status());
 }
 
 TEST(ProgramResolutionTest, CheckQubitsIn1DFailedByOpWithMoreThan2Qubits) {
@@ -577,7 +586,8 @@ TEST(ProgramResolutionTest, CheckQubitsIn1DFailedByOpWithMoreThan2Qubits) {
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       three_qubit_op_program, &program_with_3qubit_op));
   EXPECT_EQ(CheckMPSSupported(program_with_3qubit_op),
-            Status(tensorflow::error::INVALID_ARGUMENT,
+            Status(static_cast<tensorflow::errors::Code>(
+                       absl::StatusCode::kInvalidArgument),
                    "1D operations only support 1 and 2 qubit gates. "
                    "Found: 3 qubit gate."));
 }
@@ -588,7 +598,8 @@ TEST(ProgramResolutionTest,
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       valid_program, &program_with_3qubit_op));
   EXPECT_EQ(CheckMPSSupported(program_with_3qubit_op),
-            Status(tensorflow::error::INVALID_ARGUMENT,
+            Status(static_cast<tensorflow::errors::Code>(
+                       absl::StatusCode::kInvalidArgument),
                    "1D operations only support 1 and 2 qubit gates. "
                    "Found: 3 qubit gate."));
 }
@@ -598,7 +609,8 @@ TEST(ProgramResolutionTest, CheckQubitsIn1DFailedByNot1DTopology) {
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       resolved_qubit_program_not_1d, &program_not_1d));
   EXPECT_EQ(CheckMPSSupported(program_not_1d),
-            Status(tensorflow::error::INVALID_ARGUMENT,
+            Status(static_cast<tensorflow::errors::Code>(
+                       absl::StatusCode::kInvalidArgument),
                    "A program is not in 1D topology. It contains an"
                    " operation with qubits not neighbors each other."));
 }

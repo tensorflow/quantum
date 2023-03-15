@@ -38,7 +38,7 @@ cc_binary(
             "-DNOGDI",
             "/d2ReducedOptimizeHugeFunctions",
             "/arch:AVX",
-            "/std:c++14",
+            "/std:c++17",
             "-DTENSORFLOW_MONOLITHIC_BUILD",
             "/DPLATFORM_WINDOWS",
             "/DEIGEN_HAS_C99_MATH",
@@ -52,8 +52,8 @@ cc_binary(
         ],
         "//conditions:default": [
             "-pthread",
-            "-std=c++14",
-            "-D_GLIBCXX_USE_CXX11_ABI=0",
+            "-std=c++17",
+            "-D_GLIBCXX_USE_CXX11_ABI=1",
         ],
     }),
     features = select({
