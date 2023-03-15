@@ -45,39 +45,57 @@ def prefer_static_value(x):
     return x
 
 
-RotosolveOptimizerResults = collections.namedtuple(
-    'RotosolveOptimizerResults',
-    [
-        'converged',
-        # Scalar boolean tensor indicating whether the minimum
-        # was found within tolerance.
-        'num_iterations',
-        # The number of iterations of the rotosolve update.
-        'num_objective_evaluations',
-        # The total number of objective
-        # evaluations performed.
-        'position',
-        # A tensor containing the last argument value found
-        # during the search. If the search converged, then
-        # this value is the argmin of the objective function.
-        # A tensor containing the value of the objective from
-        # previous iteration
-        'objective_value_previous_iteration',
-        # Save the evaluated value of the objective function
-        # from the previous iteration
-        'objective_value',
-        # A tensor containing the value of the objective
-        # function at the `position`. If the search
-        # converged, then this is the (local) minimum of
-        # the objective function.
-        'tolerance',
-        # Define the stop criteria. Iteration will stop when the
-        # objective value difference between two iterations is
-        # smaller than tolerance
-        'solve_param_i',
-        # The parameter index where rotosolve is currently
-        # modifying. Reserved for internal use.
-    ])
+class RotosolveOptimizerResults(tf.experimental.ExtensionType):
+    converged: tf.Tensor
+    # Scalar boolean tensor indicating whether the minimum
+    # was found within tolerance.
+    num_iterations: tf.Tensor
+    # The number of iterations of the rotosolve update.
+    num_objective_evaluations: tf.Tensor
+    # The total number of objective
+    # evaluations performed.
+    position: tf.Tensor
+    # A tensor containing the last argument value found
+    # during the search. If the search converged, then
+    # this value is the argmin of the objective function.
+    # A tensor containing the value of the objective from
+    # previous iteration
+    objective_value_previous_iteration: tf.Tensor
+    # Save the evaluated value of the objective function
+    # from the previous iteration
+    objective_value: tf.Tensor
+    # A tensor containing the value of the objective
+    # function at the `position`. If the search
+    # converged, then this is the (local) minimum of
+    # the objective function.
+    tolerance: tf.Tensor
+    # Define the stop criteria. Iteration will stop when the
+    # objective value difference between two iterations is
+    # smaller than tolerance
+    solve_param_i: tf.Tensor
+
+    # The parameter index where rotosolve is currently
+    # modifying. Reserved for internal use.
+
+    def to_dict(self):
+        return {
+            "converged":
+                self.converged,
+            "num_iterations":
+                self.num_iterations,
+            "num_objective_evaluations":
+                self.num_objective_evaluations,
+            "position":
+                self.position,
+            "objective_value":
+                self.objective_value,
+            "objective_value_previous_iteration":
+                self.objective_value_previous_iteration,
+            "tolerance":
+                self.tolerance,
+            "solve_param_i":
+                self.solve_param_i,
+        }
 
 
 def _get_initial_state(initial_position, tolerance, expectation_value_function):
@@ -87,10 +105,10 @@ def _get_initial_state(initial_position, tolerance, expectation_value_function):
         "num_iterations": tf.Variable(0),
         "num_objective_evaluations": tf.Variable(0),
         "position": tf.Variable(initial_position),
-        "objective_value": tf.Variable(0.),
+        "objective_value": expectation_value_function(initial_position),
         "objective_value_previous_iteration": tf.Variable(0.),
         "tolerance": tolerance,
-        "solve_param_i": tf.Variable(0)
+        "solve_param_i": tf.Variable(0),
     }
     return RotosolveOptimizerResults(**init_args)
 
@@ -190,17 +208,16 @@ def minimize(expectation_value_function,
                 [[state.solve_param_i]], [delta_update],
                 prefer_static_shape(state.position))
 
-            state.solve_param_i.assign_add(1)
-            state.position.assign(
-                tf.math.floormod(state.position + delta_update_tensor,
-                                 np.pi * 2))
-
-            state.objective_value_previous_iteration.assign(
-                state.objective_value)
-            state.objective_value.assign(
-                expectation_value_function(state.position))
-
-            return [state]
+            new_position = (tf.math.floormod(
+                state.position + delta_update_tensor, np.pi * 2))
+            next_state_params = state.to_dict()
+            next_state_params.update({
+                "solve_param_i": state.solve_param_i + 1,
+                "position": new_position,
+                "objective_value_previous_iteration": state.objective_value,
+                "objective_value": (expectation_value_function(new_position)),
+            })
+            return [RotosolveOptimizerResults(**next_state_params)]
 
         def _rotosolve_all_parameters_once(state):
             """Iterate over all parameters and rotosolve each single
@@ -219,12 +236,16 @@ def minimize(expectation_value_function,
                 return state_cond.solve_param_i < \
                        prefer_static_shape(state_cond.position)[0]
 
-            state.num_objective_evaluations.assign_add(1)
+            next_state_params = state.to_dict()
+            next_state_params.update({
+                "num_objective_evaluations":
+                    state.num_objective_evaluations + 1,
+            })
 
             return tf.while_loop(
                 cond=_cond_internal,
                 body=_rotosolve_one_parameter_once,
-                loop_vars=[state],
+                loop_vars=[RotosolveOptimizerResults(**next_state_params)],
                 parallel_iterations=1,
             )
 
@@ -238,24 +259,22 @@ def minimize(expectation_value_function,
 
         def _body(state):
             """Main optimization loop."""
-
-            state.solve_param_i.assign(0)
-
-            _rotosolve_all_parameters_once(state)
-
-            state.num_iterations.assign_add(1)
-            state.converged.assign(
-                tf.abs(state.objective_value -
-                       state.objective_value_previous_iteration) <
-                state.tolerance)
-
-            return [state]
+            pre_state_params = state.to_dict()
+            pre_state_params.update({"solve_param_i": 0})
+            pre_state = RotosolveOptimizerResults(**pre_state_params)
+            post_state = _rotosolve_all_parameters_once(pre_state)[0]
+            next_state_params = post_state.to_dict()
+            next_state_params.update({
+                "converged":
+                    (tf.abs(post_state.objective_value -
+                            post_state.objective_value_previous_iteration) <
+                     post_state.tolerance),
+                "num_iterations": post_state.num_iterations + 1,
+            })
+            return [RotosolveOptimizerResults(**next_state_params)]
 
         initial_state = _get_initial_state(initial_position, tolerance,
                                            expectation_value_function)
-
-        initial_state.objective_value.assign(
-            expectation_value_function(initial_state.position))
 
         return tf.while_loop(cond=_cond,
                              body=_body,
