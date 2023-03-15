@@ -12,8 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""The rotosolve minimization algorithm"""
-import collections
+"""The rotosolve minimization algorithm."""
 import numpy as np
 import tensorflow as tf
 
@@ -46,6 +45,7 @@ def prefer_static_value(x):
 
 
 class RotosolveOptimizerResults(tf.experimental.ExtensionType):
+    """ExtentionType of Rotosolve Optimizer tf.while_loop() inner state."""
     converged: tf.Tensor
     # Scalar boolean tensor indicating whether the minimum
     # was found within tolerance.
@@ -60,7 +60,7 @@ class RotosolveOptimizerResults(tf.experimental.ExtensionType):
     # this value is the argmin of the objective function.
     # A tensor containing the value of the objective from
     # previous iteration
-    objective_value_previous_iteration: tf.Tensor
+    objective_value_prev: tf.Tensor
     # Save the evaluated value of the objective function
     # from the previous iteration
     objective_value: tf.Tensor
@@ -78,23 +78,16 @@ class RotosolveOptimizerResults(tf.experimental.ExtensionType):
     # modifying. Reserved for internal use.
 
     def to_dict(self):
+        """Transforms immutable data to mutable dictionary."""
         return {
-            "converged":
-                self.converged,
-            "num_iterations":
-                self.num_iterations,
-            "num_objective_evaluations":
-                self.num_objective_evaluations,
-            "position":
-                self.position,
-            "objective_value":
-                self.objective_value,
-            "objective_value_previous_iteration":
-                self.objective_value_previous_iteration,
-            "tolerance":
-                self.tolerance,
-            "solve_param_i":
-                self.solve_param_i,
+            "converged": self.converged,
+            "num_iterations": self.num_iterations,
+            "num_objective_evaluations": self.num_objective_evaluations,
+            "position": self.position,
+            "objective_value": self.objective_value,
+            "objective_value_prev": self.objective_value_prev,
+            "tolerance": self.tolerance,
+            "solve_param_i": self.solve_param_i,
         }
 
 
@@ -106,7 +99,7 @@ def _get_initial_state(initial_position, tolerance, expectation_value_function):
         "num_objective_evaluations": tf.Variable(0),
         "position": tf.Variable(initial_position),
         "objective_value": expectation_value_function(initial_position),
-        "objective_value_previous_iteration": tf.Variable(0.),
+        "objective_value_prev": tf.Variable(0.),
         "tolerance": tolerance,
         "solve_param_i": tf.Variable(0),
     }
@@ -214,7 +207,7 @@ def minimize(expectation_value_function,
             next_state_params.update({
                 "solve_param_i": state.solve_param_i + 1,
                 "position": new_position,
-                "objective_value_previous_iteration": state.objective_value,
+                "objective_value_prev": state.objective_value,
                 "objective_value": (expectation_value_function(new_position)),
             })
             return [RotosolveOptimizerResults(**next_state_params)]
@@ -265,10 +258,9 @@ def minimize(expectation_value_function,
             post_state = _rotosolve_all_parameters_once(pre_state)[0]
             next_state_params = post_state.to_dict()
             next_state_params.update({
-                "converged":
-                    (tf.abs(post_state.objective_value -
-                            post_state.objective_value_previous_iteration) <
-                     post_state.tolerance),
+                "converged": (tf.abs(post_state.objective_value -
+                                     post_state.objective_value_prev) <
+                              post_state.tolerance),
                 "num_iterations": post_state.num_iterations + 1,
             })
             return [RotosolveOptimizerResults(**next_state_params)]
