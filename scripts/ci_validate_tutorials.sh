@@ -21,7 +21,7 @@ pip install ipykernel==5.1.1
 # OpenAI Gym pip package needed for the quantum reinforcement learning tutorial
 pip install gym==0.24.1
 # seaborn has also numpy dependency, it requires version >= 0.12.0.
-pip install seaborn=0.12.0
+pip install seaborn==0.12.0
 # tf_docs pip package needed for noise tutorial.
 pip install -q git+https://github.com/tensorflow/docs
 # Leave the quantum directory, otherwise errors may occur
