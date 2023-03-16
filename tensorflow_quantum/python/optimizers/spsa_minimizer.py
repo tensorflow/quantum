@@ -263,8 +263,6 @@ def minimize(expectation_value_function,
                     "objective_value": current_obj
                 })
 
-                return [SPSAOptimizerResults(**next_state_params)]
-
             return [SPSAOptimizerResults(**next_state_params)]
 
         # The `state` here is a `SPSAOptimizerResults` tuple with
