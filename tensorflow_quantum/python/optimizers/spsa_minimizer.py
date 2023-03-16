@@ -291,8 +291,6 @@ def minimize(expectation_value_function,
 
             post_state = _spsa_once(SPSAOptimizerResults(**pre_state_params))[0]
             post_state_params = post_state.to_dict()
-            tf.print("asdf", state.objective_value.dtype,
-                     state.objective_value_prev.dtype)
             post_state_params.update({
                 "num_iterations":
                     post_state.num_iterations + 1,
