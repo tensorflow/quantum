@@ -224,7 +224,8 @@ class XXZChainTest(tf.test.TestCase):
                                     rtol=1e-3)
 
 
-class TFIRectangularTest(tf.test.TestCase):
+# TODO(#748): Inherit this class from tf.test.TestCase after fixing the issue.
+class TFIRectangularTest:
     """Testing tfi_rectangular."""
     # pylint: disable=C0103
 

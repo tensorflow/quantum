@@ -82,7 +82,7 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
     std::vector<NoisyQsimCircuit> qsim_circuits(programs.size(),
                                                 NoisyQsimCircuit());
 
-    Status parse_status = Status::OK();
+    Status parse_status = ::tensorflow::Status();
     auto p_lock = tensorflow::mutex();
     auto construct_f = [&](int start, int end) {
       for (int i = start; i < end; i++) {
@@ -343,7 +343,7 @@ REGISTER_OP("TfqNoisySamples")
                   tensorflow::shape_inference::InferenceContext::kUnknownDim,
                   tensorflow::shape_inference::InferenceContext::kUnknownDim}));
 
-      return tensorflow::Status::OK();
+      return ::tensorflow::Status();
     });
 
 }  // namespace tfq
