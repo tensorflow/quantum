@@ -12,8 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""The SPSA minimization algorithm"""
-import collections
+"""The SPSA minimization algorithm."""
 import tensorflow as tf
 import numpy as np
 
@@ -45,69 +44,88 @@ def prefer_static_value(x):
     return x
 
 
-SPSAOptimizerResults = collections.namedtuple(
-    'SPSAOptimizerResults',
-    [
-        'converged',
-        # Scalar boolean tensor indicating whether the minimum
-        # was found within tolerance.
-        'num_iterations',
-        # The number of iterations of the SPSA update.
-        'num_objective_evaluations',
-        # The total number of objective
-        # evaluations performed.
-        'position',
-        # A tensor containing the last argument value found
-        # during the search. If the search converged, then
-        # this value is the argmin of the objective function.
-        # A tensor containing the value of the objective from
-        # previous iteration
-        'objective_value_previous_iteration',
-        # Save the evaluated value of the objective function
-        # from the previous iteration
-        'objective_value',
-        # A tensor containing the value of the objective
-        # function at the `position`. If the search
-        # converged, then this is the (local) minimum of
-        # the objective function.
-        'tolerance',
-        # Define the stop criteria. Iteration will stop when the
-        # objective value difference between two iterations is
-        # smaller than tolerance
-        'lr',
-        # Specifies the learning rate
-        'alpha',
-        # Specifies scaling of the learning rate
-        'perturb',
-        # Specifies the size of the perturbations
-        'gamma',
-        # Specifies scaling of the size of the perturbations
-        'blocking',
-        # If true, then the optimizer will only accept updates that improve
-        # the objective function.
-        'allowed_increase'
-        # Specifies maximum allowable increase in objective function
-        # (only applies if blocking is true).
-    ])
+class SPSAOptimizerResults(tf.experimental.ExtensionType):
+    """ExtentionType of SPSA Optimizer tf.while_loop() inner state."""
+    converged: tf.Tensor
+    # Scalar boolean tensor indicating whether the minimum
+    # was found within tolerance.
+    num_iterations: tf.Tensor
+    # The number of iterations of the SPSA update.
+    num_objective_evaluations: tf.Tensor
+    # The total number of objective
+    # evaluations performed.
+    position: tf.Tensor
+    # A tensor containing the last argument value found
+    # during the search. If the search converged, then
+    # this value is the argmin of the objective function.
+    # A tensor containing the value of the objective from
+    # previous iteration
+    objective_value_prev: tf.Tensor
+    # Save the evaluated value of the objective function
+    # from the previous iteration
+    objective_value: tf.Tensor
+    # A tensor containing the value of the objective
+    # function at the `position`. If the search
+    # converged, then this is the (local) minimum of
+    # the objective function.
+    tolerance: tf.Tensor
+    # Define the stop criteria. Iteration will stop when the
+    # objective value difference between two iterations is
+    # smaller than tolerance
+    learning_rate: tf.Tensor
+    # Specifies the learning rate
+    alpha: tf.Tensor
+    # Specifies scaling of the learning rate
+    perturb: tf.Tensor
+    # Specifies the size of the perturbations
+    gamma: tf.Tensor
+    # Specifies scaling of the size of the perturbations
+    blocking: tf.Tensor
+    # If true, then the optimizer will only accept updates that improve
+    # the objective function.
+    allowed_increase: tf.Tensor
+
+    # Specifies maximum allowable increase in objective function
+    # (only applies if blocking is true).
+
+    def to_dict(self):
+        """Transforms immutable data to mutable dictionary."""
+        return {
+            "converged": self.converged,
+            "num_iterations": self.num_iterations,
+            "num_objective_evaluations": self.num_objective_evaluations,
+            "position": self.position,
+            "objective_value": self.objective_value,
+            "objective_value_prev": self.objective_value_prev,
+            "tolerance": self.tolerance,
+            "learning_rate": self.learning_rate,
+            "alpha": self.alpha,
+            "perturb": self.perturb,
+            "gamma": self.gamma,
+            "blocking": self.blocking,
+            "allowed_increase": self.allowed_increase,
+        }
 
 
 def _get_initial_state(initial_position, tolerance, expectation_value_function,
-                       lr, alpha, perturb, gamma, blocking, allowed_increase):
+                       learning_rate, alpha, perturb, gamma, blocking,
+                       allowed_increase):
     """Create SPSAOptimizerResults with initial state of search."""
     init_args = {
         "converged": tf.Variable(False),
         "num_iterations": tf.Variable(0),
         "num_objective_evaluations": tf.Variable(0),
         "position": tf.Variable(initial_position),
-        "objective_value": tf.Variable(0.),
-        "objective_value_previous_iteration": tf.Variable(np.inf),
+        "objective_value":
+            (tf.cast(expectation_value_function(initial_position), tf.float32)),
+        "objective_value_prev": tf.Variable(np.inf),
         "tolerance": tolerance,
-        "lr": tf.Variable(lr),
+        "learning_rate": tf.Variable(learning_rate),
         "alpha": tf.Variable(alpha),
         "perturb": tf.Variable(perturb),
         "gamma": tf.Variable(gamma),
         "blocking": tf.Variable(blocking),
-        "allowed_increase": tf.Variable(allowed_increase)
+        "allowed_increase": tf.Variable(allowed_increase),
     }
     return SPSAOptimizerResults(**init_args)
 
@@ -117,7 +135,7 @@ def minimize(expectation_value_function,
              tolerance=1e-5,
              max_iterations=200,
              alpha=0.602,
-             lr=1.0,
+             learning_rate=1.0,
              perturb=1.0,
              gamma=0.101,
              blocking=False,
@@ -159,7 +177,8 @@ def minimize(expectation_value_function,
         tolerance: Scalar `tf.Tensor` of real dtype. Specifies the tolerance
             for the procedure. If the supremum norm between two iteration
             vector is below this number, the algorithm is stopped.
-        lr: Scalar `tf.Tensor` of real dtype. Specifies the learning rate
+        learning_rate: Scalar `tf.Tensor` of real dtype.
+            Specifies the learning rate.
         alpha: Scalar `tf.Tensor` of real dtype. Specifies scaling of the
             learning rate.
         perturb: Scalar `tf.Tensor` of real dtype. Specifies the size of the
@@ -198,7 +217,9 @@ def minimize(expectation_value_function,
         max_iterations = tf.convert_to_tensor(max_iterations,
                                               name='max_iterations')
 
-        lr_init = tf.convert_to_tensor(lr, name='initial_a', dtype='float32')
+        learning_rate_init = tf.convert_to_tensor(learning_rate,
+                                                  name='initial_a',
+                                                  dtype='float32')
         perturb_init = tf.convert_to_tensor(perturb,
                                             name='initial_c',
                                             dtype='float32')
@@ -224,19 +245,25 @@ def minimize(expectation_value_function,
                                              state.perturb * delta_shift)
 
             gradient_estimate = (v_p - v_m) / (2 * state.perturb) * delta_shift
-            update = state.lr * gradient_estimate
+            update = state.learning_rate * gradient_estimate
+            next_state_params = state.to_dict()
+            next_state_params.update({
+                "num_objective_evaluations":
+                    state.num_objective_evaluations + 2,
+            })
 
-            state.num_objective_evaluations.assign_add(2)
-
-            current_obj = expectation_value_function(state.position - update)
-            if state.objective_value_previous_iteration + \
+            current_obj = tf.cast(expectation_value_function(state.position -
+                                                             update),
+                                  dtype=tf.float32)
+            if state.objective_value_prev + \
                 state.allowed_increase >= current_obj or not state.blocking:
-                state.position.assign(state.position - update)
-                state.objective_value_previous_iteration.assign(
-                    state.objective_value)
-                state.objective_value.assign(current_obj)
+                next_state_params.update({
+                    "position": state.position - update,
+                    "objective_value_prev": state.objective_value,
+                    "objective_value": current_obj
+                })
 
-            return [state]
+            return [SPSAOptimizerResults(**next_state_params)]
 
         # The `state` here is a `SPSAOptimizerResults` tuple with
         # values for the current state of the algorithm computation.
@@ -248,31 +275,33 @@ def minimize(expectation_value_function,
 
         def _body(state):
             """Main optimization loop."""
-            new_lr = lr_init / (
+            new_learning_rate = learning_rate_init / (
                 (tf.cast(state.num_iterations + 1, tf.float32) +
                  0.01 * tf.cast(max_iterations, tf.float32))**state.alpha)
             new_perturb = perturb_init / (tf.cast(state.num_iterations + 1,
                                                   tf.float32)**state.gamma)
 
-            state.lr.assign(new_lr)
-            state.perturb.assign(new_perturb)
+            pre_state_params = state.to_dict()
+            pre_state_params.update({
+                "learning_rate": new_learning_rate,
+                "perturb": new_perturb,
+            })
 
-            _spsa_once(state)
-            state.num_iterations.assign_add(1)
-            state.converged.assign(
-                tf.abs(state.objective_value -
-                       state.objective_value_previous_iteration) <
-                state.tolerance)
-            return [state]
+            post_state = _spsa_once(SPSAOptimizerResults(**pre_state_params))[0]
+            post_state_params = post_state.to_dict()
+            post_state_params.update({
+                "num_iterations":
+                    post_state.num_iterations + 1,
+                "converged":
+                    (tf.abs(state.objective_value - state.objective_value_prev)
+                     < state.tolerance),
+            })
+            return [SPSAOptimizerResults(**post_state_params)]
 
         initial_state = _get_initial_state(initial_position, tolerance,
-                                           expectation_value_function, lr,
-                                           alpha, perturb, gamma, blocking,
-                                           allowed_increase)
-
-        initial_state.objective_value.assign(
-            tf.cast(expectation_value_function(initial_state.position),
-                    tf.float32))
+                                           expectation_value_function,
+                                           learning_rate, alpha, perturb, gamma,
+                                           blocking, allowed_increase)
 
         return tf.while_loop(cond=_cond,
                              body=_body,

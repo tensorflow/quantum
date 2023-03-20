@@ -68,7 +68,7 @@ class TfqCalculateUnitaryOp : public tensorflow::OpKernel {
     std::vector<std::vector<qsim::GateFused<QsimGate>>> fused_circuits(
         programs.size(), std::vector<qsim::GateFused<QsimGate>>({}));
 
-    Status parse_status = Status::OK();
+    Status parse_status = ::tensorflow::Status();
     auto p_lock = tensorflow::mutex();
     auto construct_f = [&](int start, int end) {
       for (int i = start; i < end; i++) {
@@ -182,7 +182,7 @@ REGISTER_OP("TfqCalculateUnitary")
                   tensorflow::shape_inference::InferenceContext::kUnknownDim,
                   tensorflow::shape_inference::InferenceContext::kUnknownDim}));
 
-      return tensorflow::Status::OK();
+      return ::tensorflow::Status();
     });
 
 }  // namespace tfq

@@ -42,16 +42,17 @@ template <typename T>
 Status ParseProto(const std::string& text, T* proto) {
   // First attempt to parse from the binary representation.
   if (proto->ParseFromString(text)) {
-    return Status::OK();
+    return ::tensorflow::Status();
   }
 
   // If that fails, then try to parse from the human readable representation.
   if (google::protobuf::TextFormat::ParseFromString(text, proto)) {
-    return Status::OK();
+    return ::tensorflow::Status();
   }
 
-  return Status(tensorflow::error::INVALID_ARGUMENT,
-                "Unparseable proto: " + text);
+  return Status(
+      static_cast<tensorflow::errors::Code>(absl::StatusCode::kInvalidArgument),
+      "Unparseable proto: " + text);
 }
 
 }  // namespace
@@ -67,7 +68,8 @@ Status ParsePrograms(OpKernelContext* context, const std::string& input_name,
   if (input->dims() != 1) {
     // Never parse anything other than a 1d list of circuits.
     return Status(
-        tensorflow::error::INVALID_ARGUMENT,
+        static_cast<tensorflow::errors::Code>(
+            absl::StatusCode::kInvalidArgument),
         absl::StrCat("programs must be rank 1. Got rank ", input->dims(), "."));
   }
 
@@ -86,7 +88,7 @@ Status ParsePrograms(OpKernelContext* context, const std::string& input_name,
   context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
       num_programs, cycle_estimate, DoWork);
 
-  return Status::OK();
+  return ::tensorflow::Status();
 }
 
 Status ParsePrograms2D(OpKernelContext* context, const std::string& input_name,
@@ -99,7 +101,8 @@ Status ParsePrograms2D(OpKernelContext* context, const std::string& input_name,
 
   if (input->dims() != 2) {
     // Never parse anything other than a 1d list of circuits.
-    return Status(tensorflow::error::INVALID_ARGUMENT,
+    return Status(static_cast<tensorflow::errors::Code>(
+                      absl::StatusCode::kInvalidArgument),
                   absl::StrCat("other_programs must be rank 2. Got rank ",
                                input->dims(), "."));
   }
@@ -123,7 +126,7 @@ Status ParsePrograms2D(OpKernelContext* context, const std::string& input_name,
   context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
       num_programs * num_entries, cycle_estimate, DoWork);
 
-  return Status::OK();
+  return ::tensorflow::Status();
 }
 
 Status GetProgramsAndProgramsToAppend(
@@ -140,11 +143,12 @@ Status GetProgramsAndProgramsToAppend(
   }
 
   if (programs->size() != programs_to_append->size()) {
-    return Status(tensorflow::error::INVALID_ARGUMENT,
+    return Status(static_cast<tensorflow::errors::Code>(
+                      absl::StatusCode::kInvalidArgument),
                   "programs and programs_to_append must have matching sizes.");
   }
 
-  return Status::OK();
+  return ::tensorflow::Status();
 }
 
 Status GetProgramsAndNumQubits(
@@ -167,7 +171,8 @@ Status GetProgramsAndNumQubits(
     }
     if (programs->size() != p_sums->size()) {
       return Status(
-          tensorflow::error::INVALID_ARGUMENT,
+          static_cast<tensorflow::errors::Code>(
+              absl::StatusCode::kInvalidArgument),
           absl::StrCat("Number of circuits and PauliSums do not match. Got ",
                        programs->size(), " circuits and ", p_sums->size(),
                        " paulisums."));
@@ -197,7 +202,7 @@ Status GetProgramsAndNumQubits(
   context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
       num_qubits->size(), cycle_estimate, DoWork);
 
-  return Status::OK();
+  return ::tensorflow::Status();
 }
 
 tensorflow::Status GetProgramsAndNumQubits(
@@ -218,7 +223,8 @@ tensorflow::Status GetProgramsAndNumQubits(
   }
 
   if (programs->size() != other_programs->size()) {
-    return Status(tensorflow::error::INVALID_ARGUMENT,
+    return Status(static_cast<tensorflow::errors::Code>(
+                      absl::StatusCode::kInvalidArgument),
                   absl::StrCat("programs and other_programs batch dimension",
                                " do not match. Foud: ", programs->size(),
                                " and ", other_programs->size()));
@@ -241,7 +247,7 @@ tensorflow::Status GetProgramsAndNumQubits(
   context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
       num_qubits->size(), cycle_estimate, DoWork);
 
-  return Status::OK();
+  return ::tensorflow::Status();
 }
 
 Status GetPauliSums(OpKernelContext* context,
@@ -254,7 +260,8 @@ Status GetPauliSums(OpKernelContext* context,
   }
 
   if (input->dims() != 2) {
-    return Status(tensorflow::error::INVALID_ARGUMENT,
+    return Status(static_cast<tensorflow::errors::Code>(
+                      absl::StatusCode::kInvalidArgument),
                   absl::StrCat("pauli_sums must be rank 2. Got rank ",
                                input->dims(), "."));
   }
@@ -278,7 +285,7 @@ Status GetPauliSums(OpKernelContext* context,
   context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
       sum_specs.dimension(0) * sum_specs.dimension(1), cycle_estimate, DoWork);
 
-  return Status::OK();
+  return ::tensorflow::Status();
 }
 
 Status GetSymbolMaps(OpKernelContext* context, std::vector<SymbolMap>* maps) {
@@ -290,7 +297,8 @@ Status GetSymbolMaps(OpKernelContext* context, std::vector<SymbolMap>* maps) {
   }
 
   if (input_names->dims() != 1) {
-    return Status(tensorflow::error::INVALID_ARGUMENT,
+    return Status(static_cast<tensorflow::errors::Code>(
+                      absl::StatusCode::kInvalidArgument),
                   absl::StrCat("symbol_names must be rank 1. Got rank ",
                                input_names->dims(), "."));
   }
@@ -302,7 +310,8 @@ Status GetSymbolMaps(OpKernelContext* context, std::vector<SymbolMap>* maps) {
   }
 
   if (input_values->dims() != 2) {
-    return Status(tensorflow::error::INVALID_ARGUMENT,
+    return Status(static_cast<tensorflow::errors::Code>(
+                      absl::StatusCode::kInvalidArgument),
                   absl::StrCat("symbol_values must be rank 2. Got rank ",
                                input_values->dims(), "."));
   }
@@ -311,7 +320,8 @@ Status GetSymbolMaps(OpKernelContext* context, std::vector<SymbolMap>* maps) {
   const auto symbol_values = input_values->matrix<float>();
 
   if (symbol_names.dimension(0) != symbol_values.dimension(1)) {
-    return Status(tensorflow::error::INVALID_ARGUMENT,
+    return Status(static_cast<tensorflow::errors::Code>(
+                      absl::StatusCode::kInvalidArgument),
                   "Input symbol names and value sizes do not match.");
   }
 
@@ -333,7 +343,7 @@ Status GetSymbolMaps(OpKernelContext* context, std::vector<SymbolMap>* maps) {
   context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
       symbol_values.dimension(0), cycle_estimate, DoWork);
 
-  return Status::OK();
+  return ::tensorflow::Status();
 }
 
 tensorflow::Status GetNumSamples(
@@ -346,7 +356,8 @@ tensorflow::Status GetNumSamples(
   }
 
   if (input_num_samples->dims() != 2) {
-    return Status(tensorflow::error::INVALID_ARGUMENT,
+    return Status(static_cast<tensorflow::errors::Code>(
+                      absl::StatusCode::kInvalidArgument),
                   absl::StrCat("num_samples must be rank 2. Got rank ",
                                input_num_samples->dims(), "."));
   }
@@ -359,7 +370,8 @@ tensorflow::Status GetNumSamples(
     for (unsigned int j = 0; j < matrix_num_samples.dimension(1); j++) {
       const int num_samples = matrix_num_samples(i, j);
       if (num_samples < 1) {
-        return Status(tensorflow::error::INVALID_ARGUMENT,
+        return Status(static_cast<tensorflow::errors::Code>(
+                          absl::StatusCode::kInvalidArgument),
                       "Each element of num_samples must be greater than 0.");
       }
       sub_parsed_num_samples.push_back(num_samples);
@@ -367,7 +379,7 @@ tensorflow::Status GetNumSamples(
     parsed_num_samples->push_back(sub_parsed_num_samples);
   }
 
-  return Status::OK();
+  return ::tensorflow::Status();
 }
 
 // used by tfq_simulate_samples.
@@ -380,7 +392,8 @@ Status GetIndividualSample(tensorflow::OpKernelContext* context,
   }
 
   if (input_num_samples->dims() != 1) {
-    return Status(tensorflow::error::INVALID_ARGUMENT,
+    return Status(static_cast<tensorflow::errors::Code>(
+                      absl::StatusCode::kInvalidArgument),
                   absl::StrCat("num_samples must be rank 1. Got rank ",
                                input_num_samples->dims(), "."));
   }
@@ -388,13 +401,14 @@ Status GetIndividualSample(tensorflow::OpKernelContext* context,
   const auto vector_num_samples = input_num_samples->vec<int>();
 
   if (vector_num_samples.dimension(0) != 1) {
-    return Status(tensorflow::error::INVALID_ARGUMENT,
+    return Status(static_cast<tensorflow::errors::Code>(
+                      absl::StatusCode::kInvalidArgument),
                   absl::StrCat("num_samples must contain 1 element. Got ",
                                vector_num_samples.dimension(0), "."));
   }
 
   (*n_samples) = vector_num_samples(0);
-  return Status::OK();
+  return ::tensorflow::Status();
 }
 
 // used by adj_grad_op.
@@ -408,7 +422,8 @@ tensorflow::Status GetPrevGrads(
   }
 
   if (input_grads->dims() != 2) {
-    return Status(tensorflow::error::INVALID_ARGUMENT,
+    return Status(static_cast<tensorflow::errors::Code>(
+                      absl::StatusCode::kInvalidArgument),
                   absl::StrCat("downstream_grads must be rank 2. Got rank ",
                                input_grads->dims(), "."));
   }
@@ -425,7 +440,7 @@ tensorflow::Status GetPrevGrads(
     parsed_prev_grads->push_back(sub_parsed_grads);
   }
 
-  return Status::OK();
+  return ::tensorflow::Status();
 }
 
 }  // namespace tfq

@@ -120,7 +120,7 @@ TEST_CASES = [
             }
         }
     }),
-    (List[bool], np.array([True, False], dtype=np.bool), {
+    (List[bool], np.array([True, False], dtype=np.bool_), {
         'arg_value': {
             'bool_values': {
                 'values': [True, False]
