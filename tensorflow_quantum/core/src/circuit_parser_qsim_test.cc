@@ -149,7 +149,7 @@ TEST_P(TwoQubitEigenFixture, TwoEigenGate) {
   // Test case where we have a placeholder.
   ASSERT_EQ(QsimCircuitFromProgram(program_proto, symbol_map, 2, &test_circuit,
                                    &fused_circuit, &metadata),
-            tensorflow::Status::OK());
+            ::tensorflow::Status());
   AssertTwoQubitEqual(test_circuit.gates[0], ref_gate);
   EXPECT_EQ(metadata[0].index, 0);
   EXPECT_EQ(metadata[0].symbol_values[0], "placeholder");
@@ -172,7 +172,7 @@ TEST_P(TwoQubitEigenFixture, TwoEigenGate) {
   // Test case where we have all float values.
   ASSERT_EQ(QsimCircuitFromProgram(program_proto, symbol_map, 2, &test_circuit,
                                    &fused_circuit, &metadata),
-            tensorflow::Status::OK());
+            ::tensorflow::Status());
   AssertTwoQubitEqual(test_circuit.gates[0], ref_gate);
   EXPECT_EQ(metadata[0].index, 0);
   EXPECT_NEAR(metadata[0].gate_params[0], exp, 1e-5);
@@ -191,7 +191,8 @@ TEST_P(TwoQubitEigenFixture, TwoEigenGate) {
   // Test case where proto arg missing.
   ASSERT_EQ(QsimCircuitFromProgram(program_proto, symbol_map, 2, &test_circuit,
                                    &fused_circuit),
-            tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
+            tensorflow::Status(static_cast<tensorflow::error::Code>(
+                                   absl::StatusCode::kInvalidArgument),
                                "Could not find arg: exponent in op."));
 
   test_circuit.gates.clear();
@@ -203,7 +204,8 @@ TEST_P(TwoQubitEigenFixture, TwoEigenGate) {
   ASSERT_EQ(
       QsimCircuitFromProgram(program_proto, symbol_map, 2, &test_circuit,
                              &fused_circuit),
-      tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
+      tensorflow::Status(static_cast<tensorflow::error::Code>(
+                             absl::StatusCode::kInvalidArgument),
                          "Could not find symbol in parameter map: alpha"));
 }
 
@@ -250,7 +252,7 @@ TEST_P(TwoQubitEigenFixture, TwoEigenGateControlled) {
   // Test case where we have a placeholder.
   ASSERT_EQ(QsimCircuitFromProgram(program_proto, symbol_map, 4, &test_circuit,
                                    &fused_circuit, &metadata),
-            tensorflow::Status::OK());
+            ::tensorflow::Status());
   AssertTwoQubitEqual(test_circuit.gates[0], ref_gate);
   EXPECT_EQ(metadata[0].index, 0);
   EXPECT_EQ(metadata[0].symbol_values[0], "placeholder");
@@ -319,7 +321,7 @@ TEST_P(SingleQubitEigenFixture, SingleEigenGate) {
 
   ASSERT_EQ(QsimCircuitFromProgram(program_proto, symbol_map, 1, &test_circuit,
                                    &fused_circuit, &metadata),
-            tensorflow::Status::OK());
+            ::tensorflow::Status());
   AssertOneQubitEqual(test_circuit.gates[0], ref_gate);
   EXPECT_EQ(metadata[0].index, 0);
   EXPECT_EQ(metadata[0].symbol_values[0], "placeholder");
@@ -342,7 +344,7 @@ TEST_P(SingleQubitEigenFixture, SingleEigenGate) {
   // Test case where we have all float values.
   ASSERT_EQ(QsimCircuitFromProgram(program_proto, symbol_map, 1, &test_circuit,
                                    &fused_circuit, &metadata),
-            tensorflow::Status::OK());
+            ::tensorflow::Status());
   AssertOneQubitEqual(test_circuit.gates[0], ref_gate);
   EXPECT_EQ(metadata[0].index, 0);
   EXPECT_NEAR(metadata[0].gate_params[0], exp, 1e-5);
@@ -361,7 +363,8 @@ TEST_P(SingleQubitEigenFixture, SingleEigenGate) {
   // Test case where proto arg missing.
   ASSERT_EQ(QsimCircuitFromProgram(program_proto, symbol_map, 1, &test_circuit,
                                    &fused_circuit),
-            tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
+            tensorflow::Status(static_cast<tensorflow::error::Code>(
+                                   absl::StatusCode::kInvalidArgument),
                                "Could not find arg: exponent in op."));
 
   test_circuit.gates.clear();
@@ -373,7 +376,8 @@ TEST_P(SingleQubitEigenFixture, SingleEigenGate) {
   ASSERT_EQ(
       QsimCircuitFromProgram(program_proto, symbol_map, 1, &test_circuit,
                              &fused_circuit),
-      tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
+      tensorflow::Status(static_cast<tensorflow::error::Code>(
+                             absl::StatusCode::kInvalidArgument),
                          "Could not find symbol in parameter map: alpha"));
 }
 
@@ -418,7 +422,7 @@ TEST_P(SingleQubitEigenFixture, SingleEigenGateControlled) {
 
   ASSERT_EQ(QsimCircuitFromProgram(program_proto, symbol_map, 3, &test_circuit,
                                    &fused_circuit, &metadata),
-            tensorflow::Status::OK());
+            ::tensorflow::Status());
   AssertOneQubitEqual(test_circuit.gates[0], ref_gate);
   EXPECT_EQ(metadata[0].index, 0);
   EXPECT_EQ(metadata[0].symbol_values[0], "placeholder");
@@ -471,7 +475,7 @@ TEST(QsimCircuitParserTest, SingleConstantGate) {
 
     ASSERT_EQ(QsimCircuitFromProgram(program_proto, empty_map, 1, &test_circuit,
                                      &fused_circuit, &metadata),
-              tensorflow::Status::OK());
+              ::tensorflow::Status());
     AssertOneQubitEqual(test_circuit.gates[0], kv.second);
     EXPECT_EQ(metadata.size(), 1);
     EXPECT_EQ(metadata[0].placeholder_names.size(), 0);
@@ -511,7 +515,7 @@ TEST(QsimCircuitParserTest, SingleConstantGateControlled) {
 
     ASSERT_EQ(QsimCircuitFromProgram(program_proto, empty_map, 3, &test_circuit,
                                      &fused_circuit, &metadata),
-              tensorflow::Status::OK());
+              ::tensorflow::Status());
     AssertOneQubitEqual(test_circuit.gates[0], kv.second);
     EXPECT_EQ(metadata.size(), 1);
     EXPECT_EQ(metadata[0].placeholder_names.size(), 0);
@@ -553,7 +557,7 @@ TEST(QsimCircuitParserTest, TwoConstantGate) {
 
     ASSERT_EQ(QsimCircuitFromProgram(program_proto, empty_map, 2, &test_circuit,
                                      &fused_circuit, &metadata),
-              tensorflow::Status::OK());
+              ::tensorflow::Status());
     AssertTwoQubitEqual(test_circuit.gates[0], kv.second);
     EXPECT_EQ(metadata.size(), 1);
     EXPECT_EQ(metadata[0].placeholder_names.size(), 0);
@@ -596,7 +600,7 @@ TEST(QsimCircuitParserTest, TwoConstantGateControlled) {
 
     ASSERT_EQ(QsimCircuitFromProgram(program_proto, empty_map, 4, &test_circuit,
                                      &fused_circuit, &metadata),
-              tensorflow::Status::OK());
+              ::tensorflow::Status());
     AssertTwoQubitEqual(test_circuit.gates[0], kv.second);
     EXPECT_EQ(metadata.size(), 1);
     EXPECT_EQ(metadata[0].placeholder_names.size(), 0);
@@ -646,7 +650,7 @@ TEST(QsimCircuitParserTest, FsimGate) {
   // Test symbol resolution.
   ASSERT_EQ(QsimCircuitFromProgram(program_proto, symbol_map, 2, &test_circuit,
                                    &fused_circuit, &metadata),
-            tensorflow::Status::OK());
+            ::tensorflow::Status());
   AssertTwoQubitEqual(test_circuit.gates[0], reference);
   EXPECT_EQ(metadata.size(), 1);
   EXPECT_EQ(metadata[0].placeholder_names.size(), 2);
@@ -673,7 +677,7 @@ TEST(QsimCircuitParserTest, FsimGate) {
   // Test float values only.
   ASSERT_EQ(QsimCircuitFromProgram(program_proto, symbol_map, 2, &test_circuit,
                                    &fused_circuit, &metadata),
-            tensorflow::Status::OK());
+            ::tensorflow::Status());
   AssertTwoQubitEqual(test_circuit.gates[0], reference);
   EXPECT_EQ(metadata.size(), 1);
   EXPECT_EQ(metadata[0].placeholder_names.size(), 0);
@@ -691,7 +695,8 @@ TEST(QsimCircuitParserTest, FsimGate) {
   // Test case where proto arg missing.
   ASSERT_EQ(QsimCircuitFromProgram(program_proto, symbol_map, 2, &test_circuit,
                                    &fused_circuit),
-            tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
+            tensorflow::Status(static_cast<tensorflow::error::Code>(
+                                   absl::StatusCode::kInvalidArgument),
                                "Could not find arg: theta in op."));
 
   test_circuit.gates.clear();
@@ -703,7 +708,8 @@ TEST(QsimCircuitParserTest, FsimGate) {
   ASSERT_EQ(
       QsimCircuitFromProgram(program_proto, symbol_map, 2, &test_circuit,
                              &fused_circuit),
-      tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
+      tensorflow::Status(static_cast<tensorflow::error::Code>(
+                             absl::StatusCode::kInvalidArgument),
                          "Could not find symbol in parameter map: alpha"));
 }
 
@@ -749,7 +755,7 @@ TEST(QsimCircuitParserTest, FsimGateControlled) {
   // Test symbol resolution.
   ASSERT_EQ(QsimCircuitFromProgram(program_proto, symbol_map, 4, &test_circuit,
                                    &fused_circuit, &metadata),
-            tensorflow::Status::OK());
+            ::tensorflow::Status());
   AssertTwoQubitEqual(test_circuit.gates[0], reference);
   EXPECT_EQ(metadata.size(), 1);
   EXPECT_EQ(metadata[0].placeholder_names.size(), 2);
@@ -808,7 +814,7 @@ TEST(QsimCircuitParserTest, PhasedISwap) {
   // Test symbol resolution.
   ASSERT_EQ(QsimCircuitFromProgram(program_proto, symbol_map, 2, &test_circuit,
                                    &fused_circuit, &metadata),
-            tensorflow::Status::OK());
+            ::tensorflow::Status());
   AssertTwoQubitEqual(test_circuit.gates[0], reference);
   EXPECT_EQ(metadata.size(), 1);
   EXPECT_EQ(metadata[0].placeholder_names.size(), 2);
@@ -835,7 +841,7 @@ TEST(QsimCircuitParserTest, PhasedISwap) {
   // Test float values only.
   ASSERT_EQ(QsimCircuitFromProgram(program_proto, symbol_map, 2, &test_circuit,
                                    &fused_circuit, &metadata),
-            tensorflow::Status::OK());
+            ::tensorflow::Status());
   AssertTwoQubitEqual(test_circuit.gates[0], reference);
   EXPECT_EQ(metadata.size(), 1);
   EXPECT_EQ(metadata[0].placeholder_names.size(), 0);
@@ -853,7 +859,8 @@ TEST(QsimCircuitParserTest, PhasedISwap) {
   // Test case where proto arg missing.
   ASSERT_EQ(QsimCircuitFromProgram(program_proto, symbol_map, 2, &test_circuit,
                                    &fused_circuit),
-            tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
+            tensorflow::Status(static_cast<tensorflow::error::Code>(
+                                   absl::StatusCode::kInvalidArgument),
                                "Could not find arg: phase_exponent in op."));
 
   test_circuit.gates.clear();
@@ -865,7 +872,8 @@ TEST(QsimCircuitParserTest, PhasedISwap) {
   ASSERT_EQ(
       QsimCircuitFromProgram(program_proto, symbol_map, 2, &test_circuit,
                              &fused_circuit),
-      tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
+      tensorflow::Status(static_cast<tensorflow::error::Code>(
+                             absl::StatusCode::kInvalidArgument),
                          "Could not find symbol in parameter map: alpha"));
 }
 
@@ -913,7 +921,7 @@ TEST(QsimCircuitParserTest, PhasedISwapControlled) {
   // Test symbol resolution.
   ASSERT_EQ(QsimCircuitFromProgram(program_proto, symbol_map, 4, &test_circuit,
                                    &fused_circuit, &metadata),
-            tensorflow::Status::OK());
+            ::tensorflow::Status());
   AssertTwoQubitEqual(test_circuit.gates[0], reference);
   EXPECT_EQ(metadata.size(), 1);
   EXPECT_EQ(metadata[0].placeholder_names.size(), 2);
@@ -972,7 +980,7 @@ TEST(QsimCircuitParserTest, PhasedXPow) {
   // Test symbol resolution.
   ASSERT_EQ(QsimCircuitFromProgram(program_proto, symbol_map, 1, &test_circuit,
                                    &fused_circuit, &metadata),
-            tensorflow::Status::OK());
+            ::tensorflow::Status());
   AssertOneQubitEqual(test_circuit.gates[0], reference);
   EXPECT_EQ(metadata.size(), 1);
   EXPECT_EQ(metadata[0].placeholder_names.size(), 2);
@@ -1001,7 +1009,7 @@ TEST(QsimCircuitParserTest, PhasedXPow) {
   // Test float values only.
   ASSERT_EQ(QsimCircuitFromProgram(program_proto, symbol_map, 1, &test_circuit,
                                    &fused_circuit, &metadata),
-            tensorflow::Status::OK());
+            ::tensorflow::Status());
   AssertOneQubitEqual(test_circuit.gates[0], reference);
   EXPECT_EQ(metadata.size(), 1);
   EXPECT_EQ(metadata[0].placeholder_names.size(), 0);
@@ -1019,7 +1027,8 @@ TEST(QsimCircuitParserTest, PhasedXPow) {
   // Test case where proto arg missing.
   ASSERT_EQ(QsimCircuitFromProgram(program_proto, symbol_map, 1, &test_circuit,
                                    &fused_circuit),
-            tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
+            tensorflow::Status(static_cast<tensorflow::error::Code>(
+                                   absl::StatusCode::kInvalidArgument),
                                "Could not find arg: phase_exponent in op."));
 
   test_circuit.gates.clear();
@@ -1031,7 +1040,8 @@ TEST(QsimCircuitParserTest, PhasedXPow) {
   ASSERT_EQ(
       QsimCircuitFromProgram(program_proto, symbol_map, 1, &test_circuit,
                              &fused_circuit),
-      tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
+      tensorflow::Status(static_cast<tensorflow::error::Code>(
+                             absl::StatusCode::kInvalidArgument),
                          "Could not find symbol in parameter map: alpha"));
 }
 
@@ -1079,7 +1089,7 @@ TEST(QsimCircuitParserTest, PhasedXPowControlled) {
   // Test symbol resolution.
   ASSERT_EQ(QsimCircuitFromProgram(program_proto, symbol_map, 3, &test_circuit,
                                    &fused_circuit, &metadata),
-            tensorflow::Status::OK());
+            ::tensorflow::Status());
   AssertOneQubitEqual(test_circuit.gates[0], reference);
   EXPECT_EQ(metadata.size(), 1);
   EXPECT_EQ(metadata[0].placeholder_names.size(), 2);
@@ -1124,7 +1134,8 @@ TEST(QsimCircuitParserTest, InvalidControlValues) {
 
   ASSERT_EQ(QsimCircuitFromProgram(program_proto, empty_map, 3, &test_circuit,
                                    &fused_circuit, &metadata),
-            tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
+            tensorflow::Status(static_cast<tensorflow::error::Code>(
+                                   absl::StatusCode::kInvalidArgument),
                                "Unparseable control value: junk"));
 }
 
@@ -1157,7 +1168,8 @@ TEST(QsimCircuitParserTest, MismatchControlNum) {
   ASSERT_EQ(QsimCircuitFromProgram(program_proto, empty_map, 3, &test_circuit,
                                    &fused_circuit, &metadata),
             tensorflow::Status(
-                tensorflow::error::INVALID_ARGUMENT,
+                static_cast<tensorflow::error::Code>(
+                    absl::StatusCode::kInvalidArgument),
                 "Mistmatched number of control qubits and control values."));
 }
 
@@ -1174,7 +1186,7 @@ TEST(QsimCircuitParserTest, EmptyTest) {
   // Ensure that nothing bad happens with an empty circuit.
   ASSERT_EQ(QsimCircuitFromProgram(program_proto, empty_map, 2, &test_circuit,
                                    &fused_circuit, &metadata),
-            tensorflow::Status::OK());
+            ::tensorflow::Status());
   ASSERT_EQ(test_circuit.gates.size(), 0);
   ASSERT_EQ(fused_circuit.size(), 0);
   ASSERT_EQ(metadata.size(), 0);
@@ -1227,7 +1239,7 @@ TEST(QsimCircuitParserTest, CompoundCircuit) {
 
   ASSERT_EQ(
       NoisyQsimCircuitFromProgram(program_proto, {}, 2, true, &test_circuit),
-      tensorflow::Status::OK());
+      ::tensorflow::Status());
   AssertChannelEqual(test_circuit.channels[0], ref_chan);
   AssertOneQubitEqual(test_circuit.channels[1][0].ops[0], ref_gate);
   ASSERT_EQ(test_circuit.channels.size(),
@@ -1270,7 +1282,7 @@ TEST(QsimCircuitParserTest, AsymmetricDepolarizing) {
 
   ASSERT_EQ(
       NoisyQsimCircuitFromProgram(program_proto, {}, 1, false, &test_circuit),
-      tensorflow::Status::OK());
+      ::tensorflow::Status());
   AssertChannelEqual(test_circuit.channels[0], reference);
   ASSERT_EQ(test_circuit.channels.size(), 1);
   ASSERT_EQ(test_circuit.num_qubits, 1);
@@ -1307,7 +1319,7 @@ TEST(QsimCircuitParserTest, AmplitudeDamping) {
 
   ASSERT_EQ(
       NoisyQsimCircuitFromProgram(program_proto, {}, 1, false, &test_circuit),
-      tensorflow::Status::OK());
+      ::tensorflow::Status());
   AssertChannelEqual(test_circuit.channels[0], reference);
   ASSERT_EQ(test_circuit.channels.size(), 1);
   ASSERT_EQ(test_circuit.num_qubits, 1);
@@ -1343,7 +1355,7 @@ TEST(QsimCircuitParserTest, Depolarizing) {
 
   ASSERT_EQ(
       NoisyQsimCircuitFromProgram(program_proto, {}, 1, false, &test_circuit),
-      tensorflow::Status::OK());
+      ::tensorflow::Status());
   AssertChannelEqual(test_circuit.channels[0], reference);
   ASSERT_EQ(test_circuit.channels.size(), 1);
   ASSERT_EQ(test_circuit.num_qubits, 1);
@@ -1383,7 +1395,7 @@ TEST(QsimCircuitParserTest, GeneralizedAmplitudeDamping) {
 
   ASSERT_EQ(
       NoisyQsimCircuitFromProgram(program_proto, {}, 1, false, &test_circuit),
-      tensorflow::Status::OK());
+      ::tensorflow::Status());
   AssertChannelEqual(test_circuit.channels[0], reference);
   ASSERT_EQ(test_circuit.channels.size(), 1);
   ASSERT_EQ(test_circuit.num_qubits, 1);
@@ -1417,7 +1429,7 @@ TEST(QsimCircuitParserTest, Reset) {
 
   ASSERT_EQ(
       NoisyQsimCircuitFromProgram(program_proto, {}, 1, false, &test_circuit),
-      tensorflow::Status::OK());
+      ::tensorflow::Status());
   AssertChannelEqual(test_circuit.channels[0], reference);
   ASSERT_EQ(test_circuit.channels.size(), 1);
   ASSERT_EQ(test_circuit.num_qubits, 1);
@@ -1453,7 +1465,7 @@ TEST(QsimCircuitParserTest, PhaseDamping) {
 
   ASSERT_EQ(
       NoisyQsimCircuitFromProgram(program_proto, {}, 1, false, &test_circuit),
-      tensorflow::Status::OK());
+      ::tensorflow::Status());
   AssertChannelEqual(test_circuit.channels[0], reference);
   ASSERT_EQ(test_circuit.channels.size(), 1);
   ASSERT_EQ(test_circuit.num_qubits, 1);
@@ -1489,7 +1501,7 @@ TEST(QsimCircuitParserTest, PhaseFlip) {
 
   ASSERT_EQ(
       NoisyQsimCircuitFromProgram(program_proto, {}, 1, false, &test_circuit),
-      tensorflow::Status::OK());
+      ::tensorflow::Status());
   AssertChannelEqual(test_circuit.channels[0], reference);
   ASSERT_EQ(test_circuit.channels.size(), 1);
   ASSERT_EQ(test_circuit.num_qubits, 1);
@@ -1525,7 +1537,7 @@ TEST(QsimCircuitParserTest, BitFlip) {
 
   ASSERT_EQ(
       NoisyQsimCircuitFromProgram(program_proto, {}, 1, false, &test_circuit),
-      tensorflow::Status::OK());
+      ::tensorflow::Status());
   AssertChannelEqual(test_circuit.channels[0], reference);
   ASSERT_EQ(test_circuit.channels.size(), 1);
   ASSERT_EQ(test_circuit.num_qubits, 1);
@@ -1540,7 +1552,7 @@ TEST(QsimCircuitParserTest, NoisyEmpty) {
   NoisyQsimCircuit test_circuit;
   ASSERT_EQ(
       NoisyQsimCircuitFromProgram(program_proto, {}, 0, false, &test_circuit),
-      tensorflow::Status::OK());
+      ::tensorflow::Status());
   ASSERT_EQ(test_circuit.channels.size(), 0);
   ASSERT_EQ(test_circuit.num_qubits, 0);
 }
@@ -1559,7 +1571,8 @@ TEST(QsimCircuitParserTest, NoisyBadProto) {
   NoisyQsimCircuit test_circuit;
   ASSERT_EQ(
       NoisyQsimCircuitFromProgram(program_proto, {}, 1, false, &test_circuit),
-      tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
+      tensorflow::Status(static_cast<tensorflow::error::Code>(
+                             absl::StatusCode::kInvalidArgument),
                          "Could not parse channel id: ABCDEFG"));
 }
 
@@ -1580,7 +1593,7 @@ TEST(QsimCircuitParserTest, CircuitFromPauliTermPauli) {
   // Check conversion
   status =
       QsimCircuitFromPauliTerm(pauli_proto, 1, &test_circuit, &fused_circuit);
-  ASSERT_EQ(status, tensorflow::Status::OK());
+  ASSERT_EQ(status, tensorflow::Status());
   ASSERT_EQ(test_circuit.num_qubits, 1);
   ASSERT_EQ(test_circuit.gates.size(), 1);
   AssertOneQubitEqual(test_circuit.gates[0], reference);
@@ -1593,7 +1606,7 @@ TEST(QsimCircuitParserTest, CircuitFromPauliTermEmpty) {
   std::vector<qsim::GateFused<QsimGate>> fused_circuit;
   status =
       QsimCircuitFromPauliTerm(pauli_proto, 0, &test_circuit, &fused_circuit);
-  ASSERT_EQ(status, tensorflow::Status::OK());
+  ASSERT_EQ(status, tensorflow::Status());
   ASSERT_EQ(test_circuit.num_qubits, 0);
   ASSERT_EQ(test_circuit.gates.size(), 0);
 }
@@ -1615,7 +1628,7 @@ TEST(QsimCircuitParserTest, ZBasisCircuitFromPauliTermPauliX) {
   // Check conversion
   status = QsimZBasisCircuitFromPauliTerm(pauli_proto, 1, &test_circuit,
                                           &fused_circuit);
-  ASSERT_EQ(status, tensorflow::Status::OK());
+  ASSERT_EQ(status, tensorflow::Status());
   ASSERT_EQ(test_circuit.num_qubits, 1);
   ASSERT_EQ(test_circuit.gates.size(), 1);
   AssertOneQubitEqual(test_circuit.gates[0], reference);
@@ -1638,7 +1651,7 @@ TEST(QsimCircuitParserTest, ZBasisCircuitFromPauliTermPauliY) {
   // Check conversion
   status = QsimZBasisCircuitFromPauliTerm(pauli_proto, 1, &test_circuit,
                                           &fused_circuit);
-  ASSERT_EQ(status, tensorflow::Status::OK());
+  ASSERT_EQ(status, tensorflow::Status());
   ASSERT_EQ(test_circuit.num_qubits, 1);
   ASSERT_EQ(test_circuit.gates.size(), 1);
   AssertOneQubitEqual(test_circuit.gates[0], reference);
@@ -1660,7 +1673,7 @@ TEST(QsimCircuitParserTest, ZBasisCircuitFromPauliTermPauliZ) {
   // Check conversion
   status = QsimZBasisCircuitFromPauliTerm(pauli_proto, 1, &test_circuit,
                                           &fused_circuit);
-  ASSERT_EQ(status, tensorflow::Status::OK());
+  ASSERT_EQ(status, tensorflow::Status());
   ASSERT_EQ(test_circuit.num_qubits, 1);
   ASSERT_EQ(test_circuit.gates.size(), 0);
 }
@@ -1687,7 +1700,7 @@ TEST(QsimCircuitParserTest, ZBasisCircuitFromPauliTermPauliCompound) {
   // Check conversion
   status = QsimZBasisCircuitFromPauliTerm(pauli_proto, 2, &test_circuit,
                                           &fused_circuit);
-  ASSERT_EQ(status, tensorflow::Status::OK());
+  ASSERT_EQ(status, tensorflow::Status());
   ASSERT_EQ(test_circuit.num_qubits, 2);
   ASSERT_EQ(test_circuit.gates.size(), 2);
   AssertOneQubitEqual(test_circuit.gates[0], reference1);
@@ -1701,7 +1714,7 @@ TEST(QsimCircuitParserTest, ZBasisCircuitFromPauliTermEmpty) {
   std::vector<qsim::GateFused<QsimGate>> fused_circuit;
   status = QsimZBasisCircuitFromPauliTerm(pauli_proto, 0, &test_circuit,
                                           &fused_circuit);
-  ASSERT_EQ(status, tensorflow::Status::OK());
+  ASSERT_EQ(status, tensorflow::Status());
   ASSERT_EQ(test_circuit.num_qubits, 0);
   ASSERT_EQ(test_circuit.gates.size(), 0);
 }

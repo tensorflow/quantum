@@ -934,7 +934,10 @@ class SimulateMPS1DSampledExpectationTest(tf.test.TestCase):
         ] for _ in range(batch_size)]
         symbol_names = []
         resolver_batch = [{} for _ in range(batch_size)]
-        num_samples = np.ones_like(pauli_sums, dtype=np.int32) * 1000
+        # Because `pauli_sums` has inhomogeneous shape due to the different
+        # number of terms, `np.ones_like` failed with `pauli_sums`.
+        puali_sums_len = [[len(x) for x in y] for y in pauli_sums]
+        num_samples = np.ones_like(puali_sums_len, dtype=int) * 1000
 
         symbol_values_array = np.array(
             [[resolver[symbol]

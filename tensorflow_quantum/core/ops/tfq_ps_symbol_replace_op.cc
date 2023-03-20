@@ -206,7 +206,7 @@ REGISTER_OP("TfqPsSymbolReplace")
                   tensorflow::shape_inference::InferenceContext::kUnknownDim,
                   tensorflow::shape_inference::InferenceContext::kUnknownDim}));
 
-      return tensorflow::Status::OK();
+      return ::tensorflow::Status();
     });
 
 }  // namespace tfq
