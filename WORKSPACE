@@ -24,11 +24,19 @@ cc_library(
         ],
 )
 
+# http_archive(
+#     name = "qsim",
+#     sha256 = "b9c1eba09a885a938b5e73dfc2e02f5231cf3b01d899415caa24769346a731d5",
+#     strip_prefix = "qsim-0.13.3",
+#     urls = ["https://github.com/quantumlib/qsim/archive/refs/tags/v0.13.3.zip"],
+# )
+
+# TODO: After merging this patch later into qsim mainstream, remove this and uncomment the above.
 http_archive(
     name = "qsim",
-    sha256 = "b9c1eba09a885a938b5e73dfc2e02f5231cf3b01d899415caa24769346a731d5",
-    strip_prefix = "qsim-0.13.3",
-    urls = ["https://github.com/quantumlib/qsim/archive/refs/tags/v0.13.3.zip"],
+    sha256 = "97b26e1a8fe13cfa465611f2618ade00f539480c6a7849f020fbee3582686bbf",
+    strip_prefix = "qsim-0.15.0-dev20230317",
+    urls = ["https://github.com/jaeyoo/qsim/archive/refs/tags/v0.15.0+dev20230317.tar.gz"],
 )
 
 http_archive(
