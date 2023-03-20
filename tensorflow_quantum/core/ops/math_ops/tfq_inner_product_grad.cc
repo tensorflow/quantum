@@ -112,7 +112,7 @@ class TfqInnerProductGradOp : public tensorflow::OpKernel {
     std::vector<std::vector<GradientOfGate>> gradient_gates(
         programs.size(), std::vector<GradientOfGate>({}));
 
-    Status parse_status = Status::OK();
+    Status parse_status = ::tensorflow::Status();
     auto p_lock = tensorflow::mutex();
     auto construct_f = [&](int start, int end) {
       for (int i = start; i < end; i++) {
@@ -490,7 +490,7 @@ REGISTER_OP("TfqInnerProductGrad")
                  {output_rows,
                   tensorflow::shape_inference::InferenceContext::kUnknownDim}));
 
-      return tensorflow::Status::OK();
+      return ::tensorflow::Status();
     });
 
 }  // namespace tfq

@@ -87,7 +87,7 @@ class TfqInnerProductOp : public tensorflow::OpKernel {
     std::vector<QsimFusedCircuit> fused_circuits(programs.size(),
                                                  QsimFusedCircuit({}));
 
-    Status parse_status = Status::OK();
+    Status parse_status = ::tensorflow::Status();
     auto p_lock = tensorflow::mutex();
     auto construct_f = [&](int start, int end) {
       for (int i = start; i < end; i++) {
@@ -314,7 +314,7 @@ REGISTER_OP("TfqInnerProduct")
           c->Dim(other_programs_shape, 1);
       c->set_output(0, c->Matrix(output_rows, output_cols));
 
-      return tensorflow::Status::OK();
+      return ::tensorflow::Status();
     });
 
 }  // namespace tfq
