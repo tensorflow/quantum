@@ -97,7 +97,6 @@ class OpGetterInputChecks(tf.test.TestCase):
         circuit_execution_ops.get_expectation_op()
         with self.assertRaisesRegex(NotImplementedError,
                                     expected_regex='Sample-based'):
-            mock_engine = mock.Mock()
             circuit_execution_ops.get_expectation_op(
                 cirq_google.engine.ProcessorSampler(processor='test'))
         with self.assertRaisesRegex(
@@ -116,7 +115,6 @@ class OpGetterInputChecks(tf.test.TestCase):
             backend=cirq.Simulator())
         circuit_execution_ops.get_sampled_expectation_op(
             backend=cirq.DensityMatrixSimulator())
-        mock_engine = mock.Mock()
         circuit_execution_ops.get_sampled_expectation_op(
             cirq_google.engine.ProcessorSampler(processor='test'))
         with self.assertRaisesRegex(TypeError, expected_regex="a Cirq.Sampler"):
@@ -133,7 +131,6 @@ class OpGetterInputChecks(tf.test.TestCase):
         circuit_execution_ops.get_sampling_op(backend=cirq.Simulator())
         circuit_execution_ops.get_sampling_op(
             backend=cirq.DensityMatrixSimulator())
-        mock_engine = mock.Mock()
         circuit_execution_ops.get_sampling_op(
             backend=cirq_google.engine.ProcessorSampler(processor='test'))
         with self.assertRaisesRegex(TypeError,
@@ -155,7 +152,6 @@ class OpGetterInputChecks(tf.test.TestCase):
             circuit_execution_ops.get_state_op(backend="junk")
         with self.assertRaisesRegex(TypeError,
                                     expected_regex="Cirq.SimulatesFinalState"):
-            mock_engine = mock.Mock()
             circuit_execution_ops.get_state_op(
                 cirq_google.engine.ProcessorSampler(processor='test'))
 
