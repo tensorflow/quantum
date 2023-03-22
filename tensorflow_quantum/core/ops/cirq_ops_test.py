@@ -348,7 +348,6 @@ class CirqSamplesTest(tf.test.TestCase, parameterized.TestCase):
         cirq_ops._get_cirq_samples()
         cirq_ops._get_cirq_samples(cirq.Simulator())
         cirq_ops._get_cirq_samples(cirq.DensityMatrixSimulator())
-        mock_engine = mock.Mock()
         cirq_ops._get_cirq_samples(
             cirq_google.engine.ProcessorSampler(processor='test'))
 
