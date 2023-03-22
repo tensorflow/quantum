@@ -20,7 +20,6 @@ NEW_PATH = [x for x in sys.path if 'com_google_protobuf' not in x]
 sys.path = NEW_PATH
 # pylint: enable=wrong-import-position
 
-from unittest import mock
 import numpy as np
 import tensorflow as tf
 from absl.testing import parameterized
