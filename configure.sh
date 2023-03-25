@@ -64,9 +64,9 @@ done
 while [[ "$TF_CUDA_VERSION" == "" ]]; do
   read -p "Are you building against TensorFlow 2.1(including RCs) or newer?[Y/n] " INPUT
   case $INPUT in
-    [Yy]* ) echo "Build against TensorFlow 2.1 or newer."; TF_CUDA_VERSION=10.1;;
+    [Yy]* ) echo "Build against TensorFlow 2.1 or newer."; TF_CUDA_VERSION=11;;
     [Nn]* ) echo "Build against TensorFlow <2.1."; TF_CUDA_VERSION=10.0;;
-    "" ) echo "Build against TensorFlow 2.1 or newer."; TF_CUDA_VERSION=10.1;;
+    "" ) echo "Build against TensorFlow 2.1 or newer."; TF_CUDA_VERSION=11;;
     * ) echo "Invalid selection: " $INPUT;;
   esac
 done
@@ -94,10 +94,6 @@ fi
 TF_CFLAGS=( $(python -c 'import tensorflow as tf; print(" ".join(tf.sysconfig.get_compile_flags()))') )
 TF_LFLAGS="$(python -c 'import tensorflow as tf; print(" ".join(tf.sysconfig.get_link_flags()))')"
 
-write_to_bazelrc "build:cuda --define=using_cuda=true --define=using_cuda_nvcc=true"
-if [[ "$PIP_MANYLINUX2010" == "0" ]]; then
-  write_to_bazelrc "build:cuda --crosstool_top=@local_config_cuda//crosstool:toolchain"
-fi
 
 write_to_bazelrc "build --experimental_repo_remote_exec"
 write_to_bazelrc "build --spawn_strategy=standalone"
@@ -142,8 +138,12 @@ fi
 
 # TODO(yifeif): do not hardcode path
 if [[ "$TF_NEED_CUDA" == "1" ]]; then
+  write_to_bazelrc "build:cuda --define=using_cuda=true --define=using_cuda_nvcc=true"
+  write_to_bazelrc "build:cuda --@local_config_cuda//:enable_cuda"
+  write_to_bazelrc "build:cuda --crosstool_top=@local_config_cuda//crosstool:toolchain"
+
   write_action_env_to_bazelrc "TF_CUDA_VERSION" ${TF_CUDA_VERSION}
-  write_action_env_to_bazelrc "TF_CUDNN_VERSION" "7"
+  write_action_env_to_bazelrc "TF_CUDNN_VERSION" "8"
   if is_windows; then
     write_action_env_to_bazelrc "CUDNN_INSTALL_PATH" "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v${TF_CUDA_VERSION}"
     write_action_env_to_bazelrc "CUDA_TOOLKIT_PATH" "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v${TF_CUDA_VERSION}"
