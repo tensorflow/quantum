@@ -111,7 +111,7 @@ class TfqSimulateExpectationOpCuda : public tensorflow::OpKernel {
     for (const int num : num_qubits) {
       max_num_qubits = std::max(max_num_qubits, num);
     }
-    if (max_num_qubits >= 26 || programs.size() == 1) {
+    if (max_num_qubits >= 26 || programs.size() == 1 || true) {
       ComputeLarge(num_qubits, fused_circuits, pauli_sums, context,
                    &output_tensor);
     } else {
