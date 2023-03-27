@@ -111,7 +111,7 @@ class TfqSimulateExpectationOpCuda : public tensorflow::OpKernel {
     for (const int num : num_qubits) {
       max_num_qubits = std::max(max_num_qubits, num);
     }
-    if (max_num_qubits >= 26 || programs.size() == 1 || true) {
+    if (max_num_qubits >= 26 || programs.size() == 1) {
       ComputeLarge(num_qubits, fused_circuits, pauli_sums, context,
                    &output_tensor);
     } else {
@@ -122,7 +122,6 @@ class TfqSimulateExpectationOpCuda : public tensorflow::OpKernel {
 
  private:
   int num_threads_in_sim_;
-  int thread_per_block_;
   int block_count_;
 
   // Define the GPU implementation that launches the CUDA kernel.
@@ -135,24 +134,10 @@ class TfqSimulateExpectationOpCuda : public tensorflow::OpKernel {
     // Instantiate qsim objects.
     using Simulator = qsim::SimulatorCUDA<float>;
     using StateSpace = Simulator::StateSpace;
-    // Launch the cuda kernel. These parameters came from:
-    // 1. min/max num_threads in //third_party/qsim/tests/simulator_cuda_test.cu
-    // 2. min/max num_threads & dblocks in
-    //    //third_party/qsim/tests/statespace_cuda_test.cu
-    // //third_party/qsim/lib/statespace_cuda.h:55-64
-    // num_dblocks has no explanation. just follow test code 2 or 16.
-    int block_count = 2;  // 2 or 16;
-    // num_threads = 2**q where q in [5..10]
-    int thread_per_block = 128;  // 32, 64, 128, 256, 512, 1024;
-    // TFQ GPU
-    StateSpace::Parameter param_ss;
-    param_ss.num_threads = thread_per_block;
-    param_ss.num_dblocks = block_count;
-
-    // Begin simulation.
+    // Begin simulation with default parameters.
     int largest_nq = 1;
     Simulator sim = Simulator();
-    StateSpace ss = StateSpace(param_ss);
+    StateSpace ss = StateSpace(StateSpace::Parameter());
     auto sv = ss.Create(largest_nq);
     auto scratch = ss.Create(largest_nq);
 
@@ -199,10 +184,7 @@ class TfqSimulateExpectationOpCuda : public tensorflow::OpKernel {
     using Simulator = qsim::SimulatorCUDA<float>;
     using StateSpace = Simulator::StateSpace;
 
-    StateSpace::Parameter param_ss;
-    param_ss.num_threads = thread_per_block_;
-    param_ss.num_dblocks = block_count_;
-
+    StateSpace::Parameter param_default;
     const int output_dim_op_size = output_tensor->dimension(1);
 
     Status compute_status = Status();
@@ -215,7 +197,7 @@ class TfqSimulateExpectationOpCuda : public tensorflow::OpKernel {
 
       // Begin simulation.
       auto sim = Simulator();
-      auto ss = StateSpace(param_ss);
+      auto ss = StateSpace(param_default);
       auto sv = ss.Create(largest_nq);
       auto scratch = ss.Create(largest_nq);
       for (int i = start; i < end; i++) {
