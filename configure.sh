@@ -99,7 +99,6 @@ write_to_bazelrc "build:cuda --define=using_cuda=true --define=using_cuda_nvcc=t
 write_to_bazelrc "build:cuda --@local_config_cuda//:enable_cuda"
 write_to_bazelrc "build:cuda --crosstool_top=@local_config_cuda//crosstool:toolchain"
 
-
 write_to_bazelrc "build --experimental_repo_remote_exec"
 write_to_bazelrc "build --spawn_strategy=standalone"
 write_to_bazelrc "build --strategy=Genrule=standalone"
