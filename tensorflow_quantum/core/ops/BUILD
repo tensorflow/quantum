@@ -1,4 +1,6 @@
 # load op_wrapper
+load("@org_tensorflow//tensorflow:tensorflow.bzl", "tf_gpu_kernel_library", "tf_gen_op_wrapper_py")
+load("@local_config_cuda//cuda:build_defs.bzl", "if_cuda_is_configured", "if_cuda")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -10,6 +12,23 @@ exports_files(["__init__.py"])
 config_setting(
     name = "windows",
     constraint_values = ["@bazel_tools//platforms:windows"],
+)
+
+cc_library(
+    name = "cuda",
+    data = [
+        "@local_config_cuda//cuda:cudart",
+    ],
+    linkopts = select({
+        ":windows": [],
+        "//conditions:default": [
+            "-Wl,-rpath,../local_config_cuda/cuda/lib64",
+            "-Wl,-rpath,../local_config_cuda/cuda/extras/CUPTI/lib64",
+        ],
+    }),
+    deps = [
+        "@local_config_cuda//cuda:cudart",
+    ],
 )
 
 py_library(
@@ -24,6 +43,7 @@ py_library(
         ":tfq_adj_grad_op_py",
         ":tfq_ps_util_ops_py",
         ":tfq_simulate_ops_py",
+        ":tfq_simulate_ops_cuda_py",
         ":tfq_unitary_op_py",
         ":tfq_utility_ops_py",
         # test addons
@@ -617,6 +637,103 @@ py_test(
         "//tensorflow_quantum/core/serialize:serializer",
         "//tensorflow_quantum/python:util",
     ],
+)
+
+py_library(
+    name = "tfq_simulate_ops_cuda_py",
+    srcs = ["tfq_simulate_ops_cuda.py"],
+    data = [
+        ":_tfq_simulate_ops_cuda.so",
+    ],
+    srcs_version = "PY3",
+    deps = [
+        # tensorflow framework for wrappers
+        ":load_module",
+    ],
+)
+
+py_test(
+    name = "tfq_simulate_ops_cuda_test",
+    srcs = ["tfq_simulate_ops_cuda_test.py"],
+    deps = [
+        ":tfq_simulate_ops_cuda_py",
+        ":tfq_simulate_ops_py",
+        "//tensorflow_quantum/python:util",
+    ],
+    srcs_version = "PY3",
+)
+
+cc_binary(
+    name = "_tfq_simulate_ops_cuda.so",
+    srcs = [
+        "tfq_simulate_expectation_op_cuda.cu.cc",
+    ],
+    linkshared = 1,
+    features = select({
+        ":windows": ["windows_export_all_symbols"],
+        "//conditions:default": [],
+    }),
+    copts = select({
+        ":windows": [
+            "/D__CLANG_SUPPORT_DYN_ANNOTATION__",
+            "/D_USE_MATH_DEFINES",
+            "/DEIGEN_MPL2_ONLY",
+            "/DEIGEN_MAX_ALIGN_BYTES=64",
+            "/DEIGEN_HAS_TYPE_TRAITS=0",
+            "/DTF_USE_SNAPPY",
+            "/showIncludes",
+            "/MD",
+            "/O2",
+            "/DNDEBUG",
+            "/w",
+            "-DWIN32_LEAN_AND_MEAN",
+            "-DNOGDI",
+            "/d2ReducedOptimizeHugeFunctions",
+            "/arch:AVX",
+            "/std:c++17",
+            "-DTENSORFLOW_MONOLITHIC_BUILD",
+            "/DPLATFORM_WINDOWS",
+            "/DEIGEN_HAS_C99_MATH",
+            "/DTENSORFLOW_USE_EIGEN_THREADPOOL",
+            "/DEIGEN_AVOID_STL_ARRAY",
+            "/Iexternal/gemmlowp",
+            "/wd4018",
+            "/wd4577",
+            "/DNOGDI",
+            "/UTF_COMPILE_LIBRARY",
+        ],
+        "//conditions:default": [
+            "-Iexternal/local_cuda/cuda/include",
+            # "--cuda-gpu-arch=sm_86",
+            # "-L/usr/local/cuda/lib64",
+            # "-lcudart_static",
+            # "-ldl",
+            # "-lrt",
+            "-pthread",
+            "-std=c++17",
+            "-D_GLIBCXX_USE_CXX11_ABI=1",
+            "-O3",
+            "-Iexternal/cuda_headers",
+            "-DNV_CUDNN_DISABLE_EXCEPTION",
+            # "-fpermissive",
+        ],
+    }) + if_cuda_is_configured(["-DTENSORFLOW_USE_NVCC=1", "-DGOOGLE_CUDA=1", "-x cuda", "-nvcc_options=relaxed-constexpr", "-nvcc_options=ftz=true"]),
+    deps = [
+        # cirq cc proto
+        "//tensorflow_quantum/core/ops:parse_context",
+        "//tensorflow_quantum/core/ops:tfq_simulate_utils",
+        "//tensorflow_quantum/core/proto:pauli_sum_cc_proto",
+        "//tensorflow_quantum/core/proto:program_cc_proto",
+        "//tensorflow_quantum/core/src:circuit_parser_qsim",
+        "//tensorflow_quantum/core/src:util_qsim",
+        "@qsim//lib:qsim_cuda_lib",
+        "@eigen//:eigen3",
+        # "@local_cuda//:cuda_headers"
+        # tensorflow core framework
+        # tensorflow core lib
+        # tensorflow core protos
+    ] + if_cuda_is_configured([":cuda",  "@local_config_cuda//cuda:cuda_headers"]),
+    # alwayslink=1,
 )
 
 py_library(
