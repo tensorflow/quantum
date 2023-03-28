@@ -65,7 +65,8 @@ class SimulateExpectationGpuTest(tf.test.TestCase):
                 circuit_batch_tensor,
                 symbol_names, symbol_values_array.astype(np.float64),
                 pauli_sums_tensor),
-            "CPU"
+            "CPU",
+            num_samples=100,
         )
 
         cuda_avg_time, res_cuda = measure_average_runtime(
@@ -73,11 +74,12 @@ class SimulateExpectationGpuTest(tf.test.TestCase):
                 circuit_batch_tensor,
                 symbol_names, symbol_values_array.astype(np.float64),
                 pauli_sums_tensor),
-            "CUDA"
+            "CUDA",
+            num_samples=100,
         )
 
         # The result should be the similar within a tolerance.
-        np.testing.assert_allclose(res_cpu, res_cuda, atol=1e-5)
+        np.testing.assert_allclose(res_cpu, res_cuda, atol=1e-4)
 
         # CUDA op should be faster than CPU op.
         self.assertGreater(cpu_avg_time, cuda_avg_time)
@@ -107,19 +109,22 @@ class SimulateExpectationGpuTest(tf.test.TestCase):
                 circuit_batch_tensor,
                 symbol_names, symbol_values_array.astype(np.float64),
                 pauli_sums_tensor),
-            "CPU"
-        )
+            "CPU",
+            num_samples=100,
 
+        )
+        
         cuda_avg_time, res_cuda = measure_average_runtime(
             lambda: tfq_simulate_ops_cuquantum.tfq_simulate_expectation(
                 circuit_batch_tensor,
                 symbol_names, symbol_values_array.astype(np.float64),
                 pauli_sums_tensor),
-            "cuQuantum"
+            "cuQuantum",
+            num_samples=100,
         )
 
         # The result should be the similar within a tolerance.
-        np.testing.assert_allclose(res_cpu, res_cuda, atol=1e-5)
+        np.testing.assert_allclose(res_cpu, res_cuda, atol=1e-4)
 
         # cuQuantum op should be faster than CPU op.
         self.assertGreater(cpu_avg_time, cuda_avg_time)

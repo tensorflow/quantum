@@ -51,6 +51,7 @@ class TfqSimulateExpectationOpCuQuantum : public tensorflow::OpKernel {
       : OpKernel(context) {}
 
   void Compute(tensorflow::OpKernelContext* context) override {
+
     // TODO (mbbrough): add more dimension checks for other inputs here.
     const int num_inputs = context->num_inputs();
     OP_REQUIRES(context, num_inputs == 4,
@@ -116,13 +117,10 @@ class TfqSimulateExpectationOpCuQuantum : public tensorflow::OpKernel {
     // create handles for simulator
     cublasCreate(&cublas_handle_);
     custatevecCreate(&custatevec_handle_);
-    if (max_num_qubits >= 26 || programs.size() == 1) {
-      ComputeLarge(num_qubits, fused_circuits, pauli_sums, context,
-                   &output_tensor); // HOW TO manage extraWorkspace size?
-    } else {
-      ComputeSmall(num_qubits, max_num_qubits, fused_circuits, pauli_sums,
-                   context, &output_tensor);
-    }
+
+    ComputeLarge(num_qubits, fused_circuits, pauli_sums, context,
+                 &output_tensor);
+
     // destroy handles in sync with simulator lifetime
     cublasDestroy(cublas_handle_);
     custatevecDestroy(custatevec_handle_);
@@ -185,76 +183,6 @@ class TfqSimulateExpectationOpCuQuantum : public tensorflow::OpKernel {
         (*output_tensor)(i, j) = exp_v;
       }
     }
-  }
-
-  void ComputeSmall(
-      const std::vector<int>& num_qubits, const int max_num_qubits,
-      const std::vector<std::vector<qsim::GateFused<QsimGate>>>& fused_circuits,
-      const std::vector<std::vector<PauliSum>>& pauli_sums,
-      tensorflow::OpKernelContext* context,
-      tensorflow::TTypes<float, 1>::Matrix* output_tensor) {
-    using Simulator = qsim::SimulatorCuStateVec<float>;
-    using StateSpace = Simulator::StateSpace;
-
-    const int output_dim_op_size = output_tensor->dimension(1);
-
-    Status compute_status = Status::OK();
-    auto c_lock = tensorflow::mutex();
-    auto DoWork = [&](int start, int end) {
-      int old_batch_index = -2;
-      int cur_batch_index = -1;
-      int largest_nq = 1;
-      int cur_op_index;
-
-      // Launch custatevec, begin simulation.
-      auto sim = Simulator(cublas_handle_, custatevec_handle_);
-      auto ss = StateSpace(cublas_handle_, custatevec_handle_);
-      auto sv = ss.Create(largest_nq);
-      auto scratch = ss.Create(largest_nq);
-      for (int i = start; i < end; i++) {
-        cur_batch_index = i / output_dim_op_size;
-        cur_op_index = i % output_dim_op_size;
-
-        const int nq = num_qubits[cur_batch_index];
-
-        // (#679) Just ignore empty program
-        if (fused_circuits[cur_batch_index].size() == 0) {
-          (*output_tensor)(cur_batch_index, cur_op_index) = -2.0;
-          continue;
-        }
-
-        if (cur_batch_index != old_batch_index) {
-          // We've run into a new state vector we must compute.
-          // Only compute a new state vector when we have to.
-          if (nq > largest_nq) {
-            largest_nq = nq;
-            sv = ss.Create(largest_nq);
-            scratch = ss.Create(largest_nq);
-          }
-          // no need to update scratch_state since ComputeExpectation
-          // will take care of things for us.
-          ss.SetStateZero(sv);
-          for (int j = 0; j < fused_circuits[cur_batch_index].size(); j++) {
-            qsim::ApplyFusedGate(sim, fused_circuits[cur_batch_index][j], sv);
-          }
-        }
-
-        float exp_v = 0.0;
-        NESTED_FN_STATUS_SYNC(
-            compute_status,
-            ComputeExpectationQsim(pauli_sums[cur_batch_index][cur_op_index],
-                                   sim, ss, sv, scratch, &exp_v),
-            c_lock);
-        (*output_tensor)(cur_batch_index, cur_op_index) = exp_v;
-        old_batch_index = cur_batch_index;
-      }
-    };
-
-    const int64_t num_cycles =
-        200 * (int64_t(1) << static_cast<int64_t>(max_num_qubits));
-    context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
-        fused_circuits.size() * output_dim_op_size, num_cycles, DoWork);
-    OP_REQUIRES_OK(context, compute_status);
   }
 };
 
