@@ -96,9 +96,9 @@ Download and install `bazel` version 5.1.0:
 
 <!-- common_typos_disable -->
 <pre class="devsite-click-to-copy">
-  <code class="devsite-terminal">wget https://github.com/bazelbuild/bazel/releases/download/5.1.0/bazel_5.1.0-linux-x86_64.deb
+  <code class="devsite-terminal">wget https://github.com/bazelbuild/bazel/releases/download/5.3.0/bazel_5.3.0-linux-x86_64.deb
 </code>
-  <code class="devsite-terminal">sudo dpkg -i bazel_5.1.0-linux-x86_64.deb</code>
+  <code class="devsite-terminal">sudo dpkg -i bazel_5.3.0-linux-x86_64.deb</code>
 </pre>
 <!-- common_typos_enable -->
 
