@@ -1,3 +1,5 @@
+load("@local_config_cuda//cuda:build_defs.bzl", "if_cuda_is_configured")
+
 licenses(["notice"])
 
 sh_binary(
@@ -39,8 +41,6 @@ sh_binary(
         "//tensorflow_quantum/core/ops:tfq_unitary_op_py",
         "//tensorflow_quantum/core/ops:tfq_utility_ops_py",
         "//tensorflow_quantum/core/ops:tfq_simulate_ops_py",
-        "//tensorflow_quantum/core/ops:tfq_simulate_ops_cuda_py",
-        "//tensorflow_quantum/core/ops:tfq_simulate_ops_cuquantum_py",
         "//tensorflow_quantum/core/ops/math_ops:fidelity_op_py",
         "//tensorflow_quantum/core/ops/math_ops:inner_product_op_py",
         "//tensorflow_quantum/core/ops/math_ops:simulate_mps_py",
@@ -68,5 +68,8 @@ sh_binary(
         "//tensorflow_quantum/python:util",
         "//tensorflow_quantum/python/optimizers:rotosolve_minimizer",
         "//tensorflow_quantum/python/optimizers:spsa_minimizer",
-    ],
+    ] + if_cuda_is_configured([
+        "//tensorflow_quantum/core/ops:tfq_simulate_ops_cuda_py",
+        "//tensorflow_quantum/core/ops:tfq_simulate_ops_cuquantum_py",
+    ]),
 )
