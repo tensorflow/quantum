@@ -119,7 +119,7 @@ class TfqSimulateExpectationOpCuQuantum : public tensorflow::OpKernel {
     custatevecCreate(&custatevec_handle_);
 
     ComputeLarge(num_qubits, fused_circuits, pauli_sums, context,
-                  &output_tensor); // HOW TO manage extraWorkspace size?
+                 &output_tensor);
 
     // destroy handles in sync with simulator lifetime
     cublasDestroy(cublas_handle_);
