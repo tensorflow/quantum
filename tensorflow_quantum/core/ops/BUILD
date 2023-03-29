@@ -759,6 +759,9 @@ cc_binary(
     name = "_tfq_simulate_ops_cuquantum.so",
     srcs = [
         "tfq_simulate_expectation_op_cuquantum.cu.cc",
+        # "tfq_simulate_sampled_expectation_op_cuquantum.cu.cc",
+        # "tfq_simulate_state_op_cuquantum.cu.cc",
+        "tfq_simulate_samples_op_cuquantum.cu.cc",
     ],
     linkshared = 1,
     features = select({
