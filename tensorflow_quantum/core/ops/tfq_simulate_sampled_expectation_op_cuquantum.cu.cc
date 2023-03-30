@@ -1,8 +1,11 @@
 /* Copyright 2020 The TensorFlow Quantum Authors. All Rights Reserved.
+
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
+
     http://www.apache.org/licenses/LICENSE-2.0
+
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,7 +22,6 @@ limitations under the License.
 #include "../qsim/lib/circuit.h"
 #include "../qsim/lib/gate_appl.h"
 #include "../qsim/lib/gates_cirq.h"
-#include "../qsim/lib/gates_qsim.h"
 #include "../qsim/lib/seqfor.h"
 #include "../qsim/lib/simmux.h"
 #include "tensorflow/core/framework/op_kernel.h"
@@ -28,7 +30,10 @@ limitations under the License.
 #include "tensorflow/core/lib/core/error_codes.pb.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow/core/lib/core/threadpool.h"
+#include "tensorflow/core/lib/random/random.h"
+#include "tensorflow/core/lib/random/simple_philox.h"
 #include "tensorflow/core/platform/mutex.h"
+#include "tensorflow/core/util/guarded_philox_random.h"
 #include "tensorflow_quantum/core/ops/parse_context.h"
 #include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
 #include "tensorflow_quantum/core/proto/program.pb.h"
@@ -43,18 +48,18 @@ using ::tfq::proto::Program;
 typedef qsim::Cirq::GateCirq<float> QsimGate;
 typedef qsim::Circuit<QsimGate> QsimCircuit;
 
-class TfqSimulateExpectationOpCuQuantum : public tensorflow::OpKernel {
+class TfqSimulateSampledExpectationOpCuQuantum : public tensorflow::OpKernel {
  public:
-  explicit TfqSimulateExpectationOpCuQuantum(
+  explicit TfqSimulateSampledExpectationOpCuQuantum(
       tensorflow::OpKernelConstruction* context)
       : OpKernel(context) {}
 
   void Compute(tensorflow::OpKernelContext* context) override {
     // TODO (mbbrough): add more dimension checks for other inputs here.
     const int num_inputs = context->num_inputs();
-    OP_REQUIRES(context, num_inputs == 4,
+    OP_REQUIRES(context, num_inputs == 5,
                 tensorflow::errors::InvalidArgument(absl::StrCat(
-                    "Expected 4 inputs, got ", num_inputs, " inputs.")));
+                    "Expected 5 inputs, got ", num_inputs, " inputs.")));
 
     // Create the output Tensor.
     const int output_dim_batch_size = context->input(0).dim_size(0);
@@ -64,17 +69,12 @@ class TfqSimulateExpectationOpCuQuantum : public tensorflow::OpKernel {
     output_shape.AddDim(output_dim_op_size);
 
     tensorflow::Tensor* output = nullptr;
-    tensorflow::AllocatorAttributes alloc_attr;
-    alloc_attr.set_on_host(true);  // why??
-    alloc_attr.set_gpu_compatible(true);
-    OP_REQUIRES_OK(context, context->allocate_output(0, output_shape, &output,
-                                                     alloc_attr));
+    OP_REQUIRES_OK(context, context->allocate_output(0, output_shape, &output));
     auto output_tensor = output->matrix<float>();
-    // Parse program protos.
+
     std::vector<Program> programs;
     std::vector<int> num_qubits;
-    std::vector<std::vector<PauliSum>>
-        pauli_sums;  // why is this a vector of vectors??
+    std::vector<std::vector<PauliSum>> pauli_sums;
     OP_REQUIRES_OK(context, GetProgramsAndNumQubits(context, &programs,
                                                     &num_qubits, &pauli_sums));
 
@@ -86,6 +86,22 @@ class TfqSimulateExpectationOpCuQuantum : public tensorflow::OpKernel {
                     "Number of circuits and symbol_values do not match. Got ",
                     programs.size(), " circuits and ", maps.size(),
                     " symbol values.")));
+
+    std::vector<std::vector<int>> num_samples;
+    OP_REQUIRES_OK(context, GetNumSamples(context, &num_samples));
+
+    OP_REQUIRES(context, num_samples.size() == pauli_sums.size(),
+                tensorflow::errors::InvalidArgument(absl::StrCat(
+                    "Dimension 0 of num_samples and pauli_sums do not match.",
+                    "Got ", num_samples.size(), " lists of sample sizes and ",
+                    pauli_sums.size(), " lists of pauli sums.")));
+
+    OP_REQUIRES(
+        context, context->input(4).dim_size(1) == context->input(3).dim_size(1),
+        tensorflow::errors::InvalidArgument(absl::StrCat(
+            "Dimension 1 of num_samples and pauli_sums do not match.", "Got ",
+            context->input(4).dim_size(1), " lists of sample sizes and ",
+            context->input(3).dim_size(1), " lists of pauli sums.")));
 
     // Construct qsim circuits.
     std::vector<QsimCircuit> qsim_circuits(programs.size(), QsimCircuit());
@@ -113,14 +129,10 @@ class TfqSimulateExpectationOpCuQuantum : public tensorflow::OpKernel {
       max_num_qubits = std::max(max_num_qubits, num);
     }
 
-    // create handles for simulator
     cublasCreate(&cublas_handle_);
     custatevecCreate(&custatevec_handle_);
-
-    ComputeLarge(num_qubits, fused_circuits, pauli_sums, context,
+    ComputeLarge(num_qubits, fused_circuits, pauli_sums, num_samples, context,
                  &output_tensor);
-
-    // destroy handles in sync with simulator lifetime
     cublasDestroy(cublas_handle_);
     custatevecDestroy(custatevec_handle_);
   }
@@ -129,25 +141,35 @@ class TfqSimulateExpectationOpCuQuantum : public tensorflow::OpKernel {
   cublasHandle_t cublas_handle_;
   custatevecHandle_t custatevec_handle_;
 
-  // Define the GPU implementation that launches the CUDA kernel.
   void ComputeLarge(
       const std::vector<int>& num_qubits,
       const std::vector<std::vector<qsim::GateFused<QsimGate>>>& fused_circuits,
       const std::vector<std::vector<PauliSum>>& pauli_sums,
+      const std::vector<std::vector<int>>& num_samples,
       tensorflow::OpKernelContext* context,
       tensorflow::TTypes<float, 1>::Matrix* output_tensor) {
     // Instantiate qsim objects.
     using Simulator = qsim::SimulatorCuStateVec<float>;
     using StateSpace = Simulator::StateSpace;
 
-    // Launch the cuda kernel.
     // Begin simulation.
     int largest_nq = 1;
     Simulator sim = Simulator(cublas_handle_, custatevec_handle_);
     StateSpace ss = StateSpace(cublas_handle_, custatevec_handle_);
     auto sv = ss.Create(largest_nq);
-    ss.SetStateZero(sv);
     auto scratch = ss.Create(largest_nq);
+
+    tensorflow::GuardedPhiloxRandom random_gen;
+    random_gen.Init(tensorflow::random::New64(), tensorflow::random::New64());
+    int largest_sum = -1;
+    for (const auto& sums : pauli_sums) {
+      for (const auto& sum : sums) {
+        largest_sum = std::max(largest_sum, sum.terms().size());
+      }
+    }
+    auto local_gen = random_gen.ReserveSamples32(
+        largest_sum * pauli_sums[0].size() * fused_circuits.size() + 1);
+    tensorflow::random::SimplePhilox rand_source(&local_gen);
 
     // Simulate programs one by one. Parallelizing over state vectors
     // we no longer parallelize over circuits. Each time we encounter a
@@ -175,24 +197,25 @@ class TfqSimulateExpectationOpCuQuantum : public tensorflow::OpKernel {
           continue;
         }
         float exp_v = 0.0;
-        OP_REQUIRES_OK(context,
-                       ComputeExpectationQsim(pauli_sums[i][j], sim, ss, sv,
-                                              scratch, &exp_v));
+        OP_REQUIRES_OK(context, ComputeSampledExpectationQsim(
+                                    pauli_sums[i][j], sim, ss, sv, scratch,
+                                    num_samples[i][j], rand_source, &exp_v));
         (*output_tensor)(i, j) = exp_v;
       }
     }
   }
 };
 
-REGISTER_KERNEL_BUILDER(
-    Name("TfqSimulateExpectationCuquantum").Device(tensorflow::DEVICE_CPU),
-    TfqSimulateExpectationOpCuQuantum);
+REGISTER_KERNEL_BUILDER(Name("TfqSimulateSampledExpectationCuquantum")
+                            .Device(tensorflow::DEVICE_CPU),
+                        TfqSimulateSampledExpectationOpCuQuantum);
 
-REGISTER_OP("TfqSimulateExpectationCuquantum")
+REGISTER_OP("TfqSimulateSampledExpectationCuquantum")
     .Input("programs: string")
     .Input("symbol_names: string")
     .Input("symbol_values: float")
     .Input("pauli_sums: string")
+    .Input("num_samples: int32")
     .Output("expectations: float")
     .SetShapeFn([](tensorflow::shape_inference::InferenceContext* c) {
       tensorflow::shape_inference::ShapeHandle programs_shape;
@@ -206,6 +229,9 @@ REGISTER_OP("TfqSimulateExpectationCuquantum")
 
       tensorflow::shape_inference::ShapeHandle pauli_sums_shape;
       TF_RETURN_IF_ERROR(c->WithRank(c->input(3), 2, &pauli_sums_shape));
+
+      tensorflow::shape_inference::ShapeHandle num_samples_shape;
+      TF_RETURN_IF_ERROR(c->WithRank(c->input(4), 2, &num_samples_shape));
 
       tensorflow::shape_inference::DimensionHandle output_rows =
           c->Dim(programs_shape, 0);

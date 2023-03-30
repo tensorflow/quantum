@@ -10,18 +10,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
+#include <chrono>
 #include <memory>
 #include <vector>
-
-#include <chrono>
 
 #include "../qsim/lib/circuit.h"
 #include "../qsim/lib/gate_appl.h"
 #include "../qsim/lib/gates_cirq.h"
 #include "../qsim/lib/gates_qsim.h"
 #include "../qsim/lib/seqfor.h"
-#include "../qsim/lib/simulator_cuda.h"
-#include "../qsim/lib/statespace_cuda.h"
+#include "../qsim/lib/simmux.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/shape_inference.h"
 #include "tensorflow/core/framework/tensor_shape.h"
@@ -43,10 +41,10 @@ using ::tfq::proto::Program;
 typedef qsim::Cirq::GateCirq<float> QsimGate;
 typedef qsim::Circuit<QsimGate> QsimCircuit;
 
-
 class TfqSimulateExpectationOpCuda : public tensorflow::OpKernel {
  public:
-  explicit TfqSimulateExpectationOpCuda(tensorflow::OpKernelConstruction* context)
+  explicit TfqSimulateExpectationOpCuda(
+      tensorflow::OpKernelConstruction* context)
       : OpKernel(context) {}
 
   void Compute(tensorflow::OpKernelContext* context) override {
@@ -169,7 +167,6 @@ class TfqSimulateExpectationOpCuda : public tensorflow::OpKernel {
       }
     }
   }
-
 };
 
 REGISTER_KERNEL_BUILDER(
