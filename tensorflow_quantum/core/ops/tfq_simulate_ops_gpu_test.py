@@ -13,10 +13,8 @@
 # limitations under the License.
 # ==============================================================================
 """Tests that specifically target tfq_simulate_ops_cu*."""
-import os
 import time
 import numpy as np
-from absl.testing import parameterized
 import tensorflow as tf
 import cirq
 
@@ -26,6 +24,10 @@ from tensorflow_quantum.core.ops import tfq_simulate_ops_cuquantum
 from tensorflow_quantum.python import util
 
 def measure_average_runtime(fn, tag, num_samples=10):
+    """
+    Measures the average runtime of a function and returns the result
+    and average runtime in seconds.
+    """
     avg_time = []
     for _ in range(num_samples):
         begin_time = time.time()
@@ -111,9 +113,8 @@ class SimulateExpectationGpuTest(tf.test.TestCase):
                 pauli_sums_tensor),
             "CPU",
             num_samples=100,
-
         )
-        
+
         cuda_avg_time, res_cuda = measure_average_runtime(
             lambda: tfq_simulate_ops_cuquantum.tfq_simulate_expectation(
                 circuit_batch_tensor,
