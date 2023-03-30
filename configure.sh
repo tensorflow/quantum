@@ -71,6 +71,17 @@ while [[ "$TF_CUDA_VERSION" == "" ]]; do
   esac
 done
 
+# Check if we are building cuQuantum ops on top of CUDA.
+if [[ "$TF_NEED_CUDA" == "1" ]]; then
+  echo "GPU is selected, default acceleration is CUDA for TFQuantum."
+  echo "Searching cuQuantum library from environment variable CUQUANTUM_ROOT..."
+  if [[ "$CUQUANTUM_ROOT" != "" ]]; then
+    echo "  [*] cuQuantum library is detected here: CUQUANTUM_ROOT=$CUQUANTUM_ROOT."
+    write_action_env_to_bazelrc "CUQUANTUM_ROOT" ${CUQUANTUM_ROOT}
+  else
+    echo "  [*] cuQuantum library is NOT detected. Using general CUDA ops..."
+  fi
+fi
 
 # Check if it's installed
 if [[ $(pip show tensorflow) == *tensorflow* ]] || [[ $(pip show tf-nightly) == *tf-nightly* ]]; then
