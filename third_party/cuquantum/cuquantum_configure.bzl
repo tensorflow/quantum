@@ -120,10 +120,14 @@ def _symlink_genrule_for_dir(
         genrule target that creates the symlinks.
     """
     if is_empty_genrule:
+        if dest_dir != "":
+          target_path = "%s/%s.h" % (dest_dir, genrule_name)
+        else:
+          target_path = genrule_name
         genrule = _genrule(
             genrule_name,
-            "echo 'this genrule is empty because CUQUANTUM_ROOT is not set.' && touch %s.h" % genrule_name,
-            "'%s.h'" % genrule_name,
+            "echo 'this genrule %s is empty because CUQUANTUM_ROOT is not set.' && touch %s" % (genrule_name, target_path),
+            "'%s'" % (target_path),
         )
         return genrule
 

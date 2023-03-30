@@ -14,8 +14,8 @@ limitations under the License.
 #include <vector>
 
 #include <chrono>
+#include <custatevec.h>
 
-#include "../cuquantum_libs/include/custatevec.h"
 #include "../qsim/lib/circuit.h"
 #include "../qsim/lib/gate_appl.h"
 #include "../qsim/lib/gates_cirq.h"
