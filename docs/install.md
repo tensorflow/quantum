@@ -17,7 +17,7 @@ TensorFlow Quantum is supported on Python 3.7, 3.8, and 3.9 and depends directly
 ### Requirements
 
 * pip 19.0 or later (requires `manylinux2010` support)
-* [TensorFlow == 2.7.0](https://www.tensorflow.org/install/pip)
+* [TensorFlow == 2.11.0](https://www.tensorflow.org/install/pip)
 
 See the [TensorFlow install guide](https://www.tensorflow.org/install/pip) to
 set up your Python development environment and an (optional) virtual environment.
@@ -27,7 +27,7 @@ Upgrade `pip` and install TensorFlow
 <!-- common_typos_disable -->
 <pre class="devsite-click-to-copy">
   <code class="devsite-terminal">pip3 install --upgrade pip</code>
-  <code class="devsite-terminal">pip3 install tensorflow==2.7.0</code>
+  <code class="devsite-terminal">pip3 install tensorflow==2.11.0</code>
 </pre>
 <!-- common_typos_enable -->
 
@@ -85,6 +85,7 @@ guide, the <a href="https://bazel.build/" class="external">Bazel</a>
 build system will be required.
 
 Our latest source builds use TensorFlow 2.11.0. To ensure compatibility we use `bazel` version 5.1.0. To remove any existing version of Bazel:
+Our latest source builds use TensorFlow 2.11.0. To ensure compatibility we use `bazel` version 5.3.0. To remove any existing version of Bazel:
 
 <!-- common_typos_disable -->
 <pre class="devsite-click-to-copy">
@@ -92,13 +93,13 @@ Our latest source builds use TensorFlow 2.11.0. To ensure compatibility we use `
 </pre>
 <!-- common_typos_enable -->
 
-Download and install `bazel` version 5.1.0:
+Download and install `bazel` version 5.3.0:
 
 <!-- common_typos_disable -->
 <pre class="devsite-click-to-copy">
-  <code class="devsite-terminal">wget https://github.com/bazelbuild/bazel/releases/download/5.1.0/bazel_5.1.0-linux-x86_64.deb
+  <code class="devsite-terminal">wget https://github.com/bazelbuild/bazel/releases/download/5.3.0/bazel_5.3.0-linux-x86_64.deb
 </code>
-  <code class="devsite-terminal">sudo dpkg -i bazel_5.1.0-linux-x86_64.deb</code>
+  <code class="devsite-terminal">sudo dpkg -i bazel_5.3.0-linux-x86_64.deb</code>
 </pre>
 <!-- common_typos_enable -->
 
