@@ -668,15 +668,15 @@ py_library(
 )
 
 py_test(
-    name = "tfq_simulate_ops_gpu_test",
-    srcs = ["tfq_simulate_ops_gpu_test.py"],
+    name = "tfq_simulate_ops_cuda_test",
+    srcs = ["tfq_simulate_ops_cuda_test.py"],
     deps = [
         ":tfq_simulate_ops_cuda_py",
-        ":tfq_simulate_ops_cuquantum_py",
         ":tfq_simulate_ops_py",
         "//tensorflow_quantum/python:util",
     ],
     srcs_version = "PY3",
+    tags = ["cuda"],
 )
 
 cc_binary(
@@ -753,6 +753,18 @@ cc_binary(
         "@qsim//lib:qsim_cuda_lib",
     ]),
     # alwayslink=1,
+)
+
+py_test(
+    name = "tfq_simulate_ops_cuquantum_test",
+    srcs = ["tfq_simulate_ops_cuquantum_test.py"],
+    deps = [
+        ":tfq_simulate_ops_cuquantum_py",
+        ":tfq_simulate_ops_py",
+        "//tensorflow_quantum/python:util",
+    ],
+    srcs_version = "PY3",
+    tags = ["cuquantum"],
 )
 
 cc_binary(
