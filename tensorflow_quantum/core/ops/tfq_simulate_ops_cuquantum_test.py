@@ -30,7 +30,7 @@ def measure_average_runtime(
         result_avg=False,
 ):
     """Measures average runtime for given function.
-    
+
     Args:
         fn: function.
         tag: The message title.

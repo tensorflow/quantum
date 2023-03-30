@@ -23,15 +23,36 @@ from tensorflow_quantum.core.ops import tfq_simulate_ops_cuda
 from tensorflow_quantum.python import util
 
 
-def measure_average_runtime(fn, tag, num_samples=10):
+def measure_average_runtime(
+        fn,
+        tag,
+        num_samples=10,
+        result_avg=False,
+):
+    """Measures average runtime for given function.
+
+    Args:
+        fn: function.
+        tag: The message title.
+        num_samples: The number of measurements.
+        result_avg: True if the results are all averaged.
+
+    Returns:
+        The average time and the (averaged) result.
+    """
     avg_time = []
+    avg_res = []
     for _ in range(num_samples):
         begin_time = time.time()
         result = fn()
         duration = time.time() - begin_time
         avg_time.append(duration)
+        if result_avg:
+            avg_res.append(result)
     avg_time = sum(avg_time) / float(num_samples)
     print(f"\n\t{tag} time: {avg_time}\n")
+    if result_avg:
+        result = np.average(avg_res, axis=0)
     return avg_time, result
 
 
