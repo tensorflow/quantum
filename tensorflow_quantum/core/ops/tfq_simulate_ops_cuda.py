@@ -13,7 +13,6 @@
 # limitations under the License.
 # ==============================================================================
 """Module to register cuda simulation python op."""
-import os
 import tensorflow as tf
 from tensorflow_quantum.core.ops.load_module import load_module
 

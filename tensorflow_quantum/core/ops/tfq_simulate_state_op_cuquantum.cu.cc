@@ -13,11 +13,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#include <string>
-#include <vector>
+#include <custatevec.h>
 
 #include <chrono>
-#include <custatevec.h>
+#include <string>
+#include <vector>
 
 #include "../qsim/lib/circuit.h"
 #include "../qsim/lib/gate_appl.h"
@@ -46,7 +46,8 @@ typedef qsim::Circuit<QsimGate> QsimCircuit;
 
 class TfqSimulateStateOpCuQuantum : public tensorflow::OpKernel {
  public:
-  explicit TfqSimulateStateOpCuQuantum(tensorflow::OpKernelConstruction* context)
+  explicit TfqSimulateStateOpCuQuantum(
+      tensorflow::OpKernelConstruction* context)
       : OpKernel(context) {}
 
   void Compute(tensorflow::OpKernelContext* context) override {
@@ -117,13 +118,12 @@ class TfqSimulateStateOpCuQuantum : public tensorflow::OpKernel {
                  &output_tensor);
     cublasDestroy(cublas_handle_);
     custatevecDestroy(custatevec_handle_);
-    
   }
 
  private:
   cublasHandle_t cublas_handle_;
   custatevecHandle_t custatevec_handle_;
-  
+
   void ComputeLarge(
       const std::vector<int>& num_qubits, const int max_num_qubits,
       const std::vector<std::vector<qsim::GateFused<QsimGate>>>& fused_circuits,
@@ -178,8 +178,9 @@ class TfqSimulateStateOpCuQuantum : public tensorflow::OpKernel {
   }
 };
 
-REGISTER_KERNEL_BUILDER(Name("TfqSimulateStateCuquantum").Device(tensorflow::DEVICE_CPU),
-                        TfqSimulateStateOpCuQuantum);
+REGISTER_KERNEL_BUILDER(
+    Name("TfqSimulateStateCuquantum").Device(tensorflow::DEVICE_CPU),
+    TfqSimulateStateOpCuQuantum);
 
 REGISTER_OP("TfqSimulateStateCuquantum")
     .Input("programs: string")

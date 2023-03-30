@@ -13,10 +13,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
+#include <custatevec.h>
 #include <stdlib.h>
 
 #include <chrono>
-#include <custatevec.h>
 #include <string>
 
 #include "../qsim/lib/circuit.h"
@@ -49,7 +49,8 @@ typedef qsim::Circuit<QsimGate> QsimCircuit;
 
 class TfqSimulateSamplesOpCuQuantum : public tensorflow::OpKernel {
  public:
-  explicit TfqSimulateSamplesOpCuQuantum(tensorflow::OpKernelConstruction* context)
+  explicit TfqSimulateSamplesOpCuQuantum(
+      tensorflow::OpKernelConstruction* context)
       : OpKernel(context) {}
 
   void Compute(tensorflow::OpKernelContext* context) override {

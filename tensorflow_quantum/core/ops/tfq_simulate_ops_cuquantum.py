@@ -13,7 +13,6 @@
 # limitations under the License.
 # ==============================================================================
 """Module to register cuQuantum simulation python op."""
-import os
 import tensorflow as tf
 from tensorflow_quantum.core.ops.load_module import load_module
 
@@ -65,8 +64,8 @@ def tfq_simulate_state(programs, symbol_names, symbol_values):
     Returns:
         A `tf.Tensor` containing the final state of each circuit in `programs`.
     """
-    return SIM_OP_MODULE.tfq_simulate_state_cuquantum(programs, symbol_names,
-                                            tf.cast(symbol_values, tf.float32))
+    return SIM_OP_MODULE.tfq_simulate_state_cuquantum(
+        programs, symbol_names, tf.cast(symbol_values, tf.float32))
 
 
 def tfq_simulate_samples(programs, symbol_names, symbol_values, num_samples):

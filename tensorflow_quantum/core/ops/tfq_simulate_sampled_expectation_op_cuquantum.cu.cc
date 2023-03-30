@@ -13,11 +13,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#include <memory>
-#include <vector>
+#include <custatevec.h>
 
 #include <chrono>
-#include <custatevec.h>
+#include <memory>
+#include <vector>
 
 #include "../qsim/lib/circuit.h"
 #include "../qsim/lib/gate_appl.h"
@@ -30,15 +30,14 @@ limitations under the License.
 #include "tensorflow/core/lib/core/error_codes.pb.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow/core/lib/core/threadpool.h"
+#include "tensorflow/core/lib/random/random.h"
+#include "tensorflow/core/lib/random/simple_philox.h"
 #include "tensorflow/core/platform/mutex.h"
+#include "tensorflow/core/util/guarded_philox_random.h"
 #include "tensorflow_quantum/core/ops/parse_context.h"
 #include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
 #include "tensorflow_quantum/core/proto/program.pb.h"
 #include "tensorflow_quantum/core/src/util_qsim.h"
-
-#include "tensorflow/core/lib/random/random.h"
-#include "tensorflow/core/lib/random/simple_philox.h"
-#include "tensorflow/core/util/guarded_philox_random.h"
 
 namespace tfq {
 
@@ -207,9 +206,9 @@ class TfqSimulateSampledExpectationOpCuQuantum : public tensorflow::OpKernel {
   }
 };
 
-REGISTER_KERNEL_BUILDER(
-    Name("TfqSimulateSampledExpectationCuquantum").Device(tensorflow::DEVICE_CPU),
-    TfqSimulateSampledExpectationOpCuQuantum);
+REGISTER_KERNEL_BUILDER(Name("TfqSimulateSampledExpectationCuquantum")
+                            .Device(tensorflow::DEVICE_CPU),
+                        TfqSimulateSampledExpectationOpCuQuantum);
 
 REGISTER_OP("TfqSimulateSampledExpectationCuquantum")
     .Input("programs: string")

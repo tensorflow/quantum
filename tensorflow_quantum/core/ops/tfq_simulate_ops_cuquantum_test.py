@@ -13,10 +13,8 @@
 # limitations under the License.
 # ==============================================================================
 """Tests that specifically target tfq_simulate_ops_cu*."""
-import os
 import time
 import numpy as np
-from absl.testing import parameterized
 import tensorflow as tf
 import cirq
 
@@ -24,12 +22,24 @@ from tensorflow_quantum.core.ops import tfq_simulate_ops
 from tensorflow_quantum.core.ops import tfq_simulate_ops_cuquantum
 from tensorflow_quantum.python import util
 
+
 def measure_average_runtime(
         fn,
         tag,
         num_samples=10,
         result_avg=False,
-        ):
+):
+    """Measures average runtime for given function.
+    
+    Args:
+        fn: function.
+        tag: The message title.
+        num_samples: The number of measurements.
+        result_avg: True if the results are all averaged.
+
+    Returns:
+        The average time and the (averaged) result.
+    """
     avg_time = []
     avg_res = []
     for _ in range(num_samples):
@@ -38,11 +48,11 @@ def measure_average_runtime(
         duration = time.time() - begin_time
         avg_time.append(duration)
         if result_avg:
-          avg_res.append(result)
+            avg_res.append(result)
     avg_time = sum(avg_time) / float(num_samples)
     print(f"\n\t{tag} time: {avg_time}\n")
     if result_avg:
-      result = np.average(avg_res, axis=0)
+        result = np.average(avg_res, axis=0)
     return avg_time, result
 
 
@@ -71,18 +81,16 @@ class SimulateExpectationCuquantumTest(tf.test.TestCase):
 
         cpu_avg_time, res_cpu = measure_average_runtime(
             lambda: tfq_simulate_ops.tfq_simulate_expectation(
-                circuit_batch_tensor,
-                symbol_names, symbol_values_array.astype(np.float64),
-                pauli_sums_tensor),
+                circuit_batch_tensor, symbol_names,
+                symbol_values_array.astype(np.float64), pauli_sums_tensor),
             "CPU",
             num_samples=10,
         )
-        
+
         cuquantum_avg_time, res_cuquantum = measure_average_runtime(
             lambda: tfq_simulate_ops_cuquantum.tfq_simulate_expectation(
-                circuit_batch_tensor,
-                symbol_names, symbol_values_array.astype(np.float64),
-                pauli_sums_tensor),
+                circuit_batch_tensor, symbol_names,
+                symbol_values_array.astype(np.float64), pauli_sums_tensor),
             "cuQuantum",
             num_samples=10,
         )
@@ -91,7 +99,10 @@ class SimulateExpectationCuquantumTest(tf.test.TestCase):
         self.assertGreater(cpu_avg_time, cuquantum_avg_time)
 
         # The result should be the similar within a tolerance.
-        np.testing.assert_allclose(res_cpu, res_cuquantum, atol=1e-4, err_msg="""
+        np.testing.assert_allclose(res_cpu,
+                                   res_cuquantum,
+                                   atol=1e-4,
+                                   err_msg="""
         # If failed, the GPU architecture in this system may be unsupported.
         # Please refer to the supported architectures here.
         # https://docs.nvidia.com/cuda/cuquantum/getting_started.html#custatevec
@@ -124,18 +135,18 @@ class SimulateSampledExpectationCuquantumTest(tf.test.TestCase):
 
         cpu_avg_time, res_cpu = measure_average_runtime(
             lambda: tfq_simulate_ops.tfq_simulate_sampled_expectation(
-                circuit_batch_tensor,
-                symbol_names, symbol_values_array.astype(np.float64),
-                pauli_sums_tensor, n_samples),
+                circuit_batch_tensor, symbol_names,
+                symbol_values_array.astype(np.float64), pauli_sums_tensor,
+                n_samples),
             "CPU",
             num_samples=10,
         )
-        
+
         cuquantum_avg_time, res_cuquantum = measure_average_runtime(
             lambda: tfq_simulate_ops_cuquantum.tfq_simulate_sampled_expectation(
-                circuit_batch_tensor,
-                symbol_names, symbol_values_array.astype(np.float64),
-                pauli_sums_tensor, n_samples),
+                circuit_batch_tensor, symbol_names,
+                symbol_values_array.astype(np.float64), pauli_sums_tensor,
+                n_samples),
             "cuQuantum",
             num_samples=10,
         )
@@ -144,7 +155,10 @@ class SimulateSampledExpectationCuquantumTest(tf.test.TestCase):
         self.assertGreater(cpu_avg_time, cuquantum_avg_time)
 
         # The result should be the similar within a tolerance.
-        np.testing.assert_allclose(res_cpu, res_cuquantum, atol=1e-4, err_msg="""
+        np.testing.assert_allclose(res_cpu,
+                                   res_cuquantum,
+                                   atol=1e-4,
+                                   err_msg="""
         # If failed, the GPU architecture in this system may be unsupported.
         # Please refer to the supported architectures here.
         # https://docs.nvidia.com/cuda/cuquantum/getting_started.html#custatevec
@@ -174,19 +188,17 @@ class SimulateSamplesCuquantumTest(tf.test.TestCase):
 
         cpu_avg_time, res_cpu = measure_average_runtime(
             lambda: tfq_simulate_ops.tfq_simulate_samples(
-                circuit_batch_tensor,
-                symbol_names, symbol_values_array.astype(np.float64),
-                n_samples),
+                circuit_batch_tensor, symbol_names,
+                symbol_values_array.astype(np.float64), n_samples),
             "CPU",
             num_samples=10,
             result_avg=True,
         )
-        
+
         cuquantum_avg_time, res_cuquantum = measure_average_runtime(
             lambda: tfq_simulate_ops_cuquantum.tfq_simulate_samples(
-                circuit_batch_tensor,
-                symbol_names, symbol_values_array.astype(np.float64),
-                n_samples),
+                circuit_batch_tensor, symbol_names,
+                symbol_values_array.astype(np.float64), n_samples),
             "cuQuantum",
             num_samples=10,
             result_avg=True,
@@ -196,7 +208,10 @@ class SimulateSamplesCuquantumTest(tf.test.TestCase):
         self.assertGreater(cpu_avg_time, cuquantum_avg_time)
 
         # The result should be the similar within a tolerance.
-        np.testing.assert_allclose(res_cpu, res_cuquantum, atol=1e-4, err_msg="""
+        np.testing.assert_allclose(res_cpu,
+                                   res_cuquantum,
+                                   atol=1e-4,
+                                   err_msg="""
         # If failed, the GPU architecture in this system may be unsupported.
         # Please refer to the supported architectures here.
         # https://docs.nvidia.com/cuda/cuquantum/getting_started.html#custatevec
@@ -225,26 +240,28 @@ class SimulateStateCuquantumTest(tf.test.TestCase):
 
         cpu_avg_time, res_cpu = measure_average_runtime(
             lambda: tfq_simulate_ops.tfq_simulate_state(
-                circuit_batch_tensor,
-                symbol_names, symbol_values_array.astype(np.float64)),
+                circuit_batch_tensor, symbol_names,
+                symbol_values_array.astype(np.float64)),
             "CPU",
             num_samples=10,
         )
-        
+
         cuquantum_avg_time, res_cuquantum = measure_average_runtime(
             lambda: tfq_simulate_ops_cuquantum.tfq_simulate_state(
-                circuit_batch_tensor,
-                symbol_names, symbol_values_array.astype(np.float64)),
+                circuit_batch_tensor, symbol_names,
+                symbol_values_array.astype(np.float64)),
             "cuQuantum",
             num_samples=10,
         )
-
 
         # cuQuantum op should be faster than CPU op.
         self.assertGreater(cpu_avg_time, cuquantum_avg_time)
 
         # The result should be the similar within a tolerance.
-        np.testing.assert_allclose(res_cpu, res_cuquantum, atol=1e-4, err_msg="""
+        np.testing.assert_allclose(res_cpu,
+                                   res_cuquantum,
+                                   atol=1e-4,
+                                   err_msg="""
         # If failed, the GPU architecture in this system may be unsupported.
         # Please refer to the supported architectures here.
         # https://docs.nvidia.com/cuda/cuquantum/getting_started.html#custatevec
