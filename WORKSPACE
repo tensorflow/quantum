@@ -34,7 +34,7 @@ cc_library(
 # TODO: After merging this patch later into qsim mainstream, remove this and uncomment the above.
 http_archive(
     name = "qsim",
-    sha256 = "",
+    sha256 = "75d62843020f8a70cf2aac85aca5e25fa6c1cea0945323afd06c3b7fcf3ee2b7",
     strip_prefix = "qsim-0.15.0-dev-20230330_v2",
     urls = ["https://github.com/jaeyoo/qsim/archive/refs/tags/v0.15.0-dev+20230330_v2.tar.gz"],
 )

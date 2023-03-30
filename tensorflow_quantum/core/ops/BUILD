@@ -717,6 +717,7 @@ cc_binary(
             "/wd4577",
             "/DNOGDI",
             "/UTF_COMPILE_LIBRARY",
+            "/D__CUDA__",
         ],
         "//conditions:default": [
             "-Iexternal/local_cuda/cuda/include",
@@ -733,7 +734,14 @@ cc_binary(
             "-DNV_CUDNN_DISABLE_EXCEPTION",
             # "-fpermissive",
         ],
-    }) + if_cuda_is_configured(["-DTENSORFLOW_USE_NVCC=1", "-DGOOGLE_CUDA=1", "-x cuda", "-nvcc_options=relaxed-constexpr", "-nvcc_options=ftz=true"]),
+    }) + if_cuda_is_configured([
+        "-DTENSORFLOW_USE_NVCC=1",
+        "-DGOOGLE_CUDA=1",
+        "-x cuda",
+        "-nvcc_options=relaxed-constexpr",
+        "-nvcc_options=ftz=true",
+        "-D__CUDA__",
+    ]),
     deps = [
         # cirq cc proto
         "//tensorflow_quantum/core/ops:parse_context",
@@ -771,6 +779,9 @@ cc_binary(
     name = "_tfq_simulate_ops_cuquantum.so",
     srcs = [
         "tfq_simulate_expectation_op_cuquantum.cu.cc",
+        "tfq_simulate_sampled_expectation_op_cuquantum.cu.cc",
+        "tfq_simulate_samples_op_cuquantum.cu.cc",
+        "tfq_simulate_state_op_cuquantum.cu.cc",
     ],
     linkshared = 1,
     features = select({
@@ -805,6 +816,7 @@ cc_binary(
             "/wd4577",
             "/DNOGDI",
             "/UTF_COMPILE_LIBRARY",
+            "/D__CUSTATEVEC__",
         ],
         "//conditions:default": [
             "-Iexternal/local_cuda/cuda/include",
@@ -821,7 +833,14 @@ cc_binary(
             "-DNV_CUDNN_DISABLE_EXCEPTION",
             # "-fpermissive",
         ],
-    }) + if_cuda_is_configured(["-DTENSORFLOW_USE_NVCC=1", "-DGOOGLE_CUDA=1", "-x cuda", "-nvcc_options=relaxed-constexpr", "-nvcc_options=ftz=true"]),
+    }) + if_cuda_is_configured([
+        "-DTENSORFLOW_USE_NVCC=1",
+        "-DGOOGLE_CUDA=1",
+        "-x cuda",
+        "-nvcc_options=relaxed-constexpr",
+        "-nvcc_options=ftz=true",
+        "-D__CUSTATEVEC__",
+    ]),
     deps = [
         # cirq cc proto
         "//tensorflow_quantum/core/ops:parse_context",
