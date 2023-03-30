@@ -43,14 +43,16 @@ py_library(
         ":tfq_adj_grad_op_py",
         ":tfq_ps_util_ops_py",
         ":tfq_simulate_ops_py",
-        ":tfq_simulate_ops_cuda_py",
         ":tfq_unitary_op_py",
         ":tfq_utility_ops_py",
         # test addons
         "//tensorflow_quantum/core/ops/math_ops:inner_product_op_py",
         "//tensorflow_quantum/core/ops/math_ops:fidelity_op_py",
         "//tensorflow_quantum/core/ops/noise:noisy_expectation_op_py",
-    ],
+    ] + if_cuda_is_configured([
+        ":tfq_simulate_ops_cuda_py",
+        ":tfq_simulate_ops_cuquantum_py",
+    ]),
 )
 
 cc_binary(

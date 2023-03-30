@@ -84,7 +84,6 @@ As noted in the TensorFlow
 guide, the <a href="https://bazel.build/" class="external">Bazel</a>
 build system will be required.
 
-Our latest source builds use TensorFlow 2.11.0. To ensure compatibility we use `bazel` version 5.1.0. To remove any existing version of Bazel:
 Our latest source builds use TensorFlow 2.11.0. To ensure compatibility we use `bazel` version 5.3.0. To remove any existing version of Bazel:
 
 <!-- common_typos_disable -->
