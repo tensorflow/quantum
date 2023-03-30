@@ -46,9 +46,9 @@ using ::tfq::proto::Program;
 typedef qsim::Cirq::GateCirq<float> QsimGate;
 typedef qsim::Circuit<QsimGate> QsimCircuit;
 
-class TfqSimulateStateGpuOp : public tensorflow::OpKernel {
+class TfqSimulateStateCuquantumOp : public tensorflow::OpKernel {
  public:
-  explicit TfqSimulateStateGpuOp(tensorflow::OpKernelConstruction* context)
+  explicit TfqSimulateStateCuquantumOp(tensorflow::OpKernelConstruction* context)
       : OpKernel(context) {}
 
   void Compute(tensorflow::OpKernelContext* context) override {
@@ -227,10 +227,10 @@ class TfqSimulateStateGpuOp : public tensorflow::OpKernel {
   }
 };
 
-REGISTER_KERNEL_BUILDER(Name("TfqSimulateStateGpu").Device(tensorflow::DEVICE_CPU),
-                        TfqSimulateStateGpuOp);
+REGISTER_KERNEL_BUILDER(Name("TfqSimulateStateCuquantum").Device(tensorflow::DEVICE_CPU),
+                        TfqSimulateStateCuquantumOp);
 
-REGISTER_OP("TfqSimulateStateGpu")
+REGISTER_OP("TfqSimulateStateCuquantum")
     .Input("programs: string")
     .Input("symbol_names: string")
     .Input("symbol_values: float")

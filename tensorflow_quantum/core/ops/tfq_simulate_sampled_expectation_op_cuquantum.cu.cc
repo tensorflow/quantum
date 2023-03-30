@@ -51,9 +51,9 @@ using ::tfq::proto::Program;
 typedef qsim::Cirq::GateCirq<float> QsimGate;
 typedef qsim::Circuit<QsimGate> QsimCircuit;
 
-class TfqSimulateSampledExpectationGpuOp : public tensorflow::OpKernel {
+class TfqSimulateSampledExpectationCuquantumOp : public tensorflow::OpKernel {
  public:
-  explicit TfqSimulateSampledExpectationGpuOp(
+  explicit TfqSimulateSampledExpectationCuquantumOp(
       tensorflow::OpKernelConstruction* context)
       : OpKernel(context) {}
 
@@ -312,10 +312,10 @@ class TfqSimulateSampledExpectationGpuOp : public tensorflow::OpKernel {
 };
 
 REGISTER_KERNEL_BUILDER(
-    Name("TfqSimulateSampledExpectationGpu").Device(tensorflow::DEVICE_CPU),
-    TfqSimulateSampledExpectationGpuOp);
+    Name("TfqSimulateSampledExpectationCuquantum").Device(tensorflow::DEVICE_CPU),
+    TfqSimulateSampledExpectationCuquantumOp);
 
-REGISTER_OP("TfqSimulateSampledExpectationGpu")
+REGISTER_OP("TfqSimulateSampledExpectationCuquantum")
     .Input("programs: string")
     .Input("symbol_names: string")
     .Input("symbol_values: float")

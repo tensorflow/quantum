@@ -264,10 +264,10 @@ class TfqSimulateSamplesGpuOp : public tensorflow::OpKernel {
 };
 
 REGISTER_KERNEL_BUILDER(
-    Name("TfqSimulateSamplesGpu").Device(tensorflow::DEVICE_CPU),
+    Name("TfqSimulateSamplesCuquantum").Device(tensorflow::DEVICE_CPU),
     TfqSimulateSamplesGpuOp);
 
-REGISTER_OP("TfqSimulateSamplesGpu")
+REGISTER_OP("TfqSimulateSamplesCuquantum")
     .Input("programs: string")
     .Input("symbol_names: string")
     .Input("symbol_values: float")
