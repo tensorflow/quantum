@@ -823,9 +823,9 @@ cc_binary(
         # tensorflow core protos
     ] + if_cuda_is_configured([
         ":cuda",
-        "@cuquantum_libs//:custatevec",
-        "@cuquantum_libs//:custatevec_headers",
         "@local_config_cuda//cuda:cuda_headers",
+        "@local_config_cuquantum//:cuquantum_headers",
+        "@local_config_cuquantum//:libcuquantum",
         "@qsim//lib:qsim_cuquantum_lib",
     ]),
     # alwayslink=1,
