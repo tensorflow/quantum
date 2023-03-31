@@ -668,15 +668,15 @@ py_library(
 )
 
 py_test(
-    name = "tfq_simulate_ops_cuda_test",
-    srcs = ["tfq_simulate_ops_cuda_test.py"],
+    name = "tfq_simulate_ops_gpu_test",
+    srcs = ["tfq_simulate_ops_gpu_test.py"],
     deps = [
         ":tfq_simulate_ops_cuda_py",
+        ":tfq_simulate_ops_cuquantum_py",
         ":tfq_simulate_ops_py",
         "//tensorflow_quantum/python:util",
     ],
     srcs_version = "PY3",
-    tags = ["cuda"],
 )
 
 cc_binary(
@@ -717,7 +717,6 @@ cc_binary(
             "/wd4577",
             "/DNOGDI",
             "/UTF_COMPILE_LIBRARY",
-            "/D__CUDA__",
         ],
         "//conditions:default": [
             "-Iexternal/local_cuda/cuda/include",
@@ -734,14 +733,7 @@ cc_binary(
             "-DNV_CUDNN_DISABLE_EXCEPTION",
             # "-fpermissive",
         ],
-    }) + if_cuda_is_configured([
-        "-DTENSORFLOW_USE_NVCC=1",
-        "-DGOOGLE_CUDA=1",
-        "-x cuda",
-        "-nvcc_options=relaxed-constexpr",
-        "-nvcc_options=ftz=true",
-        "-D__CUDA__",
-    ]),
+    }) + if_cuda_is_configured(["-DTENSORFLOW_USE_NVCC=1", "-DGOOGLE_CUDA=1", "-x cuda", "-nvcc_options=relaxed-constexpr", "-nvcc_options=ftz=true"]),
     deps = [
         # cirq cc proto
         "//tensorflow_quantum/core/ops:parse_context",
@@ -763,32 +755,14 @@ cc_binary(
     # alwayslink=1,
 )
 
-py_test(
-    name = "tfq_simulate_ops_cuquantum_test",
-    srcs = ["tfq_simulate_ops_cuquantum_test.py"],
-    deps = [
-        ":tfq_simulate_ops_cuquantum_py",
-        ":tfq_simulate_ops_py",
-        "//tensorflow_quantum/python:util",
-    ],
-    srcs_version = "PY3",
-    tags = ["cuquantum"],
-)
-
 cc_binary(
     name = "_tfq_simulate_ops_cuquantum.so",
     srcs = [
         "tfq_simulate_expectation_op_cuquantum.cu.cc",
-<<<<<<< HEAD
         # "tfq_simulate_sampled_expectation_op_cuquantum.cu.cc",
         # "tfq_simulate_state_op_cuquantum.cu.cc",
         "tfq_simulate_samples_op_cuquantum.cu.cc",
-=======
-        "tfq_simulate_sampled_expectation_op_cuquantum.cu.cc",
-        "tfq_simulate_samples_op_cuquantum.cu.cc",
-        "tfq_simulate_state_op_cuquantum.cu.cc",
->>>>>>> master
-    ],
+    ], 
     linkshared = 1,
     features = select({
         ":windows": ["windows_export_all_symbols"],
@@ -822,7 +796,6 @@ cc_binary(
             "/wd4577",
             "/DNOGDI",
             "/UTF_COMPILE_LIBRARY",
-            "/D__CUSTATEVEC__",
         ],
         "//conditions:default": [
             "-Iexternal/local_cuda/cuda/include",
@@ -839,14 +812,7 @@ cc_binary(
             "-DNV_CUDNN_DISABLE_EXCEPTION",
             # "-fpermissive",
         ],
-    }) + if_cuda_is_configured([
-        "-DTENSORFLOW_USE_NVCC=1",
-        "-DGOOGLE_CUDA=1",
-        "-x cuda",
-        "-nvcc_options=relaxed-constexpr",
-        "-nvcc_options=ftz=true",
-        "-D__CUSTATEVEC__",
-    ]),
+    }) + if_cuda_is_configured(["-DTENSORFLOW_USE_NVCC=1", "-DGOOGLE_CUDA=1", "-x cuda", "-nvcc_options=relaxed-constexpr", "-nvcc_options=ftz=true"]),
     deps = [
         # cirq cc proto
         "//tensorflow_quantum/core/ops:parse_context",
@@ -862,9 +828,9 @@ cc_binary(
         # tensorflow core protos
     ] + if_cuda_is_configured([
         ":cuda",
+        "@cuquantum_libs//:custatevec",
+        "@cuquantum_libs//:custatevec_headers",
         "@local_config_cuda//cuda:cuda_headers",
-        "@local_config_cuquantum//:cuquantum_headers",
-        "@local_config_cuquantum//:libcuquantum",
         "@qsim//lib:qsim_cuquantum_lib",
     ]),
     # alwayslink=1,
