@@ -20,22 +20,39 @@ import cirq
 
 from tensorflow_quantum.core.ops import tfq_simulate_ops
 from tensorflow_quantum.core.ops import tfq_simulate_ops_cuda
-from tensorflow_quantum.core.ops import tfq_simulate_ops_cuquantum
 from tensorflow_quantum.python import util
 
-def measure_average_runtime(fn, tag, num_samples=10):
-    """
-    Measures the average runtime of a function and returns the result
-    and average runtime in seconds.
+
+def measure_average_runtime(
+        fn,
+        tag,
+        num_samples=10,
+        result_avg=False,
+):
+    """Measures average runtime for given function.
+
+    Args:
+        fn: function.
+        tag: The message title.
+        num_samples: The number of measurements.
+        result_avg: True if the results are all averaged.
+
+    Returns:
+        The average time and the (averaged) result.
     """
     avg_time = []
+    avg_res = []
     for _ in range(num_samples):
         begin_time = time.time()
         result = fn()
         duration = time.time() - begin_time
         avg_time.append(duration)
+        if result_avg:
+            avg_res.append(result)
     avg_time = sum(avg_time) / float(num_samples)
     print(f"\n\t{tag} time: {avg_time}\n")
+    if result_avg:
+        result = np.average(avg_res, axis=0)
     return avg_time, result
 
 
@@ -64,18 +81,16 @@ class SimulateExpectationGpuTest(tf.test.TestCase):
 
         cpu_avg_time, res_cpu = measure_average_runtime(
             lambda: tfq_simulate_ops.tfq_simulate_expectation(
-                circuit_batch_tensor,
-                symbol_names, symbol_values_array.astype(np.float64),
-                pauli_sums_tensor),
+                circuit_batch_tensor, symbol_names,
+                symbol_values_array.astype(np.float64), pauli_sums_tensor),
             "CPU",
             num_samples=100,
         )
 
         cuda_avg_time, res_cuda = measure_average_runtime(
             lambda: tfq_simulate_ops_cuda.tfq_simulate_expectation(
-                circuit_batch_tensor,
-                symbol_names, symbol_values_array.astype(np.float64),
-                pauli_sums_tensor),
+                circuit_batch_tensor, symbol_names,
+                symbol_values_array.astype(np.float64), pauli_sums_tensor),
             "CUDA",
             num_samples=100,
         )
@@ -86,49 +101,6 @@ class SimulateExpectationGpuTest(tf.test.TestCase):
         # CUDA op should be faster than CPU op.
         self.assertGreater(cpu_avg_time, cuda_avg_time)
 
-    def test_simulate_expectation_cpu_vs_cuquantum(self):
-        """Make sure that cpu & gpu(cuquantum) ops have the same results."""
-        n_qubits = 20
-        batch_size = 5
-        symbol_names = ['alpha']
-        qubits = cirq.GridQubit.rect(1, n_qubits)
-        circuit_batch, resolver_batch = \
-            util.random_symbol_circuit_resolver_batch(
-                qubits, symbol_names, batch_size)
-
-        circuit_batch_tensor = util.convert_to_tensor(circuit_batch)
-
-        symbol_values_array = np.array(
-            [[resolver[symbol]
-              for symbol in symbol_names]
-             for resolver in resolver_batch])
-
-        pauli_sums = util.random_pauli_sums(qubits, 3, batch_size)
-        pauli_sums_tensor = util.convert_to_tensor([[x] for x in pauli_sums])
-
-        cpu_avg_time, res_cpu = measure_average_runtime(
-            lambda: tfq_simulate_ops.tfq_simulate_expectation(
-                circuit_batch_tensor,
-                symbol_names, symbol_values_array.astype(np.float64),
-                pauli_sums_tensor),
-            "CPU",
-            num_samples=100,
-        )
-
-        cuda_avg_time, res_cuda = measure_average_runtime(
-            lambda: tfq_simulate_ops_cuquantum.tfq_simulate_expectation(
-                circuit_batch_tensor,
-                symbol_names, symbol_values_array.astype(np.float64),
-                pauli_sums_tensor),
-            "cuQuantum",
-            num_samples=100,
-        )
-
-        # The result should be the similar within a tolerance.
-        np.testing.assert_allclose(res_cpu, res_cuda, atol=1e-4)
-
-        # cuQuantum op should be faster than CPU op.
-        self.assertGreater(cpu_avg_time, cuda_avg_time)
 
 if __name__ == "__main__":
     tf.test.main()

@@ -13,18 +13,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
+#include <custatevec.h>
 #include <stdlib.h>
 
 #include <chrono>
 #include <string>
 
-#include "../cuquantum_libs/include/custatevec.h"
 #include "../qsim/lib/circuit.h"
 #include "../qsim/lib/gate_appl.h"
 #include "../qsim/lib/gates_cirq.h"
 #include "../qsim/lib/seqfor.h"
-#include "../qsim/lib/simulator_custatevec.h"
-#include "../qsim/lib/statespace_custatevec.h"
 #include "../qsim/lib/simmux.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/shape_inference.h"
@@ -49,9 +47,10 @@ using ::tfq::proto::Program;
 typedef qsim::Cirq::GateCirq<float> QsimGate;
 typedef qsim::Circuit<QsimGate> QsimCircuit;
 
-class TfqSimulateSamplesGpuOp : public tensorflow::OpKernel {
+class TfqSimulateSamplesOpCuQuantum : public tensorflow::OpKernel {
  public:
-  explicit TfqSimulateSamplesGpuOp(tensorflow::OpKernelConstruction* context)
+  explicit TfqSimulateSamplesOpCuQuantum(
+      tensorflow::OpKernelConstruction* context)
       : OpKernel(context) {}
 
   void Compute(tensorflow::OpKernelContext* context) override {
@@ -118,23 +117,11 @@ class TfqSimulateSamplesGpuOp : public tensorflow::OpKernel {
       return;  // bug in qsim dependency we can't control.
     }
 
-    // Cross reference with standard google cloud compute instances
-    // Memory ~= 2 * num_threads * (2 * 64 * 2 ** num_qubits in circuits)
-    // e2s2 = 2 CPU, 8GB -> Can safely do 25 since Memory = 4GB
-    // e2s4 = 4 CPU, 16GB -> Can safely do 25 since Memory = 8GB
-    // ...
-
     // create handles for simulator
     cublasCreate(&cublas_handle_);
     custatevecCreate(&custatevec_handle_);
-    if (max_num_qubits >= 26 || programs.size() == 1) {
-      ComputeLarge(num_qubits, max_num_qubits, num_samples, fused_circuits,
-                   context, &output_tensor);
-    } else {
-      ComputeSmall(num_qubits, max_num_qubits, num_samples, fused_circuits,
-                   context, &output_tensor);
-    }
-    // destroy handles in sync with simulator lifetime
+    ComputeLarge(num_qubits, max_num_qubits, num_samples, fused_circuits,
+                 context, &output_tensor);
     cublasDestroy(cublas_handle_);
     custatevecDestroy(custatevec_handle_);
   }
@@ -200,72 +187,11 @@ class TfqSimulateSamplesGpuOp : public tensorflow::OpKernel {
       }
     }
   }
-
-  void ComputeSmall(
-      const std::vector<int>& num_qubits, const int max_num_qubits,
-      const int num_samples,
-      const std::vector<std::vector<qsim::GateFused<QsimGate>>>& fused_circuits,
-      tensorflow::OpKernelContext* context,
-      tensorflow::TTypes<int8_t, 3>::Tensor* output_tensor) {
-    using Simulator = qsim::SimulatorCuStateVec<float>;
-    using StateSpace = Simulator::StateSpace;
-
-    tensorflow::GuardedPhiloxRandom random_gen;
-    random_gen.Init(tensorflow::random::New64(), tensorflow::random::New64());
-
-    auto DoWork = [&](int start, int end) {
-      int largest_nq = 1;
-      Simulator sim = Simulator(cublas_handle_, custatevec_handle_);
-      StateSpace ss = StateSpace(cublas_handle_, custatevec_handle_);
-      auto sv = ss.Create(largest_nq);
-
-      auto local_gen = random_gen.ReserveSamples32(fused_circuits.size() + 1);
-      tensorflow::random::SimplePhilox rand_source(&local_gen);
-
-      for (int i = start; i < end; i++) {
-        int nq = num_qubits[i];
-
-        if (nq > largest_nq) {
-          // need to switch to larger statespace.
-          largest_nq = nq;
-          sv = ss.Create(largest_nq);
-        }
-        ss.SetStateZero(sv);
-        for (int j = 0; j < fused_circuits[i].size(); j++) {
-          qsim::ApplyFusedGate(sim, fused_circuits[i][j], sv);
-        }
-
-        auto samples = ss.Sample(sv, num_samples, rand_source.Rand32());
-        for (int j = 0; j < num_samples; j++) {
-          uint64_t q_ind = 0;
-          uint64_t mask = 1;
-          bool val = 0;
-          while (q_ind < nq) {
-            val = samples[j] & mask;
-            (*output_tensor)(
-                i, j, static_cast<ptrdiff_t>(max_num_qubits - q_ind - 1)) = val;
-            q_ind++;
-            mask <<= 1;
-          }
-          while (q_ind < max_num_qubits) {
-            (*output_tensor)(
-                i, j, static_cast<ptrdiff_t>(max_num_qubits - q_ind - 1)) = -2;
-            q_ind++;
-          }
-        }
-      }
-    };
-
-    const int64_t num_cycles =
-        200 * (int64_t(1) << static_cast<int64_t>(max_num_qubits));
-    context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
-        fused_circuits.size(), num_cycles, DoWork);
-  }
 };
 
 REGISTER_KERNEL_BUILDER(
     Name("TfqSimulateSamplesCuquantum").Device(tensorflow::DEVICE_CPU),
-    TfqSimulateSamplesGpuOp);
+    TfqSimulateSamplesOpCuQuantum);
 
 REGISTER_OP("TfqSimulateSamplesCuquantum")
     .Input("programs: string")

@@ -71,6 +71,17 @@ while [[ "$TF_CUDA_VERSION" == "" ]]; do
   esac
 done
 
+# Check if we are building cuQuantum ops on top of CUDA.
+if [[ "$TF_NEED_CUDA" == "1" ]]; then
+  echo "GPU is selected, default acceleration is CUDA for TFQuantum."
+  echo "Searching cuQuantum library from environment variable CUQUANTUM_ROOT..."
+  if [[ "$CUQUANTUM_ROOT" != "" ]]; then
+    echo "  [*] cuQuantum library is detected here: CUQUANTUM_ROOT=$CUQUANTUM_ROOT."
+    write_action_env_to_bazelrc "CUQUANTUM_ROOT" ${CUQUANTUM_ROOT}
+  else
+    echo "  [*] cuQuantum library is NOT detected. Using general CUDA ops..."
+  fi
+fi
 
 # Check if it's installed
 if [[ $(pip show tensorflow) == *tensorflow* ]] || [[ $(pip show tf-nightly) == *tf-nightly* ]]; then
@@ -94,10 +105,6 @@ fi
 TF_CFLAGS=( $(python -c 'import tensorflow as tf; print(" ".join(tf.sysconfig.get_compile_flags()))') )
 TF_LFLAGS="$(python -c 'import tensorflow as tf; print(" ".join(tf.sysconfig.get_link_flags()))')"
 
-# This config refers to building CUDA op kernels with nvcc.
-write_to_bazelrc "build:cuda --define=using_cuda=true --define=using_cuda_nvcc=true"
-write_to_bazelrc "build:cuda --@local_config_cuda//:enable_cuda"
-write_to_bazelrc "build:cuda --crosstool_top=@local_config_cuda//crosstool:toolchain"
 
 write_to_bazelrc "build --experimental_repo_remote_exec"
 write_to_bazelrc "build --spawn_strategy=standalone"
@@ -142,6 +149,10 @@ fi
 
 # TODO(yifeif): do not hardcode path
 if [[ "$TF_NEED_CUDA" == "1" ]]; then
+  write_to_bazelrc "build:cuda --define=using_cuda=true --define=using_cuda_nvcc=true"
+  write_to_bazelrc "build:cuda --@local_config_cuda//:enable_cuda"
+  write_to_bazelrc "build:cuda --crosstool_top=@local_config_cuda//crosstool:toolchain"
+
   write_action_env_to_bazelrc "TF_CUDA_VERSION" ${TF_CUDA_VERSION}
   write_action_env_to_bazelrc "TF_CUDNN_VERSION" "8"
   if is_windows; then

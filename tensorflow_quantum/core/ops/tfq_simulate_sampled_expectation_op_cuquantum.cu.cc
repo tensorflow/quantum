@@ -13,34 +13,31 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
+#include <custatevec.h>
+
+#include <chrono>
 #include <memory>
 #include <vector>
 
-#include <chrono>
-
-#include "../cuquantum_libs/include/custatevec.h"
 #include "../qsim/lib/circuit.h"
 #include "../qsim/lib/gate_appl.h"
 #include "../qsim/lib/gates_cirq.h"
 #include "../qsim/lib/seqfor.h"
 #include "../qsim/lib/simmux.h"
-#include "../qsim/lib/simulator_custatevec.h"
-#include "../qsim/lib/statespace_custatevec.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/shape_inference.h"
 #include "tensorflow/core/framework/tensor_shape.h"
 #include "tensorflow/core/lib/core/error_codes.pb.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow/core/lib/core/threadpool.h"
+#include "tensorflow/core/lib/random/random.h"
+#include "tensorflow/core/lib/random/simple_philox.h"
 #include "tensorflow/core/platform/mutex.h"
+#include "tensorflow/core/util/guarded_philox_random.h"
 #include "tensorflow_quantum/core/ops/parse_context.h"
 #include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
 #include "tensorflow_quantum/core/proto/program.pb.h"
 #include "tensorflow_quantum/core/src/util_qsim.h"
-
-#include "tensorflow/core/lib/random/random.h"
-#include "tensorflow/core/lib/random/simple_philox.h"
-#include "tensorflow/core/util/guarded_philox_random.h"
 
 namespace tfq {
 
@@ -51,9 +48,9 @@ using ::tfq::proto::Program;
 typedef qsim::Cirq::GateCirq<float> QsimGate;
 typedef qsim::Circuit<QsimGate> QsimCircuit;
 
-class TfqSimulateSampledExpectationCuquantumOp : public tensorflow::OpKernel {
+class TfqSimulateSampledExpectationOpCuQuantum : public tensorflow::OpKernel {
  public:
-  explicit TfqSimulateSampledExpectationCuquantumOp(
+  explicit TfqSimulateSampledExpectationOpCuQuantum(
       tensorflow::OpKernelConstruction* context)
       : OpKernel(context) {}
 
@@ -132,20 +129,10 @@ class TfqSimulateSampledExpectationCuquantumOp : public tensorflow::OpKernel {
       max_num_qubits = std::max(max_num_qubits, num);
     }
 
-    // Cross reference with standard google cloud compute instances
-    // Memory ~= 2 * num_threads * (2 * 64 * 2 ** num_qubits in circuits)
-    // e2s2 = 2 CPU, 8GB -> Can safely do 25 since Memory = 4GB
-    // e2s4 = 4 CPU, 16GB -> Can safely do 25 since Memory = 8GB
-    // ...
     cublasCreate(&cublas_handle_);
     custatevecCreate(&custatevec_handle_);
-    if (max_num_qubits >= 26 || programs.size() == 1) {
-      ComputeLarge(num_qubits, fused_circuits, pauli_sums, num_samples, context,
-                   &output_tensor);
-    } else {
-      ComputeSmall(num_qubits, max_num_qubits, fused_circuits, pauli_sums,
-                   num_samples, context, &output_tensor);
-    }
+    ComputeLarge(num_qubits, fused_circuits, pauli_sums, num_samples, context,
+                 &output_tensor);
     cublasDestroy(cublas_handle_);
     custatevecDestroy(custatevec_handle_);
   }
@@ -217,103 +204,11 @@ class TfqSimulateSampledExpectationCuquantumOp : public tensorflow::OpKernel {
       }
     }
   }
-
-  void ComputeSmall(
-      const std::vector<int>& num_qubits, const int max_num_qubits,
-      const std::vector<std::vector<qsim::GateFused<QsimGate>>>& fused_circuits,
-      const std::vector<std::vector<PauliSum>>& pauli_sums,
-      const std::vector<std::vector<int>>& num_samples,
-      tensorflow::OpKernelContext* context,
-      tensorflow::TTypes<float, 1>::Matrix* output_tensor) {
-    using Simulator = qsim::SimulatorCuStateVec<float>;
-    using StateSpace = Simulator::StateSpace;
-
-    const int output_dim_op_size = output_tensor->dimension(1);
-
-    tensorflow::GuardedPhiloxRandom random_gen;
-    random_gen.Init(tensorflow::random::New64(), tensorflow::random::New64());
-    int largest_sum = -1;
-    for (const auto& sums : pauli_sums) {
-      for (const auto& sum : sums) {
-        largest_sum = std::max(largest_sum, sum.terms().size());
-      }
-    }
-    const int num_threads = context->device()
-                                ->tensorflow_cpu_worker_threads()
-                                ->workers->NumThreads();
-
-    Status compute_status = Status::OK();
-    auto c_lock = tensorflow::mutex();
-    auto DoWork = [&](int start, int end) {
-      int old_batch_index = -2;
-      int cur_batch_index = -1;
-      int largest_nq = 1;
-      int cur_op_index;
-
-      Simulator sim = Simulator(cublas_handle_, custatevec_handle_);
-      StateSpace ss = StateSpace(cublas_handle_, custatevec_handle_);
-      auto sv = ss.Create(largest_nq);
-      auto scratch = ss.Create(largest_nq);
-
-      int n_random = largest_sum * output_dim_op_size * fused_circuits.size();
-      n_random /= num_threads;
-      n_random += 1;
-      auto local_gen = random_gen.ReserveSamples32(n_random);
-      tensorflow::random::SimplePhilox rand_source(&local_gen);
-
-      for (int i = start; i < end; i++) {
-        cur_batch_index = i / output_dim_op_size;
-        cur_op_index = i % output_dim_op_size;
-
-        const int nq = num_qubits[cur_batch_index];
-
-        // (#679) Just ignore empty program
-        if (fused_circuits[cur_batch_index].size() == 0) {
-          (*output_tensor)(cur_batch_index, cur_op_index) = -2.0;
-          continue;
-        }
-
-        if (cur_batch_index != old_batch_index) {
-          // We've run into a new state vector we must compute.
-          // Only compute a new state vector when we have to.
-          if (nq > largest_nq) {
-            largest_nq = nq;
-            sv = ss.Create(largest_nq);
-            scratch = ss.Create(largest_nq);
-          }
-          // no need to update scratch_state since ComputeExpectation
-          // will take care of things for us.
-          ss.SetStateZero(sv);
-          for (int j = 0; j < fused_circuits[cur_batch_index].size(); j++) {
-            qsim::ApplyFusedGate(sim, fused_circuits[cur_batch_index][j], sv);
-          }
-        }
-
-        float exp_v = 0.0;
-        NESTED_FN_STATUS_SYNC(
-            compute_status,
-            ComputeSampledExpectationQsim(
-                pauli_sums[cur_batch_index][cur_op_index], sim, ss, sv, scratch,
-                num_samples[cur_batch_index][cur_op_index], rand_source,
-                &exp_v),
-            c_lock);
-
-        (*output_tensor)(cur_batch_index, cur_op_index) = exp_v;
-        old_batch_index = cur_batch_index;
-      }
-    };
-
-    const int64_t num_cycles =
-        200 * (int64_t(1) << static_cast<int64_t>(max_num_qubits));
-    context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
-        fused_circuits.size() * output_dim_op_size, num_cycles, DoWork);
-    OP_REQUIRES_OK(context, compute_status);
-  }
 };
 
-REGISTER_KERNEL_BUILDER(
-    Name("TfqSimulateSampledExpectationCuquantum").Device(tensorflow::DEVICE_CPU),
-    TfqSimulateSampledExpectationCuquantumOp);
+REGISTER_KERNEL_BUILDER(Name("TfqSimulateSampledExpectationCuquantum")
+                            .Device(tensorflow::DEVICE_CPU),
+                        TfqSimulateSampledExpectationOpCuQuantum);
 
 REGISTER_OP("TfqSimulateSampledExpectationCuquantum")
     .Input("programs: string")

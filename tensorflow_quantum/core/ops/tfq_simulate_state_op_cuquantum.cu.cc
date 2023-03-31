@@ -13,19 +13,17 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
+#include <custatevec.h>
+
+#include <chrono>
 #include <string>
 #include <vector>
 
-#include <chrono>
-
-#include "../cuquantum_libs/include/custatevec.h"
 #include "../qsim/lib/circuit.h"
 #include "../qsim/lib/gate_appl.h"
 #include "../qsim/lib/gates_cirq.h"
 #include "../qsim/lib/seqfor.h"
 #include "../qsim/lib/simmux.h"
-#include "../qsim/lib/simulator_custatevec.h"
-#include "../qsim/lib/statespace_custatevec.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/shape_inference.h"
 #include "tensorflow/core/framework/tensor_shape.h"
@@ -46,9 +44,10 @@ using ::tfq::proto::Program;
 typedef qsim::Cirq::GateCirq<float> QsimGate;
 typedef qsim::Circuit<QsimGate> QsimCircuit;
 
-class TfqSimulateStateCuquantumOp : public tensorflow::OpKernel {
+class TfqSimulateStateOpCuQuantum : public tensorflow::OpKernel {
  public:
-  explicit TfqSimulateStateCuquantumOp(tensorflow::OpKernelConstruction* context)
+  explicit TfqSimulateStateOpCuQuantum(
+      tensorflow::OpKernelConstruction* context)
       : OpKernel(context) {}
 
   void Compute(tensorflow::OpKernelContext* context) override {
@@ -115,22 +114,15 @@ class TfqSimulateStateCuquantumOp : public tensorflow::OpKernel {
     // ...
     cublasCreate(&cublas_handle_);
     custatevecCreate(&custatevec_handle_);
-    if (max_num_qubits >= 26 || programs.size() == 1) {      
-      ComputeLarge(num_qubits, max_num_qubits, fused_circuits, context,
-                   &output_tensor);
-    } else {
-      ComputeSmall(num_qubits, max_num_qubits, fused_circuits, context,
-                   &output_tensor);
-    }
+    ComputeLarge(num_qubits, max_num_qubits, fused_circuits, context,
+                 &output_tensor);
     cublasDestroy(cublas_handle_);
     custatevecDestroy(custatevec_handle_);
-    
   }
 
  private:
   cublasHandle_t cublas_handle_;
   custatevecHandle_t custatevec_handle_;
-  
   void ComputeLarge(
       const std::vector<int>& num_qubits, const int max_num_qubits,
       const std::vector<std::vector<qsim::GateFused<QsimGate>>>& fused_circuits,
@@ -183,52 +175,11 @@ class TfqSimulateStateCuquantumOp : public tensorflow::OpKernel {
           uint64_t(1) << max_num_qubits, num_cycles_copy, copy_f);
     }
   }
-
-  void ComputeSmall(
-      const std::vector<int>& num_qubits, const int max_num_qubits,
-      const std::vector<std::vector<qsim::GateFused<QsimGate>>>& fused_circuits,
-      tensorflow::OpKernelContext* context,
-      tensorflow::TTypes<std::complex<float>, 1>::Matrix* output_tensor) {
-    using Simulator = qsim::SimulatorCuStateVec<float>;
-    using StateSpace = Simulator::StateSpace;
-
-    auto DoWork = [&](int start, int end) {
-      int largest_nq = 1;
-      Simulator sim = Simulator(cublas_handle_, custatevec_handle_);
-      StateSpace ss = StateSpace(cublas_handle_, custatevec_handle_);
-      auto sv = ss.Create(largest_nq);
-      for (int i = start; i < end; i++) {
-        int nq = num_qubits[i];
-
-        if (nq > largest_nq) {
-          // need to switch to larger statespace.
-          largest_nq = nq;
-          sv = ss.Create(largest_nq);
-        }
-        ss.SetStateZero(sv);
-        for (int j = 0; j < fused_circuits[i].size(); j++) {
-          qsim::ApplyFusedGate(sim, fused_circuits[i][j], sv);
-        }
-
-        for (uint64_t j = 0; j < (uint64_t(1) << nq); j++) {
-          (*output_tensor)(i, j) = ss.GetAmpl(sv, j);
-        }
-        for (uint64_t j = (uint64_t(1) << nq);
-             j < (uint64_t(1) << max_num_qubits); j++) {
-          (*output_tensor)(i, j) = std::complex<float>(-2, 0);
-        }
-      }
-    };
-
-    const int64_t num_cycles =
-        200 * (int64_t(1) << static_cast<int64_t>(max_num_qubits));
-    context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
-        fused_circuits.size(), num_cycles, DoWork);
-  }
 };
 
-REGISTER_KERNEL_BUILDER(Name("TfqSimulateStateCuquantum").Device(tensorflow::DEVICE_CPU),
-                        TfqSimulateStateCuquantumOp);
+REGISTER_KERNEL_BUILDER(
+    Name("TfqSimulateStateCuquantum").Device(tensorflow::DEVICE_CPU),
+    TfqSimulateStateOpCuQuantum);
 
 REGISTER_OP("TfqSimulateStateCuquantum")
     .Input("programs: string")

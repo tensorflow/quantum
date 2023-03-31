@@ -34,9 +34,9 @@ cc_library(
 # TODO: After merging this patch later into qsim mainstream, remove this and uncomment the above.
 http_archive(
     name = "qsim",
-    sha256 = "",
-    strip_prefix = "qsim-0.15.0-dev20230327_v3",
-    urls = ["https://github.com/jaeyoo/qsim/archive/refs/tags/v0.15.0+dev20230327_v3.tar.gz"],
+    sha256 = "75d62843020f8a70cf2aac85aca5e25fa6c1cea0945323afd06c3b7fcf3ee2b7",
+    strip_prefix = "qsim-0.15.0-dev-20230330_v2",
+    urls = ["https://github.com/jaeyoo/qsim/archive/refs/tags/v0.15.0-dev+20230330_v2.tar.gz"],
 )
 
 http_archive(
@@ -81,21 +81,6 @@ bind(
     actual = "@six_archive//:six",
 )
 
-new_local_repository(
-    name = "cuquantum_libs",
-    path = "/usr/local/google/home/jaeyoo/workspace/cuquantum-linux-x86_64-22.11.0.13-archive",
-    build_file_content = """
-cc_library(
-    name = "custatevec_headers",
-    srcs = ["include/custatevec.h"],
-    visibility = ["//visibility:public"],
-)
+load("//third_party/cuquantum:cuquantum_configure.bzl", "cuquantum_configure")
 
-cc_library(
-    name = "custatevec",
-    srcs = ["lib/libcustatevec.so"],
-    visibility = ["//visibility:public"],
-)
-""",
-)
-
+cuquantum_configure(name = "local_config_cuquantum")

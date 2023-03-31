@@ -10,19 +10,18 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
+#include <custatevec.h>
+
+#include <chrono>
 #include <memory>
 #include <vector>
 
-#include <chrono>
-
-#include "../cuquantum_libs/include/custatevec.h"
 #include "../qsim/lib/circuit.h"
 #include "../qsim/lib/gate_appl.h"
 #include "../qsim/lib/gates_cirq.h"
 #include "../qsim/lib/gates_qsim.h"
 #include "../qsim/lib/seqfor.h"
-#include "../qsim/lib/simulator_custatevec.h"
-#include "../qsim/lib/statespace_custatevec.h"
+#include "../qsim/lib/simmux.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/shape_inference.h"
 #include "tensorflow/core/framework/tensor_shape.h"
@@ -44,14 +43,13 @@ using ::tfq::proto::Program;
 typedef qsim::Cirq::GateCirq<float> QsimGate;
 typedef qsim::Circuit<QsimGate> QsimCircuit;
 
-
 class TfqSimulateExpectationOpCuQuantum : public tensorflow::OpKernel {
  public:
-  explicit TfqSimulateExpectationOpCuQuantum(tensorflow::OpKernelConstruction* context)
+  explicit TfqSimulateExpectationOpCuQuantum(
+      tensorflow::OpKernelConstruction* context)
       : OpKernel(context) {}
 
   void Compute(tensorflow::OpKernelContext* context) override {
-
     // TODO (mbbrough): add more dimension checks for other inputs here.
     const int num_inputs = context->num_inputs();
     OP_REQUIRES(context, num_inputs == 4,
@@ -67,7 +65,7 @@ class TfqSimulateExpectationOpCuQuantum : public tensorflow::OpKernel {
 
     tensorflow::Tensor* output = nullptr;
     tensorflow::AllocatorAttributes alloc_attr;
-    alloc_attr.set_on_host(true); // why??
+    alloc_attr.set_on_host(true);  // why??
     alloc_attr.set_gpu_compatible(true);
     OP_REQUIRES_OK(context, context->allocate_output(0, output_shape, &output,
                                                      alloc_attr));
@@ -75,7 +73,8 @@ class TfqSimulateExpectationOpCuQuantum : public tensorflow::OpKernel {
     // Parse program protos.
     std::vector<Program> programs;
     std::vector<int> num_qubits;
-    std::vector<std::vector<PauliSum>> pauli_sums; // why is this a vector of vectors??
+    std::vector<std::vector<PauliSum>>
+        pauli_sums;  // why is this a vector of vectors??
     OP_REQUIRES_OK(context, GetProgramsAndNumQubits(context, &programs,
                                                     &num_qubits, &pauli_sums));
 
@@ -140,7 +139,6 @@ class TfqSimulateExpectationOpCuQuantum : public tensorflow::OpKernel {
     // Instantiate qsim objects.
     using Simulator = qsim::SimulatorCuStateVec<float>;
     using StateSpace = Simulator::StateSpace;
-
 
     // Launch the cuda kernel.
     // Begin simulation.
