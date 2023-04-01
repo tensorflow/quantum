@@ -15,7 +15,7 @@
 """Compute gradients by combining function values linearly."""
 import tensorflow as tf
 
-from tensorflow_quantum.core.ops import tfq_adj_grad_op
+from tensorflow_quantum.core.ops import tfq_adj_grad_op, tfq_adj_grad_op_cuquantum
 from tensorflow_quantum.python.differentiators import differentiator
 
 
@@ -98,9 +98,13 @@ class Adjoint(differentiator.Differentiator):
     @differentiator.catch_empty_inputs
     @tf.function
     def differentiate_analytic(self, programs, symbol_names, symbol_values,
-                               pauli_sums, forward_pass_vals, grad):
-        return tfq_adj_grad_op.tfq_adj_grad(programs, symbol_names,
-                                            symbol_values, pauli_sums, grad)
+                               pauli_sums, forward_pass_vals, grad, use_gpu=False):
+        if use_gpu:
+            return tfq_adj_grad_op_cuquantum.tfq_adj_grad(programs, symbol_names,
+                                                symbol_values, pauli_sums, grad)
+        else:
+            return tfq_adj_grad_op.tfq_adj_grad(programs, symbol_names,
+                                                symbol_values, pauli_sums, grad)
 
     def differentiate_sampled(self, programs, symbol_names, symbol_values,
                               pauli_sums, num_samples, forward_pass_vals, grad):
