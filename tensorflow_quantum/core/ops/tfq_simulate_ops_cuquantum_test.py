@@ -167,107 +167,107 @@ class SimulateSampledExpectationCuquantumTest(tf.test.TestCase):
         """)
 
 
-# class SimulateSamplesCuquantumTest(tf.test.TestCase):
-#     """Tests tfq_simulate_samples."""
+class SimulateSamplesCuquantumTest(tf.test.TestCase):
+    """Tests tfq_simulate_samples."""
 
-#     def test_simulate_samples_cpu_vs_cuquantum(self):
-#         """Make sure that cpu & gpu(cuquantum) ops have the same results."""
-#         n_qubits = 20
-#         batch_size = 5
-#         symbol_names = ['alpha']
-#         n_samples = [100]
-#         qubits = cirq.GridQubit.rect(1, n_qubits)
-#         circuit_batch, resolver_batch = \
-#             util.random_symbol_circuit_resolver_batch(
-#                 qubits, symbol_names, batch_size)
+    def test_simulate_samples_cpu_vs_cuquantum(self):
+        """Make sure that cpu & gpu(cuquantum) ops have the same results."""
+        n_qubits = 20
+        batch_size = 5
+        symbol_names = ['alpha']
+        n_samples = [100]
+        qubits = cirq.GridQubit.rect(1, n_qubits)
+        circuit_batch, resolver_batch = \
+            util.random_symbol_circuit_resolver_batch(
+                qubits, symbol_names, batch_size)
 
-#         circuit_batch_tensor = util.convert_to_tensor(circuit_batch)
+        circuit_batch_tensor = util.convert_to_tensor(circuit_batch)
 
-#         symbol_values_array = np.array(
-#             [[resolver[symbol]
-#               for symbol in symbol_names]
-#              for resolver in resolver_batch])
+        symbol_values_array = np.array(
+            [[resolver[symbol]
+              for symbol in symbol_names]
+             for resolver in resolver_batch])
 
-#         cpu_avg_time, res_cpu = measure_average_runtime(
-#             lambda: tfq_simulate_ops.tfq_simulate_samples(
-#                 circuit_batch_tensor, symbol_names,
-#                 symbol_values_array.astype(np.float64), n_samples),
-#             "CPU",
-#             num_samples=10,
-#             result_avg=True,
-#         )
+        cpu_avg_time, res_cpu = measure_average_runtime(
+            lambda: tfq_simulate_ops.tfq_simulate_samples(
+                circuit_batch_tensor, symbol_names,
+                symbol_values_array.astype(np.float64), n_samples),
+            "CPU",
+            num_samples=10,
+            result_avg=True,
+        )
 
-#         cuquantum_avg_time, res_cuquantum = measure_average_runtime(
-#             lambda: tfq_simulate_ops_cuquantum.tfq_simulate_samples(
-#                 circuit_batch_tensor, symbol_names,
-#                 symbol_values_array.astype(np.float64), n_samples),
-#             "cuQuantum",
-#             num_samples=10,
-#             result_avg=True,
-#         )
+        cuquantum_avg_time, res_cuquantum = measure_average_runtime(
+            lambda: tfq_simulate_ops_cuquantum.tfq_simulate_samples(
+                circuit_batch_tensor, symbol_names,
+                symbol_values_array.astype(np.float64), n_samples),
+            "cuQuantum",
+            num_samples=10,
+            result_avg=True,
+        )
 
-#         # cuQuantum op should be faster than CPU op.
-#         self.assertGreater(cpu_avg_time, cuquantum_avg_time)
+        # cuQuantum op should be faster than CPU op.
+        self.assertGreater(cpu_avg_time, cuquantum_avg_time)
 
-#         # The result should be the similar within a tolerance.
-#         np.testing.assert_allclose(res_cpu,
-#                                    res_cuquantum,
-#                                    atol=1e-4,
-#                                    err_msg="""
-#         # If failed, the GPU architecture in this system may be unsupported.
-#         # Please refer to the supported architectures here.
-#         # https://docs.nvidia.com/cuda/cuquantum/getting_started.html#custatevec
-#         """)
+        # The result should be the similar within a tolerance.
+        np.testing.assert_allclose(res_cpu,
+                                   res_cuquantum,
+                                   atol=1e-4,
+                                   err_msg="""
+        # If failed, the GPU architecture in this system may be unsupported.
+        # Please refer to the supported architectures here.
+        # https://docs.nvidia.com/cuda/cuquantum/getting_started.html#custatevec
+        """)
 
 
-# class SimulateStateCuquantumTest(tf.test.TestCase):
-#     """Tests tfq_simulate_samples."""
+class SimulateStateCuquantumTest(tf.test.TestCase):
+    """Tests tfq_simulate_samples."""
 
-#     def test_simulate_state_cpu_vs_cuquantum(self):
-#         """Make sure that cpu & gpu(cuquantum) ops have the same results."""
-#         n_qubits = 10
-#         batch_size = 5
-#         symbol_names = ['alpha']
-#         qubits = cirq.GridQubit.rect(1, n_qubits)
-#         circuit_batch, resolver_batch = \
-#             util.random_symbol_circuit_resolver_batch(
-#                 qubits, symbol_names, batch_size)
+    def test_simulate_state_cpu_vs_cuquantum(self):
+        """Make sure that cpu & gpu(cuquantum) ops have the same results."""
+        n_qubits = 10
+        batch_size = 5
+        symbol_names = ['alpha']
+        qubits = cirq.GridQubit.rect(1, n_qubits)
+        circuit_batch, resolver_batch = \
+            util.random_symbol_circuit_resolver_batch(
+                qubits, symbol_names, batch_size)
 
-#         circuit_batch_tensor = util.convert_to_tensor(circuit_batch)
+        circuit_batch_tensor = util.convert_to_tensor(circuit_batch)
 
-#         symbol_values_array = np.array(
-#             [[resolver[symbol]
-#               for symbol in symbol_names]
-#              for resolver in resolver_batch])
+        symbol_values_array = np.array(
+            [[resolver[symbol]
+              for symbol in symbol_names]
+             for resolver in resolver_batch])
 
-#         cpu_avg_time, res_cpu = measure_average_runtime(
-#             lambda: tfq_simulate_ops.tfq_simulate_state(
-#                 circuit_batch_tensor, symbol_names,
-#                 symbol_values_array.astype(np.float64)),
-#             "CPU",
-#             num_samples=10,
-#         )
+        cpu_avg_time, res_cpu = measure_average_runtime(
+            lambda: tfq_simulate_ops.tfq_simulate_state(
+                circuit_batch_tensor, symbol_names,
+                symbol_values_array.astype(np.float64)),
+            "CPU",
+            num_samples=10,
+        )
 
-#         cuquantum_avg_time, res_cuquantum = measure_average_runtime(
-#             lambda: tfq_simulate_ops_cuquantum.tfq_simulate_state(
-#                 circuit_batch_tensor, symbol_names,
-#                 symbol_values_array.astype(np.float64)),
-#             "cuQuantum",
-#             num_samples=10,
-#         )
+        cuquantum_avg_time, res_cuquantum = measure_average_runtime(
+            lambda: tfq_simulate_ops_cuquantum.tfq_simulate_state(
+                circuit_batch_tensor, symbol_names,
+                symbol_values_array.astype(np.float64)),
+            "cuQuantum",
+            num_samples=10,
+        )
 
-#         # cuQuantum op should be faster than CPU op.
-#         self.assertGreater(cpu_avg_time, cuquantum_avg_time)
+        # cuQuantum op should be faster than CPU op.
+        self.assertGreater(cpu_avg_time, cuquantum_avg_time)
 
-#         # The result should be the similar within a tolerance.
-#         np.testing.assert_allclose(res_cpu,
-#                                    res_cuquantum,
-#                                    atol=1e-4,
-#                                    err_msg="""
-#         # If failed, the GPU architecture in this system may be unsupported.
-#         # Please refer to the supported architectures here.
-#         # https://docs.nvidia.com/cuda/cuquantum/getting_started.html#custatevec
-#         """)
+        # The result should be the similar within a tolerance.
+        np.testing.assert_allclose(res_cpu,
+                                   res_cuquantum,
+                                   atol=1e-4,
+                                   err_msg="""
+        # If failed, the GPU architecture in this system may be unsupported.
+        # Please refer to the supported architectures here.
+        # https://docs.nvidia.com/cuda/cuquantum/getting_started.html#custatevec
+        """)
 
 
 if __name__ == "__main__":
