@@ -946,7 +946,7 @@ py_library(
 
 py_test(
     name = "tfq_adj_grad_op_cuquantum_test",
-    srcs = ["tfq_adj_grad_op_cuquantum.py"],
+    srcs = ["tfq_adj_grad_op_cuquantum_test.py"],
     python_version = "PY3",
     deps = [
         ":tfq_adj_grad_op_cuquantum_py",
