@@ -950,6 +950,7 @@ py_test(
     python_version = "PY3",
     deps = [
         ":tfq_adj_grad_op_cuquantum_py",
+        ":tfq_adj_grad_op_py",
         "//tensorflow_quantum/python:util",
     ],
     srcs_version = "PY3",
