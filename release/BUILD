@@ -71,5 +71,6 @@ sh_binary(
     ] + if_cuda_is_configured([
         "//tensorflow_quantum/core/ops:tfq_simulate_ops_cuda_py",
         "//tensorflow_quantum/core/ops:tfq_simulate_ops_cuquantum_py",
+        "//tensorflow_quantum/core/ops:tfq_adj_grad_op_cuquantum_py",
     ]),
 )
