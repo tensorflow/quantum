@@ -123,7 +123,6 @@ class TfqSimulateStateOpCuQuantum : public tensorflow::OpKernel {
  private:
   cublasHandle_t cublas_handle_;
   custatevecHandle_t custatevec_handle_;
-
   void ComputeLarge(
       const std::vector<int>& num_qubits, const int max_num_qubits,
       const std::vector<std::vector<qsim::GateFused<QsimGate>>>& fused_circuits,
