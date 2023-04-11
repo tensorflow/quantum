@@ -62,7 +62,7 @@ class Adjoint(differentiator.Differentiator):
 
     """
 
-    def generate_differentiable_op(self, *, sampled_op=None, analytic_op=None):
+    def generate_differentiable_op(self, *, sampled_op=None, analytic_op=None, use_gpu=False):
         """Generate a differentiable op by attaching self to an op.
 
         See `tfq.differentiators.Differentiator`. This has been partially
@@ -75,18 +75,23 @@ class Adjoint(differentiator.Differentiator):
                 using this differentiator's `differentiate_sampled` method.
             analytic_op: A `callable` op that you want to make differentiable
                 using this differentiators `differentiate_analytic` method.
+            use_gpu: A `bool` indicating whether to use the GPU version of the
+                adjoint gradient op.
 
         Returns:
             A `callable` op that who's gradients are now registered to be
             a call to this differentiators `differentiate_*` function.
 
         """
+        self.use_gpu = use_gpu
+        if self.use_gpu:
+            print("[LOG] USING GPU version")
         if sampled_op is not None:
             raise ValueError("sample base backends are not supported by the "
                              "Adjoint method, please use analytic expectation"
                              " or choose another differentiator.")
 
-        return super().generate_differentiable_op(analytic_op=analytic_op)
+        return super().generate_differentiable_op(analytic_op=analytic_op, use_gpu=use_gpu)
 
     @tf.function
     def get_gradient_circuits(self, programs, symbol_names, symbol_values):
@@ -100,6 +105,7 @@ class Adjoint(differentiator.Differentiator):
     def differentiate_analytic(self, programs, symbol_names, symbol_values,
                                pauli_sums, forward_pass_vals, grad, use_gpu=False):
         if use_gpu:
+            print("[LOG] USING GPU version")
             return tfq_adj_grad_op_cuquantum.tfq_adj_grad(programs, symbol_names,
                                                 symbol_values, pauli_sums, grad)
         else:

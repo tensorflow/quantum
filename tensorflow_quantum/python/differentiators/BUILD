@@ -25,6 +25,7 @@ py_library(
     deps = [
         ":differentiator",
         "//tensorflow_quantum/core/ops:tfq_adj_grad_op_py",
+        "//tensorflow_quantum/core/ops:tfq_adj_grad_op_cuquantum_py",
     ],
 )
 

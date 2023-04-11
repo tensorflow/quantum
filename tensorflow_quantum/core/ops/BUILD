@@ -538,6 +538,7 @@ py_library(
     deps = [
         ":cirq_ops",
         ":tfq_simulate_ops_py",
+        ":tfq_simulate_ops_cuquantum_py",
         ":tfq_utility_ops_py",
         "//tensorflow_quantum/python:quantum_context",
     ],

@@ -247,6 +247,7 @@ class Expectation(tf.keras.layers.Layer):
         if differentiator is None:
             differentiator = parameter_shift.ParameterShift()
             if backend is None:
+                print("[LOG] Using Adjoint Differentiator for noiseless")
                 differentiator = adjoint.Adjoint()
 
         if not isinstance(differentiator, diff.Differentiator):
@@ -264,7 +265,7 @@ class Expectation(tf.keras.layers.Layer):
             used_op = circuit_execution_ops.get_expectation_op(backend=backend,
                                                                use_gpu=use_gpu)
             self._expectation_op = differentiator.generate_differentiable_op(
-                analytic_op=used_op)
+                analytic_op=used_op, use_gpu=use_gpu)
 
         self._w = None
 

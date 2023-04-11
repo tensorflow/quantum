@@ -55,7 +55,8 @@ class Differentiator(metaclass=abc.ABCMeta):
     to backpropagate through a quantum circuit.
     """
 
-    def generate_differentiable_op(self, *, sampled_op=None, analytic_op=None):
+    def generate_differentiable_op(self, *, sampled_op=None, analytic_op=None,
+                                   use_gpu=False):
         """Generate a differentiable op by attaching self to an op.
 
         This function returns a `tf.function` that passes values through to
@@ -80,6 +81,7 @@ class Differentiator(metaclass=abc.ABCMeta):
                 using this differentiator's `differentiate_sampled` method.
             analytic_op: A `callable` op that you want to make differentiable
                 using this differentiators `differentiate_analytic` method.
+            use_gpu: A `bool` indicating whether to use GPU
 
         Returns:
             A `callable` op that who's gradients are now registered to be
@@ -117,7 +119,9 @@ class Differentiator(metaclass=abc.ABCMeta):
         #   put inside of the analytical_op argument or vice versa.
         #   right all that is checked is that the desire op signatures
         #   are substrings of the given op signature.
+        print("analytic_op: ", analytic_op)
         if analytic_op is not None:
+            print("[LOG] analytic_op is not None")
             signature = inspect.signature(analytic_op).parameters
             expected_signature = [
                 'programs', 'symbol_names', 'symbol_values', 'pauli_sums'
@@ -138,6 +142,7 @@ class Differentiator(metaclass=abc.ABCMeta):
                                  'Note: noisy ops should use sampled_op')
 
         if sampled_op is not None:
+            print("[LOG] sampled_op is not None")
             signature = inspect.signature(sampled_op).parameters
             expected_signature = [
                 'programs', 'symbol_names', 'symbol_values', 'pauli_sums',
@@ -159,7 +164,8 @@ class Differentiator(metaclass=abc.ABCMeta):
             def gradient(grad):
                 return self._differentiate_ana(programs, symbol_names,
                                                symbol_values, pauli_sums,
-                                               forward_pass_vals, grad)
+                                               forward_pass_vals, grad, 
+                                               use_gpu=use_gpu)
 
             return forward_pass_vals, gradient
 
@@ -181,16 +187,18 @@ class Differentiator(metaclass=abc.ABCMeta):
         self.expectation_op = analytic_op
         return_func = op_wrapper_analytic
         if analytic_op is None:
+            print("[LOG] analytic_op is None")
             self.expectation_op = sampled_op
             return_func = op_wrapper_sampled
 
+        print("[LOG] return_func: ", return_func)
         return return_func
 
     def _differentiate_ana(self, programs, symbol_names, symbol_values,
-                           pauli_sums, forward_pass_vals, grad):
+                           pauli_sums, forward_pass_vals, grad, use_gpu):
         return None, None, self.differentiate_analytic(
             programs, symbol_names, symbol_values,
-            pauli_sums, forward_pass_vals, grad), \
+            pauli_sums, forward_pass_vals, grad, use_gpu=use_gpu), \
                None
 
     def _differentiate_sam(self, programs, symbol_names, symbol_values,
