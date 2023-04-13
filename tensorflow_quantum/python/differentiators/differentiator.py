@@ -119,9 +119,7 @@ class Differentiator(metaclass=abc.ABCMeta):
         #   put inside of the analytical_op argument or vice versa.
         #   right all that is checked is that the desire op signatures
         #   are substrings of the given op signature.
-        print("analytic_op: ", analytic_op)
         if analytic_op is not None:
-            print("[LOG] analytic_op is not None")
             signature = inspect.signature(analytic_op).parameters
             expected_signature = [
                 'programs', 'symbol_names', 'symbol_values', 'pauli_sums'
@@ -142,7 +140,6 @@ class Differentiator(metaclass=abc.ABCMeta):
                                  'Note: noisy ops should use sampled_op')
 
         if sampled_op is not None:
-            print("[LOG] sampled_op is not None")
             signature = inspect.signature(sampled_op).parameters
             expected_signature = [
                 'programs', 'symbol_names', 'symbol_values', 'pauli_sums',
@@ -187,11 +184,9 @@ class Differentiator(metaclass=abc.ABCMeta):
         self.expectation_op = analytic_op
         return_func = op_wrapper_analytic
         if analytic_op is None:
-            print("[LOG] analytic_op is None")
             self.expectation_op = sampled_op
             return_func = op_wrapper_sampled
 
-        print("[LOG] return_func: ", return_func)
         return return_func
 
     def _differentiate_ana(self, programs, symbol_names, symbol_values,

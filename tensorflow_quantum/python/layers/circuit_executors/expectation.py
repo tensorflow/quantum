@@ -247,7 +247,6 @@ class Expectation(tf.keras.layers.Layer):
         if differentiator is None:
             differentiator = parameter_shift.ParameterShift()
             if backend is None:
-                print("[LOG] Using Adjoint Differentiator for noiseless")
                 differentiator = adjoint.Adjoint()
 
         if not isinstance(differentiator, diff.Differentiator):

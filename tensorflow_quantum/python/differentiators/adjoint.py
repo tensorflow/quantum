@@ -83,9 +83,6 @@ class Adjoint(differentiator.Differentiator):
             a call to this differentiators `differentiate_*` function.
 
         """
-        self.use_gpu = use_gpu
-        if self.use_gpu:
-            print("[LOG] USING GPU version")
         if sampled_op is not None:
             raise ValueError("sample base backends are not supported by the "
                              "Adjoint method, please use analytic expectation"
@@ -105,7 +102,6 @@ class Adjoint(differentiator.Differentiator):
     def differentiate_analytic(self, programs, symbol_names, symbol_values,
                                pauli_sums, forward_pass_vals, grad, use_gpu=False):
         if use_gpu:
-            print("[LOG] USING GPU version")
             return tfq_adj_grad_op_cuquantum.tfq_adj_grad(programs, symbol_names,
                                                 symbol_values, pauli_sums, grad)
         else:
