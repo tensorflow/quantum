@@ -1,3 +1,5 @@
+load("@local_config_cuda//cuda:build_defs.bzl", "if_cuda_is_configured")
+
 package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])

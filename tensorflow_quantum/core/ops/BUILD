@@ -1,6 +1,4 @@
-# load op_wrapper
-load("@org_tensorflow//tensorflow:tensorflow.bzl", "tf_gpu_kernel_library", "tf_gen_op_wrapper_py")
-load("@local_config_cuda//cuda:build_defs.bzl", "if_cuda_is_configured", "if_cuda")
+load("@local_config_cuda//cuda:build_defs.bzl", "if_cuda_is_configured")
 
 package(default_visibility = ["//visibility:public"])
 
