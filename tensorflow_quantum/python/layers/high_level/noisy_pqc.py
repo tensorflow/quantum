@@ -139,6 +139,7 @@ class NoisyPQC(tf.keras.layers.Layer):
             repetitions=None,
             sample_based=None,
             differentiator=None,
+            use_gpu=False,
             initializer=tf.keras.initializers.RandomUniform(0, 2 * np.pi),
             regularizer=None,
             constraint=None,
@@ -164,6 +165,8 @@ class NoisyPQC(tf.keras.layers.Layer):
             trajectory.
         differentiator: Optional `tfq.differentiator` object to specify how
             gradients of `model_circuit` should be calculated.
+        use_gpu: Python `bool` indicating whether to use GPU ops (currently
+            not supported/implemented).
         initializer: Optional `tf.keras.initializer` object to specify how the
             symbols in `model_circuit` should be initialized when creating
             the managed variables.
@@ -219,6 +222,11 @@ class NoisyPQC(tf.keras.layers.Layer):
         self._repetitions = tf.constant(
             [[repetitions for _ in range(len(operators))]],
             dtype=tf.dtypes.int32)
+
+        # Use gpu not supported yet.
+        if use_gpu:
+            raise NotImplementedError("GPU support for noisy PQC is not \
+                                      yet implemented.")
 
         # Ingest differentiator.
         if differentiator is None:

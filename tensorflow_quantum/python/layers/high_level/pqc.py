@@ -137,6 +137,7 @@ class PQC(tf.keras.layers.Layer):
             *,
             repetitions=None,
             backend='noiseless',
+            use_gpu=False,
             differentiator=None,
             initializer=tf.keras.initializers.RandomUniform(0, 2 * np.pi),
             regularizer=None,
@@ -166,6 +167,7 @@ class PQC(tf.keras.layers.Layer):
             `cirq.sim.simulator.SimulatesExpectationValues` if analytic
             expectations are desired or `cirq.Sampler` if sampled expectations
             are desired.
+        use_gpu: Optional Python `bool` indicating whether or not to use GPU ops
         differentiator: Optional `tfq.differentiator` object to specify how
             gradients of `model_circuit` should be calculated.
         initializer: Optional `tf.keras.initializer` object to specify how the
@@ -248,10 +250,10 @@ class PQC(tf.keras.layers.Layer):
                             "cirq.sim.simulator.SimulatesExpectationValues.")
         if self._analytic:
             self._executor = expectation.Expectation(
-                backend=backend, differentiator=differentiator)
+                backend=backend, differentiator=differentiator, use_gpu=use_gpu)
         else:
             self._executor = sampled_expectation.SampledExpectation(
-                backend=backend, differentiator=differentiator)
+                backend=backend, differentiator=differentiator, use_gpu=use_gpu)
 
         self._append_layer = elementary.AddCircuit()
 

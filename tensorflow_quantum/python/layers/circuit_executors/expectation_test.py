@@ -324,7 +324,7 @@ class ExpectationFunctionalTests(parameterized.TestCase, tf.test.TestCase):
         l1 = tf.keras.layers.Dense(10)(inputs)
         l2 = tf.keras.layers.Dense(3)(l1)
         reps = 1000 if noisy else None
-        outputs = expectation.Expectation(backend=backend)(
+        outputs = expectation.Expectation(backend=backend, use_gpu=False)(
             datum,
             symbol_names=symbols,
             operators=cirq.Z(bit),

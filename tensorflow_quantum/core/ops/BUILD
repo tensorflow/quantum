@@ -538,6 +538,7 @@ py_library(
     deps = [
         ":cirq_ops",
         ":tfq_simulate_ops_py",
+        ":tfq_simulate_ops_cuquantum_py",
         ":tfq_utility_ops_py",
         "//tensorflow_quantum/python:quantum_context",
     ],
@@ -950,7 +951,7 @@ py_test(
     python_version = "PY3",
     deps = [
         ":tfq_adj_grad_op_cuquantum_py",
-        ":tfq_adj_grad_op_py",
+        ":tfq_adj_grad_op_py", # for testing cpu vs gpu diff
         "//tensorflow_quantum/python:util",
     ],
     srcs_version = "PY3",

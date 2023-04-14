@@ -18,16 +18,26 @@ import enum
 import cirq
 
 from tensorflow_quantum.core.ops import (cirq_ops, tfq_simulate_ops,
-                                         tfq_utility_ops)
+                                         tfq_utility_ops,
+                                         tfq_simulate_ops_cuquantum)
 from tensorflow_quantum.python import quantum_context
 
 
 class TFQStateVectorSimulator(enum.Enum):
     """Enum to make specifying TFQ simulators user-friendly."""
     expectation = tfq_simulate_ops.tfq_simulate_expectation
+    expectation_gpu_cpu = tfq_simulate_ops_cuquantum.tfq_simulate_expectation
+
     samples = tfq_simulate_ops.tfq_simulate_samples
+    samples_gpu_cpu = tfq_simulate_ops_cuquantum.tfq_simulate_samples
+
     state = tfq_simulate_ops.tfq_simulate_state
-    sampled_expectation = tfq_simulate_ops.tfq_simulate_sampled_expectation
+    state_gpu_cpu = tfq_simulate_ops_cuquantum.tfq_simulate_state
+
+    sampled_expectation = \
+        tfq_simulate_ops.tfq_simulate_sampled_expectation
+    sampled_expectation_gpu_cpu = \
+        tfq_simulate_ops_cuquantum.tfq_simulate_sampled_expectation
 
 
 def _check_quantum_concurrent(quantum_concurrent):
@@ -38,6 +48,7 @@ def _check_quantum_concurrent(quantum_concurrent):
 
 def get_expectation_op(
         backend=None,
+        use_gpu=False,
         *,
         quantum_concurrent=quantum_context.get_quantum_concurrent_op_mode()):
     """Get a TensorFlow op that will calculate batches of expectation values.
@@ -121,7 +132,10 @@ def get_expectation_op(
 
     op = None
     if backend is None:
-        op = TFQStateVectorSimulator.expectation
+        if use_gpu:
+            op = TFQStateVectorSimulator.expectation_gpu_cpu
+        else:
+            op = TFQStateVectorSimulator.expectation
 
     # TODO(zaqqwerty): remove DM check after cirq #3964
     if isinstance(backend, (cirq.sim.simulator.SimulatesExpectationValues,
@@ -151,6 +165,7 @@ def get_expectation_op(
 
 def get_sampling_op(
         backend=None,
+        use_gpu=False,
         *,
         quantum_concurrent=quantum_context.get_quantum_concurrent_op_mode()):
     """Get a Tensorflow op that produces samples from given quantum circuits.
@@ -220,7 +235,10 @@ def get_sampling_op(
 
     op = None
     if backend is None:
-        op = TFQStateVectorSimulator.samples
+        if use_gpu:
+            op = TFQStateVectorSimulator.samples_gpu_cpu
+        else:
+            op = TFQStateVectorSimulator.samples
 
     if isinstance(backend, cirq.Sampler):
         op = cirq_ops._get_cirq_samples(backend)
@@ -243,6 +261,7 @@ def get_sampling_op(
 
 def get_state_op(
         backend=None,
+        use_gpu=False,
         *,
         quantum_concurrent=quantum_context.get_quantum_concurrent_op_mode()):
     """Get a TensorFlow op that produces states from given quantum circuits.
@@ -309,7 +328,10 @@ def get_state_op(
 
     op = None
     if backend is None:
-        op = TFQStateVectorSimulator.state
+        if use_gpu:
+            op = TFQStateVectorSimulator.state_gpu_cpu
+        else:
+            op = TFQStateVectorSimulator.state
 
     if isinstance(backend, (cirq.SimulatesFinalState)):
         op = cirq_ops._get_cirq_simulate_state(backend)
@@ -333,6 +355,7 @@ def get_state_op(
 
 def get_sampled_expectation_op(
         backend=None,
+        use_gpu=False,
         *,
         quantum_concurrent=quantum_context.get_quantum_concurrent_op_mode()):
     """Get a TensorFlow op that will calculate sampled expectation values.
@@ -420,7 +443,10 @@ def get_sampled_expectation_op(
 
     op = None
     if backend is None:
-        op = TFQStateVectorSimulator.sampled_expectation
+        if use_gpu:
+            op = TFQStateVectorSimulator.sampled_expectation_gpu_cpu
+        else:
+            op = TFQStateVectorSimulator.sampled_expectation
 
     if isinstance(backend, cirq.Sampler):
         op = cirq_ops._get_cirq_sampled_expectation(backend)

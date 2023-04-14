@@ -139,7 +139,7 @@ class Sample(tf.keras.layers.Layer):
 
     """
 
-    def __init__(self, backend='noiseless', **kwargs):
+    def __init__(self, backend='noiseless', use_gpu=False, **kwargs):
         """Instantiate this Layer.
 
         Create a layer that will output bitstring samples taken from either a
@@ -150,12 +150,16 @@ class Sample(tf.keras.layers.Layer):
                 to the noiseless simulator. Options are {'noisy', 'noiseless'},
                 however users may also specify a preconfigured cirq execution
                 object to use instead, which must inherit `cirq.Sampler`.
+            use_gpu: Calls TFQ GPU version op.
         """
         super().__init__(**kwargs)
         used_op = None
         if backend == 'noiseless':
-            used_op = circuit_execution_ops.get_sampling_op(None)
+            used_op = circuit_execution_ops.get_sampling_op(None, \
+                                                            use_gpu=use_gpu)
         elif backend == 'noisy':
+            if use_gpu:
+                raise ValueError('noisy backend does not currently support GPU')
             used_op = noisy_samples_op.samples
         else:
             used_op = circuit_execution_ops.get_sampling_op(backend)
