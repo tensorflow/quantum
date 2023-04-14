@@ -155,7 +155,8 @@ class Sample(tf.keras.layers.Layer):
         super().__init__(**kwargs)
         used_op = None
         if backend == 'noiseless':
-            used_op = circuit_execution_ops.get_sampling_op(None, use_gpu=use_gpu)
+            used_op = circuit_execution_ops.get_sampling_op(None, \
+                                                            use_gpu=use_gpu)
         elif backend == 'noisy':
             if use_gpu:
                 raise ValueError('noisy backend does not currently support GPU')

@@ -34,8 +34,10 @@ class TFQStateVectorSimulator(enum.Enum):
     state = tfq_simulate_ops.tfq_simulate_state
     state_gpu_cpu = tfq_simulate_ops_cuquantum.tfq_simulate_state
 
-    sampled_expectation = tfq_simulate_ops.tfq_simulate_sampled_expectation
-    sampled_expectation_gpu_cpu = tfq_simulate_ops_cuquantum.tfq_simulate_sampled_expectation
+    sampled_expectation = \
+        tfq_simulate_ops.tfq_simulate_sampled_expectation
+    sampled_expectation_gpu_cpu = \
+        tfq_simulate_ops_cuquantum.tfq_simulate_sampled_expectation
 
 
 def _check_quantum_concurrent(quantum_concurrent):

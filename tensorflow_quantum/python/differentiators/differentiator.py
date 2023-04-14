@@ -161,7 +161,7 @@ class Differentiator(metaclass=abc.ABCMeta):
             def gradient(grad):
                 return self._differentiate_ana(programs, symbol_names,
                                                symbol_values, pauli_sums,
-                                               forward_pass_vals, grad, 
+                                               forward_pass_vals, grad,
                                                use_gpu=use_gpu)
 
             return forward_pass_vals, gradient

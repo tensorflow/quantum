@@ -225,7 +225,8 @@ class NoisyPQC(tf.keras.layers.Layer):
 
         # Use gpu not supported yet.
         if use_gpu:
-            raise NotImplementedError("GPU support for noisy PQC is not yet implemented.")
+            raise NotImplementedError("GPU support for noisy PQC is not \
+                                      yet implemented.")
 
         # Ingest differentiator.
         if differentiator is None:
