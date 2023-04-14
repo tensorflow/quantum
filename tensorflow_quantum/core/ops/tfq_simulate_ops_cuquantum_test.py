@@ -638,7 +638,7 @@ class SimulateSamplesCuquantumTest(tf.test.TestCase, parameterized.TestCase):
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'Unparseable proto'):
             # programs tensor has the right type, but invalid value.
-            tfq_simulate_ops_cuquantum.tfq_simulate_samples( \
+            tfq_simulate_ops_cuquantum.tfq_simulate_samples(\
                                                   ['junk'] * batch_size,
                                                   symbol_names,
                                                   symbol_values_array,
@@ -838,8 +838,8 @@ class SimulateStateCuquantumTest(tf.test.TestCase, parameterized.TestCase):
         with self.assertRaisesRegex(TypeError, 'Cannot convert'):
             # programs tensor has the wrong type.
             tfq_simulate_ops_cuquantum.tfq_simulate_state([1] * batch_size,
-                                                symbol_names,
-                                                symbol_values_array)
+                                                          symbol_names,
+                                                          symbol_values_array)
 
         with self.assertRaisesRegex(TypeError, 'Cannot convert'):
             # symbol_names tensor has the wrong type.
