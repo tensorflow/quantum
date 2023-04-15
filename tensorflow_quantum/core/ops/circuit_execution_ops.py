@@ -143,7 +143,7 @@ def get_expectation_op(
         op = cirq_ops._get_cirq_analytical_expectation(backend)
 
     if op is not None:
-        if quantum_concurrent is True:
+        if use_gpu is False and quantum_concurrent is True:
             # Return an op that does not block graph level parallelism.
             return lambda programs, symbol_names, symbol_values, pauli_sums: \
                 op(programs, symbol_names, symbol_values, pauli_sums)
@@ -244,7 +244,7 @@ def get_sampling_op(
         op = cirq_ops._get_cirq_samples(backend)
 
     if op is not None:
-        if quantum_concurrent is True:
+        if use_gpu is False and quantum_concurrent is True:
             # Return an op that does not block graph level parallelism.
             return lambda programs, symbol_names, symbol_values, num_samples: \
                 tfq_utility_ops.padded_to_ragged(
@@ -337,7 +337,7 @@ def get_state_op(
         op = cirq_ops._get_cirq_simulate_state(backend)
 
     if op is not None:
-        if quantum_concurrent is True:
+        if use_gpu is False and quantum_concurrent is True:
             # Return an op that does not block graph level parallelism.
             return lambda programs, symbol_names, symbol_values: \
                 tfq_utility_ops.padded_to_ragged(
@@ -452,7 +452,7 @@ def get_sampled_expectation_op(
         op = cirq_ops._get_cirq_sampled_expectation(backend)
 
     if op is not None:
-        if quantum_concurrent is True:
+        if use_gpu is False and quantum_concurrent is True:
             # Return an op that does not block graph level parallelism.
             return lambda programs, symbol_names, symbol_values, pauli_sums, \
                 num_samples: op(programs,
