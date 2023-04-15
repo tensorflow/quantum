@@ -48,7 +48,7 @@ def _check_quantum_concurrent(quantum_concurrent):
 
 def get_expectation_op(
         backend=None,
-        use_gpu=False,
+        use_cuquantum=False,
         *,
         quantum_concurrent=quantum_context.get_quantum_concurrent_op_mode()):
     """Get a TensorFlow op that will calculate batches of expectation values.
@@ -132,7 +132,7 @@ def get_expectation_op(
 
     op = None
     if backend is None:
-        if use_gpu:
+        if use_cuquantum:
             op = TFQStateVectorSimulator.expectation_cuquantum
         else:
             op = TFQStateVectorSimulator.expectation
@@ -143,7 +143,7 @@ def get_expectation_op(
         op = cirq_ops._get_cirq_analytical_expectation(backend)
 
     if op is not None:
-        if use_gpu is False and quantum_concurrent is True:
+        if use_cuquantum is False and quantum_concurrent is True:
             # Return an op that does not block graph level parallelism.
             return lambda programs, symbol_names, symbol_values, pauli_sums: \
                 op(programs, symbol_names, symbol_values, pauli_sums)
@@ -165,7 +165,7 @@ def get_expectation_op(
 
 def get_sampling_op(
         backend=None,
-        use_gpu=False,
+        use_cuquantum=False,
         *,
         quantum_concurrent=quantum_context.get_quantum_concurrent_op_mode()):
     """Get a Tensorflow op that produces samples from given quantum circuits.
@@ -235,7 +235,7 @@ def get_sampling_op(
 
     op = None
     if backend is None:
-        if use_gpu:
+        if use_cuquantum:
             op = TFQStateVectorSimulator.samples_cuquantum
         else:
             op = TFQStateVectorSimulator.samples
@@ -244,7 +244,7 @@ def get_sampling_op(
         op = cirq_ops._get_cirq_samples(backend)
 
     if op is not None:
-        if use_gpu is False and quantum_concurrent is True:
+        if use_cuquantum is False and quantum_concurrent is True:
             # Return an op that does not block graph level parallelism.
             return lambda programs, symbol_names, symbol_values, num_samples: \
                 tfq_utility_ops.padded_to_ragged(
@@ -261,7 +261,7 @@ def get_sampling_op(
 
 def get_state_op(
         backend=None,
-        use_gpu=False,
+        use_cuquantum=False,
         *,
         quantum_concurrent=quantum_context.get_quantum_concurrent_op_mode()):
     """Get a TensorFlow op that produces states from given quantum circuits.
@@ -328,7 +328,7 @@ def get_state_op(
 
     op = None
     if backend is None:
-        if use_gpu:
+        if use_cuquantum:
             op = TFQStateVectorSimulator.state_cuquantum
         else:
             op = TFQStateVectorSimulator.state
@@ -337,7 +337,7 @@ def get_state_op(
         op = cirq_ops._get_cirq_simulate_state(backend)
 
     if op is not None:
-        if use_gpu is False and quantum_concurrent is True:
+        if use_cuquantum is False and quantum_concurrent is True:
             # Return an op that does not block graph level parallelism.
             return lambda programs, symbol_names, symbol_values: \
                 tfq_utility_ops.padded_to_ragged(
@@ -355,7 +355,7 @@ def get_state_op(
 
 def get_sampled_expectation_op(
         backend=None,
-        use_gpu=False,
+        use_cuquantum=False,
         *,
         quantum_concurrent=quantum_context.get_quantum_concurrent_op_mode()):
     """Get a TensorFlow op that will calculate sampled expectation values.
@@ -443,7 +443,7 @@ def get_sampled_expectation_op(
 
     op = None
     if backend is None:
-        if use_gpu:
+        if use_cuquantum:
             op = TFQStateVectorSimulator.sampled_expectation_cuquantum
         else:
             op = TFQStateVectorSimulator.sampled_expectation
@@ -452,7 +452,7 @@ def get_sampled_expectation_op(
         op = cirq_ops._get_cirq_sampled_expectation(backend)
 
     if op is not None:
-        if use_gpu is False and quantum_concurrent is True:
+        if use_cuquantum is False and quantum_concurrent is True:
             # Return an op that does not block graph level parallelism.
             return lambda programs, symbol_names, symbol_values, pauli_sums, \
                 num_samples: op(programs,

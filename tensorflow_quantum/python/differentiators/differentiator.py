@@ -56,7 +56,7 @@ class Differentiator(metaclass=abc.ABCMeta):
     """
 
     def generate_differentiable_op(self, *, sampled_op=None, analytic_op=None,
-                                   use_gpu=False):
+                                   use_cuquantum=False):
         """Generate a differentiable op by attaching self to an op.
 
         This function returns a `tf.function` that passes values through to
@@ -81,7 +81,7 @@ class Differentiator(metaclass=abc.ABCMeta):
                 using this differentiator's `differentiate_sampled` method.
             analytic_op: A `callable` op that you want to make differentiable
                 using this differentiators `differentiate_analytic` method.
-            use_gpu: A `bool` indicating whether to use GPU
+            use_cuquantum: A `bool` indicating whether to use GPU
 
         Returns:
             A `callable` op that who's gradients are now registered to be
@@ -162,7 +162,7 @@ class Differentiator(metaclass=abc.ABCMeta):
                 return self._differentiate_ana(programs, symbol_names,
                                                symbol_values, pauli_sums,
                                                forward_pass_vals, grad,
-                                               use_gpu=use_gpu)
+                                               use_cuquantum=use_cuquantum)
 
             return forward_pass_vals, gradient
 
@@ -190,10 +190,10 @@ class Differentiator(metaclass=abc.ABCMeta):
         return return_func
 
     def _differentiate_ana(self, programs, symbol_names, symbol_values,
-                           pauli_sums, forward_pass_vals, grad, use_gpu):
+                           pauli_sums, forward_pass_vals, grad, use_cuquantum):
         return None, None, self.differentiate_analytic(
             programs, symbol_names, symbol_values,
-            pauli_sums, forward_pass_vals, grad, use_gpu=use_gpu), \
+            pauli_sums, forward_pass_vals, grad, use_cuquantum=use_cuquantum), \
                None
 
     def _differentiate_sam(self, programs, symbol_names, symbol_values,

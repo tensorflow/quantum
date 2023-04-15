@@ -112,7 +112,7 @@ class State(tf.keras.layers.Layer):
 
     """
 
-    def __init__(self, backend=None, use_gpu=False, **kwargs):
+    def __init__(self, backend=None, use_cuquantum=False, **kwargs):
         """Instantiate a State Layer.
 
         Create a layer that will simulate a quantum state and output it into
@@ -126,11 +126,11 @@ class State(tf.keras.layers.Layer):
                 `cirq.SimulatesFinalState`. Note that C++ Density Matrix
                 simulation is not yet supported so to do Density Matrix
                 simulation please use `cirq.DensityMatrixSimulator`.
-            use_gpu: Calls TFQ GPU version op.
+            use_cuquantum: Calls TFQ GPU version op.
         """
         super().__init__(**kwargs)
         self.state_op = circuit_execution_ops.get_state_op(backend, \
-                                                           use_gpu=use_gpu)
+                                                           use_cuquantum=use_cuquantum)
 
     def call(self, inputs, *, symbol_names=None, symbol_values=None):
         """Keras call function.

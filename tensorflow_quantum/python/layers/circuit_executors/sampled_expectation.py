@@ -213,7 +213,7 @@ class SampledExpectation(tf.keras.layers.Layer):
 
     """
 
-    def __init__(self, backend='noiseless', differentiator=None, use_gpu=False,
+    def __init__(self, backend='noiseless', differentiator=None, use_cuquantum=False,
                  **kwargs):
         """Instantiate this Layer.
 
@@ -228,7 +228,7 @@ class SampledExpectation(tf.keras.layers.Layer):
                 derivative values of given operators_to_measure and circuit,
                 which must inherit `tfq.differentiators.Differentiator`.
                 Defaults to `parameter_shift.ParameterShift()` (None argument).
-            use_gpu: Calls TFQ GPU version op.
+            use_cuquantum: Calls TFQ GPU version op.
 
         """
         super().__init__(**kwargs)
@@ -250,14 +250,14 @@ class SampledExpectation(tf.keras.layers.Layer):
         used_op = None
         if backend == 'noiseless':
             used_op = circuit_execution_ops.get_sampled_expectation_op(
-                use_gpu=use_gpu)
+                use_cuquantum=use_cuquantum)
         elif backend == 'noisy':
-            if use_gpu:
+            if use_cuquantum:
                 raise ValueError('noisy backend does not currently support GPU')
             used_op = noisy_sampled_expectation_op.sampled_expectation
         else:
             used_op = circuit_execution_ops.get_sampled_expectation_op(
-                backend=backend, use_gpu=use_gpu)
+                backend=backend, use_cuquantum=use_cuquantum)
 
         self._expectation_op = differentiator.generate_differentiable_op(
             sampled_op=used_op)
