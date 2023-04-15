@@ -190,7 +190,7 @@ def _cuquantum_pip_imple(repository_ctx):
         "%{CUQUANTUM_HEADER_GENRULE}": cuquantum_header_rule,
         "%{CUSTATEVEC_SHARED_LIBRARY_GENRULE}": custatevec_shared_library_rule,
     })
-        
+
 
 cuquantum_configure = repository_rule(
     implementation = _cuquantum_pip_imple,

@@ -26,17 +26,17 @@ from tensorflow_quantum.python import quantum_context
 class TFQStateVectorSimulator(enum.Enum):
     """Enum to make specifying TFQ simulators user-friendly."""
     expectation = tfq_simulate_ops.tfq_simulate_expectation
-    expectation_gpu_cpu = tfq_simulate_ops_cuquantum.tfq_simulate_expectation
+    expectation_cuquantum = tfq_simulate_ops_cuquantum.tfq_simulate_expectation
 
     samples = tfq_simulate_ops.tfq_simulate_samples
-    samples_gpu_cpu = tfq_simulate_ops_cuquantum.tfq_simulate_samples
+    samples_cuquantum = tfq_simulate_ops_cuquantum.tfq_simulate_samples
 
     state = tfq_simulate_ops.tfq_simulate_state
-    state_gpu_cpu = tfq_simulate_ops_cuquantum.tfq_simulate_state
+    state_cuquantum = tfq_simulate_ops_cuquantum.tfq_simulate_state
 
     sampled_expectation = \
         tfq_simulate_ops.tfq_simulate_sampled_expectation
-    sampled_expectation_gpu_cpu = \
+    sampled_expectation_cuquantum = \
         tfq_simulate_ops_cuquantum.tfq_simulate_sampled_expectation
 
 
@@ -133,7 +133,7 @@ def get_expectation_op(
     op = None
     if backend is None:
         if use_gpu:
-            op = TFQStateVectorSimulator.expectation_gpu_cpu
+            op = TFQStateVectorSimulator.expectation_cuquantum
         else:
             op = TFQStateVectorSimulator.expectation
 
@@ -236,7 +236,7 @@ def get_sampling_op(
     op = None
     if backend is None:
         if use_gpu:
-            op = TFQStateVectorSimulator.samples_gpu_cpu
+            op = TFQStateVectorSimulator.samples_cuquantum
         else:
             op = TFQStateVectorSimulator.samples
 
@@ -329,7 +329,7 @@ def get_state_op(
     op = None
     if backend is None:
         if use_gpu:
-            op = TFQStateVectorSimulator.state_gpu_cpu
+            op = TFQStateVectorSimulator.state_cuquantum
         else:
             op = TFQStateVectorSimulator.state
 
@@ -444,7 +444,7 @@ def get_sampled_expectation_op(
     op = None
     if backend is None:
         if use_gpu:
-            op = TFQStateVectorSimulator.sampled_expectation_gpu_cpu
+            op = TFQStateVectorSimulator.sampled_expectation_cuquantum
         else:
             op = TFQStateVectorSimulator.sampled_expectation
 
