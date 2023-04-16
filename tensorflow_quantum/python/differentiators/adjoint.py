@@ -64,7 +64,7 @@ class Adjoint(differentiator.Differentiator):
     """
 
     def generate_differentiable_op(
-        self, *, sampled_op=None, analytic_op=None, use_gpu=False
+        self, *, sampled_op=None, analytic_op=None, use_cuquantum=False
     ):
         """Generate a differentiable op by attaching self to an op.
 
@@ -78,8 +78,8 @@ class Adjoint(differentiator.Differentiator):
                 using this differentiator's `differentiate_sampled` method.
             analytic_op: A `callable` op that you want to make differentiable
                 using this differentiators `differentiate_analytic` method.
-            use_gpu: A `bool` indicating whether to use the GPU version of the
-                adjoint gradient op.
+            use_cuquantum: A `bool` indicating whether to use the cuQuantum
+                version of the adjoint gradient op.
 
         Returns:
             A `callable` op that who's gradients are now registered to be
@@ -94,7 +94,7 @@ class Adjoint(differentiator.Differentiator):
             )
 
         return super().generate_differentiable_op(
-            analytic_op=analytic_op, use_gpu=use_gpu
+            analytic_op=analytic_op, use_cuquantum=use_cuquantum
         )
 
     @tf.function
@@ -107,6 +107,21 @@ class Adjoint(differentiator.Differentiator):
 
     @differentiator.catch_empty_inputs
     @tf.function
+    def differentiate_analytic_cuquantum(
+        self,
+        programs,
+        symbol_names,
+        symbol_values,
+        pauli_sums,
+        forward_pass_vals,
+        grad,
+    ):
+        return tfq_adj_grad_op_cuquantum.tfq_adj_grad(
+            programs, symbol_names, symbol_values, pauli_sums, grad
+        )
+
+    @differentiator.catch_empty_inputs
+    @tf.function
     def differentiate_analytic(
         self,
         programs,
@@ -115,16 +130,10 @@ class Adjoint(differentiator.Differentiator):
         pauli_sums,
         forward_pass_vals,
         grad,
-        use_gpu=False,
     ):
-        if use_gpu:
-            return tfq_adj_grad_op_cuquantum.tfq_adj_grad(
-                programs, symbol_names, symbol_values, pauli_sums, grad
-            )
-        else:
-            return tfq_adj_grad_op.tfq_adj_grad(
-                programs, symbol_names, symbol_values, pauli_sums, grad
-            )
+        return tfq_adj_grad_op.tfq_adj_grad(
+            programs, symbol_names, symbol_values, pauli_sums, grad
+        )
 
     def differentiate_sampled(
         self,

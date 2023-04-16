@@ -142,7 +142,7 @@ class NoisyControlledPQC(tf.keras.layers.Layer):
                  repetitions=None,
                  sample_based=None,
                  differentiator=None,
-                 use_gpu=False,
+                 use_cuquantum=False,
                  **kwargs):
         """Instantiate this layer.
 
@@ -164,7 +164,7 @@ class NoisyControlledPQC(tf.keras.layers.Layer):
             trajectory.
         differentiator: Optional `tfq.differentiator` object to specify how
             gradients of `model_circuit` should be calculated.
-        use_gpu: Optional `bool` indicating whether to use GPU for simulation
+        use_cuquantum: Optional `bool` indicating whether to use GPU for simulation
             or not. Defaults to `False`. NOT IMPLEMENTED YET.
         """
         super().__init__(**kwargs)
@@ -222,7 +222,7 @@ class NoisyControlledPQC(tf.keras.layers.Layer):
             differentiator = parameter_shift.ParameterShift()
 
         # Use gpu not supported yet.
-        if use_gpu:
+        if use_cuquantum:
             raise NotImplementedError("GPU support for noisy controlled PQC \
                 is not yet implemented.")
 

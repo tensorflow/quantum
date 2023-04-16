@@ -40,7 +40,7 @@ py_library(
         "//tensorflow_quantum/python/differentiators:adjoint",
         "//tensorflow_quantum/python/differentiators:differentiator",
         "//tensorflow_quantum/python/differentiators:parameter_shift",
-    ],
+    ]
 )
 
 py_library(

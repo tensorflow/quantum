@@ -201,7 +201,7 @@ REGISTER_OP("TfqSimulateStateCuquantum")
                  {c->Dim(programs_shape, 0),
                   tensorflow::shape_inference::InferenceContext::kUnknownDim}));
 
-      return tensorflow::Status::OK();
+      return ::tensorflow::Status();
     });
 
 }  // namespace tfq
