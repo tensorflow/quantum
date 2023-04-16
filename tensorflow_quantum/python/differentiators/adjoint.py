@@ -78,8 +78,8 @@ class Adjoint(differentiator.Differentiator):
                 using this differentiator's `differentiate_sampled` method.
             analytic_op: A `callable` op that you want to make differentiable
                 using this differentiators `differentiate_analytic` method.
-            use_cuquantum: A `bool` indicating whether to use the GPU version of the
-                adjoint gradient op.
+            use_cuquantum: A `bool` indicating whether to use the cuQuantum
+                version of the adjoint gradient op.
 
         Returns:
             A `callable` op that who's gradients are now registered to be

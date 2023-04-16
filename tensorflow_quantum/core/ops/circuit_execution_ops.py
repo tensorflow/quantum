@@ -48,9 +48,9 @@ def _check_quantum_concurrent(quantum_concurrent):
 
 def get_expectation_op(
         backend=None,
-        use_cuquantum=False,
         *,
-        quantum_concurrent=quantum_context.get_quantum_concurrent_op_mode()):
+        quantum_concurrent=quantum_context.get_quantum_concurrent_op_mode(),
+        use_cuquantum=False):
     """Get a TensorFlow op that will calculate batches of expectation values.
 
     This function produces a non-differentiable TF op that will calculate
@@ -101,6 +101,7 @@ def get_expectation_op(
             (no blocking). This flag is only needed for advanced users when
             using TFQ for very large simulations, or when running on a real
             chip.
+        use_cuquantum: Set True to turn on TFQ cuQuantum version op.
 
     Returns:
         A `callable` with the following signature:
@@ -165,9 +166,9 @@ def get_expectation_op(
 
 def get_sampling_op(
         backend=None,
-        use_cuquantum=False,
         *,
-        quantum_concurrent=quantum_context.get_quantum_concurrent_op_mode()):
+        quantum_concurrent=quantum_context.get_quantum_concurrent_op_mode(),
+        use_cuquantum=False):
     """Get a Tensorflow op that produces samples from given quantum circuits.
 
     This function produces a non-differentiable op that will calculate
@@ -205,6 +206,7 @@ def get_sampling_op(
             (no blocking). This flag is only needed for advanced users when
             using TFQ for very large simulations, or when running on a real
             chip.
+        use_cuquantum: Set True to turn on TFQ cuQuantum version op.
 
     Returns:
         A `callable` with the following signature:
@@ -261,9 +263,9 @@ def get_sampling_op(
 
 def get_state_op(
         backend=None,
-        use_cuquantum=False,
         *,
-        quantum_concurrent=quantum_context.get_quantum_concurrent_op_mode()):
+        quantum_concurrent=quantum_context.get_quantum_concurrent_op_mode(),
+        use_cuquantum=False):
     """Get a TensorFlow op that produces states from given quantum circuits.
 
     This function produces a non-differentiable op that will calculate
@@ -301,6 +303,7 @@ def get_state_op(
             (no blocking). This flag is only needed for advanced users when
             using TFQ for very large simulations, or when running on a real
             chip.
+        use_cuquantum: Set True to turn on TFQ cuQuantum version op.
 
     Returns:
         A `callable` with the following signature:
@@ -355,9 +358,9 @@ def get_state_op(
 
 def get_sampled_expectation_op(
         backend=None,
-        use_cuquantum=False,
         *,
-        quantum_concurrent=quantum_context.get_quantum_concurrent_op_mode()):
+        quantum_concurrent=quantum_context.get_quantum_concurrent_op_mode(),
+        use_cuquantum=False):
     """Get a TensorFlow op that will calculate sampled expectation values.
 
     This function produces a non-differentiable TF op that will calculate
@@ -409,6 +412,7 @@ def get_sampled_expectation_op(
             (no blocking). This flag is only needed for advanced users when
             using TFQ for very large simulations, or when running on a real
             chip.
+        use_cuquantum: Set True to turn on TFQ cuQuantum version op.
 
     Returns:
         A `callable` with the following signature:

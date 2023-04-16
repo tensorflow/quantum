@@ -60,8 +60,8 @@ class Differentiator(metaclass=abc.ABCMeta):
         """Generate a differentiable op by attaching self to an op.
 
         This function returns a `tf.function` that passes values through to
-        `forward_op` during the forward pass and this differentiator (`self`) to
-        backpropagate through the op during the backward pass. If sampled_op
+        `forward_op` during the forward pass and this differentiator (`self`)
+        to backpropagate through the op during the backward pass. If sampled_op
         is provided the differentiators `differentiate_sampled` method will
         be invoked (which requires sampled_op to be a sample based expectation
         op with num_samples input tensor). If analytic_op is provided the
@@ -81,7 +81,8 @@ class Differentiator(metaclass=abc.ABCMeta):
                 using this differentiator's `differentiate_sampled` method.
             analytic_op: A `callable` op that you want to make differentiable
                 using this differentiators `differentiate_analytic` method.
-            use_cuquantum: A `bool` indicating whether to use GPU
+            use_cuquantum: A `bool` indicating whether to use cuQuantum version
+                op.
 
         Returns:
             A `callable` op that who's gradients are now registered to be

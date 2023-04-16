@@ -255,14 +255,14 @@ class Expectation(tf.keras.layers.Layer):
 
         if backend == 'noisy':
             if use_cuquantum:
-                raise ValueError('noisy backend does not currently support GPU')
+                raise ValueError("noisy backend does not currently support GPU")
             used_op = noisy_expectation_op.expectation
             self._expectation_op = differentiator.generate_differentiable_op(
                 sampled_op=used_op)
             self.noisy = True
         else:
-            used_op = circuit_execution_ops.get_expectation_op(backend=backend,
-                                                               use_cuquantum=use_cuquantum)
+            used_op = circuit_execution_ops.get_expectation_op(
+                backend=backend, use_cuquantum=use_cuquantum)
             self._expectation_op = differentiator.generate_differentiable_op(
                 analytic_op=used_op, use_cuquantum=use_cuquantum)
 
