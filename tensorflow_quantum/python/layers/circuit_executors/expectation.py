@@ -226,7 +226,7 @@ class Expectation(tf.keras.layers.Layer):
                 which uses `tfq.differentiators.ParameterShift()`. If
                 `backend` is also 'noiseless' then default is
                 `tfq.differentiators.Adjoint`.
-            use_cuquantum: Calls TFQ GPU version op.
+            use_cuquantum: Calls TFQ cuQuantum version op.
 
         """
         super().__init__(**kwargs)
@@ -264,7 +264,9 @@ class Expectation(tf.keras.layers.Layer):
             used_op = circuit_execution_ops.get_expectation_op(
                 backend=backend, use_cuquantum=use_cuquantum)
             self._expectation_op = differentiator.generate_differentiable_op(
-                analytic_op=used_op, use_cuquantum=use_cuquantum)
+                analytic_op=used_op)
+            # self._expectation_op = differentiator.generate_differentiable_op(
+            #     analytic_op=used_op, use_cuquantum=use_cuquantum)
 
         self._w = None
 

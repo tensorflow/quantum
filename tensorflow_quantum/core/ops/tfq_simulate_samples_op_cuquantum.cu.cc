@@ -51,7 +51,9 @@ class TfqSimulateSamplesOpCuQuantum : public tensorflow::OpKernel {
  public:
   explicit TfqSimulateSamplesOpCuQuantum(
       tensorflow::OpKernelConstruction* context)
-      : OpKernel(context) {}
+      : OpKernel(context) {
+        OP_REQUIRES_OK(context, random_gen_.Init(context));
+  }
 
   void Compute(tensorflow::OpKernelContext* context) override {
     // TODO (mbbrough): add more dimension checks for other inputs here.
@@ -80,7 +82,7 @@ class TfqSimulateSamplesOpCuQuantum : public tensorflow::OpKernel {
     std::vector<std::vector<qsim::GateFused<QsimGate>>> fused_circuits(
         programs.size(), std::vector<qsim::GateFused<QsimGate>>({}));
 
-    Status parse_status = Status::OK();
+    Status parse_status = ::tensorflow::Status();
     auto p_lock = tensorflow::mutex();
     auto construct_f = [&](int start, int end) {
       for (int i = start; i < end; i++) {
@@ -129,6 +131,7 @@ class TfqSimulateSamplesOpCuQuantum : public tensorflow::OpKernel {
  private:
   cublasHandle_t cublas_handle_;
   custatevecHandle_t custatevec_handle_;
+  tensorflow::GuardedPhiloxRandom random_gen_;
 
   void ComputeLarge(
       const std::vector<int>& num_qubits, const int max_num_qubits,
@@ -146,9 +149,7 @@ class TfqSimulateSamplesOpCuQuantum : public tensorflow::OpKernel {
     StateSpace ss = StateSpace(cublas_handle_, custatevec_handle_);
     auto sv = ss.Create(largest_nq);
 
-    tensorflow::GuardedPhiloxRandom random_gen;
-    random_gen.Init(tensorflow::random::New64(), tensorflow::random::New64());
-    auto local_gen = random_gen.ReserveSamples32(fused_circuits.size() + 1);
+    auto local_gen = random_gen_.ReserveSamples32(fused_circuits.size() + 1);
     tensorflow::random::SimplePhilox rand_source(&local_gen);
 
     // Simulate programs one by one. Parallelizing over state vectors
@@ -219,7 +220,7 @@ REGISTER_OP("TfqSimulateSamplesCuquantum")
                   tensorflow::shape_inference::InferenceContext::kUnknownDim,
                   tensorflow::shape_inference::InferenceContext::kUnknownDim}));
 
-      return tensorflow::Status::OK();
+      return ::tensorflow::Status();
     });
 
 }  // namespace tfq

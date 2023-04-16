@@ -152,6 +152,10 @@ class Differentiator(metaclass=abc.ABCMeta):
                                      'Given arg: {}.'.format(str(key)) + ''
                                      'The signature should contain: {}.'.format(
                                          list(expected_signature)))
+        _differentiate_ana = (
+            self._differentiate_ana_cq if use_cuquantum else
+            self._differentiate_ana
+        )
 
         @tf.custom_gradient
         def op_wrapper_analytic(programs, symbol_names, symbol_values,
@@ -160,10 +164,9 @@ class Differentiator(metaclass=abc.ABCMeta):
                                             symbol_values, pauli_sums)
 
             def gradient(grad):
-                return self._differentiate_ana(programs, symbol_names,
-                                               symbol_values, pauli_sums,
-                                               forward_pass_vals, grad,
-                                               use_cuquantum=use_cuquantum)
+                return _differentiate_ana(programs, symbol_names,
+                                          symbol_values, pauli_sums,
+                                          forward_pass_vals, grad)
 
             return forward_pass_vals, gradient
 
@@ -190,11 +193,18 @@ class Differentiator(metaclass=abc.ABCMeta):
 
         return return_func
 
+    def _differentiate_ana_cq(self, programs, symbol_names, symbol_values,
+                              pauli_sums, forward_pass_vals, grad):
+        return None, None, self.differentiate_analytic_cuquantum(
+            programs, symbol_names, symbol_values,
+            pauli_sums, forward_pass_vals, grad), \
+               None
+
     def _differentiate_ana(self, programs, symbol_names, symbol_values,
-                           pauli_sums, forward_pass_vals, grad, use_cuquantum):
+                           pauli_sums, forward_pass_vals, grad):
         return None, None, self.differentiate_analytic(
             programs, symbol_names, symbol_values,
-            pauli_sums, forward_pass_vals, grad, use_cuquantum=use_cuquantum), \
+            pauli_sums, forward_pass_vals, grad), \
                None
 
     def _differentiate_sam(self, programs, symbol_names, symbol_values,

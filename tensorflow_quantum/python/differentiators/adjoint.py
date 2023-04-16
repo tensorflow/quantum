@@ -107,6 +107,21 @@ class Adjoint(differentiator.Differentiator):
 
     @differentiator.catch_empty_inputs
     @tf.function
+    def differentiate_analytic_cuquantum(
+        self,
+        programs,
+        symbol_names,
+        symbol_values,
+        pauli_sums,
+        forward_pass_vals,
+        grad,
+    ):
+        return tfq_adj_grad_op_cuquantum.tfq_adj_grad(
+            programs, symbol_names, symbol_values, pauli_sums, grad
+        )
+
+    @differentiator.catch_empty_inputs
+    @tf.function
     def differentiate_analytic(
         self,
         programs,
@@ -115,16 +130,10 @@ class Adjoint(differentiator.Differentiator):
         pauli_sums,
         forward_pass_vals,
         grad,
-        use_cuquantum=False,
     ):
-        if use_cuquantum:
-            return tfq_adj_grad_op_cuquantum.tfq_adj_grad(
-                programs, symbol_names, symbol_values, pauli_sums, grad
-            )
-        else:
-            return tfq_adj_grad_op.tfq_adj_grad(
-                programs, symbol_names, symbol_values, pauli_sums, grad
-            )
+        return tfq_adj_grad_op.tfq_adj_grad(
+            programs, symbol_names, symbol_values, pauli_sums, grad
+        )
 
     def differentiate_sampled(
         self,

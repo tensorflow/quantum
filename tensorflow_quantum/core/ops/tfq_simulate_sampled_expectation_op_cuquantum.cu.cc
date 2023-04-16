@@ -52,7 +52,9 @@ class TfqSimulateSampledExpectationOpCuQuantum : public tensorflow::OpKernel {
  public:
   explicit TfqSimulateSampledExpectationOpCuQuantum(
       tensorflow::OpKernelConstruction* context)
-      : OpKernel(context) {}
+      : OpKernel(context) {
+        OP_REQUIRES_OK(context, random_gen_.Init(context));
+  }
 
   void Compute(tensorflow::OpKernelContext* context) override {
     // TODO (mbbrough): add more dimension checks for other inputs here.
@@ -140,6 +142,7 @@ class TfqSimulateSampledExpectationOpCuQuantum : public tensorflow::OpKernel {
  private:
   cublasHandle_t cublas_handle_;
   custatevecHandle_t custatevec_handle_;
+  tensorflow::GuardedPhiloxRandom random_gen_;
 
   void ComputeLarge(
       const std::vector<int>& num_qubits,
@@ -159,15 +162,13 @@ class TfqSimulateSampledExpectationOpCuQuantum : public tensorflow::OpKernel {
     auto sv = ss.Create(largest_nq);
     auto scratch = ss.Create(largest_nq);
 
-    tensorflow::GuardedPhiloxRandom random_gen;
-    random_gen.Init(tensorflow::random::New64(), tensorflow::random::New64());
     int largest_sum = -1;
     for (const auto& sums : pauli_sums) {
       for (const auto& sum : sums) {
         largest_sum = std::max(largest_sum, sum.terms().size());
       }
     }
-    auto local_gen = random_gen.ReserveSamples32(
+    auto local_gen = random_gen_.ReserveSamples32(
         largest_sum * pauli_sums[0].size() * fused_circuits.size() + 1);
     tensorflow::random::SimplePhilox rand_source(&local_gen);
 
