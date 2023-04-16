@@ -40,10 +40,17 @@ class TFQStateVectorSimulator(enum.Enum):
         tfq_simulate_ops_cuquantum.tfq_simulate_sampled_expectation
 
 
-def _check_quantum_concurrent(quantum_concurrent):
+def _check_quantum_concurrent(quantum_concurrent, use_cuquantum):
     if not isinstance(quantum_concurrent, bool):
         raise TypeError("quantum_concurrent must be type bool."
                         " Given: {}".format(str(type(quantum_concurrent))))
+    if not isinstance(use_cuquantum, bool):
+        raise TypeError("use_cuquantum must be type bool."
+                        " Given: {}".format(str(type(use_cuquantum))))
+    if use_cuquantum is True and quantum_concurrent is True:
+        raise ValueError("use_cuquantum and quantum_concurrent should "
+                         "not be True at the same time. Please set False to "
+                         "quantum_concurrent.")
 
 
 def get_expectation_op(
@@ -91,8 +98,8 @@ def get_expectation_op(
         backend: Optional Python `object` that specifies what backend this op
             should use when evaluating circuits. Can be
             `cirq.DensityMatrixSimulator` or any
-            `cirq.sim.simulator.SimulatesExpectationValues`. If not provided the
-            default C++ analytical expectation calculation op is returned.
+            `cirq.sim.simulator.SimulatesExpectationValues`. If not provided
+            the default C++ analytical expectation calculation op is returned.
         quantum_concurrent: Optional Python `bool`. True indicates that the
             returned op should not block graph level parallelism on itself when
             executing. False indicates that graph level parallelism on itself
@@ -101,7 +108,8 @@ def get_expectation_op(
             (no blocking). This flag is only needed for advanced users when
             using TFQ for very large simulations, or when running on a real
             chip.
-        use_cuquantum: Set True to turn on TFQ cuQuantum version op.
+        use_cuquantum: Set True to turn on TFQ cuQuantum version op, which
+            requires `quantum_concurrent` to be False.
 
     Returns:
         A `callable` with the following signature:
@@ -129,7 +137,7 @@ def get_expectation_op(
     """
 
     # TODO (mbbrough): investigate how the above docstring renders.
-    _check_quantum_concurrent(quantum_concurrent)
+    _check_quantum_concurrent(quantum_concurrent, use_cuquantum)
 
     op = None
     if backend is None:
@@ -206,7 +214,8 @@ def get_sampling_op(
             (no blocking). This flag is only needed for advanced users when
             using TFQ for very large simulations, or when running on a real
             chip.
-        use_cuquantum: Set True to turn on TFQ cuQuantum version op.
+        use_cuquantum: Set True to turn on TFQ cuQuantum version op, which
+            requires `quantum_concurrent` to be False.
 
     Returns:
         A `callable` with the following signature:
@@ -233,7 +242,7 @@ def get_sampling_op(
     """
 
     # TODO (mbbrough): investigate how the above docstring renders.
-    _check_quantum_concurrent(quantum_concurrent)
+    _check_quantum_concurrent(quantum_concurrent, use_cuquantum)
 
     op = None
     if backend is None:
@@ -303,7 +312,8 @@ def get_state_op(
             (no blocking). This flag is only needed for advanced users when
             using TFQ for very large simulations, or when running on a real
             chip.
-        use_cuquantum: Set True to turn on TFQ cuQuantum version op.
+        use_cuquantum: Set True to turn on TFQ cuQuantum version op, which
+            requires `quantum_concurrent` to be False.
 
     Returns:
         A `callable` with the following signature:
@@ -327,7 +337,7 @@ def get_state_op(
     """
 
     # TODO (mbbrough): investigate how the above docstring renders.
-    _check_quantum_concurrent(quantum_concurrent)
+    _check_quantum_concurrent(quantum_concurrent, use_cuquantum)
 
     op = None
     if backend is None:
@@ -412,7 +422,8 @@ def get_sampled_expectation_op(
             (no blocking). This flag is only needed for advanced users when
             using TFQ for very large simulations, or when running on a real
             chip.
-        use_cuquantum: Set True to turn on TFQ cuQuantum version op.
+        use_cuquantum: Set True to turn on TFQ cuQuantum version op, which
+            requires `quantum_concurrent` to be False.
 
     Returns:
         A `callable` with the following signature:
@@ -443,12 +454,13 @@ def get_sampled_expectation_op(
                 (after resolving the corresponding parameters in).
     """
     # TODO (mbbrough): investigate how the above docstring renders.
-    _check_quantum_concurrent(quantum_concurrent)
+    _check_quantum_concurrent(quantum_concurrent, use_cuquantum)
 
     op = None
     if backend is None:
         if use_cuquantum:
             op = TFQStateVectorSimulator.sampled_expectation_cuquantum
+            quantum_concurrent = False
         else:
             op = TFQStateVectorSimulator.sampled_expectation
 

@@ -47,7 +47,11 @@ EXPECTATION_OPS = [
                                              quantum_concurrent=True),
     # For timing interests C++ backend is tested in quantum_concurrent mode.
     circuit_execution_ops.get_expectation_op(backend=None,
-                                             quantum_concurrent=False)
+                                             quantum_concurrent=False),
+    # For cuQuantum op. quantum_concurrent=True is not allowed.
+    circuit_execution_ops.get_expectation_op(backend=None,
+                                             quantum_concurrent=False,
+                                             use_cuquantum=True)
 ]
 
 SAMPLING_OPS = [
@@ -59,16 +63,26 @@ SAMPLING_OPS = [
                                           quantum_concurrent=True),
     # For timing interests C++ backend is tested in quantum_concurrent mode.
     circuit_execution_ops.get_sampling_op(backend=None,
-                                          quantum_concurrent=False)
+                                          quantum_concurrent=False),
+    # For cuQuantum op. quantum_concurrent=True is not allowed.
+    circuit_execution_ops.get_sampling_op(backend=None,
+                                          quantum_concurrent=False,
+                                          use_cuquantum=True)
 ]
 
 STATE_OPS = [
     circuit_execution_ops.get_state_op(backend=None, quantum_concurrent=True),
-    circuit_execution_ops.get_state_op(backend=WF_SIM, quantum_concurrent=True),
-    circuit_execution_ops.get_state_op(backend=DM_SIM, quantum_concurrent=True),
+    circuit_execution_ops.get_state_op(backend=WF_SIM,
+                                       quantum_concurrent=True),
+    circuit_execution_ops.get_state_op(backend=DM_SIM,
+                                       quantum_concurrent=True),
     # For timing interests C++ backend is tested in quantum_concurrent mode.
-    circuit_execution_ops.get_state_op(backend=None, quantum_concurrent=False)
+    circuit_execution_ops.get_state_op(backend=None, quantum_concurrent=False),
+    # For cuQuantum op. quantum_concurrent=True is not allowed.
+    circuit_execution_ops.get_state_op(backend=None, quantum_concurrent=False,
+                                       use_cuquantum=True)
 ]
+NO_DM_STATE_OPS = STATE_OPS[:2] + STATE_OPS[2:]
 
 SAMPLED_EXPECTATION_OPS = [
     circuit_execution_ops.get_sampled_expectation_op(backend=None,
@@ -80,9 +94,14 @@ SAMPLED_EXPECTATION_OPS = [
     # For timing interests C++ backend is tested in quantum_concurrent mode.
     circuit_execution_ops.get_sampled_expectation_op(backend=None,
                                                      quantum_concurrent=False),
+    # For cuQuantum op. quantum_concurrent=True is not allowed.
+    circuit_execution_ops.get_sampled_expectation_op(backend=None,
+                                                     quantum_concurrent=False,
+                                                     use_cuquantum=True)
 ]
 
-SIMS = [WF_SIM, WF_SIM, DM_SIM, WF_SIM]
+SIMS = [WF_SIM, WF_SIM, DM_SIM, WF_SIM, WF_SIM]
+NO_DM_SIMS = SIMS[:2] + SIMS[2:]
 
 
 class OpGetterInputChecks(tf.test.TestCase):
@@ -111,6 +130,15 @@ class OpGetterInputChecks(tf.test.TestCase):
                                     expected_regex="must be type bool."):
             circuit_execution_ops.get_expectation_op(quantum_concurrent='junk')
 
+        with self.assertRaisesRegex(TypeError,
+                                    expected_regex="must be type bool."):
+            circuit_execution_ops.get_expectation_op(use_cuquantum='junk')
+
+        with self.assertRaisesRegex(
+            ValueError, expected_regex="not be True at the same time"):
+            circuit_execution_ops.get_expectation_op(
+                quantum_concurrent=True, use_cuquantum=True)
+
     def test_get_sampled_expectation_inputs(self):
         """Test that get expectation only accepts inputs it should."""
         circuit_execution_ops.get_sampled_expectation_op()
@@ -131,6 +159,16 @@ class OpGetterInputChecks(tf.test.TestCase):
             circuit_execution_ops.get_sampled_expectation_op(
                 quantum_concurrent='junk')
 
+        with self.assertRaisesRegex(TypeError,
+                                    expected_regex="must be type bool."):
+            circuit_execution_ops.get_sampled_expectation_op(
+                use_cuquantum='junk')
+
+        with self.assertRaisesRegex(
+            ValueError, expected_regex="not be True at the same time"):
+            circuit_execution_ops.get_sampled_expectation_op(
+                quantum_concurrent=True, use_cuquantum=True)
+
     def test_get_samples_inputs(self):
         """Test that get_samples only accepts inputs it should."""
         circuit_execution_ops.get_sampling_op()
@@ -149,6 +187,15 @@ class OpGetterInputChecks(tf.test.TestCase):
         with self.assertRaisesRegex(TypeError,
                                     expected_regex="must be type bool."):
             circuit_execution_ops.get_sampling_op(quantum_concurrent='junk')
+
+        with self.assertRaisesRegex(TypeError,
+                                    expected_regex="must be type bool."):
+            circuit_execution_ops.get_sampling_op(use_cuquantum='junk')
+
+        with self.assertRaisesRegex(
+            ValueError, expected_regex="not be True at the same time"):
+            circuit_execution_ops.get_sampling_op(
+                quantum_concurrent=True, use_cuquantum=True)
 
     def test_get_state_inputs(self):
         """Test that get_states only accepts inputs it should."""
@@ -171,6 +218,15 @@ class OpGetterInputChecks(tf.test.TestCase):
         with self.assertRaisesRegex(TypeError,
                                     expected_regex="must be type bool."):
             circuit_execution_ops.get_state_op(quantum_concurrent='junk')
+
+        with self.assertRaisesRegex(TypeError,
+                                    expected_regex="must be type bool."):
+            circuit_execution_ops.get_state_op(use_cuquantum='junk')
+
+        with self.assertRaisesRegex(
+            ValueError, expected_regex="not be True at the same time"):
+            circuit_execution_ops.get_state_op(
+                quantum_concurrent=True, use_cuquantum=True)
 
 
 class ExecutionOpsConsistentyTest(tf.test.TestCase, parameterized.TestCase):
@@ -277,8 +333,7 @@ class ExecutionOpsConsistentyTest(tf.test.TestCase, parameterized.TestCase):
                 **{
                     'op_and_sim': [(op, sim) for (
                         op,
-                        sim) in zip(STATE_OPS[:-2] +
-                                    [STATE_OPS[-1]], SIMS[:-2] + [SIMS[-1]])],
+                        sim) in zip(NO_DM_STATE_OPS, NO_DM_SIMS)],
                 })))
     def test_simulate_state_large(self, op_and_sim):
         """Test a reasonably large and complex circuit."""
@@ -298,6 +353,10 @@ class ExecutionOpsConsistentyTest(tf.test.TestCase, parameterized.TestCase):
 
         cirq_states = batch_util.batch_calculate_state(circuit_batch,
                                                        resolver_batch, sim)
+        # Due to numpy memory allocation error with large circuits,
+        # we deallocate these variables.
+        del circuit_batch
+        del resolver_batch
 
         self.assertAllClose(cirq_states, op_states, atol=1e-5, rtol=1e-5)
 

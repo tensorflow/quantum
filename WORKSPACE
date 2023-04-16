@@ -24,12 +24,12 @@ cc_library(
         ],
 )
 
-# http_archive(
-#     name = "qsim",
-#     sha256 = "b9c1eba09a885a938b5e73dfc2e02f5231cf3b01d899415caa24769346a731d5",
-#     strip_prefix = "qsim-0.13.3",
-#     urls = ["https://github.com/quantumlib/qsim/archive/refs/tags/v0.13.3.zip"],
-# )
+#http_archive(
+#    name = "qsim",
+#    sha256 = "",
+#    strip_prefix = "qsim-0.16.0",
+#    urls = ["https://github.com/quantumlib/qsim/archive/refs/tags/v0.16.0.zip"],
+#)
 
 # TODO: After merging this patch later into qsim mainstream, remove this and uncomment the above.
 http_archive(
