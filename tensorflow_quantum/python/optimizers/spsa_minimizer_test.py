@@ -95,7 +95,7 @@ class SPSAMinimizerTest(tf.test.TestCase, parameterized.TestCase):
         func = lambda x: x[0]**2 + x[1]**2
 
         result = spsa_minimizer.minimize(func, tf.random.uniform(shape=[2]))
-        self.assertAlmostEqual(func(result.position).numpy(), 0, delta=1e-4)
+        self.assertAlmostEqual(func(result.position).numpy(), 0, delta=1e-5)
         self.assertTrue(result.converged)
 
     def test_quadratic_function_optimization(self):
@@ -106,7 +106,7 @@ class SPSAMinimizerTest(tf.test.TestCase, parameterized.TestCase):
         func = lambda x: tf.math.reduce_sum(np.power(x, 2) * coefficient)
 
         result = spsa_minimizer.minimize(func, tf.random.uniform(shape=[n]))
-        self.assertAlmostEqual(func(result.position).numpy(), 0, delta=2e-4)
+        self.assertAlmostEqual(func(result.position).numpy(), 0, delta=1e-5)
         self.assertTrue(result.converged)
 
     def test_noisy_sin_function_optimization(self):
