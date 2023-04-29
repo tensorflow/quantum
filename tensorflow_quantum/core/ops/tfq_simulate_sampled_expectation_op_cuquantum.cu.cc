@@ -222,7 +222,7 @@ REGISTER_OP("TfqSimulateSampledExpectationCuquantum")
     .Input("symbol_values: float")
     .Input("pauli_sums: string")
     .Input("num_samples: int32")
-    .Attr("seed: numbertype")
+    .Attr("seed: int")
     .Output("expectations: float")
     .SetShapeFn([](tensorflow::shape_inference::InferenceContext* c) {
       tensorflow::shape_inference::ShapeHandle programs_shape;
