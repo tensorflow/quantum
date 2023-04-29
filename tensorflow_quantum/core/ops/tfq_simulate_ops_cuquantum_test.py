@@ -336,7 +336,6 @@ class SimulateSampledExpectationCuquantumTest(tf.test.TestCase):
         # https://docs.nvidia.com/cuda/cuquantum/getting_started.html#custatevec
         """)
 
-
     def test_simulate_sampled_expectation_inputs(self):
         """Make sure sampled expectation op fails gracefully on bad inputs."""
         n_qubits = 5
@@ -531,6 +530,7 @@ class SimulateSampledExpectationCuquantumTest(tf.test.TestCase):
                 symbol_names, symbol_values_array,
                 util.convert_to_tensor([[x] for x in pauli_sums]), num_samples)
 
+
 class SimulateSamplesCuquantumTest(tf.test.TestCase, parameterized.TestCase):
     """Tests tfq_simulate_samples."""
 
@@ -585,7 +585,6 @@ class SimulateSamplesCuquantumTest(tf.test.TestCase, parameterized.TestCase):
         # Please refer to the supported architectures here.
         # https://docs.nvidia.com/cuda/cuquantum/getting_started.html#custatevec
         """)
-
 
     def test_simulate_samples_inputs(self):
         """Make sure the sample op fails gracefully on bad inputs."""
@@ -657,9 +656,9 @@ class SimulateSamplesCuquantumTest(tf.test.TestCase, parameterized.TestCase):
         with self.assertRaisesRegex(TypeError, 'Cannot convert'):
             # programs tensor has the wrong type.
             tfq_simulate_ops_cuquantum.tfq_simulate_samples([1] * batch_size,
-                                                  symbol_names,
-                                                  symbol_values_array,
-                                                  [num_samples])
+                                                            symbol_names,
+                                                            symbol_values_array,
+                                                            [num_samples])
 
         with self.assertRaisesRegex(TypeError, 'Cannot convert'):
             # programs tensor has the wrong type.
@@ -780,7 +779,6 @@ class SimulateStateCuquantumTest(tf.test.TestCase, parameterized.TestCase):
         # https://docs.nvidia.com/cuda/cuquantum/getting_started.html#custatevec
         """)
 
-
     def test_simulate_state_inputs(self):
         """Make sure the state op fails gracefully on bad inputs."""
         n_qubits = 5
@@ -828,8 +826,8 @@ class SimulateStateCuquantumTest(tf.test.TestCase, parameterized.TestCase):
                                     'Unparseable proto'):
             # programs tensor has the right type, but invalid value.
             tfq_simulate_ops_cuquantum.tfq_simulate_state(['junk'] * batch_size,
-                                                symbol_names,
-                                                symbol_values_array)
+                                                          symbol_names,
+                                                          symbol_values_array)
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'Could not find symbol in parameter map'):

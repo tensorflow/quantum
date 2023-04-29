@@ -50,8 +50,8 @@ class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
   explicit TfqSimulateSampledExpectationOp(
       tensorflow::OpKernelConstruction* context)
       : OpKernel(context) {
-        OP_REQUIRES_OK(context, random_gen_.Init(context));
-      }
+    OP_REQUIRES_OK(context, random_gen_.Init(context));
+  }
 
   void Compute(tensorflow::OpKernelContext* context) override {
     // TODO (mbbrough): add more dimension checks for other inputs here.

@@ -43,6 +43,7 @@ def tfq_simulate_expectation(programs, symbol_names, symbol_values, pauli_sums):
     return SIM_OP_MODULE.tfq_simulate_expectation_cuquantum(
         programs, symbol_names, tf.cast(symbol_values, tf.float32), pauli_sums)
 
+
 def tfq_simulate_state(programs, symbol_names, symbol_values):
     """Returns the state of the programs using the C++ state vector simulator.
 

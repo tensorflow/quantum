@@ -49,8 +49,8 @@ class TfqSimulateSamplesOp : public tensorflow::OpKernel {
  public:
   explicit TfqSimulateSamplesOp(tensorflow::OpKernelConstruction* context)
       : OpKernel(context) {
-        OP_REQUIRES_OK(context, random_gen_.Init(context));
-      }
+    OP_REQUIRES_OK(context, random_gen_.Init(context));
+  }
 
   void Compute(tensorflow::OpKernelContext* context) override {
     // TODO (mbbrough): add more dimension checks for other inputs here.
@@ -150,7 +150,6 @@ class TfqSimulateSamplesOp : public tensorflow::OpKernel {
     StateSpace ss = StateSpace(tfq_for);
     auto sv = ss.Create(largest_nq);
 
-    
     auto local_gen = random_gen_.ReserveSamples32(fused_circuits.size() + 1);
     tensorflow::random::SimplePhilox rand_source(&local_gen);
 

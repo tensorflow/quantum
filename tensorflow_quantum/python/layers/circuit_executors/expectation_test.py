@@ -296,6 +296,8 @@ def _gen_single_bit_rotation_problem(bit, symbols, noisy):
 #         self.assertAllClose(mse.numpy(), 0, atol=1e-3)
 
 from tensorflow_quantum.python import quantum_context
+
+
 class ExpectationFunctionalTests(parameterized.TestCase, tf.test.TestCase):
     """Test hybrid/integrated models that include an expectation layer."""
 

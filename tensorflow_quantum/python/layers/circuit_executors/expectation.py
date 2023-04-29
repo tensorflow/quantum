@@ -28,7 +28,6 @@ from tensorflow_quantum.python.differentiators import differentiator as diff
 from tensorflow_quantum.python.layers.circuit_executors import input_checks
 
 
-
 class Expectation(tf.keras.layers.Layer):
     """A Layer that calculates an expectation value.
 
@@ -207,7 +206,10 @@ class Expectation(tf.keras.layers.Layer):
 
     """
 
-    def __init__(self, backend='noiseless', differentiator=None, use_cuquantum=False,
+    def __init__(self,
+                 backend='noiseless',
+                 differentiator=None,
+                 use_cuquantum=False,
                  **kwargs):
         """Instantiate this Layer.
 
@@ -266,7 +268,8 @@ class Expectation(tf.keras.layers.Layer):
             mode = quantum_context.get_quantum_concurrent_op_mode()
             quantum_concurrent = False if use_cuquantum else mode
             used_op = circuit_execution_ops.get_expectation_op(
-                backend=backend, use_cuquantum=use_cuquantum,
+                backend=backend,
+                use_cuquantum=use_cuquantum,
                 quantum_concurrent=quantum_concurrent)
             self._expectation_op = differentiator.generate_differentiable_op(
                 analytic_op=used_op, use_cuquantum=use_cuquantum)

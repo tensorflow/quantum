@@ -31,6 +31,7 @@ from tensorflow_quantum.python import util
 from tensorflow_quantum.core.ops import tfq_adj_grad_op
 from tensorflow_quantum.core.ops import tfq_adj_grad_op_cuquantum
 
+
 def measure_average_runtime(
         fn,
         tag,
@@ -62,6 +63,7 @@ def measure_average_runtime(
     if result_avg:
         result = np.average(avg_res, axis=0)
     return avg_time, result
+
 
 class ADJGradTest(tf.test.TestCase, parameterized.TestCase):
     """Tests tfq_calculate_unitary."""

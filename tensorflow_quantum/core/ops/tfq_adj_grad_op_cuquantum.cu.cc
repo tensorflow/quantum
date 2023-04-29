@@ -47,7 +47,8 @@ typedef qsim::Circuit<QsimGate> QsimCircuit;
 
 class TfqAdjointGradientCuquantumOp : public tensorflow::OpKernel {
  public:
-  explicit TfqAdjointGradientCuquantumOp(tensorflow::OpKernelConstruction* context)
+  explicit TfqAdjointGradientCuquantumOp(
+      tensorflow::OpKernelConstruction* context)
       : OpKernel(context) {}
 
   void Compute(tensorflow::OpKernelContext* context) override {
@@ -153,10 +154,10 @@ class TfqAdjointGradientCuquantumOp : public tensorflow::OpKernel {
     // ...
     // This method creates 3 big state vectors per thread so reducing size
     // here slightly.
-    
+
     ComputeLarge(num_qubits, qsim_circuits, maps, full_fuse,
-                partial_fused_circuits, pauli_sums, gradient_gates,
-                downstream_grads, context, &output_tensor);
+                 partial_fused_circuits, pauli_sums, gradient_gates,
+                 downstream_grads, context, &output_tensor);
 
     // destroy handles in sync with simulator lifetime
     cublasDestroy(cublas_handle_);

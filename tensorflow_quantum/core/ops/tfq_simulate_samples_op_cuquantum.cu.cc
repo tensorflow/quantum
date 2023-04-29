@@ -52,17 +52,17 @@ class TfqSimulateSamplesOpCuQuantum : public tensorflow::OpKernel {
   explicit TfqSimulateSamplesOpCuQuantum(
       tensorflow::OpKernelConstruction* context)
       : OpKernel(context) {
-        OP_REQUIRES_OK(context, random_gen_.Init(context));
-        // Allocates handlers for initialization.
-        cublasCreate(&cublas_handle_);
-        custatevecCreate(&custatevec_handle_);
-      }
+    OP_REQUIRES_OK(context, random_gen_.Init(context));
+    // Allocates handlers for initialization.
+    cublasCreate(&cublas_handle_);
+    custatevecCreate(&custatevec_handle_);
+  }
 
   ~TfqSimulateSamplesOpCuQuantum() {
-      // Destroys handlers in sync with simulator lifetime.
-      cublasDestroy(cublas_handle_);
-      custatevecDestroy(custatevec_handle_);
-    }
+    // Destroys handlers in sync with simulator lifetime.
+    cublasDestroy(cublas_handle_);
+    custatevecDestroy(custatevec_handle_);
+  }
 
   void Compute(tensorflow::OpKernelContext* context) override {
     // TODO (mbbrough): add more dimension checks for other inputs here.
