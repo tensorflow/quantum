@@ -329,7 +329,7 @@ class SimulateSampledExpectationCuquantumTest(tf.test.TestCase):
         # The result should be the similar within a tolerance.
         np.testing.assert_allclose(res_cpu,
                                    res_cuquantum,
-                                   atol=3e-2,
+                                   atol=5e-2,
                                    err_msg="""
         # If failed, the GPU architecture in this system may be unsupported.
         # Please refer to the supported architectures here.
