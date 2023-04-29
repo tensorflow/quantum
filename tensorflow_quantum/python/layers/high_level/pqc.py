@@ -250,10 +250,14 @@ class PQC(tf.keras.layers.Layer):
                             "cirq.sim.simulator.SimulatesExpectationValues.")
         if self._analytic:
             self._executor = expectation.Expectation(
-                backend=backend, differentiator=differentiator, use_cuquantum=use_cuquantum)
+                backend=backend,
+                differentiator=differentiator,
+                use_cuquantum=use_cuquantum)
         else:
             self._executor = sampled_expectation.SampledExpectation(
-                backend=backend, differentiator=differentiator, use_cuquantum=use_cuquantum)
+                backend=backend,
+                differentiator=differentiator,
+                use_cuquantum=use_cuquantum)
 
         self._append_layer = elementary.AddCircuit()
 

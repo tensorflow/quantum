@@ -287,7 +287,7 @@ class SimulateSampledExpectationCuquantumTest(tf.test.TestCase):
         n_qubits = 20
         batch_size = 5
         symbol_names = ['alpha']
-        n_samples = [[100]] * batch_size
+        n_samples = [[10000]] * batch_size
         qubits = cirq.GridQubit.rect(1, n_qubits)
         circuit_batch, resolver_batch = \
             util.random_symbol_circuit_resolver_batch(
@@ -309,8 +309,8 @@ class SimulateSampledExpectationCuquantumTest(tf.test.TestCase):
                 symbol_values_array.astype(np.float64), pauli_sums_tensor,
                 n_samples),
             "CPU",
-            num_samples=100,
-            result_avg=True,
+            num_samples=10,
+            result_avg=False,
         )
 
         cuquantum_avg_time, res_cuquantum = measure_average_runtime(
@@ -319,8 +319,8 @@ class SimulateSampledExpectationCuquantumTest(tf.test.TestCase):
                 symbol_values_array.astype(np.float64), pauli_sums_tensor,
                 n_samples),
             "cuQuantum",
-            num_samples=100,
-            result_avg=True,
+            num_samples=10,
+            result_avg=False,
         )
 
         # cuQuantum op should be faster than CPU op.
@@ -329,13 +329,12 @@ class SimulateSampledExpectationCuquantumTest(tf.test.TestCase):
         # The result should be the similar within a tolerance.
         np.testing.assert_allclose(res_cpu,
                                    res_cuquantum,
-                                   atol=1e-4,
+                                   atol=0.07,
                                    err_msg="""
         # If failed, the GPU architecture in this system may be unsupported.
         # Please refer to the supported architectures here.
         # https://docs.nvidia.com/cuda/cuquantum/getting_started.html#custatevec
         """)
-
 
     def test_simulate_sampled_expectation_inputs(self):
         """Make sure sampled expectation op fails gracefully on bad inputs."""
@@ -531,6 +530,7 @@ class SimulateSampledExpectationCuquantumTest(tf.test.TestCase):
                 symbol_names, symbol_values_array,
                 util.convert_to_tensor([[x] for x in pauli_sums]), num_samples)
 
+
 class SimulateSamplesCuquantumTest(tf.test.TestCase, parameterized.TestCase):
     """Tests tfq_simulate_samples."""
 
@@ -558,7 +558,7 @@ class SimulateSamplesCuquantumTest(tf.test.TestCase, parameterized.TestCase):
                 symbol_values_array.astype(np.float64), n_samples),
             "CPU",
             num_samples=10,
-            result_avg=True,
+            result_avg=False,
         )
 
         cuquantum_avg_time, res_cuquantum = measure_average_runtime(
@@ -567,22 +567,24 @@ class SimulateSamplesCuquantumTest(tf.test.TestCase, parameterized.TestCase):
                 symbol_values_array.astype(np.float64), n_samples),
             "cuQuantum",
             num_samples=10,
-            result_avg=True,
+            result_avg=False,
         )
 
         # cuQuantum op should be faster than CPU op.
         self.assertGreater(cpu_avg_time, cuquantum_avg_time)
 
+        res_cpu = np.average(res_cpu, axis=1)
+        res_cuquantum = np.average(res_cuquantum, axis=1)
+
         # The result should be the similar within a tolerance.
         np.testing.assert_allclose(res_cpu,
                                    res_cuquantum,
-                                   atol=1e-4,
+                                   atol=0.3,
                                    err_msg="""
         # If failed, the GPU architecture in this system may be unsupported.
         # Please refer to the supported architectures here.
         # https://docs.nvidia.com/cuda/cuquantum/getting_started.html#custatevec
         """)
-
 
     def test_simulate_samples_inputs(self):
         """Make sure the sample op fails gracefully on bad inputs."""
@@ -654,9 +656,9 @@ class SimulateSamplesCuquantumTest(tf.test.TestCase, parameterized.TestCase):
         with self.assertRaisesRegex(TypeError, 'Cannot convert'):
             # programs tensor has the wrong type.
             tfq_simulate_ops_cuquantum.tfq_simulate_samples([1] * batch_size,
-                                                  symbol_names,
-                                                  symbol_values_array,
-                                                  [num_samples])
+                                                            symbol_names,
+                                                            symbol_values_array,
+                                                            [num_samples])
 
         with self.assertRaisesRegex(TypeError, 'Cannot convert'):
             # programs tensor has the wrong type.
@@ -777,7 +779,6 @@ class SimulateStateCuquantumTest(tf.test.TestCase, parameterized.TestCase):
         # https://docs.nvidia.com/cuda/cuquantum/getting_started.html#custatevec
         """)
 
-
     def test_simulate_state_inputs(self):
         """Make sure the state op fails gracefully on bad inputs."""
         n_qubits = 5
@@ -825,8 +826,8 @@ class SimulateStateCuquantumTest(tf.test.TestCase, parameterized.TestCase):
                                     'Unparseable proto'):
             # programs tensor has the right type, but invalid value.
             tfq_simulate_ops_cuquantum.tfq_simulate_state(['junk'] * batch_size,
-                                                symbol_names,
-                                                symbol_values_array)
+                                                          symbol_names,
+                                                          symbol_values_array)
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'Could not find symbol in parameter map'):

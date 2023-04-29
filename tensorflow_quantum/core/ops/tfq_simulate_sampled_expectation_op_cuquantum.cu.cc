@@ -53,7 +53,16 @@ class TfqSimulateSampledExpectationOpCuQuantum : public tensorflow::OpKernel {
   explicit TfqSimulateSampledExpectationOpCuQuantum(
       tensorflow::OpKernelConstruction* context)
       : OpKernel(context) {
-        OP_REQUIRES_OK(context, random_gen_.Init(context));
+    OP_REQUIRES_OK(context, random_gen_.Init(context));
+    // Allocates handlers for initialization.
+    cublasCreate(&cublas_handle_);
+    custatevecCreate(&custatevec_handle_);
+  }
+
+  ~TfqSimulateSampledExpectationOpCuQuantum() {
+    // Destroys handlers in sync with simulator lifetime.
+    cublasDestroy(cublas_handle_);
+    custatevecDestroy(custatevec_handle_);
   }
 
   void Compute(tensorflow::OpKernelContext* context) override {
@@ -131,12 +140,8 @@ class TfqSimulateSampledExpectationOpCuQuantum : public tensorflow::OpKernel {
       max_num_qubits = std::max(max_num_qubits, num);
     }
 
-    cublasCreate(&cublas_handle_);
-    custatevecCreate(&custatevec_handle_);
     ComputeLarge(num_qubits, fused_circuits, pauli_sums, num_samples, context,
                  &output_tensor);
-    cublasDestroy(cublas_handle_);
-    custatevecDestroy(custatevec_handle_);
   }
 
  private:
@@ -217,7 +222,10 @@ REGISTER_OP("TfqSimulateSampledExpectationCuquantum")
     .Input("symbol_values: float")
     .Input("pauli_sums: string")
     .Input("num_samples: int32")
+    .SetIsStateful()
     .Output("expectations: float")
+    .Attr("seed: int = 0")
+    .Attr("seed2: int = 0")
     .SetShapeFn([](tensorflow::shape_inference::InferenceContext* c) {
       tensorflow::shape_inference::ShapeHandle programs_shape;
       TF_RETURN_IF_ERROR(c->WithRank(c->input(0), 1, &programs_shape));

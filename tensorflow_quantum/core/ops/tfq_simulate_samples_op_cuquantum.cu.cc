@@ -52,7 +52,16 @@ class TfqSimulateSamplesOpCuQuantum : public tensorflow::OpKernel {
   explicit TfqSimulateSamplesOpCuQuantum(
       tensorflow::OpKernelConstruction* context)
       : OpKernel(context) {
-        OP_REQUIRES_OK(context, random_gen_.Init(context));
+    OP_REQUIRES_OK(context, random_gen_.Init(context));
+    // Allocates handlers for initialization.
+    cublasCreate(&cublas_handle_);
+    custatevecCreate(&custatevec_handle_);
+  }
+
+  ~TfqSimulateSamplesOpCuQuantum() {
+    // Destroys handlers in sync with simulator lifetime.
+    cublasDestroy(cublas_handle_);
+    custatevecDestroy(custatevec_handle_);
   }
 
   void Compute(tensorflow::OpKernelContext* context) override {
@@ -119,13 +128,8 @@ class TfqSimulateSamplesOpCuQuantum : public tensorflow::OpKernel {
       return;  // bug in qsim dependency we can't control.
     }
 
-    // create handles for simulator
-    cublasCreate(&cublas_handle_);
-    custatevecCreate(&custatevec_handle_);
     ComputeLarge(num_qubits, max_num_qubits, num_samples, fused_circuits,
                  context, &output_tensor);
-    cublasDestroy(cublas_handle_);
-    custatevecDestroy(custatevec_handle_);
   }
 
  private:
@@ -199,7 +203,10 @@ REGISTER_OP("TfqSimulateSamplesCuquantum")
     .Input("symbol_names: string")
     .Input("symbol_values: float")
     .Input("num_samples: int32")
+    .SetIsStateful()
     .Output("samples: int8")
+    .Attr("seed: int = 0")
+    .Attr("seed2: int = 0")
     .SetShapeFn([](tensorflow::shape_inference::InferenceContext* c) {
       tensorflow::shape_inference::ShapeHandle programs_shape;
       TF_RETURN_IF_ERROR(c->WithRank(c->input(0), 1, &programs_shape));

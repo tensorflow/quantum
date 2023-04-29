@@ -72,14 +72,13 @@ SAMPLING_OPS = [
 
 STATE_OPS = [
     circuit_execution_ops.get_state_op(backend=None, quantum_concurrent=True),
-    circuit_execution_ops.get_state_op(backend=WF_SIM,
-                                       quantum_concurrent=True),
-    circuit_execution_ops.get_state_op(backend=DM_SIM,
-                                       quantum_concurrent=True),
+    circuit_execution_ops.get_state_op(backend=WF_SIM, quantum_concurrent=True),
+    circuit_execution_ops.get_state_op(backend=DM_SIM, quantum_concurrent=True),
     # For timing interests C++ backend is tested in quantum_concurrent mode.
     circuit_execution_ops.get_state_op(backend=None, quantum_concurrent=False),
     # For cuQuantum op. quantum_concurrent=True is not allowed.
-    circuit_execution_ops.get_state_op(backend=None, quantum_concurrent=False,
+    circuit_execution_ops.get_state_op(backend=None,
+                                       quantum_concurrent=False,
                                        use_cuquantum=True)
 ]
 NO_DM_STATE_OPS = STATE_OPS[:2] + STATE_OPS[2:]
@@ -135,9 +134,9 @@ class OpGetterInputChecks(tf.test.TestCase):
             circuit_execution_ops.get_expectation_op(use_cuquantum='junk')
 
         with self.assertRaisesRegex(
-            ValueError, expected_regex="not be True at the same time"):
-            circuit_execution_ops.get_expectation_op(
-                quantum_concurrent=True, use_cuquantum=True)
+                ValueError, expected_regex="not be True at the same time"):
+            circuit_execution_ops.get_expectation_op(quantum_concurrent=True,
+                                                     use_cuquantum=True)
 
     def test_get_sampled_expectation_inputs(self):
         """Test that get expectation only accepts inputs it should."""
@@ -165,7 +164,7 @@ class OpGetterInputChecks(tf.test.TestCase):
                 use_cuquantum='junk')
 
         with self.assertRaisesRegex(
-            ValueError, expected_regex="not be True at the same time"):
+                ValueError, expected_regex="not be True at the same time"):
             circuit_execution_ops.get_sampled_expectation_op(
                 quantum_concurrent=True, use_cuquantum=True)
 
@@ -193,9 +192,9 @@ class OpGetterInputChecks(tf.test.TestCase):
             circuit_execution_ops.get_sampling_op(use_cuquantum='junk')
 
         with self.assertRaisesRegex(
-            ValueError, expected_regex="not be True at the same time"):
-            circuit_execution_ops.get_sampling_op(
-                quantum_concurrent=True, use_cuquantum=True)
+                ValueError, expected_regex="not be True at the same time"):
+            circuit_execution_ops.get_sampling_op(quantum_concurrent=True,
+                                                  use_cuquantum=True)
 
     def test_get_state_inputs(self):
         """Test that get_states only accepts inputs it should."""
@@ -224,9 +223,9 @@ class OpGetterInputChecks(tf.test.TestCase):
             circuit_execution_ops.get_state_op(use_cuquantum='junk')
 
         with self.assertRaisesRegex(
-            ValueError, expected_regex="not be True at the same time"):
-            circuit_execution_ops.get_state_op(
-                quantum_concurrent=True, use_cuquantum=True)
+                ValueError, expected_regex="not be True at the same time"):
+            circuit_execution_ops.get_state_op(quantum_concurrent=True,
+                                               use_cuquantum=True)
 
 
 class ExecutionOpsConsistentyTest(tf.test.TestCase, parameterized.TestCase):
@@ -332,8 +331,7 @@ class ExecutionOpsConsistentyTest(tf.test.TestCase, parameterized.TestCase):
             util.kwargs_cartesian_product(
                 **{
                     'op_and_sim': [(op, sim) for (
-                        op,
-                        sim) in zip(NO_DM_STATE_OPS, NO_DM_SIMS)],
+                        op, sim) in zip(NO_DM_STATE_OPS, NO_DM_SIMS)],
                 })))
     def test_simulate_state_large(self, op_and_sim):
         """Test a reasonably large and complex circuit."""

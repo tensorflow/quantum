@@ -47,7 +47,17 @@ class TfqSimulateExpectationOpCuQuantum : public tensorflow::OpKernel {
  public:
   explicit TfqSimulateExpectationOpCuQuantum(
       tensorflow::OpKernelConstruction* context)
-      : OpKernel(context) {}
+      : OpKernel(context) {
+    // Allocates handlers for initialization.
+    cublasCreate(&cublas_handle_);
+    custatevecCreate(&custatevec_handle_);
+  }
+
+  ~TfqSimulateExpectationOpCuQuantum() {
+    // Destroys handlers in sync with simulator lifetime.
+    cublasDestroy(cublas_handle_);
+    custatevecDestroy(custatevec_handle_);
+  }
 
   void Compute(tensorflow::OpKernelContext* context) override {
     // TODO (mbbrough): add more dimension checks for other inputs here.
@@ -113,16 +123,8 @@ class TfqSimulateExpectationOpCuQuantum : public tensorflow::OpKernel {
       max_num_qubits = std::max(max_num_qubits, num);
     }
 
-    // create handles for simulator
-    cublasCreate(&cublas_handle_);
-    custatevecCreate(&custatevec_handle_);
-
     ComputeLarge(num_qubits, fused_circuits, pauli_sums, context,
                  &output_tensor);
-
-    // destroy handles in sync with simulator lifetime
-    cublasDestroy(cublas_handle_);
-    custatevecDestroy(custatevec_handle_);
   }
 
  private:

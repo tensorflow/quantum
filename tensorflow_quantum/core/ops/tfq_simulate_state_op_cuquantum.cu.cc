@@ -48,7 +48,17 @@ class TfqSimulateStateOpCuQuantum : public tensorflow::OpKernel {
  public:
   explicit TfqSimulateStateOpCuQuantum(
       tensorflow::OpKernelConstruction* context)
-      : OpKernel(context) {}
+      : OpKernel(context) {
+    // Allocates handlers for initialization.
+    cublasCreate(&cublas_handle_);
+    custatevecCreate(&custatevec_handle_);
+  }
+
+  ~TfqSimulateStateOpCuQuantum() {
+    // Destroys handlers in sync with simulator lifetime.
+    cublasDestroy(cublas_handle_);
+    custatevecDestroy(custatevec_handle_);
+  }
 
   void Compute(tensorflow::OpKernelContext* context) override {
     // TODO (mbbrough): add more dimension checks for other inputs here.
@@ -107,17 +117,8 @@ class TfqSimulateStateOpCuQuantum : public tensorflow::OpKernel {
     tensorflow::TTypes<std::complex<float>, 1>::Matrix output_tensor =
         output->matrix<std::complex<float>>();
 
-    // Cross reference with standard google cloud compute instances
-    // Memory ~= 2 * num_threads * (2 * 64 * 2 ** num_qubits in circuits)
-    // e2s2 = 2 CPU, 8GB -> Can safely do 25 since Memory = 4GB
-    // e2s4 = 4 CPU, 16GB -> Can safely do 25 since Memory = 8GB
-    // ...
-    cublasCreate(&cublas_handle_);
-    custatevecCreate(&custatevec_handle_);
     ComputeLarge(num_qubits, max_num_qubits, fused_circuits, context,
                  &output_tensor);
-    cublasDestroy(cublas_handle_);
-    custatevecDestroy(custatevec_handle_);
   }
 
  private:

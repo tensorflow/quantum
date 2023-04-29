@@ -213,7 +213,10 @@ class SampledExpectation(tf.keras.layers.Layer):
 
     """
 
-    def __init__(self, backend='noiseless', differentiator=None, use_cuquantum=False,
+    def __init__(self,
+                 backend='noiseless',
+                 differentiator=None,
+                 use_cuquantum=False,
                  **kwargs):
         """Instantiate this Layer.
 
