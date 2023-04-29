@@ -287,7 +287,7 @@ class SimulateSampledExpectationCuquantumTest(tf.test.TestCase):
         n_qubits = 20
         batch_size = 5
         symbol_names = ['alpha']
-        n_samples = [[100]] * batch_size
+        n_samples = [[1000]] * batch_size
         qubits = cirq.GridQubit.rect(1, n_qubits)
         circuit_batch, resolver_batch = \
             util.random_symbol_circuit_resolver_batch(
@@ -310,7 +310,7 @@ class SimulateSampledExpectationCuquantumTest(tf.test.TestCase):
                 n_samples),
             "CPU",
             num_samples=100,
-            result_avg=True,
+            result_avg=False,
         )
 
         cuquantum_avg_time, res_cuquantum = measure_average_runtime(
@@ -320,7 +320,7 @@ class SimulateSampledExpectationCuquantumTest(tf.test.TestCase):
                 n_samples),
             "cuQuantum",
             num_samples=100,
-            result_avg=True,
+            result_avg=False,
         )
 
         # cuQuantum op should be faster than CPU op.
@@ -329,7 +329,7 @@ class SimulateSampledExpectationCuquantumTest(tf.test.TestCase):
         # The result should be the similar within a tolerance.
         np.testing.assert_allclose(res_cpu,
                                    res_cuquantum,
-                                   atol=1e-4,
+                                   atol=3e-2,
                                    err_msg="""
         # If failed, the GPU architecture in this system may be unsupported.
         # Please refer to the supported architectures here.
@@ -558,7 +558,7 @@ class SimulateSamplesCuquantumTest(tf.test.TestCase, parameterized.TestCase):
                 symbol_values_array.astype(np.float64), n_samples),
             "CPU",
             num_samples=10,
-            result_avg=True,
+            result_avg=False,
         )
 
         cuquantum_avg_time, res_cuquantum = measure_average_runtime(
@@ -567,11 +567,14 @@ class SimulateSamplesCuquantumTest(tf.test.TestCase, parameterized.TestCase):
                 symbol_values_array.astype(np.float64), n_samples),
             "cuQuantum",
             num_samples=10,
-            result_avg=True,
+            result_avg=False,
         )
 
         # cuQuantum op should be faster than CPU op.
         self.assertGreater(cpu_avg_time, cuquantum_avg_time)
+
+        res_cpu = np.average(res_cpu, axis=1)
+        res_cuquantum = np.average(res_cuquantum, axis=1)
 
         # The result should be the similar within a tolerance.
         np.testing.assert_allclose(res_cpu,

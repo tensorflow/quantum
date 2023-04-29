@@ -48,7 +48,9 @@ typedef qsim::Circuit<QsimGate> QsimCircuit;
 class TfqSimulateSamplesOp : public tensorflow::OpKernel {
  public:
   explicit TfqSimulateSamplesOp(tensorflow::OpKernelConstruction* context)
-      : OpKernel(context) {}
+      : OpKernel(context) {
+        OP_REQUIRES_OK(context, random_gen_.Init(context));
+      }
 
   void Compute(tensorflow::OpKernelContext* context) override {
     // TODO (mbbrough): add more dimension checks for other inputs here.
@@ -129,6 +131,8 @@ class TfqSimulateSamplesOp : public tensorflow::OpKernel {
   }
 
  private:
+  tensorflow::GuardedPhiloxRandom random_gen_;
+
   void ComputeLarge(
       const std::vector<int>& num_qubits, const int max_num_qubits,
       const int num_samples,
@@ -260,7 +264,10 @@ REGISTER_OP("TfqSimulateSamples")
     .Input("symbol_names: string")
     .Input("symbol_values: float")
     .Input("num_samples: int32")
+    .SetIsStateful()
     .Output("samples: int8")
+    .Attr("seed: int = 0")
+    .Attr("seed2: int = 0")
     .SetShapeFn([](tensorflow::shape_inference::InferenceContext* c) {
       tensorflow::shape_inference::ShapeHandle programs_shape;
       TF_RETURN_IF_ERROR(c->WithRank(c->input(0), 1, &programs_shape));
