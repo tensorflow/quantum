@@ -21,10 +21,12 @@ import tensorflow as tf
 import cirq
 from tensorflow_quantum.core.ops import circuit_execution_ops
 from tensorflow_quantum.core.ops.noise import noisy_expectation_op
+from tensorflow_quantum.python import quantum_context
 from tensorflow_quantum.python.differentiators import adjoint
 from tensorflow_quantum.python.differentiators import parameter_shift
 from tensorflow_quantum.python.differentiators import differentiator as diff
 from tensorflow_quantum.python.layers.circuit_executors import input_checks
+
 
 
 class Expectation(tf.keras.layers.Layer):
@@ -261,12 +263,13 @@ class Expectation(tf.keras.layers.Layer):
                 sampled_op=used_op)
             self.noisy = True
         else:
+            mode = quantum_context.get_quantum_concurrent_op_mode()
+            quantum_concurrent = False if use_cuquantum else mode
             used_op = circuit_execution_ops.get_expectation_op(
-                backend=backend, use_cuquantum=use_cuquantum)
+                backend=backend, use_cuquantum=use_cuquantum,
+                quantum_concurrent=quantum_concurrent)
             self._expectation_op = differentiator.generate_differentiable_op(
-                analytic_op=used_op)
-            # self._expectation_op = differentiator.generate_differentiable_op(
-            #     analytic_op=used_op, use_cuquantum=use_cuquantum)
+                analytic_op=used_op, use_cuquantum=use_cuquantum)
 
         self._w = None
 
