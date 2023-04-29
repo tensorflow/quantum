@@ -295,8 +295,6 @@ def _gen_single_bit_rotation_problem(bit, symbols, noisy):
 #             optimizer.apply_gradients(zip(grads, layer.trainable_weights))
 #         self.assertAllClose(mse.numpy(), 0, atol=1e-3)
 
-from tensorflow_quantum.python import quantum_context
-
 
 class ExpectationFunctionalTests(parameterized.TestCase, tf.test.TestCase):
     """Test hybrid/integrated models that include an expectation layer."""
@@ -326,7 +324,6 @@ class ExpectationFunctionalTests(parameterized.TestCase, tf.test.TestCase):
         l1 = tf.keras.layers.Dense(10)(inputs)
         l2 = tf.keras.layers.Dense(3)(l1)
         reps = 1000 if noisy else None
-        # quantum_context.set_quantum_concurrent_op_mode(False)
         outputs = expectation.Expectation(backend=backend, use_cuquantum=True)(
             datum,
             symbol_names=symbols,
