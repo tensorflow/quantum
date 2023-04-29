@@ -58,7 +58,7 @@ class TfqSimulateSamplesOpCuQuantum : public tensorflow::OpKernel {
         custatevecCreate(&custatevec_handle_);
       }
 
-  ~TfqSimulateExpectationOpCuQuantum() {
+  ~TfqSimulateSamplesOpCuQuantum() {
       // Destroys handlers in sync with simulator lifetime.
       cublasDestroy(cublas_handle_);
       custatevecDestroy(custatevec_handle_);
