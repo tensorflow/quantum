@@ -140,12 +140,8 @@ class TfqSimulateSampledExpectationOpCuQuantum : public tensorflow::OpKernel {
       max_num_qubits = std::max(max_num_qubits, num);
     }
 
-    cublasCreate(&cublas_handle_);
-    custatevecCreate(&custatevec_handle_);
     ComputeLarge(num_qubits, fused_circuits, pauli_sums, num_samples, context,
                  &output_tensor);
-    cublasDestroy(cublas_handle_);
-    custatevecDestroy(custatevec_handle_);
   }
 
  private:
@@ -226,6 +222,7 @@ REGISTER_OP("TfqSimulateSampledExpectationCuquantum")
     .Input("symbol_values: float")
     .Input("pauli_sums: string")
     .Input("num_samples: int32")
+    .Attr("seed: numbertype")
     .Output("expectations: float")
     .SetShapeFn([](tensorflow::shape_inference::InferenceContext* c) {
       tensorflow::shape_inference::ShapeHandle programs_shape;
