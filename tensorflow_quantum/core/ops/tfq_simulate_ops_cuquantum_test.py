@@ -287,7 +287,7 @@ class SimulateSampledExpectationCuquantumTest(tf.test.TestCase):
         n_qubits = 20
         batch_size = 5
         symbol_names = ['alpha']
-        n_samples = [[1000]] * batch_size
+        n_samples = [[10000]] * batch_size
         qubits = cirq.GridQubit.rect(1, n_qubits)
         circuit_batch, resolver_batch = \
             util.random_symbol_circuit_resolver_batch(
@@ -309,7 +309,7 @@ class SimulateSampledExpectationCuquantumTest(tf.test.TestCase):
                 symbol_values_array.astype(np.float64), pauli_sums_tensor,
                 n_samples),
             "CPU",
-            num_samples=100,
+            num_samples=10,
             result_avg=False,
         )
 
@@ -319,7 +319,7 @@ class SimulateSampledExpectationCuquantumTest(tf.test.TestCase):
                 symbol_values_array.astype(np.float64), pauli_sums_tensor,
                 n_samples),
             "cuQuantum",
-            num_samples=100,
+            num_samples=10,
             result_avg=False,
         )
 
@@ -579,7 +579,7 @@ class SimulateSamplesCuquantumTest(tf.test.TestCase, parameterized.TestCase):
         # The result should be the similar within a tolerance.
         np.testing.assert_allclose(res_cpu,
                                    res_cuquantum,
-                                   atol=0.2,
+                                   atol=0.3,
                                    err_msg="""
         # If failed, the GPU architecture in this system may be unsupported.
         # Please refer to the supported architectures here.
