@@ -48,7 +48,7 @@ class TfqSimulateExpectationOpCuQuantum : public tensorflow::OpKernel {
   explicit TfqSimulateExpectationOpCuQuantum(
       tensorflow::OpKernelConstruction* context)
       : OpKernel(context) {
-        // Allocates handlers for initializaiton.
+        // Allocates handlers for initialization.
         cublasCreate(&cublas_handle_);
         custatevecCreate(&custatevec_handle_);
       }
