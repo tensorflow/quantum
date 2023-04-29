@@ -206,6 +206,7 @@ REGISTER_OP("TfqSimulateSamplesCuquantum")
     .SetIsStateful()
     .Output("samples: int8")
     .Attr("seed: int = 0")
+    .Attr("seed2: int = 0")
     .SetShapeFn([](tensorflow::shape_inference::InferenceContext* c) {
       tensorflow::shape_inference::ShapeHandle programs_shape;
       TF_RETURN_IF_ERROR(c->WithRank(c->input(0), 1, &programs_shape));
