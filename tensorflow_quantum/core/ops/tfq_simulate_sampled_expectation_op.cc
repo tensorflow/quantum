@@ -164,8 +164,6 @@ class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
     auto sv = ss.Create(largest_nq);
     auto scratch = ss.Create(largest_nq);
 
-    tensorflow::GuardedPhiloxRandom random_gen;
-    random_gen.Init(tensorflow::random::New64(), tensorflow::random::New64());
     int largest_sum = -1;
     for (const auto& sums : pauli_sums) {
       for (const auto& sum : sums) {
@@ -223,8 +221,6 @@ class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
 
     const int output_dim_op_size = output_tensor->dimension(1);
 
-    tensorflow::GuardedPhiloxRandom random_gen;
-    random_gen.Init(tensorflow::random::New64(), tensorflow::random::New64());
     int largest_sum = -1;
     for (const auto& sums : pauli_sums) {
       for (const auto& sum : sums) {
@@ -251,7 +247,8 @@ class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
       int n_random = largest_sum * output_dim_op_size * fused_circuits.size();
       n_random /= num_threads;
       n_random += 1;
-      auto local_gen = random_gen.ReserveSamples32(n_random);
+      auto local_gen = random_gen_.ReserveSamples32(
+          largest_sum * pauli_sums[0].size() * fused_circuits.size() + 1);
       tensorflow::random::SimplePhilox rand_source(&local_gen);
 
       for (int i = start; i < end; i++) {
