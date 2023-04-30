@@ -23,6 +23,7 @@ limitations under the License.
 #include "../qsim/lib/circuit_noisy.h"
 #include "../qsim/lib/gates_cirq.h"
 #include "absl/container/flat_hash_map.h"
+#include "absl/status/status.h"
 #include "absl/strings/numbers.h"
 #include "gtest/gtest.h"
 #include "tensorflow/core/lib/core/status.h"
