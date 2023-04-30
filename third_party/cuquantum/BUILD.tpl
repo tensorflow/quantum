@@ -13,6 +13,9 @@ cc_library(
     srcs = [
         ":libcustatevec.so",
     ],
+    linkopts = [
+        "-Wl,-rpath,%{CUQUANTUM_LIBRARY_PATH}",
+    ],
     visibility = ["//visibility:public"],
 )
 
