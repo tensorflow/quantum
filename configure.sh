@@ -20,11 +20,11 @@ function write_to_bazelrc() {
 }
 
 function write_action_env_to_bazelrc() {
-  write_to_bazelrc "build --action_env $1=\"$2\""
+  write_to_bazelrc "$1 --action_env $2=\"$3\""
 }
 
 function write_linkopt_dir_to_bazelrc() {
-  write_to_bazelrc "build --linkopt -Wl,-rpath,$1" >> .bazelrc
+  write_to_bazelrc "$1 --linkopt -Wl,-rpath,$2" >> .bazelrc
 }
 
 
@@ -77,9 +77,10 @@ if [[ "$TF_NEED_CUDA" == "1" ]]; then
   echo "Searching cuQuantum library from environment variable CUQUANTUM_ROOT..."
   if [[ "$CUQUANTUM_ROOT" != "" ]]; then
     echo "  [*] cuQuantum library is detected here: CUQUANTUM_ROOT=$CUQUANTUM_ROOT."
-    write_action_env_to_bazelrc "CUQUANTUM_ROOT" ${CUQUANTUM_ROOT}
+    write_action_env_to_bazelrc "build:cuda" "CUQUANTUM_ROOT" ${CUQUANTUM_ROOT}
+    write_linkopt_dir_to_bazelrc "build:cuda" "${CUQUANTUM_ROOT}/lib"
   else
-    echo "  [*] cuQuantum library is NOT detected. Using general CUDA ops..."
+    echo "  [*] cuQuantum library is NOT detected. Lazily detect it later, OR please set CUQUANTUM_ROOT environment variable."
   fi
 fi
 
@@ -138,29 +139,34 @@ if is_windows; then
   SHARED_LIBRARY_NAME=${SHARED_LIBRARY_NAME//\\//}
   HEADER_DIR=${HEADER_DIR//\\//}
 fi
-write_action_env_to_bazelrc "TF_HEADER_DIR" ${HEADER_DIR}
-write_action_env_to_bazelrc "TF_SHARED_LIBRARY_DIR" ${SHARED_LIBRARY_DIR}
-write_action_env_to_bazelrc "TF_SHARED_LIBRARY_NAME" ${SHARED_LIBRARY_NAME}
-write_action_env_to_bazelrc "TF_NEED_CUDA" ${TF_NEED_CUDA}
+write_action_env_to_bazelrc "build" "TF_HEADER_DIR" ${HEADER_DIR} ""
+write_action_env_to_bazelrc "build" "TF_SHARED_LIBRARY_DIR" ${SHARED_LIBRARY_DIR} ""
+write_action_env_to_bazelrc "build" "TF_SHARED_LIBRARY_NAME" ${SHARED_LIBRARY_NAME} ""
+write_action_env_to_bazelrc "build" "TF_NEED_CUDA" ${TF_NEED_CUDA} ""
 
 if ! is_windows; then
-  write_linkopt_dir_to_bazelrc ${SHARED_LIBRARY_DIR}
+  write_linkopt_dir_to_bazelrc "build"  ${SHARED_LIBRARY_DIR} ""
 fi
 
 # TODO(yifeif): do not hardcode path
 if [[ "$TF_NEED_CUDA" == "1" ]]; then
-  write_to_bazelrc "build:cuda --define=using_cuda=true --define=using_cuda_nvcc=true"
+  write_to_bazelrc "build:cuda --experimental_repo_remote_exec"
+  write_to_bazelrc "build:cuda --spawn_strategy=standalone"
+  write_to_bazelrc "build:cuda --strategy=Genrule=standalone"
+  write_to_bazelrc "build:cuda -c opt"
+  write_to_bazelrc "build:cuda --cxxopt=\"-D_GLIBCXX_USE_CXX11_ABI=1\""
+  write_to_bazelrc "build:cuda --cxxopt=\"-std=c++17\""
   write_to_bazelrc "build:cuda --@local_config_cuda//:enable_cuda"
   write_to_bazelrc "build:cuda --crosstool_top=@local_config_cuda//crosstool:toolchain"
 
-  write_action_env_to_bazelrc "TF_CUDA_VERSION" ${TF_CUDA_VERSION}
-  write_action_env_to_bazelrc "TF_CUDNN_VERSION" "8"
+  write_action_env_to_bazelrc "build:cuda" "TF_CUDA_VERSION" ${TF_CUDA_VERSION} 
+  write_action_env_to_bazelrc "build:cuda" "TF_CUDNN_VERSION" "8"
   if is_windows; then
-    write_action_env_to_bazelrc "CUDNN_INSTALL_PATH" "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v${TF_CUDA_VERSION}"
-    write_action_env_to_bazelrc "CUDA_TOOLKIT_PATH" "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v${TF_CUDA_VERSION}"
+    write_action_env_to_bazelrc "build:cuda" "CUDNN_INSTALL_PATH" "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v${TF_CUDA_VERSION}"
+    write_action_env_to_bazelrc "build:cuda" "CUDA_TOOLKIT_PATH" "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v${TF_CUDA_VERSION}"
   else
-    write_action_env_to_bazelrc "CUDNN_INSTALL_PATH" "/usr/lib/x86_64-linux-gnu"
-    write_action_env_to_bazelrc "CUDA_TOOLKIT_PATH" "/usr/local/cuda"
+    write_action_env_to_bazelrc "build:cuda" "CUDNN_INSTALL_PATH" "/usr/lib/x86_64-linux-gnu"
+    write_action_env_to_bazelrc "build:cuda" "CUDA_TOOLKIT_PATH" "/usr/local/cuda"
   fi
   write_to_bazelrc "build --config=cuda"
   write_to_bazelrc "test --config=cuda"

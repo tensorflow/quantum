@@ -656,6 +656,7 @@ py_library(
 
 py_test(
     name = "tfq_simulate_ops_cuquantum_test",
+    timeout = "long",
     srcs = ["tfq_simulate_ops_cuquantum_test.py"],
     deps = [
         ":tfq_simulate_ops_cuquantum_py",

@@ -84,7 +84,7 @@ class SimulateExpectationCuquantumTest(tf.test.TestCase):
             lambda: tfq_simulate_ops.tfq_simulate_expectation(
                 circuit_batch_tensor, symbol_names,
                 symbol_values_array.astype(np.float64), pauli_sums_tensor),
-            "CPU",
+            "Expectation CPU",
             num_samples=100,
         )
 
@@ -92,7 +92,7 @@ class SimulateExpectationCuquantumTest(tf.test.TestCase):
             lambda: tfq_simulate_ops_cuquantum.tfq_simulate_expectation(
                 circuit_batch_tensor, symbol_names,
                 symbol_values_array.astype(np.float64), pauli_sums_tensor),
-            "cuQuantum",
+            "Expectation cuQuantum",
             num_samples=100,
         )
 
@@ -308,7 +308,7 @@ class SimulateSampledExpectationCuquantumTest(tf.test.TestCase):
                 circuit_batch_tensor, symbol_names,
                 symbol_values_array.astype(np.float64), pauli_sums_tensor,
                 n_samples),
-            "CPU",
+            "SampledExpectation CPU",
             num_samples=10,
             result_avg=False,
         )
@@ -318,7 +318,7 @@ class SimulateSampledExpectationCuquantumTest(tf.test.TestCase):
                 circuit_batch_tensor, symbol_names,
                 symbol_values_array.astype(np.float64), pauli_sums_tensor,
                 n_samples),
-            "cuQuantum",
+            "SampledExpectation cuQuantum",
             num_samples=10,
             result_avg=False,
         )
@@ -556,7 +556,7 @@ class SimulateSamplesCuquantumTest(tf.test.TestCase, parameterized.TestCase):
             lambda: tfq_simulate_ops.tfq_simulate_samples(
                 circuit_batch_tensor, symbol_names,
                 symbol_values_array.astype(np.float64), n_samples),
-            "CPU",
+            "Samples CPU",
             num_samples=10,
             result_avg=False,
         )
@@ -565,7 +565,7 @@ class SimulateSamplesCuquantumTest(tf.test.TestCase, parameterized.TestCase):
             lambda: tfq_simulate_ops_cuquantum.tfq_simulate_samples(
                 circuit_batch_tensor, symbol_names,
                 symbol_values_array.astype(np.float64), n_samples),
-            "cuQuantum",
+            "Samples cuQuantum",
             num_samples=10,
             result_avg=False,
         )
@@ -735,7 +735,7 @@ class SimulateStateCuquantumTest(tf.test.TestCase, parameterized.TestCase):
 
     def test_simulate_state_cpu_vs_cuquantum(self):
         """Make sure that cpu & gpu(cuquantum) ops have the same results."""
-        n_qubits = 10
+        n_qubits = 20
         batch_size = 5
         symbol_names = ['alpha']
         qubits = cirq.GridQubit.rect(1, n_qubits)
@@ -754,7 +754,7 @@ class SimulateStateCuquantumTest(tf.test.TestCase, parameterized.TestCase):
             lambda: tfq_simulate_ops.tfq_simulate_state(
                 circuit_batch_tensor, symbol_names,
                 symbol_values_array.astype(np.float64)),
-            "CPU",
+            "State CPU",
             num_samples=10,
         )
 
@@ -762,7 +762,7 @@ class SimulateStateCuquantumTest(tf.test.TestCase, parameterized.TestCase):
             lambda: tfq_simulate_ops_cuquantum.tfq_simulate_state(
                 circuit_batch_tensor, symbol_names,
                 symbol_values_array.astype(np.float64)),
-            "cuQuantum",
+            "State cuQuantum",
             num_samples=10,
         )
 

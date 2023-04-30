@@ -22,8 +22,7 @@ limitations under the License.
 #include "../qsim/lib/circuit.h"
 #include "../qsim/lib/gate_appl.h"
 #include "../qsim/lib/gates_cirq.h"
-#include "../qsim/lib/seqfor.h"
-#include "../qsim/lib/simmux.h"
+#include "../qsim/lib/simmux_gpu.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/shape_inference.h"
 #include "tensorflow/core/framework/tensor_shape.h"
@@ -124,6 +123,7 @@ class TfqSimulateStateOpCuQuantum : public tensorflow::OpKernel {
  private:
   cublasHandle_t cublas_handle_;
   custatevecHandle_t custatevec_handle_;
+
   void ComputeLarge(
       const std::vector<int>& num_qubits, const int max_num_qubits,
       const std::vector<std::vector<qsim::GateFused<QsimGate>>>& fused_circuits,
@@ -134,14 +134,17 @@ class TfqSimulateStateOpCuQuantum : public tensorflow::OpKernel {
     using StateSpace = Simulator::StateSpace;
 
     // Begin simulation.
-    int largest_nq = 1;
     Simulator sim = Simulator(cublas_handle_, custatevec_handle_);
     StateSpace ss = StateSpace(cublas_handle_, custatevec_handle_);
+    // Begin simulation.
+    int largest_nq = 1;
     auto sv = ss.Create(largest_nq);
+    std::vector<float> sv_host;
+    sv_host.resize(2 * (uint64_t(1) << largest_nq));
 
     // Simulate programs one by one. Parallelizing over state vectors
     // we no longer parallelize over circuits. Each time we encounter a
-    // a larger circuit we will grow the Statevector as nescessary.
+    // a larger circuit we will grow the Statevector as necessary.
     for (int i = 0; i < fused_circuits.size(); i++) {
       int nq = num_qubits[i];
 
@@ -149,22 +152,28 @@ class TfqSimulateStateOpCuQuantum : public tensorflow::OpKernel {
         // need to switch to larger statespace.
         largest_nq = nq;
         sv = ss.Create(largest_nq);
+        sv_host.resize(2 * (uint64_t(1) << largest_nq));
       }
       ss.SetStateZero(sv);
       for (int j = 0; j < fused_circuits[i].size(); j++) {
         qsim::ApplyFusedGate(sim, fused_circuits[i][j], sv);
       }
 
+      // Copy the whole GPU data to CPU memory once.
+      // Please don't use ss.GetAmpl(), because it copies amplitude
+      // one-by-one, which makes huge speed slowdown, even slower than CPU op.
+      ss.Copy(sv, sv_host.data());
       // Parallel copy state vector information from qsim into tensorflow
-      // tensors.
-      auto copy_f = [i, nq, max_num_qubits, &output_tensor, &ss, &sv](
+      // tensors. We need type conversions from 2 floats to std::complex.
+      auto copy_f = [i, nq, max_num_qubits, &output_tensor, &sv_host](
                         uint64_t start, uint64_t end) {
         uint64_t crossover = uint64_t(1) << nq;
         uint64_t upper = std::min(end, crossover);
 
         if (start < crossover) {
           for (uint64_t j = 0; j < upper; j++) {
-            (*output_tensor)(i, j) = ss.GetAmpl(sv, j);
+            (*output_tensor)(i, j) =
+                std::complex<float>(sv_host[2 * j], sv_host[2 * j + 1]);
           }
         }
         for (uint64_t j = upper; j < end; j++) {

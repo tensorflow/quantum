@@ -20,6 +20,7 @@ limitations under the License.
 #include <string>
 #include <vector>
 
+#include "absl/status/status.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/lib/core/error_codes.pb.h"
 #include "tensorflow/core/lib/core/status.h"
@@ -51,7 +52,7 @@ Status ParseProto(const std::string& text, T* proto) {
   }
 
   return Status(
-      static_cast<tensorflow::errors::Code>(absl::StatusCode::kInvalidArgument),
+      static_cast<tensorflow::error::Code>(absl::StatusCode::kInvalidArgument),
       "Unparseable proto: " + text);
 }
 
@@ -68,7 +69,7 @@ Status ParsePrograms(OpKernelContext* context, const std::string& input_name,
   if (input->dims() != 1) {
     // Never parse anything other than a 1d list of circuits.
     return Status(
-        static_cast<tensorflow::errors::Code>(
+        static_cast<tensorflow::error::Code>(
             absl::StatusCode::kInvalidArgument),
         absl::StrCat("programs must be rank 1. Got rank ", input->dims(), "."));
   }
@@ -101,7 +102,7 @@ Status ParsePrograms2D(OpKernelContext* context, const std::string& input_name,
 
   if (input->dims() != 2) {
     // Never parse anything other than a 1d list of circuits.
-    return Status(static_cast<tensorflow::errors::Code>(
+    return Status(static_cast<tensorflow::error::Code>(
                       absl::StatusCode::kInvalidArgument),
                   absl::StrCat("other_programs must be rank 2. Got rank ",
                                input->dims(), "."));
@@ -143,7 +144,7 @@ Status GetProgramsAndProgramsToAppend(
   }
 
   if (programs->size() != programs_to_append->size()) {
-    return Status(static_cast<tensorflow::errors::Code>(
+    return Status(static_cast<tensorflow::error::Code>(
                       absl::StatusCode::kInvalidArgument),
                   "programs and programs_to_append must have matching sizes.");
   }
@@ -171,7 +172,7 @@ Status GetProgramsAndNumQubits(
     }
     if (programs->size() != p_sums->size()) {
       return Status(
-          static_cast<tensorflow::errors::Code>(
+          static_cast<tensorflow::error::Code>(
               absl::StatusCode::kInvalidArgument),
           absl::StrCat("Number of circuits and PauliSums do not match. Got ",
                        programs->size(), " circuits and ", p_sums->size(),
@@ -223,7 +224,7 @@ tensorflow::Status GetProgramsAndNumQubits(
   }
 
   if (programs->size() != other_programs->size()) {
-    return Status(static_cast<tensorflow::errors::Code>(
+    return Status(static_cast<tensorflow::error::Code>(
                       absl::StatusCode::kInvalidArgument),
                   absl::StrCat("programs and other_programs batch dimension",
                                " do not match. Foud: ", programs->size(),
@@ -260,7 +261,7 @@ Status GetPauliSums(OpKernelContext* context,
   }
 
   if (input->dims() != 2) {
-    return Status(static_cast<tensorflow::errors::Code>(
+    return Status(static_cast<tensorflow::error::Code>(
                       absl::StatusCode::kInvalidArgument),
                   absl::StrCat("pauli_sums must be rank 2. Got rank ",
                                input->dims(), "."));
@@ -297,7 +298,7 @@ Status GetSymbolMaps(OpKernelContext* context, std::vector<SymbolMap>* maps) {
   }
 
   if (input_names->dims() != 1) {
-    return Status(static_cast<tensorflow::errors::Code>(
+    return Status(static_cast<tensorflow::error::Code>(
                       absl::StatusCode::kInvalidArgument),
                   absl::StrCat("symbol_names must be rank 1. Got rank ",
                                input_names->dims(), "."));
@@ -310,7 +311,7 @@ Status GetSymbolMaps(OpKernelContext* context, std::vector<SymbolMap>* maps) {
   }
 
   if (input_values->dims() != 2) {
-    return Status(static_cast<tensorflow::errors::Code>(
+    return Status(static_cast<tensorflow::error::Code>(
                       absl::StatusCode::kInvalidArgument),
                   absl::StrCat("symbol_values must be rank 2. Got rank ",
                                input_values->dims(), "."));
@@ -320,7 +321,7 @@ Status GetSymbolMaps(OpKernelContext* context, std::vector<SymbolMap>* maps) {
   const auto symbol_values = input_values->matrix<float>();
 
   if (symbol_names.dimension(0) != symbol_values.dimension(1)) {
-    return Status(static_cast<tensorflow::errors::Code>(
+    return Status(static_cast<tensorflow::error::Code>(
                       absl::StatusCode::kInvalidArgument),
                   "Input symbol names and value sizes do not match.");
   }
@@ -356,7 +357,7 @@ tensorflow::Status GetNumSamples(
   }
 
   if (input_num_samples->dims() != 2) {
-    return Status(static_cast<tensorflow::errors::Code>(
+    return Status(static_cast<tensorflow::error::Code>(
                       absl::StatusCode::kInvalidArgument),
                   absl::StrCat("num_samples must be rank 2. Got rank ",
                                input_num_samples->dims(), "."));
@@ -370,7 +371,7 @@ tensorflow::Status GetNumSamples(
     for (unsigned int j = 0; j < matrix_num_samples.dimension(1); j++) {
       const int num_samples = matrix_num_samples(i, j);
       if (num_samples < 1) {
-        return Status(static_cast<tensorflow::errors::Code>(
+        return Status(static_cast<tensorflow::error::Code>(
                           absl::StatusCode::kInvalidArgument),
                       "Each element of num_samples must be greater than 0.");
       }
@@ -392,7 +393,7 @@ Status GetIndividualSample(tensorflow::OpKernelContext* context,
   }
 
   if (input_num_samples->dims() != 1) {
-    return Status(static_cast<tensorflow::errors::Code>(
+    return Status(static_cast<tensorflow::error::Code>(
                       absl::StatusCode::kInvalidArgument),
                   absl::StrCat("num_samples must be rank 1. Got rank ",
                                input_num_samples->dims(), "."));
@@ -401,7 +402,7 @@ Status GetIndividualSample(tensorflow::OpKernelContext* context,
   const auto vector_num_samples = input_num_samples->vec<int>();
 
   if (vector_num_samples.dimension(0) != 1) {
-    return Status(static_cast<tensorflow::errors::Code>(
+    return Status(static_cast<tensorflow::error::Code>(
                       absl::StatusCode::kInvalidArgument),
                   absl::StrCat("num_samples must contain 1 element. Got ",
                                vector_num_samples.dimension(0), "."));
@@ -422,7 +423,7 @@ tensorflow::Status GetPrevGrads(
   }
 
   if (input_grads->dims() != 2) {
-    return Status(static_cast<tensorflow::errors::Code>(
+    return Status(static_cast<tensorflow::error::Code>(
                       absl::StatusCode::kInvalidArgument),
                   absl::StrCat("downstream_grads must be rank 2. Got rank ",
                                input_grads->dims(), "."));

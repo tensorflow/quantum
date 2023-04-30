@@ -247,8 +247,7 @@ class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
       int n_random = largest_sum * output_dim_op_size * fused_circuits.size();
       n_random /= num_threads;
       n_random += 1;
-      auto local_gen = random_gen_.ReserveSamples32(
-          largest_sum * pauli_sums[0].size() * fused_circuits.size() + 1);
+      auto local_gen = random_gen_.ReserveSamples32(n_random);
       tensorflow::random::SimplePhilox rand_source(&local_gen);
 
       for (int i = start; i < end; i++) {
