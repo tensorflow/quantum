@@ -1,4 +1,4 @@
-# Release 0.7.0
+# Release 0.8.0
 # Breaking Changes
 - Build, compilation, and packaging:
   - The TensorFlow dependency has been upgraded from 2.7.0 to 2.11.0:
