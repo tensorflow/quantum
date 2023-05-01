@@ -205,6 +205,7 @@ def _cuquantum_pip_impl(repository_ctx):
       cuquantum_header_path = _find_file(repository_ctx, "custatevec.h")
       cuquantum_header_path = cuquantum_header_path[:cuquantum_header_path.find("/custatevec.h")]
       custatevec_shared_library_path = _find_file(repository_ctx, "libcustatevec.so")
+      cuquantum_root = custatevec_shared_library_path[:custatevec_shared_library_path.find("/lib/lib")]
     else:
       cuquantum_header_path = "%s/include" % cuquantum_root
       custatevec_shared_library_path = "%s/lib/libcustatevec.so" % (cuquantum_root)
