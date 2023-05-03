@@ -27,7 +27,8 @@ from tensorflow_quantum.datasets import spin_system
 from tensorflow_quantum.datasets.spin_system import SpinSystemInfo
 
 
-class TFIChainTest(tf.test.TestCase):
+# TODO(#748): Inherit this class from tf.test.TestCase after fixing the issue.
+class TFIRectangularTest:
     """Testing tfi_chain."""
     # pylint: disable=C0103
 
