@@ -246,7 +246,7 @@ class TfqAdjointGradientCuquantumOp : public tensorflow::OpKernel {
       // sv now contains psi
       // scratch contains (sum_j paulis_sums[i][j] * downstream_grads[j])|psi>
       // scratch2 now contains psi as well.
-      [[maybe_unused]] AccumulateOperators(pauli_sums[i], downstream_grads[i],
+      [[maybe_unused]] Status unused = AccumulateOperators(pauli_sums[i], downstream_grads[i],
                                            sim, ss, sv, scratch2, scratch);
 
       for (int j = partial_fused_circuits[i].size() - 1; j >= 0; j--) {
