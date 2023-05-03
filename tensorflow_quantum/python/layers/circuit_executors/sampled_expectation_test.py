@@ -97,22 +97,36 @@ class SampledExpectationTest(parameterized.TestCase, tf.test.TestCase):
 
     @parameterized.parameters([
         {
-            'backend': 'noisy'
+            'backend': 'noisy',
+            'use_cuquantum': False,
         },
         {
-            'backend': 'noiseless'
+            'backend': 'noiseless',
+            'use_cuquantum': False,
         },
         {
-            'backend': cirq.Simulator()
+            'backend': 'noiseless',
+            'use_cuquantum': True,
         },
         {
-            'backend': CustomSampler()
+            'backend': cirq.Simulator(),
+            'use_cuquantum': False,
         },
         {
-            'backend': None  # older API usage.
+            'backend': CustomSampler(),
+            'use_cuquantum': False,
+        },
+        {
+            'backend': None,  # older API usage.
+            'use_cuquantum': False,
+        },
+        {
+            'backend': None,
+            'use_cuquantum': True,
         }
     ])
-    def test_sampled_expectation_type_inputs_error(self, backend):
+    def test_sampled_expectation_type_inputs_error(self, backend,
+                                                   use_cuquantum):
         """Test that SampledExpectation errors within Keras call."""
 
         bit = cirq.GridQubit(0, 0)
@@ -124,43 +138,62 @@ class SampledExpectationTest(parameterized.TestCase, tf.test.TestCase):
 
         with self.assertRaisesRegex(RuntimeError,
                                     expected_regex="repetitions not provided"):
-            sampled_expectation.SampledExpectation(backend=backend)(
-                symb_circuit,
-                symbol_names=[symbol],
-                symbol_values=[[0.5]],
-                operators=test_psum)
+            sampled_expectation.SampledExpectation(
+                backend=backend,
+                use_cuquantum=use_cuquantum,
+            )(symb_circuit,
+              symbol_names=[symbol],
+              symbol_values=[[0.5]],
+              operators=test_psum)
 
         with self.assertRaisesRegex(Exception,
                                     expected_regex="Unknown initializer"):
-            sampled_expectation.SampledExpectation(backend=backend)(
-                reg_circuit,
-                operators=test_psum,
-                initializer='junk',
-                repetitions=1)
+            sampled_expectation.SampledExpectation(
+                backend=backend,
+                use_cuquantum=use_cuquantum,
+            )(reg_circuit,
+              operators=test_psum,
+              initializer='junk',
+              repetitions=1)
 
         with self.assertRaisesRegex(Exception,
                                     expected_regex="cannot be parsed"):
-            sampled_expectation.SampledExpectation(backend=backend)(
-                reg_circuit, operators=test_psum, repetitions='junk')
+            sampled_expectation.SampledExpectation(
+                backend=backend,
+                use_cuquantum=use_cuquantum,
+            )(reg_circuit, operators=test_psum, repetitions='junk')
 
     @parameterized.parameters([
         {
-            'backend': 'noisy'
+            'backend': 'noisy',
+            'use_cuquantum': False,
         },
         {
-            'backend': 'noiseless'
+            'backend': 'noiseless',
+            'use_cuquantum': False,
         },
         {
-            'backend': cirq.Simulator()
+            'backend': 'noiseless',
+            'use_cuquantum': True,
         },
         {
-            'backend': CustomSampler()
+            'backend': cirq.Simulator(),
+            'use_cuquantum': False,
         },
         {
-            'backend': None  # older API usage.
+            'backend': CustomSampler(),
+            'use_cuquantum': False,
+        },
+        {
+            'backend': None,  # older API usage.
+            'use_cuquantum': False,
+        },
+        {
+            'backend': None,
+            'use_cuquantum': True,
         }
     ])
-    def test_sampled_expectation_op_error(self, backend):
+    def test_sampled_expectation_op_error(self, backend, use_cuquantum):
         """Test that expectation errors within underlying ops correctly."""
         # Note the expected_regex is left blank here since there is a
         # discrepancy between the error strings provided between backends.
@@ -173,72 +206,97 @@ class SampledExpectationTest(parameterized.TestCase, tf.test.TestCase):
 
         with self.assertRaisesRegex(Exception, expected_regex="pauli"):
             # Operators has wrong rank. Parse error.
-            sampled_expectation.SampledExpectation(backend=backend)(
-                [reg_circuit],
-                operators=util.convert_to_tensor([test_psum]),
-                repetitions=1)
+            sampled_expectation.SampledExpectation(
+                backend=backend,
+                use_cuquantum=use_cuquantum,
+            )([reg_circuit],
+              operators=util.convert_to_tensor([test_psum]),
+              repetitions=1)
 
         with self.assertRaisesRegex(Exception, expected_regex="symbol_values"):
             # symbol_values has wrong rank.
-            sampled_expectation.SampledExpectation(backend=backend)(
-                [symb_circuit],
-                symbol_names=[symbol],
-                symbol_values=[0.5],
-                operators=test_psum,
-                repetitions=1)
+            sampled_expectation.SampledExpectation(
+                backend=backend,
+                use_cuquantum=use_cuquantum,
+            )([symb_circuit],
+              symbol_names=[symbol],
+              symbol_values=[0.5],
+              operators=test_psum,
+              repetitions=1)
 
         with self.assertRaisesRegex(Exception, expected_regex="pauli"):
             # Wrong batch size for pauli operators.
-            sampled_expectation.SampledExpectation(backend=backend)(
-                symb_circuit,
-                symbol_names=[symbol],
-                operators=[[test_psum], [test_psum]],
-                repetitions=1)
+            sampled_expectation.SampledExpectation(
+                backend=backend,
+                use_cuquantum=use_cuquantum,
+            )(symb_circuit,
+              symbol_names=[symbol],
+              operators=[[test_psum], [test_psum]],
+              repetitions=1)
 
         with self.assertRaisesRegex(Exception, expected_regex="pauli"):
             # Wrong batch size for pauli operators.
-            sampled_expectation.SampledExpectation(backend=backend)(
-                reg_circuit,
-                operators=[[test_psum], [test_psum]],
-                repetitions=1)
+            sampled_expectation.SampledExpectation(
+                backend=backend,
+                use_cuquantum=use_cuquantum,
+            )(reg_circuit, operators=[[test_psum], [test_psum]], repetitions=1)
 
         with self.assertRaisesRegex(Exception, expected_regex="0"):
             # Wrong repetitions.
-            sampled_expectation.SampledExpectation(backend=backend)(
-                reg_circuit, operators=test_psum, repetitions=-1)
+            sampled_expectation.SampledExpectation(
+                backend=backend,
+                use_cuquantum=use_cuquantum,
+            )(reg_circuit, operators=test_psum, repetitions=-1)
 
         with self.assertRaisesRegex(Exception, expected_regex=""):
             # Wrong second dimension size for repetitions & pauli operators.
-            sampled_expectation.SampledExpectation(backend=backend)(
-                reg_circuit, operators=test_psum, repetitions=[5, 4, 3])
+            sampled_expectation.SampledExpectation(
+                backend=backend,
+                use_cuquantum=use_cuquantum,
+            )(reg_circuit, operators=test_psum, repetitions=[5, 4, 3])
 
         with self.assertRaisesRegex(Exception, expected_regex=""):
             # Wrong batch_size for symbol values.
-            sampled_expectation.SampledExpectation(backend=backend)(
-                [reg_circuit],
-                symbol_names=[symbol],
-                symbol_values=np.zeros((3, 1)),
-                operators=test_psum,
-                repetitions=5)
+            sampled_expectation.SampledExpectation(
+                backend=backend,
+                use_cuquantum=use_cuquantum,
+            )([reg_circuit],
+              symbol_names=[symbol],
+              symbol_values=np.zeros((3, 1)),
+              operators=test_psum,
+              repetitions=5)
 
     @parameterized.parameters([
         {
-            'backend': 'noisy'
+            'backend': 'noisy',
+            'use_cuquantum': False,
         },
         {
-            'backend': 'noiseless'
+            'backend': 'noiseless',
+            'use_cuquantum': False,
         },
         {
-            'backend': cirq.Simulator()
+            'backend': 'noiseless',
+            'use_cuquantum': True,
         },
         {
-            'backend': CustomSampler()
+            'backend': cirq.Simulator(),
+            'use_cuquantum': False,
         },
         {
-            'backend': None  # older API usage.
+            'backend': CustomSampler(),
+            'use_cuquantum': False,
+        },
+        {
+            'backend': None,  # older API usage.
+            'use_cuquantum': False,
+        },
+        {
+            'backend': None,
+            'use_cuquantum': True,
         }
     ])
-    def test_static_cases(self, backend):
+    def test_static_cases(self, backend, use_cuquantum):
         """Run inputs through in complex cases."""
 
         bit = cirq.GridQubit(0, 0)
@@ -249,59 +307,77 @@ class SampledExpectationTest(parameterized.TestCase, tf.test.TestCase):
         reg_circuit = cirq.Circuit(cirq.H(bit))
 
         # Passing a 2d operators input requires a 1d circuit input.
-        sampled_expectation.SampledExpectation(backend=backend)(
-            [reg_circuit, reg_circuit],
-            operators=[[test_psum, test_psum], [test_psum, test_psum]],
-            repetitions=1)
+        sampled_expectation.SampledExpectation(
+            backend=backend,
+            use_cuquantum=use_cuquantum,
+        )([reg_circuit, reg_circuit],
+          operators=[[test_psum, test_psum], [test_psum, test_psum]],
+          repetitions=1)
 
         # Passing 2d operators along with other inputs.
-        sampled_expectation.SampledExpectation(backend=backend)(
-            [symb_circuit, symb_circuit],
-            symbol_names=[symbol],
-            operators=[[test_psum, test_psum], [test_psum, test_psum]],
-            repetitions=1)
-        sampled_expectation.SampledExpectation(backend=backend)(
-            [symb_circuit, symb_circuit],
-            symbol_names=[symbol],
-            symbol_values=[[0.5], [0.8]],
-            operators=[[test_psum, test_psum], [test_psum, test_psum]],
-            repetitions=1)
+        sampled_expectation.SampledExpectation(
+            backend=backend,
+            use_cuquantum=use_cuquantum,
+        )([symb_circuit, symb_circuit],
+          symbol_names=[symbol],
+          operators=[[test_psum, test_psum], [test_psum, test_psum]],
+          repetitions=1)
+        sampled_expectation.SampledExpectation(
+            backend=backend,
+            use_cuquantum=use_cuquantum,
+        )([symb_circuit, symb_circuit],
+          symbol_names=[symbol],
+          symbol_values=[[0.5], [0.8]],
+          operators=[[test_psum, test_psum], [test_psum, test_psum]],
+          repetitions=1)
 
         # Ensure tiling up of circuits works as expected.
-        sampled_expectation.SampledExpectation(backend=backend)(
-            reg_circuit, operators=test_psum, repetitions=1)
-        sampled_expectation.SampledExpectation(backend=backend)(
-            reg_circuit, operators=[test_psum, test_psum], repetitions=1)
+        sampled_expectation.SampledExpectation(
+            backend=backend,
+            use_cuquantum=use_cuquantum,
+        )(reg_circuit, operators=test_psum, repetitions=1)
+        sampled_expectation.SampledExpectation(
+            backend=backend,
+            use_cuquantum=use_cuquantum,
+        )(reg_circuit, operators=[test_psum, test_psum], repetitions=1)
 
         # Ensure tiling up of symbol_values works as expected.
-        sampled_expectation.SampledExpectation(backend=backend)(
-            symb_circuit,
-            symbol_names=[symbol],
-            symbol_values=[[0.5], [0.8]],
-            operators=test_psum,
-            repetitions=1)
-        sampled_expectation.SampledExpectation(backend=backend)(
-            symb_circuit,
-            symbol_names=[symbol],
-            symbol_values=[[0.5]],
-            operators=test_psum,
-            repetitions=1)
+        sampled_expectation.SampledExpectation(
+            backend=backend,
+            use_cuquantum=use_cuquantum,
+        )(symb_circuit,
+          symbol_names=[symbol],
+          symbol_values=[[0.5], [0.8]],
+          operators=test_psum,
+          repetitions=1)
+        sampled_expectation.SampledExpectation(
+            backend=backend,
+            use_cuquantum=use_cuquantum,
+        )(symb_circuit,
+          symbol_names=[symbol],
+          symbol_values=[[0.5]],
+          operators=test_psum,
+          repetitions=1)
 
         # Test multiple operators with integer valued repetition.
-        sampled_expectation.SampledExpectation(backend=backend)(
-            symb_circuit,
-            symbol_names=[symbol],
-            symbol_values=[[0.5]],
-            operators=[-1.0 * cirq.Z(bit),
-                       cirq.X(bit) + 2.0 * cirq.Z(bit)],
-            repetitions=1)
-        sampled_expectation.SampledExpectation(backend=backend)(
-            symb_circuit,
-            symbol_names=[symbol],
-            symbol_values=[[0.5]],
-            operators=[-1.0 * cirq.Z(bit),
-                       cirq.X(bit) + 2.0 * cirq.Z(bit)],
-            repetitions=[5, 1])
+        sampled_expectation.SampledExpectation(
+            backend=backend,
+            use_cuquantum=use_cuquantum,
+        )(symb_circuit,
+          symbol_names=[symbol],
+          symbol_values=[[0.5]],
+          operators=[-1.0 * cirq.Z(bit),
+                     cirq.X(bit) + 2.0 * cirq.Z(bit)],
+          repetitions=1)
+        sampled_expectation.SampledExpectation(
+            backend=backend,
+            use_cuquantum=use_cuquantum,
+        )(symb_circuit,
+          symbol_names=[symbol],
+          symbol_values=[[0.5]],
+          operators=[-1.0 * cirq.Z(bit),
+                     cirq.X(bit) + 2.0 * cirq.Z(bit)],
+          repetitions=[5, 1])
 
     def test_sampled_expectation_simple_tf_train(self):
         """Train a layer using standard tf (not keras)."""
@@ -325,8 +401,17 @@ class SampledExpectationFunctionalTests(parameterized.TestCase,
                                         tf.test.TestCase):
     """Test hybrid/integrated models that include a SampledExpectation layer."""
 
-    @parameterized.parameters([{'backend': 'noisy'}, {'backend': 'noiseless'}])
-    def test_simple_param_value_input(self, backend):
+    @parameterized.parameters([{
+        'backend': 'noisy',
+        'use_cuquantum': False,
+    }, {
+        'backend': 'noiseless',
+        'use_cuquantum': False,
+    }, {
+        'backend': 'noiseless',
+        'use_cuquantum': True,
+    }])
+    def test_simple_param_value_input(self, backend, use_cuquantum):
         """Train a densely connected hybrid model.
 
         This model will put a qubit in the zero or one state from a random state
@@ -341,12 +426,14 @@ class SampledExpectationFunctionalTests(parameterized.TestCase,
         datum = tf.keras.Input(shape=(), dtype=tf.dtypes.string)
         l1 = tf.keras.layers.Dense(10)(inputs)
         l2 = tf.keras.layers.Dense(3)(l1)
-        outputs = sampled_expectation.SampledExpectation(backend=backend)(
-            datum,
-            symbol_names=symbols,
-            operators=cirq.Z(bit),
-            symbol_values=l2,
-            repetitions=5000)
+        outputs = sampled_expectation.SampledExpectation(
+            backend=backend,
+            use_cuquantum=use_cuquantum,
+        )(datum,
+          symbol_names=symbols,
+          operators=cirq.Z(bit),
+          symbol_values=l2,
+          repetitions=5000)
         model = tf.keras.Model(inputs=[datum, inputs], outputs=outputs)
 
         data_in = np.array([[1], [0]], dtype=np.float32)
@@ -360,8 +447,17 @@ class SampledExpectationFunctionalTests(parameterized.TestCase,
         history = model.fit(x=[circuits, data_in], y=data_out, epochs=30)
         self.assertAllClose(history.history['loss'][-1], 0, atol=0.3)
 
-    @parameterized.parameters([{'backend': 'noisy'}, {'backend': 'noiseless'}])
-    def test_simple_op_input(self, backend):
+    @parameterized.parameters([{
+        'backend': 'noisy',
+        'use_cuquantum': False,
+    }, {
+        'backend': 'noiseless',
+        'use_cuquantum': False,
+    }, {
+        'backend': 'noiseless',
+        'use_cuquantum': True,
+    }])
+    def test_simple_op_input(self, backend, use_cuquantum):
         """Test a simple operator input
 
         Learn qubit in the z+ state using two different measurement operators.
@@ -381,10 +477,12 @@ class SampledExpectationFunctionalTests(parameterized.TestCase,
         n_inp = tf.keras.Input(shape=(1,), dtype=tf.dtypes.int32)
         circuit_inp = tf.keras.Input(shape=(), dtype=tf.dtypes.string)
         circuit_output = sampled_expectation.SampledExpectation(
-            backend=backend)(circuit_inp,
-                             symbol_names=symbols,
-                             operators=op_inp,
-                             repetitions=n_inp)
+            backend=backend,
+            use_cuquantum=use_cuquantum,
+        )(circuit_inp,
+          symbol_names=symbols,
+          operators=op_inp,
+          repetitions=n_inp)
         model = tf.keras.Model(inputs=[circuit_inp, op_inp, n_inp],
                                outputs=[circuit_output])
 
@@ -399,8 +497,17 @@ class SampledExpectationFunctionalTests(parameterized.TestCase,
 
         self.assertAllClose(history.history['loss'][-1], 0, atol=1e-2)
 
-    @parameterized.parameters([{'backend': 'noisy'}, {'backend': 'noiseless'}])
-    def test_simple_op_and_param_input(self, backend):
+    @parameterized.parameters([{
+        'backend': 'noisy',
+        'use_cuquantum': False,
+    }, {
+        'backend': 'noiseless',
+        'use_cuquantum': False,
+    }, {
+        'backend': 'noiseless',
+        'use_cuquantum': True,
+    }])
+    def test_simple_op_and_param_input(self, backend, use_cuquantum):
         """Test a simple operator and parameter input.
 
         Train a NN to put a qubit in the z+ or x+ states based on a classical
@@ -424,11 +531,13 @@ class SampledExpectationFunctionalTests(parameterized.TestCase,
         dense_1 = tf.keras.layers.Dense(10)(data_inp)
         dense_2 = tf.keras.layers.Dense(3)(dense_1)
         circuit_output = sampled_expectation.SampledExpectation(
-            backend=backend)(circuit_inp,
-                             symbol_names=symbols,
-                             symbol_values=dense_2,
-                             operators=op_inp,
-                             repetitions=n_inp)
+            backend=backend,
+            use_cuquantum=use_cuquantum,
+        )(circuit_inp,
+          symbol_names=symbols,
+          symbol_values=dense_2,
+          operators=op_inp,
+          repetitions=n_inp)
 
         functional_model = tf.keras.Model(
             inputs=[circuit_inp, data_inp, op_inp, n_inp],
@@ -443,8 +552,17 @@ class SampledExpectationFunctionalTests(parameterized.TestCase,
                                        epochs=20)
         self.assertAllClose(history.history['loss'][-1], 0, atol=3)
 
-    @parameterized.parameters([{'backend': 'noisy'}, {'backend': 'noiseless'}])
-    def test_dnn_qnn_dnn(self, backend):
+    @parameterized.parameters([{
+        'backend': 'noisy',
+        'use_cuquantum': False,
+    }, {
+        'backend': 'noiseless',
+        'use_cuquantum': False,
+    }, {
+        'backend': 'noiseless',
+        'use_cuquantum': True,
+    }])
+    def test_dnn_qnn_dnn(self, backend, use_cuquantum):
         """Train a fully hybrid network using an SampledExpectation layer.
 
         Train the network to output +-5 given an input of 1 or 0. This tests
@@ -463,12 +581,14 @@ class SampledExpectationFunctionalTests(parameterized.TestCase,
         circuit_input = tf.keras.Input(shape=(), dtype=tf.dtypes.string)
         d1 = tf.keras.layers.Dense(10)(classical_input)
         d2 = tf.keras.layers.Dense(3)(d1)
-        quantum = sampled_expectation.SampledExpectation(backend=backend)(
-            circuit_input,
-            symbol_names=symbols,
-            symbol_values=d2,
-            operators=cirq.Z(bit),
-            repetitions=5000)
+        quantum = sampled_expectation.SampledExpectation(
+            backend=backend,
+            use_cuquantum=use_cuquantum,
+        )(circuit_input,
+          symbol_names=symbols,
+          symbol_values=d2,
+          operators=cirq.Z(bit),
+          repetitions=5000)
         d3 = tf.keras.layers.Dense(1)(quantum)
 
         model = tf.keras.Model(inputs=[circuit_input, classical_input],

@@ -16,6 +16,7 @@
 import tensorflow as tf
 
 from tensorflow_quantum.core.ops import circuit_execution_ops
+from tensorflow_quantum.python import quantum_context
 from tensorflow_quantum.python.layers.circuit_executors import input_checks
 
 
@@ -129,8 +130,22 @@ class State(tf.keras.layers.Layer):
             use_cuquantum: Calls TFQ GPU version op.
         """
         super().__init__(**kwargs)
-        self.state_op = circuit_execution_ops.get_state_op(
-            backend, use_cuquantum=use_cuquantum)
+
+        used_op = None
+        if backend == 'noiseless' or backend is None:
+            mode = quantum_context.get_quantum_concurrent_op_mode()
+            quantum_concurrent = False if use_cuquantum else mode
+            used_op = circuit_execution_ops.get_state_op(
+                backend=None,
+                use_cuquantum=use_cuquantum,
+                quantum_concurrent=quantum_concurrent,
+            )
+        elif backend == 'noisy':
+            raise ValueError('noisy backend is not supported in State layer.')
+        else:
+            used_op = circuit_execution_ops.get_state_op(backend=backend)
+
+        self.state_op = used_op
 
     def call(self, inputs, *, symbol_names=None, symbol_values=None):
         """Keras call function.
