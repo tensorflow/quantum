@@ -162,7 +162,7 @@ class SampleTest(tf.test.TestCase, parameterized.TestCase):
         output = sampler([circuit, circuit], repetitions=5)
         self.assertShapeEqual(np.empty((2, 5, 1)), output.to_tensor())
 
-    # TODO(trevormccrt): add QuantumEngineSampler to this once it is available
+    # TODO(trevormccrt): add ProcessorSampler to this once it is available
     @parameterized.parameters(
         list(
             util.kwargs_cartesian_product(
