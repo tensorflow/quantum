@@ -23,15 +23,16 @@ from tensorflow_quantum.python import quantum_context
 
 try:
     from tensorflow_quantum.core.ops import tfq_simulate_ops_cuquantum
-    _enable_use_cuquantum = True
+    _ENABLE_USE_CUQUANTUM = True
 except:
-    # `_enable_use_cuquantum = False` makes `use_cuquantum` silent.
-    _enable_use_cuquantum = False
+    # `_ENABLE_USE_CUQUANTUM = False` makes `use_cuquantum` silent.
+    _ENABLE_USE_CUQUANTUM = False
     tfq_simulate_ops_cuquantum = tfq_simulate_ops
 
 
-def is_cuda_configured() -> bool:
-    return _enable_use_cuquantum
+def is_gpu_configured() -> bool:
+    """Returns True if gpu ops are available or not."""
+    return _ENABLE_USE_CUQUANTUM
 
 
 class TFQStateVectorSimulator(enum.Enum):
@@ -147,7 +148,7 @@ def get_expectation_op(
     """
     # TODO (mbbrough): investigate how the above docstring renders.
     _check_quantum_concurrent(quantum_concurrent, use_cuquantum)
-    use_cuquantum = _enable_use_cuquantum and use_cuquantum
+    use_cuquantum = _ENABLE_USE_CUQUANTUM and use_cuquantum
 
     op = None
     if backend is None:
@@ -253,7 +254,7 @@ def get_sampling_op(
 
     # TODO (mbbrough): investigate how the above docstring renders.
     _check_quantum_concurrent(quantum_concurrent, use_cuquantum)
-    use_cuquantum = _enable_use_cuquantum and use_cuquantum
+    use_cuquantum = _ENABLE_USE_CUQUANTUM and use_cuquantum
 
     op = None
     if backend is None:
@@ -349,7 +350,7 @@ def get_state_op(
 
     # TODO (mbbrough): investigate how the above docstring renders.
     _check_quantum_concurrent(quantum_concurrent, use_cuquantum)
-    use_cuquantum = _enable_use_cuquantum and use_cuquantum
+    use_cuquantum = _ENABLE_USE_CUQUANTUM and use_cuquantum
 
     op = None
     if backend is None:
@@ -467,7 +468,7 @@ def get_sampled_expectation_op(
     """
     # TODO (mbbrough): investigate how the above docstring renders.
     _check_quantum_concurrent(quantum_concurrent, use_cuquantum)
-    use_cuquantum = _enable_use_cuquantum and use_cuquantum
+    use_cuquantum = _ENABLE_USE_CUQUANTUM and use_cuquantum
 
     op = None
     if backend is None:

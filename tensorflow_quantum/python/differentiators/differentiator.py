@@ -343,7 +343,9 @@ class Differentiator(metaclass=abc.ABCMeta):
     def differentiate_analytic_cuquantum(self, programs, symbol_names,
                                          symbol_values, pauli_sums,
                                          forward_pass_vals, grad):
-        # `self.expectation_op` is already set to cuquantum op.
+        """Differentiate a circuit with analytical expectation with GPU ops."""
+        # `self.expectation_op` is already set to cuquantum op at
+        # generate_differentiable_op._differentiate_ana.
         return self.differentiate_analytic(programs, symbol_names,
                                            symbol_values, pauli_sums,
                                            forward_pass_vals, grad)

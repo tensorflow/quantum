@@ -18,9 +18,9 @@ import tensorflow as tf
 from tensorflow_quantum.core.ops import tfq_adj_grad_op
 try:
     from tensorflow_quantum.core.ops import tfq_adj_grad_op_cuquantum
-    _enable_use_cuquantum = True
+    _ENABLE_USE_CUQUANTUM = True
 except:
-    _enable_use_cuquantum = False
+    _ENABLE_USE_CUQUANTUM = False
     tfq_adj_grad_op_cuquantum = tfq_adj_grad_op
 
 from tensorflow_quantum.python.differentiators import differentiator
@@ -99,6 +99,7 @@ class Adjoint(differentiator.Differentiator):
             raise ValueError("sample base backends are not supported by the "
                              "Adjoint method, please use analytic expectation"
                              " or choose another differentiator.")
+        use_cuquantum = _ENABLE_USE_CUQUANTUM and use_cuquantum
 
         return super().generate_differentiable_op(analytic_op=analytic_op,
                                                   use_cuquantum=use_cuquantum)
