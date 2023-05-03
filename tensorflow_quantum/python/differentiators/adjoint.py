@@ -23,7 +23,6 @@ except:
     _enable_use_cuquantum = False
     tfq_adj_grad_op_cuquantum = tfq_adj_grad_op
 
-
 from tensorflow_quantum.python.differentiators import differentiator
 
 
