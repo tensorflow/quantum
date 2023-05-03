@@ -167,7 +167,8 @@ class PQC(tf.keras.layers.Layer):
             `cirq.sim.simulator.SimulatesExpectationValues` if analytic
             expectations are desired or `cirq.Sampler` if sampled expectations
             are desired.
-        use_cuquantum: Optional Python `bool` indicating whether or not to use GPU ops
+        use_cuquantum: Optional Python `bool` indicating whether or not to use
+            GPU ops.
         differentiator: Optional `tfq.differentiator` object to specify how
             gradients of `model_circuit` should be calculated.
         initializer: Optional `tf.keras.initializer` object to specify how the

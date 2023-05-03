@@ -154,7 +154,7 @@ class ControlledPQC(tf.keras.layers.Layer):
             `sampled_based` is True or it must inherit
             `cirq.sim.simulator.SimulatesExpectationValues` if `sample_based` is
             False.
-        use_cuquantum: Optional Python `bool` indicating whether or not to use 
+        use_cuquantum: Optional Python `bool` indicating whether or not to use
             GPU ops
         differentiator: Optional `tfq.differentiator` object to specify how
             gradients of `model_circuit` should be calculated.

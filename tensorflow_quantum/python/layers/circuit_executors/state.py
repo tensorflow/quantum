@@ -129,8 +129,8 @@ class State(tf.keras.layers.Layer):
             use_cuquantum: Calls TFQ GPU version op.
         """
         super().__init__(**kwargs)
-        self.state_op = circuit_execution_ops.get_state_op(backend, \
-                                                           use_cuquantum=use_cuquantum)
+        self.state_op = circuit_execution_ops.get_state_op(
+            backend, use_cuquantum=use_cuquantum)
 
     def call(self, inputs, *, symbol_names=None, symbol_values=None):
         """Keras call function.
