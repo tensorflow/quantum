@@ -39,11 +39,11 @@ limitations under the License.
 namespace tfq {
 
 namespace {
-  // TODO(jaeyoo): Temorary hack for BulkSetAmpl with cuda ops.
-  // Updates qsim custatevec side BulkSetAmple ops, and remove these utilities.
-  template <typename FP, unsigned warp_size = 32>
-__global__ void BulkSetAmplKernel(
-    uint64_t mask, uint64_t bits, FP re, FP im, bool exclude, FP* state) {
+// TODO(jaeyoo): Temorary hack for BulkSetAmpl with cuda ops.
+// Updates qsim custatevec side BulkSetAmple ops, and remove these utilities.
+template <typename FP, unsigned warp_size = 32>
+__global__ void BulkSetAmplKernel(uint64_t mask, uint64_t bits, FP re, FP im,
+                                  bool exclude, FP* state) {
   uint64_t k1 = uint64_t{blockIdx.x} * blockDim.x + threadIdx.x;
   uint64_t k2 = 2 * k1 - threadIdx.x % warp_size;
 
@@ -57,21 +57,21 @@ __global__ void BulkSetAmplKernel(
 
 // Sets state[i] = complex(re, im) where (i & mask) == bits.
 // if `exclude` is true then the criteria becomes (i & mask) != bits.
-template<typename fp_type>
+template <typename fp_type>
 void BulkSetAmpl(qsim::SimulatorCuStateVec<float>::StateSpace::State& state,
-                 uint64_t mask, uint64_t bits, fp_type re,
-                 fp_type im, bool exclude = false) {
+                 uint64_t mask, uint64_t bits, fp_type re, fp_type im,
+                 bool exclude = false) {
   uint64_t size = uint64_t{1} << state.num_qubits();
 
   unsigned threads = std::min(size, uint64_t{512});
   unsigned blocks = size / threads;
 
-  BulkSetAmplKernel<<<blocks, threads>>>(
-      mask, bits, re, im, exclude, state.get());
+  BulkSetAmplKernel<<<blocks, threads>>>(mask, bits, re, im, exclude,
+                                         state.get());
   cudaPeekAtLastError();
   cudaDeviceSynchronize();
 }
-} // namespace
+}  // namespace
 
 using ::tensorflow::Status;
 using ::tfq::proto::PauliSum;
@@ -189,7 +189,6 @@ class TfqAdjointGradientCuquantumOp : public tensorflow::OpKernel {
 
     output_tensor.setZero();
 
-
     ComputeLarge(num_qubits, qsim_circuits, maps, full_fuse,
                  partial_fused_circuits, pauli_sums, gradient_gates,
                  downstream_grads, context, &output_tensor);
@@ -247,8 +246,8 @@ class TfqAdjointGradientCuquantumOp : public tensorflow::OpKernel {
       // sv now contains psi
       // scratch contains (sum_j paulis_sums[i][j] * downstream_grads[j])|psi>
       // scratch2 now contains psi as well.
-      Status unused = AccumulateOperators(pauli_sums[i], downstream_grads[i],
-                                          sim, ss, sv, scratch2, scratch);
+      [[maybe_unused]] AccumulateOperators(pauli_sums[i], downstream_grads[i],
+                                           sim, ss, sv, scratch2, scratch);
 
       for (int j = partial_fused_circuits[i].size() - 1; j >= 0; j--) {
         for (int k = partial_fused_circuits[i][j].size() - 1; k >= 0; k--) {
@@ -274,7 +273,8 @@ class TfqAdjointGradientCuquantumOp : public tensorflow::OpKernel {
           cbits |= ((cur_gate.cmask >> k) & 1) << control_loc;
         }
 
-        for (size_t k = 0; k < gradient_gates[i][j - 1].grad_gates.size(); k++) {
+        for (size_t k = 0; k < gradient_gates[i][j - 1].grad_gates.size();
+             k++) {
           // Copy sv onto scratch2 in anticipation of non-unitary "gradient
           // gate".
           ss.Copy(sv, scratch2);

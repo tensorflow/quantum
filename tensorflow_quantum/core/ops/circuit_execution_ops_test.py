@@ -204,8 +204,7 @@ class OpGetterInputChecks(tf.test.TestCase):
                                     expected_regex="Cirq.SimulatesFinalState"):
             mock_processor = mock.create_autospec(AbstractProcessor)
             circuit_execution_ops.get_state_op(
-                backend=cirq_google.ProcessorSampler(
-                    processor=mock_processor))
+                backend=cirq_google.ProcessorSampler(processor=mock_processor))
 
         with self.assertRaisesRegex(TypeError,
                                     expected_regex="must be type bool."):

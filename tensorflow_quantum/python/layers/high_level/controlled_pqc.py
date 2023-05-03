@@ -242,7 +242,8 @@ class ControlledPQC(tf.keras.layers.Layer):
                                                   use_cuquantum=use_cuquantum)
         else:
             self._layer = sampled_expectation.SampledExpectation(
-                backend=backend, differentiator=differentiator,
+                backend=backend,
+                differentiator=differentiator,
                 use_cuquantum=use_cuquantum)
 
         self._append_layer = elementary.AddCircuit()

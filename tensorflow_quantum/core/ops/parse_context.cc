@@ -121,7 +121,8 @@ Status ParsePrograms2D(OpKernelContext* context, const std::string& input_name,
   auto p_lock = tensorflow::mutex();
   auto DoWork = [&](int start, int end) {
     for (int i = start; i < end; i++) {
-      Status local = ParseProto(program_strings(i / num_entries, i % num_entries),
+      Status local =
+          ParseProto(program_strings(i / num_entries, i % num_entries),
                      &programs->at(i / num_entries).at(i % num_entries));
       NESTED_FN_STATUS_SYNC(parse_status, local, p_lock);
     }
@@ -195,11 +196,11 @@ Status GetProgramsAndNumQubits(
       unsigned int this_num_qubits;
       Status local;
       if (p_sums) {
-        local = ResolveQubitIds(&program, &this_num_qubits,
-                                       &(p_sums->at(i)), swap_endianness);
+        local = ResolveQubitIds(&program, &this_num_qubits, &(p_sums->at(i)),
+                                swap_endianness);
       } else {
-        local = ResolveQubitIds(&program, &this_num_qubits,
-                                       nullptr, swap_endianness);
+        local = ResolveQubitIds(&program, &this_num_qubits, nullptr,
+                                swap_endianness);
       }
       NESTED_FN_STATUS_SYNC(parse_status, local, p_lock);
       (*num_qubits)[i] = this_num_qubits;
@@ -247,8 +248,8 @@ tensorflow::Status GetProgramsAndNumQubits(
     for (int i = start; i < end; i++) {
       Program& program = (*programs)[i];
       unsigned int this_num_qubits;
-      Status local = ResolveQubitIds(&program, &this_num_qubits,
-                                              &(*other_programs)[i]);
+      Status local =
+          ResolveQubitIds(&program, &this_num_qubits, &(*other_programs)[i]);
       NESTED_FN_STATUS_SYNC(parse_status, local, p_lock);
       (*num_qubits)[i] = this_num_qubits;
     }

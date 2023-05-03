@@ -167,8 +167,8 @@ class TfqPsSymbolReplaceOp : public tensorflow::OpKernel {
           output_tensor(pidx, sidx, j) =
               output_programs.at(pidx).at(sidx).at(j);
         }
-        for (size_t j = output_programs.at(pidx).at(sidx).size(); j < biggest_pad;
-             j++) {
+        for (size_t j = output_programs.at(pidx).at(sidx).size();
+             j < biggest_pad; j++) {
           output_tensor(pidx, sidx, j) = empty_program;
         }
       }
