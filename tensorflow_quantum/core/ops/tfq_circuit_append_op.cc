@@ -54,7 +54,7 @@ class TfqCircuitAppendOp : public tensorflow::OpKernel {
     auto DoWork = [&](int start, int end) {
       std::string temp;
       for (int i = start; i < end; i++) {
-        for (int j = 0; j < programs_to_append.at(i).circuit().moments().size();
+        for (size_t j = 0; j < programs_to_append.at(i).circuit().moments().size();
              j++) {
           Moment *new_moment = programs.at(i).mutable_circuit()->add_moments();
           *new_moment = programs_to_append.at(i).circuit().moments(j);

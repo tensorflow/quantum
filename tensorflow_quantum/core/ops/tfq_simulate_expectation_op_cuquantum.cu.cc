@@ -153,7 +153,7 @@ class TfqSimulateExpectationOpCuQuantum : public tensorflow::OpKernel {
     // Simulate programs one by one. Parallelizing over state vectors
     // we no longer parallelize over circuits. Each time we encounter a
     // a larger circuit we will grow the Statevector as necessary.
-    for (int i = 0; i < fused_circuits.size(); i++) {
+    for (size_t i = 0; i < fused_circuits.size(); i++) {
       int nq = num_qubits[i];
 
       if (nq > largest_nq) {
@@ -166,10 +166,10 @@ class TfqSimulateExpectationOpCuQuantum : public tensorflow::OpKernel {
       //  the state if there is a possibility that circuit[i] and
       //  circuit[i + 1] produce the same state.
       ss.SetStateZero(sv);
-      for (int j = 0; j < fused_circuits[i].size(); j++) {
+      for (size_t j = 0; j < fused_circuits[i].size(); j++) {
         qsim::ApplyFusedGate(sim, fused_circuits[i][j], sv);
       }
-      for (int j = 0; j < pauli_sums[i].size(); j++) {
+      for (size_t j = 0; j < pauli_sums[i].size(); j++) {
         // (#679) Just ignore empty program
         if (fused_circuits[i].size() == 0) {
           (*output_tensor)(i, j) = -2.0;

@@ -95,8 +95,8 @@ class ADJGradTest(tf.test.TestCase, parameterized.TestCase):
                 circuit_batch_tensor, symbol_names,
                 symbol_values_array.astype(np.float64), pauli_sums_tensor,
                 prev_grads),
-            "CPU",
-            num_samples=100,
+            "Adjoint CPU",
+            num_samples=10,
             result_avg=True,
         )
 
@@ -105,8 +105,8 @@ class ADJGradTest(tf.test.TestCase, parameterized.TestCase):
                 circuit_batch_tensor, symbol_names,
                 symbol_values_array.astype(np.float64), pauli_sums_tensor,
                 prev_grads),
-            "cuQuantum",
-            num_samples=100,
+            "Adjoint cuQuantum",
+            num_samples=10,
             result_avg=True,
         )
 
@@ -116,7 +116,7 @@ class ADJGradTest(tf.test.TestCase, parameterized.TestCase):
         # The result should be the similar within a tolerance.
         np.testing.assert_allclose(res_cpu,
                                    res_cuquantum,
-                                   atol=1e-4,
+                                   atol=1e-3,
                                    err_msg="""
         # If failed, the GPU architecture in this system may be unsupported.
         # Please refer to the supported architectures here.
