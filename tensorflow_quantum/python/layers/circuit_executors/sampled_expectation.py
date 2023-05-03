@@ -22,6 +22,7 @@ import tensorflow as tf
 import cirq
 from tensorflow_quantum.core.ops import circuit_execution_ops
 from tensorflow_quantum.core.ops.noise import noisy_sampled_expectation_op
+from tensorflow_quantum.python import quantum_context
 from tensorflow_quantum.python.differentiators import differentiator as diff
 from tensorflow_quantum.python.differentiators import parameter_shift
 from tensorflow_quantum.python.layers.circuit_executors import input_checks
@@ -251,16 +252,21 @@ class SampledExpectation(tf.keras.layers.Layer):
                             "not cirq.Sampler. Please use Expectation instead.")
 
         used_op = None
-        if backend == 'noiseless':
+        if backend == 'noiseless' or backend is None:
+            mode = quantum_context.get_quantum_concurrent_op_mode()
+            quantum_concurrent = False if use_cuquantum else mode
             used_op = circuit_execution_ops.get_sampled_expectation_op(
-                use_cuquantum=use_cuquantum)
+                backend=None,
+                use_cuquantum=use_cuquantum,
+                quantum_concurrent=quantum_concurrent,
+            )
         elif backend == 'noisy':
             if use_cuquantum:
                 raise ValueError('noisy backend does not currently support GPU')
             used_op = noisy_sampled_expectation_op.sampled_expectation
         else:
             used_op = circuit_execution_ops.get_sampled_expectation_op(
-                backend=backend, use_cuquantum=use_cuquantum)
+                backend=backend)
 
         self._expectation_op = differentiator.generate_differentiable_op(
             sampled_op=used_op)

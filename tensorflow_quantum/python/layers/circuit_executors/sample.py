@@ -19,6 +19,7 @@ import tensorflow as tf
 
 from tensorflow_quantum.core.ops import circuit_execution_ops
 from tensorflow_quantum.core.ops.noise import noisy_samples_op
+from tensorflow_quantum.python import quantum_context
 from tensorflow_quantum.python.layers.circuit_executors import input_checks
 
 
@@ -154,12 +155,16 @@ class Sample(tf.keras.layers.Layer):
         """
         super().__init__(**kwargs)
         used_op = None
-        if backend == 'noiseless':
-            used_op = circuit_execution_ops.get_sampling_op(None, \
-                                                            use_cuquantum=use_cuquantum)
+        if backend == 'noiseless' or backend is None:
+            mode = quantum_context.get_quantum_concurrent_op_mode()
+            quantum_concurrent = False if use_cuquantum else mode
+            used_op = circuit_execution_ops.get_sampling_op(
+                None,
+                use_cuquantum=use_cuquantum,
+                quantum_concurrent=quantum_concurrent)
         elif backend == 'noisy':
             if use_cuquantum:
-                raise ValueError('noisy backend does not currently support GPU')
+                raise ValueError('noisy backend has no GPU support.')
             used_op = noisy_samples_op.samples
         else:
             used_op = circuit_execution_ops.get_sampling_op(backend)

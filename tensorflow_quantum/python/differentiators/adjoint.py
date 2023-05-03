@@ -33,9 +33,10 @@ class Adjoint(differentiator.Differentiator):
     https://academic.oup.com/gji/article-pdf/167/2/495/1492368/167-2-495.pdf).
     The Adjoint method differentiates the input circuits in roughly one forward
     and backward pass over the circuits, to calculate the gradient of
-    a symbol only a constant number of gate operations need to be applied to the
-    circuits state. When the number of parameters in a circuit is very large,
-    this differentiator performs much better than all the others found in TFQ.
+    a symbol only a constant number of gate operations need to be applied to
+    the circuits state. When the number of parameters in a circuit is very
+    large, this differentiator performs much better than all the others found
+    in TFQ.
 
 
     >>> my_op = tfq.get_expectation_op()
@@ -114,6 +115,7 @@ class Adjoint(differentiator.Differentiator):
             forward_pass_vals,
             grad,
     ):
+        """Returns cuquantum adjoint gradient op result."""
         return tfq_adj_grad_op_cuquantum.tfq_adj_grad(programs, symbol_names,
                                                       symbol_values, pauli_sums,
                                                       grad)
@@ -129,6 +131,7 @@ class Adjoint(differentiator.Differentiator):
             forward_pass_vals,
             grad,
     ):
+        """Returns cpu adjoint gradient op result."""
         return tfq_adj_grad_op.tfq_adj_grad(programs, symbol_names,
                                             symbol_values, pauli_sums, grad)
 

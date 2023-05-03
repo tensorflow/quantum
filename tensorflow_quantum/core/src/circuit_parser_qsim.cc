@@ -187,7 +187,8 @@ inline Status TwoConstantGate(
     const unsigned int num_qubits, const unsigned int time,
     QsimCircuit* circuit, std::vector<GateMetaData>* metadata) {
   unsigned int q0, q1;
-  bool unused = absl::SimpleAtoi(op.qubits(0).id(), &q0);
+  [[maybe_unused]] bool unused;
+  unused = absl::SimpleAtoi(op.qubits(0).id(), &q0);
   unused = absl::SimpleAtoi(op.qubits(1).id(), &q1);
   auto gate = create_f(time, num_qubits - q0 - 1, num_qubits - q1 - 1);
   Status s = OptionalInsertControls(op, num_qubits, &gate);
@@ -213,9 +214,10 @@ inline Status SingleEigenGate(
     const unsigned int num_qubits, const unsigned int time,
     QsimCircuit* circuit, std::vector<GateMetaData>* metadata) {
   unsigned int q0;
-  bool unused;
+
   float exp, exp_s, gs;
   Status u;
+  [[maybe_unused]] bool unused;
   unused = absl::SimpleAtoi(op.qubits(0).id(), &q0);
 
   absl::optional<std::string> exponent_symbol;
@@ -263,8 +265,9 @@ inline Status TwoEigenGate(
     QsimCircuit* circuit, std::vector<GateMetaData>* metadata) {
   unsigned int q0, q1;
   float exp, exp_s, gs;
-  bool unused;
+
   Status u;
+  [[maybe_unused]] bool unused;
   unused = absl::SimpleAtoi(op.qubits(0).id(), &q0);
   unused = absl::SimpleAtoi(op.qubits(1).id(), &q1);
 
@@ -402,9 +405,10 @@ inline Status PhasedXGate(const Operation& op, const SymbolMap& param_map,
                           const unsigned int time, QsimCircuit* circuit,
                           std::vector<GateMetaData>* metadata) {
   int q0;
-  bool unused;
+
   float pexp, pexp_s, exp, exp_s, gs;
   Status u;
+  [[maybe_unused]] bool unused;
   unused = absl::SimpleAtoi(op.qubits(0).id(), &q0);
 
   absl::optional<std::string> exponent_symbol;
@@ -462,9 +466,10 @@ inline Status FsimGate(const Operation& op, const SymbolMap& param_map,
                        QsimCircuit* circuit,
                        std::vector<GateMetaData>* metadata) {
   int q0, q1;
-  bool unused;
+
   float theta, theta_s, phi, phi_s;
   Status u;
+  [[maybe_unused]] bool unused;
   unused = absl::SimpleAtoi(op.qubits(0).id(), &q0);
   unused = absl::SimpleAtoi(op.qubits(1).id(), &q1);
 
@@ -519,9 +524,10 @@ inline Status PhasedISwapGate(const Operation& op, const SymbolMap& param_map,
                               const unsigned int time, QsimCircuit* circuit,
                               std::vector<GateMetaData>* metadata) {
   int q0, q1;
-  bool unused;
+
   float pexp, pexp_s, exp, exp_s;
   Status u;
+  [[maybe_unused]] bool unused;
   unused = absl::SimpleAtoi(op.qubits(0).id(), &q0);
   unused = absl::SimpleAtoi(op.qubits(1).id(), &q1);
 
@@ -611,9 +617,10 @@ inline Status AsymmetricDepolarizingChannel(const Operation& op,
                                             const unsigned int time,
                                             NoisyQsimCircuit* ncircuit) {
   int q;
-  bool unused;
+
   float p_x, p_y, p_z;
   Status u;
+  [[maybe_unused]] bool unused;
   unused = absl::SimpleAtoi(op.qubits(0).id(), &q);
 
   u = ParseProtoArg(op, "p_x", {}, &p_x);
@@ -633,9 +640,10 @@ inline Status DepolarizingChannel(const Operation& op,
                                   const unsigned int time,
                                   NoisyQsimCircuit* ncircuit) {
   int q;
-  bool unused;
+
   float p;
   Status u;
+  [[maybe_unused]] bool unused;
   unused = absl::SimpleAtoi(op.qubits(0).id(), &q);
 
   u = ParseProtoArg(op, "p", {}, &p);
@@ -651,9 +659,10 @@ inline Status DepolarizingChannel(const Operation& op,
 inline Status GADChannel(const Operation& op, const unsigned int num_qubits,
                          const unsigned int time, NoisyQsimCircuit* ncircuit) {
   int q;
-  bool unused;
+
   float p, gamma;
   Status u;
+  [[maybe_unused]] bool unused;
   unused = absl::SimpleAtoi(op.qubits(0).id(), &q);
 
   u = ParseProtoArg(op, "p", {}, &p);
@@ -675,7 +684,8 @@ inline Status ResetChannel(const Operation& op, const unsigned int num_qubits,
                            const unsigned int time,
                            NoisyQsimCircuit* ncircuit) {
   int q;
-  bool unused;
+
+  [[maybe_unused]] bool unused;
   unused = absl::SimpleAtoi(op.qubits(0).id(), &q);
 
   auto chan = qsim::Cirq::ResetChannel<float>::Create(time, num_qubits - q - 1);
@@ -688,9 +698,10 @@ inline Status AmplitudeDampingChannel(const Operation& op,
                                       const unsigned int time,
                                       NoisyQsimCircuit* ncircuit) {
   int q;
-  bool unused;
+
   float gamma;
   Status u;
+  [[maybe_unused]] bool unused;
   unused = absl::SimpleAtoi(op.qubits(0).id(), &q);
 
   u = ParseProtoArg(op, "gamma", {}, &gamma);
@@ -708,9 +719,10 @@ inline Status PhaseDampingChannel(const Operation& op,
                                   const unsigned int time,
                                   NoisyQsimCircuit* ncircuit) {
   int q;
-  bool unused;
+
   float gamma;
   Status u;
+  [[maybe_unused]] bool unused;
   unused = absl::SimpleAtoi(op.qubits(0).id(), &q);
 
   u = ParseProtoArg(op, "gamma", {}, &gamma);
@@ -729,9 +741,10 @@ inline Status PhaseFlipChannel(const Operation& op,
                                const unsigned int time,
                                NoisyQsimCircuit* ncircuit) {
   int q;
-  bool unused;
+
   float p;
   Status u;
+  [[maybe_unused]] bool unused;
   unused = absl::SimpleAtoi(op.qubits(0).id(), &q);
 
   u = ParseProtoArg(op, "p", {}, &p);
@@ -749,9 +762,10 @@ inline Status BitFlipChannel(const Operation& op, const unsigned int num_qubits,
                              const unsigned int time,
                              NoisyQsimCircuit* ncircuit) {
   int q;
-  bool unused;
+
   float p;
   Status u;
+  [[maybe_unused]] bool unused;
   unused = absl::SimpleAtoi(op.qubits(0).id(), &q);
 
   u = ParseProtoArg(op, "p", {}, &p);
@@ -852,7 +866,8 @@ tensorflow::Status QsimCircuitFromProgram(
   // Convert proto to qsim internal representation.
   circuit->num_qubits = num_qubits;
   int time = 0;
-  bool unused;
+  [[maybe_unused]] bool unused;
+
   // Special case empty.
   if (num_qubits <= 0) {
     return ::tensorflow::Status();

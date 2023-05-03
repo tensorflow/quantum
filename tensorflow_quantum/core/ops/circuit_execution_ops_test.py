@@ -27,6 +27,7 @@ from absl.testing import parameterized
 from scipy import stats
 import cirq
 import cirq_google
+from cirq_google.engine.abstract_processor import AbstractProcessor
 
 from tensorflow_quantum.core.ops import batch_util, circuit_execution_ops
 from tensorflow_quantum.python import util
@@ -115,11 +116,9 @@ class OpGetterInputChecks(tf.test.TestCase):
         circuit_execution_ops.get_expectation_op()
         with self.assertRaisesRegex(NotImplementedError,
                                     expected_regex='Sample-based'):
-            mock_engine = mock.Mock()
+            mock_processor = mock.create_autospec(AbstractProcessor)
             circuit_execution_ops.get_expectation_op(
-                cirq_google.QuantumEngineSampler(engine=mock_engine,
-                                                 processor_id='test',
-                                                 gate_set=cirq_google.XMON))
+                cirq_google.ProcessorSampler(processor=mock_processor))
         with self.assertRaisesRegex(
                 TypeError,
                 expected_regex="cirq.sim.simulator.SimulatesExpectationValues"):
@@ -145,11 +144,9 @@ class OpGetterInputChecks(tf.test.TestCase):
             backend=cirq.Simulator())
         circuit_execution_ops.get_sampled_expectation_op(
             backend=cirq.DensityMatrixSimulator())
-        mock_engine = mock.Mock()
+        mock_processor = mock.create_autospec(AbstractProcessor)
         circuit_execution_ops.get_sampled_expectation_op(
-            cirq_google.QuantumEngineSampler(engine=mock_engine,
-                                             processor_id='test',
-                                             gate_set=cirq_google.XMON))
+            cirq_google.ProcessorSampler(processor=mock_processor))
         with self.assertRaisesRegex(TypeError, expected_regex="a Cirq.Sampler"):
             circuit_execution_ops.get_sampled_expectation_op(backend="junk")
 
@@ -174,11 +171,9 @@ class OpGetterInputChecks(tf.test.TestCase):
         circuit_execution_ops.get_sampling_op(backend=cirq.Simulator())
         circuit_execution_ops.get_sampling_op(
             backend=cirq.DensityMatrixSimulator())
-        mock_engine = mock.Mock()
+        mock_processor = mock.create_autospec(AbstractProcessor)
         circuit_execution_ops.get_sampling_op(
-            backend=cirq_google.QuantumEngineSampler(engine=mock_engine,
-                                                     processor_id='test',
-                                                     gate_set=cirq_google.XMON))
+            backend=cirq_google.ProcessorSampler(processor=mock_processor))
         with self.assertRaisesRegex(TypeError,
                                     expected_regex="Expected a Cirq.Sampler"):
             circuit_execution_ops.get_sampling_op(backend="junk")
@@ -207,12 +202,9 @@ class OpGetterInputChecks(tf.test.TestCase):
             circuit_execution_ops.get_state_op(backend="junk")
         with self.assertRaisesRegex(TypeError,
                                     expected_regex="Cirq.SimulatesFinalState"):
-            mock_engine = mock.Mock()
+            mock_processor = mock.create_autospec(AbstractProcessor)
             circuit_execution_ops.get_state_op(
-                backend=cirq_google.QuantumEngineSampler(
-                    engine=mock_engine,
-                    processor_id='test',
-                    gate_set=cirq_google.XMON))
+                backend=cirq_google.ProcessorSampler(processor=mock_processor))
 
         with self.assertRaisesRegex(TypeError,
                                     expected_regex="must be type bool."):
@@ -339,7 +331,7 @@ class ExecutionOpsConsistentyTest(tf.test.TestCase, parameterized.TestCase):
         symbol_names = []
         circuit_batch, resolver_batch = \
             util.random_circuit_resolver_batch(
-                cirq.GridQubit.rect(4, 4), 5)
+                cirq.GridQubit.rect(3, 3), 5)
 
         symbol_values_array = np.array(
             [[resolver[symbol]
@@ -351,10 +343,6 @@ class ExecutionOpsConsistentyTest(tf.test.TestCase, parameterized.TestCase):
 
         cirq_states = batch_util.batch_calculate_state(circuit_batch,
                                                        resolver_batch, sim)
-        # Due to numpy memory allocation error with large circuits,
-        # we deallocate these variables.
-        del circuit_batch
-        del resolver_batch
 
         self.assertAllClose(cirq_states, op_states, atol=1e-5, rtol=1e-5)
 

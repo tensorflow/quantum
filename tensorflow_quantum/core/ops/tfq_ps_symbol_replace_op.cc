@@ -89,9 +89,9 @@ class TfqPsSymbolReplaceOp : public tensorflow::OpKernel {
         std::string symbol_to_replace = symbols(sidx);
         std::string temp_symbol_holder;
         Program cur_program = programs.at(pidx);
-        for (int j = 0; j < cur_program.circuit().moments().size(); j++) {
+        for (size_t j = 0; j < cur_program.circuit().moments().size(); j++) {
           Moment cur_moment = cur_program.circuit().moments().at(j);
-          for (int k = 0; k < cur_moment.operations().size(); k++) {
+          for (size_t k = 0; k < cur_moment.operations().size(); k++) {
             Operation cur_op = cur_moment.operations().at(k);
             for (auto l = cur_op.args().begin(); l != cur_op.args().end();
                  l++) {
@@ -163,12 +163,12 @@ class TfqPsSymbolReplaceOp : public tensorflow::OpKernel {
       for (int i = start; i < end; i++) {
         int sidx = i % n_symbols;
         int pidx = i / n_symbols;
-        for (int j = 0; j < output_programs.at(pidx).at(sidx).size(); j++) {
+        for (size_t j = 0; j < output_programs.at(pidx).at(sidx).size(); j++) {
           output_tensor(pidx, sidx, j) =
               output_programs.at(pidx).at(sidx).at(j);
         }
-        for (int j = output_programs.at(pidx).at(sidx).size(); j < biggest_pad;
-             j++) {
+        for (size_t j = output_programs.at(pidx).at(sidx).size();
+             j < biggest_pad; j++) {
           output_tensor(pidx, sidx, j) = empty_program;
         }
       }

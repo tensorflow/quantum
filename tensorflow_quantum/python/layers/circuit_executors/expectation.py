@@ -244,20 +244,27 @@ class Expectation(tf.keras.layers.Layer):
                             "Please use SampledExpectation instead.")
         used_op = None
         self.noisy = False
-        if backend == 'noiseless':
-            backend = None
 
         # Ingest differentiator.
         if differentiator is None:
             differentiator = parameter_shift.ParameterShift()
-            if backend is None:
+            if backend == 'noiseless' or backend is None:
                 differentiator = adjoint.Adjoint()
 
         if not isinstance(differentiator, diff.Differentiator):
             raise TypeError("Differentiator must inherit from "
                             "tfq.differentiators.Differentiator")
 
-        if backend == 'noisy':
+        if backend == 'noiseless' or backend is None:
+            mode = quantum_context.get_quantum_concurrent_op_mode()
+            quantum_concurrent = False if use_cuquantum else mode
+            used_op = circuit_execution_ops.get_expectation_op(
+                backend=None,
+                use_cuquantum=use_cuquantum,
+                quantum_concurrent=quantum_concurrent)
+            self._expectation_op = differentiator.generate_differentiable_op(
+                analytic_op=used_op, use_cuquantum=use_cuquantum)
+        elif backend == 'noisy':
             if use_cuquantum:
                 raise ValueError("noisy backend does not currently support GPU")
             used_op = noisy_expectation_op.expectation
@@ -265,14 +272,9 @@ class Expectation(tf.keras.layers.Layer):
                 sampled_op=used_op)
             self.noisy = True
         else:
-            mode = quantum_context.get_quantum_concurrent_op_mode()
-            quantum_concurrent = False if use_cuquantum else mode
-            used_op = circuit_execution_ops.get_expectation_op(
-                backend=backend,
-                use_cuquantum=use_cuquantum,
-                quantum_concurrent=quantum_concurrent)
+            used_op = circuit_execution_ops.get_expectation_op(backend=backend)
             self._expectation_op = differentiator.generate_differentiable_op(
-                analytic_op=used_op, use_cuquantum=use_cuquantum)
+                analytic_op=used_op)
 
         self._w = None
 

@@ -1,5 +1,5 @@
-cirq-core==0.13.1
-cirq-google==0.13.1
+cirq-core~=1.0
+cirq-google~=1.0
 sympy==1.8
 numpy==1.24.2  # TensorFlow can detect if it was built against other versions.
 nbformat==4.4.0

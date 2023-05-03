@@ -22,7 +22,7 @@ limitations under the License.
 #include "../qsim/lib/gate_appl.h"
 #include "../qsim/lib/gates_cirq.h"
 #include "../qsim/lib/seqfor.h"
-#include "../qsim/lib/simmux.h"
+#include "../qsim/lib/simmux_gpu.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/shape_inference.h"
 #include "tensorflow/core/framework/tensor_shape.h"
@@ -38,6 +38,41 @@ limitations under the License.
 
 namespace tfq {
 
+namespace {
+// TODO(jaeyoo): Temorary hack for BulkSetAmpl with cuda ops.
+// Updates qsim custatevec side BulkSetAmple ops, and remove these utilities.
+template <typename FP, unsigned warp_size = 32>
+__global__ void BulkSetAmplKernel(uint64_t mask, uint64_t bits, FP re, FP im,
+                                  bool exclude, FP* state) {
+  uint64_t k1 = uint64_t{blockIdx.x} * blockDim.x + threadIdx.x;
+  uint64_t k2 = 2 * k1 - threadIdx.x % warp_size;
+
+  bool set = ((k1 & mask) == bits) ^ exclude;
+
+  if (set) {
+    state[k2] = re;
+    state[k2 + warp_size] = im;
+  }
+}
+
+// Sets state[i] = complex(re, im) where (i & mask) == bits.
+// if `exclude` is true then the criteria becomes (i & mask) != bits.
+template <typename fp_type>
+void BulkSetAmpl(qsim::SimulatorCuStateVec<float>::StateSpace::State& state,
+                 uint64_t mask, uint64_t bits, fp_type re, fp_type im,
+                 bool exclude = false) {
+  uint64_t size = uint64_t{1} << state.num_qubits();
+
+  unsigned threads = std::min(size, uint64_t{512});
+  unsigned blocks = size / threads;
+
+  BulkSetAmplKernel<<<blocks, threads>>>(mask, bits, re, im, exclude,
+                                         state.get());
+  cudaPeekAtLastError();
+  cudaDeviceSynchronize();
+}
+}  // namespace
+
 using ::tensorflow::Status;
 using ::tfq::proto::PauliSum;
 using ::tfq::proto::Program;
@@ -49,7 +84,17 @@ class TfqAdjointGradientCuquantumOp : public tensorflow::OpKernel {
  public:
   explicit TfqAdjointGradientCuquantumOp(
       tensorflow::OpKernelConstruction* context)
-      : OpKernel(context) {}
+      : OpKernel(context) {
+    // create handles for simulator
+    cublasCreate(&cublas_handle_);
+    custatevecCreate(&custatevec_handle_);
+  }
+
+  ~TfqAdjointGradientCuquantumOp() {
+    // destroy handles in sync with simulator lifetime
+    cublasDestroy(cublas_handle_);
+    custatevecDestroy(custatevec_handle_);
+  }
 
   void Compute(tensorflow::OpKernelContext* context) override {
     // TODO (mbbrough): add more dimension checks for other inputs here.
@@ -144,24 +189,9 @@ class TfqAdjointGradientCuquantumOp : public tensorflow::OpKernel {
 
     output_tensor.setZero();
 
-    // create handles for simulator
-    cublasCreate(&cublas_handle_);
-    custatevecCreate(&custatevec_handle_);
-    // Cross reference with standard google cloud compute instances
-    // Memory ~= 2 * num_threads * (2 * 64 * 2 ** num_qubits in circuits)
-    // e2s2 = 2 CPU, 8GB -> Can safely do 25 since Memory = 4GB
-    // e2s4 = 4 CPU, 16GB -> Can safely do 25 since Memory = 8GB
-    // ...
-    // This method creates 3 big state vectors per thread so reducing size
-    // here slightly.
-
     ComputeLarge(num_qubits, qsim_circuits, maps, full_fuse,
                  partial_fused_circuits, pauli_sums, gradient_gates,
                  downstream_grads, context, &output_tensor);
-
-    // destroy handles in sync with simulator lifetime
-    cublasDestroy(cublas_handle_);
-    custatevecDestroy(custatevec_handle_);
   }
 
  private:
@@ -181,7 +211,6 @@ class TfqAdjointGradientCuquantumOp : public tensorflow::OpKernel {
       tensorflow::OpKernelContext* context,
       tensorflow::TTypes<float, 1>::Matrix* output_tensor) {
     // Instantiate qsim objects.
-    const auto tfq_for = tfq::QsimFor(context);
     using Simulator = qsim::SimulatorCuStateVec<float>;
     using StateSpace = Simulator::StateSpace;
 
@@ -193,7 +222,7 @@ class TfqAdjointGradientCuquantumOp : public tensorflow::OpKernel {
     auto scratch = ss.Create(largest_nq);
     auto scratch2 = ss.Create(largest_nq);
 
-    for (int i = 0; i < partial_fused_circuits.size(); i++) {
+    for (size_t i = 0; i < partial_fused_circuits.size(); i++) {
       int nq = num_qubits[i];
 
       if (nq > largest_nq) {
@@ -210,15 +239,15 @@ class TfqAdjointGradientCuquantumOp : public tensorflow::OpKernel {
       }
 
       ss.SetStateZero(sv);
-      for (int j = 0; j < full_fuse[i].size(); j++) {
+      for (size_t j = 0; j < full_fuse[i].size(); j++) {
         qsim::ApplyFusedGate(sim, full_fuse[i][j], sv);
       }
 
       // sv now contains psi
       // scratch contains (sum_j paulis_sums[i][j] * downstream_grads[j])|psi>
       // scratch2 now contains psi as well.
-      Status unused = AccumulateOperators(pauli_sums[i], downstream_grads[i],
-                                          sim, ss, sv, scratch2, scratch);
+      [[maybe_unused]] AccumulateOperators(pauli_sums[i], downstream_grads[i],
+                                           sim, ss, sv, scratch2, scratch);
 
       for (int j = partial_fused_circuits[i].size() - 1; j >= 0; j--) {
         for (int k = partial_fused_circuits[i][j].size() - 1; k >= 0; k--) {
@@ -238,13 +267,14 @@ class TfqAdjointGradientCuquantumOp : public tensorflow::OpKernel {
         // if applicable compute control qubit mask and control value bits.
         uint64_t mask = 0;
         uint64_t cbits = 0;
-        for (int k = 0; k < cur_gate.controlled_by.size(); k++) {
+        for (size_t k = 0; k < cur_gate.controlled_by.size(); k++) {
           uint64_t control_loc = cur_gate.controlled_by[k];
           mask |= uint64_t{1} << control_loc;
           cbits |= ((cur_gate.cmask >> k) & 1) << control_loc;
         }
 
-        for (int k = 0; k < gradient_gates[i][j - 1].grad_gates.size(); k++) {
+        for (size_t k = 0; k < gradient_gates[i][j - 1].grad_gates.size();
+             k++) {
           // Copy sv onto scratch2 in anticipation of non-unitary "gradient
           // gate".
           ss.Copy(sv, scratch2);
@@ -252,7 +282,7 @@ class TfqAdjointGradientCuquantumOp : public tensorflow::OpKernel {
             // Gradient of controlled gates puts zeros on diagonal which is
             // the same as collapsing the state and then applying the
             // non-controlled version of the gradient gate.
-            ss.BulkSetAmpl(scratch2, mask, cbits, 0, 0, true);
+            BulkSetAmpl<float>(scratch2, mask, cbits, 0, 0, true);
           }
           qsim::ApplyGate(sim, gradient_gates[i][j - 1].grad_gates[k],
                           scratch2);

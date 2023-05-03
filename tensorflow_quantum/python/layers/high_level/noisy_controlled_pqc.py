@@ -164,8 +164,8 @@ class NoisyControlledPQC(tf.keras.layers.Layer):
             trajectory.
         differentiator: Optional `tfq.differentiator` object to specify how
             gradients of `model_circuit` should be calculated.
-        use_cuquantum: Optional `bool` indicating whether to use GPU for simulation
-            or not. Defaults to `False`. NOT IMPLEMENTED YET.
+        use_cuquantum: Optional `bool` indicating whether to use GPU for
+            simulation or not. Defaults to `False`. NOT IMPLEMENTED YET.
         """
         super().__init__(**kwargs)
         # Ingest model_circuit.

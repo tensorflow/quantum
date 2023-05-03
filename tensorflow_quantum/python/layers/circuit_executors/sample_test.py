@@ -85,21 +85,29 @@ class SampleTest(tf.test.TestCase, parameterized.TestCase):
 
     @parameterized.parameters([
         {
-            'backend': 'noiseless'
+            'backend': 'noiseless',
+            'use_cuquantum': False,
         },
         {
-            'backend': 'noisy'
+            'backend': 'noisy',
+            'use_cuquantum': False,
         },
         {
-            'backend': cirq.Simulator()
+            'backend': cirq.Simulator(),
+            'use_cuquantum': False,
         },
         {
-            'backend': None  # old API usage.
+            'backend': None,  # old API usage.
+            'use_cuquantum': False,
+        },
+        {
+            'backend': None,
+            'use_cuquantum': True,
         }
     ])
-    def test_sample_invalid_combinations(self, backend):
+    def test_sample_invalid_combinations(self, backend, use_cuquantum):
         """Test with valid type inputs and valid value, but incorrect combo."""
-        sampler = sample.Sample(backend)
+        sampler = sample.Sample(backend, use_cuquantum=use_cuquantum)
         symbol = sympy.Symbol('alpha')
         circuit = cirq.Circuit(cirq.H(cirq.GridQubit(0, 0))**symbol)
         with self.assertRaisesRegex(Exception, expected_regex=""):
@@ -162,24 +170,30 @@ class SampleTest(tf.test.TestCase, parameterized.TestCase):
         output = sampler([circuit, circuit], repetitions=5)
         self.assertShapeEqual(np.empty((2, 5, 1)), output.to_tensor())
 
-    # TODO(trevormccrt): add QuantumEngineSampler to this once it is available
+    # TODO(trevormccrt): add ProcessorSampler to this once it is available
     @parameterized.parameters(
         list(
             util.kwargs_cartesian_product(
                 backend=['noiseless', 'noisy',
                          cirq.Simulator(), None],
+                use_cuquantum=[False, True],
                 all_n_qubits=[[3, 4, 10]],
                 n_samples=[1],
                 symbol_names=[[], ['a', 'b']])))
-    def test_sample_output(self, backend, all_n_qubits, n_samples,
-                           symbol_names):
+    def test_sample_output(self, backend, use_cuquantum, all_n_qubits,
+                           n_samples, symbol_names):
         """Test that expected output format is preserved.
 
         Check that any pre or post processing done inside the layers does not
         cause what is output from the layer to structurally deviate from what
         is expected.
         """
-        sampler = sample.Sample(backend=backend)
+        if use_cuquantum:
+            # If use_cuquantum is True,
+            if backend is not None and backend != 'noiseless':
+                return
+            # Passes backend=None or backend == 'noiseless' only.
+        sampler = sample.Sample(backend=backend, use_cuquantum=use_cuquantum)
         bits = cirq.GridQubit.rect(1, max(all_n_qubits))
         programs = []
         expected_outputs = []
