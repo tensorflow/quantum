@@ -340,6 +340,14 @@ class Differentiator(metaclass=abc.ABCMeta):
 
     @catch_empty_inputs
     @tf.function
+    def differentiate_analytic_cuquantum(self, programs, symbol_names, symbol_values,
+                               pauli_sums, forward_pass_vals, grad):
+        # `self.expectation_op` is already set to cuquantum op.
+        return self.differentiate_analytic(programs, symbol_names, symbol_values,
+                               pauli_sums, forward_pass_vals, grad)
+
+    @catch_empty_inputs
+    @tf.function
     def differentiate_analytic(self, programs, symbol_names, symbol_values,
                                pauli_sums, forward_pass_vals, grad):
         """Differentiate a circuit with analytical expectation.

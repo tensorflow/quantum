@@ -18,9 +18,20 @@ import enum
 import cirq
 
 from tensorflow_quantum.core.ops import (cirq_ops, tfq_simulate_ops,
-                                         tfq_utility_ops,
-                                         tfq_simulate_ops_cuquantum)
+                                         tfq_utility_ops)
 from tensorflow_quantum.python import quantum_context
+
+try:
+    from tensorflow_quantum.core.ops import tfq_simulate_ops_cuquantum
+    _enable_use_cuquantum = True
+except:
+    # `_enable_use_cuquantum = False` makes `use_cuquantum` silent.
+    _enable_use_cuquantum = False
+    tfq_simulate_ops_cuquantum = tfq_simulate_ops
+
+
+def is_cuda_configured() -> bool:
+    return _enable_use_cuquantum
 
 
 class TFQStateVectorSimulator(enum.Enum):
@@ -34,10 +45,12 @@ class TFQStateVectorSimulator(enum.Enum):
     state = tfq_simulate_ops.tfq_simulate_state
     state_cuquantum = tfq_simulate_ops_cuquantum.tfq_simulate_state
 
-    sampled_expectation = \
+    sampled_expectation = (
         tfq_simulate_ops.tfq_simulate_sampled_expectation
-    sampled_expectation_cuquantum = \
+    )
+    sampled_expectation_cuquantum = (
         tfq_simulate_ops_cuquantum.tfq_simulate_sampled_expectation
+    )
 
 
 def _check_quantum_concurrent(quantum_concurrent, use_cuquantum):
@@ -135,9 +148,9 @@ def get_expectation_op(
                 expectation value for each circuit with each op applied to it
                 (after resolving the corresponding parameters in).
     """
-
     # TODO (mbbrough): investigate how the above docstring renders.
     _check_quantum_concurrent(quantum_concurrent, use_cuquantum)
+    use_cuquantum = _enable_use_cuquantum and use_cuquantum
 
     op = None
     if backend is None:
@@ -243,6 +256,7 @@ def get_sampling_op(
 
     # TODO (mbbrough): investigate how the above docstring renders.
     _check_quantum_concurrent(quantum_concurrent, use_cuquantum)
+    use_cuquantum = _enable_use_cuquantum and use_cuquantum
 
     op = None
     if backend is None:
@@ -338,6 +352,7 @@ def get_state_op(
 
     # TODO (mbbrough): investigate how the above docstring renders.
     _check_quantum_concurrent(quantum_concurrent, use_cuquantum)
+    use_cuquantum = _enable_use_cuquantum and use_cuquantum
 
     op = None
     if backend is None:
@@ -455,12 +470,12 @@ def get_sampled_expectation_op(
     """
     # TODO (mbbrough): investigate how the above docstring renders.
     _check_quantum_concurrent(quantum_concurrent, use_cuquantum)
+    use_cuquantum = _enable_use_cuquantum and use_cuquantum
 
     op = None
     if backend is None:
         if use_cuquantum:
             op = TFQStateVectorSimulator.sampled_expectation_cuquantum
-            quantum_concurrent = False
         else:
             op = TFQStateVectorSimulator.sampled_expectation
 

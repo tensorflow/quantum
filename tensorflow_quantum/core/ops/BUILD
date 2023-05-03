@@ -652,6 +652,7 @@ py_library(
         # tensorflow framework for wrappers
         ":load_module",
     ],
+    tags = ["cuquantum"],
 )
 
 py_test(
@@ -748,6 +749,7 @@ cc_binary(
         "@local_config_cuquantum//:libcuquantum",
         "@qsim//lib:qsim_cuquantum_lib",
     ]),
+    tags = ["cuquantum"],
     # alwayslink=1,
 )
 
@@ -824,6 +826,7 @@ cc_binary(
         "@local_config_cuquantum//:libcuquantum",
         "@qsim//lib:qsim_cuquantum_lib",
     ]),
+    tags = ["cuquantum"],
     # alwayslink=1,
 )
 
@@ -838,6 +841,7 @@ py_library(
         # projector sum cc proto
         # tensorflow framework for wrappers
     ],
+    tags = ["cuquantum"],
 )
 
 py_test(

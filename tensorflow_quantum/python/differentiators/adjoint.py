@@ -15,8 +15,15 @@
 """Compute gradients by combining function values linearly."""
 import tensorflow as tf
 
-from tensorflow_quantum.core.ops import tfq_adj_grad_op, \
-                                        tfq_adj_grad_op_cuquantum
+from tensorflow_quantum.core.ops import tfq_adj_grad_op
+try:
+    from tensorflow_quantum.core.ops import tfq_adj_grad_op_cuquantum
+    _enable_use_cuquantum = True
+except:
+    _enable_use_cuquantum = False
+    tfq_adj_grad_op_cuquantum = tfq_adj_grad_op
+
+
 from tensorflow_quantum.python.differentiators import differentiator
 
 
