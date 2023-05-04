@@ -41,17 +41,16 @@ namespace tfq {
 namespace {
 // TODO(jaeyoo): Temorary hack for BulkSetAmpl with cuda ops.
 // Updates qsim custatevec side BulkSetAmple ops, and remove these utilities.
-template <typename FP, unsigned warp_size = 32>
+template <typename FP>
 __global__ void BulkSetAmplKernel(uint64_t mask, uint64_t bits, FP re, FP im,
                                   bool exclude, FP* state) {
   uint64_t k1 = uint64_t{blockIdx.x} * blockDim.x + threadIdx.x;
-  uint64_t k2 = 2 * k1 - threadIdx.x % warp_size;
 
   bool set = ((k1 & mask) == bits) ^ exclude;
 
   if (set) {
-    state[k2] = re;
-    state[k2 + warp_size] = im;
+    state[2 * k1] = re;
+    state[2 * k1 + 1] = im;
   }
 }
 

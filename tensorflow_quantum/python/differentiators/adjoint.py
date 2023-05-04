@@ -142,6 +142,21 @@ class Adjoint(differentiator.Differentiator):
         return tfq_adj_grad_op.tfq_adj_grad(programs, symbol_names,
                                             symbol_values, pauli_sums, grad)
 
+    def differentiate_sampled_cuquantum(
+            self,
+            programs,
+            symbol_names,
+            symbol_values,
+            pauli_sums,
+            num_samples,
+            forward_pass_vals,
+            grad,
+    ):
+        raise NotImplementedError(
+            "Adjoint state methods are not supported in sample based settings."
+            " Please use analytic expectation calculation or a different "
+            "tfq.differentiator.")
+
     def differentiate_sampled(
             self,
             programs,

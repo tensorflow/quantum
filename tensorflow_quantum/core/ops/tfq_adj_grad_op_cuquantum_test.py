@@ -116,7 +116,7 @@ class ADJGradTest(tf.test.TestCase, parameterized.TestCase):
         # The result should be the similar within a tolerance.
         np.testing.assert_allclose(res_cpu,
                                    res_cuquantum,
-                                   atol=1e-3,
+                                   atol=1e-4,
                                    err_msg="""
         # If failed, the GPU architecture in this system may be unsupported.
         # Please refer to the supported architectures here.
