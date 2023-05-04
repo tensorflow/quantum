@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# ==============================================================================
+# =============================================================================
 """A tf.keras.layer that ingests programs and outputs bitstring samples."""
 import numbers
 
@@ -179,17 +179,18 @@ class Sample(tf.keras.layers.Layer):
              repetitions=None):
         """Keras call function.
 
-        Input options:
-            `inputs`, `symbol_names`, `symbol_values`:
-                see `input_checks.expand_circuits`
-            `repetitions`: a Python `int` or a pre-converted
-                `tf.Tensor` containing a single `int` entry.
+        Args:
+            inputs: See `input_checks.expand_circuits`.
+            symbol_names: See `input_checks.expand_circuits`.
+            symbol_values: See `input_checks.expand_circuits`.
+            repetitions: A Python `int` or a pre-converted `tf.Tensor`
+                containing a single `int` entry.
 
-        Output shape:
+        Returns:
             `tf.RaggedTensor` with shape:
-                [batch size of symbol_values, repetitions, <ragged string size>]
-                    or
-                [number of circuits, repetitions, <ragged string size>]
+            [batch size of symbol_values, repetitions, <ragged string size>]
+                or
+            [number of circuits, repetitions, <ragged string size>]
         """
         if repetitions is None:
             raise ValueError("Number of repetitions not specified.")

@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# ==============================================================================
+# =============================================================================
 """Tests for tensorflow_quantum.layers.circuit_executors.expectation."""
 # Remove PYTHONPATH collisions for protobuf.
 # pylint: disable=wrong-import-position
@@ -48,7 +48,7 @@ def _gen_single_bit_rotation_problem(bit, symbols, noisy):
     return circuit
 
 
-class ExpectationTest(tf.test.TestCase):
+class ExpectationTest(parameterized.TestCase, tf.test.TestCase):
     """Basic tests for the expectation layer."""
 
     def test_expectation_instantiate(self):
@@ -283,10 +283,17 @@ class ExpectationTest(tf.test.TestCase):
             ], [cirq.Z(bit), cirq.Z(bit), cirq.Z(bit)]],
             repetitions=[[1, 2, 3], [4, 5, 6]])
 
-    def test_expectation_simple_tf_train(self):
+    @parameterized.parameters([{
+        'use_cuquantum': False,
+    }, {
+        'use_cuquantum': True,
+    }])
+    def test_expectation_simple_tf_train(self, use_cuquantum):
         """Train a layer using standard tf (not keras).
         This is a subtle test that will work since we don't use keras compile.
         """
+        tf.random.set_seed(RANDOM_SEED)
+        initializer = tf.keras.initializers.RandomUniform(0, 2 * np.pi)
         bit = cirq.GridQubit(0, 0)
         circuit = \
             cirq.Circuit(cirq.rx(sympy.Symbol('theta'))(bit))
@@ -297,7 +304,8 @@ class ExpectationTest(tf.test.TestCase):
             with tf.GradientTape() as tape:
                 circuit_out = layer(circuit,
                                     symbol_names=['theta'],
-                                    operators=op)
+                                    operators=op,
+                                    initializer=initializer)
                 mse = tf.square(tf.reduce_sum(tf.subtract(circuit_out, -1)))
             grads = tape.gradient(mse, layer.trainable_weights)
             optimizer.apply_gradients(zip(grads, layer.trainable_weights))
@@ -331,6 +339,8 @@ class ExpectationFunctionalTests(parameterized.TestCase, tf.test.TestCase):
         if use_cuquantum and not circuit_execution_ops.is_gpu_configured():
             # GPU is not set. Ignores this sub-test.
             self.skipTest("GPU is not set. Ignoring gpu tests...")
+        tf.random.set_seed(RANDOM_SEED)
+        initializer = tf.keras.initializers.RandomUniform(0, 2 * np.pi)
         noisy = backend == 'noisy'
         bit = cirq.GridQubit(0, 0)
         symbols = sympy.symbols('x y z')
@@ -348,7 +358,8 @@ class ExpectationFunctionalTests(parameterized.TestCase, tf.test.TestCase):
           symbol_names=symbols,
           operators=cirq.Z(bit),
           symbol_values=l2,
-          repetitions=reps)
+          repetitions=reps,
+          initializer=initializer)
         model = tf.keras.Model(inputs=[datum, inputs], outputs=outputs)
 
         data_in = np.array([[1], [0]], dtype=np.float32)
@@ -386,6 +397,8 @@ class ExpectationFunctionalTests(parameterized.TestCase, tf.test.TestCase):
         if use_cuquantum and not circuit_execution_ops.is_gpu_configured():
             # GPU is not set. Ignores this sub-test.
             self.skipTest("GPU is not set. Ignoring gpu tests...")
+        tf.random.set_seed(RANDOM_SEED)
+        normal_initializer = tf.keras.initializers.RandomNormal()
         noisy = backend == 'noisy'
         bit = cirq.GridQubit(0, 0)
         symbols = sympy.symbols('x, y, z')
@@ -406,7 +419,7 @@ class ExpectationFunctionalTests(parameterized.TestCase, tf.test.TestCase):
         )(circuit_input,
           symbol_names=symbols,
           operators=op_input,
-          initializer=tf.keras.initializers.RandomNormal(),
+          initializer=normal_initializer,
           repetitions=reps)
 
         model = tf.keras.Model(
@@ -453,6 +466,8 @@ class ExpectationFunctionalTests(parameterized.TestCase, tf.test.TestCase):
         if use_cuquantum and not circuit_execution_ops.is_gpu_configured():
             # GPU is not set. Ignores this sub-test.
             self.skipTest("GPU is not set. Ignoring gpu tests...")
+        tf.random.set_seed(RANDOM_SEED)
+        initializer = tf.keras.initializers.RandomUniform(0, 2 * np.pi)
         noisy = backend == 'noisy'
         bit = cirq.GridQubit(0, 0)
         symbols = sympy.symbols('x, y, z')
@@ -475,7 +490,8 @@ class ExpectationFunctionalTests(parameterized.TestCase, tf.test.TestCase):
           symbol_names=symbols,
           symbol_values=dense_2,
           operators=op_inp,
-          repetitions=reps)
+          repetitions=reps,
+          initializer=initializer)
 
         functional_model = tf.keras.Model(
             inputs=[data_inp, op_inp, circuit_inp], outputs=[circuit_output])
@@ -513,6 +529,9 @@ class ExpectationFunctionalTests(parameterized.TestCase, tf.test.TestCase):
         if use_cuquantum and not circuit_execution_ops.is_gpu_configured():
             # GPU is not set. Ignores this sub-test.
             self.skipTest("GPU is not set. Ignoring gpu tests...")
+        tf.random.set_seed(RANDOM_SEED)
+        initializer = tf.keras.initializers.RandomUniform(0, 2 * np.pi)
+
         noisy = backend == 'noisy'
         bit = cirq.GridQubit(0, 0)
         symbols = sympy.symbols('x, y, z')
@@ -533,7 +552,8 @@ class ExpectationFunctionalTests(parameterized.TestCase, tf.test.TestCase):
           symbol_names=symbols,
           symbol_values=d2,
           operators=cirq.Z(bit),
-          repetitions=reps)
+          repetitions=reps,
+          initializer=initializer)
         d3 = tf.keras.layers.Dense(1)(quantum)
 
         model = tf.keras.Model(inputs=[circuit_input, classical_input],

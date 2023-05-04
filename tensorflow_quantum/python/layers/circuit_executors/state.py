@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# ==============================================================================
+# =============================================================================
 """A tf.keras.layer that ingests programs and parameters and outputs a state."""
 import tensorflow as tf
 
@@ -150,11 +150,12 @@ class State(tf.keras.layers.Layer):
     def call(self, inputs, *, symbol_names=None, symbol_values=None):
         """Keras call function.
 
-        Input options:
-            `inputs`, `symbol_names`, `symbol_values`:
-                see `input_checks.expand_circuits`
+        Args:
+            inputs: See `input_checks.expand_circuits.
+            symbol_names: See `input_checks.expand_circuits.
+            symbol_values: See `input_checks.expand_circuits.
 
-        Output shape:
+        Returns:
             `tf.RaggedTensor` with shape:
                 [batch size of symbol_values, <size of state>]
                     or

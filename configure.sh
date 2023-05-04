@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# ==============================================================================
+# =============================================================================
 PLATFORM="$(uname -s | tr 'A-Z' 'a-z')"
 
 function write_to_bazelrc() {
