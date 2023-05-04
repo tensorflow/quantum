@@ -31,6 +31,8 @@ from tensorflow_quantum.python.layers.circuit_executors import \
 from tensorflow_quantum.python.differentiators import linear_combination
 from tensorflow_quantum.python import util
 
+RANDOM_SEED = 1234
+
 
 class CustomSampler(cirq.Sampler):
     """Wrapper for cirq.Simulator to confirm that custom samplers work."""
@@ -381,6 +383,7 @@ class SampledExpectationTest(parameterized.TestCase, tf.test.TestCase):
 
     def test_sampled_expectation_simple_tf_train(self):
         """Train a layer using standard tf (not keras)."""
+        tf.random.set_seed(RANDOM_SEED)
         bit = cirq.GridQubit(0, 0)
         circuit = cirq.Circuit(cirq.rx(sympy.Symbol('theta'))(bit))
         layer = sampled_expectation.SampledExpectation()
@@ -417,6 +420,7 @@ class SampledExpectationFunctionalTests(parameterized.TestCase,
         This model will put a qubit in the zero or one state from a random state
         given the input zero or one.
         """
+        tf.random.set_seed(RANDOM_SEED)
         bit = cirq.GridQubit(0, 0)
         symbols = sympy.symbols('x y z')
         circuit = _gen_single_bit_rotation_problem(
@@ -462,6 +466,7 @@ class SampledExpectationFunctionalTests(parameterized.TestCase,
 
         Learn qubit in the z+ state using two different measurement operators.
         """
+        tf.random.set_seed(RANDOM_SEED)
         bit = cirq.GridQubit(0, 0)
         symbols = sympy.symbols('x y z')
         ops = util.convert_to_tensor([[cirq.Z(bit)], [cirq.Z(bit)]])
@@ -513,6 +518,7 @@ class SampledExpectationFunctionalTests(parameterized.TestCase,
         Train a NN to put a qubit in the z+ or x+ states based on a classical
         binary input.
         """
+        tf.random.set_seed(RANDOM_SEED)
         bit = cirq.GridQubit(0, 0)
         symbols = sympy.symbols('x y z')
         ops = util.convert_to_tensor([[cirq.Z(bit)], [cirq.Z(bit)]])
@@ -568,6 +574,7 @@ class SampledExpectationFunctionalTests(parameterized.TestCase,
         Train the network to output +-5 given an input of 1 or 0. This tests
         that everything works when SampledExpectation layer is a middle layers.
         """
+        tf.random.set_seed(RANDOM_SEED)
         bit = cirq.GridQubit(0, 0)
         symbols = sympy.symbols('x, y, z')
         circuits = util.convert_to_tensor([

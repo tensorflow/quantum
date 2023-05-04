@@ -29,6 +29,8 @@ import cirq
 from tensorflow_quantum.python.layers.circuit_executors import sample
 from tensorflow_quantum.python import util
 
+RANDOM_SEED = 1234
+
 
 class SampleTest(tf.test.TestCase, parameterized.TestCase):
     """Tests for the Sample layer."""
@@ -188,6 +190,7 @@ class SampleTest(tf.test.TestCase, parameterized.TestCase):
         cause what is output from the layer to structurally deviate from what
         is expected.
         """
+        tf.random.set_seed(RANDOM_SEED)
         if use_cuquantum:
             # If use_cuquantum is True,
             if backend is not None and backend != 'noiseless':
