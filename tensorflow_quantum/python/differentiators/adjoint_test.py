@@ -47,7 +47,7 @@ class AdjointTest(tf.test.TestCase, parameterized.TestCase):
         """Ensure that use_cuquantum switches to cuquantum ops well."""
         if not circuit_execution_ops.is_gpu_configured():
             # Ignores this test if gpu is not configured.
-            self.skipTest()
+            self.skipTest("GPU is not set. Ignoring gpu tests...")
         # Prepares a simple circuit.
         qubit = cirq.GridQubit(0, 0)
         circuit = util.convert_to_tensor(
@@ -75,7 +75,7 @@ class AdjointTest(tf.test.TestCase, parameterized.TestCase):
                 g.watch(symbol_values_tensor)
                 expectations = diff_op(circuit, tf.convert_to_tensor(['alpha']),
                                        symbol_values_tensor, psums)
-            grads = g.gradient(expectations, symbol_values_tensor)
+            _ = g.gradient(expectations, symbol_values_tensor)
         mock_adj.assert_called_once()
 
     def test_sample_errors(self):

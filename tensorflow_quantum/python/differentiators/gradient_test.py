@@ -152,7 +152,7 @@ class AnalyticGradientCorrectnessTest(tf.test.TestCase, parameterized.TestCase):
         """
         if use_cuquantum and not circuit_execution_ops.is_gpu_configured():
             # GPU is not set. Ignores this sub-test.
-            self.skipTest()
+            self.skipTest("GPU is not set. Ignoring gpu tests...")
         differentiator.refresh()
         op = differentiator.generate_differentiable_op(
             analytic_op=op,
@@ -222,7 +222,7 @@ class AnalyticGradientCorrectnessTest(tf.test.TestCase, parameterized.TestCase):
         """
         if use_cuquantum and not circuit_execution_ops.is_gpu_configured():
             # GPU is not set. Ignores this sub-test.
-            self.skipTest()
+            self.skipTest("GPU is not set. Ignoring gpu tests...")
         differentiator.refresh()
         op = differentiator.generate_differentiable_op(
             analytic_op=op,
@@ -292,7 +292,7 @@ class AnalyticGradientCorrectnessTest(tf.test.TestCase, parameterized.TestCase):
         """Test the value of differentiator with simple circuit."""
         if use_cuquantum and not circuit_execution_ops.is_gpu_configured():
             # GPU is not set. Ignores this sub-test.
-            self.skipTest()
+            self.skipTest("GPU is not set. Ignoring gpu tests...")
         # Get an expectation op, with this differentiator attached.
         differentiator.refresh()
         op = differentiator.generate_differentiable_op(
@@ -337,7 +337,7 @@ class AnalyticGradientCorrectnessTest(tf.test.TestCase, parameterized.TestCase):
         """Test that providing no circuits will fail gracefully."""
         if use_cuquantum and not circuit_execution_ops.is_gpu_configured():
             # GPU is not set. Ignores this sub-test.
-            self.skipTest()
+            self.skipTest("GPU is not set. Ignoring gpu tests...")
         differentiator.refresh()
         op = differentiator.generate_differentiable_op(analytic_op=op)
         circuit = tf.convert_to_tensor([], dtype=tf.string)
@@ -377,6 +377,9 @@ class SampledGradientCorrectnessTest(tf.test.TestCase, parameterized.TestCase):
     def test_sampled_value_with_simple_circuit(self, differentiator, op,
                                                num_samples, use_cuquantum):
         """Test the value of sampled differentiator with simple circuit."""
+        if use_cuquantum and not circuit_execution_ops.is_gpu_configured():
+            # GPU is not set. Ignores this sub-test.
+            self.skipTest("GPU is not set. Ignoring gpu tests...")
         tf.random.set_seed(RANDOM_SEED)
         # Get an expectation op, with this differentiator attached.
         differentiator.refresh()
@@ -426,6 +429,9 @@ class SampledGradientCorrectnessTest(tf.test.TestCase, parameterized.TestCase):
                                      symbol_names, n_ops, n_programs,
                                      num_samples, use_cuquantum):
         """Test small circuits with limited depth."""
+        if use_cuquantum and not circuit_execution_ops.is_gpu_configured():
+            # GPU is not set. Ignores this sub-test.
+            self.skipTest("GPU is not set. Ignoring gpu tests...")
         tf.random.set_seed(RANDOM_SEED)
         differentiator, tol = diff_and_tol
         differentiator.refresh()
@@ -488,6 +494,9 @@ class SampledGradientCorrectnessTest(tf.test.TestCase, parameterized.TestCase):
     def test_empty_circuit_sampled_grad(self, differentiator, op,
                                         use_cuquantum):
         """Test that providing no circuits will fail gracefully."""
+        if use_cuquantum and not circuit_execution_ops.is_gpu_configured():
+            # GPU is not set. Ignores this sub-test.
+            self.skipTest("GPU is not set. Ignoring gpu tests...")
         tf.random.set_seed(RANDOM_SEED)
         differentiator.refresh()
         op = differentiator.generate_differentiable_op(sampled_op=op)
