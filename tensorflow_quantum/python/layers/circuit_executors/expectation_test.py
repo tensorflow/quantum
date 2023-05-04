@@ -26,6 +26,7 @@ import sympy
 import tensorflow as tf
 
 import cirq
+from tensorflow_quantum.core.ops import circuit_execution_ops
 from tensorflow_quantum.python.layers.circuit_executors import expectation
 from tensorflow_quantum.python.differentiators import linear_combination
 from tensorflow_quantum.python import util
@@ -327,6 +328,9 @@ class ExpectationFunctionalTests(parameterized.TestCase, tf.test.TestCase):
         state given the input zero or one. This tests the input signature:
         Expectation([input_value_batch]).
         """
+        if use_cuquantum and not circuit_execution_ops.is_gpu_configured():
+            # GPU is not set. Ignores this sub-test.
+            self.skipTest("GPU is not set. Ignoring gpu tests...")
         noisy = backend == 'noisy'
         bit = cirq.GridQubit(0, 0)
         symbols = sympy.symbols('x y z')
@@ -379,6 +383,9 @@ class ExpectationFunctionalTests(parameterized.TestCase, tf.test.TestCase):
         Learn qubit in the z+ state using two different measurement operators.
         This tests input signature Expectation([operator_batch])
         """
+        if use_cuquantum and not circuit_execution_ops.is_gpu_configured():
+            # GPU is not set. Ignores this sub-test.
+            self.skipTest("GPU is not set. Ignoring gpu tests...")
         noisy = backend == 'noisy'
         bit = cirq.GridQubit(0, 0)
         symbols = sympy.symbols('x, y, z')
@@ -443,6 +450,9 @@ class ExpectationFunctionalTests(parameterized.TestCase, tf.test.TestCase):
         binary input. This tests the input signature:
         Expectation([value_batch, operator_batch]).
         """
+        if use_cuquantum and not circuit_execution_ops.is_gpu_configured():
+            # GPU is not set. Ignores this sub-test.
+            self.skipTest("GPU is not set. Ignoring gpu tests...")
         noisy = backend == 'noisy'
         bit = cirq.GridQubit(0, 0)
         symbols = sympy.symbols('x, y, z')
@@ -500,6 +510,9 @@ class ExpectationFunctionalTests(parameterized.TestCase, tf.test.TestCase):
         Train the network to output +-5 given an input of 1 or 0. This tests
         that everything works when Expectation layer is a middle layers.
         """
+        if use_cuquantum and not circuit_execution_ops.is_gpu_configured():
+            # GPU is not set. Ignores this sub-test.
+            self.skipTest("GPU is not set. Ignoring gpu tests...")
         noisy = backend == 'noisy'
         bit = cirq.GridQubit(0, 0)
         symbols = sympy.symbols('x, y, z')

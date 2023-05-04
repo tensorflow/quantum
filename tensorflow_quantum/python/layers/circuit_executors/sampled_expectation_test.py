@@ -26,6 +26,7 @@ import sympy
 import tensorflow as tf
 
 import cirq
+from tensorflow_quantum.core.ops import circuit_execution_ops
 from tensorflow_quantum.python.layers.circuit_executors import \
     sampled_expectation
 from tensorflow_quantum.python.differentiators import linear_combination
@@ -130,6 +131,9 @@ class SampledExpectationTest(parameterized.TestCase, tf.test.TestCase):
     def test_sampled_expectation_type_inputs_error(self, backend,
                                                    use_cuquantum):
         """Test that SampledExpectation errors within Keras call."""
+        if use_cuquantum and not circuit_execution_ops.is_gpu_configured():
+            # GPU is not set. Ignores this sub-test.
+            self.skipTest("GPU is not set. Ignoring gpu tests...")
 
         bit = cirq.GridQubit(0, 0)
         symbol = sympy.Symbol('alpha')
@@ -197,6 +201,10 @@ class SampledExpectationTest(parameterized.TestCase, tf.test.TestCase):
     ])
     def test_sampled_expectation_op_error(self, backend, use_cuquantum):
         """Test that expectation errors within underlying ops correctly."""
+        if use_cuquantum and not circuit_execution_ops.is_gpu_configured():
+            # GPU is not set. Ignores this sub-test.
+            self.skipTest("GPU is not set. Ignoring gpu tests...")
+
         # Note the expected_regex is left blank here since there is a
         # discrepancy between the error strings provided between backends.
         bit = cirq.GridQubit(0, 0)
@@ -300,6 +308,9 @@ class SampledExpectationTest(parameterized.TestCase, tf.test.TestCase):
     ])
     def test_static_cases(self, backend, use_cuquantum):
         """Run inputs through in complex cases."""
+        if use_cuquantum and not circuit_execution_ops.is_gpu_configured():
+            # GPU is not set. Ignores this sub-test.
+            self.skipTest("GPU is not set. Ignoring gpu tests...")
 
         bit = cirq.GridQubit(0, 0)
         symbol = sympy.Symbol('alpha')
@@ -381,12 +392,21 @@ class SampledExpectationTest(parameterized.TestCase, tf.test.TestCase):
                      cirq.X(bit) + 2.0 * cirq.Z(bit)],
           repetitions=[5, 1])
 
-    def test_sampled_expectation_simple_tf_train(self):
+    @parameterized.parameters([{
+        'use_cuquantum': False,
+    }, {
+        'use_cuquantum': True,
+    }])
+    def test_sampled_expectation_simple_tf_train(self, use_cuquantum):
         """Train a layer using standard tf (not keras)."""
+        if use_cuquantum and not circuit_execution_ops.is_gpu_configured():
+            # GPU is not set. Ignores this sub-test.
+            self.skipTest("GPU is not set. Ignoring gpu tests...")
         tf.random.set_seed(RANDOM_SEED)
         bit = cirq.GridQubit(0, 0)
         circuit = cirq.Circuit(cirq.rx(sympy.Symbol('theta'))(bit))
-        layer = sampled_expectation.SampledExpectation()
+        layer = sampled_expectation.SampledExpectation(
+            use_cuquantum=use_cuquantum)
         optimizer = tf.optimizers.Adam(learning_rate=0.05)
         for _ in range(10):
             with tf.GradientTape() as tape:
@@ -420,6 +440,9 @@ class SampledExpectationFunctionalTests(parameterized.TestCase,
         This model will put a qubit in the zero or one state from a random state
         given the input zero or one.
         """
+        if use_cuquantum and not circuit_execution_ops.is_gpu_configured():
+            # GPU is not set. Ignores this sub-test.
+            self.skipTest("GPU is not set. Ignoring gpu tests...")
         tf.random.set_seed(RANDOM_SEED)
         bit = cirq.GridQubit(0, 0)
         symbols = sympy.symbols('x y z')
@@ -466,6 +489,9 @@ class SampledExpectationFunctionalTests(parameterized.TestCase,
 
         Learn qubit in the z+ state using two different measurement operators.
         """
+        if use_cuquantum and not circuit_execution_ops.is_gpu_configured():
+            # GPU is not set. Ignores this sub-test.
+            self.skipTest("GPU is not set. Ignoring gpu tests...")
         tf.random.set_seed(RANDOM_SEED)
         bit = cirq.GridQubit(0, 0)
         symbols = sympy.symbols('x y z')
@@ -518,6 +544,9 @@ class SampledExpectationFunctionalTests(parameterized.TestCase,
         Train a NN to put a qubit in the z+ or x+ states based on a classical
         binary input.
         """
+        if use_cuquantum and not circuit_execution_ops.is_gpu_configured():
+            # GPU is not set. Ignores this sub-test.
+            self.skipTest("GPU is not set. Ignoring gpu tests...")
         tf.random.set_seed(RANDOM_SEED)
         bit = cirq.GridQubit(0, 0)
         symbols = sympy.symbols('x y z')
@@ -574,6 +603,9 @@ class SampledExpectationFunctionalTests(parameterized.TestCase,
         Train the network to output +-5 given an input of 1 or 0. This tests
         that everything works when SampledExpectation layer is a middle layers.
         """
+        if use_cuquantum and not circuit_execution_ops.is_gpu_configured():
+            # GPU is not set. Ignores this sub-test.
+            self.skipTest("GPU is not set. Ignoring gpu tests...")
         tf.random.set_seed(RANDOM_SEED)
         bit = cirq.GridQubit(0, 0)
         symbols = sympy.symbols('x, y, z')

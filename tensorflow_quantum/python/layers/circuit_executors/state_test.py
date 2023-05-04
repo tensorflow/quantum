@@ -26,6 +26,7 @@ import sympy
 import tensorflow as tf
 import cirq
 
+from tensorflow_quantum.core.ops import circuit_execution_ops
 from tensorflow_quantum.python.layers.circuit_executors import state
 from tensorflow_quantum.python import util
 
@@ -59,7 +60,10 @@ class StateTest(parameterized.TestCase, tf.test.TestCase):
     }])
     def test_state_invalid_combinations(self, backend, use_cuquantum):
         """Test with valid type inputs and valid value, but incorrect combo."""
-        state_calc = state.State(backend, use_cuquantum)
+        if use_cuquantum and not circuit_execution_ops.is_gpu_configured():
+            # GPU is not set. Ignores this sub-test.
+            self.skipTest("GPU is not set. Ignoring gpu tests...")
+        state_calc = state.State(backend, use_cuquantum=use_cuquantum)
         symbol = sympy.Symbol('alpha')
         circuit = cirq.Circuit(cirq.H(cirq.GridQubit(0, 0))**symbol)
         with self.assertRaisesRegex(Exception, expected_regex=""):
@@ -142,6 +146,9 @@ class StateTest(parameterized.TestCase, tf.test.TestCase):
         post processing done inside the layers should not cause output from the
         layer to structurally deviate from what is expected.
         """
+        if use_cuquantum and not circuit_execution_ops.is_gpu_configured():
+            # GPU is not set. Ignores this sub-test.
+            self.skipTest("GPU is not set. Ignoring gpu tests...")
         backend = backend_output[0]
         output = backend_output[1]
         state_executor = state.State(
