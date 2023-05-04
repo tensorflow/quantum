@@ -409,12 +409,12 @@ class SampledExpectationTest(parameterized.TestCase, tf.test.TestCase):
         layer = sampled_expectation.SampledExpectation(
             use_cuquantum=use_cuquantum)
         optimizer = tf.optimizers.Adam(learning_rate=0.05)
-        for _ in range(10):
+        for _ in range(20):
             with tf.GradientTape() as tape:
                 circuit_out = layer(circuit,
                                     symbol_names=['theta'],
                                     operators=cirq.Z(bit),
-                                    repetitions=100
+                                    repetitions=100,
                                     initializer=initializer)
                 mse = tf.square(tf.reduce_sum(tf.subtract(circuit_out, -1)))
             grads = tape.gradient(mse, layer.trainable_weights)

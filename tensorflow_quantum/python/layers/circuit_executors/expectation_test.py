@@ -31,6 +31,8 @@ from tensorflow_quantum.python.layers.circuit_executors import expectation
 from tensorflow_quantum.python.differentiators import linear_combination
 from tensorflow_quantum.python import util
 
+RANDOM_SEED = 1234
+
 
 def _gen_single_bit_rotation_problem(bit, symbols, noisy):
     """Generate a toy problem on 1 qubit."""
