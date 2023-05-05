@@ -16,7 +16,7 @@ TensorFlow Quantum is supported on Python 3.7, 3.8, and 3.9 and depends directly
 
 ### Requirements
 
-* pip 19.0 or later (requires `manylinux2010` support)
+* pip 23.0 or later (requires `manylinux2014` support)
 * [TensorFlow == 2.11.0](https://www.tensorflow.org/install/pip)
 
 See the [TensorFlow install guide](https://www.tensorflow.org/install/pip) to
@@ -187,20 +187,20 @@ We use the standard [fork and pull request workflow](https://guides.github.com/a
 <!-- common_typos_enable -->
 
 
-### 6. Build the TensorFlow Quantum pip package
+### 6. Build the TensorFlow Quantum pip package for CPU
 
 Build the TensorFlow Quantum pip package and install:
 
 <!-- common_typos_disable -->
 <pre class="devsite-click-to-copy">
-  <code class="devsite-terminal">./configure.sh</code>
+  <code class="devsite-terminal">./configure.sh  # Type 'Y' for the first question.</code>
   <code class="devsite-terminal">bazel build -c opt --cxxopt="-O3" --cxxopt="-march=native" --cxxopt="-std=c++17" --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=1" release:build_pip_package</code>
   <code class="devsite-terminal">bazel-bin/release/build_pip_package /tmp/tfquantum/</code>
   <code class="devsite-terminal">python3 -m pip install /tmp/tfquantum/<var>name_of_generated_wheel</var>.whl</code>
 </pre>
 <!-- common_typos_enable -->
 
-To confirm that TensorFlow Quantum has successfully been installed, you can run the tests:
+To confirm that TensorFlow Quantum for CPU has successfully been installed, you can run the tests:
 <!-- common_typos_disable -->
 <pre class="devsite-click-to-copy">
   <code class="devsite-terminal">./scripts/test_all.sh</code>
@@ -208,4 +208,28 @@ To confirm that TensorFlow Quantum has successfully been installed, you can run 
 <!-- common_typos_enable -->
 
 
-Success: TensorFlow Quantum is now installed.
+Success: TensorFlow Quantum for CPU is now installed.
+
+### 7. Build the TensorFlow Quantum pip package for GPU
+
+Build the TensorFlow Quantum GPU pip package and install:
+
+<!-- common_typos_disable -->
+<pre class="devsite-click-to-copy">
+  <code class="devsite-terminal">bazel clean --expunge  # If you got stuck `.so` related issue, please clean the cache.</code>
+  <code class="devsite-terminal">./configure.sh  # Type 'n' for the second question.</code>
+  <code class="devsite-terminal">bazel build -c opt --config=cuda --cxxopt="-O3" --cxxopt="-march=native" --cxxopt="-std=c++17" --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=1" release:build_pip_package</code>
+  <code class="devsite-terminal">bazel-bin/release/build_pip_package /tmp/tfquantum_gpu/</code>
+  <code class="devsite-terminal">python3 -m pip install /tmp/tfquantum_gpu/<var>name_of_generated_wheel</var>.whl</code>
+</pre>
+<!-- common_typos_enable -->
+
+To confirm that TensorFlow Quantum for GPU has successfully been installed, you can run the tests:
+<!-- common_typos_disable -->
+<pre class="devsite-click-to-copy">
+  <code class="devsite-terminal">./scripts/test_all.sh gpu</code>
+</pre>
+<!-- common_typos_enable -->
+
+
+Success: TensorFlow Quantum for GPU is now installed.

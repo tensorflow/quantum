@@ -19,6 +19,13 @@ def _fail(msg):
     fail("%sPython Configuration Error:%s %s\n" % (red, no_color, msg))
 
 
+def _warn(msg):
+    """Output warning message when auto configuration warns."""
+    brown = "\033[1;33m"
+    no_color = "\033[0m"
+    print("\n%sAuto-Configuration Warning:%s %s\n" % (brown, no_color, msg))
+
+
 def _execute(
         repository_ctx,
         cmdline,
@@ -70,7 +77,7 @@ def _find_file(repository_ctx, filename):
     The returned string contains the parent path of the filename.
     """
     result = repository_ctx.execute(
-        ["timeout", "5", "find", "/", "-name", filename, "-print", "-quit", "-not", "-path", "'*/.*'", "-quit"]).stdout
+        ["timeout", "10", "find", "/", "-name", filename, "-print", "-quit", "-not", "-path", "'*/.*'", "-quit"]).stdout
     result = result[:result.find(filename)+len(filename)]
     return result
 
@@ -202,10 +209,15 @@ def _cuquantum_pip_impl(repository_ctx):
       repository_ctx.os.environ[_CUQUANTUM_ROOT] = ""
       cuquantum_root = ""
     if cuquantum_root == "":
+      # CUQUANTUM_ROOT is empty. Let's find the library root path lazily.
       cuquantum_header_path = _find_file(repository_ctx, "custatevec.h")
       cuquantum_header_path = cuquantum_header_path[:cuquantum_header_path.find("/custatevec.h")]
       custatevec_shared_library_path = _find_file(repository_ctx, "libcustatevec.so")
       cuquantum_root = custatevec_shared_library_path[:custatevec_shared_library_path.find("/lib/lib")]
+      if cuquantum_root == "":
+        _warn("'CUQUANTUM_ROOT' environment variable is not set, no library was found too. If it is CPU mode, please ignore this warning")
+      else:
+        _warn("'CUQUANTUM_ROOT' environment variable is not set, using '%s' as default" % cuquantum_root)
     else:
       cuquantum_header_path = "%s/include" % cuquantum_root
       custatevec_shared_library_path = "%s/lib/libcustatevec.so" % (cuquantum_root)

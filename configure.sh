@@ -73,7 +73,7 @@ done
 
 # Check if we are building cuQuantum ops on top of CUDA.
 if [[ "$TF_NEED_CUDA" == "1" ]]; then
-  echo "GPU is selected, default acceleration is CUDA for TFQuantum."
+  echo "GPU is on."
   echo "Searching cuQuantum library from environment variable CUQUANTUM_ROOT..."
   if [[ "$CUQUANTUM_ROOT" != "" ]]; then
     echo "  [*] cuQuantum library is detected here: CUQUANTUM_ROOT=$CUQUANTUM_ROOT."
@@ -113,7 +113,8 @@ write_to_bazelrc "build --strategy=Genrule=standalone"
 write_to_bazelrc "build -c opt"
 write_to_bazelrc "build --cxxopt=\"-D_GLIBCXX_USE_CXX11_ABI=1\""
 write_to_bazelrc "build --cxxopt=\"-std=c++17\""
-
+write_to_bazelrc "build --cxxopt=\"-O3\""
+write_to_bazelrc "build --cxxopt=\"-march=native\""
 
 if is_windows; then
   # Use pywrap_tensorflow instead of tensorflow_framework on Windows
@@ -156,6 +157,8 @@ if [[ "$TF_NEED_CUDA" == "1" ]]; then
   write_to_bazelrc "build:cuda -c opt"
   write_to_bazelrc "build:cuda --cxxopt=\"-D_GLIBCXX_USE_CXX11_ABI=1\""
   write_to_bazelrc "build:cuda --cxxopt=\"-std=c++17\""
+  write_to_bazelrc "build:cuda --cxxopt=\"-O3\""
+  write_to_bazelrc "build:cuda --cxxopt=\"-march=native\""
   write_to_bazelrc "build:cuda --@local_config_cuda//:enable_cuda"
   write_to_bazelrc "build:cuda --crosstool_top=@local_config_cuda//crosstool:toolchain"
 
