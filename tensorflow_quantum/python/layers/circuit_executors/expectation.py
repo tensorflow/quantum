@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# ==============================================================================
+# =============================================================================
 """A tf.keras.layer that ingests programs and outputs expectation values."""
 import numbers
 
@@ -285,15 +285,20 @@ class Expectation(tf.keras.layers.Layer):
              symbol_values=None,
              operators=None,
              repetitions=None,
-             initializer=tf.keras.initializers.RandomUniform(0, 2 * np.pi)):
+             initializer=None):
         """Keras call function.
 
-        Input options:
-            `inputs`, `symbol_names`, `symbol_values`:
-                see `input_checks.expand_circuits`
-            `operators`: see `input_checks.expand_operators`
+        Args:
+            inputs: See `input_checks.expand_circuits.
+            symbol_names: See `input_checks.expand_circuits.
+            symbol_values: See `input_checks.expand_circuits.
+            operators: See `input_checks.expand_operators`
+            repetitions: A Python `int` or a pre-converted `tf.Tensor`
+                containing a single `int` entry.
+            initializer: The keras initializer object for weights.
+                Defaults to uniform distribution [0..2*pi]
 
-        Output shape:
+        Returns:
             `tf.Tensor` with shape [batch_size, n_ops] that holds the
                 expectation value for each circuit with each op applied to it
                 (after resolving the corresponding parameters in).
@@ -301,6 +306,9 @@ class Expectation(tf.keras.layers.Layer):
         values_empty = False
         if symbol_values is None:
             values_empty = True
+
+        if initializer is None:
+            initializer = tf.keras.initializers.RandomUniform(0, 2 * np.pi)
 
         inputs, symbol_names, symbol_values = input_checks.expand_circuits(
             inputs, symbol_names, symbol_values)

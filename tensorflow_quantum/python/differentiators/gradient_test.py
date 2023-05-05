@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# ==============================================================================
+# =============================================================================
 """Testing for gradient calculation consistency in TFQ."""
 # Remove PYTHONPATH collisions for protobuf.
 # pylint: disable=wrong-import-position
@@ -36,6 +36,8 @@ from tensorflow_quantum.core.ops import circuit_execution_ops, batch_util
 from tensorflow_quantum.core.ops.noise import noisy_expectation_op
 from tensorflow_quantum.core.ops.noise import noisy_sampled_expectation_op
 
+RANDOM_SEED = 1234
+
 ANALYTIC_DIFFS = [
     linear_combination.ForwardDifference(grid_spacing=0.0001),
     linear_combination.ForwardDifference(error_order=2, grid_spacing=0.0001),
@@ -57,10 +59,20 @@ ANALYTIC_OPS = [
     circuit_execution_ops.get_expectation_op()  # C++
 ]
 
+ANALYTIC_GPU_OPS = [
+    circuit_execution_ops.get_expectation_op(use_cuquantum=True,
+                                             quantum_concurrent=False)
+]
+
 SAMPLED_OPS = [
     circuit_execution_ops.get_sampled_expectation_op(
         cirq.sim.Simulator()),  # WF
     circuit_execution_ops.get_sampled_expectation_op()  # C++
+]
+
+SAMPLED_GPU_OPS = [
+    circuit_execution_ops.get_sampled_expectation_op(use_cuquantum=True,
+                                                     quantum_concurrent=False)
 ]
 
 NOISY_OPS = [
@@ -117,19 +129,35 @@ class AnalyticGradientCorrectnessTest(tf.test.TestCase, parameterized.TestCase):
 
     @parameterized.parameters(
         list(
-            util.kwargs_cartesian_product(**{
-                'differentiator': ANALYTIC_DIFFS,
-                'op': ANALYTIC_OPS
-            })) + [{
-                'differentiator': adjoint.Adjoint(),
-                'op': circuit_execution_ops.get_expectation_op()
-            }])
-    def test_backprop(self, differentiator, op):
+            util.kwargs_cartesian_product(
+                **{
+                    'differentiator': ANALYTIC_DIFFS,
+                    'op': ANALYTIC_OPS,
+                    'use_cuquantum': [False],
+                })) + [{
+                    'differentiator': adjoint.Adjoint(),
+                    'op': circuit_execution_ops.get_expectation_op(),
+                    'use_cuquantum': False,
+                }] +
+        list(
+            util.kwargs_cartesian_product(
+                **{
+                    'differentiator': ANALYTIC_DIFFS + [adjoint.Adjoint()],
+                    'op': ANALYTIC_GPU_OPS,
+                    'use_cuquantum': [True],
+                })))
+    def test_backprop(self, differentiator, op, use_cuquantum):
         """Test that gradients are correctly backpropagated through a quantum
         circuit via comparison to analytical results.
         """
+        if use_cuquantum and not circuit_execution_ops.is_gpu_configured():
+            # GPU is not set. Ignores this sub-test.
+            self.skipTest("GPU is not set. Ignoring gpu tests...")
         differentiator.refresh()
-        op = differentiator.generate_differentiable_op(analytic_op=op)
+        op = differentiator.generate_differentiable_op(
+            analytic_op=op,
+            use_cuquantum=use_cuquantum,
+        )
 
         def exact_grad(theta):
             new_theta = 2 * np.pi * theta
@@ -164,23 +192,42 @@ class AnalyticGradientCorrectnessTest(tf.test.TestCase, parameterized.TestCase):
                     'n_qubits': [5],
                     'n_programs': [3],
                     'n_ops': [3],
-                    'symbol_names': [['a', 'b']]
+                    'symbol_names': [['a', 'b']],
+                    'use_cuquantum': [False],
                 })) + [{
                     'differentiator': adjoint.Adjoint(),
                     'op': circuit_execution_ops.get_expectation_op(),
                     'n_qubits': 10,
                     'n_programs': 5,
                     'n_ops': 3,
-                    'symbol_names': ['a', 'b']
-                }])
+                    'symbol_names': ['a', 'b'],
+                    'use_cuquantum': False,
+                }] +
+        list(
+            util.kwargs_cartesian_product(
+                **{
+                    'differentiator': ANALYTIC_DIFFS + [adjoint.Adjoint()],
+                    'op': ANALYTIC_GPU_OPS,
+                    'n_qubits': [5],
+                    'n_programs': [3],
+                    'n_ops': [3],
+                    'symbol_names': [['a', 'b']],
+                    'use_cuquantum': [True],
+                })))
     def test_gradients_vs_cirq_finite_difference(self, differentiator, op,
                                                  n_qubits, n_programs, n_ops,
-                                                 symbol_names):
+                                                 symbol_names, use_cuquantum):
         """Compare TFQ differentiators to fine-grained noiseless cirq finite
         differencing.
         """
+        if use_cuquantum and not circuit_execution_ops.is_gpu_configured():
+            # GPU is not set. Ignores this sub-test.
+            self.skipTest("GPU is not set. Ignoring gpu tests...")
         differentiator.refresh()
-        op = differentiator.generate_differentiable_op(analytic_op=op)
+        op = differentiator.generate_differentiable_op(
+            analytic_op=op,
+            use_cuquantum=use_cuquantum,
+        )
 
         qubits = cirq.GridQubit.rect(1, n_qubits)
         circuit_batch, resolver_batch = \
@@ -219,18 +266,39 @@ class AnalyticGradientCorrectnessTest(tf.test.TestCase, parameterized.TestCase):
 
     @parameterized.parameters(
         list(
-            util.kwargs_cartesian_product(**{
-                'differentiator': ANALYTIC_DIFFS,
-                'op': ANALYTIC_OPS,
-            })) + [{
-                'differentiator': adjoint.Adjoint(),
-                'op': circuit_execution_ops.get_expectation_op(),
-            }])
-    def test_analytic_value_with_simple_circuit(self, differentiator, op):
+            util.kwargs_cartesian_product(
+                **{
+                    'differentiator': ANALYTIC_DIFFS,
+                    'op': ANALYTIC_OPS,
+                    'use_cuquantum': [False],
+                })) + [{
+                    'differentiator': adjoint.Adjoint(),
+                    'op': circuit_execution_ops.get_expectation_op(),
+                    'use_cuquantum': False,
+                }] +
+        list(
+            util.kwargs_cartesian_product(
+                **{
+                    'differentiator': ANALYTIC_DIFFS + [adjoint.Adjoint()],
+                    'op': ANALYTIC_GPU_OPS,
+                    'use_cuquantum': [True],
+                })))
+    def test_analytic_value_with_simple_circuit(
+            self,
+            differentiator,
+            op,
+            use_cuquantum,
+    ):
         """Test the value of differentiator with simple circuit."""
+        if use_cuquantum and not circuit_execution_ops.is_gpu_configured():
+            # GPU is not set. Ignores this sub-test.
+            self.skipTest("GPU is not set. Ignoring gpu tests...")
         # Get an expectation op, with this differentiator attached.
         differentiator.refresh()
-        op = differentiator.generate_differentiable_op(analytic_op=op)
+        op = differentiator.generate_differentiable_op(
+            analytic_op=op,
+            use_cuquantum=use_cuquantum,
+        )
         qubit = cirq.GridQubit(0, 0)
         circuit = util.convert_to_tensor(
             [cirq.Circuit(cirq.X(qubit)**sympy.Symbol('alpha'))])
@@ -248,15 +316,28 @@ class AnalyticGradientCorrectnessTest(tf.test.TestCase, parameterized.TestCase):
 
     @parameterized.parameters(
         list(
-            util.kwargs_cartesian_product(**{
-                'differentiator': ANALYTIC_DIFFS,
-                'op': ANALYTIC_OPS,
-            })) + [{
-                'differentiator': adjoint.Adjoint(),
-                'op': circuit_execution_ops.get_expectation_op(),
-            }])
-    def test_empty_circuit_grad(self, differentiator, op):
+            util.kwargs_cartesian_product(
+                **{
+                    'differentiator': ANALYTIC_DIFFS,
+                    'op': ANALYTIC_OPS,
+                    'use_cuquantum': [False],
+                })) + [{
+                    'differentiator': adjoint.Adjoint(),
+                    'op': circuit_execution_ops.get_expectation_op(),
+                    'use_cuquantum': False,
+                }] +
+        list(
+            util.kwargs_cartesian_product(
+                **{
+                    'differentiator': ANALYTIC_DIFFS + [adjoint.Adjoint()],
+                    'op': ANALYTIC_GPU_OPS,
+                    'use_cuquantum': [True],
+                })))
+    def test_empty_circuit_grad(self, differentiator, op, use_cuquantum):
         """Test that providing no circuits will fail gracefully."""
+        if use_cuquantum and not circuit_execution_ops.is_gpu_configured():
+            # GPU is not set. Ignores this sub-test.
+            self.skipTest("GPU is not set. Ignoring gpu tests...")
         differentiator.refresh()
         op = differentiator.generate_differentiable_op(analytic_op=op)
         circuit = tf.convert_to_tensor([], dtype=tf.string)
@@ -283,11 +364,23 @@ class SampledGradientCorrectnessTest(tf.test.TestCase, parameterized.TestCase):
                 **{
                     'differentiator': SAMPLED_DIFFS,
                     'op': SAMPLED_OPS,
-                    'num_samples': [20000]
-                })))
+                    'num_samples': [20000],
+                    'use_cuquantum': [False],
+                })) + list(
+                    util.kwargs_cartesian_product(
+                        **{
+                            'differentiator': SAMPLED_DIFFS,
+                            'op': SAMPLED_GPU_OPS,
+                            'num_samples': [20000],
+                            'use_cuquantum': [True],
+                        })))
     def test_sampled_value_with_simple_circuit(self, differentiator, op,
-                                               num_samples):
+                                               num_samples, use_cuquantum):
         """Test the value of sampled differentiator with simple circuit."""
+        if use_cuquantum and not circuit_execution_ops.is_gpu_configured():
+            # GPU is not set. Ignores this sub-test.
+            self.skipTest("GPU is not set. Ignoring gpu tests...")
+        tf.random.set_seed(RANDOM_SEED)
         # Get an expectation op, with this differentiator attached.
         differentiator.refresh()
         op = differentiator.generate_differentiable_op(sampled_op=op)
@@ -317,15 +410,33 @@ class SampledGradientCorrectnessTest(tf.test.TestCase, parameterized.TestCase):
                     'n_programs': [5],
                     'n_ops': [2],
                     'symbol_names': [['a', 'b']],
-                    'num_samples': [30000]
+                    'num_samples': [30000],
+                    'use_cuquantum': [False],
+                })) +
+        list(
+            util.kwargs_cartesian_product(
+                **{
+                    'diff_and_tol': zip(SAMPLED_DIFFS, SAMPLED_DIFFS_TOLS),
+                    'op': SAMPLED_GPU_OPS,
+                    'n_qubits': [3],
+                    'n_programs': [5],
+                    'n_ops': [2],
+                    'symbol_names': [['a', 'b']],
+                    'num_samples': [30000],
+                    'use_cuquantum': [True],
                 })))
     def test_approx_equality_shallow(self, diff_and_tol, op, n_qubits,
                                      symbol_names, n_ops, n_programs,
-                                     num_samples):
+                                     num_samples, use_cuquantum):
         """Test small circuits with limited depth."""
+        if use_cuquantum and not circuit_execution_ops.is_gpu_configured():
+            # GPU is not set. Ignores this sub-test.
+            self.skipTest("GPU is not set. Ignoring gpu tests...")
+        tf.random.set_seed(RANDOM_SEED)
         differentiator, tol = diff_and_tol
         differentiator.refresh()
-        op = differentiator.generate_differentiable_op(sampled_op=op)
+        op = differentiator.generate_differentiable_op(
+            sampled_op=op, use_cuquantum=use_cuquantum)
 
         qubits = cirq.GridQubit.rect(1, n_qubits)
         circuit_batch, resolver_batch = \
@@ -368,12 +479,25 @@ class SampledGradientCorrectnessTest(tf.test.TestCase, parameterized.TestCase):
 
     @parameterized.parameters(
         list(
-            util.kwargs_cartesian_product(**{
-                'differentiator': SAMPLED_DIFFS,
-                'op': SAMPLED_OPS,
-            })))
-    def test_empty_circuit_sampled_grad(self, differentiator, op):
+            util.kwargs_cartesian_product(
+                **{
+                    'differentiator': SAMPLED_DIFFS,
+                    'op': SAMPLED_OPS,
+                    'use_cuquantum': [False],
+                })) + list(
+                    util.kwargs_cartesian_product(
+                        **{
+                            'differentiator': SAMPLED_DIFFS,
+                            'op': SAMPLED_GPU_OPS,
+                            'use_cuquantum': [True],
+                        })))
+    def test_empty_circuit_sampled_grad(self, differentiator, op,
+                                        use_cuquantum):
         """Test that providing no circuits will fail gracefully."""
+        if use_cuquantum and not circuit_execution_ops.is_gpu_configured():
+            # GPU is not set. Ignores this sub-test.
+            self.skipTest("GPU is not set. Ignoring gpu tests...")
+        tf.random.set_seed(RANDOM_SEED)
         differentiator.refresh()
         op = differentiator.generate_differentiable_op(sampled_op=op)
         circuit = tf.convert_to_tensor([], dtype=tf.string)

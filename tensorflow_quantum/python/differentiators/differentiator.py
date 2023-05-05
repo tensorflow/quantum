@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# ==============================================================================
+# =============================================================================
 """Testing consistency in values across differentiation methods."""
 import abc
 import inspect
@@ -118,6 +118,9 @@ class Differentiator(metaclass=abc.ABCMeta):
             raise TypeError('Provided arguments must be callable tensorflow '
                             'ops.')
 
+        if not isinstance(use_cuquantum, bool):
+            raise TypeError('use_cuquantum should be boolean.')
+
         # TODO (mbbrough): find a better workaround than this to ensure
         #   that the correct sample based expectation wasn't accidentally
         #   put inside of the analytical_op argument or vice versa.
@@ -155,8 +158,12 @@ class Differentiator(metaclass=abc.ABCMeta):
                                      'Given arg: {}.'.format(str(key)) + ''
                                      'The signature should contain: {}.'.format(
                                          list(expected_signature)))
-        _differentiate_ana = (self._differentiate_ana_cq
-                              if use_cuquantum else self._differentiate_ana)
+        if use_cuquantum:
+            _differentiate_ana, _differentiate_sam = (
+                self._differentiate_ana_cq, self._differentiate_sam_cq)
+        else:
+            _differentiate_ana, _differentiate_sam = (self._differentiate_ana,
+                                                      self._differentiate_sam)
 
         @tf.custom_gradient
         def op_wrapper_analytic(programs, symbol_names, symbol_values,
@@ -178,10 +185,9 @@ class Differentiator(metaclass=abc.ABCMeta):
                                            num_samples)
 
             def gradient(grad):
-                return self._differentiate_sam(programs, symbol_names,
-                                               symbol_values, pauli_sums,
-                                               num_samples, forward_pass_vals,
-                                               grad)
+                return _differentiate_sam(programs, symbol_names, symbol_values,
+                                          pauli_sums, num_samples,
+                                          forward_pass_vals, grad)
 
             return forward_pass_vals, gradient
 
@@ -206,6 +212,13 @@ class Differentiator(metaclass=abc.ABCMeta):
             programs, symbol_names, symbol_values,
             pauli_sums, forward_pass_vals, grad), \
                None
+
+    def _differentiate_sam_cq(self, programs, symbol_names, symbol_values,
+                              pauli_sums, num_samples, forward_pass_vals, grad):
+        return None, None, self.differentiate_sampled_cuquantum(
+            programs, symbol_names, symbol_values,
+            pauli_sums, num_samples, forward_pass_vals, grad), \
+               None, None
 
     def _differentiate_sam(self, programs, symbol_names, symbol_values,
                            pauli_sums, num_samples, forward_pass_vals, grad):
@@ -340,11 +353,27 @@ class Differentiator(metaclass=abc.ABCMeta):
 
     @catch_empty_inputs
     @tf.function
-    def differentiate_analytic_cuquantum(self, programs, symbol_names, symbol_values,
-                               pauli_sums, forward_pass_vals, grad):
-        # `self.expectation_op` is already set to cuquantum op.
-        return self.differentiate_analytic(programs, symbol_names, symbol_values,
-                               pauli_sums, forward_pass_vals, grad)
+    def differentiate_analytic_cuquantum(self, programs, symbol_names,
+                                         symbol_values, pauli_sums,
+                                         forward_pass_vals, grad):
+        """Differentiate a circuit with analytical expectation with GPU ops."""
+        # `self.expectation_op` is already set to cuquantum op at
+        # generate_differentiable_op._differentiate_ana.
+        return self.differentiate_analytic(programs, symbol_names,
+                                           symbol_values, pauli_sums,
+                                           forward_pass_vals, grad)
+
+    @catch_empty_inputs
+    @tf.function
+    def differentiate_sampled_cuquantum(self, programs, symbol_names,
+                                        symbol_values, pauli_sums, num_samples,
+                                        forward_pass_vals, grad):
+        """Differentiate a circuit with sampled expectation with GPU ops."""
+        # `self.expectation_op` is already set to cuquantum op at
+        # generate_differentiable_op._differentiate_sam.
+        return self.differentiate_sampled(programs, symbol_names, symbol_values,
+                                          pauli_sums, num_samples,
+                                          forward_pass_vals, grad)
 
     @catch_empty_inputs
     @tf.function

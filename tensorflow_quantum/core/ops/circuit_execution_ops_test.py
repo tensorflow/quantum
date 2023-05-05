@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# ==============================================================================
+# =============================================================================
 """Module to test consistency between Cirq and TFQ circuit execution ops."""
 # Remove PYTHONPATH collisions for protobuf.
 # pylint: disable=wrong-import-position

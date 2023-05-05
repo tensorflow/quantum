@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# ==============================================================================
+# =============================================================================
 """Tests for the differentiator abstract class."""
 # Remove PYTHONPATH collisions for protobuf.
 # pylint: disable=wrong-import-position
@@ -71,6 +71,26 @@ class DifferentiatorTest(tf.test.TestCase):
         with self.assertRaisesRegex(ValueError, expected_regex='sampled_op'):
             WorkingDifferentiator().generate_differentiable_op(
                 sampled_op=lambda programs, symbol_names, pauli_sums: 1)
+
+    def test_generate_differentiable_op_cuquantum(self):
+        """test the type checking on this method with `use_cuquantum`."""
+        WorkingDifferentiator().generate_differentiable_op(
+            analytic_op=lambda programs, symbol_names, symbol_values,
+            pauli_sums: 1,
+            use_cuquantum=True)
+        WorkingDifferentiator().generate_differentiable_op(
+            sampled_op=lambda programs, symbol_names, symbol_values, pauli_sums,
+            num_samples: 1,
+            use_cuquantum=True)
+        with self.assertRaisesRegex(TypeError, expected_regex='boolean'):
+            WorkingDifferentiator().generate_differentiable_op(
+                analytic_op=lambda programs, symbol_names, symbol_values,
+                pauli_sums: 1,
+                use_cuquantum='junk')
+        with self.assertRaisesRegex(TypeError, expected_regex='boolean'):
+            WorkingDifferentiator().generate_differentiable_op(
+                sampled_op=lambda programs, symbol_names, pauli_sums: 1,
+                use_cuquantum='junk')
 
     def test_single_op_link(self):
         """Tests if the `one-differentiator-per-op` policy is working well."""

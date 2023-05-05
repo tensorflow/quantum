@@ -39,6 +39,7 @@ py_test(
     deps = [
         ":adjoint",
         "//tensorflow_quantum/core/ops:circuit_execution_ops",
+        "//tensorflow_quantum/python:util",
     ],
 )
 
@@ -122,6 +123,7 @@ py_test(
 py_test(
     name = "gradient_test",
     timeout = "eternal",
+    shard_count = 5,
     srcs = ["gradient_test.py"],
     python_version = "PY3",
     deps = [

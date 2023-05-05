@@ -41,17 +41,16 @@ namespace tfq {
 namespace {
 // TODO(jaeyoo): Temorary hack for BulkSetAmpl with cuda ops.
 // Updates qsim custatevec side BulkSetAmple ops, and remove these utilities.
-template <typename FP, unsigned warp_size = 32>
+template <typename FP>
 __global__ void BulkSetAmplKernel(uint64_t mask, uint64_t bits, FP re, FP im,
                                   bool exclude, FP* state) {
   uint64_t k1 = uint64_t{blockIdx.x} * blockDim.x + threadIdx.x;
-  uint64_t k2 = 2 * k1 - threadIdx.x % warp_size;
 
   bool set = ((k1 & mask) == bits) ^ exclude;
 
   if (set) {
-    state[k2] = re;
-    state[k2 + warp_size] = im;
+    state[2 * k1] = re;
+    state[2 * k1 + 1] = im;
   }
 }
 
@@ -246,8 +245,8 @@ class TfqAdjointGradientCuquantumOp : public tensorflow::OpKernel {
       // sv now contains psi
       // scratch contains (sum_j paulis_sums[i][j] * downstream_grads[j])|psi>
       // scratch2 now contains psi as well.
-      [[maybe_unused]] Status unused = AccumulateOperators(pauli_sums[i], downstream_grads[i],
-                                           sim, ss, sv, scratch2, scratch);
+      [[maybe_unused]] Status unused = AccumulateOperators(
+          pauli_sums[i], downstream_grads[i], sim, ss, sv, scratch2, scratch);
 
       for (int j = partial_fused_circuits[i].size() - 1; j >= 0; j--) {
         for (int k = partial_fused_circuits[i][j].size() - 1; k >= 0; k--) {

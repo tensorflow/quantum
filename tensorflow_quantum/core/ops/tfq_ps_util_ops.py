@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# ==============================================================================
+# =============================================================================
 """Expose bindings for ParameterShift C++ ops."""
 from tensorflow_quantum.core.ops.load_module import load_module
 

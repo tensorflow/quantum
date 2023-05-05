@@ -11,18 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# ==============================================================================
+# =============================================================================
 """Compute gradients by combining function values linearly."""
 import tensorflow as tf
 
 from tensorflow_quantum.core.ops import tfq_adj_grad_op
 try:
     from tensorflow_quantum.core.ops import tfq_adj_grad_op_cuquantum
-    _enable_use_cuquantum = True
+    _ENABLE_USE_CUQUANTUM = True
 except:
-    _enable_use_cuquantum = False
+    _ENABLE_USE_CUQUANTUM = False
     tfq_adj_grad_op_cuquantum = tfq_adj_grad_op
-
 
 from tensorflow_quantum.python.differentiators import differentiator
 
@@ -100,6 +99,7 @@ class Adjoint(differentiator.Differentiator):
             raise ValueError("sample base backends are not supported by the "
                              "Adjoint method, please use analytic expectation"
                              " or choose another differentiator.")
+        use_cuquantum = _ENABLE_USE_CUQUANTUM and use_cuquantum
 
         return super().generate_differentiable_op(analytic_op=analytic_op,
                                                   use_cuquantum=use_cuquantum)
@@ -141,6 +141,21 @@ class Adjoint(differentiator.Differentiator):
         """Returns cpu adjoint gradient op result."""
         return tfq_adj_grad_op.tfq_adj_grad(programs, symbol_names,
                                             symbol_values, pauli_sums, grad)
+
+    def differentiate_sampled_cuquantum(
+            self,
+            programs,
+            symbol_names,
+            symbol_values,
+            pauli_sums,
+            num_samples,
+            forward_pass_vals,
+            grad,
+    ):
+        raise NotImplementedError(
+            "Adjoint state methods are not supported in sample based settings."
+            " Please use analytic expectation calculation or a different "
+            "tfq.differentiator.")
 
     def differentiate_sampled(
             self,

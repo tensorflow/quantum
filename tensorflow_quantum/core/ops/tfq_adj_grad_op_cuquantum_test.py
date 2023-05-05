@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# ==============================================================================
+# =============================================================================
 """Tests that specifically target tfq_unitary_op."""
 # Remove PYTHONPATH collisions for protobuf.
 # pylint: disable=wrong-import-position
@@ -116,7 +116,7 @@ class ADJGradTest(tf.test.TestCase, parameterized.TestCase):
         # The result should be the similar within a tolerance.
         np.testing.assert_allclose(res_cpu,
                                    res_cuquantum,
-                                   atol=1e-3,
+                                   atol=1e-4,
                                    err_msg="""
         # If failed, the GPU architecture in this system may be unsupported.
         # Please refer to the supported architectures here.
