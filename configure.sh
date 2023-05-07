@@ -49,56 +49,76 @@ function is_ppc64le() {
 # Remove .bazelrc if it already exist
 [ -e .bazelrc ] && rm .bazelrc
 
-# Check if we are building GPU or CPU ops, default CPU
-while [[ "$TF_NEED_CUDA" == "" ]]; do
-  read -p "Do you want to build ops again TensorFlow CPU pip package?"\
-" Y or enter for CPU (tensorflow-cpu), N for GPU (tensorflow). [Y/n] " INPUT
+# Check if we are building TFQ GPU or not (TODO)
+while [[ "$TFQ_NEED_CUDA" == "" ]]; do
+  read -p "Do you want to build TFQ against GPU ?"\
+" Y or enter for GPU, N for CPU. [Y/n] " INPUT
   case $INPUT in
-    [Yy]* ) echo "Build with CPU pip package."; TF_NEED_CUDA=0;;
-    [Nn]* ) echo "Build with GPU pip package."; TF_NEED_CUDA=1;;
-    "" ) echo "Build with CPU pip package."; TF_NEED_CUDA=0;;
+    [Yy]* ) echo "Build with cuQuantum support."; TFQ_NEED_CUDA=1;;
+    [Nn]* ) echo "Build with CPU ops only."; TFQ_NEED_CUDA=0;;
+    "" ) echo "Build with cuQuantum support."; TFQ_NEED_CUDA=1;;
     * ) echo "Invalid selection: " $INPUT;;
   esac
 done
 
-while [[ "$TF_CUDA_VERSION" == "" ]]; do
-  read -p "Are you building against TensorFlow 2.11(including RCs) or newer?[Y/n] " INPUT
-  case $INPUT in
-    [Yy]* ) echo "Build against TensorFlow 2.11 or newer."; TF_CUDA_VERSION=11;;
-    [Nn]* ) echo "Build against TensorFlow <2.11."; TF_CUDA_VERSION=10.0;;
-    "" ) echo "Build against TensorFlow 2.11 or newer."; TF_CUDA_VERSION=11;;
-    * ) echo "Invalid selection: " $INPUT;;
-  esac
-done
+# Set the CUDA SDK version for TF
+if [[ "$TFQ_NEED_CUDA" == "1" ]]; then
+  _DEFAULT_CUDA_VERSION=11
+  while [[ "$TF_CUDA_VERSION" == "" ]]; do
+    read -p "Please specify the CUDA SDK major version you want to use. [Leave empty to default to CUDA $_DEFAULT_CUDA_VERSION]: " INPUT
+    case $INPUT in
+      "" ) echo "Build against CUDA $_DEFAULT_CUDA_VERSION."; TF_CUDA_VERSION=$_DEFAULT_CUDA_VERSION;;
+      # check if the input is a number
+      *[!0-9]* ) echo "Invalid selection: $INPUT";;
+      * ) echo "Build against CUDA $INPUT."; TF_CUDA_VERSION=$INPUT;;
+    esac
+  done
+fi
+
+# If TFQ_NEED_CUDA then enforce building against TensorFlow 2.11 or newer.
+IS_VALID_TF_VERSION=$(python -c "import tensorflow as tf; v = tf.__version__; print(float(v[:v.rfind('.')]) < 2.11)")
+TF_VERSION=$(python -c "import tensorflow as tf; print(tf.__version__)")
+if [[ $IS_VALID_TF_VERSION == "True" ]]; then
+  echo "Building against TensorFlow 2.11 or newer is required."
+  echo "Please upgrade your TensorFlow version."
+  exit 1
+elif [[ $IS_VALID_TF_VERSION == "False" ]]; then
+  echo "Using TensorFlow 2.11"
+else
+  echo "Unable to determine TensorFlow version."
+  exit 1
+fi
 
 # Check if we are building cuQuantum ops on top of CUDA.
-if [[ "$TF_NEED_CUDA" == "1" ]]; then
-  echo "GPU is on."
-  echo "Searching cuQuantum library from environment variable CUQUANTUM_ROOT..."
+if [[ "$TFQ_NEED_CUDA" == "1" ]]; then
   if [[ "$CUQUANTUM_ROOT" != "" ]]; then
     echo "  [*] cuQuantum library is detected here: CUQUANTUM_ROOT=$CUQUANTUM_ROOT."
-    write_action_env_to_bazelrc "build:cuda" "CUQUANTUM_ROOT" ${CUQUANTUM_ROOT}
-    write_linkopt_dir_to_bazelrc "build:cuda" "${CUQUANTUM_ROOT}/lib"
   else
-    echo "  [*] cuQuantum library is NOT detected. Lazily detect it later, OR please set CUQUANTUM_ROOT environment variable."
+    # Prompt the user to enter the cuQuantum root path, do not allow empty input (pressing enter)
+    # If the user enters an invalid path, prompt again.
+    while true; do
+      read -p "Please specify the cuQuantum root directory: " INPUT
+      if [[ -z "$INPUT" ]]; then
+        echo "Input cannot be empty. Please enter a valid path."
+      elif [[ "$INPUT" =~ ^(/[A-Za-z0-9_-]+)+$ ]]; then
+        echo "Path pattern is valid: $INPUT"
+        CUQUANTUM_ROOT=$INPUT
+        break
+      else
+        echo "Invalid path pattern: $INPUT. Please enter a valid path."
+      fi
+    done
   fi
+  write_action_env_to_bazelrc "build:cuda" "CUQUANTUM_ROOT" ${CUQUANTUM_ROOT}
+  write_linkopt_dir_to_bazelrc "build:cuda" "${CUQUANTUM_ROOT}/lib"
 fi
 
 # Check if it's installed
 if [[ $(pip show tensorflow) == *tensorflow* ]] || [[ $(pip show tf-nightly) == *tf-nightly* ]]; then
-  echo 'Using installed tensorflow'
+  echo "Using installed tensorflow-($TF_VERSION)"
 else
-  # Uninstall CPU version if it is installed.
-  if [[ $(pip show tensorflow-cpu) == *tensorflow-cpu* ]]; then
-    echo 'Already have tensorflow non-gpu installed. Uninstalling......\n'
-    pip uninstall tensorflow
-  elif [[ $(pip show tf-nightly-cpu) == *tf-nightly-cpu* ]]; then
-    echo 'Already have tensorflow non-gpu installed. Uninstalling......\n'
-    pip uninstall tf-nightly
-  fi
-  # Install GPU version
-  echo 'Installing tensorflow .....\n'
-  pip install tensorflow
+  echo 'Installing tensorflow 2.11 .....\n'
+  pip install tensorflow==2.11.0
 fi
 
 
@@ -140,6 +160,8 @@ if is_windows; then
   SHARED_LIBRARY_NAME=${SHARED_LIBRARY_NAME//\\//}
   HEADER_DIR=${HEADER_DIR//\\//}
 fi
+
+TF_NEED_CUDA=${TFQ_NEED_CUDA}
 write_action_env_to_bazelrc "build" "TF_HEADER_DIR" ${HEADER_DIR} ""
 write_action_env_to_bazelrc "build" "TF_SHARED_LIBRARY_DIR" ${SHARED_LIBRARY_DIR} ""
 write_action_env_to_bazelrc "build" "TF_SHARED_LIBRARY_NAME" ${SHARED_LIBRARY_NAME} ""
