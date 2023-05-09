@@ -1,3 +1,4 @@
+load("@local_config_cuda//cuda:build_defs.bzl", "if_cuda_is_configured")
 package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
@@ -27,6 +28,18 @@ py_test(
     ],
 )
 
+py_test(
+    name = "benchmark_cuquantum_ops",
+    srcs = ["benchmark_cuquantum_ops.py"],
+    python_version = "PY3",
+    deps = [
+        "//tensorflow_quantum/core/ops:tfq_simulate_ops_cuquantum_py",
+        "//tensorflow_quantum/core/ops::tfq_simulate_ops_py",
+        "//tensorflow_quantum/core/serialize:serializer",
+        "@local_config_tf//:test_log_pb2",
+        "//tensorflow_quantum/python:util",
+    ],
+)
 py_test(
     name = "benchmark_op_gradients",
     srcs = ["benchmark_op_gradients.py"],

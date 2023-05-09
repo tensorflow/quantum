@@ -80,7 +80,7 @@ class SimulateExpectationCuquantumTest(tf.test.TestCase):
         pauli_sums = util.random_pauli_sums(qubits, 3, batch_size)
         pauli_sums_tensor = util.convert_to_tensor([[x] for x in pauli_sums])
 
-        cpu_avg_time, res_cpu = measure_average_runtime(
+        _, res_cpu = measure_average_runtime(
             lambda: tfq_simulate_ops.tfq_simulate_expectation(
                 circuit_batch_tensor, symbol_names,
                 symbol_values_array.astype(np.float64), pauli_sums_tensor),
@@ -88,16 +88,13 @@ class SimulateExpectationCuquantumTest(tf.test.TestCase):
             num_samples=100,
         )
 
-        cuquantum_avg_time, res_cuquantum = measure_average_runtime(
+        _, res_cuquantum = measure_average_runtime(
             lambda: tfq_simulate_ops_cuquantum.tfq_simulate_expectation(
                 circuit_batch_tensor, symbol_names,
                 symbol_values_array.astype(np.float64), pauli_sums_tensor),
             "Expectation cuQuantum",
             num_samples=100,
         )
-
-        # cuQuantum op should be faster than CPU op.
-        self.assertGreater(cpu_avg_time, cuquantum_avg_time)
 
         # The result should be the similar within a tolerance.
         np.testing.assert_allclose(res_cpu,
@@ -303,7 +300,7 @@ class SimulateSampledExpectationCuquantumTest(tf.test.TestCase):
         pauli_sums = util.random_pauli_sums(qubits, 3, batch_size)
         pauli_sums_tensor = util.convert_to_tensor([[x] for x in pauli_sums])
 
-        cpu_avg_time, res_cpu = measure_average_runtime(
+        _, res_cpu = measure_average_runtime(
             lambda: tfq_simulate_ops.tfq_simulate_sampled_expectation(
                 circuit_batch_tensor, symbol_names,
                 symbol_values_array.astype(np.float64), pauli_sums_tensor,
@@ -313,7 +310,7 @@ class SimulateSampledExpectationCuquantumTest(tf.test.TestCase):
             result_avg=False,
         )
 
-        cuquantum_avg_time, res_cuquantum = measure_average_runtime(
+        _, res_cuquantum = measure_average_runtime(
             lambda: tfq_simulate_ops_cuquantum.tfq_simulate_sampled_expectation(
                 circuit_batch_tensor, symbol_names,
                 symbol_values_array.astype(np.float64), pauli_sums_tensor,
@@ -324,7 +321,6 @@ class SimulateSampledExpectationCuquantumTest(tf.test.TestCase):
         )
 
         # cuQuantum op should be faster than CPU op.
-        self.assertGreater(cpu_avg_time, cuquantum_avg_time)
 
         # The result should be the similar within a tolerance.
         np.testing.assert_allclose(res_cpu,
@@ -552,7 +548,7 @@ class SimulateSamplesCuquantumTest(tf.test.TestCase, parameterized.TestCase):
               for symbol in symbol_names]
              for resolver in resolver_batch])
 
-        cpu_avg_time, res_cpu = measure_average_runtime(
+        _, res_cpu = measure_average_runtime(
             lambda: tfq_simulate_ops.tfq_simulate_samples(
                 circuit_batch_tensor, symbol_names,
                 symbol_values_array.astype(np.float64), n_samples),
@@ -561,7 +557,7 @@ class SimulateSamplesCuquantumTest(tf.test.TestCase, parameterized.TestCase):
             result_avg=False,
         )
 
-        cuquantum_avg_time, res_cuquantum = measure_average_runtime(
+        _, res_cuquantum = measure_average_runtime(
             lambda: tfq_simulate_ops_cuquantum.tfq_simulate_samples(
                 circuit_batch_tensor, symbol_names,
                 symbol_values_array.astype(np.float64), n_samples),
@@ -571,7 +567,6 @@ class SimulateSamplesCuquantumTest(tf.test.TestCase, parameterized.TestCase):
         )
 
         # cuQuantum op should be faster than CPU op.
-        self.assertGreater(cpu_avg_time, cuquantum_avg_time)
 
         res_cpu = np.average(res_cpu, axis=1)
         res_cuquantum = np.average(res_cuquantum, axis=1)
@@ -750,7 +745,7 @@ class SimulateStateCuquantumTest(tf.test.TestCase, parameterized.TestCase):
               for symbol in symbol_names]
              for resolver in resolver_batch])
 
-        cpu_avg_time, res_cpu = measure_average_runtime(
+        _, res_cpu = measure_average_runtime(
             lambda: tfq_simulate_ops.tfq_simulate_state(
                 circuit_batch_tensor, symbol_names,
                 symbol_values_array.astype(np.float64)),
@@ -758,7 +753,7 @@ class SimulateStateCuquantumTest(tf.test.TestCase, parameterized.TestCase):
             num_samples=10,
         )
 
-        cuquantum_avg_time, res_cuquantum = measure_average_runtime(
+        _, res_cuquantum = measure_average_runtime(
             lambda: tfq_simulate_ops_cuquantum.tfq_simulate_state(
                 circuit_batch_tensor, symbol_names,
                 symbol_values_array.astype(np.float64)),
@@ -767,7 +762,6 @@ class SimulateStateCuquantumTest(tf.test.TestCase, parameterized.TestCase):
         )
 
         # cuQuantum op should be faster than CPU op.
-        self.assertGreater(cpu_avg_time, cuquantum_avg_time)
 
         # The result should be the similar within a tolerance.
         np.testing.assert_allclose(res_cpu,
