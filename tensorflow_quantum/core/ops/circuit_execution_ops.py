@@ -160,6 +160,10 @@ def get_expectation_op(
     # TODO(zaqqwerty): remove DM check after cirq #3964
     if isinstance(backend, (cirq.sim.simulator.SimulatesExpectationValues,
                             cirq.DensityMatrixSimulator)):
+        if use_cuquantum:
+            raise ValueError(
+                "use_cuquantum is not supported for cirq simulator. Please \
+                    set use_cuquantum to False.")
         op = cirq_ops._get_cirq_analytical_expectation(backend)
 
     if op is not None:
@@ -264,6 +268,10 @@ def get_sampling_op(
             op = TFQStateVectorSimulator.samples
 
     if isinstance(backend, cirq.Sampler):
+        if use_cuquantum:
+            raise ValueError(
+                "use_cuquantum is not supported for cirq sampler. Please \
+                    set use_cuquantum to False.")
         op = cirq_ops._get_cirq_samples(backend)
 
     if op is not None:
@@ -360,6 +368,10 @@ def get_state_op(
             op = TFQStateVectorSimulator.state
 
     if isinstance(backend, (cirq.SimulatesFinalState)):
+        if use_cuquantum:
+            raise ValueError(
+                "use_cuquantum is not supported for cirq simulator. Please \
+                    set use_cuquantum to False.")
         op = cirq_ops._get_cirq_simulate_state(backend)
 
     if op is not None:
@@ -478,6 +490,10 @@ def get_sampled_expectation_op(
             op = TFQStateVectorSimulator.sampled_expectation
 
     if isinstance(backend, cirq.Sampler):
+        if use_cuquantum:
+            raise ValueError(
+                "use_cuquantum is not supported for cirq sampler. Please \
+                    set use_cuquantum to False.")
         op = cirq_ops._get_cirq_sampled_expectation(backend)
 
     if op is not None:
