@@ -34,7 +34,7 @@ py_test(
     python_version = "PY3",
     deps = [
         "//tensorflow_quantum/core/ops:tfq_simulate_ops_cuquantum_py",
-        "//tensorflow_quantum/core/ops::tfq_simulate_ops_py",
+        "//tensorflow_quantum/core/ops:tfq_simulate_ops_py",
         "//tensorflow_quantum/core/serialize:serializer",
         "@local_config_tf//:test_log_pb2",
         "//tensorflow_quantum/python:util",
