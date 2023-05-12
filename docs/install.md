@@ -212,6 +212,11 @@ Success: TensorFlow Quantum for CPU is now installed.
 
 ### 7. Build the TensorFlow Quantum pip package for GPU
 
+To enable GPU (cuQuantum) backend, cuStatevec must be installed, see <a href="https://docs.nvidia.com/cuda/cuquantum/custatevec/getting_started.html">installation guide</a> for details. Importantly, we require that the `CUQUANTUM_ROOT` environment variable has been set by running the following with your installation path.
+<pre class="devsite-click-to-copy">
+  <code class="devsite-terminal">export CUQUANTUM_ROOT=/path/to/cuquantum/installation/dir </code>
+</pre>
+
 Build the TensorFlow Quantum GPU pip package and install:
 
 <!-- common_typos_disable -->
