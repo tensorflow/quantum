@@ -11,7 +11,6 @@ from tensorflow_quantum.python import util
 import flags
 from dataclasses import dataclass
 
-SEED = 63536323
 SRC = os.path.dirname(os.path.realpath(__file__))
 os.environ['TEST_REPORT_FILE_PREFIX'] = os.path.join(SRC, 'reports/')
 
