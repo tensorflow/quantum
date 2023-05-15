@@ -22,23 +22,25 @@ class BenchmarkParams:
     batch_size: int
     n_iters: int = 100
 
-_test_params_1 = BenchmarkParams(n_qubits=20, n_moments=1, batch_size=5)
-_test_params_2 = BenchmarkParams(n_qubits=21, n_moments=10, batch_size=5) # more depth
-_test_params_3 = BenchmarkParams(n_qubits=22, n_moments=1, batch_size=5, n_iters=10)
+_test_params_1 = BenchmarkParams(n_qubits=20, n_moments=15, batch_size=5)
+_test_params_2 = BenchmarkParams(n_qubits=21, n_moments=25, batch_size=5) # more depth
+_test_params_3 = BenchmarkParams(n_qubits=22, n_moments=15, batch_size=5, n_iters=10)
 
 TEST_PARAMS_EXPECTATION = [
     _test_params_1,
-    # _test_params_2, # uncomment for depth params
+    _test_params_2, # uncomment for depth params
     ]
 TEST_PARAMS_SAMPLED_EXPECTATION = [
     _test_params_1,
-    # _test_params_2, # uncomment for depth params
+    _test_params_2, # uncomment for depth params
     ]
 TEST_PARAMS_SAMPLES = [
     _test_params_1,
-    # _test_params_2, # uncomment for depth params
+    _test_params_2, # uncomment for depth params
     ]
-TEST_PARAMS_STATE = [_test_params_3,]
+TEST_PARAMS_STATE = [
+    _test_params_3,
+    ]
 
 def _measure_median_runtime(
         fn,
@@ -89,10 +91,10 @@ class RandomCircuitBenchmark(tf.test.Benchmark):
         batch_size = self.params.batch_size
         circuit_depth = self.params.n_moments
         symbol_names = ['alpha']
-        qubits = cirq.GridQubit.rect(circuit_depth, n_qubits)
+        qubits = cirq.GridQubit.rect(1, n_qubits)
         circuit_batch, resolver_batch = \
             util.random_symbol_circuit_resolver_batch(
-                qubits, symbol_names, batch_size)
+                qubits, symbol_names, batch_size, n_moments=circuit_depth)
 
         circuit_batch_tensor = util.convert_to_tensor(circuit_batch)
 
@@ -144,10 +146,10 @@ class RandomCircuitBenchmark(tf.test.Benchmark):
         batch_size = self.params.batch_size
         circuit_depth = self.params.n_moments
         symbol_names = ['alpha']
-        qubits = cirq.GridQubit.rect(circuit_depth, n_qubits)
+        qubits = cirq.GridQubit.rect(1, n_qubits)
         circuit_batch, resolver_batch = \
             util.random_symbol_circuit_resolver_batch(
-                qubits, symbol_names, batch_size)
+                qubits, symbol_names, batch_size, n_moments=circuit_depth)
 
         circuit_batch_tensor = util.convert_to_tensor(circuit_batch)
 
@@ -197,10 +199,10 @@ class RandomCircuitBenchmark(tf.test.Benchmark):
         batch_size = params.batch_size
         circuit_depth = params.n_moments
         symbol_names = ['alpha']
-        qubits = cirq.GridQubit.rect(circuit_depth, n_qubits)
+        qubits = cirq.GridQubit.rect(1, n_qubits)
         circuit_batch, resolver_batch = \
             util.random_symbol_circuit_resolver_batch(
-                qubits, symbol_names, batch_size)
+                qubits, symbol_names, batch_size, n_moments=circuit_depth)
         n_samples = [[10000]] * batch_size
 
         circuit_batch_tensor = util.convert_to_tensor(circuit_batch)
@@ -253,10 +255,10 @@ class RandomCircuitBenchmark(tf.test.Benchmark):
         batch_size = params.batch_size
         circuit_depth = params.n_moments
         symbol_names = ['alpha']
-        qubits = cirq.GridQubit.rect(circuit_depth, n_qubits)
+        qubits = cirq.GridQubit.rect(1, n_qubits)
         circuit_batch, resolver_batch = \
             util.random_symbol_circuit_resolver_batch(
-                qubits, symbol_names, batch_size)
+                qubits, symbol_names, batch_size, n_moments=circuit_depth)
         n_samples = [[10000]] * batch_size
 
         circuit_batch_tensor = util.convert_to_tensor(circuit_batch)
@@ -310,11 +312,11 @@ class RandomCircuitBenchmark(tf.test.Benchmark):
         circuit_depth = params.n_moments
         symbol_names = ['alpha']
         n_samples = [100]
-        qubits = cirq.GridQubit.rect(circuit_depth, n_qubits)
+        qubits = cirq.GridQubit.rect(1, n_qubits)
 
         circuit_batch, resolver_batch = \
             util.random_symbol_circuit_resolver_batch(
-                qubits, symbol_names, batch_size)
+                qubits, symbol_names, batch_size, n_moments=circuit_depth)
 
         circuit_batch_tensor = util.convert_to_tensor(circuit_batch)
 
@@ -363,11 +365,11 @@ class RandomCircuitBenchmark(tf.test.Benchmark):
         circuit_depth = params.n_moments
         symbol_names = ['alpha']
         n_samples = [100]
-        qubits = cirq.GridQubit.rect(circuit_depth, n_qubits)
+        qubits = cirq.GridQubit.rect(1, n_qubits)
 
         circuit_batch, resolver_batch = \
             util.random_symbol_circuit_resolver_batch(
-                qubits, symbol_names, batch_size)
+                qubits, symbol_names, batch_size, n_moments=circuit_depth)
 
         circuit_batch_tensor = util.convert_to_tensor(circuit_batch)
 
@@ -415,10 +417,10 @@ class RandomCircuitBenchmark(tf.test.Benchmark):
         batch_size = params.batch_size
         circuit_depth = params.n_moments
         symbol_names = ['alpha']
-        qubits = cirq.GridQubit.rect(circuit_depth, n_qubits)
+        qubits = cirq.GridQubit.rect(1, n_qubits)
         circuit_batch, resolver_batch = \
             util.random_symbol_circuit_resolver_batch(
-                qubits, symbol_names, batch_size)
+                qubits, symbol_names, batch_size, n_moments=circuit_depth)
 
         circuit_batch_tensor = util.convert_to_tensor(circuit_batch)
 
@@ -465,10 +467,10 @@ class RandomCircuitBenchmark(tf.test.Benchmark):
         batch_size = params.batch_size
         circuit_depth = params.n_moments
         symbol_names = ['alpha']
-        qubits = cirq.GridQubit.rect(circuit_depth, n_qubits)
+        qubits = cirq.GridQubit.rect(1, n_qubits)
         circuit_batch, resolver_batch = \
             util.random_symbol_circuit_resolver_batch(
-                qubits, symbol_names, batch_size)
+                qubits, symbol_names, batch_size, n_moments=circuit_depth)
 
         circuit_batch_tensor = util.convert_to_tensor(circuit_batch)
 
