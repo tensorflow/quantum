@@ -51,12 +51,12 @@ function is_ppc64le() {
 
 # Check if we are building TFQ GPU or not (TODO)
 while [[ "$TFQ_NEED_CUDA" == "" ]]; do
-  read -p "Do you want to build TFQ against GPU ?"\
-" Y or enter for GPU, N for CPU. [Y/n] " INPUT
+  read -p "Do you want to build TFQ against CPU?"\
+" Y or enter for CPU, N for GPU. [Y/n] " INPUT
   case $INPUT in
-    [Yy]* ) echo "Build with cuQuantum support."; TFQ_NEED_CUDA=1;;
-    [Nn]* ) echo "Build with CPU ops only."; TFQ_NEED_CUDA=0;;
-    "" ) echo "Build with cuQuantum support."; TFQ_NEED_CUDA=1;;
+    [Yy]* ) echo "Build with CPU ops only."; TFQ_NEED_CUDA=0;;
+    [Nn]* ) echo "Build with cuQuantum support."; TFQ_NEED_CUDA=1;;
+    "" ) echo "Build with CPU ops only."; TFQ_NEED_CUDA=0;;
     * ) echo "Invalid selection: " $INPUT;;
   esac
 done
