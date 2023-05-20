@@ -27,6 +27,8 @@ jobs:
         with:
           python-version: '3.8'
           architecture: 'x64'
+      - name: get ubuntu version
+        run: lsb_release -a
       - name: Install Format tools
         run: pip install --upgrade pip setuptools; pip install -r requirements.txt; sudo apt-get install -y clang-format-6.0
       - name: Format Check
