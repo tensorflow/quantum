@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# ==============================================================================
+# =============================================================================
 
 # Run the tutorials using the installed pip package
 pip install jupyter nbclient==0.6.5 jupyter-client==6.1.12 ipython==7.22.0
