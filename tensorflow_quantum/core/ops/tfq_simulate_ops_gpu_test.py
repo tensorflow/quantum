@@ -13,10 +13,8 @@
 # limitations under the License.
 # =============================================================================
 """Tests that specifically target tfq_simulate_ops_cu*."""
-import os
 import time
 import numpy as np
-from absl.testing import parameterized
 import tensorflow as tf
 import cirq
 
@@ -26,6 +24,17 @@ from tensorflow_quantum.core.ops import tfq_simulate_ops_cuquantum
 from tensorflow_quantum.python import util
 
 def measure_average_runtime(fn, tag, num_samples=10):
+    """
+    Measure the average runtime of a function.
+
+    Args:
+        fn: A function to measure.
+        tag: A string to print.
+        num_samples: Number of samples to measure.
+
+    Returns:
+        A tuple of (average runtime, function result).    
+    """
     avg_time = []
     for _ in range(num_samples):
         begin_time = time.time()
