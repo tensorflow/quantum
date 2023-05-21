@@ -33,7 +33,7 @@ def measure_average_runtime(fn, tag, num_samples=10):
         num_samples: Number of samples to measure.
 
     Returns:
-        A tuple of (average runtime, function result).    
+        A tuple of (average runtime, function result).
     """
     avg_time = []
     for _ in range(num_samples):
@@ -71,18 +71,16 @@ class SimulateExpectationGpuTest(tf.test.TestCase):
 
         cpu_avg_time, res_cpu = measure_average_runtime(
             lambda: tfq_simulate_ops.tfq_simulate_expectation(
-                circuit_batch_tensor,
-                symbol_names, symbol_values_array.astype(np.float64),
-                pauli_sums_tensor),
+                circuit_batch_tensor, symbol_names,
+                symbol_values_array.astype(np.float64), pauli_sums_tensor),
             "CPU",
             num_samples=100,
         )
 
         cuda_avg_time, res_cuda = measure_average_runtime(
             lambda: tfq_simulate_ops_cuda.tfq_simulate_expectation(
-                circuit_batch_tensor,
-                symbol_names, symbol_values_array.astype(np.float64),
-                pauli_sums_tensor),
+                circuit_batch_tensor, symbol_names,
+                symbol_values_array.astype(np.float64), pauli_sums_tensor),
             "CUDA",
             num_samples=100,
         )
@@ -115,18 +113,16 @@ class SimulateExpectationGpuTest(tf.test.TestCase):
 
         cpu_avg_time, res_cpu = measure_average_runtime(
             lambda: tfq_simulate_ops.tfq_simulate_expectation(
-                circuit_batch_tensor,
-                symbol_names, symbol_values_array.astype(np.float64),
-                pauli_sums_tensor),
+                circuit_batch_tensor, symbol_names,
+                symbol_values_array.astype(np.float64), pauli_sums_tensor),
             "CPU",
             num_samples=100,
         )
 
         cuda_avg_time, res_cuda = measure_average_runtime(
             lambda: tfq_simulate_ops_cuquantum.tfq_simulate_expectation(
-                circuit_batch_tensor,
-                symbol_names, symbol_values_array.astype(np.float64),
-                pauli_sums_tensor),
+                circuit_batch_tensor, symbol_names,
+                symbol_values_array.astype(np.float64), pauli_sums_tensor),
             "cuQuantum",
             num_samples=100,
         )
