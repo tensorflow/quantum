@@ -404,7 +404,7 @@ class SampledExpectationTest(parameterized.TestCase, tf.test.TestCase):
             # GPU is not set. Ignores this sub-test.
             self.skipTest("GPU is not set. Ignoring gpu tests...")
         tf.random.set_seed(RANDOM_SEED)
-        initializer = tf.keras.initializers.RandomUniform(0, 2*np.pi)
+        initializer = tf.keras.initializers.RandomUniform(0, 2 * np.pi)
         bit = cirq.GridQubit(0, 0)
         circuit = cirq.Circuit(cirq.rx(sympy.Symbol('theta'))(bit))
         layer = sampled_expectation.SampledExpectation(
@@ -447,7 +447,7 @@ class SampledExpectationFunctionalTests(parameterized.TestCase,
             # GPU is not set. Ignores this sub-test.
             self.skipTest("GPU is not set. Ignoring gpu tests...")
         tf.random.set_seed(RANDOM_SEED)
-        initializer = tf.keras.initializers.RandomUniform(0, 2*np.pi)
+        initializer = tf.keras.initializers.RandomUniform(0, 2 * np.pi)
         bit = cirq.GridQubit(0, 0)
         symbols = sympy.symbols('x y z')
         circuit = _gen_single_bit_rotation_problem(
@@ -498,7 +498,7 @@ class SampledExpectationFunctionalTests(parameterized.TestCase,
             # GPU is not set. Ignores this sub-test.
             self.skipTest("GPU is not set. Ignoring gpu tests...")
         tf.random.set_seed(RANDOM_SEED)
-        initializer = tf.keras.initializers.RandomUniform(0, 2*np.pi)
+        initializer = tf.keras.initializers.RandomUniform(0, 2 * np.pi)
         bit = cirq.GridQubit(0, 0)
         symbols = sympy.symbols('x y z')
         ops = util.convert_to_tensor([[cirq.Z(bit)], [cirq.Z(bit)]])
@@ -555,7 +555,7 @@ class SampledExpectationFunctionalTests(parameterized.TestCase,
             # GPU is not set. Ignores this sub-test.
             self.skipTest("GPU is not set. Ignoring gpu tests...")
         tf.random.set_seed(RANDOM_SEED)
-        initializer = tf.keras.initializers.RandomUniform(0, 2*np.pi)
+        initializer = tf.keras.initializers.RandomUniform(0, 2 * np.pi)
         bit = cirq.GridQubit(0, 0)
         symbols = sympy.symbols('x y z')
         ops = util.convert_to_tensor([[cirq.Z(bit)], [cirq.Z(bit)]])
@@ -616,7 +616,7 @@ class SampledExpectationFunctionalTests(parameterized.TestCase,
             # GPU is not set. Ignores this sub-test.
             self.skipTest("GPU is not set. Ignoring gpu tests...")
         tf.random.set_seed(RANDOM_SEED)
-        initializer = tf.keras.initializers.RandomUniform(0, 2*np.pi)
+        initializer = tf.keras.initializers.RandomUniform(0, 2 * np.pi)
         bit = cirq.GridQubit(0, 0)
         symbols = sympy.symbols('x, y, z')
         circuits = util.convert_to_tensor([
