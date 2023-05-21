@@ -92,7 +92,6 @@ if nightly:
     project_name = 'tfq-nightly'
     build_version = build_version + '.dev' + str(date.today()).replace('-', '')
 
-
 setup(
     name=project_name,
     version=build_version,
