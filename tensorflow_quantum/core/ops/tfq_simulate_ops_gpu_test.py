@@ -120,9 +120,8 @@ class SimulateExpectationGpuTest(tf.test.TestCase):
                 pauli_sums_tensor),
             "CPU",
             num_samples=100,
-
         )
-        
+
         cuda_avg_time, res_cuda = measure_average_runtime(
             lambda: tfq_simulate_ops_cuquantum.tfq_simulate_expectation(
                 circuit_batch_tensor,
