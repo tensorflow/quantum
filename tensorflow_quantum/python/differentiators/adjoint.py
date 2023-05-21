@@ -16,6 +16,13 @@
 import tensorflow as tf
 
 from tensorflow_quantum.core.ops import tfq_adj_grad_op
+try:
+    from tensorflow_quantum.core.ops import tfq_adj_grad_op_cuquantum
+    _ENABLE_USE_CUQUANTUM = True
+except:
+    _ENABLE_USE_CUQUANTUM = False
+    tfq_adj_grad_op_cuquantum = tfq_adj_grad_op
+
 from tensorflow_quantum.python.differentiators import differentiator
 
 
@@ -32,9 +39,10 @@ class Adjoint(differentiator.Differentiator):
     https://academic.oup.com/gji/article-pdf/167/2/495/1492368/167-2-495.pdf).
     The Adjoint method differentiates the input circuits in roughly one forward
     and backward pass over the circuits, to calculate the gradient of
-    a symbol only a constant number of gate operations need to be applied to the
-    circuits state. When the number of parameters in a circuit is very large,
-    this differentiator performs much better than all the others found in TFQ.
+    a symbol only a constant number of gate operations need to be applied to
+    the circuits state. When the number of parameters in a circuit is very
+    large, this differentiator performs much better than all the others found
+    in TFQ.
 
 
     >>> my_op = tfq.get_expectation_op()
@@ -62,7 +70,11 @@ class Adjoint(differentiator.Differentiator):
 
     """
 
-    def generate_differentiable_op(self, *, sampled_op=None, analytic_op=None):
+    def generate_differentiable_op(self,
+                                   *,
+                                   sampled_op=None,
+                                   analytic_op=None,
+                                   use_cuquantum=False):
         """Generate a differentiable op by attaching self to an op.
 
         See `tfq.differentiators.Differentiator`. This has been partially
@@ -75,6 +87,8 @@ class Adjoint(differentiator.Differentiator):
                 using this differentiator's `differentiate_sampled` method.
             analytic_op: A `callable` op that you want to make differentiable
                 using this differentiators `differentiate_analytic` method.
+            use_cuquantum: A `bool` indicating whether to use the cuQuantum
+                version of the adjoint gradient op.
 
         Returns:
             A `callable` op that who's gradients are now registered to be
@@ -85,8 +99,10 @@ class Adjoint(differentiator.Differentiator):
             raise ValueError("sample base backends are not supported by the "
                              "Adjoint method, please use analytic expectation"
                              " or choose another differentiator.")
+        use_cuquantum = _ENABLE_USE_CUQUANTUM and use_cuquantum
 
-        return super().generate_differentiable_op(analytic_op=analytic_op)
+        return super().generate_differentiable_op(analytic_op=analytic_op,
+                                                  use_cuquantum=use_cuquantum)
 
     @tf.function
     def get_gradient_circuits(self, programs, symbol_names, symbol_values):
@@ -97,13 +113,60 @@ class Adjoint(differentiator.Differentiator):
 
     @differentiator.catch_empty_inputs
     @tf.function
-    def differentiate_analytic(self, programs, symbol_names, symbol_values,
-                               pauli_sums, forward_pass_vals, grad):
+    def differentiate_analytic_cuquantum(
+            self,
+            programs,
+            symbol_names,
+            symbol_values,
+            pauli_sums,
+            forward_pass_vals,
+            grad,
+    ):
+        """Returns cuquantum adjoint gradient op result."""
+        return tfq_adj_grad_op_cuquantum.tfq_adj_grad(programs, symbol_names,
+                                                      symbol_values, pauli_sums,
+                                                      grad)
+
+    @differentiator.catch_empty_inputs
+    @tf.function
+    def differentiate_analytic(
+            self,
+            programs,
+            symbol_names,
+            symbol_values,
+            pauli_sums,
+            forward_pass_vals,
+            grad,
+    ):
+        """Returns cpu adjoint gradient op result."""
         return tfq_adj_grad_op.tfq_adj_grad(programs, symbol_names,
                                             symbol_values, pauli_sums, grad)
 
-    def differentiate_sampled(self, programs, symbol_names, symbol_values,
-                              pauli_sums, num_samples, forward_pass_vals, grad):
+    def differentiate_sampled_cuquantum(
+            self,
+            programs,
+            symbol_names,
+            symbol_values,
+            pauli_sums,
+            num_samples,
+            forward_pass_vals,
+            grad,
+    ):
+        raise NotImplementedError(
+            "Adjoint state methods are not supported in sample based settings."
+            " Please use analytic expectation calculation or a different "
+            "tfq.differentiator.")
+
+    def differentiate_sampled(
+            self,
+            programs,
+            symbol_names,
+            symbol_values,
+            pauli_sums,
+            num_samples,
+            forward_pass_vals,
+            grad,
+    ):
         raise NotImplementedError(
             "Adjoint state methods are not supported in sample based settings."
             " Please use analytic expectation calculation or a different "

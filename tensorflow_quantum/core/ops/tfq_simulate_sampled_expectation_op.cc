@@ -49,7 +49,9 @@ class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
  public:
   explicit TfqSimulateSampledExpectationOp(
       tensorflow::OpKernelConstruction* context)
-      : OpKernel(context) {}
+      : OpKernel(context) {
+    OP_REQUIRES_OK(context, random_gen_.Init(context));
+  }
 
   void Compute(tensorflow::OpKernelContext* context) override {
     // TODO (mbbrough): add more dimension checks for other inputs here.
@@ -141,6 +143,8 @@ class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
   }
 
  private:
+  tensorflow::GuardedPhiloxRandom random_gen_;
+
   void ComputeLarge(
       const std::vector<int>& num_qubits,
       const std::vector<std::vector<qsim::GateFused<QsimGate>>>& fused_circuits,
@@ -160,22 +164,20 @@ class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
     auto sv = ss.Create(largest_nq);
     auto scratch = ss.Create(largest_nq);
 
-    tensorflow::GuardedPhiloxRandom random_gen;
-    random_gen.Init(tensorflow::random::New64(), tensorflow::random::New64());
     int largest_sum = -1;
     for (const auto& sums : pauli_sums) {
       for (const auto& sum : sums) {
         largest_sum = std::max(largest_sum, sum.terms().size());
       }
     }
-    auto local_gen = random_gen.ReserveSamples32(
+    auto local_gen = random_gen_.ReserveSamples32(
         largest_sum * pauli_sums[0].size() * fused_circuits.size() + 1);
     tensorflow::random::SimplePhilox rand_source(&local_gen);
 
     // Simulate programs one by one. Parallelizing over state vectors
     // we no longer parallelize over circuits. Each time we encounter a
     // a larger circuit we will grow the Statevector as necessary.
-    for (int i = 0; i < fused_circuits.size(); i++) {
+    for (size_t i = 0; i < fused_circuits.size(); i++) {
       int nq = num_qubits[i];
 
       if (nq > largest_nq) {
@@ -188,10 +190,10 @@ class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
       //  the state if there is a possibility that circuit[i] and
       //  circuit[i + 1] produce the same state.
       ss.SetStateZero(sv);
-      for (int j = 0; j < fused_circuits[i].size(); j++) {
+      for (size_t j = 0; j < fused_circuits[i].size(); j++) {
         qsim::ApplyFusedGate(sim, fused_circuits[i][j], sv);
       }
-      for (int j = 0; j < pauli_sums[i].size(); j++) {
+      for (size_t j = 0; j < pauli_sums[i].size(); j++) {
         // (#679) Just ignore empty program
         if (fused_circuits[i].size() == 0) {
           (*output_tensor)(i, j) = -2.0;
@@ -219,8 +221,6 @@ class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
 
     const int output_dim_op_size = output_tensor->dimension(1);
 
-    tensorflow::GuardedPhiloxRandom random_gen;
-    random_gen.Init(tensorflow::random::New64(), tensorflow::random::New64());
     int largest_sum = -1;
     for (const auto& sums : pauli_sums) {
       for (const auto& sum : sums) {
@@ -247,7 +247,7 @@ class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
       int n_random = largest_sum * output_dim_op_size * fused_circuits.size();
       n_random /= num_threads;
       n_random += 1;
-      auto local_gen = random_gen.ReserveSamples32(n_random);
+      auto local_gen = random_gen_.ReserveSamples32(n_random);
       tensorflow::random::SimplePhilox rand_source(&local_gen);
 
       for (int i = start; i < end; i++) {
@@ -273,7 +273,7 @@ class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
           // no need to update scratch_state since ComputeExpectation
           // will take care of things for us.
           ss.SetStateZero(sv);
-          for (int j = 0; j < fused_circuits[cur_batch_index].size(); j++) {
+          for (size_t j = 0; j < fused_circuits[cur_batch_index].size(); j++) {
             qsim::ApplyFusedGate(sim, fused_circuits[cur_batch_index][j], sv);
           }
         }
@@ -310,7 +310,10 @@ REGISTER_OP("TfqSimulateSampledExpectation")
     .Input("symbol_values: float")
     .Input("pauli_sums: string")
     .Input("num_samples: int32")
+    .SetIsStateful()
     .Output("expectations: float")
+    .Attr("seed: int = 0")
+    .Attr("seed2: int = 0")
     .SetShapeFn([](tensorflow::shape_inference::InferenceContext* c) {
       tensorflow::shape_inference::ShapeHandle programs_shape;
       TF_RETURN_IF_ERROR(c->WithRank(c->input(0), 1, &programs_shape));

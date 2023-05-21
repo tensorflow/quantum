@@ -39,14 +39,14 @@ def op_proto(json):
     return op
 
 
-class GateWithAttribute(cirq.SingleQubitGate):
+class GateWithAttribute(cirq.testing.SingleQubitGate):
     """GateAttribute helper class."""
 
     def __init__(self, val):
         self.val = val
 
 
-class GateWithProperty(cirq.SingleQubitGate):
+class GateWithProperty(cirq.testing.SingleQubitGate):
     """GateProperty helper class."""
 
     def __init__(self, val, not_req=None):
@@ -59,7 +59,7 @@ class GateWithProperty(cirq.SingleQubitGate):
         return self._val
 
 
-class GateWithMethod(cirq.SingleQubitGate):
+class GateWithMethod(cirq.testing.SingleQubitGate):
     """GateMethod helper class."""
 
     def __init__(self, val):

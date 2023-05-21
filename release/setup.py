@@ -51,15 +51,17 @@ class InstallPlatlib(install):
 
 
 REQUIRED_PACKAGES = [
-    'cirq-core==0.13.1', 'cirq-google>=0.13.1', 'sympy == 1.8',
+    'cirq-core~=1.0', 'cirq-google~=1.0', 'sympy == 1.8',
     'googleapis-common-protos==1.52.0', 'google-api-core==1.21.0',
     'google-auth==1.18.0', 'protobuf==3.19.5'
 ]
 
+REQUIRED_GPU_PACKAGES = []
+
 # placed as extra to not have required overwrite existing nightly installs if
 # they exist.
 EXTRA_PACKAGES = ['tensorflow == 2.11.0']
-CUR_VERSION = '0.7.3'
+CUR_VERSION = '0.7.4'
 
 
 class BinaryDistribution(Distribution):
@@ -74,11 +76,22 @@ if '--nightly' in sys.argv:
     nightly = True
     sys.argv.remove('--nightly')
 
+gpu = False
+if '--gpu' in sys.argv:
+    gpu = True
+    sys.argv.remove('--gpu')
+
 project_name = 'tensorflow-quantum'
 build_version = CUR_VERSION
+
+if gpu:
+    build_version = build_version + '.gpu'
+    REQUIRED_PACKAGES = REQUIRED_PACKAGES + REQUIRED_GPU_PACKAGES
+
 if nightly:
     project_name = 'tfq-nightly'
-    build_version = CUR_VERSION + '.dev' + str(date.today()).replace('-', '')
+    build_version = build_version + '.dev' + str(date.today()).replace('-', '')
+
 
 setup(
     name=project_name,
