@@ -16,6 +16,7 @@
 # Remove PYTHONPATH collisions for protobuf.
 # pylint: disable=wrong-import-position
 import sys
+
 NEW_PATH = [x for x in sys.path if 'com_google_protobuf' not in x]
 sys.path = NEW_PATH
 # pylint: enable=wrong-import-position
@@ -99,7 +100,7 @@ def _build_op_proto(gate_id, arg_names, arg_vals, qubit_ids):
         if isinstance(arg_vals[i], str) else \
             program_pb2.Arg(
                 arg_value=program_pb2.ArgValue(
-                    float_value=np.round(float(arg_vals[i]), 6)))) \
+                    float_value=np.round(float(arg_vals[i]), 6))))
                 for i in range(len(arg_vals))},
         qubits=[program_pb2.Qubit(
             id=q_id) for q_id in qubit_ids])])

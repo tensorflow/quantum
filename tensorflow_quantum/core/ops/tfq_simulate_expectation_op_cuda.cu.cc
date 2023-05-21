@@ -43,10 +43,10 @@ using ::tfq::proto::Program;
 typedef qsim::Cirq::GateCirq<float> QsimGate;
 typedef qsim::Circuit<QsimGate> QsimCircuit;
 
-
 class TfqSimulateExpectationOpCuda : public tensorflow::OpKernel {
  public:
-  explicit TfqSimulateExpectationOpCuda(tensorflow::OpKernelConstruction* context)
+  explicit TfqSimulateExpectationOpCuda(
+      tensorflow::OpKernelConstruction* context)
       : OpKernel(context) {}
 
   void Compute(tensorflow::OpKernelContext* context) override {
@@ -169,7 +169,6 @@ class TfqSimulateExpectationOpCuda : public tensorflow::OpKernel {
       }
     }
   }
-
 };
 
 REGISTER_KERNEL_BUILDER(

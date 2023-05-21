@@ -44,14 +44,13 @@ using ::tfq::proto::Program;
 typedef qsim::Cirq::GateCirq<float> QsimGate;
 typedef qsim::Circuit<QsimGate> QsimCircuit;
 
-
 class TfqSimulateExpectationOpCuQuantum : public tensorflow::OpKernel {
  public:
-  explicit TfqSimulateExpectationOpCuQuantum(tensorflow::OpKernelConstruction* context)
+  explicit TfqSimulateExpectationOpCuQuantum(
+      tensorflow::OpKernelConstruction* context)
       : OpKernel(context) {}
 
   void Compute(tensorflow::OpKernelContext* context) override {
-
     // TODO (mbbrough): add more dimension checks for other inputs here.
     const int num_inputs = context->num_inputs();
     OP_REQUIRES(context, num_inputs == 4,
@@ -67,7 +66,7 @@ class TfqSimulateExpectationOpCuQuantum : public tensorflow::OpKernel {
 
     tensorflow::Tensor* output = nullptr;
     tensorflow::AllocatorAttributes alloc_attr;
-    alloc_attr.set_on_host(true); // why??
+    alloc_attr.set_on_host(true);  // why??
     alloc_attr.set_gpu_compatible(true);
     OP_REQUIRES_OK(context, context->allocate_output(0, output_shape, &output,
                                                      alloc_attr));
@@ -75,7 +74,8 @@ class TfqSimulateExpectationOpCuQuantum : public tensorflow::OpKernel {
     // Parse program protos.
     std::vector<Program> programs;
     std::vector<int> num_qubits;
-    std::vector<std::vector<PauliSum>> pauli_sums; // why is this a vector of vectors??
+    std::vector<std::vector<PauliSum>>
+        pauli_sums;  // why is this a vector of vectors??
     OP_REQUIRES_OK(context, GetProgramsAndNumQubits(context, &programs,
                                                     &num_qubits, &pauli_sums));
 
@@ -140,7 +140,6 @@ class TfqSimulateExpectationOpCuQuantum : public tensorflow::OpKernel {
     // Instantiate qsim objects.
     using Simulator = qsim::SimulatorCuStateVec<float>;
     using StateSpace = Simulator::StateSpace;
-
 
     // Launch the cuda kernel.
     // Begin simulation.

@@ -23,6 +23,7 @@ from tensorflow_quantum.core.ops import tfq_simulate_ops_cuda
 from tensorflow_quantum.core.ops import tfq_simulate_ops_cuquantum
 from tensorflow_quantum.python import util
 
+
 def measure_average_runtime(fn, tag, num_samples=10):
     """
     Measure the average runtime of a function.
@@ -132,6 +133,7 @@ class SimulateExpectationGpuTest(tf.test.TestCase):
 
         # cuQuantum op should be faster than CPU op.
         self.assertGreater(cpu_avg_time, cuda_avg_time)
+
 
 if __name__ == "__main__":
     tf.test.main()
