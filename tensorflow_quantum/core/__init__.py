@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# ==============================================================================
+# =============================================================================
 """Imports to tensorflow_quantum.core.* level."""
 # Import getters for constructing ops.
 from tensorflow_quantum.core.ops import (get_expectation_op,
