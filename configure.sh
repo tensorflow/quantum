@@ -20,11 +20,11 @@ function write_to_bazelrc() {
 }
 
 function write_action_env_to_bazelrc() {
-  write_to_bazelrc "build --action_env $1=\"$2\""
+  write_to_bazelrc "$1 --action_env $2=\"$3\""
 }
 
 function write_linkopt_dir_to_bazelrc() {
-  write_to_bazelrc "build --linkopt -Wl,-rpath,$1" >> .bazelrc
+  write_to_bazelrc "$1 --linkopt -Wl,-rpath,$2" >> .bazelrc
 }
 
 
@@ -49,44 +49,76 @@ function is_ppc64le() {
 # Remove .bazelrc if it already exist
 [ -e .bazelrc ] && rm .bazelrc
 
-# Check if we are building GPU or CPU ops, default CPU
-while [[ "$TF_NEED_CUDA" == "" ]]; do
-  read -p "Do you want to build ops again TensorFlow CPU pip package?"\
-" Y or enter for CPU (tensorflow-cpu), N for GPU (tensorflow). [Y/n] " INPUT
+# Check if we are building TFQ GPU or not (TODO)
+while [[ "$TFQ_NEED_CUDA" == "" ]]; do
+  read -p "Do you want to build TFQ against CPU?"\
+" Y or enter for CPU, N for GPU. [Y/n] " INPUT
   case $INPUT in
-    [Yy]* ) echo "Build with CPU pip package."; TF_NEED_CUDA=0;;
-    [Nn]* ) echo "Build with GPU pip package."; TF_NEED_CUDA=1;;
-    "" ) echo "Build with CPU pip package."; TF_NEED_CUDA=0;;
+    [Yy]* ) echo "Build with CPU ops only."; TFQ_NEED_CUDA=0;;
+    [Nn]* ) echo "Build with cuQuantum support."; TFQ_NEED_CUDA=1;;
+    "" ) echo "Build with CPU ops only."; TFQ_NEED_CUDA=0;;
     * ) echo "Invalid selection: " $INPUT;;
   esac
 done
 
-while [[ "$TF_CUDA_VERSION" == "" ]]; do
-  read -p "Are you building against TensorFlow 2.11(including RCs) or newer?[Y/n] " INPUT
-  case $INPUT in
-    [Yy]* ) echo "Build against TensorFlow 2.11 or newer."; TF_CUDA_VERSION=11;;
-    [Nn]* ) echo "Build against TensorFlow <2.11."; TF_CUDA_VERSION=10.0;;
-    "" ) echo "Build against TensorFlow 2.11 or newer."; TF_CUDA_VERSION=11;;
-    * ) echo "Invalid selection: " $INPUT;;
-  esac
-done
+# Set the CUDA SDK version for TF
+if [[ "$TFQ_NEED_CUDA" == "1" ]]; then
+  _DEFAULT_CUDA_VERSION=11
+  while [[ "$TF_CUDA_VERSION" == "" ]]; do
+    read -p "Please specify the CUDA SDK major version you want to use. [Leave empty to default to CUDA $_DEFAULT_CUDA_VERSION]: " INPUT
+    case $INPUT in
+      "" ) echo "Build against CUDA $_DEFAULT_CUDA_VERSION."; TF_CUDA_VERSION=$_DEFAULT_CUDA_VERSION;;
+      # check if the input is a number
+      *[!0-9]* ) echo "Invalid selection: $INPUT";;
+      * ) echo "Build against CUDA $INPUT."; TF_CUDA_VERSION=$INPUT;;
+    esac
+  done
+fi
 
+# If TFQ_NEED_CUDA then enforce building against TensorFlow 2.11 or newer.
+IS_VALID_TF_VERSION=$(python -c "import tensorflow as tf; v = tf.__version__; print(float(v[:v.rfind('.')]) < 2.11)")
+TF_VERSION=$(python -c "import tensorflow as tf; print(tf.__version__)")
+if [[ $IS_VALID_TF_VERSION == "True" ]]; then
+  echo "Building against TensorFlow 2.11 or newer is required."
+  echo "Please upgrade your TensorFlow version."
+  exit 1
+elif [[ $IS_VALID_TF_VERSION == "False" ]]; then
+  echo "Using TensorFlow 2.11"
+else
+  echo "Unable to determine TensorFlow version."
+  exit 1
+fi
+
+# Check if we are building cuQuantum ops on top of CUDA.
+if [[ "$TFQ_NEED_CUDA" == "1" ]]; then
+  if [[ "$CUQUANTUM_ROOT" != "" ]]; then
+    echo "  [*] cuQuantum library is detected here: CUQUANTUM_ROOT=$CUQUANTUM_ROOT."
+  else
+    # Prompt the user to enter the cuQuantum root path, do not allow empty input (pressing enter)
+    # If the user enters an invalid path, prompt again.
+    while true; do
+      read -p "Please specify the cuQuantum root directory: " INPUT
+      if [[ -z "$INPUT" ]]; then
+        echo "Input cannot be empty. Please enter a valid path."
+      elif [[ "$INPUT" =~ ^(/[A-Za-z0-9_-]+)+$ ]]; then
+        echo "Path pattern is valid: $INPUT"
+        CUQUANTUM_ROOT=$INPUT
+        break
+      else
+        echo "Invalid path pattern: $INPUT. Please enter a valid path."
+      fi
+    done
+  fi
+  write_action_env_to_bazelrc "build:cuda" "CUQUANTUM_ROOT" ${CUQUANTUM_ROOT}
+  write_linkopt_dir_to_bazelrc "build:cuda" "${CUQUANTUM_ROOT}/lib"
+fi
 
 # Check if it's installed
 if [[ $(pip show tensorflow) == *tensorflow* ]] || [[ $(pip show tf-nightly) == *tf-nightly* ]]; then
-  echo 'Using installed tensorflow'
+  echo "Using installed tensorflow-($TF_VERSION)"
 else
-  # Uninstall CPU version if it is installed.
-  if [[ $(pip show tensorflow-cpu) == *tensorflow-cpu* ]]; then
-    echo 'Already have tensorflow non-gpu installed. Uninstalling......\n'
-    pip uninstall tensorflow
-  elif [[ $(pip show tf-nightly-cpu) == *tf-nightly-cpu* ]]; then
-    echo 'Already have tensorflow non-gpu installed. Uninstalling......\n'
-    pip uninstall tf-nightly
-  fi
-  # Install GPU version
-  echo 'Installing tensorflow .....\n'
-  pip install tensorflow
+  echo 'Installing tensorflow 2.11 .....\n'
+  pip install tensorflow==2.11.0
 fi
 
 
@@ -101,7 +133,8 @@ write_to_bazelrc "build --strategy=Genrule=standalone"
 write_to_bazelrc "build -c opt"
 write_to_bazelrc "build --cxxopt=\"-D_GLIBCXX_USE_CXX11_ABI=1\""
 write_to_bazelrc "build --cxxopt=\"-std=c++17\""
-
+write_to_bazelrc "build --cxxopt=\"-O3\""
+write_to_bazelrc "build --cxxopt=\"-march=native\""
 
 if is_windows; then
   # Use pywrap_tensorflow instead of tensorflow_framework on Windows
@@ -127,29 +160,38 @@ if is_windows; then
   SHARED_LIBRARY_NAME=${SHARED_LIBRARY_NAME//\\//}
   HEADER_DIR=${HEADER_DIR//\\//}
 fi
-write_action_env_to_bazelrc "TF_HEADER_DIR" ${HEADER_DIR}
-write_action_env_to_bazelrc "TF_SHARED_LIBRARY_DIR" ${SHARED_LIBRARY_DIR}
-write_action_env_to_bazelrc "TF_SHARED_LIBRARY_NAME" ${SHARED_LIBRARY_NAME}
-write_action_env_to_bazelrc "TF_NEED_CUDA" ${TF_NEED_CUDA}
+
+TF_NEED_CUDA=${TFQ_NEED_CUDA}
+write_action_env_to_bazelrc "build" "TF_HEADER_DIR" ${HEADER_DIR} ""
+write_action_env_to_bazelrc "build" "TF_SHARED_LIBRARY_DIR" ${SHARED_LIBRARY_DIR} ""
+write_action_env_to_bazelrc "build" "TF_SHARED_LIBRARY_NAME" ${SHARED_LIBRARY_NAME} ""
+write_action_env_to_bazelrc "build" "TF_NEED_CUDA" ${TF_NEED_CUDA} ""
 
 if ! is_windows; then
-  write_linkopt_dir_to_bazelrc ${SHARED_LIBRARY_DIR}
+  write_linkopt_dir_to_bazelrc "build"  ${SHARED_LIBRARY_DIR} ""
 fi
 
 # TODO(yifeif): do not hardcode path
 if [[ "$TF_NEED_CUDA" == "1" ]]; then
-  write_to_bazelrc "build:cuda --define=using_cuda=true --define=using_cuda_nvcc=true"
+  write_to_bazelrc "build:cuda --experimental_repo_remote_exec"
+  write_to_bazelrc "build:cuda --spawn_strategy=standalone"
+  write_to_bazelrc "build:cuda --strategy=Genrule=standalone"
+  write_to_bazelrc "build:cuda -c opt"
+  write_to_bazelrc "build:cuda --cxxopt=\"-D_GLIBCXX_USE_CXX11_ABI=1\""
+  write_to_bazelrc "build:cuda --cxxopt=\"-std=c++17\""
+  write_to_bazelrc "build:cuda --cxxopt=\"-O3\""
+  write_to_bazelrc "build:cuda --cxxopt=\"-march=native\""
   write_to_bazelrc "build:cuda --@local_config_cuda//:enable_cuda"
   write_to_bazelrc "build:cuda --crosstool_top=@local_config_cuda//crosstool:toolchain"
 
-  write_action_env_to_bazelrc "TF_CUDA_VERSION" ${TF_CUDA_VERSION}
-  write_action_env_to_bazelrc "TF_CUDNN_VERSION" "8"
+  write_action_env_to_bazelrc "build:cuda" "TF_CUDA_VERSION" ${TF_CUDA_VERSION} 
+  write_action_env_to_bazelrc "build:cuda" "TF_CUDNN_VERSION" "8"
   if is_windows; then
-    write_action_env_to_bazelrc "CUDNN_INSTALL_PATH" "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v${TF_CUDA_VERSION}"
-    write_action_env_to_bazelrc "CUDA_TOOLKIT_PATH" "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v${TF_CUDA_VERSION}"
+    write_action_env_to_bazelrc "build:cuda" "CUDNN_INSTALL_PATH" "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v${TF_CUDA_VERSION}"
+    write_action_env_to_bazelrc "build:cuda" "CUDA_TOOLKIT_PATH" "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v${TF_CUDA_VERSION}"
   else
-    write_action_env_to_bazelrc "CUDNN_INSTALL_PATH" "/usr/lib/x86_64-linux-gnu"
-    write_action_env_to_bazelrc "CUDA_TOOLKIT_PATH" "/usr/local/cuda"
+    write_action_env_to_bazelrc "build:cuda" "CUDNN_INSTALL_PATH" "/usr/lib/x86_64-linux-gnu"
+    write_action_env_to_bazelrc "build:cuda" "CUDA_TOOLKIT_PATH" "/usr/local/cuda"
   fi
   write_to_bazelrc "build --config=cuda"
   write_to_bazelrc "test --config=cuda"
