@@ -415,7 +415,7 @@ class SampledExpectationTest(parameterized.TestCase, tf.test.TestCase):
                 circuit_out = layer(circuit,
                                     symbol_names=['theta'],
                                     operators=cirq.Z(bit),
-                                    repetitions=100,
+                                    repetitions=1000,
                                     initializer=initializer)
                 mse = tf.square(tf.reduce_sum(tf.subtract(circuit_out, -1)))
             grads = tape.gradient(mse, layer.trainable_weights)
