@@ -35,6 +35,17 @@ def is_gpu_configured() -> bool:
     return _ENABLE_USE_CUQUANTUM
 
 
+def _preprocess_use_cuquantum(use_cuquantum: bool) -> bool:
+    if is_gpu_configured():
+        return use_cuquantum
+
+    # GPU is not set. `use_cuquantum` becomes silent.
+    if use_cuquantum:
+        print("WARNING: cuQuantum was not set, "
+              "`use_cuquantum=True` option becomes effectless. Using CPU.")
+    return False
+
+
 class TFQStateVectorSimulator(enum.Enum):
     """Enum to make specifying TFQ simulators user-friendly."""
     expectation = tfq_simulate_ops.tfq_simulate_expectation
@@ -148,7 +159,7 @@ def get_expectation_op(
     """
     # TODO (mbbrough): investigate how the above docstring renders.
     _check_quantum_concurrent(quantum_concurrent, use_cuquantum)
-    use_cuquantum = _ENABLE_USE_CUQUANTUM and use_cuquantum
+    use_cuquantum = _preprocess_use_cuquantum(use_cuquantum)
 
     op = None
     if backend is None:
@@ -258,7 +269,7 @@ def get_sampling_op(
 
     # TODO (mbbrough): investigate how the above docstring renders.
     _check_quantum_concurrent(quantum_concurrent, use_cuquantum)
-    use_cuquantum = _ENABLE_USE_CUQUANTUM and use_cuquantum
+    use_cuquantum = _preprocess_use_cuquantum(use_cuquantum)
 
     op = None
     if backend is None:
@@ -358,7 +369,7 @@ def get_state_op(
 
     # TODO (mbbrough): investigate how the above docstring renders.
     _check_quantum_concurrent(quantum_concurrent, use_cuquantum)
-    use_cuquantum = _ENABLE_USE_CUQUANTUM and use_cuquantum
+    use_cuquantum = _preprocess_use_cuquantum(use_cuquantum)
 
     op = None
     if backend is None:
@@ -480,7 +491,7 @@ def get_sampled_expectation_op(
     """
     # TODO (mbbrough): investigate how the above docstring renders.
     _check_quantum_concurrent(quantum_concurrent, use_cuquantum)
-    use_cuquantum = _ENABLE_USE_CUQUANTUM and use_cuquantum
+    use_cuquantum = _preprocess_use_cuquantum(use_cuquantum)
 
     op = None
     if backend is None:
