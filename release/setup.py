@@ -61,7 +61,7 @@ REQUIRED_GPU_PACKAGES = []
 # placed as extra to not have required overwrite existing nightly installs if
 # they exist.
 EXTRA_PACKAGES = ['tensorflow == 2.11.0']
-CUR_VERSION = '0.7.4'
+CUR_VERSION = '0.8.0'
 
 
 class BinaryDistribution(Distribution):
