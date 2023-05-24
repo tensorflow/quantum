@@ -1,11 +1,8 @@
 /* Copyright 2020 The TensorFlow Quantum Authors. All Rights Reserved.
-
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
-
     http://www.apache.org/licenses/LICENSE-2.0
-
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,11 +13,15 @@ limitations under the License.
 #include <memory>
 #include <vector>
 
+#include <chrono>
+
 #include "../qsim/lib/circuit.h"
 #include "../qsim/lib/gate_appl.h"
 #include "../qsim/lib/gates_cirq.h"
+#include "../qsim/lib/gates_qsim.h"
 #include "../qsim/lib/seqfor.h"
-#include "../qsim/lib/simmux.h"
+#include "../qsim/lib/simulator_cuda.h"
+#include "../qsim/lib/statespace_cuda.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/shape_inference.h"
 #include "tensorflow/core/framework/tensor_shape.h"
@@ -42,9 +43,10 @@ using ::tfq::proto::Program;
 typedef qsim::Cirq::GateCirq<float> QsimGate;
 typedef qsim::Circuit<QsimGate> QsimCircuit;
 
-class TfqSimulateExpectationOp : public tensorflow::OpKernel {
+class TfqSimulateExpectationOpCuda : public tensorflow::OpKernel {
  public:
-  explicit TfqSimulateExpectationOp(tensorflow::OpKernelConstruction* context)
+  explicit TfqSimulateExpectationOpCuda(
+      tensorflow::OpKernelConstruction* context)
       : OpKernel(context) {}
 
   void Compute(tensorflow::OpKernelContext* context) override {
@@ -62,9 +64,12 @@ class TfqSimulateExpectationOp : public tensorflow::OpKernel {
     output_shape.AddDim(output_dim_op_size);
 
     tensorflow::Tensor* output = nullptr;
-    OP_REQUIRES_OK(context, context->allocate_output(0, output_shape, &output));
+    tensorflow::AllocatorAttributes alloc_attr;
+    alloc_attr.set_on_host(true);
+    alloc_attr.set_gpu_compatible(true);
+    OP_REQUIRES_OK(context, context->allocate_output(0, output_shape, &output,
+                                                     alloc_attr));
     auto output_tensor = output->matrix<float>();
-
     // Parse program protos.
     std::vector<Program> programs;
     std::vector<int> num_qubits;
@@ -86,7 +91,7 @@ class TfqSimulateExpectationOp : public tensorflow::OpKernel {
     std::vector<std::vector<qsim::GateFused<QsimGate>>> fused_circuits(
         programs.size(), std::vector<qsim::GateFused<QsimGate>>({}));
 
-    Status parse_status = ::tensorflow::Status();
+    Status parse_status = Status();
     auto p_lock = tensorflow::mutex();
     auto construct_f = [&](int start, int end) {
       for (int i = start; i < end; i++) {
@@ -106,22 +111,15 @@ class TfqSimulateExpectationOp : public tensorflow::OpKernel {
     for (const int num : num_qubits) {
       max_num_qubits = std::max(max_num_qubits, num);
     }
-
-    // Cross reference with standard google cloud compute instances
-    // Memory ~= 2 * num_threads * (2 * 64 * 2 ** num_qubits in circuits)
-    // e2s2 = 2 CPU, 8GB -> Can safely do 25 since Memory = 4GB
-    // e2s4 = 4 CPU, 16GB -> Can safely do 25 since Memory = 8GB
-    // ...
-    if (max_num_qubits >= 26 || programs.size() == 1) {
-      ComputeLarge(num_qubits, fused_circuits, pauli_sums, context,
-                   &output_tensor);
-    } else {
-      ComputeSmall(num_qubits, max_num_qubits, fused_circuits, pauli_sums,
-                   context, &output_tensor);
-    }
+    ComputeLarge(num_qubits, fused_circuits, pauli_sums, context,
+                 &output_tensor);
   }
 
  private:
+  int num_threads_in_sim_;
+  int block_count_;
+
+  // Define the GPU implementation that launches the CUDA kernel.
   void ComputeLarge(
       const std::vector<int>& num_qubits,
       const std::vector<std::vector<qsim::GateFused<QsimGate>>>& fused_circuits,
@@ -129,21 +127,19 @@ class TfqSimulateExpectationOp : public tensorflow::OpKernel {
       tensorflow::OpKernelContext* context,
       tensorflow::TTypes<float, 1>::Matrix* output_tensor) {
     // Instantiate qsim objects.
-    const auto tfq_for = tfq::QsimFor(context);
-    using Simulator = qsim::Simulator<const tfq::QsimFor&>;
+    using Simulator = qsim::SimulatorCUDA<float>;
     using StateSpace = Simulator::StateSpace;
-
-    // Begin simulation.
+    // Begin simulation with default parameters.
     int largest_nq = 1;
-    Simulator sim = Simulator(tfq_for);
-    StateSpace ss = StateSpace(tfq_for);
+    Simulator sim = Simulator();
+    StateSpace ss = StateSpace(StateSpace::Parameter());
     auto sv = ss.Create(largest_nq);
     auto scratch = ss.Create(largest_nq);
 
     // Simulate programs one by one. Parallelizing over state vectors
     // we no longer parallelize over circuits. Each time we encounter a
     // a larger circuit we will grow the Statevector as necessary.
-    for (size_t i = 0; i < fused_circuits.size(); i++) {
+    for (int i = 0; i < fused_circuits.size(); i++) {
       int nq = num_qubits[i];
 
       if (nq > largest_nq) {
@@ -156,10 +152,10 @@ class TfqSimulateExpectationOp : public tensorflow::OpKernel {
       //  the state if there is a possibility that circuit[i] and
       //  circuit[i + 1] produce the same state.
       ss.SetStateZero(sv);
-      for (size_t j = 0; j < fused_circuits[i].size(); j++) {
+      for (int j = 0; j < fused_circuits[i].size(); j++) {
         qsim::ApplyFusedGate(sim, fused_circuits[i][j], sv);
       }
-      for (size_t j = 0; j < pauli_sums[i].size(); j++) {
+      for (int j = 0; j < pauli_sums[i].size(); j++) {
         // (#679) Just ignore empty program
         if (fused_circuits[i].size() == 0) {
           (*output_tensor)(i, j) = -2.0;
@@ -173,83 +169,13 @@ class TfqSimulateExpectationOp : public tensorflow::OpKernel {
       }
     }
   }
-
-  void ComputeSmall(
-      const std::vector<int>& num_qubits, const int max_num_qubits,
-      const std::vector<std::vector<qsim::GateFused<QsimGate>>>& fused_circuits,
-      const std::vector<std::vector<PauliSum>>& pauli_sums,
-      tensorflow::OpKernelContext* context,
-      tensorflow::TTypes<float, 1>::Matrix* output_tensor) {
-    const auto tfq_for = qsim::SequentialFor(1);
-    using Simulator = qsim::Simulator<const qsim::SequentialFor&>;
-    using StateSpace = Simulator::StateSpace;
-
-    const int output_dim_op_size = output_tensor->dimension(1);
-
-    Status compute_status = ::tensorflow::Status();
-    auto c_lock = tensorflow::mutex();
-    auto DoWork = [&](int start, int end) {
-      int old_batch_index = -2;
-      int cur_batch_index = -1;
-      int largest_nq = 1;
-      int cur_op_index;
-
-      Simulator sim = Simulator(tfq_for);
-      StateSpace ss = StateSpace(tfq_for);
-      auto sv = ss.Create(largest_nq);
-      auto scratch = ss.Create(largest_nq);
-      for (int i = start; i < end; i++) {
-        cur_batch_index = i / output_dim_op_size;
-        cur_op_index = i % output_dim_op_size;
-
-        const int nq = num_qubits[cur_batch_index];
-
-        // (#679) Just ignore empty program
-        if (fused_circuits[cur_batch_index].size() == 0) {
-          (*output_tensor)(cur_batch_index, cur_op_index) = -2.0;
-          continue;
-        }
-
-        if (cur_batch_index != old_batch_index) {
-          // We've run into a new state vector we must compute.
-          // Only compute a new state vector when we have to.
-          if (nq > largest_nq) {
-            largest_nq = nq;
-            sv = ss.Create(largest_nq);
-            scratch = ss.Create(largest_nq);
-          }
-          // no need to update scratch_state since ComputeExpectation
-          // will take care of things for us.
-          ss.SetStateZero(sv);
-          for (size_t j = 0; j < fused_circuits[cur_batch_index].size(); j++) {
-            qsim::ApplyFusedGate(sim, fused_circuits[cur_batch_index][j], sv);
-          }
-        }
-
-        float exp_v = 0.0;
-        NESTED_FN_STATUS_SYNC(
-            compute_status,
-            ComputeExpectationQsim(pauli_sums[cur_batch_index][cur_op_index],
-                                   sim, ss, sv, scratch, &exp_v),
-            c_lock);
-        (*output_tensor)(cur_batch_index, cur_op_index) = exp_v;
-        old_batch_index = cur_batch_index;
-      }
-    };
-
-    const int64_t num_cycles =
-        200 * (int64_t(1) << static_cast<int64_t>(max_num_qubits));
-    context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
-        fused_circuits.size() * output_dim_op_size, num_cycles, DoWork);
-    OP_REQUIRES_OK(context, compute_status);
-  }
 };
 
 REGISTER_KERNEL_BUILDER(
-    Name("TfqSimulateExpectation").Device(tensorflow::DEVICE_CPU),
-    TfqSimulateExpectationOp);
+    Name("TfqSimulateExpectationCuda").Device(tensorflow::DEVICE_CPU),
+    TfqSimulateExpectationOpCuda);
 
-REGISTER_OP("TfqSimulateExpectation")
+REGISTER_OP("TfqSimulateExpectationCuda")
     .Input("programs: string")
     .Input("symbol_names: string")
     .Input("symbol_values: float")

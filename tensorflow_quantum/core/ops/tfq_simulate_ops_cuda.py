@@ -12,16 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # =============================================================================
-"""Module to register python op gradient."""
+"""Module to register cuda simulation python op."""
 import tensorflow as tf
 from tensorflow_quantum.core.ops.load_module import load_module
 
-SIM_OP_MODULE = load_module("_tfq_adj_grad.so")
+SIM_OP_MODULE = load_module("_tfq_simulate_ops_cuda.so")
 
 
-def tfq_adj_grad(programs, symbol_names, symbol_values, pauli_sums, prev_grad):
-    """Calculate gradient of expectation value of circuits wrt some operator(s).
-
+def tfq_simulate_expectation(programs, symbol_names, symbol_values, pauli_sums):
+    """Calculates the expectation value of circuits wrt some operator(s).
     Args:
         programs: `tf.Tensor` of strings with shape [batch_size] containing
             the string representations of the circuits to be executed.
@@ -36,13 +35,10 @@ def tfq_adj_grad(programs, symbol_names, symbol_values, pauli_sums, prev_grad):
         pauli_sums: `tf.Tensor` of strings with shape [batch_size, n_ops]
             containing the string representation of the operators that will
             be used on all of the circuits in the expectation calculations.
-        prev_grad: `tf.Tensor` of real numbers with shape [batch_size, n_ops]
-            backprop of values from downstream in the compute graph.
     Returns:
-        `tf.Tensor` with shape [batch_size, n_params] that holds the gradient of
+        `tf.Tensor` with shape [batch_size, n_ops] that holds the
             expectation value for each circuit with each op applied to it
             (after resolving the corresponding parameters in).
     """
-    return SIM_OP_MODULE.tfq_adjoint_gradient(
-        programs, symbol_names, tf.cast(symbol_values, tf.float32), pauli_sums,
-        tf.cast(prev_grad, tf.float32))
+    return SIM_OP_MODULE.tfq_simulate_expectation_cuda(
+        programs, symbol_names, tf.cast(symbol_values, tf.float32), pauli_sums)

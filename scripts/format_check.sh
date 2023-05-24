@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# ==============================================================================
+# =============================================================================
 echo "Checking python formatting...";
 
 ################################################################################
@@ -92,7 +92,7 @@ else
 fi
 
 echo "Checking C++ formatting...";
-formatting_outputs=$(find tensorflow_quantum/ -iname *.h -o -iname *.cc | xargs clang-format -style=google -output-replacements-xml);
+formatting_outputs=$(find tensorflow_quantum/ -iname *.h -o -iname *.cc | xargs clang-format-6.0 -style=google -output-replacements-xml);
 CFORMATCHECK=0
 while read -r formatting_outputs; do
     if [ "$formatting_outputs" != "<?xml version='1.0'?>" ] && [ "$formatting_outputs" != "<replacements xml:space='preserve' incomplete_format='false'>" ] && [ "$formatting_outputs" != "</replacements>" ] && [ "$formatting_outputs" != "<replacement offset='4290' length='9'> </replacement>" ]; then
