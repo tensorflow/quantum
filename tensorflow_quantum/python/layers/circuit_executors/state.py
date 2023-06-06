@@ -11,11 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# ==============================================================================
+# =============================================================================
 """A tf.keras.layer that ingests programs and parameters and outputs a state."""
 import tensorflow as tf
 
 from tensorflow_quantum.core.ops import circuit_execution_ops
+from tensorflow_quantum.python import quantum_context
 from tensorflow_quantum.python.layers.circuit_executors import input_checks
 
 
@@ -112,7 +113,7 @@ class State(tf.keras.layers.Layer):
 
     """
 
-    def __init__(self, backend=None, **kwargs):
+    def __init__(self, backend=None, use_cuquantum=False, **kwargs):
         """Instantiate a State Layer.
 
         Create a layer that will simulate a quantum state and output it into
@@ -126,18 +127,35 @@ class State(tf.keras.layers.Layer):
                 `cirq.SimulatesFinalState`. Note that C++ Density Matrix
                 simulation is not yet supported so to do Density Matrix
                 simulation please use `cirq.DensityMatrixSimulator`.
+            use_cuquantum: Calls TFQ GPU version op.
         """
         super().__init__(**kwargs)
-        self.state_op = circuit_execution_ops.get_state_op(backend)
+
+        used_op = None
+        if backend == 'noiseless' or backend is None:
+            mode = quantum_context.get_quantum_concurrent_op_mode()
+            quantum_concurrent = False if use_cuquantum else mode
+            used_op = circuit_execution_ops.get_state_op(
+                backend=None,
+                use_cuquantum=use_cuquantum,
+                quantum_concurrent=quantum_concurrent,
+            )
+        elif backend == 'noisy':
+            raise ValueError('noisy backend is not supported in State layer.')
+        else:
+            used_op = circuit_execution_ops.get_state_op(backend=backend)
+
+        self.state_op = used_op
 
     def call(self, inputs, *, symbol_names=None, symbol_values=None):
         """Keras call function.
 
-        Input options:
-            `inputs`, `symbol_names`, `symbol_values`:
-                see `input_checks.expand_circuits`
+        Args:
+            inputs: See `input_checks.expand_circuits.
+            symbol_names: See `input_checks.expand_circuits.
+            symbol_values: See `input_checks.expand_circuits.
 
-        Output shape:
+        Returns:
             `tf.RaggedTensor` with shape:
                 [batch size of symbol_values, <size of state>]
                     or

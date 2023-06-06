@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# ==============================================================================
+# =============================================================================
 """Quantum datasets for quantum many-body spin systems."""
 
 from collections import namedtuple
@@ -280,7 +280,7 @@ def tfi_chain(qubits, boundary_condition="closed", data_dir=None):
                  / np.pi
         # Parameters are stored as np.float32, but cirq expects np.float64
         # See https://github.com/quantumlib/Cirq/issues/3359
-        params = params.astype(np.float)
+        params = params.astype(float)
         additional_info.append(
             SpinSystemInfo(g=g,
                            gs=np.load(
@@ -517,7 +517,7 @@ def xxz_chain(qubits, boundary_condition="closed", data_dir=None):
                  / np.pi
         # Parameters are stored as np.float32, but cirq expects np.float64
         # See https://github.com/quantumlib/Cirq/issues/3359
-        params = params.astype(np.float)
+        params = params.astype(float)
         additional_info.append(
             SpinSystemInfo(g=g,
                            gs=np.load(

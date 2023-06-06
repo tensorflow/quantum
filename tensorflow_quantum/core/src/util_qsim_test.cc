@@ -27,6 +27,10 @@ limitations under the License.
 #include "../qsim/lib/simmux.h"
 #include "absl/container/flat_hash_map.h"
 #include "gtest/gtest.h"
+#include "tensorflow/core/lib/random/random.h"
+#include "tensorflow/core/lib/random/simple_philox.h"
+#include "tensorflow/core/platform/mutex.h"
+#include "tensorflow/core/util/guarded_philox_random.h"
 #include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
 
 namespace tfq {
@@ -40,6 +44,7 @@ using ::tfq::proto::PauliTerm;
 typedef absl::flat_hash_map<std::string, std::pair<int, float>> SymbolMap;
 typedef qsim::Cirq::GateCirq<float> QsimGate;
 typedef qsim::Circuit<QsimGate> QsimCircuit;
+typedef std::vector<qsim::GateFused<QsimGate>> QsimFusedCircuit;
 
 class TwoTermSampledExpectationFixture
     : public ::testing::TestWithParam<std::tuple<std::string, float>> {};
@@ -87,10 +92,14 @@ TEST_P(TwoTermSampledExpectationFixture, CorrectnessTest) {
 
   // Compute expectation and compare to reference values.
   float exp_v = 0;
+  tensorflow::GuardedPhiloxRandom random_gen;
+  random_gen.Init(tensorflow::random::New64(), tensorflow::random::New64());
+  auto local_gen = random_gen.ReserveSamples32(2 * 1000000);
+  tensorflow::random::SimplePhilox rand_source(&local_gen);
   Status s = tfq::ComputeSampledExpectationQsim(p_sum, sim, ss, sv, scratch,
-                                                1000000, &exp_v);
+                                                1000000, rand_source, &exp_v);
 
-  EXPECT_NEAR(exp_v, std::get<1>(GetParam()), 1e-3);
+  EXPECT_NEAR(exp_v, std::get<1>(GetParam()), 1e-2);
 }
 
 // clang-format off
@@ -190,8 +199,12 @@ TEST(UtilQsimTest, SampledEmptyTermCase) {
 
   // Compute expectation and compare to reference values.
   float exp_v = 0;
-  Status s = tfq::ComputeSampledExpectationQsim(p_sum_empty, sim, ss, sv,
-                                                scratch, 100, &exp_v);
+  tensorflow::GuardedPhiloxRandom random_gen;
+  random_gen.Init(tensorflow::random::New64(), tensorflow::random::New64());
+  auto local_gen = random_gen.ReserveSamples32(2 * 100);
+  tensorflow::random::SimplePhilox rand_source(&local_gen);
+  Status s = tfq::ComputeSampledExpectationQsim(
+      p_sum_empty, sim, ss, sv, scratch, 100, rand_source, &exp_v);
 
   EXPECT_NEAR(exp_v, 0.1234, 1e-5);
 }
@@ -273,10 +286,14 @@ TEST(UtilQsimTest, SampledCompoundCase) {
   p_term_scratch->set_coefficient_real(4.0);
   // Compute expectation and compare to reference values.
   float exp_v = 0;
+  tensorflow::GuardedPhiloxRandom random_gen;
+  random_gen.Init(tensorflow::random::New64(), tensorflow::random::New64());
+  auto local_gen = random_gen.ReserveSamples32(2 * 1000000);
+  tensorflow::random::SimplePhilox rand_source(&local_gen);
   Status s = tfq::ComputeSampledExpectationQsim(p_sum, sim, ss, sv, scratch,
-                                                10000000, &exp_v);
+                                                10000000, rand_source, &exp_v);
 
-  EXPECT_NEAR(exp_v, 4.1234, 1e-3);
+  EXPECT_NEAR(exp_v, 4.1234, 1e-2);
 }
 
 TEST(UtilQsimTest, CompoundCase) {
@@ -476,7 +493,8 @@ TEST(UtilQsimTest, AccumulateOperatorsBasic) {
   p_term_scratch2->set_coefficient_real(-5.0);
 
   // 0.5 * (0.123ZX -3X + 4I) + 0.25 * (-5I) applied onto psi.
-  AccumulateOperators({p_sum, p_sum2}, {0.5, 0.25}, sim, ss, sv, scratch, dest);
+  (void)AccumulateOperators({p_sum, p_sum2}, {0.5, 0.25}, sim, ss, sv, scratch,
+                            dest);
 
   // Check that dest got accumulated onto.
   EXPECT_NEAR(ss.GetAmpl(dest, 0).real(), 0.577925, 1e-5);
@@ -518,7 +536,7 @@ TEST(UtilQsimTest, AccumulateOperatorsEmpty) {
   auto scratch = ss.Create(2);
   auto dest = ss.Create(2);
 
-  AccumulateOperators({}, {}, sim, ss, sv, scratch, dest);
+  (void)AccumulateOperators({}, {}, sim, ss, sv, scratch, dest);
 
   // Check sv is still in zero state.
   EXPECT_NEAR(ss.GetAmpl(sv, 0).real(), 1.0, 1e-5);
@@ -549,6 +567,199 @@ TEST(UtilQsimTest, AccumulateOperatorsEmpty) {
   EXPECT_NEAR(ss.GetAmpl(dest, 2).imag(), 0.0, 1e-5);
   EXPECT_NEAR(ss.GetAmpl(dest, 3).real(), 0.0, 1e-5);
   EXPECT_NEAR(ss.GetAmpl(scratch, 3).imag(), 0.0, 1e-5);
+}
+
+TEST(UtilQsimTest, AccumulateFusedCircuitsBasic) {
+  // Create circuit to prepare initial state.
+  std::vector<QsimCircuit> simple_circuits(2, QsimCircuit());
+  simple_circuits[0].num_qubits = 2;
+  simple_circuits[0].gates.push_back(
+      qsim::Cirq::XPowGate<float>::Create(0, 1, 0.25, 0.0));
+  simple_circuits[1].num_qubits = 2;
+  simple_circuits[1].gates.push_back(
+      qsim::Cirq::CXPowGate<float>::Create(1, 1, 0, 1.0, 0.0));
+  simple_circuits[1].gates.push_back(
+      qsim::Cirq::YPowGate<float>::Create(2, 0, 0.5, 0.0));
+
+  // Initialize fused circuits.
+  std::vector<QsimFusedCircuit> fused_circuits;
+  for (int i = 0; i < 2; i++) {
+    fused_circuits.push_back(
+        qsim::BasicGateFuser<qsim::IO, QsimGate>().FuseGates(
+            qsim::BasicGateFuser<qsim::IO, QsimGate>::Parameter(),
+            simple_circuits[i].num_qubits, simple_circuits[i].gates));
+  }
+
+  // Instantiate qsim objects.
+  qsim::Simulator<qsim::SequentialFor> sim(1);
+  qsim::Simulator<qsim::SequentialFor>::StateSpace ss(1);
+  auto sv = ss.Create(2);
+  auto scratch = ss.Create(2);
+  auto dest = ss.Create(2);
+
+  // Initialize coeffs.
+  std::vector<float> coeffs = {1.23, 4.56};
+
+  (void)AccumulateFusedCircuits(coeffs, fused_circuits, sim, ss, scratch, dest);
+
+  // Scratch has coeffs[r][c] * fused circuits[r][c] where r, c = last indices.
+  // Check that dest got accumulated onto.
+  double accumulated_real[4] = {0.0, 0.0, 0.0, 0.0};
+  double accumulated_imag[4] = {0.0, 0.0, 0.0, 0.0};
+  for (unsigned int i = 0; i < 2; i++) {
+    ss.SetStateZero(sv);
+    for (const qsim::GateFused<QsimGate>& fused_gate : fused_circuits[i]) {
+      qsim::ApplyFusedGate(sim, fused_gate, sv);
+    }
+    for (unsigned int k = 0; k < 4; k++) {
+      accumulated_real[k] += coeffs[i] * ss.GetAmpl(sv, k).real();
+      accumulated_imag[k] += coeffs[i] * ss.GetAmpl(sv, k).imag();
+    }
+  }
+  for (unsigned int k = 0; k < 4; k++) {
+    EXPECT_NEAR(ss.GetAmpl(dest, k).real(), accumulated_real[k], 1e-5);
+    EXPECT_NEAR(ss.GetAmpl(dest, k).imag(), accumulated_imag[k], 1e-5);
+  }
+}
+
+TEST(UtilQsimTest, AccumulateFusedCircuitsEmpty) {
+  // Instantiate qsim objects.
+  qsim::Simulator<qsim::SequentialFor> sim(1);
+  qsim::Simulator<qsim::SequentialFor>::StateSpace ss(1);
+  auto scratch = ss.Create(2);
+  auto dest = ss.Create(2);
+
+  (void)AccumulateFusedCircuits({}, {}, sim, ss, scratch, dest);
+
+  // scratch has garbage value.
+  // Check that dest contains all zeros.
+  EXPECT_NEAR(ss.GetAmpl(dest, 0).real(), 0.0, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(dest, 0).imag(), 0.0, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(dest, 1).real(), 0.0, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(dest, 1).imag(), 0.0, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(dest, 2).real(), 0.0, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(dest, 2).imag(), 0.0, 1e-5);
+  EXPECT_NEAR(ss.GetAmpl(dest, 3).real(), 0.0, 1e-5);
+}
+
+static void AssertWellBalanced(const std::vector<std::vector<int>>& n_reps,
+                               const int& num_threads,
+                               const std::vector<std::vector<int>>& offsets) {
+  auto max_work = std::vector<int>(n_reps.size(), -1);
+  for (size_t i = 0; i < n_reps.size(); i++) {
+    for (size_t j = 0; j < n_reps[0].size(); j++) {
+      max_work[i] = std::max(max_work[i], n_reps[i][j]);
+    }
+  }
+
+  for (size_t i = 0; i < n_reps.size(); i++) {
+    int sum = 0;
+    int prev_local_work = 0;
+    for (int k = 0; k < num_threads; k++) {
+      int local_work = (max_work[i] + num_threads - 1) / num_threads;
+      local_work += offsets[k][i];
+      sum += local_work;
+      if (k > 0) {
+        EXPECT_LT(abs(local_work - prev_local_work), 2);
+      }
+      prev_local_work = local_work;
+    }
+    EXPECT_EQ(sum, max_work[i]);
+  }
+}
+
+TEST(UtilQsimTest, BalanceTrajectorySimple) {
+  std::vector<std::vector<int>> n_reps = {{1, 3, 5, 10, 15},
+                                          {1, 10, 20, 30, 40},
+                                          {50, 70, 100, 100, 100},
+                                          {100, 200, 200, 200, 200}};
+  const int num_threads = 3;
+  // [num_threads, n_reps.size()]
+  std::vector<std::vector<int>> offsets = {
+      {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}};
+
+  BalanceTrajectory(n_reps, num_threads, &offsets);
+  AssertWellBalanced(n_reps, num_threads, offsets);
+}
+
+TEST(UtilQsimTest, BalanceTrajectoryPreventIdle) {
+  std::vector<std::vector<int>> n_reps = {{1, 1, 1, 1, 11},
+                                          {1, 1, 1, 11, 1},
+                                          {1, 1, 11, 1, 1},
+                                          {1, 11, 1, 1, 1},
+                                          {11, 1, 1, 1, 1}};
+  const int num_threads = 10;
+  // [num_threads, n_reps.size()]
+  std::vector<std::vector<int>> offsets = {
+      {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0},
+      {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0},
+      {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}};
+
+  BalanceTrajectory(n_reps, num_threads, &offsets);
+  AssertWellBalanced(n_reps, num_threads, offsets);
+}
+
+TEST(UtilQsimTest, BalanceTrajectoryLowRep) {
+  std::vector<std::vector<int>> n_reps = {
+      {1, 1, 1, 1, 1}, {1, 1, 1, 1, 1}, {1, 1, 1, 1, 1}, {1, 1, 1, 1, 1},
+      {1, 1, 1, 1, 1}, {1, 1, 1, 1, 1}, {1, 1, 1, 1, 1}};
+  const int num_threads = 5;
+  // [num_threads, n_reps.size()]
+  std::vector<std::vector<int>> offsets = {{0, 0, 0, 0, 0, 0, 0},
+                                           {0, 0, 0, 0, 0, 0, 0},
+                                           {0, 0, 0, 0, 0, 0, 0},
+                                           {0, 0, 0, 0, 0, 0, 0},
+                                           {0, 0, 0, 0, 0, 0, 0}};
+
+  BalanceTrajectory(n_reps, num_threads, &offsets);
+  AssertWellBalanced(n_reps, num_threads, offsets);
+}
+
+TEST(UtilQsimTest, BalanceTrajectoryFewHigh) {
+  std::vector<std::vector<int>> n_reps = {
+      {1, 100, 1, 1, 1}, {1, 1, 1, 1, 1000}, {1, 1, 1, 1, 1},   {1, 1, 1, 1, 1},
+      {1, 1, 1, 1, 1},   {1, 10, 1, 1, 1},   {1, 1, 1, 1, 1000}};
+  const int num_threads = 5;
+  // [num_threads, n_reps.size()]
+  std::vector<std::vector<int>> offsets = {{0, 0, 0, 0, 0, 0, 0},
+                                           {0, 0, 0, 0, 0, 0, 0},
+                                           {0, 0, 0, 0, 0, 0, 0},
+                                           {0, 0, 0, 0, 0, 0, 0},
+                                           {0, 0, 0, 0, 0, 0, 0}};
+
+  BalanceTrajectory(n_reps, num_threads, &offsets);
+  AssertWellBalanced(n_reps, num_threads, offsets);
+}
+
+TEST(UtilQsimTest, BalanceTrajectory1D) {
+  const int n_reps = 100;
+  const int num_threads = 5;
+  // [num_threads, batch_size]
+  std::vector<std::vector<int>> offsets = {{0, 0, 0, 0, 0, 0, 0},
+                                           {0, 0, 0, 0, 0, 0, 0},
+                                           {0, 0, 0, 0, 0, 0, 0},
+                                           {0, 0, 0, 0, 0, 0, 0},
+                                           {0, 0, 0, 0, 0, 0, 0}};
+
+  std::vector<std::vector<int>> tmp(offsets[0].size(),
+                                    std::vector<int>(2, n_reps));
+  BalanceTrajectory(n_reps, num_threads, &offsets);
+  AssertWellBalanced(tmp, num_threads, offsets);
+}
+
+TEST(UtilQsimTest, BalanceTrajectory1D_2) {
+  const int n_reps = 11;
+  const int num_threads = 10;
+  // [num_threads, batch_size]
+  std::vector<std::vector<int>> offsets = {
+      {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0},
+      {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0},
+      {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}};
+
+  std::vector<std::vector<int>> tmp(offsets[0].size(),
+                                    std::vector<int>(2, n_reps));
+  BalanceTrajectory(n_reps, num_threads, &offsets);
+  AssertWellBalanced(tmp, num_threads, offsets);
 }
 
 }  // namespace

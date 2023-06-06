@@ -11,14 +11,23 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# ==============================================================================
+# =============================================================================
 """Tests for tensorflow_quantum.layers.circuit_executors.state."""
+# Remove PYTHONPATH collisions for protobuf.
+# pylint: disable=wrong-import-position
+import sys
+
+NEW_PATH = [x for x in sys.path if 'com_google_protobuf' not in x]
+sys.path = NEW_PATH
+# pylint: enable=wrong-import-position
+
 import numpy as np
 from absl.testing import parameterized
 import sympy
 import tensorflow as tf
 import cirq
 
+from tensorflow_quantum.core.ops import circuit_execution_ops
 from tensorflow_quantum.python.layers.circuit_executors import state
 from tensorflow_quantum.python import util
 
@@ -38,15 +47,24 @@ class StateTest(parameterized.TestCase, tf.test.TestCase):
             state.State('junk')
 
     @parameterized.parameters([{
-        'backend': None
+        'backend': None,
+        'use_cuquantum': False,
     }, {
-        'backend': cirq.Simulator()
+        'backend': None,
+        'use_cuquantum': True,
     }, {
-        'backend': cirq.DensityMatrixSimulator()
+        'backend': cirq.Simulator(),
+        'use_cuquantum': False,
+    }, {
+        'backend': cirq.DensityMatrixSimulator(),
+        'use_cuquantum': False,
     }])
-    def test_state_invalid_combinations(self, backend):
+    def test_state_invalid_combinations(self, backend, use_cuquantum):
         """Test with valid type inputs and valid value, but incorrect combo."""
-        state_calc = state.State(backend)
+        if use_cuquantum and not circuit_execution_ops.is_gpu_configured():
+            # GPU is not set. Ignores this sub-test.
+            self.skipTest("GPU is not set. Ignoring gpu tests...")
+        state_calc = state.State(backend, use_cuquantum=use_cuquantum)
         symbol = sympy.Symbol('alpha')
         circuit = cirq.Circuit(cirq.H(cirq.GridQubit(0, 0))**symbol)
         with self.assertRaisesRegex(Exception, expected_regex=""):
@@ -102,18 +120,26 @@ class StateTest(parameterized.TestCase, tf.test.TestCase):
 
     @parameterized.parameters([
         {
-            'backend_output': (None, WF_OUTPUT)
+            'backend_output': (None, WF_OUTPUT),
+            'use_cuquantum': False,
         },
         {
-            'backend_output': (cirq.sim.sparse_simulator.Simulator(), WF_OUTPUT)
+            'backend_output': (None, WF_OUTPUT),
+            'use_cuquantum': True,
+        },
+        {
+            'backend_output':
+                (cirq.sim.sparse_simulator.Simulator(), WF_OUTPUT),
+            'use_cuquantum': False,
         },
         {
             'backend_output':
                 (cirq.sim.density_matrix_simulator.DensityMatrixSimulator(),
-                 DM_OUTPUT)
+                 DM_OUTPUT),
+            'use_cuquantum': False,
         },
     ])
-    def test_state_output(self, backend_output):
+    def test_state_output(self, backend_output, use_cuquantum):
         """Check that any output type is as expected.
 
         This layer only allows for 2 different outputs, depending on whether a
@@ -121,9 +147,15 @@ class StateTest(parameterized.TestCase, tf.test.TestCase):
         post processing done inside the layers should not cause output from the
         layer to structurally deviate from what is expected.
         """
+        if use_cuquantum and not circuit_execution_ops.is_gpu_configured():
+            # GPU is not set. Ignores this sub-test.
+            self.skipTest("GPU is not set. Ignoring gpu tests...")
         backend = backend_output[0]
         output = backend_output[1]
-        state_executor = state.State(backend=backend)
+        state_executor = state.State(
+            backend=backend,
+            use_cuquantum=use_cuquantum,
+        )
         bits = cirq.GridQubit.rect(1, 2)
         circuit = cirq.Circuit()
         circuit.append(cirq.H.on(bits[0]))

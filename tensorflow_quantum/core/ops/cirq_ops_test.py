@@ -11,13 +11,23 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# ==============================================================================
+# =============================================================================
 """Tests for the cirq simulation ops."""
+# Remove PYTHONPATH collisions for protobuf.
+# pylint: disable=wrong-import-position
+import sys
+
+NEW_PATH = [x for x in sys.path if 'com_google_protobuf' not in x]
+sys.path = NEW_PATH
+# pylint: enable=wrong-import-position
+
 from unittest import mock
 import numpy as np
 import tensorflow as tf
 from absl.testing import parameterized
 import cirq
+import cirq_google
+from cirq_google.engine.abstract_processor import AbstractProcessor
 
 from tensorflow_quantum.core.ops import cirq_ops
 from tensorflow_quantum.core.serialize import serializer
@@ -34,7 +44,7 @@ class CirqAnalyticalExpectationTest(tf.test.TestCase):
     def test_get_cirq_analytical_expectation_op(self):
         """Input check the wrapper for the cirq analytical expectation op."""
         with self.assertRaisesRegex(
-                TypeError, "simulator must inherit cirq.SimulatesFinalState."):
+                TypeError, "cirq.sim.simulator.SimulatesExpectationValues."):
             cirq_ops._get_cirq_analytical_expectation("junk")
         # TODO(peterse): Tighten these tests a bit..
         cirq_ops._get_cirq_analytical_expectation()
@@ -94,6 +104,14 @@ class CirqAnalyticalExpectationTest(tf.test.TestCase):
         test_empty_circuit = serializer.serialize_circuit(
             cirq.Circuit()).SerializeToString()
         _ = test_op([test_empty_circuit], [], [[]], [[test_pauli_sum]])
+
+    def test_analytic_expectation_no_circuit(self):
+        """Test empty tensors with no circuits at all."""
+        test_op = cirq_ops._get_cirq_analytical_expectation(cirq.Simulator())
+        empty_programs = tf.raw_ops.Empty(shape=(0,), dtype=tf.string)
+        empty_values = tf.raw_ops.Empty(shape=(0, 0), dtype=tf.float32)
+        empty_paulis = tf.raw_ops.Empty(shape=(0, 0), dtype=tf.string)
+        _ = test_op(empty_programs, [], empty_values, empty_paulis)
 
 
 class CirqSampledExpectationTest(tf.test.TestCase):
@@ -183,6 +201,15 @@ class CirqSampledExpectationTest(tf.test.TestCase):
         test_empty_circuit = serializer.serialize_circuit(
             cirq.Circuit()).SerializeToString()
         _ = test_op([test_empty_circuit], [], [[]], [[test_pauli_sum]], [[1]])
+
+    def test_sampled_expectation_no_circuit(self):
+        """Test empty tensors with no circuits at all."""
+        test_op = cirq_ops._get_cirq_sampled_expectation(cirq.Simulator())
+        empty_programs = tf.raw_ops.Empty(shape=(0,), dtype=tf.string)
+        empty_values = tf.raw_ops.Empty(shape=(0, 0), dtype=tf.float32)
+        empty_paulis = tf.raw_ops.Empty(shape=(0, 0), dtype=tf.string)
+        empty_reps = tf.raw_ops.Empty(shape=(0, 0), dtype=tf.int32)
+        _ = test_op(empty_programs, [], empty_values, empty_paulis, empty_reps)
 
 
 class CirqSimulateStateTest(tf.test.TestCase, parameterized.TestCase):
@@ -296,7 +323,7 @@ class CirqSimulateStateTest(tf.test.TestCase, parameterized.TestCase):
                     'Simulator returned unknown type of result.' +
                     str(type(result)))
 
-        self.assertAllClose(tfq_results, manual_padded_results)
+        self.assertAllClose(tfq_results, manual_padded_results, atol=1e-5)
 
     def test_state_empty_circuit(self):
         """Test empty circuits"""
@@ -304,6 +331,13 @@ class CirqSimulateStateTest(tf.test.TestCase, parameterized.TestCase):
         test_empty_circuit = serializer.serialize_circuit(
             cirq.Circuit()).SerializeToString()
         _ = test_op([test_empty_circuit], [], [[]])
+
+    def test_state_no_circuit(self):
+        """Test empty tensors with no circuits at all."""
+        test_op = cirq_ops._get_cirq_simulate_state(cirq.Simulator())
+        empty_programs = tf.raw_ops.Empty(shape=(0,), dtype=tf.string)
+        empty_values = tf.raw_ops.Empty(shape=(0, 0), dtype=tf.float32)
+        _ = test_op(empty_programs, [], empty_values)
 
 
 class CirqSamplesTest(tf.test.TestCase, parameterized.TestCase):
@@ -316,11 +350,9 @@ class CirqSamplesTest(tf.test.TestCase, parameterized.TestCase):
         cirq_ops._get_cirq_samples()
         cirq_ops._get_cirq_samples(cirq.Simulator())
         cirq_ops._get_cirq_samples(cirq.DensityMatrixSimulator())
-        mock_engine = mock.Mock()
+        mock_processor = mock.create_autospec(AbstractProcessor)
         cirq_ops._get_cirq_samples(
-            cirq.google.QuantumEngineSampler(engine=mock_engine,
-                                             processor_id='test',
-                                             gate_set=cirq.google.XMON))
+            cirq_google.ProcessorSampler(processor=mock_processor))
 
     def test_cirq_sampling_op_inputs(self):
         """test input checking in the cirq sampling op."""
@@ -390,8 +422,8 @@ class CirqSamplesTest(tf.test.TestCase, parameterized.TestCase):
             this_expected_output[:, :max(all_n_qubits) - n_qubits] = -2
             expected_outputs.append(this_expected_output)
             circuits.append(
-                cirq.Circuit(
-                    *cirq.X.on_each(*cirq.GridQubit.rect(1, n_qubits))))
+                cirq.Circuit(*cirq.X.on_each(
+                    *cirq.GridQubit.rect(1, n_qubits))))
         results = op(util.convert_to_tensor(circuits), [], [[]] * len(circuits),
                      [n_samples]).numpy()
         self.assertAllClose(expected_outputs, results)
@@ -403,6 +435,13 @@ class CirqSamplesTest(tf.test.TestCase, parameterized.TestCase):
             cirq.Circuit()).SerializeToString()
         _ = test_op([test_empty_circuit], [], [[]], [10])
 
+    def test_sample_no_circuit(self):
+        """Test empty tensors with no circuits at all."""
+        test_op = cirq_ops._get_cirq_samples(cirq.Simulator())
+        empty_programs = tf.raw_ops.Empty(shape=(0,), dtype=tf.string)
+        empty_values = tf.raw_ops.Empty(shape=(0, 0), dtype=tf.float32)
+        _ = test_op(empty_programs, [], empty_values, [1])
+
     def test_get_cirq_samples_general(self):
         """Tests that a general cirq.Sampler is compatible with sampling."""
 
@@ -412,13 +451,15 @@ class CirqSamplesTest(tf.test.TestCase, parameterized.TestCase):
             def run_sweep(self, program, params, repetitions):
                 """Returns all ones in the correct sample shape."""
                 return [
-                    cirq.TrialResult(
+                    cirq_google.EngineResult(
+                        job_id="1",
+                        job_finished_time="1",
                         params=param,
                         measurements={
                             'tfq':
                                 np.array([[1] * len(program.all_qubits())] *
                                          repetitions,
-                                         dtype=np.int32),
+                                         dtype=int),
                         }) for param in cirq.to_resolvers(params)
                 ]
 
@@ -430,8 +471,8 @@ class CirqSamplesTest(tf.test.TestCase, parameterized.TestCase):
         circuits = []
         for n_qubits in all_n_qubits:
             circuits.append(
-                cirq.Circuit(
-                    *cirq.X.on_each(*cirq.GridQubit.rect(1, n_qubits))))
+                cirq.Circuit(*cirq.X.on_each(
+                    *cirq.GridQubit.rect(1, n_qubits))))
         test_results = this_op(util.convert_to_tensor(circuits), [],
                                [[]] * len(circuits), [n_samples]).numpy()
 

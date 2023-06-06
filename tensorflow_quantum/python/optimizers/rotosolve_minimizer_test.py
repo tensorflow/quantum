@@ -11,8 +11,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# ==============================================================================
+# =============================================================================
 """Test module for tfq.python.optimizers.rotosolve_minimizer optimizer."""
+# Remove PYTHONPATH collisions for protobuf.
+# pylint: disable=wrong-import-position
+import sys
+
+NEW_PATH = [x for x in sys.path if 'com_google_protobuf' not in x]
+sys.path = NEW_PATH
+# pylint: enable=wrong-import-position
+
 from operator import mul
 from functools import reduce
 import numpy as np
@@ -28,13 +36,11 @@ from tensorflow_quantum.python.optimizers import rotosolve_minimizer
 def loss_function_with_model_parameters(model, loss, train_x, train_y):
     """Create a new function that assign the model parameter to the model
     and evaluate its value.
-
     Args:
         model : an instance of `tf.keras.Model` or its subclasses.
         loss : a function with signature loss_value = loss(pred_y, true_y).
         train_x : the input part of training data.
         train_y : the output part of training data.
-
     Returns:
         A function that has a signature of:
             loss_value = f(model_parameters).
@@ -55,10 +61,8 @@ def loss_function_with_model_parameters(model, loss, train_x, train_y):
     @tf.function
     def func(params):
         """A function that can be used by tfq.optimizer.rotosolve_minimize.
-
         Args:
            params [in]: a 1D tf.Tensor.
-
         Returns:
             Loss function value
         """
@@ -142,7 +146,7 @@ class RotosolveMinimizerTest(tf.test.TestCase, parameterized.TestCase):
         a, b = sympy.symbols('a b')  # parameters for the circuit
         circuit = cirq.Circuit(
             cirq.rx(a).on(q0),
-            cirq.ry(b).on(q1), cirq.CNOT(control=q0, target=q1))
+            cirq.ry(b).on(q1), cirq.CNOT(q0, q1))
 
         # Build the Keras model.
         model = tf.keras.Sequential([

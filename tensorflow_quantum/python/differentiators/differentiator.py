@@ -11,12 +11,39 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# ==============================================================================
+# =============================================================================
 """Testing consistency in values across differentiation methods."""
 import abc
 import inspect
+import functools
 
 import tensorflow as tf
+
+
+def catch_empty_inputs(func):
+    """Helper function for differentiators to correctly handle empty cases.
+
+    Adds support to decorated function for the case when `programs` or
+    `symbol_values` is empty which requires output to be
+    `tf.zeros_like(symbol_values)`.
+    """
+
+    @functools.wraps(func)
+    def new_diff(*args, **kwargs):
+        # args[1]=programs. args[2]=symbol_names. args[3]=symbol_values
+        programs = args[1]
+        symbol_names = args[2]
+        symbol_values = args[3]
+        empty_args = tf.equal(tf.size(programs), 0)
+        empty_vals = tf.equal(tf.size(symbol_values), 0)
+        empty_symbols = tf.equal(tf.size(symbol_names), 0)
+
+        ret_zero = tf.logical_or(empty_args, empty_vals)
+        ret_zero = tf.logical_or(ret_zero, empty_symbols)
+        return tf.cond(ret_zero, lambda: tf.zeros_like(symbol_values),
+                       lambda: func(*args, **kwargs))
+
+    return new_diff
 
 
 class Differentiator(metaclass=abc.ABCMeta):
@@ -28,12 +55,16 @@ class Differentiator(metaclass=abc.ABCMeta):
     to backpropagate through a quantum circuit.
     """
 
-    def generate_differentiable_op(self, *, sampled_op=None, analytic_op=None):
+    def generate_differentiable_op(self,
+                                   *,
+                                   sampled_op=None,
+                                   analytic_op=None,
+                                   use_cuquantum=False):
         """Generate a differentiable op by attaching self to an op.
 
         This function returns a `tf.function` that passes values through to
-        `forward_op` during the forward pass and this differentiator (`self`) to
-        backpropagate through the op during the backward pass. If sampled_op
+        `forward_op` during the forward pass and this differentiator (`self`)
+        to backpropagate through the op during the backward pass. If sampled_op
         is provided the differentiators `differentiate_sampled` method will
         be invoked (which requires sampled_op to be a sample based expectation
         op with num_samples input tensor). If analytic_op is provided the
@@ -53,6 +84,8 @@ class Differentiator(metaclass=abc.ABCMeta):
                 using this differentiator's `differentiate_sampled` method.
             analytic_op: A `callable` op that you want to make differentiable
                 using this differentiators `differentiate_analytic` method.
+            use_cuquantum: A `bool` indicating whether to use cuQuantum version
+                op.
 
         Returns:
             A `callable` op that who's gradients are now registered to be
@@ -85,6 +118,9 @@ class Differentiator(metaclass=abc.ABCMeta):
             raise TypeError('Provided arguments must be callable tensorflow '
                             'ops.')
 
+        if not isinstance(use_cuquantum, bool):
+            raise TypeError('use_cuquantum should be boolean.')
+
         # TODO (mbbrough): find a better workaround than this to ensure
         #   that the correct sample based expectation wasn't accidentally
         #   put inside of the analytical_op argument or vice versa.
@@ -101,12 +137,14 @@ class Differentiator(metaclass=abc.ABCMeta):
                                      'Given arg: {}.'.format(str(key)) + ''
                                      'The signature should contain: {}.'.format(
                                          list(expected_signature)) + ''
-                                     ' Given: {}'.format(list(signature)))
+                                     ' Given: {}'.format(list(signature)) + ''
+                                     'Note: noisy ops should use sampled_op')
 
             if 'num_samples' in signature:
                 raise ValueError('found num_samples in analytic_op. Please '
                                  'ensure that you are providing an analytical '
-                                 'expectation op in the analytic_op arg.')
+                                 'expectation op in the analytic_op arg.'
+                                 'Note: noisy ops should use sampled_op')
 
         if sampled_op is not None:
             signature = inspect.signature(sampled_op).parameters
@@ -120,6 +158,12 @@ class Differentiator(metaclass=abc.ABCMeta):
                                      'Given arg: {}.'.format(str(key)) + ''
                                      'The signature should contain: {}.'.format(
                                          list(expected_signature)))
+        if use_cuquantum:
+            _differentiate_ana, _differentiate_sam = (
+                self._differentiate_ana_cq, self._differentiate_sam_cq)
+        else:
+            _differentiate_ana, _differentiate_sam = (self._differentiate_ana,
+                                                      self._differentiate_sam)
 
         @tf.custom_gradient
         def op_wrapper_analytic(programs, symbol_names, symbol_values,
@@ -128,9 +172,8 @@ class Differentiator(metaclass=abc.ABCMeta):
                                             symbol_values, pauli_sums)
 
             def gradient(grad):
-                return self._differentiate_ana(programs, symbol_names,
-                                               symbol_values, pauli_sums,
-                                               forward_pass_vals, grad)
+                return _differentiate_ana(programs, symbol_names, symbol_values,
+                                          pauli_sums, forward_pass_vals, grad)
 
             return forward_pass_vals, gradient
 
@@ -142,10 +185,9 @@ class Differentiator(metaclass=abc.ABCMeta):
                                            num_samples)
 
             def gradient(grad):
-                return self._differentiate_sam(programs, symbol_names,
-                                               symbol_values, pauli_sums,
-                                               num_samples, forward_pass_vals,
-                                               grad)
+                return _differentiate_sam(programs, symbol_names, symbol_values,
+                                          pauli_sums, num_samples,
+                                          forward_pass_vals, grad)
 
             return forward_pass_vals, gradient
 
@@ -157,12 +199,26 @@ class Differentiator(metaclass=abc.ABCMeta):
 
         return return_func
 
+    def _differentiate_ana_cq(self, programs, symbol_names, symbol_values,
+                              pauli_sums, forward_pass_vals, grad):
+        return None, None, self.differentiate_analytic_cuquantum(
+            programs, symbol_names, symbol_values,
+            pauli_sums, forward_pass_vals, grad), \
+               None
+
     def _differentiate_ana(self, programs, symbol_names, symbol_values,
                            pauli_sums, forward_pass_vals, grad):
         return None, None, self.differentiate_analytic(
             programs, symbol_names, symbol_values,
             pauli_sums, forward_pass_vals, grad), \
                None
+
+    def _differentiate_sam_cq(self, programs, symbol_names, symbol_values,
+                              pauli_sums, num_samples, forward_pass_vals, grad):
+        return None, None, self.differentiate_sampled_cuquantum(
+            programs, symbol_names, symbol_values,
+            pauli_sums, num_samples, forward_pass_vals, grad), \
+               None, None
 
     def _differentiate_sam(self, programs, symbol_names, symbol_values,
                            pauli_sums, num_samples, forward_pass_vals, grad):
@@ -189,6 +245,15 @@ class Differentiator(metaclass=abc.ABCMeta):
         `tf.Tensor` objects give all necessary information to recreate the
         internal logic of the differentiator.
 
+        This base class defines the standard way to use the outputs of this
+        function to obtain either analytic gradients or sample gradients.
+        Below is code that is copied directly from the `differentiate_analytic`
+        default implementation, which is then compared to how one could
+        automatically get this gradient.  The point is that the derivatives of
+        some functions cannot be calculated via the available auto-diff (such
+        as when the function is not expressible efficiently as a PauliSum),
+        and then one would need to use `get_gradient_circuits` the manual way.
+
         Suppose we have some inputs `programs`, `symbol_names`, and
         `symbol_values`.  To get the derivative of the expectation values of a
         tensor of PauliSums `pauli_sums` with respect to these inputs, do:
@@ -197,13 +262,13 @@ class Differentiator(metaclass=abc.ABCMeta):
         >>> diff = <some differentiator>()
         >>> (
         ...     batch_programs, new_symbol_names, batch_symbol_values,
-        ...     batch_mapper
+        ...     batch_weights, batch_mapper
         ... ) = diff.get_gradient_circuits(
         ...     programs, symbol_names, symbol_values)
         >>> exp_layer = tfq.layers.Expectation()
         >>> batch_pauli_sums = tf.tile(
         ...     tf.expand_dims(pauli_sums, 1),
-        ...     [1, tf.shape(batch_mapper)[2], 1])
+        ...     [1, tf.shape(batch_programs)[1], 1])
         >>> n_batch_programs = tf.reduce_prod(tf.shape(batch_programs))
         >>> n_symbols = tf.shape(new_symbol_names)[0]
         >>> n_ops = tf.shape(pauli_sums)[1]
@@ -216,8 +281,11 @@ class Differentiator(metaclass=abc.ABCMeta):
         ...         batch_pauli_sums, [n_batch_programs, n_ops]))
         >>> batch_expectations = tf.reshape(
         ...     batch_expectations, tf.shape(batch_pauli_sums))
-        >>> grad_manual = tf.reduce_sum(
-        ...     tf.einsum('ikm,jmp->ikp', batch_mapper, batch_expectations), -1)
+        >>> batch_jacobian = tf.map_fn(
+        ...     lambda x: tf.einsum('km,kmp->kp', x[0], tf.gather(x[1], x[2])),
+        ...     (batch_weights, batch_expectations, batch_mapper),
+        ...     fn_output_signature=tf.float32)
+        >>> grad_manual = tf.reduce_sum(batch_jacobian, -1)
 
 
         To perform the same gradient calculation automatically:
@@ -266,24 +334,60 @@ class Differentiator(metaclass=abc.ABCMeta):
                 `new_symbol_names`. Thus, at each index `i` in the first
                 dimension is the 2-D tensor of parameter values to fill in to
                 `batch_programs[i]`.
-            batch_mapper: 3-D `tf.Tensor` of DType `tf.float32` which defines
+            batch_weights: 3-D `tf.Tensor` of DType `tf.float32` which defines
+                how much weight to give to each program when computing the
+                derivatives.  First dimension is the length of the input
+                `programs`, second dimension is the length of the input
+                `symbol_names`, and the third dimension is determined by the
+                inheriting differentiator.
+            batch_mapper: 3-D `tf.Tensor` of DType `tf.int32` which defines
                 how to map expectation values of the circuits generated by this
                 differentiator to the derivatives of the original circuits.
+                It says which indices of the returned programs are relevant for
+                the derivative of each symbol, for use by `tf.gather`.
                 The first dimension is the length of the input `programs`, the
                 second dimension is the length of the input `symbol_names`,
-                and the third dimension is the length of the second dimension of
-                the output `batch_programs`.
+                and the third dimension is the length of the last dimension of
+                the output `batch_weights`.
         """
 
-    @abc.abstractmethod
+    @catch_empty_inputs
+    @tf.function
+    def differentiate_analytic_cuquantum(self, programs, symbol_names,
+                                         symbol_values, pauli_sums,
+                                         forward_pass_vals, grad):
+        """Differentiate a circuit with analytical expectation with GPU ops."""
+        # `self.expectation_op` is already set to cuquantum op at
+        # generate_differentiable_op._differentiate_ana.
+        return self.differentiate_analytic(programs, symbol_names,
+                                           symbol_values, pauli_sums,
+                                           forward_pass_vals, grad)
+
+    @catch_empty_inputs
+    @tf.function
+    def differentiate_sampled_cuquantum(self, programs, symbol_names,
+                                        symbol_values, pauli_sums, num_samples,
+                                        forward_pass_vals, grad):
+        """Differentiate a circuit with sampled expectation with GPU ops."""
+        # `self.expectation_op` is already set to cuquantum op at
+        # generate_differentiable_op._differentiate_sam.
+        return self.differentiate_sampled(programs, symbol_names, symbol_values,
+                                          pauli_sums, num_samples,
+                                          forward_pass_vals, grad)
+
+    @catch_empty_inputs
+    @tf.function
     def differentiate_analytic(self, programs, symbol_names, symbol_values,
                                pauli_sums, forward_pass_vals, grad):
-        """Specify how to differentiate a circuit with analytical expectation.
+        """Differentiate a circuit with analytical expectation.
 
         This is called at graph runtime by TensorFlow. `differentiate_analytic`
-        should calculate the gradient of a batch of circuits and return it
-        formatted as indicated below. See
-        `tfq.differentiators.ForwardDifference` for an example.
+        calls he inheriting differentiator's `get_gradient_circuits` and uses
+        those components to construct the gradient.
+
+        Note: the default implementation does not use `forward_pass_vals`; the
+        inheriting differentiator is free to override the default implementation
+        and use this argument if desired.
 
         Args:
             programs: `tf.Tensor` of strings with shape [batch_size] containing
@@ -311,16 +415,43 @@ class Differentiator(metaclass=abc.ABCMeta):
             the gradient backpropageted to the `symbol_values` input of the op
             you are differentiating through.
         """
+        (batch_programs, new_symbol_names, batch_symbol_values, batch_weights,
+         batch_mapper) = self.get_gradient_circuits(programs, symbol_names,
+                                                    symbol_values)
+        m_i = tf.shape(batch_programs)[1]
+        batch_pauli_sums = tf.tile(tf.expand_dims(pauli_sums, 1), [1, m_i, 1])
+        n_batch_programs = tf.reduce_prod(tf.shape(batch_programs))
+        n_symbols = tf.shape(new_symbol_names)[0]
+        n_ops = tf.shape(pauli_sums)[1]
+        batch_expectations = self.expectation_op(
+            tf.reshape(batch_programs, [n_batch_programs]), new_symbol_names,
+            tf.reshape(batch_symbol_values, [n_batch_programs, n_symbols]),
+            tf.reshape(batch_pauli_sums, [n_batch_programs, n_ops]))
+        batch_expectations = tf.reshape(batch_expectations,
+                                        tf.shape(batch_pauli_sums))
 
-    @abc.abstractmethod
+        # has shape [n_programs, n_symbols, n_ops]
+        batch_jacobian = tf.map_fn(
+            lambda x: tf.einsum('sm,smo->so', x[0], tf.gather(x[1], x[2])),
+            (batch_weights, batch_expectations, batch_mapper),
+            fn_output_signature=tf.float32)
+
+        # now apply the chain rule
+        return tf.einsum('pso,po->ps', batch_jacobian, grad)
+
+    @catch_empty_inputs
+    @tf.function
     def differentiate_sampled(self, programs, symbol_names, symbol_values,
                               pauli_sums, num_samples, forward_pass_vals, grad):
-        """Specify how to differentiate a circuit with sampled expectation.
+        """Differentiate a circuit with sampled expectation.
 
         This is called at graph runtime by TensorFlow. `differentiate_sampled`
-        should calculate the gradient of a batch of circuits and return it
-        formatted as indicated below. See
-        `tfq.differentiators.ForwardDifference` for an example.
+        calls he inheriting differentiator's `get_gradient_circuits` and uses
+        those components to construct the gradient.
+
+        Note: the default implementation does not use `forward_pass_vals`; the
+        inheriting differentiator is free to override the default implementation
+        and use this argument if desired.
 
         Args:
             programs: `tf.Tensor` of strings with shape [batch_size] containing
@@ -351,3 +482,28 @@ class Differentiator(metaclass=abc.ABCMeta):
             the gradient backpropageted to the `symbol_values` input of the op
             you are differentiating through.
         """
+        (batch_programs, new_symbol_names, batch_symbol_values, batch_weights,
+         batch_mapper) = self.get_gradient_circuits(programs, symbol_names,
+                                                    symbol_values)
+        m_i = tf.shape(batch_programs)[1]
+        batch_pauli_sums = tf.tile(tf.expand_dims(pauli_sums, 1), [1, m_i, 1])
+        batch_num_samples = tf.tile(tf.expand_dims(num_samples, 1), [1, m_i, 1])
+        n_batch_programs = tf.reduce_prod(tf.shape(batch_programs))
+        n_symbols = tf.shape(new_symbol_names)[0]
+        n_ops = tf.shape(pauli_sums)[1]
+        batch_expectations = self.expectation_op(
+            tf.reshape(batch_programs, [n_batch_programs]), new_symbol_names,
+            tf.reshape(batch_symbol_values, [n_batch_programs, n_symbols]),
+            tf.reshape(batch_pauli_sums, [n_batch_programs, n_ops]),
+            tf.reshape(batch_num_samples, [n_batch_programs, n_ops]))
+        batch_expectations = tf.reshape(batch_expectations,
+                                        tf.shape(batch_pauli_sums))
+
+        # has shape [n_programs, n_symbols, n_ops]
+        batch_jacobian = tf.map_fn(
+            lambda x: tf.einsum('sm,smo->so', x[0], tf.gather(x[1], x[2])),
+            (batch_weights, batch_expectations, batch_mapper),
+            fn_output_signature=tf.float32)
+
+        # now apply the chain rule
+        return tf.einsum('pso,po->ps', batch_jacobian, grad)

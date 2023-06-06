@@ -11,8 +11,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# ==============================================================================
+# =============================================================================
 """Tests that specifically target tfq_unitary_op."""
+# Remove PYTHONPATH collisions for protobuf.
+# pylint: disable=wrong-import-position
+import sys
+
+NEW_PATH = [x for x in sys.path if 'com_google_protobuf' not in x]
+sys.path = NEW_PATH
+# pylint: enable=wrong-import-position
+
 import numpy as np
 from absl.testing import parameterized
 import tensorflow as tf
@@ -102,6 +110,14 @@ class UnitaryTest(tf.test.TestCase, parameterized.TestCase):
             unitary_op(util.convert_to_tensor(circuit_batch), symbol_names,
                        symbol_values_array, [])
 
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    expected_regex='cirq.Channel'):
+            # attempting to use noisy circuit.
+            noisy_circuit = cirq.Circuit(cirq.depolarize(0.3).on_each(*qubits))
+            unitary_op(
+                util.convert_to_tensor([noisy_circuit for _ in circuit_batch]),
+                symbol_names, symbol_values_array)
+
     @parameterized.parameters([
         {
             'all_n_qubits': [2, 3]
@@ -136,6 +152,15 @@ class UnitaryTest(tf.test.TestCase, parameterized.TestCase):
 
         self.assertAllClose(tfq_empty_u, [empty_u], atol=1e-5)  # wrap in batch.
 
+    def test_calculate_unitary_no_circuit(self):
+        """Ensure calculate_unitary is consistent with no circuits."""
+        unitary_op = tfq_unitary_op.get_unitary_op()
+        no_circuit = tf.raw_ops.Empty(shape=(0,), dtype=tf.string)
+        empty_values = tf.raw_ops.Empty(shape=(0, 0), dtype=tf.float32)
+        tfq_empty_u = unitary_op(no_circuit, [], empty_values)
+        expected_shape = tf.TensorShape([0, None, None])
+        self.assertEqual(tfq_empty_u.shape.as_list(), expected_shape.as_list())
+
     @parameterized.parameters([{
         'n_qubits': 6,
         'unitary_op': tfq_unitary_op.get_unitary_op(True)
@@ -153,7 +178,7 @@ class UnitaryTest(tf.test.TestCase, parameterized.TestCase):
                                                        unitary_op):
         """Test calculate_unitary works without symbols."""
         unitary_op = tfq_unitary_op.get_unitary_op()
-        qubits = cirq.GridQubit.rect(1, n_qubits)
+        qubits = cirq.LineQubit.range(n_qubits)
         circuit_batch, _ = util.random_circuit_resolver_batch(qubits, 25)
 
         tfq_results = unitary_op(util.convert_to_tensor(circuit_batch), [],

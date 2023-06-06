@@ -12,21 +12,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# ==============================================================================
+# =============================================================================
 echo "Testing All Bazel cc_tests with msan.";
-test_outputs=$(bazel test -c opt --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=0" \
+test_outputs=$(bazel test -c opt --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=1" \
   --cxxopt="-msse2" --cxxopt="-msse3" --cxxopt="-msse4" \
   --cxxopt="-fsanitize=address" --linkopt="-fsanitize=address" \
   --cxxopt="-g" --cxxopt="-O0" \
   --notest_keep_going --test_output=errors \
   //tensorflow_quantum/core/src:all && \
-  bazel test -c opt --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=0" \
+  bazel test -c opt --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=1" \
   --cxxopt="-mavx2" --cxxopt="-mavx" --cxxopt="-mfma" \
   --cxxopt="-fsanitize=address" --linkopt="-fsanitize=address" \
   --cxxopt="-g" --cxxopt="-O0" \
   --notest_keep_going --test_output=errors \
   //tensorflow_quantum/core/src:all && \
-  bazel test -c opt --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=0" \
+  bazel test -c opt --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=1" \
   --cxxopt="-fsanitize=address" --linkopt="-fsanitize=address" \
   --cxxopt="-g" --cxxopt="-O0" \
   --notest_keep_going --test_output=errors \

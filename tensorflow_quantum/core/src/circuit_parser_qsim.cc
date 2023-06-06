@@ -18,31 +18,38 @@ limitations under the License.
 #include <string>
 #include <vector>
 
+#include "../qsim/lib/channel.h"
+#include "../qsim/lib/channels_cirq.h"
 #include "../qsim/lib/circuit.h"
+#include "../qsim/lib/circuit_noisy.h"
 #include "../qsim/lib/fuser.h"
 #include "../qsim/lib/fuser_basic.h"
 #include "../qsim/lib/gates_cirq.h"
 #include "../qsim/lib/io.h"
 #include "absl/container/flat_hash_map.h"
+#include "absl/status/status.h"
 #include "absl/strings/numbers.h"
+#include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 #include "absl/types/optional.h"
-#include "cirq/google/api/v2/program.pb.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
+#include "tensorflow_quantum/core/proto/program.pb.h"
 
 namespace tfq {
 
-using ::cirq::google::api::v2::Moment;
-using ::cirq::google::api::v2::Operation;
-using ::cirq::google::api::v2::Program;
 using ::tensorflow::Status;
+using ::tfq::proto::Moment;
+using ::tfq::proto::Operation;
 using ::tfq::proto::PauliTerm;
+using ::tfq::proto::Program;
 
 namespace {
 
 typedef absl::flat_hash_map<std::string, std::pair<int, float>> SymbolMap;
 typedef qsim::Cirq::GateCirq<float> QsimGate;
 typedef qsim::Circuit<QsimGate> QsimCircuit;
+typedef qsim::NoisyCircuit<QsimGate> NoisyQsimCircuit;
 
 inline Status ParseProtoArg(
     const Operation& op, const std::string& arg_name,
@@ -52,11 +59,12 @@ inline Status ParseProtoArg(
   // iterator<Map<str, Arg>>
   const auto arg_v = op.args().find(arg_name);
   if (arg_v == op.args().end()) {
-    return Status(tensorflow::error::INVALID_ARGUMENT,
+    return Status(static_cast<tensorflow::error::Code>(
+                      absl::StatusCode::kInvalidArgument),
                   "Could not find arg: " + arg_name + " in op.");
   }
   // find proto arg field.
-  // ::cirq::google::api::v2::Arg
+  // ::tfq::proto::Arg
   const auto proto_arg = arg_v->second;
   *result = proto_arg.arg_value().float_value();
   if (!proto_arg.symbol().empty()) {
@@ -64,7 +72,8 @@ inline Status ParseProtoArg(
     const auto iter = param_map.find(proto_arg.symbol());
     if (iter == param_map.end()) {
       return Status(
-          tensorflow::error::INVALID_ARGUMENT,
+          static_cast<tensorflow::error::Code>(
+              absl::StatusCode::kInvalidArgument),
           "Could not find symbol in parameter map: " + proto_arg.symbol());
     }
     *result = iter->second.second;
@@ -72,7 +81,73 @@ inline Status ParseProtoArg(
       symbol_used->emplace(iter->first);
     }
   }
-  return Status::OK();
+  return ::tensorflow::Status();
+}
+
+inline Status ParseProtoControls(const Operation& op,
+                                 const unsigned int num_qubits,
+                                 std::vector<unsigned int>* control_qubits,
+                                 std::vector<unsigned int>* control_values) {
+  absl::string_view control_str =
+      op.args().at("control_qubits").arg_value().string_value();
+  absl::string_view control_v_str =
+      op.args().at("control_values").arg_value().string_value();
+
+  if (control_str == "" && control_v_str == "") {
+    // empty default value set in serializer.py
+    return ::tensorflow::Status();
+  }
+
+  std::vector<absl::string_view> control_toks =
+      absl::StrSplit(control_str, ',');
+  std::vector<absl::string_view> control_v_toks =
+      absl::StrSplit(control_v_str, ',');
+
+  if (control_toks.size() != control_v_toks.size()) {
+    return Status(static_cast<tensorflow::error::Code>(
+                      absl::StatusCode::kInvalidArgument),
+                  "Mistmatched number of control qubits and control values.");
+  }
+  if (control_toks.empty()) {
+    return ::tensorflow::Status();
+  }
+  bool valid;
+  unsigned int tmp;
+  control_qubits->reserve(control_toks.size());
+  for (auto tok : control_toks) {
+    // don't bother error checking since this is done earlier
+    // in program_resolution.
+    valid = absl::SimpleAtoi(tok, &tmp);
+    control_qubits->push_back(num_qubits - tmp - 1);
+  }
+  control_values->reserve(control_v_toks.size());
+  for (auto tok : control_v_toks) {
+    valid = absl::SimpleAtoi(tok, &tmp);
+    if (!valid) {
+      return Status(static_cast<tensorflow::error::Code>(
+                        absl::StatusCode::kInvalidArgument),
+                    "Unparseable control value: " + std::string(tok));
+    }
+    control_values->push_back(tmp);
+  }
+  return ::tensorflow::Status();
+}
+
+inline Status OptionalInsertControls(const Operation& op,
+                                     const unsigned int num_qubits,
+                                     QsimGate* gate) {
+  std::vector<unsigned int> control_values;
+  std::vector<unsigned int> control_qubits;
+  Status s;
+  s = ParseProtoControls(op, num_qubits, &control_qubits, &control_values);
+  if (!s.ok()) {
+    return s;
+  }
+  if (control_qubits.empty()) {
+    return ::tensorflow::Status();
+  }
+  qsim::MakeControlledGate(control_qubits, control_values, *gate);
+  return ::tensorflow::Status();
 }
 
 // series of fixed signature gate builders.
@@ -87,8 +162,13 @@ inline Status SingleConstantGate(
     const unsigned int num_qubits, const unsigned int time,
     QsimCircuit* circuit, std::vector<GateMetaData>* metadata) {
   unsigned int q0;
-  bool unused = absl::SimpleAtoi(op.qubits(0).id(), &q0);
-  circuit->gates.push_back(create_f(time, num_qubits - q0 - 1));
+  (void)absl::SimpleAtoi(op.qubits(0).id(), &q0);
+  auto gate = create_f(time, num_qubits - q0 - 1);
+  Status s = OptionalInsertControls(op, num_qubits, &gate);
+  if (!s.ok()) {
+    return s;
+  }
+  circuit->gates.push_back(gate);
 
   // check for symbols and track metadata if needed.
   if (metadata != nullptr) {
@@ -96,7 +176,7 @@ inline Status SingleConstantGate(
     info.index = circuit->gates.size() - 1;
     metadata->push_back(info);
   }
-  return Status::OK();
+  return ::tensorflow::Status();
 }
 
 // two qubit gate Create(time, q0, q1)
@@ -107,10 +187,15 @@ inline Status TwoConstantGate(
     const unsigned int num_qubits, const unsigned int time,
     QsimCircuit* circuit, std::vector<GateMetaData>* metadata) {
   unsigned int q0, q1;
-  bool unused = absl::SimpleAtoi(op.qubits(0).id(), &q0);
+  [[maybe_unused]] bool unused;
+  unused = absl::SimpleAtoi(op.qubits(0).id(), &q0);
   unused = absl::SimpleAtoi(op.qubits(1).id(), &q1);
-  circuit->gates.push_back(
-      create_f(time, num_qubits - q0 - 1, num_qubits - q1 - 1));
+  auto gate = create_f(time, num_qubits - q0 - 1, num_qubits - q1 - 1);
+  Status s = OptionalInsertControls(op, num_qubits, &gate);
+  if (!s.ok()) {
+    return s;
+  }
+  circuit->gates.push_back(gate);
 
   // check for symbols and track metadata if needed.
   if (metadata != nullptr) {
@@ -118,7 +203,7 @@ inline Status TwoConstantGate(
     info.index = circuit->gates.size() - 1;
     metadata->push_back(info);
   }
-  return Status::OK();
+  return ::tensorflow::Status();
 }
 
 // single qubit eigen -> Create(time, q0, exponent, global_shift)
@@ -129,9 +214,10 @@ inline Status SingleEigenGate(
     const unsigned int num_qubits, const unsigned int time,
     QsimCircuit* circuit, std::vector<GateMetaData>* metadata) {
   unsigned int q0;
-  bool unused;
+
   float exp, exp_s, gs;
   Status u;
+  [[maybe_unused]] bool unused;
   unused = absl::SimpleAtoi(op.qubits(0).id(), &q0);
 
   absl::optional<std::string> exponent_symbol;
@@ -148,8 +234,12 @@ inline Status SingleEigenGate(
     return u;
   }
 
-  circuit->gates.push_back(
-      create_f(time, num_qubits - q0 - 1, exp * exp_s, gs));
+  auto gate = create_f(time, num_qubits - q0 - 1, exp * exp_s, gs);
+  Status s = OptionalInsertControls(op, num_qubits, &gate);
+  if (!s.ok()) {
+    return s;
+  }
+  circuit->gates.push_back(gate);
 
   // check for symbols and track metadata if needed.
   if (metadata != nullptr) {
@@ -163,7 +253,7 @@ inline Status SingleEigenGate(
     }
     metadata->push_back(info);
   }
-  return Status::OK();
+  return ::tensorflow::Status();
 }
 
 // two qubit eigen -> Create(time, q0, q1, exp, gs)
@@ -175,8 +265,9 @@ inline Status TwoEigenGate(
     QsimCircuit* circuit, std::vector<GateMetaData>* metadata) {
   unsigned int q0, q1;
   float exp, exp_s, gs;
-  bool unused;
+
   Status u;
+  [[maybe_unused]] bool unused;
   unused = absl::SimpleAtoi(op.qubits(0).id(), &q0);
   unused = absl::SimpleAtoi(op.qubits(1).id(), &q1);
 
@@ -193,8 +284,14 @@ inline Status TwoEigenGate(
   if (!u.ok()) {
     return u;
   }
-  circuit->gates.push_back(create_f(time, num_qubits - q0 - 1,
-                                    num_qubits - q1 - 1, exp * exp_s, gs));
+  auto gate =
+      create_f(time, num_qubits - q0 - 1, num_qubits - q1 - 1, exp * exp_s, gs);
+
+  Status s = OptionalInsertControls(op, num_qubits, &gate);
+  if (!s.ok()) {
+    return s;
+  }
+  circuit->gates.push_back(gate);
 
   // check for symbols and track metadata if needed.
   if (metadata != nullptr) {
@@ -208,7 +305,7 @@ inline Status TwoEigenGate(
     }
     metadata->push_back(info);
   }
-  return Status::OK();
+  return ::tensorflow::Status();
 }
 
 Status IGate(const Operation& op, const SymbolMap& param_map,
@@ -308,9 +405,10 @@ inline Status PhasedXGate(const Operation& op, const SymbolMap& param_map,
                           const unsigned int time, QsimCircuit* circuit,
                           std::vector<GateMetaData>* metadata) {
   int q0;
-  bool unused;
+
   float pexp, pexp_s, exp, exp_s, gs;
   Status u;
+  [[maybe_unused]] bool unused;
   unused = absl::SimpleAtoi(op.qubits(0).id(), &q0);
 
   absl::optional<std::string> exponent_symbol;
@@ -336,8 +434,13 @@ inline Status PhasedXGate(const Operation& op, const SymbolMap& param_map,
   if (!u.ok()) {
     return u;
   }
-  circuit->gates.push_back(qsim::Cirq::PhasedXPowGate<float>::Create(
-      time, num_qubits - q0 - 1, pexp * pexp_s, exp * exp_s, gs));
+  auto gate = qsim::Cirq::PhasedXPowGate<float>::Create(
+      time, num_qubits - q0 - 1, pexp * pexp_s, exp * exp_s, gs);
+  Status s = OptionalInsertControls(op, num_qubits, &gate);
+  if (!s.ok()) {
+    return s;
+  }
+  circuit->gates.push_back(gate);
 
   // check for symbols and track metadata if needed.
   if (metadata != nullptr) {
@@ -354,7 +457,7 @@ inline Status PhasedXGate(const Operation& op, const SymbolMap& param_map,
     }
     metadata->push_back(info);
   }
-  return Status::OK();
+  return ::tensorflow::Status();
 }
 
 // two qubit fsim -> Create(time, q0, q1, theta, phi)
@@ -363,9 +466,10 @@ inline Status FsimGate(const Operation& op, const SymbolMap& param_map,
                        QsimCircuit* circuit,
                        std::vector<GateMetaData>* metadata) {
   int q0, q1;
-  bool unused;
+
   float theta, theta_s, phi, phi_s;
   Status u;
+  [[maybe_unused]] bool unused;
   unused = absl::SimpleAtoi(op.qubits(0).id(), &q0);
   unused = absl::SimpleAtoi(op.qubits(1).id(), &q1);
 
@@ -387,9 +491,14 @@ inline Status FsimGate(const Operation& op, const SymbolMap& param_map,
   if (!u.ok()) {
     return u;
   }
-  circuit->gates.push_back(qsim::Cirq::FSimGate<float>::Create(
-      time, num_qubits - q0 - 1, num_qubits - q1 - 1, theta * theta_s,
-      phi * phi_s));
+  auto gate = qsim::Cirq::FSimGate<float>::Create(time, num_qubits - q0 - 1,
+                                                  num_qubits - q1 - 1,
+                                                  theta * theta_s, phi * phi_s);
+  Status s = OptionalInsertControls(op, num_qubits, &gate);
+  if (!s.ok()) {
+    return s;
+  }
+  circuit->gates.push_back(gate);
 
   // check for symbols and track metadata if needed.
   if (metadata != nullptr) {
@@ -406,7 +515,7 @@ inline Status FsimGate(const Operation& op, const SymbolMap& param_map,
     }
     metadata->push_back(info);
   }
-  return Status::OK();
+  return ::tensorflow::Status();
 }
 
 // two qubit phase iswap -> Create(time, q0, q1, pexp, exp)
@@ -415,9 +524,10 @@ inline Status PhasedISwapGate(const Operation& op, const SymbolMap& param_map,
                               const unsigned int time, QsimCircuit* circuit,
                               std::vector<GateMetaData>* metadata) {
   int q0, q1;
-  bool unused;
+
   float pexp, pexp_s, exp, exp_s;
   Status u;
+  [[maybe_unused]] bool unused;
   unused = absl::SimpleAtoi(op.qubits(0).id(), &q0);
   unused = absl::SimpleAtoi(op.qubits(1).id(), &q1);
 
@@ -440,9 +550,14 @@ inline Status PhasedISwapGate(const Operation& op, const SymbolMap& param_map,
   if (!u.ok()) {
     return u;
   }
-  circuit->gates.push_back(qsim::Cirq::PhasedISwapPowGate<float>::Create(
+  auto gate = qsim::Cirq::PhasedISwapPowGate<float>::Create(
       time, num_qubits - q0 - 1, num_qubits - q1 - 1, pexp * pexp_s,
-      exp * exp_s));
+      exp * exp_s);
+  Status s = OptionalInsertControls(op, num_qubits, &gate);
+  if (!s.ok()) {
+    return s;
+  }
+  circuit->gates.push_back(gate);
 
   // check for symbols and track metadata if needed.
   if (metadata != nullptr) {
@@ -459,7 +574,7 @@ inline Status PhasedISwapGate(const Operation& op, const SymbolMap& param_map,
     }
     metadata->push_back(info);
   }
-  return Status::OK();
+  return ::tensorflow::Status();
 }
 
 tensorflow::Status ParseAppendGate(const Operation& op,
@@ -467,7 +582,8 @@ tensorflow::Status ParseAppendGate(const Operation& op,
                                    const unsigned int num_qubits,
                                    const unsigned int time,
                                    QsimCircuit* circuit,
-                                   std::vector<GateMetaData>* metadata) {
+                                   std::vector<GateMetaData>* metadata,
+                                   bool* lookup_succeeded) {
   // map gate name -> callable to build that qsim gate from operation proto.
   static const absl::flat_hash_map<
       std::string,
@@ -485,13 +601,263 @@ tensorflow::Status ParseAppendGate(const Operation& op,
 
   auto build_f = func_map.find(op.gate().id());
   if (build_f == func_map.end()) {
-    return Status(tensorflow::error::INVALID_ARGUMENT,
-                  "Could not parse gate id: " + op.gate().id());
+    *lookup_succeeded = false;
+    return Status(static_cast<tensorflow::error::Code>(
+                      absl::StatusCode::kInvalidArgument),
+                  absl::StrCat("Could not parse gate id: ", op.gate().id(),
+                               ". This is likely because a cirq.Channel was "
+                               "used in an op that does not support them."));
   }
+  *lookup_succeeded = true;
   return build_f->second(op, param_map, num_qubits, time, circuit, metadata);
 }
 
+inline Status AsymmetricDepolarizingChannel(const Operation& op,
+                                            const unsigned int num_qubits,
+                                            const unsigned int time,
+                                            NoisyQsimCircuit* ncircuit) {
+  int q;
+
+  float p_x, p_y, p_z;
+  Status u;
+  [[maybe_unused]] bool unused;
+  unused = absl::SimpleAtoi(op.qubits(0).id(), &q);
+
+  u = ParseProtoArg(op, "p_x", {}, &p_x);
+  u = ParseProtoArg(op, "p_y", {}, &p_y);
+  u = ParseProtoArg(op, "p_z", {}, &p_z);
+  if (!u.ok()) {
+    return u;
+  }
+  auto chan = qsim::Cirq::AsymmetricDepolarizingChannel<float>::Create(
+      time, num_qubits - q - 1, p_x, p_y, p_z);
+  ncircuit->channels.push_back(chan);
+  return ::tensorflow::Status();
+}
+
+inline Status DepolarizingChannel(const Operation& op,
+                                  const unsigned int num_qubits,
+                                  const unsigned int time,
+                                  NoisyQsimCircuit* ncircuit) {
+  int q;
+
+  float p;
+  Status u;
+  [[maybe_unused]] bool unused;
+  unused = absl::SimpleAtoi(op.qubits(0).id(), &q);
+
+  u = ParseProtoArg(op, "p", {}, &p);
+  if (!u.ok()) {
+    return u;
+  }
+  auto chan = qsim::Cirq::DepolarizingChannel<float>::Create(
+      time, num_qubits - q - 1, p);
+  ncircuit->channels.push_back(chan);
+  return ::tensorflow::Status();
+}
+
+inline Status GADChannel(const Operation& op, const unsigned int num_qubits,
+                         const unsigned int time, NoisyQsimCircuit* ncircuit) {
+  int q;
+
+  float p, gamma;
+  Status u;
+  [[maybe_unused]] bool unused;
+  unused = absl::SimpleAtoi(op.qubits(0).id(), &q);
+
+  u = ParseProtoArg(op, "p", {}, &p);
+  if (!u.ok()) {
+    return u;
+  }
+  u = ParseProtoArg(op, "gamma", {}, &gamma);
+  if (!u.ok()) {
+    return u;
+  }
+
+  auto chan = qsim::Cirq::GeneralizedAmplitudeDampingChannel<float>::Create(
+      time, num_qubits - q - 1, p, gamma);
+  ncircuit->channels.push_back(chan);
+  return ::tensorflow::Status();
+}
+
+inline Status ResetChannel(const Operation& op, const unsigned int num_qubits,
+                           const unsigned int time,
+                           NoisyQsimCircuit* ncircuit) {
+  int q;
+
+  [[maybe_unused]] bool unused;
+  unused = absl::SimpleAtoi(op.qubits(0).id(), &q);
+
+  auto chan = qsim::Cirq::ResetChannel<float>::Create(time, num_qubits - q - 1);
+  ncircuit->channels.push_back(chan);
+  return ::tensorflow::Status();
+}
+
+inline Status AmplitudeDampingChannel(const Operation& op,
+                                      const unsigned int num_qubits,
+                                      const unsigned int time,
+                                      NoisyQsimCircuit* ncircuit) {
+  int q;
+
+  float gamma;
+  Status u;
+  [[maybe_unused]] bool unused;
+  unused = absl::SimpleAtoi(op.qubits(0).id(), &q);
+
+  u = ParseProtoArg(op, "gamma", {}, &gamma);
+  if (!u.ok()) {
+    return u;
+  }
+  auto chan = qsim::Cirq::AmplitudeDampingChannel<float>::Create(
+      time, num_qubits - q - 1, gamma);
+  ncircuit->channels.push_back(chan);
+  return ::tensorflow::Status();
+}
+
+inline Status PhaseDampingChannel(const Operation& op,
+                                  const unsigned int num_qubits,
+                                  const unsigned int time,
+                                  NoisyQsimCircuit* ncircuit) {
+  int q;
+
+  float gamma;
+  Status u;
+  [[maybe_unused]] bool unused;
+  unused = absl::SimpleAtoi(op.qubits(0).id(), &q);
+
+  u = ParseProtoArg(op, "gamma", {}, &gamma);
+  if (!u.ok()) {
+    return u;
+  }
+
+  auto chan = qsim::Cirq::PhaseDampingChannel<float>::Create(
+      time, num_qubits - q - 1, gamma);
+  ncircuit->channels.push_back(chan);
+  return ::tensorflow::Status();
+}
+
+inline Status PhaseFlipChannel(const Operation& op,
+                               const unsigned int num_qubits,
+                               const unsigned int time,
+                               NoisyQsimCircuit* ncircuit) {
+  int q;
+
+  float p;
+  Status u;
+  [[maybe_unused]] bool unused;
+  unused = absl::SimpleAtoi(op.qubits(0).id(), &q);
+
+  u = ParseProtoArg(op, "p", {}, &p);
+  if (!u.ok()) {
+    return u;
+  }
+
+  auto chan =
+      qsim::Cirq::PhaseFlipChannel<float>::Create(time, num_qubits - q - 1, p);
+  ncircuit->channels.push_back(chan);
+  return ::tensorflow::Status();
+}
+
+inline Status BitFlipChannel(const Operation& op, const unsigned int num_qubits,
+                             const unsigned int time,
+                             NoisyQsimCircuit* ncircuit) {
+  int q;
+
+  float p;
+  Status u;
+  [[maybe_unused]] bool unused;
+  unused = absl::SimpleAtoi(op.qubits(0).id(), &q);
+
+  u = ParseProtoArg(op, "p", {}, &p);
+  if (!u.ok()) {
+    return u;
+  }
+
+  auto chan =
+      qsim::Cirq::BitFlipChannel<float>::Create(time, num_qubits - q - 1, p);
+  ncircuit->channels.push_back(chan);
+  return ::tensorflow::Status();
+}
+
+tensorflow::Status ParseAppendChannel(const Operation& op,
+                                      const unsigned int num_qubits,
+                                      const unsigned int time,
+                                      NoisyQsimCircuit* ncircuit) {
+  // map channel name -> callable to build qsim channel from operation proto.
+  static const absl::flat_hash_map<
+      std::string, std::function<Status(const Operation&, const unsigned int,
+                                        const unsigned int, NoisyQsimCircuit*)>>
+      chan_func_map = {
+          {"DP", &DepolarizingChannel}, {"ADP", &AsymmetricDepolarizingChannel},
+          {"GAD", &GADChannel},         {"AD", &AmplitudeDampingChannel},
+          {"RST", &ResetChannel},       {"PD", &PhaseDampingChannel},
+          {"PF", &PhaseFlipChannel},    {"BF", &BitFlipChannel}};
+
+  auto build_f = chan_func_map.find(op.gate().id());
+  if (build_f == chan_func_map.end()) {
+    return Status(static_cast<tensorflow::error::Code>(
+                      absl::StatusCode::kInvalidArgument),
+                  absl::StrCat("Could not parse channel id: ", op.gate().id()));
+  }
+  return build_f->second(op, num_qubits, time, ncircuit);
+}
+
 }  // namespace
+
+tensorflow::Status NoisyQsimCircuitFromProgram(const Program& program,
+                                               const SymbolMap& param_map,
+                                               const int num_qubits,
+                                               const bool add_tmeasures,
+                                               NoisyQsimCircuit* ncircuit) {
+  // Special case empty.
+  ncircuit->num_qubits = num_qubits;
+  if (num_qubits <= 0) {
+    return ::tensorflow::Status();
+  }
+
+  int time = 0;
+  bool gate_found;
+  QsimCircuit placeholder;
+  placeholder.gates.reserve(2);
+
+  for (const Moment& moment : program.circuit().moments()) {
+    for (const Operation& op : moment.operations()) {
+      placeholder.gates.clear();
+      gate_found = false;
+      Status status = ParseAppendGate(op, param_map, num_qubits, time,
+                                      &placeholder, nullptr, &gate_found);
+      if (gate_found && !status.ok()) {
+        // gate found, failed when parsing proto.
+        return status;
+      } else if (status.ok()) {
+        // gate found. succeeded in parsing.
+        ncircuit->channels.push_back(
+            qsim::MakeChannelFromGate(time, placeholder.gates[0]));
+      } else {
+        // got not found. Attempt to find and append channel.
+        status = ParseAppendChannel(op, num_qubits, time, ncircuit);
+      }
+
+      if (!status.ok()) {
+        return status;
+      }
+    }
+    time++;
+  }
+
+  // Optionally add terminal measurements.
+  if (add_tmeasures) {
+    std::vector<unsigned int> all_qbs(num_qubits);
+    std::iota(all_qbs.begin(), all_qbs.end(), 0);
+    ncircuit->channels.push_back(
+        {{qsim::KrausOperator<QsimGate>::kMeasurement,
+          1,
+          1.0,
+          {qsim::gate::Measurement<QsimGate>::Create(time, all_qbs)}}});
+  }
+
+  return ::tensorflow::Status();
+}
 
 tensorflow::Status QsimCircuitFromProgram(
     const Program& program, const SymbolMap& param_map, const int num_qubits,
@@ -500,9 +866,11 @@ tensorflow::Status QsimCircuitFromProgram(
   // Convert proto to qsim internal representation.
   circuit->num_qubits = num_qubits;
   int time = 0;
+  [[maybe_unused]] bool unused;
+
   // Special case empty.
   if (num_qubits <= 0) {
-    return Status::OK();
+    return ::tensorflow::Status();
   }
 
   circuit->gates.reserve(program.circuit().moments_size() * num_qubits);
@@ -511,8 +879,8 @@ tensorflow::Status QsimCircuitFromProgram(
   }
   for (const Moment& moment : program.circuit().moments()) {
     for (const Operation& op : moment.operations()) {
-      Status status =
-          ParseAppendGate(op, param_map, num_qubits, time, circuit, metadata);
+      Status status = ParseAppendGate(op, param_map, num_qubits, time, circuit,
+                                      metadata, &unused);
       if (!status.ok()) {
         return status;
       }
@@ -524,7 +892,7 @@ tensorflow::Status QsimCircuitFromProgram(
   *fused_circuit = qsim::BasicGateFuser<qsim::IO, QsimGate>().FuseGates(
       qsim::BasicGateFuser<qsim::IO, QsimGate>::Parameter(),
       circuit->num_qubits, circuit->gates);
-  return Status::OK();
+  return ::tensorflow::Status();
 }
 
 Status QsimCircuitFromPauliTerm(
@@ -533,7 +901,7 @@ Status QsimCircuitFromPauliTerm(
   Program measurement_program;
   SymbolMap empty_map;
   measurement_program.mutable_circuit()->set_scheduling_strategy(
-      cirq::google::api::v2::Circuit::MOMENT_BY_MOMENT);
+      tfq::proto::Circuit::MOMENT_BY_MOMENT);
   Moment* term_moment = measurement_program.mutable_circuit()->add_moments();
   for (const tfq::proto::PauliQubitPair& pair : term.paulis()) {
     Operation* new_op = term_moment->add_operations();
@@ -549,6 +917,12 @@ Status QsimCircuitFromPauliTerm(
     (*new_op->mutable_args())["exponent_scalar"]
         .mutable_arg_value()
         ->set_float_value(1.0);
+    (*new_op->mutable_args())["control_values"]
+        .mutable_arg_value()
+        ->set_string_value("");
+    (*new_op->mutable_args())["control_qubits"]
+        .mutable_arg_value()
+        ->set_string_value("");
   }
 
   return QsimCircuitFromProgram(measurement_program, empty_map, num_qubits,
@@ -561,7 +935,7 @@ Status QsimZBasisCircuitFromPauliTerm(
   Program measurement_program;
   SymbolMap empty_map;
   measurement_program.mutable_circuit()->set_scheduling_strategy(
-      cirq::google::api::v2::Circuit::MOMENT_BY_MOMENT);
+      tfq::proto::Circuit::MOMENT_BY_MOMENT);
   Moment* term_moment = measurement_program.mutable_circuit()->add_moments();
   float transform_exponent = 0.0;
   std::string gate_type;
@@ -593,6 +967,12 @@ Status QsimZBasisCircuitFromPauliTerm(
     (*new_op->mutable_args())["exponent_scalar"]
         .mutable_arg_value()
         ->set_float_value(1.0);
+    (*new_op->mutable_args())["control_values"]
+        .mutable_arg_value()
+        ->set_string_value("");
+    (*new_op->mutable_args())["control_qubits"]
+        .mutable_arg_value()
+        ->set_string_value("");
   }
 
   return QsimCircuitFromProgram(measurement_program, empty_map, num_qubits,

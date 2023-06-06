@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# ==============================================================================
+# =============================================================================
 """TensorFlow Quantum adds qauntum computing primitives to TensorFlow.
 
 TensorFlow Quantum is an open source library for high performance batch
@@ -50,12 +50,18 @@ class InstallPlatlib(install):
             self.install_lib = self.install_platlib
 
 
-REQUIRED_PACKAGES = ['cirq == 0.9.1', 'sympy == 1.5']
+REQUIRED_PACKAGES = [
+    'cirq-core~=1.0', 'cirq-google~=1.0', 'sympy == 1.8',
+    'googleapis-common-protos==1.52.0', 'google-api-core==1.21.0',
+    'google-auth==1.18.0', 'protobuf==3.19.5'
+]
+
+REQUIRED_GPU_PACKAGES = []
 
 # placed as extra to not have required overwrite existing nightly installs if
 # they exist.
-EXTRA_PACKAGES = ['tensorflow == 2.3.1']
-CUR_VERSION = '0.5.0'
+EXTRA_PACKAGES = ['tensorflow == 2.11.0']
+CUR_VERSION = '0.8.0'
 
 
 class BinaryDistribution(Distribution):
@@ -70,11 +76,21 @@ if '--nightly' in sys.argv:
     nightly = True
     sys.argv.remove('--nightly')
 
+gpu = False
+if '--gpu' in sys.argv:
+    gpu = True
+    sys.argv.remove('--gpu')
+
 project_name = 'tensorflow-quantum'
 build_version = CUR_VERSION
+
+if gpu:
+    build_version = build_version + '.gpu'
+    REQUIRED_PACKAGES = REQUIRED_PACKAGES + REQUIRED_GPU_PACKAGES
+
 if nightly:
     project_name = 'tfq-nightly'
-    build_version = CUR_VERSION + '.dev' + str(date.today()).replace('-', '')
+    build_version = build_version + '.dev' + str(date.today()).replace('-', '')
 
 setup(
     name=project_name,
@@ -100,8 +116,9 @@ setup(
         'Intended Audience :: Education',
         'Intended Audience :: Science/Research',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
         'Topic :: Scientific/Engineering',
         'Topic :: Scientific/Engineering :: Artificial Intelligence',
         'Topic :: Scientific/Engineering :: Mathematics',

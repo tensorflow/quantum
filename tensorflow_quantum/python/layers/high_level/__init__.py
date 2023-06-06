@@ -11,10 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# ==============================================================================
+# =============================================================================
 """Module for tfq.python.layers.high_level.*"""
 
 # pylint: disable=line-too-long
 from tensorflow_quantum.python.layers.high_level.controlled_pqc import ControlledPQC
+from tensorflow_quantum.python.layers.high_level.noisy_controlled_pqc import \
+ NoisyControlledPQC
+from tensorflow_quantum.python.layers.high_level.noisy_pqc import NoisyPQC
 from tensorflow_quantum.python.layers.high_level.pqc import PQC
 # pylint: enable=line-too-long

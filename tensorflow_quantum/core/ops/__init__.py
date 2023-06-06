@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# ==============================================================================
+# =============================================================================
 """Module for tfq.core.ops.*"""
 
 # Import getters for constructing ops.
@@ -27,3 +27,6 @@ from tensorflow_quantum.core.ops.tfq_utility_ops import (append_circuit,
 
 # Import math_ops.
 from tensorflow_quantum.core.ops import math_ops
+
+# Import noise ops.
+from tensorflow_quantum.core.ops import noise

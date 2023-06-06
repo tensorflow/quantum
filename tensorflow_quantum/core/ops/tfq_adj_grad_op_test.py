@@ -11,8 +11,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# ==============================================================================
+# =============================================================================
 """Tests that specifically target tfq_unitary_op."""
+# Remove PYTHONPATH collisions for protobuf.
+# pylint: disable=wrong-import-position
+import sys
+
+NEW_PATH = [x for x in sys.path if 'com_google_protobuf' not in x]
+sys.path = NEW_PATH
+# pylint: enable=wrong-import-position
+
 import numpy as np
 from absl.testing import parameterized
 import tensorflow as tf
@@ -86,7 +94,7 @@ class ADJGradTest(tf.test.TestCase, parameterized.TestCase):
             tfq_adj_grad_op.tfq_adj_grad(
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 tf.convert_to_tensor(symbol_values_array),
-                util.convert_to_tensor([x for x in pauli_sums]),
+                util.convert_to_tensor(list(pauli_sums)),
                 tf.convert_to_tensor(upstream_grads))
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
@@ -223,6 +231,16 @@ class ADJGradTest(tf.test.TestCase, parameterized.TestCase):
                 tf.convert_to_tensor([[0, 0] for _ in range(len(circuit_batch))
                                      ]))
 
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    expected_regex='cirq.Channel'):
+            # attempting to use noisy circuit.
+            noisy_circuit = cirq.Circuit(cirq.depolarize(0.3).on_each(*qubits))
+            tfq_adj_grad_op.tfq_adj_grad(
+                util.convert_to_tensor([noisy_circuit for _ in circuit_batch]),
+                symbol_names, tf.convert_to_tensor(symbol_values_array),
+                util.convert_to_tensor([[x] for x in pauli_sums]),
+                tf.convert_to_tensor(upstream_grads))
+
     def test_calculate_adj_grad_empty(self):
         """Verify that the empty case is handled gracefully."""
         out = tfq_adj_grad_op.tfq_adj_grad(
@@ -232,6 +250,17 @@ class ADJGradTest(tf.test.TestCase, parameterized.TestCase):
             tf.convert_to_tensor([[]], dtype=tf.dtypes.string),
             tf.convert_to_tensor([[]]))
         self.assertShapeEqual(np.zeros((1, 0)), out)
+
+    def test_calculate_adj_grad_no_circuit(self):
+        """Verify that the no circuit case is handled gracefully."""
+        out = tfq_adj_grad_op.tfq_adj_grad(
+            tf.raw_ops.Empty(shape=(0,), dtype=tf.string),
+            tf.raw_ops.Empty(shape=(0,), dtype=tf.string),
+            tf.raw_ops.Empty(shape=(0, 0), dtype=tf.float32),
+            tf.raw_ops.Empty(shape=(0, 0), dtype=tf.string),
+            tf.raw_ops.Empty(shape=(0, 0), dtype=tf.float32),
+        )
+        self.assertShapeEqual(np.zeros((0, 0)), out)
 
     def test_calculate_adj_grad_simple_case(self):
         """Make sure that adjoint gradient works on simple input case."""
@@ -338,7 +367,7 @@ class ADJGradTest(tf.test.TestCase, parameterized.TestCase):
         n_qubits = 2
         batch_size = 1
         symbol_names = ['alpha', 'beta', 'gamma']
-        qubits = cirq.GridQubit.rect(1, n_qubits)
+        qubits = cirq.LineQubit.range(n_qubits)
         circuit_batch, resolver_batch = \
         [cirq.Circuit(cirq.X(qubits[0]) ** sympy.Symbol('alpha'),
             cirq.Y(qubits[1]) ** sympy.Symbol('alpha'),

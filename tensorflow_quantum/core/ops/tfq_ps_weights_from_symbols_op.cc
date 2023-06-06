@@ -18,7 +18,6 @@ limitations under the License.
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/strings/numbers.h"
-#include "cirq/google/api/v2/program.pb.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/shape_inference.h"
 #include "tensorflow/core/framework/tensor_shape.h"
@@ -26,14 +25,15 @@ limitations under the License.
 #include "tensorflow/core/lib/core/threadpool.h"
 #include "tensorflow_quantum/core/ops/parse_context.h"
 #include "tensorflow_quantum/core/ops/tfq_simulate_utils.h"
+#include "tensorflow_quantum/core/proto/program.pb.h"
 
 namespace tfq {
 
-using ::cirq::google::api::v2::Arg;
-using ::cirq::google::api::v2::Moment;
-using ::cirq::google::api::v2::Operation;
-using ::cirq::google::api::v2::Program;
 using ::tensorflow::Tensor;
+using ::tfq::proto::Arg;
+using ::tfq::proto::Moment;
+using ::tfq::proto::Operation;
+using ::tfq::proto::Program;
 
 class TfqPsWeightsFromSymbolOp : public tensorflow::OpKernel {
  public:
@@ -71,7 +71,9 @@ class TfqPsWeightsFromSymbolOp : public tensorflow::OpKernel {
     for (int i = 0; i < n_symbols; i++) {
       symbols_map[symbols(i)] = i;
     }
-    std::vector<std::string> ignore_list = {"I", "ISP", "PXP", "FSIM", "PISP"};
+    std::vector<std::string> ignore_list = {"I",  "ISP", "PXP", "FSIM", "PISP",
+                                            "AD", "ADP", "DP",  "GAD",  "BF",
+                                            "PF", "PD",  "RST"};
     absl::flat_hash_set<std::string> ignored_symbol_set(ignore_list.begin(),
                                                         ignore_list.end());
 
@@ -80,9 +82,9 @@ class TfqPsWeightsFromSymbolOp : public tensorflow::OpKernel {
     auto DoWork = [&](int start, int end) {
       for (int i = start; i < end; i++) {
         Program cur_program = programs.at(i);
-        for (int j = 0; j < cur_program.circuit().moments().size(); j++) {
+        for (size_t j = 0; j < cur_program.circuit().moments().size(); j++) {
           Moment cur_moment = cur_program.circuit().moments().at(j);
-          for (int k = 0; k < cur_moment.operations().size(); k++) {
+          for (size_t k = 0; k < cur_moment.operations().size(); k++) {
             Operation cur_op = cur_moment.operations().at(k);
             if (ignored_symbol_set.contains(cur_op.gate().id())) continue;
 
@@ -144,10 +146,10 @@ class TfqPsWeightsFromSymbolOp : public tensorflow::OpKernel {
     auto DoWork2 = [&](int start, int end) {
       for (int i = start; i < end; i++) {
         for (int j = 0; j < n_symbols; j++) {
-          for (int k = 0; k < output_results.at(i).at(j).size(); k++) {
+          for (size_t k = 0; k < output_results.at(i).at(j).size(); k++) {
             output_tensor(i, j, k) = output_results.at(i).at(j).at(k);
           }
-          for (int k = output_results.at(i).at(j).size();
+          for (size_t k = output_results.at(i).at(j).size();
                k < largest_single_symbol; k++) {
             output_tensor(i, j, k) = 0.0f;
           }
@@ -182,7 +184,7 @@ REGISTER_OP("TfqPsWeightsFromSymbols")
                   tensorflow::shape_inference::InferenceContext::kUnknownDim,
                   tensorflow::shape_inference::InferenceContext::kUnknownDim}));
 
-      return tensorflow::Status::OK();
+      return ::tensorflow::Status();
     });
 
 }  // namespace tfq

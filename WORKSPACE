@@ -1,100 +1,61 @@
 # This file includes external dependencies that are required to compile the
-# TensorFlow op. Maybe of them are specific versions used by the TensorFlow
-# binary used. These are extracted from TF v2.3.1, tensorflow/workspace.bzl.
+# TensorFlow op.
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
+EIGEN_COMMIT = "3bb6a48d8c171cf20b5f8e48bfb4e424fbd4f79e"
+EIGEN_SHA256 = "eca9847b3fe6249e0234a342b78f73feec07d29f534e914ba5f920f3e09383a3"
+
+
 http_archive(
-    name = "com_google_absl",
-    sha256 = "f368a8476f4e2e0eccf8a7318b98dafbe30b2600f4e3cf52636e5eb145aba06a",
-    strip_prefix = "abseil-cpp-df3ea785d8c30a9503321a3d35ee7d35808f190d",
-    urls = [
-        "https://storage.googleapis.com/mirror.tensorflow.org/github.com/abseil/abseil-cpp/archive/df3ea785d8c30a9503321a3d35ee7d35808f190d.tar.gz",
-        "https://github.com/abseil/abseil-cpp/archive/df3ea785d8c30a9503321a3d35ee7d35808f190d.tar.gz",
-    ],
+    name = "eigen",
+    build_file_content = """
+cc_library(
+  name = "eigen3",
+  textual_hdrs = glob(["Eigen/**", "unsupported/**"]),
+  visibility = ["//visibility:public"],
 )
-
-http_archive(
-    name = "com_google_googletest",
-    sha256 = "ff7a82736e158c077e76188232eac77913a15dac0b22508c390ab3f88e6d6d86",
-    strip_prefix = "googletest-b6cd405286ed8635ece71c72f118e659f4ade3fb",
-    urls = [
-        "https://storage.googleapis.com/mirror.tensorflow.org/github.com/google/googletest/archive/b6cd405286ed8635ece71c72f118e659f4ade3fb.zip",
-        "https://github.com/google/googletest/archive/b6cd405286ed8635ece71c72f118e659f4ade3fb.zip",
-    ],
-)
-
-http_archive(
-    name = "com_google_protobuf",
-    sha256 = "cfcba2df10feec52a84208693937c17a4b5df7775e1635c1e3baffc487b24c9b",
-    strip_prefix = "protobuf-3.9.2",
-    urls = [
-        "https://storage.googleapis.com/mirror.tensorflow.org/github.com/protocolbuffers/protobuf/archive/v3.9.2.zip",
-        "https://github.com/protocolbuffers/protobuf/archive/v3.9.2.zip",
-    ],
-)
-
-# Use this zlib rule that depends on github since it is more reliable than zlib.net.
-http_archive(
-    name = "zlib",
-    build_file = "@com_google_protobuf//:third_party/zlib.BUILD",
-    sha256 = "c3e5e9fdd5004dcb542feda5ee4f0ff0744628baf8ed2dd5d66f8ca1197cb1a1",
-    strip_prefix = "zlib-1.2.11",
-    urls = [
-        "https://storage.googleapis.com/mirror.tensorflow.org/zlib.net/zlib-1.2.11.tar.gz",
-        "https://zlib.net/zlib-1.2.11.tar.gz",
-    ],
-)
-
-load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
-
-protobuf_deps()
-
-# com_google_protobuf depends on @bazel_skylib ??
-http_archive(
-    name = "bazel_skylib",
-    sha256 = "bbccf674aa441c266df9894182d80de104cabd19be98be002f6d478aaa31574d",
-    strip_prefix = "bazel-skylib-2169ae1c374aab4a09aa90e65efe1a3aad4e279b",
-    urls = ["https://github.com/bazelbuild/bazel-skylib/archive/2169ae1c374aab4a09aa90e65efe1a3aad4e279b.tar.gz"],
-)
-
-http_archive(
-    name = "cirq",
-    sha256 = "418cb7ff9c223e1e32516ab0ccc578385734af833528d6f5d903260b322d3362",
-    strip_prefix = "Cirq-0.9.1",
-    urls = ["https://github.com/quantumlib/Cirq/archive/v0.9.1.zip"],
+    """,
+    sha256 = EIGEN_SHA256,
+        strip_prefix = "eigen-{commit}".format(commit = EIGEN_COMMIT),
+        urls = [
+            "https://storage.googleapis.com/mirror.tensorflow.org/gitlab.com/libeigen/eigen/-/archive/{commit}/eigen-{commit}.tar.gz".format(commit = EIGEN_COMMIT),
+            "https://gitlab.com/libeigen/eigen/-/archive/{commit}/eigen-{commit}.tar.gz".format(commit = EIGEN_COMMIT),
+        ],
 )
 
 http_archive(
     name = "qsim",
-    sha256 = "f390ee72cf88c48d81c98262c599dc45d660a2a9308a9ee903bfa73aec08a9b4",
-    strip_prefix = "qsim-0.6.0",
-    urls = ["https://github.com/quantumlib/qsim/archive/v0.6.0.zip"],
-)
-
-# Added for crosstool in tensorflow.
-http_archive(
-    name = "io_bazel_rules_closure",
-    sha256 = "5b00383d08dd71f28503736db0500b6fb4dda47489ff5fc6bed42557c07c6ba9",
-    strip_prefix = "rules_closure-308b05b2419edb5c8ee0471b67a40403df940149",
-    urls = [
-        "https://storage.googleapis.com/mirror.tensorflow.org/github.com/bazelbuild/rules_closure/archive/308b05b2419edb5c8ee0471b67a40403df940149.tar.gz",
-        "https://github.com/bazelbuild/rules_closure/archive/308b05b2419edb5c8ee0471b67a40403df940149.tar.gz",  # 2019-06-13
-    ],
+    sha256 = "f7f410a07543a51b254f7a5810b5153e196a4c7b4ec89dc8faf86f9c77eec97b",
+    strip_prefix = "qsim-0.16.1",
+    urls = ["https://github.com/quantumlib/qsim/archive/refs/tags/v0.16.1.zip"],
 )
 
 http_archive(
     name = "org_tensorflow",
-    sha256 = "6f063636673d6ef4ac60febd2541e3ad3516a57c18339a680c794b736798d054",
-    strip_prefix = "tensorflow-2.3.1",
+    sha256 = "e52cda3bae45f0ae0fccd4055e9fa29892b414f70e2df94df9a3a10319c75fff",
+    strip_prefix = "tensorflow-2.11.0",
     urls = [
-        "https://github.com/tensorflow/tensorflow/archive/v2.3.1.zip",
+        "https://github.com/tensorflow/tensorflow/archive/refs/tags/v2.11.0.zip",
     ],
 )
 
-load("@org_tensorflow//tensorflow:workspace.bzl", "tf_workspace")
 
-tf_workspace(tf_repo_name = "@org_tensorflow")
+load("@org_tensorflow//tensorflow:workspace3.bzl", "workspace")
+
+workspace()
+
+load("@org_tensorflow//tensorflow:workspace2.bzl", "workspace")
+
+workspace()
+
+load("@org_tensorflow//tensorflow:workspace1.bzl", "workspace")
+
+workspace()
+
+load("@org_tensorflow//tensorflow:workspace0.bzl", "workspace")
+
+workspace()
 
 load("//third_party/tf:tf_configure.bzl", "tf_configure")
 
@@ -111,3 +72,7 @@ bind(
     name = "six",
     actual = "@six_archive//:six",
 )
+
+load("//third_party/cuquantum:cuquantum_configure.bzl", "cuquantum_configure")
+
+cuquantum_configure(name = "local_config_cuquantum")

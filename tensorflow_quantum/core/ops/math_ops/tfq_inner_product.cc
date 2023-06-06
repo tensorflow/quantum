@@ -21,21 +21,22 @@ limitations under the License.
 #include "../qsim/lib/gates_cirq.h"
 #include "../qsim/lib/seqfor.h"
 #include "../qsim/lib/simmux.h"
-#include "cirq/google/api/v2/program.pb.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/shape_inference.h"
 #include "tensorflow/core/framework/tensor_shape.h"
 #include "tensorflow/core/lib/core/error_codes.pb.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow/core/lib/core/threadpool.h"
+#include "tensorflow/core/platform/mutex.h"
 #include "tensorflow_quantum/core/ops/parse_context.h"
+#include "tensorflow_quantum/core/proto/program.pb.h"
 #include "tensorflow_quantum/core/src/util_qsim.h"
 
 namespace tfq {
 
-using ::cirq::google::api::v2::Program;
 using ::tensorflow::Status;
 using ::tfq::proto::PauliSum;
+using ::tfq::proto::Program;
 
 typedef qsim::Cirq::GateCirq<float> QsimGate;
 typedef qsim::Circuit<QsimGate> QsimCircuit;
@@ -86,17 +87,21 @@ class TfqInnerProductOp : public tensorflow::OpKernel {
     std::vector<QsimFusedCircuit> fused_circuits(programs.size(),
                                                  QsimFusedCircuit({}));
 
+    Status parse_status = ::tensorflow::Status();
+    auto p_lock = tensorflow::mutex();
     auto construct_f = [&](int start, int end) {
       for (int i = start; i < end; i++) {
-        OP_REQUIRES_OK(context, QsimCircuitFromProgram(
-                                    programs[i], maps[i], num_qubits[i],
-                                    &qsim_circuits[i], &fused_circuits[i]));
+        Status local =
+            QsimCircuitFromProgram(programs[i], maps[i], num_qubits[i],
+                                   &qsim_circuits[i], &fused_circuits[i]);
+        NESTED_FN_STATUS_SYNC(parse_status, local, p_lock);
       }
     };
 
     const int num_cycles = 1000;
     context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
         output_dim_batch_size, num_cycles, construct_f);
+    OP_REQUIRES_OK(context, parse_status);
 
     // Construct qsim circuits for other_programs.
     std::vector<std::vector<QsimCircuit>> other_qsim_circuits(
@@ -114,16 +119,19 @@ class TfqInnerProductOp : public tensorflow::OpKernel {
         Status status = QsimCircuitFromProgram(
             other_programs[ii][jj], {}, num_qubits[ii],
             &other_qsim_circuits[ii][jj], &other_fused_circuits[ii][jj]);
-        OP_REQUIRES(context, status.ok(),
-                    tensorflow::errors::InvalidArgument(absl::StrCat(
-                        "Found symbols in other_programs.",
-                        "No symbols are allowed in these circuits.")));
+        NESTED_FN_STATUS_SYNC(parse_status, status, p_lock);
       }
     };
 
     context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
         output_dim_batch_size * output_dim_internal_size, num_cycles,
         construct_f2);
+    if (!parse_status.ok()) {
+      OP_REQUIRES_OK(context,
+                     tensorflow::errors::InvalidArgument(absl::StrCat(
+                         "Found symbols in other_programs.",
+                         "No symbols are allowed in these circuits.")));
+    }
 
     int max_num_qubits = 0;
     for (const int num : num_qubits) {
@@ -166,7 +174,7 @@ class TfqInnerProductOp : public tensorflow::OpKernel {
     // Simulate programs one by one. Parallelizing over state vectors
     // we no longer parallelize over circuits. Each time we encounter a
     // a larger circuit we will grow the Statevector as necessary.
-    for (int i = 0; i < fused_circuits.size(); i++) {
+    for (size_t i = 0; i < fused_circuits.size(); i++) {
       int nq = num_qubits[i];
       if (nq > largest_nq) {
         // need to switch to larger statespace.
@@ -178,10 +186,10 @@ class TfqInnerProductOp : public tensorflow::OpKernel {
       //  the state if there is a possibility that circuit[i] and
       //  circuit[i + 1] produce the same state.
       ss.SetStateZero(sv);
-      for (int j = 0; j < fused_circuits[i].size(); j++) {
+      for (size_t j = 0; j < fused_circuits[i].size(); j++) {
         qsim::ApplyFusedGate(sim, fused_circuits[i][j], sv);
       }
-      for (int j = 0; j < other_fused_circuits[i].size(); j++) {
+      for (size_t j = 0; j < other_fused_circuits[i].size(); j++) {
         // (#679) Just ignore empty program
         if (fused_circuits[i].size() == 0) {
           (*output_tensor)(i, j) = std::complex<float>(1, 0);
@@ -189,7 +197,7 @@ class TfqInnerProductOp : public tensorflow::OpKernel {
         }
 
         ss.SetStateZero(scratch);
-        for (int k = 0; k < other_fused_circuits[i][j].size(); k++) {
+        for (size_t k = 0; k < other_fused_circuits[i][j].size(); k++) {
           qsim::ApplyFusedGate(sim, other_fused_circuits[i][j][k], scratch);
         }
 
@@ -247,13 +255,13 @@ class TfqInnerProductOp : public tensorflow::OpKernel {
           // no need to update scratch_state since ComputeExpectation
           // will take care of things for us.
           ss.SetStateZero(sv);
-          for (int j = 0; j < fused_circuits[cur_batch_index].size(); j++) {
+          for (size_t j = 0; j < fused_circuits[cur_batch_index].size(); j++) {
             qsim::ApplyFusedGate(sim, fused_circuits[cur_batch_index][j], sv);
           }
         }
 
         ss.SetStateZero(scratch);
-        for (int k = 0;
+        for (size_t k = 0;
              k <
              other_fused_circuits[cur_batch_index][cur_internal_index].size();
              k++) {
@@ -306,7 +314,7 @@ REGISTER_OP("TfqInnerProduct")
           c->Dim(other_programs_shape, 1);
       c->set_output(0, c->Matrix(output_rows, output_cols));
 
-      return tensorflow::Status::OK();
+      return ::tensorflow::Status();
     });
 
 }  // namespace tfq

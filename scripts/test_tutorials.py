@@ -11,14 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# ==============================================================================
+# =============================================================================
 """Module to ensure all notebooks execute without error by pytesting them."""
 import glob
 import re
 
 from absl.testing import parameterized
 import nbformat
-import nbconvert
+import nbclient
 import tensorflow as tf
 
 # Must be run from the directory containing `quantum` repo.
@@ -40,11 +40,13 @@ class ExamplesTest(tf.test.TestCase, parameterized.TestCase):
                 src = re.sub(r'\!(?!=)', r'#!', src)
                 # For mnist.ipynb to reduce runtime in test.
                 src = re.sub('NUM_EXAMPLES ?= ?.*', 'NUM_EXAMPLES = 10', src)
+                # For quantum_reinforcement_learning.ipynb to reduce runtime in test.
+                src = re.sub('n_episodes ?= ?.*', 'n_episodes = 50', src)
+                # For noise.ipynb to reduce runtime in test.
+                src = re.sub('n_epochs ?= ?.*', 'n_epochs = 2', src)
                 cell['source'] = src
 
-        _ = nbconvert.preprocessors.execute.executenb(nb,
-                                                      timeout=900,
-                                                      kernel_name="python3")
+        _ = nbclient.execute(nb, timeout=900, kernel_name="python3")
 
 
 if __name__ == "__main__":

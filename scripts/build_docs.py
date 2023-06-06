@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# ==============================================================================
+# =============================================================================
 """Tool to generate external api_docs for tfq."""
 
 from __future__ import absolute_import
@@ -67,12 +67,17 @@ def main(unused_argv):
                 "parameter_shift_util", "adjoint"
             ],
             "tfq.datasets": ["cluster_state"],
-            "tfq.optimizers": ["rotosolve_minimizer"],
+            "tfq.optimizers": ["rotosolve_minimizer", "spsa_minimizer"],
             "tfq.util": [
                 "from_tensor", "convert_to_tensor", "exp_identity",
                 "check_commutability", "kwargs_cartesian_product",
                 "random_circuit_resolver_batch", "random_pauli_sums",
                 "random_symbol_circuit", "random_symbol_circuit_resolver_batch"
+            ],
+            "tfq.math": ["fidelity_op", "inner_product_op"],
+            "tfq.noise": [
+                "noisy_expectation_op", "noisy_sampled_expectation_op",
+                "noisy_samples_op"
             ]
         })
 

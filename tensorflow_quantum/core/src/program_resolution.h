@@ -22,9 +22,9 @@ limitations under the License.
 #include <string>
 
 #include "absl/container/flat_hash_map.h"
-#include "cirq/google/api/v2/program.pb.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
+#include "tensorflow_quantum/core/proto/program.pb.h"
 
 namespace tfq {
 
@@ -36,16 +36,17 @@ namespace tfq {
 //
 // The number of qubits in the program is recorded in `num_qubits`.
 tensorflow::Status ResolveQubitIds(
-    cirq::google::api::v2::Program* program, unsigned int* num_qubits,
-    std::vector<tfq::proto::PauliSum>* p_sums = nullptr);
+    tfq::proto::Program* program, unsigned int* num_qubits,
+    std::vector<tfq::proto::PauliSum>* p_sums = nullptr,
+    bool swap_endianness = false);
 
 // Overload which allows for strict resolution of multiple programs.
 // Will resolve GridQubits in `program` and then double check that
 // all qubits in `other_programs` match and resolve them.
 // Note: no nullptr default is done here to avoid signature resolutions issues.
 tensorflow::Status ResolveQubitIds(
-    cirq::google::api::v2::Program* program, unsigned int* num_qubits,
-    std::vector<cirq::google::api::v2::Program>* other_programs);
+    tfq::proto::Program* program, unsigned int* num_qubits,
+    std::vector<tfq::proto::Program>* other_programs);
 
 // Resolves all of the symbols present in the Program. Iterates through all
 // operations in all moments, and if any Args have a symbol, replaces the one-of
@@ -56,7 +57,10 @@ tensorflow::Status ResolveQubitIds(
 // isn't used.
 tensorflow::Status ResolveSymbols(
     const absl::flat_hash_map<std::string, std::pair<int, float>>& param_map,
-    cirq::google::api::v2::Program* program, bool resolve_all = true);
+    tfq::proto::Program* program, bool resolve_all = true);
+
+// Checks if the qubits are in 1D topology.
+tensorflow::Status CheckMPSSupported(const tfq::proto::Program& program);
 
 }  // namespace tfq
 

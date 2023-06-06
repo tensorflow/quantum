@@ -70,7 +70,7 @@ challenges:
 For performance reasons, Eigen (the C++ library used in many TensorFlow ops) is
 not well suited for quantum circuit simulation. Instead, the circuit simulators
 used in the
-<a href="https://ai.googleblog.com/2019/10/quantum-supremacy-using-programmable.html" class="external">quantum supremacy experiment</a>
+<a href="https://ai.googleblog.com/2019/10/quantum-supremacy-using-programmable.html" class="external">quantum beyond-classical experiment</a>
 are used as verifiers and extended as the foundation of TFQ ops (all written
 with AVX2 and SSE instructions). Ops with identical functional signatures were
 created that use a physical quantum computer. Switching between a simulated and

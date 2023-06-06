@@ -5,27 +5,27 @@ on: [pull_request]
 jobs:
   lint:
     name: Lint check
-    runs-on: ubuntu-16.04
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v1
       - uses: actions/setup-python@v1
         with:
-          python-version: '3.6'
+          python-version: '3.8'
           architecture: 'x64'
       - name: Install Lint tools
-        run: pip install --upgrade pylint
+        run: pip install --upgrade pip setuptools; pip install -r requirements.txt;
       - name: Lint All
         run: ./scripts/lint_all.sh
 
   format:
     name: Formatting check
-    runs-on: ubuntu-16.04
+    runs-on: ubuntu-20.04
 
     steps:
       - uses: actions/checkout@v1
       - uses: actions/setup-python@v1
         with:
-          python-version: '3.6'
+          python-version: '3.8'
           architecture: 'x64'
       - name: Install Format tools
         run: pip install --upgrade pip setuptools; pip install -r requirements.txt; sudo apt-get install -y clang-format-6.0
@@ -34,13 +34,13 @@ jobs:
 
   wheel-build:
     name: Wheel test
-    runs-on: ubuntu-16.04
+    runs-on: ubuntu-20.04
 
     steps:
       - uses: actions/checkout@v1
       - uses: actions/setup-python@v1
         with:
-          python-version: '3.6'
+          python-version: '3.8'
           architecture: 'x64'
       - name: Install Bazel on CI
         run: ./scripts/ci_install.sh
@@ -53,14 +53,14 @@ jobs:
 
   bazel-tests:
     name: Library tests
-    runs-on: ubuntu-16.04
+    runs-on: ubuntu-20.04
     needs: [lint, format]
 
     steps:
       - uses: actions/checkout@v1
       - uses: actions/setup-python@v1
         with:
-          python-version: '3.6'
+          python-version: '3.8'
           architecture: 'x64'
       - name: Install Bazel on CI
         run: ./scripts/ci_install.sh
@@ -71,14 +71,14 @@ jobs:
 
   leak-tests:
     name: Memory Leak tests
-    runs-on: ubuntu-16.04
+    runs-on: ubuntu-20.04
     needs: [lint, format]
 
     steps:
       - uses: actions/checkout@v1
       - uses: actions/setup-python@v1
         with:
-          python-version: '3.6'
+          python-version: '3.8'
           architecture: 'x64'
       - name: Install Bazel on CI
         run: ./scripts/ci_install.sh
@@ -89,14 +89,14 @@ jobs:
 
   tutorials-test:
     name: Tutorial tests
-    runs-on: ubuntu-16.04
+    runs-on: ubuntu-20.04
     needs: [lint, format, wheel-build]
 
     steps:
       - uses: actions/checkout@v1
       - uses: actions/setup-python@v1
         with:
-          python-version: '3.6'
+          python-version: '3.8'
           architecture: 'x64'
       - name: Install notebook dependencies
         run: pip install --upgrade pip seaborn==0.10.0

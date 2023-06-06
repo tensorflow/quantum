@@ -16,32 +16,41 @@ limitations under the License.
 #ifndef TFQ_CORE_OPS_PARSE_CONTEXT
 #define TFQ_CORE_OPS_PARSE_CONTEXT
 
+// Syncs a threads work status with some global status.
+#define NESTED_FN_STATUS_SYNC(global_status, local_status, global_lock) \
+  if (TF_PREDICT_FALSE(!local_status.ok())) {                           \
+    global_lock.lock();                                                 \
+    global_status = local_status;                                       \
+    global_lock.unlock();                                               \
+    return;                                                             \
+  }
+
 #include <string>
 #include <vector>
 
 #include "absl/container/flat_hash_map.h"
-#include "cirq/google/api/v2/program.pb.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
+#include "tensorflow_quantum/core/proto/program.pb.h"
 
 namespace tfq {
 
 // Simplest Program proto parsing
-tensorflow::Status ParsePrograms(
-    tensorflow::OpKernelContext* context, const std::string& input_name,
-    std::vector<cirq::google::api::v2::Program>* programs);
+tensorflow::Status ParsePrograms(tensorflow::OpKernelContext* context,
+                                 const std::string& input_name,
+                                 std::vector<tfq::proto::Program>* programs);
 
 // Simplest Program proto parsing in 2D.
 tensorflow::Status ParsePrograms2D(
     tensorflow::OpKernelContext* context, const std::string& input_name,
-    std::vector<std::vector<cirq::google::api::v2::Program>>* programs);
+    std::vector<std::vector<tfq::proto::Program>>* programs);
 
 // Parses a vector of programs along with another vector of programs to append
 tensorflow::Status GetProgramsAndProgramsToAppend(
     tensorflow::OpKernelContext* context,
-    std::vector<cirq::google::api::v2::Program>* programs,
-    std::vector<cirq::google::api::v2::Program>* programs_to_append);
+    std::vector<tfq::proto::Program>* programs,
+    std::vector<tfq::proto::Program>* programs_to_append);
 
 // A parameter map is a mapping from the name of the parameter to the index in
 // the input parameter value tensor (for gradient computations) and the value
@@ -54,9 +63,9 @@ typedef absl::flat_hash_map<std::string, std::pair<int, float>> SymbolMap;
 // and correct with the original programs.
 tensorflow::Status GetProgramsAndNumQubits(
     tensorflow::OpKernelContext* context,
-    std::vector<cirq::google::api::v2::Program>* programs,
-    std::vector<int>* num_qubits,
-    std::vector<std::vector<tfq::proto::PauliSum>>* p_sums = nullptr);
+    std::vector<tfq::proto::Program>* programs, std::vector<int>* num_qubits,
+    std::vector<std::vector<tfq::proto::PauliSum>>* p_sums = nullptr,
+    bool swap_endianness = false);
 
 // Parses Cirq Program protos out of the 'circuit_specs' input Tensor. Also
 // resolves the QubitIds inside of the Program. This override also parses and
@@ -64,9 +73,8 @@ tensorflow::Status GetProgramsAndNumQubits(
 // found in all programs[i][j] for all j.
 tensorflow::Status GetProgramsAndNumQubits(
     tensorflow::OpKernelContext* context,
-    std::vector<cirq::google::api::v2::Program>* programs,
-    std::vector<int>* num_qubits,
-    std::vector<std::vector<cirq::google::api::v2::Program>>* other_programs);
+    std::vector<tfq::proto::Program>* programs, std::vector<int>* num_qubits,
+    std::vector<std::vector<tfq::proto::Program>>* other_programs);
 
 // Parses PauliSum protos out of the 'pauli_sums' input tensor. Note this
 // function does NOT resolve QubitID's as any paulisum needs a reference

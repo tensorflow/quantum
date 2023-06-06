@@ -11,9 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# ==============================================================================
+# =============================================================================
 """Module definitions for tensorflow_quantum.python.optimizers.*"""
 
 # Quantum circuit specific optimizers.
 from tensorflow_quantum.python.optimizers.rotosolve_minimizer import (
     minimize as rotosolve_minimize)
+from tensorflow_quantum.python.optimizers.spsa_minimizer import (minimize as
+                                                                 spsa_minimize)

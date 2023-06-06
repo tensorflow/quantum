@@ -16,7 +16,6 @@ limitations under the License.
 #include <cmath>
 #include <string>
 
-#include "cirq/google/api/v2/program.pb.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/shape_inference.h"
 #include "tensorflow/core/framework/tensor_shape.h"
@@ -24,16 +23,17 @@ limitations under the License.
 #include "tensorflow/core/lib/core/threadpool.h"
 #include "tensorflow_quantum/core/ops/parse_context.h"
 #include "tensorflow_quantum/core/ops/tfq_simulate_utils.h"
+#include "tensorflow_quantum/core/proto/program.pb.h"
 
 namespace tfq {
 
-using ::cirq::google::api::v2::Arg;
-using ::cirq::google::api::v2::Circuit;
-using ::cirq::google::api::v2::Moment;
-using ::cirq::google::api::v2::Operation;
-using ::cirq::google::api::v2::Program;
 using ::tensorflow::Status;
 using ::tensorflow::Tensor;
+using ::tfq::proto::Arg;
+using ::tfq::proto::Circuit;
+using ::tfq::proto::Moment;
+using ::tfq::proto::Operation;
+using ::tfq::proto::Program;
 
 class TfqPsDecomposeOp : public tensorflow::OpKernel {
  public:
@@ -55,7 +55,7 @@ class TfqPsDecomposeOp : public tensorflow::OpKernel {
                                 0, context->input(0).shape(), &output));
     auto output_tensor = output->flat<tensorflow::tstring>();
 
-    const int max_buffer_moments = 3;
+    const int max_buffer_moments = 5;
 
     auto DoWork = [&](int start, int end) {
       for (int i = start; i < end; i++) {
@@ -65,11 +65,11 @@ class TfqPsDecomposeOp : public tensorflow::OpKernel {
         new_program.mutable_language()->set_gate_set("tfq_gate_set");
         new_program.mutable_circuit()->set_scheduling_strategy(
             Circuit::MOMENT_BY_MOMENT);
-        for (int j = 0; j < cur_program.circuit().moments().size(); j++) {
+        for (size_t j = 0; j < cur_program.circuit().moments().size(); j++) {
           Moment cur_moment(cur_program.circuit().moments().at(j));
           std::vector<Moment> temp_moment_list(max_buffer_moments, Moment());
           int num_extra_moments = 0;
-          for (int k = 0; k < cur_moment.operations().size(); k++) {
+          for (size_t k = 0; k < cur_moment.operations().size(); k++) {
             Operation cur_op = cur_moment.operations().at(k);
             auto &cur_op_map = *cur_op.mutable_args();
             if (cur_op.gate().id() == "PISP") {
@@ -79,21 +79,21 @@ class TfqPsDecomposeOp : public tensorflow::OpKernel {
                   phase_exponent.arg_case() == Arg::ArgCase::kSymbol) {
                 // Decompose cirq.PhasedISwapPowGate only if it is
                 // parameterized.
-                num_extra_moments = 3;
+                num_extra_moments = 5;
                 Operation new_op;
 
                 new_op = getOpForPISP(cur_op, 0, 0);
                 cur_moment.mutable_operations()->at(k) = new_op;
                 new_op = getOpForPISP(cur_op, 1, 1);
-                *cur_moment.add_operations() = new_op;
-                new_op = getOpForISP(cur_op, "XXP", exponent.symbol());
                 *temp_moment_list[0].add_operations() = new_op;
-                new_op = getOpForISP(cur_op, "YYP", exponent.symbol());
+                new_op = getOpForISP(cur_op, "XXP", exponent.symbol());
                 *temp_moment_list[1].add_operations() = new_op;
+                new_op = getOpForISP(cur_op, "YYP", exponent.symbol());
+                *temp_moment_list[2].add_operations() = new_op;
                 new_op = getOpForPISP(cur_op, 1, 0);
-                *temp_moment_list[2].add_operations() = new_op;
+                *temp_moment_list[3].add_operations() = new_op;
                 new_op = getOpForPISP(cur_op, 0, 1);
-                *temp_moment_list[2].add_operations() = new_op;
+                *temp_moment_list[4].add_operations() = new_op;
               }
             } else if (cur_op.gate().id() == "ISP") {
               auto exponent = cur_op_map.at("exponent");
@@ -176,6 +176,11 @@ class TfqPsDecomposeOp : public tensorflow::OpKernel {
     new_op_map["exponent_scalar"].mutable_arg_value()->set_float_value(
         cur_exponent_scalar * -0.5);
     new_op_map["exponent"].set_symbol(symbol);
+    // Copy over control metadata.
+    new_op_map["control_qubits"].mutable_arg_value()->set_string_value(
+        cur_op_map["control_qubits"].arg_value().string_value());
+    new_op_map["control_values"].mutable_arg_value()->set_string_value(
+        cur_op_map["control_values"].arg_value().string_value());
     // Step 4. add qubits.
     *new_op.mutable_qubits() = {cur_op_qubits.begin(), cur_op_qubits.end()};
     return new_op;
@@ -215,6 +220,11 @@ class TfqPsDecomposeOp : public tensorflow::OpKernel {
     }
     // Step 4. add qubits.
     *new_op.mutable_qubits() = {cur_op_qubits.begin(), cur_op_qubits.end()};
+    // Copy over control metadata.
+    new_op_map["control_qubits"].mutable_arg_value()->set_string_value(
+        cur_op_map["control_qubits"].arg_value().string_value());
+    new_op_map["control_values"].mutable_arg_value()->set_string_value(
+        cur_op_map["control_values"].arg_value().string_value());
     return new_op;
   }
 
@@ -251,6 +261,11 @@ class TfqPsDecomposeOp : public tensorflow::OpKernel {
     }
     *new_op.mutable_qubits() = {cur_op_qubits.begin() + use_target,
                                 cur_op_qubits.end() - !use_target};
+    // Copy over control metadata.
+    new_op_map["control_qubits"].mutable_arg_value()->set_string_value(
+        cur_op_map["control_qubits"].arg_value().string_value());
+    new_op_map["control_values"].mutable_arg_value()->set_string_value(
+        cur_op_map["control_values"].arg_value().string_value());
     return new_op;
   }
 
@@ -290,6 +305,11 @@ class TfqPsDecomposeOp : public tensorflow::OpKernel {
     }
     // Step 4. add qubits.
     *new_op.mutable_qubits() = {cur_op_qubits.begin(), cur_op_qubits.end()};
+    // Copy over control metadata.
+    new_op_map["control_qubits"].mutable_arg_value()->set_string_value(
+        cur_op_map["control_qubits"].arg_value().string_value());
+    new_op_map["control_values"].mutable_arg_value()->set_string_value(
+        cur_op_map["control_values"].arg_value().string_value());
     return new_op;
   }
 };
@@ -306,7 +326,7 @@ REGISTER_OP("TfqPsDecompose")
 
       c->set_output(0, c->input(0));
 
-      return tensorflow::Status::OK();
+      return ::tensorflow::Status();
     });
 
 }  // namespace tfq

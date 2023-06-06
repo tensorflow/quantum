@@ -20,445 +20,485 @@ limitations under the License.
 #include <string>
 
 #include "absl/container/flat_hash_map.h"
-#include "cirq/google/api/v2/program.pb.h"
+#include "absl/status/status.h"
 #include "gtest/gtest.h"
 #include "tensorflow/core/lib/core/status.h"
+#include "tensorflow_quantum/core/proto/program.pb.h"
 
 namespace tfq {
 namespace {
 
-using cirq::google::api::v2::Program;
+using tensorflow::Status;
+using tfq::proto::PauliSum;
+using tfq::proto::Program;
 
-TEST(ProgramResolutionTest, ResolveQubitIdsInvalidArg) {
-  const std::string text = R"(
-    circuit {
-      moments {
-        operations {
-          qubits {
-            id: "0_0"
+const std::string valid_program = R"(
+  circuit {
+    moments {
+      operations {
+        args {
+          key: "control_qubits"
+          value {
+            arg_value {
+              string_value: "0_0"
+            }
           }
-          qubits {
-            id: "1_0"
+        }
+        qubits {
+          id: "0_1"
+        }
+        qubits {
+          id: "0_2"
+        }
+      }
+    }
+  }
+)";
+
+const std::string valid_line_program = R"(
+  circuit {
+    moments {
+      operations {
+        args {
+          key: "control_qubits"
+          value {
+            arg_value {
+              string_value: "0_1"
+            }
+          }
+        }
+        qubits {
+          id: "1"
+        }
+        qubits {
+          id: "2"
+        }
+      }
+    }
+  }
+)";
+
+const std::string valid_psum = R"(
+  terms {
+    coefficient_real: 1.0
+    coefficient_imag: 0.0
+    paulis {
+      qubit_id: "0_0"
+      pauli_type: "X"
+    }
+  }
+  terms {
+    coefficient_real: 5.0
+    coefficient_imag: 0.0
+    paulis {
+      qubit_id: "0_2"
+      pauli_type: "Y"
+    }
+    paulis {
+      qubit_id: "0_1"
+      pauli_type: "Z"
+    }
+  }
+)";
+
+const std::string valid_symbol_program = R"(
+  circuit {
+    scheduling_strategy: MOMENT_BY_MOMENT
+    moments {
+      operations {
+        args {
+          key: "exponent"
+          value {
+            symbol: "v1"
           }
         }
       }
     }
-  )";
-
-  const std::string bad_text = R"(
-    circuit {
-      moments {
-        operations {
-          qubits {
-            id: "0_0"
-          }
-          qubits {
-            id: "1_junk"
+    moments {
+      operations {
+        args {
+          key: "exponent"
+          value {
+            symbol: "v2"
           }
         }
       }
     }
-  )";
+  }
+)";
 
-  const std::string bad_text2 = R"(
-    circuit {
-      moments {
-        operations {
-          qubits {
-            id: "0_0"
-          }
-          qubits {
-            id: "junk_1"
-          }
+const std::string three_qubit_op_program = R"(
+  circuit {
+    moments {
+      operations {
+        qubits {
+          id: "0_0"
+        }
+        qubits {
+          id: "0_1"
+        }
+        qubits {
+          id: "0_2"
         }
       }
     }
-  )";
+  }
+)";
 
-  const std::string bad_text3 = R"(
-    circuit {
-      moments {
-        operations {
-          qubits {
-            id: "0_0"
-          }
-          qubits {
-            id: "1_2_3"
-          }
+/* Qubit topology:
+  1 -- 0 -- 2
+       |
+       |
+       3
+*/
+const std::string resolved_qubit_program_not_1d = R"(
+  circuit {
+    moments {
+      operations {
+        qubits {
+          id: "0"
+        }
+        qubits {
+          id: "1"
+        }
+      }
+      operations {
+        qubits {
+          id: "0"
+        }
+        qubits {
+          id: "2"
+        }
+      }
+      operations {
+        qubits {
+          id: "0"
+        }
+        qubits {
+          id: "3"
         }
       }
     }
-  )";
+  }
+)";
 
-  const std::string text_good_p_sum = R"(
-    terms {
-      coefficient_real: 1.0
-      coefficient_imag: 0.0
-      paulis {
-        qubit_id: "0_0"
-        pauli_type: "Z"
-      }
-    }
-  )";
-
-  const std::string text_bad_p_sum = R"(
-    terms {
-      coefficient_real: 1.0
-      coefficient_imag: 0.0
-      paulis {
-        qubit_id: "0_1"
-        pauli_type: "X"
-      }
-    }
-  )";
-
-  std::vector<tfq::proto::PauliSum> p_sums;
-  tfq::proto::PauliSum p_sum_good, p_sum_bad;
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(text_good_p_sum,
-                                                            &p_sum_good));
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(text_bad_p_sum,
-                                                            &p_sum_bad));
-  p_sums.push_back(p_sum_good);
-  p_sums.push_back(p_sum_bad);
-
+TEST(ProgramResolutionTest, ResolveQubitIdsValid) {
   Program program;
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(text, &program));
-
-  unsigned int num_qubits;
-  EXPECT_EQ(ResolveQubitIds(&program, &num_qubits, &p_sums),
-            tensorflow::Status(
-                tensorflow::error::INVALID_ARGUMENT,
-                "Found a Pauli sum operating on qubits not found in circuit."));
-
+  unsigned int qubit_count;
   ASSERT_TRUE(
-      google::protobuf::TextFormat::ParseFromString(bad_text, &program));
-  EXPECT_EQ(ResolveQubitIds(&program, &num_qubits, &p_sums),
-            tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
-                               "Unable to parse qubit: 1_junk"));
+      google::protobuf::TextFormat::ParseFromString(valid_program, &program));
 
-  ASSERT_TRUE(
-      google::protobuf::TextFormat::ParseFromString(bad_text2, &program));
-  EXPECT_EQ(ResolveQubitIds(&program, &num_qubits, &p_sums),
-            tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
-                               "Unable to parse qubit: junk_1"));
-
-  ASSERT_TRUE(
-      google::protobuf::TextFormat::ParseFromString(bad_text3, &program));
-  EXPECT_EQ(ResolveQubitIds(&program, &num_qubits, &p_sums),
-            tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
-                               "Unable to parse qubit: 1_2_3"));
-}
-
-TEST(ProgramResolutionTest, ResolveQubitIds) {
-  const std::string text = R"(
-    circuit {
-      moments {
-        operations {
-          qubits {
-            id: "0_0"
-          }
-          qubits {
-            id: "1_0"
-          }
-        }
-      }
-      moments {
-        operations {
-          qubits {
-            id: "0_0"
-          }
-          qubits {
-            id: "0_1"
-          }
-        }
-      }
-    }
-  )";
-
-  const std::string text_p_sum_0 = R"(
-    terms {
-      coefficient_real: 1.0
-      coefficient_imag: 0.0
-      paulis {
-        qubit_id: "0_0"
-        pauli_type: "Z"
-      }
-    }
-  )";
-
-  const std::string text_p_sum_1 = R"(
-    terms {
-      coefficient_real: 1.0
-      coefficient_imag: 0.0
-      paulis {
-        qubit_id: "1_0"
-        pauli_type: "X"
-      }
-    }
-  )";
-
-  const std::string text_alphabet = R"(
-    circuit {
-      moments {
-        operations {
-          qubits {
-            id: "0_0"
-          }
-          qubits {
-            id: "0_1"
-          }
-        }
-      }
-      moments {
-        operations {
-          qubits {
-            id: "0_2"
-          }
-          qubits {
-            id: "0_3"
-          }
-        }
-      }
-    }
-  )";
-
-  const std::string text_alphabet_p_sum_0 = R"(
-    terms {
-      coefficient_real: 1.0
-      coefficient_imag: 0.0
-      paulis {
-        qubit_id: "0_1"
-        pauli_type: "Z"
-      }
-    }
-  )";
-
-  const std::string text_alphabet_p_sum_1 = R"(
-    terms {
-      coefficient_real: 1.0
-      coefficient_imag: 0.0
-      paulis {
-        qubit_id: "0_0"
-        pauli_type: "X"
-      }
-    }
-  )";
-
-  const std::string text_empty = R"(
-    circuit {
-    }
-  )";
-
-  std::vector<tfq::proto::PauliSum> p_sums, p_sums_alphabet;
-  tfq::proto::PauliSum p_sum_0, p_sum_1;
-  ASSERT_TRUE(
-      google::protobuf::TextFormat::ParseFromString(text_p_sum_0, &p_sum_0));
-  ASSERT_TRUE(
-      google::protobuf::TextFormat::ParseFromString(text_p_sum_1, &p_sum_1));
-  p_sums.push_back(p_sum_0);
-  p_sums.push_back(p_sum_1);
-  tfq::proto::PauliSum alphabet_p_sum_0, alphabet_p_sum_1;
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
-      text_alphabet_p_sum_0, &alphabet_p_sum_0));
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
-      text_alphabet_p_sum_1, &alphabet_p_sum_1));
-  p_sums_alphabet.push_back(alphabet_p_sum_0);
-  p_sums_alphabet.push_back(alphabet_p_sum_1);
-
-  Program program, empty_program, alphabet_program;
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(text, &program));
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(text_empty,
-                                                            &empty_program));
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(text_alphabet,
-                                                            &alphabet_program));
-
-  unsigned int num_qubits, num_qubits_empty, num_qubits_alphabet;
-  EXPECT_TRUE(ResolveQubitIds(&program, &num_qubits, &p_sums).ok());
-  EXPECT_TRUE(ResolveQubitIds(&empty_program, &num_qubits_empty).ok());
-  EXPECT_TRUE(
-      ResolveQubitIds(&alphabet_program, &num_qubits_alphabet, &p_sums_alphabet)
-          .ok());
-
-  EXPECT_EQ(program.circuit().moments(0).operations(0).qubits(0).id(), "0");
+  EXPECT_EQ(ResolveQubitIds(&program, &qubit_count), Status());
+  EXPECT_EQ(qubit_count, 3);
+  EXPECT_EQ(program.circuit().moments(0).operations(0).qubits(0).id(), "1");
   EXPECT_EQ(program.circuit().moments(0).operations(0).qubits(1).id(), "2");
-  EXPECT_EQ(program.circuit().moments(1).operations(0).qubits(0).id(), "0");
-  EXPECT_EQ(program.circuit().moments(1).operations(0).qubits(1).id(), "1");
-
-  EXPECT_EQ(alphabet_program.circuit().moments(0).operations(0).qubits(0).id(),
+  EXPECT_EQ(program.circuit()
+                .moments(0)
+                .operations(0)
+                .args()
+                .at("control_qubits")
+                .arg_value()
+                .string_value(),
             "0");
-  EXPECT_EQ(alphabet_program.circuit().moments(0).operations(0).qubits(1).id(),
-            "1");
-  EXPECT_EQ(alphabet_program.circuit().moments(1).operations(0).qubits(0).id(),
-            "2");
-  EXPECT_EQ(alphabet_program.circuit().moments(1).operations(0).qubits(1).id(),
-            "3");
-
-  EXPECT_EQ(p_sums.at(0).terms(0).paulis(0).qubit_id(), "0");
-  EXPECT_EQ(p_sums.at(1).terms(0).paulis(0).qubit_id(), "2");
-
-  EXPECT_EQ(p_sums_alphabet.at(0).terms(0).paulis(0).qubit_id(), "1");
-  EXPECT_EQ(p_sums_alphabet.at(1).terms(0).paulis(0).qubit_id(), "0");
-
-  EXPECT_EQ(num_qubits, 3);
-  EXPECT_EQ(num_qubits_empty, 0);
-  EXPECT_EQ(num_qubits_alphabet, 4);
 }
 
-TEST(ProgramResolutionTest, ResolveQubitIdsPrograms) {
-  const std::string text = R"(
-    circuit {
-      moments {
-        operations {
-          qubits {
-            id: "0_0"
-          }
-          qubits {
-            id: "1_0"
-          }
-        }
-      }
-      moments {
-        operations {
-          qubits {
-            id: "0_0"
-          }
-          qubits {
-            id: "0_1"
-          }
-        }
-      }
-    }
-  )";
+TEST(ProgramResolutionTest, ResolveQubitIdsValidLine) {
+  Program program;
+  unsigned int qubit_count;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(valid_line_program,
+                                                            &program));
 
-  const std::string text_alphabet = R"(
-    circuit {
-      moments {
-        operations {
-          qubits {
-            id: "0_0"
-          }
-          qubits {
-            id: "1_0"
-          }
-        }
-      }
-      moments {
-        operations {
-          qubits {
-            id: "0_1"
-          }
-          qubits {
-            id: "0_3"
-          }
-        }
-      }
-    }
-  )";
-
-  const std::string text_empty = R"(
-    circuit {
-    }
-  )";
-
-  Program program, program_copy, empty_program;
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(text, &program));
-  ASSERT_TRUE(
-      google::protobuf::TextFormat::ParseFromString(text, &program_copy));
-
-  unsigned int num_qubits, num_qubits_empty;
-  std::vector<Program> vec({program_copy});
-  EXPECT_TRUE(ResolveQubitIds(&program, &num_qubits, &vec).ok());
-
-  // Test case where circuits are aligned.
-  EXPECT_EQ(program.circuit().moments(0).operations(0).qubits(0).id(), "0");
+  EXPECT_EQ(ResolveQubitIds(&program, &qubit_count), Status());
+  EXPECT_EQ(qubit_count, 3);
+  EXPECT_EQ(program.circuit().moments(0).operations(0).qubits(0).id(), "1");
   EXPECT_EQ(program.circuit().moments(0).operations(0).qubits(1).id(), "2");
-  EXPECT_EQ(program.circuit().moments(1).operations(0).qubits(0).id(), "0");
-  EXPECT_EQ(program.circuit().moments(1).operations(0).qubits(1).id(), "1");
-
-  EXPECT_EQ(vec[0].circuit().moments(0).operations(0).qubits(0).id(), "0");
-  EXPECT_EQ(vec[0].circuit().moments(0).operations(0).qubits(1).id(), "2");
-  EXPECT_EQ(vec[0].circuit().moments(1).operations(0).qubits(0).id(), "0");
-  EXPECT_EQ(vec[0].circuit().moments(1).operations(0).qubits(1).id(), "1");
-
-  // Test case where source circuit is smaller than paired circuit:
-  program.Clear();
-  program_copy.Clear();
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(text, &program));
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(text_alphabet,
-                                                            &program_copy));
-
-  std::vector<Program> vec2({program_copy});
-
-  EXPECT_EQ(
-      ResolveQubitIds(&program, &num_qubits, &vec2),
-      tensorflow::Status(
-          tensorflow::error::INVALID_ARGUMENT,
-          "A paired circuit contains qubits not found in reference circuit."));
-
-  // Test case where paired circuit is smaller than source circuit:
-  program.Clear();
-  program_copy.Clear();
-  ASSERT_TRUE(
-      google::protobuf::TextFormat::ParseFromString(text_alphabet, &program));
-  ASSERT_TRUE(
-      google::protobuf::TextFormat::ParseFromString(text, &program_copy));
-
-  std::vector<Program> vec3({program_copy});
-
-  EXPECT_EQ(
-      ResolveQubitIds(&program, &num_qubits, &vec3),
-      tensorflow::Status(
-          tensorflow::error::INVALID_ARGUMENT,
-          "A reference circuit contains qubits not found in paired circuit."));
-
-  // Ensure empty case is consistent.
-  std::vector<Program> vec4;
-  EXPECT_TRUE(ResolveQubitIds(&empty_program, &num_qubits_empty, &vec4).ok());
-  EXPECT_EQ(num_qubits_empty, 0);
+  EXPECT_EQ(program.circuit()
+                .moments(0)
+                .operations(0)
+                .args()
+                .at("control_qubits")
+                .arg_value()
+                .string_value(),
+            "0");
 }
 
-TEST(ProgramResolutionTest, ResolveSymbolsInvalidArg) {
-  const std::string text = R"(
-    circuit {
-      scheduling_strategy: MOMENT_BY_MOMENT
-      moments {
-        operations {
-          args {
-            key: "exponent"
-            value {
-              symbol: "v1"
-            }
-          }
-        }
-      }
-      moments {
-        operations {
-          args {
-            key: "exponent"
-            value {
-              symbol: "v2"
-            }
-          }
-        }
-      }
-    }
-  )";
-
-  // Test with strict replacement
-  Program program_strict;
+TEST(ProgramResolutionTest, ResolveQubitIdsInvalidControlQubit) {
+  Program program;
+  unsigned int qubit_count;
   ASSERT_TRUE(
-      google::protobuf::TextFormat::ParseFromString(text, &program_strict));
+      google::protobuf::TextFormat::ParseFromString(valid_program, &program));
+
+  program.mutable_circuit()
+      ->mutable_moments(0)
+      ->mutable_operations(0)
+      ->mutable_args()
+      ->at("control_qubits")
+      .mutable_arg_value()
+      ->set_string_value("junk");
+  EXPECT_EQ(ResolveQubitIds(&program, &qubit_count),
+            tensorflow::Status(static_cast<tensorflow::error::Code>(
+                                   absl::StatusCode::kInvalidArgument),
+                               "Unable to parse qubit: junk"));
+}
+
+TEST(ProgramResolutionTest, ResolveQubitIdsInvalidQubit) {
+  Program program;
+  unsigned int qubit_count;
+  ASSERT_TRUE(
+      google::protobuf::TextFormat::ParseFromString(valid_program, &program));
+
+  program.mutable_circuit()
+      ->mutable_moments(0)
+      ->mutable_operations(0)
+      ->mutable_qubits(0)
+      ->set_id("junk");
+  EXPECT_EQ(ResolveQubitIds(&program, &qubit_count),
+            tensorflow::Status(static_cast<tensorflow::error::Code>(
+                                   absl::StatusCode::kInvalidArgument),
+                               "Unable to parse qubit: junk"));
+}
+
+TEST(ProgramResolutionTest, ResolveQubitIdsWithPauliSum) {
+  Program program;
+  unsigned int qubit_count;
+  ASSERT_TRUE(
+      google::protobuf::TextFormat::ParseFromString(valid_program, &program));
+
+  PauliSum p_sum;
+  ASSERT_TRUE(
+      google::protobuf::TextFormat::ParseFromString(valid_psum, &p_sum));
+  std::vector<PauliSum> p_sums = {p_sum, p_sum};
+
+  EXPECT_EQ(ResolveQubitIds(&program, &qubit_count, &p_sums), Status());
+  EXPECT_EQ(qubit_count, 3);
+  EXPECT_EQ(program.circuit().moments(0).operations(0).qubits(0).id(), "1");
+  EXPECT_EQ(program.circuit().moments(0).operations(0).qubits(1).id(), "2");
+  EXPECT_EQ(program.circuit()
+                .moments(0)
+                .operations(0)
+                .args()
+                .at("control_qubits")
+                .arg_value()
+                .string_value(),
+            "0");
+
+  for (int i = 0; i < 2; i++) {
+    EXPECT_EQ(p_sums[i].terms(0).paulis(0).qubit_id(), "0");
+    EXPECT_EQ(p_sums[i].terms(1).paulis(0).qubit_id(), "2");
+    EXPECT_EQ(p_sums[i].terms(1).paulis(1).qubit_id(), "1");
+  }
+}
+
+TEST(ProgramResolutionTest, ResolveQubitIdsWithInvalidPauliSum) {
+  Program program;
+  unsigned int qubit_count;
+  ASSERT_TRUE(
+      google::protobuf::TextFormat::ParseFromString(valid_program, &program));
+
+  PauliSum p_sum;
+  ASSERT_TRUE(
+      google::protobuf::TextFormat::ParseFromString(valid_psum, &p_sum));
+  p_sum.mutable_terms(0)->mutable_paulis(0)->set_qubit_id("1_1");
+  std::vector<PauliSum> p_sums = {p_sum, p_sum};
+
+  EXPECT_EQ(ResolveQubitIds(&program, &qubit_count, &p_sums),
+            tensorflow::Status(
+                static_cast<tensorflow::error::Code>(
+                    absl::StatusCode::kInvalidArgument),
+                "Found a Pauli sum operating on qubits not found in circuit."));
+}
+
+TEST(ProgramResolutionTest, ResolveQubitIdsMultiProgram) {
+  Program program, other;
+  unsigned int qubit_count;
+  ASSERT_TRUE(
+      google::protobuf::TextFormat::ParseFromString(valid_program, &program));
+  ASSERT_TRUE(
+      google::protobuf::TextFormat::ParseFromString(valid_program, &other));
+
+  // Re-arrange qubits on other.
+  other.mutable_circuit()
+      ->mutable_moments(0)
+      ->mutable_operations(0)
+      ->mutable_qubits(1)
+      ->set_id("0_0");  // turn 0_2 -> 0_0!
+  other.mutable_circuit()
+      ->mutable_moments(0)
+      ->mutable_operations(0)
+      ->mutable_args()
+      ->at("control_qubits")
+      .mutable_arg_value()
+      ->set_string_value("0_2");  // turn 0_0 -> 0_2!
+
+  std::vector<Program> other_programs = {other, other};
+  EXPECT_EQ(ResolveQubitIds(&program, &qubit_count, &other_programs), Status());
+  EXPECT_EQ(qubit_count, 3);
+  EXPECT_EQ(program.circuit().moments(0).operations(0).qubits(0).id(), "1");
+  EXPECT_EQ(program.circuit().moments(0).operations(0).qubits(1).id(), "2");
+  EXPECT_EQ(program.circuit()
+                .moments(0)
+                .operations(0)
+                .args()
+                .at("control_qubits")
+                .arg_value()
+                .string_value(),
+            "0");
+
+  for (int i = 0; i < 2; i++) {
+    EXPECT_EQ(
+        other_programs[i].circuit().moments(0).operations(0).qubits(0).id(),
+        "1");
+    EXPECT_EQ(
+        other_programs[i].circuit().moments(0).operations(0).qubits(1).id(),
+        "0");
+    EXPECT_EQ(other_programs[i]
+                  .circuit()
+                  .moments(0)
+                  .operations(0)
+                  .args()
+                  .at("control_qubits")
+                  .arg_value()
+                  .string_value(),
+              "2");
+  }
+}
+
+TEST(ProgramResolutionTest, ResolveQubitIdsMultiProgramInvalid) {
+  Program program, other;
+  unsigned int qubit_count;
+  ASSERT_TRUE(
+      google::protobuf::TextFormat::ParseFromString(valid_program, &program));
+  ASSERT_TRUE(
+      google::protobuf::TextFormat::ParseFromString(valid_program, &other));
+  program.mutable_circuit()
+      ->mutable_moments(0)
+      ->mutable_operations(0)
+      ->mutable_qubits(0)
+      ->set_id("junk");
+  std::vector<Program> others = {other, other};
+  EXPECT_EQ(ResolveQubitIds(&program, &qubit_count, &others),
+            tensorflow::Status(static_cast<tensorflow::error::Code>(
+                                   absl::StatusCode::kInvalidArgument),
+                               "Unable to parse qubit: junk"));
+}
+
+TEST(ProgramResolutionTest, ResolveQubitIdsMultiProgramInvalidControl) {
+  Program program, other;
+  unsigned int qubit_count;
+  ASSERT_TRUE(
+      google::protobuf::TextFormat::ParseFromString(valid_program, &program));
+  ASSERT_TRUE(
+      google::protobuf::TextFormat::ParseFromString(valid_program, &other));
+  program.mutable_circuit()
+      ->mutable_moments(0)
+      ->mutable_operations(0)
+      ->mutable_args()
+      ->at("control_qubits")
+      .mutable_arg_value()
+      ->set_string_value("junk");
+  std::vector<Program> others = {other, other};
+  EXPECT_EQ(ResolveQubitIds(&program, &qubit_count, &others),
+            tensorflow::Status(static_cast<tensorflow::error::Code>(
+                                   absl::StatusCode::kInvalidArgument),
+                               "Unable to parse qubit: junk"));
+}
+
+TEST(ProgramResolutionTest, ResolveQubitIdsMultiProgramMismatch) {
+  Program program, other;
+  unsigned int qubit_count;
+  ASSERT_TRUE(
+      google::protobuf::TextFormat::ParseFromString(valid_program, &program));
+  ASSERT_TRUE(
+      google::protobuf::TextFormat::ParseFromString(valid_program, &other));
+  program.mutable_circuit()
+      ->mutable_moments(0)
+      ->mutable_operations(0)
+      ->mutable_qubits(0)
+      ->set_id("0_5");
+  std::vector<Program> others = {other, other};
+  EXPECT_EQ(
+      ResolveQubitIds(&program, &qubit_count, &others),
+      tensorflow::Status(
+          static_cast<tensorflow::error::Code>(
+              absl::StatusCode::kInvalidArgument),
+          "A paired circuit contains qubits not found in reference circuit."));
+}
+
+TEST(ProgramResolutionTest, ResolveQubitIdsMultiProgramMismatchControl) {
+  Program program, other;
+  unsigned int qubit_count;
+  ASSERT_TRUE(
+      google::protobuf::TextFormat::ParseFromString(valid_program, &program));
+  ASSERT_TRUE(
+      google::protobuf::TextFormat::ParseFromString(valid_program, &other));
+  program.mutable_circuit()
+      ->mutable_moments(0)
+      ->mutable_operations(0)
+      ->mutable_args()
+      ->at("control_qubits")
+      .mutable_arg_value()
+      ->set_string_value("0_5");
+  std::vector<Program> others = {other, other};
+  EXPECT_EQ(
+      ResolveQubitIds(&program, &qubit_count, &others),
+      tensorflow::Status(
+          static_cast<tensorflow::error::Code>(
+              absl::StatusCode::kInvalidArgument),
+          "A paired circuit contains qubits not found in reference circuit."));
+}
+
+TEST(ProgramResolutionTest, ResolveQubitIdsMultiProgramSmaller) {
+  Program program, other;
+  unsigned int qubit_count;
+  ASSERT_TRUE(
+      google::protobuf::TextFormat::ParseFromString(valid_program, &program));
+  ASSERT_TRUE(
+      google::protobuf::TextFormat::ParseFromString(valid_program, &other));
+  other.mutable_circuit()
+      ->mutable_moments(0)
+      ->mutable_operations(0)
+      ->mutable_qubits(0)
+      ->set_id("0_2");
+  std::vector<Program> others = {other, other};
+  EXPECT_EQ(
+      ResolveQubitIds(&program, &qubit_count, &others),
+      tensorflow::Status(
+          static_cast<tensorflow::error::Code>(
+              absl::StatusCode::kInvalidArgument),
+          "A reference circuit contains qubits not found in paired circuit."));
+}
+
+TEST(ProgramResolutionTest, ResolveQubitIdsMultiProgramSmallerControl) {
+  Program program, other;
+  unsigned int qubit_count;
+  ASSERT_TRUE(
+      google::protobuf::TextFormat::ParseFromString(valid_program, &program));
+  ASSERT_TRUE(
+      google::protobuf::TextFormat::ParseFromString(valid_program, &other));
+  other.mutable_circuit()
+      ->mutable_moments(0)
+      ->mutable_operations(0)
+      ->mutable_args()
+      ->at("control_qubits")
+      .mutable_arg_value()
+      ->set_string_value("0_2");
+  std::vector<Program> others = {other, other};
+  EXPECT_EQ(
+      ResolveQubitIds(&program, &qubit_count, &others),
+      tensorflow::Status(
+          static_cast<tensorflow::error::Code>(
+              absl::StatusCode::kInvalidArgument),
+          "A reference circuit contains qubits not found in paired circuit."));
+}
+
+TEST(ProgramResolutionTest, ResolveSymbolsPartial) {
+  Program symbol_program;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      valid_symbol_program, &symbol_program));
   const absl::flat_hash_map<std::string, std::pair<int, float>> param_map = {
       {"v1", {0, 1.0}}};
-  EXPECT_EQ(ResolveSymbols(param_map, &program_strict, true),
-            tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
-                               "Could not find symbol in parameter map: v2"));
-
-  // Test with non-strict replacement
-  Program program;
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(text, &program));
-  EXPECT_TRUE(ResolveSymbols(param_map, &program, false).ok());
-  EXPECT_EQ(program.circuit()
+  EXPECT_EQ(ResolveSymbols(param_map, &symbol_program, false), Status());
+  EXPECT_EQ(symbol_program.circuit()
                 .moments(0)
                 .operations(0)
                 .args()
@@ -466,9 +506,114 @@ TEST(ProgramResolutionTest, ResolveSymbolsInvalidArg) {
                 .arg_value()
                 .float_value(),
             1.0);
-  EXPECT_EQ(
-      program.circuit().moments(1).operations(0).args().at("exponent").symbol(),
-      "v2");
+  EXPECT_EQ(symbol_program.circuit()
+                .moments(1)
+                .operations(0)
+                .args()
+                .at("exponent")
+                .symbol(),
+            "v2");
+}
+
+TEST(ProgramResolutionTest, ResolveSymbolsFull) {
+  Program symbol_program;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      valid_symbol_program, &symbol_program));
+  const absl::flat_hash_map<std::string, std::pair<int, float>> param_map = {
+      {"v1", {0, 1.0}}, {"v2", {1, 2.0f}}};
+  EXPECT_EQ(ResolveSymbols(param_map, &symbol_program, false), Status());
+  EXPECT_EQ(symbol_program.circuit()
+                .moments(0)
+                .operations(0)
+                .args()
+                .at("exponent")
+                .arg_value()
+                .float_value(),
+            1.0);
+  EXPECT_EQ(symbol_program.circuit()
+                .moments(1)
+                .operations(0)
+                .args()
+                .at("exponent")
+                .arg_value()
+                .float_value(),
+            2.0);
+}
+
+TEST(ProgramResolutionTest, ResolveSymbolsStrictPartial) {
+  Program symbol_program;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      valid_symbol_program, &symbol_program));
+  const absl::flat_hash_map<std::string, std::pair<int, float>> param_map = {
+      {"v1", {0, 1.0}}};
+  EXPECT_EQ(ResolveSymbols(param_map, &symbol_program, true),
+            Status(static_cast<tensorflow::error::Code>(
+                       absl::StatusCode::kInvalidArgument),
+                   "Could not find symbol in parameter map: v2"));
+}
+
+TEST(ProgramResolutionTest, ResolveSymbolsStrictFull) {
+  Program symbol_program;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      valid_symbol_program, &symbol_program));
+  const absl::flat_hash_map<std::string, std::pair<int, float>> param_map = {
+      {"v1", {0, 1.0}}, {"v2", {1, 2.0f}}};
+  EXPECT_EQ(ResolveSymbols(param_map, &symbol_program, true), Status());
+  EXPECT_EQ(symbol_program.circuit()
+                .moments(0)
+                .operations(0)
+                .args()
+                .at("exponent")
+                .arg_value()
+                .float_value(),
+            1.0);
+  EXPECT_EQ(symbol_program.circuit()
+                .moments(1)
+                .operations(0)
+                .args()
+                .at("exponent")
+                .arg_value()
+                .float_value(),
+            2.0);
+}
+
+TEST(ProgramResolutionTest, CheckMPSSupportedEmpty) {
+  Program empty;
+  EXPECT_EQ(CheckMPSSupported(empty), Status());
+}
+
+TEST(ProgramResolutionTest, CheckQubitsIn1DFailedByOpWithMoreThan2Qubits) {
+  Program program_with_3qubit_op;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      three_qubit_op_program, &program_with_3qubit_op));
+  EXPECT_EQ(CheckMPSSupported(program_with_3qubit_op),
+            Status(static_cast<tensorflow::error::Code>(
+                       absl::StatusCode::kInvalidArgument),
+                   "1D operations only support 1 and 2 qubit gates. "
+                   "Found: 3 qubit gate."));
+}
+
+TEST(ProgramResolutionTest,
+     CheckQubitsIn1DFailedByOpWithMoreThan2QubitsOnControlQubits) {
+  Program program_with_3qubit_op;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      valid_program, &program_with_3qubit_op));
+  EXPECT_EQ(CheckMPSSupported(program_with_3qubit_op),
+            Status(static_cast<tensorflow::error::Code>(
+                       absl::StatusCode::kInvalidArgument),
+                   "1D operations only support 1 and 2 qubit gates. "
+                   "Found: 3 qubit gate."));
+}
+
+TEST(ProgramResolutionTest, CheckQubitsIn1DFailedByNot1DTopology) {
+  Program program_not_1d;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      resolved_qubit_program_not_1d, &program_not_1d));
+  EXPECT_EQ(CheckMPSSupported(program_not_1d),
+            Status(static_cast<tensorflow::error::Code>(
+                       absl::StatusCode::kInvalidArgument),
+                   "A program is not in 1D topology. It contains an"
+                   " operation with qubits not neighbors each other."));
 }
 
 }  // namespace

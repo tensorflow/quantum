@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# ==============================================================================
+# =============================================================================
 """Imports to tensorflow_quantum.core.* level."""
 # Import getters for constructing ops.
 from tensorflow_quantum.core.ops import (get_expectation_op,
@@ -23,3 +23,6 @@ from tensorflow_quantum.core.ops import (append_circuit, padded_to_ragged,
                                          padded_to_ragged2d, resolve_parameters)
 # Import math ops.
 from tensorflow_quantum.core.ops import math_ops
+
+# Import noise ops.
+from tensorflow_quantum.core.ops import noise

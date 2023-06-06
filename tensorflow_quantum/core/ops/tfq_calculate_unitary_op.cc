@@ -19,21 +19,22 @@ limitations under the License.
 #include "../qsim/lib/gate_appl.h"
 #include "../qsim/lib/gates_cirq.h"
 #include "../qsim/lib/umux.h"
-#include "cirq/google/api/v2/program.pb.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/shape_inference.h"
 #include "tensorflow/core/framework/tensor_shape.h"
 #include "tensorflow/core/lib/core/error_codes.pb.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow/core/lib/core/threadpool.h"
+#include "tensorflow/core/platform/mutex.h"
 #include "tensorflow_quantum/core/ops/parse_context.h"
+#include "tensorflow_quantum/core/proto/program.pb.h"
 #include "tensorflow_quantum/core/src/circuit_parser_qsim.h"
 #include "tensorflow_quantum/core/src/util_qsim.h"
 
 namespace tfq {
 
-using ::cirq::google::api::v2::Program;
 using ::tensorflow::Status;
+using ::tfq::proto::Program;
 
 typedef qsim::Cirq::GateCirq<float> QsimGate;
 typedef qsim::Circuit<QsimGate> QsimCircuit;
@@ -67,17 +68,21 @@ class TfqCalculateUnitaryOp : public tensorflow::OpKernel {
     std::vector<std::vector<qsim::GateFused<QsimGate>>> fused_circuits(
         programs.size(), std::vector<qsim::GateFused<QsimGate>>({}));
 
+    Status parse_status = ::tensorflow::Status();
+    auto p_lock = tensorflow::mutex();
     auto construct_f = [&](int start, int end) {
       for (int i = start; i < end; i++) {
-        OP_REQUIRES_OK(context, QsimCircuitFromProgram(
-                                    programs[i], maps[i], num_qubits[i],
-                                    &qsim_circuits[i], &fused_circuits[i]));
+        Status local =
+            QsimCircuitFromProgram(programs[i], maps[i], num_qubits[i],
+                                   &qsim_circuits[i], &fused_circuits[i]);
+        NESTED_FN_STATUS_SYNC(parse_status, local, p_lock);
       }
     };
 
     const int num_cycles = 1000;
     context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
         programs.size(), num_cycles, construct_f);
+    OP_REQUIRES_OK(context, parse_status);
 
     // Find largest circuit for tensor size padding and allocate
     // the output tensor.
@@ -106,22 +111,22 @@ class TfqCalculateUnitaryOp : public tensorflow::OpKernel {
 
     // Begin simulation.
     int largest_nq = 1;
-    Unitary u = UnitarySpace(largest_nq, tfq_for).CreateUnitary();
+    Unitary u = UnitarySpace(tfq_for).CreateUnitary(largest_nq);
 
     // Simulate programs one by one. Parallelizing over state vectors
     // we no longer parallelize over circuits. Each time we encounter a
     // a larger circuit we will grow the unitary as nescessary.
-    for (int i = 0; i < fused_circuits.size(); i++) {
+    for (size_t i = 0; i < fused_circuits.size(); i++) {
       int nq = num_qubits[i];
-      UCalculator sim = UCalculator(nq, tfq_for);
-      UnitarySpace us = UnitarySpace(nq, tfq_for);
+      UCalculator sim = UCalculator(tfq_for);
+      UnitarySpace us = UnitarySpace(tfq_for);
       if (nq > largest_nq) {
         // need to switch to larger unitaryspace.
         largest_nq = nq;
-        u = us.CreateUnitary();
+        u = us.CreateUnitary(nq);
       }
       us.SetIdentity(u);
-      for (int j = 0; j < fused_circuits[i].size(); j++) {
+      for (size_t j = 0; j < fused_circuits[i].size(); j++) {
         qsim::ApplyFusedGate(sim, fused_circuits[i][j], u);
       }
 
@@ -136,7 +141,7 @@ class TfqCalculateUnitaryOp : public tensorflow::OpKernel {
           uint64_t k = l % (1 << max_num_qubits);
           if (k < crossover && j < crossover) {
             output_tensor(static_cast<ptrdiff_t>(i), static_cast<ptrdiff_t>(j),
-                          static_cast<ptrdiff_t>(k)) = us.GetEntry(u, j, k);
+                          static_cast<ptrdiff_t>(k)) = us.GetEntry(u, k, j);
           } else {
             output_tensor(static_cast<ptrdiff_t>(i), static_cast<ptrdiff_t>(j),
                           static_cast<ptrdiff_t>(k)) =
@@ -177,7 +182,7 @@ REGISTER_OP("TfqCalculateUnitary")
                   tensorflow::shape_inference::InferenceContext::kUnknownDim,
                   tensorflow::shape_inference::InferenceContext::kUnknownDim}));
 
-      return tensorflow::Status::OK();
+      return ::tensorflow::Status();
     });
 
 }  // namespace tfq

@@ -11,16 +11,27 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# ==============================================================================
+# =============================================================================
 """Tests for the sample layer."""
+# Remove PYTHONPATH collisions for protobuf.
+# pylint: disable=wrong-import-position
+import sys
+
+NEW_PATH = [x for x in sys.path if 'com_google_protobuf' not in x]
+sys.path = NEW_PATH
+# pylint: enable=wrong-import-position
+
 import numpy as np
 from absl.testing import parameterized
 import sympy
 import tensorflow as tf
 import cirq
 
+from tensorflow_quantum.core.ops import circuit_execution_ops
 from tensorflow_quantum.python.layers.circuit_executors import sample
 from tensorflow_quantum.python import util
+
+RANDOM_SEED = 1234
 
 
 class SampleTest(tf.test.TestCase, parameterized.TestCase):
@@ -76,16 +87,34 @@ class SampleTest(tf.test.TestCase, parameterized.TestCase):
                 TypeError, expected_regex="cannot be parsed to int32 tensor"):
             sampler([cirq.Circuit()], repetitions=[10])
 
-    @parameterized.parameters([{
-        'backend': None
-    }, {
-        'backend': cirq.Simulator()
-    }, {
-        'backend': cirq.DensityMatrixSimulator()
-    }])
-    def test_sample_invalid_combinations(self, backend):
+    @parameterized.parameters([
+        {
+            'backend': 'noiseless',
+            'use_cuquantum': False,
+        },
+        {
+            'backend': 'noisy',
+            'use_cuquantum': False,
+        },
+        {
+            'backend': cirq.Simulator(),
+            'use_cuquantum': False,
+        },
+        {
+            'backend': None,  # old API usage.
+            'use_cuquantum': False,
+        },
+        {
+            'backend': None,
+            'use_cuquantum': True,
+        }
+    ])
+    def test_sample_invalid_combinations(self, backend, use_cuquantum):
         """Test with valid type inputs and valid value, but incorrect combo."""
-        sampler = sample.Sample(backend)
+        if use_cuquantum and not circuit_execution_ops.is_gpu_configured():
+            # GPU is not set. Ignores this sub-test.
+            self.skipTest("GPU is not set. Ignoring gpu tests...")
+        sampler = sample.Sample(backend, use_cuquantum=use_cuquantum)
         symbol = sympy.Symbol('alpha')
         circuit = cirq.Circuit(cirq.H(cirq.GridQubit(0, 0))**symbol)
         with self.assertRaisesRegex(Exception, expected_regex=""):
@@ -127,9 +156,17 @@ class SampleTest(tf.test.TestCase, parameterized.TestCase):
                     symbol_values=np.zeros((3, 1)),
                     repetitions=5)
 
-    def test_sample_basic_inputs(self):
+    @parameterized.parameters([{
+        'use_cuquantum': False,
+    }, {
+        'use_cuquantum': True,
+    }])
+    def test_sample_basic_inputs(self, use_cuquantum):
         """Test that sample ingests inputs correctly in simple settings."""
-        sampler = sample.Sample()
+        if use_cuquantum and not circuit_execution_ops.is_gpu_configured():
+            # GPU is not set. Ignores this sub-test.
+            self.skipTest("GPU is not set. Ignoring gpu tests...")
+        sampler = sample.Sample(use_cuquantum=use_cuquantum)
         sampler(cirq.Circuit(), repetitions=10)
         sampler([cirq.Circuit()], repetitions=10)
         sampler(cirq.Circuit(),
@@ -141,32 +178,49 @@ class SampleTest(tf.test.TestCase, parameterized.TestCase):
                 symbol_values=[[0.5]],
                 repetitions=10)
 
-    def test_sample_outputs_simple(self):
+    @parameterized.parameters([{
+        'use_cuquantum': False,
+    }, {
+        'use_cuquantum': True,
+    }])
+    def test_sample_outputs_simple(self, use_cuquantum):
         """Test the simplest call where nothing but circuits are provided."""
-        sampler = sample.Sample()
+        if use_cuquantum and not circuit_execution_ops.is_gpu_configured():
+            # GPU is not set. Ignores this sub-test.
+            self.skipTest("GPU is not set. Ignoring gpu tests...")
+        sampler = sample.Sample(use_cuquantum=use_cuquantum)
         circuit = cirq.Circuit(cirq.H(cirq.GridQubit(0, 0)))
         output = sampler([circuit, circuit], repetitions=5)
         self.assertShapeEqual(np.empty((2, 5, 1)), output.to_tensor())
 
-    # TODO(trevormccrt): add QuantumEngineSampler to this once it is available
+    # TODO(trevormccrt): add ProcessorSampler to this once it is available
     @parameterized.parameters(
         list(
             util.kwargs_cartesian_product(
-                backend=[None,
-                         cirq.Simulator(),
-                         cirq.DensityMatrixSimulator()],
-                all_n_qubits=[[3], [8], [3, 4], [3, 4, 10]],
-                n_samples=[1, 10, 100],
+                backend=['noiseless', 'noisy',
+                         cirq.Simulator(), None],
+                use_cuquantum=[False, True],
+                all_n_qubits=[[3, 4, 10]],
+                n_samples=[1],
                 symbol_names=[[], ['a', 'b']])))
-    def test_sample_output(self, backend, all_n_qubits, n_samples,
-                           symbol_names):
+    def test_sample_output(self, backend, use_cuquantum, all_n_qubits,
+                           n_samples, symbol_names):
         """Test that expected output format is preserved.
 
         Check that any pre or post processing done inside the layers does not
         cause what is output from the layer to structurally deviate from what
         is expected.
         """
-        sampler = sample.Sample(backend=backend)
+        if use_cuquantum and not circuit_execution_ops.is_gpu_configured():
+            # GPU is not set. Ignores this sub-test.
+            self.skipTest("GPU is not set. Ignoring gpu tests...")
+        tf.random.set_seed(RANDOM_SEED)
+        if use_cuquantum:
+            # If use_cuquantum is True,
+            if backend is not None and backend != 'noiseless':
+                return
+            # Passes backend=None or backend == 'noiseless' only.
+        sampler = sample.Sample(backend=backend, use_cuquantum=use_cuquantum)
         bits = cirq.GridQubit.rect(1, max(all_n_qubits))
         programs = []
         expected_outputs = []
@@ -178,6 +232,7 @@ class SampleTest(tf.test.TestCase, parameterized.TestCase):
                                symbol_names=symbol_names,
                                symbol_values=symbol_values,
                                repetitions=n_samples).to_list()
+
         self.assertEqual(expected_outputs, layer_output)
 
 

@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# ==============================================================================
+# =============================================================================
 """Module for tfq.python.layers.high_level.controlled_pqc layer."""
 import numbers
 import numpy as np
@@ -86,7 +86,7 @@ class ControlledPQC(tf.keras.layers.Layer):
     to indicate the differentiation scheme this `ControlledPQC` layer
     should use. Here's how you would take the gradients of the
     above example using a `cirq.Simulator` backend (which is slower
-    than `backend=None` which uses C++):
+    than `backend='noiseless'` which uses C++):
 
 
     >>> bit = cirq.GridQubit(0, 0)
@@ -127,7 +127,8 @@ class ControlledPQC(tf.keras.layers.Layer):
                  operators,
                  *,
                  repetitions=None,
-                 backend=None,
+                 backend='noiseless',
+                 use_cuquantum=False,
                  differentiator=None,
                  **kwargs):
         """Instantiate this layer.
@@ -147,11 +148,14 @@ class ControlledPQC(tf.keras.layers.Layer):
             when estimating expectation values. If `None` analytic expectation
             calculation is used.
         backend: Optional Backend to use to simulate states. Defaults to
-            the native TensorFlow simulator (None), however users may also
+            the noiseless TensorFlow simulator, however users may also
             specify a preconfigured cirq simulation object to use instead.
-            If a cirq object is given it must inherit `cirq.SimulatesFinalState`
-            if `sampled_based` is True or it must inherit `cirq.Sampler` if
-            `sample_based` is False.
+            If a cirq object is given it must inherit `cirq.Sampler` if
+            `sampled_based` is True or it must inherit
+            `cirq.sim.simulator.SimulatesExpectationValues` if `sample_based` is
+            False.
+        use_cuquantum: Optional Python `bool` indicating whether or not to use
+            GPU ops
         differentiator: Optional `tfq.differentiator` object to specify how
             gradients of `model_circuit` should be calculated.
         """
@@ -208,27 +212,39 @@ class ControlledPQC(tf.keras.layers.Layer):
                 [[repetitions for _ in range(len(operators))]],
                 dtype=tf.dtypes.int32)
 
-        if not isinstance(backend, cirq.Sampler
-                         ) and repetitions is not None and backend is not None:
+        # Ingest backend and differentiator.
+        if backend == 'noisy':
+            raise ValueError("noisy backend value is not supported in "
+                             "tfq.layers.ControlledPQC. Please use "
+                             "tfq.layers.NoisyControlledPQC instead.")
+
+        not_default = backend != 'noiseless'
+        not_default &= backend is not None  # legacy backend=None support.
+        if not isinstance(
+                backend,
+                cirq.Sampler) and repetitions is not None and not_default:
             raise TypeError("provided backend does not inherit cirq.Sampler "
                             "and repetitions!=None. Please provide a backend "
                             "that inherits cirq.Sampler or set "
                             "repetitions=None.")
 
-        if not isinstance(backend, cirq.SimulatesFinalState
-                         ) and repetitions is None and backend is not None:
+        if not isinstance(backend, cirq.sim.simulator.SimulatesExpectationValues
+                         ) and repetitions is None and not_default:
             raise TypeError("provided backend does not inherit "
-                            "cirq.SimulatesFinalState and repetitions=None. "
-                            "Please provide a backend that inherits "
-                            "cirq.SimulatesFinalState.")
+                            "cirq.sim.simulator.SimulatesExpectationValues and "
+                            "repetitions=None. Please provide a backend that "
+                            "inherits "
+                            "cirq.sim.simulator.SimulatesExpectationValues.")
 
-        # Ingest backend and differentiator.
         if self._analytic:
             self._layer = expectation.Expectation(backend=backend,
-                                                  differentiator=differentiator)
+                                                  differentiator=differentiator,
+                                                  use_cuquantum=use_cuquantum)
         else:
             self._layer = sampled_expectation.SampledExpectation(
-                backend=backend, differentiator=differentiator)
+                backend=backend,
+                differentiator=differentiator,
+                use_cuquantum=use_cuquantum)
 
         self._append_layer = elementary.AddCircuit()
 

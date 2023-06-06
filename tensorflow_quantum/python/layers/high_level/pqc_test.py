@@ -11,8 +11,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# ==============================================================================
+# =============================================================================
 """Test module for tfq.python.layers.high_level.pqc layer."""
+# Remove PYTHONPATH collisions for protobuf.
+# pylint: disable=wrong-import-position
+import sys
+
+NEW_PATH = [x for x in sys.path if 'com_google_protobuf' not in x]
+sys.path = NEW_PATH
+# pylint: enable=wrong-import-position
+
 import numpy as np
 import tensorflow as tf
 from absl.testing import parameterized
@@ -33,6 +41,15 @@ class PQCTest(tf.test.TestCase, parameterized.TestCase):
         learnable_flip = cirq.Circuit(cirq.X(qubit)**symbol)
         pqc.PQC(learnable_flip, cirq.Z(qubit))
         pqc.PQC(learnable_flip, cirq.Z(qubit), repetitions=500)
+
+    def test_pqc_noisy_error(self):
+        """Refer to noisy layer."""
+        symbol = sympy.Symbol('alpha')
+        qubit = cirq.GridQubit(0, 0)
+        learnable_flip = cirq.Circuit(cirq.X(qubit)**symbol)
+        with self.assertRaisesRegex(ValueError,
+                                    expected_regex='tfq.layers.NoisyPQC'):
+            pqc.PQC(learnable_flip, cirq.Z(qubit), backend='noisy')
 
     def test_pqc_model_circuit_error(self):
         """Test that invalid circuits error properly."""
@@ -89,10 +106,10 @@ class PQCTest(tf.test.TestCase, parameterized.TestCase):
         qubit = cirq.GridQubit(0, 0)
         learnable_flip = cirq.Circuit(cirq.X(qubit)**symbol)
 
-        class MyState(cirq.SimulatesFinalState):
-            """My state simulator."""
+        class MyExpectation(cirq.sim.simulator.SimulatesExpectationValues):
+            """My expectation values simulator."""
 
-            def simulate_sweep(self):
+            def simulate_expectation_values_sweep(self):
                 """do nothing."""
                 return
 
@@ -103,14 +120,20 @@ class PQCTest(tf.test.TestCase, parameterized.TestCase):
                 """do nothing."""
                 return
 
+        with self.assertRaisesRegex(
+                TypeError,
+                expected_regex="cirq.sim.simulator.SimulatesExpectation"):
+            pqc.PQC(learnable_flip, cirq.Z(qubit), backend='junk')
+
         with self.assertRaisesRegex(TypeError, expected_regex="cirq.Sampler"):
             pqc.PQC(learnable_flip,
                     cirq.Z(qubit),
-                    backend=MyState,
+                    backend=MyExpectation,
                     repetitions=500)
 
-        with self.assertRaisesRegex(TypeError,
-                                    expected_regex="cirq.SimulatesFinalState"):
+        with self.assertRaisesRegex(
+                TypeError,
+                expected_regex="cirq.sim.simulator.SimulatesExpectationValues"):
             pqc.PQC(learnable_flip,
                     cirq.Z(qubit),
                     backend=MySample,

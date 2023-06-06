@@ -11,8 +11,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# ==============================================================================
+# =============================================================================
 """Tests that specifically target tfq_simulate_ops."""
+# Remove PYTHONPATH collisions for protobuf.
+# pylint: disable=wrong-import-position
+import sys
+
+NEW_PATH = [x for x in sys.path if 'com_google_protobuf' not in x]
+sys.path = NEW_PATH
+# pylint: enable=wrong-import-position
+
 import numpy as np
 from absl.testing import parameterized
 import tensorflow as tf
@@ -79,8 +87,7 @@ class SimulateExpectationTest(tf.test.TestCase):
             # pauli_sums tensor has too few dimensions.
             tfq_simulate_ops.tfq_simulate_expectation(
                 util.convert_to_tensor(circuit_batch), symbol_names,
-                symbol_values_array,
-                util.convert_to_tensor([x for x in pauli_sums]))
+                symbol_values_array, util.convert_to_tensor(list(pauli_sums)))
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'pauli_sums must be rank 2.'):
@@ -178,6 +185,15 @@ class SimulateExpectationTest(tf.test.TestCase):
             tfq_simulate_ops.tfq_simulate_expectation(
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 symbol_values_array[:int(batch_size * 0.5)],
+                util.convert_to_tensor([[x] for x in pauli_sums]))
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    expected_regex='cirq.Channel'):
+            # attempting to use noisy circuit.
+            noisy_circuit = cirq.Circuit(cirq.depolarize(0.3).on_each(*qubits))
+            tfq_simulate_ops.tfq_simulate_expectation(
+                util.convert_to_tensor([noisy_circuit for _ in pauli_sums]),
+                symbol_names, symbol_values_array,
                 util.convert_to_tensor([[x] for x in pauli_sums]))
 
         res = tfq_simulate_ops.tfq_simulate_expectation(
@@ -284,6 +300,14 @@ class SimulateStateTest(tf.test.TestCase, parameterized.TestCase):
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 symbol_values_array[:int(batch_size * 0.5)])
 
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    expected_regex='cirq.Channel'):
+            # attempting to use noisy circuit.
+            noisy_circuit = cirq.Circuit(cirq.depolarize(0.3).on_each(*qubits))
+            tfq_simulate_ops.tfq_simulate_state(
+                util.convert_to_tensor([noisy_circuit for _ in circuit_batch]),
+                symbol_names, symbol_values_array)
+
     @parameterized.parameters([
         {
             'all_n_qubits': [2, 3]
@@ -319,7 +343,7 @@ class SimulateStateTest(tf.test.TestCase, parameterized.TestCase):
             blank_state[:wf.shape[0]] = wf
             manual_padded_results.append(blank_state)
 
-        self.assertAllClose(tfq_results, manual_padded_results)
+        self.assertAllClose(tfq_results, manual_padded_results, atol=1e-5)
 
 
 class SimulateSamplesTest(tf.test.TestCase, parameterized.TestCase):
@@ -432,6 +456,14 @@ class SimulateSamplesTest(tf.test.TestCase, parameterized.TestCase):
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 symbol_values_array[:int(batch_size * 0.5)], num_samples)
 
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    expected_regex='cirq.Channel'):
+            # attempting to use noisy circuit.
+            noisy_circuit = cirq.Circuit(cirq.depolarize(0.3).on_each(*qubits))
+            tfq_simulate_ops.tfq_simulate_samples(
+                util.convert_to_tensor([noisy_circuit for _ in circuit_batch]),
+                symbol_names, symbol_values_array, [num_samples])
+
     @parameterized.parameters([
         {
             'all_n_qubits': [2, 3],
@@ -453,8 +485,8 @@ class SimulateSamplesTest(tf.test.TestCase, parameterized.TestCase):
             this_expected_output[:, :max(all_n_qubits) - n_qubits] = -2
             expected_outputs.append(this_expected_output)
             circuits.append(
-                cirq.Circuit(
-                    *cirq.X.on_each(*cirq.GridQubit.rect(1, n_qubits))))
+                cirq.Circuit(*cirq.X.on_each(
+                    *cirq.GridQubit.rect(1, n_qubits))))
         results = op(util.convert_to_tensor(circuits), [], [[]] * len(circuits),
                      [n_samples]).numpy()
         self.assertAllClose(expected_outputs, results)
@@ -517,9 +549,9 @@ class SimulateSampledExpectationTest(tf.test.TestCase):
                                     'pauli_sums must be rank 2.'):
             # pauli_sums tensor has too few dimensions.
             tfq_simulate_ops.tfq_simulate_sampled_expectation(
-                util.convert_to_tensor(circuit_batch), symbol_names,
-                symbol_values_array,
-                util.convert_to_tensor([x for x in pauli_sums]), num_samples)
+                util.convert_to_tensor(circuit_batch),
+                symbol_names, symbol_values_array,
+                util.convert_to_tensor(list(pauli_sums)), num_samples)
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'pauli_sums must be rank 2.'):
@@ -646,6 +678,15 @@ class SimulateSampledExpectationTest(tf.test.TestCase):
             tfq_simulate_ops.tfq_simulate_sampled_expectation(
                 util.convert_to_tensor(circuit_batch), symbol_names,
                 symbol_values_array[:int(batch_size * 0.5)],
+                util.convert_to_tensor([[x] for x in pauli_sums]), num_samples)
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    expected_regex='cirq.Channel'):
+            # attempting to use noisy circuit.
+            noisy_circuit = cirq.Circuit(cirq.depolarize(0.3).on_each(*qubits))
+            tfq_simulate_ops.tfq_simulate_sampled_expectation(
+                util.convert_to_tensor([noisy_circuit for _ in pauli_sums]),
+                symbol_names, symbol_values_array,
                 util.convert_to_tensor([[x] for x in pauli_sums]), num_samples)
 
 

@@ -11,15 +11,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# ==============================================================================
+# =============================================================================
 """A tf.keras.layer that ingests programs and outputs expectation values."""
+import numbers
+
 import numpy as np
 import tensorflow as tf
 
 import cirq
 from tensorflow_quantum.core.ops import circuit_execution_ops
+from tensorflow_quantum.core.ops.noise import noisy_expectation_op
+from tensorflow_quantum.python import quantum_context
 from tensorflow_quantum.python.differentiators import adjoint
-from tensorflow_quantum.python.differentiators import linear_combination
+from tensorflow_quantum.python.differentiators import parameter_shift
 from tensorflow_quantum.python.differentiators import differentiator as diff
 from tensorflow_quantum.python.layers.circuit_executors import input_checks
 
@@ -202,7 +206,11 @@ class Expectation(tf.keras.layers.Layer):
 
     """
 
-    def __init__(self, backend=None, differentiator=None, **kwargs):
+    def __init__(self,
+                 backend='noiseless',
+                 differentiator=None,
+                 use_cuquantum=False,
+                 **kwargs):
         """Instantiate this Layer.
 
         Create a layer that will output expectation values gained from
@@ -210,40 +218,63 @@ class Expectation(tf.keras.layers.Layer):
 
         Args:
             backend: Optional Backend to use to simulate states. Defaults to
-                the native TensorFlow simulator (None), however users may also
-                specify a preconfigured cirq simulation object to use instead,
-                which must inherit `cirq.SimulatesFinalState`.
+                the 'noiseless' simulator, options include {'noiseless',
+                'noisy'}. In the noisy case a `repetitions` call argument
+                must be provided. Users may also specify a preconfigured cirq
+                object to use instead, which must inherit
+                `cirq.sim.simulator.SimulatesExpectationValues`.
             differentiator: Optional Differentiator to use to calculate analytic
                 derivative values of given operators_to_measure and circuit,
                 which must inherit `tfq.differentiators.Differentiator` and
                 implements `differentiate_analytic` method. Defaults to None,
-                which uses `linear_combination.ForwardDifference()`. If
-                `backend` is also None then default is
+                which uses `tfq.differentiators.ParameterShift()`. If
+                `backend` is also 'noiseless' then default is
                 `tfq.differentiators.Adjoint`.
+            use_cuquantum: Calls TFQ cuQuantum version op.
 
         """
         super().__init__(**kwargs)
 
         # Ingest backend.
-        if not isinstance(backend, cirq.SimulatesFinalState) and \
+        if not isinstance(
+            backend, cirq.sim.simulator.SimulatesExpectationValues) and \
                 isinstance(backend, cirq.Sampler):
-            raise TypeError("Backend implements cirq.Sampler but not"
-                            " cirq.SimulatesFinalState. Please use "
-                            "SampledExpectation instead.")
+            raise TypeError("Backend implements cirq.Sampler but not "
+                            "cirq.sim.simulator.SimulatesExpectationValues. "
+                            "Please use SampledExpectation instead.")
+        used_op = None
+        self.noisy = False
 
         # Ingest differentiator.
         if differentiator is None:
-            differentiator = linear_combination.ForwardDifference()
-            if backend is None:
+            differentiator = parameter_shift.ParameterShift()
+            if backend == 'noiseless' or backend is None:
                 differentiator = adjoint.Adjoint()
 
         if not isinstance(differentiator, diff.Differentiator):
             raise TypeError("Differentiator must inherit from "
                             "tfq.differentiators.Differentiator")
 
-        self._expectation_op = differentiator.generate_differentiable_op(
-            analytic_op=circuit_execution_ops.get_expectation_op(
-                backend=backend))
+        if backend == 'noiseless' or backend is None:
+            mode = quantum_context.get_quantum_concurrent_op_mode()
+            quantum_concurrent = False if use_cuquantum else mode
+            used_op = circuit_execution_ops.get_expectation_op(
+                backend=None,
+                use_cuquantum=use_cuquantum,
+                quantum_concurrent=quantum_concurrent)
+            self._expectation_op = differentiator.generate_differentiable_op(
+                analytic_op=used_op, use_cuquantum=use_cuquantum)
+        elif backend == 'noisy':
+            if use_cuquantum:
+                raise ValueError("noisy backend does not currently support GPU")
+            used_op = noisy_expectation_op.expectation
+            self._expectation_op = differentiator.generate_differentiable_op(
+                sampled_op=used_op)
+            self.noisy = True
+        else:
+            used_op = circuit_execution_ops.get_expectation_op(backend=backend)
+            self._expectation_op = differentiator.generate_differentiable_op(
+                analytic_op=used_op)
 
         self._w = None
 
@@ -253,15 +284,21 @@ class Expectation(tf.keras.layers.Layer):
              symbol_names=None,
              symbol_values=None,
              operators=None,
-             initializer=tf.keras.initializers.RandomUniform(0, 2 * np.pi)):
+             repetitions=None,
+             initializer=None):
         """Keras call function.
 
-        Input options:
-            `inputs`, `symbol_names`, `symbol_values`:
-                see `input_checks.expand_circuits`
-            `operators`: see `input_checks.expand_operators`
+        Args:
+            inputs: See `input_checks.expand_circuits.
+            symbol_names: See `input_checks.expand_circuits.
+            symbol_values: See `input_checks.expand_circuits.
+            operators: See `input_checks.expand_operators`
+            repetitions: A Python `int` or a pre-converted `tf.Tensor`
+                containing a single `int` entry.
+            initializer: The keras initializer object for weights.
+                Defaults to uniform distribution [0..2*pi]
 
-        Output shape:
+        Returns:
             `tf.Tensor` with shape [batch_size, n_ops] that holds the
                 expectation value for each circuit with each op applied to it
                 (after resolving the corresponding parameters in).
@@ -270,12 +307,52 @@ class Expectation(tf.keras.layers.Layer):
         if symbol_values is None:
             values_empty = True
 
+        if initializer is None:
+            initializer = tf.keras.initializers.RandomUniform(0, 2 * np.pi)
+
         inputs, symbol_names, symbol_values = input_checks.expand_circuits(
             inputs, symbol_names, symbol_values)
 
         circuit_batch_dim = tf.gather(tf.shape(inputs), 0)
 
         operators = input_checks.expand_operators(operators, circuit_batch_dim)
+
+        # Ingest and promote repetitions if using noisy backend.
+        if not self.noisy and repetitions is not None:
+            raise RuntimeError("repetitions value provided for analytic"
+                               " expectation calculation that is noiseless.")
+
+        if self.noisy:
+            if repetitions is None:
+                raise RuntimeError(
+                    "Value for repetitions not provided."
+                    " With backend=\'noisy\' a number of trajectory"
+                    " repetitions must be provided in the layer"
+                    " call method.")
+
+            reps_need_tile = False
+            if isinstance(repetitions, numbers.Integral):
+                # Must tile it up to size to match operators if many operators
+                # were provided but only one number was provided.
+                repetitions = tf.ones(tf.shape(operators),
+                                      dtype=tf.dtypes.int32) * repetitions
+
+            if isinstance(repetitions, (list, tuple, np.ndarray)):
+                if not isinstance(repetitions[0], (list, tuple, np.ndarray)):
+                    repetitions = [repetitions]
+                    reps_need_tile = True
+
+                repetitions = tf.convert_to_tensor(repetitions,
+                                                   dtype=tf.dtypes.int32)
+
+            if reps_need_tile:
+                # Don't tile up if the user gave a python list that was
+                # precisely the correct size to match circuits outer batch dim.
+                repetitions = tf.tile(repetitions, [circuit_batch_dim, 1])
+
+            if not tf.is_tensor(repetitions):
+                raise TypeError("repetitions cannot be parsed to int32 tensor"
+                                " given input: ".format(repetitions))
 
         if values_empty:
             # No symbol_values were provided. So we assume the user wants us
@@ -292,5 +369,13 @@ class Expectation(tf.keras.layers.Layer):
             symbol_values = tf.tile(tf.expand_dims(self._w, axis=0),
                                     tf.stack([circuit_batch_dim, 1]))
 
-        return self._expectation_op(inputs, symbol_names, symbol_values,
-                                    operators)
+        num_samples = repetitions  # needed to help autographer.
+
+        # pylint: disable=no-else-return
+        if self.noisy:
+            return self._expectation_op(inputs, symbol_names, symbol_values,
+                                        operators, num_samples)
+        else:
+            return self._expectation_op(inputs, symbol_names, symbol_values,
+                                        operators)
+        # pylint: enable=no-else-return
