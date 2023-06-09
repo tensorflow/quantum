@@ -10,19 +10,17 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
+#include <custatevec.h>
+
+#include <chrono>
 #include <memory>
 #include <vector>
 
-#include <chrono>
-
-#include "../cuquantum_libs/include/custatevec.h"
 #include "../qsim/lib/circuit.h"
 #include "../qsim/lib/gate_appl.h"
 #include "../qsim/lib/gates_cirq.h"
 #include "../qsim/lib/gates_qsim.h"
-#include "../qsim/lib/seqfor.h"
-#include "../qsim/lib/simulator_custatevec.h"
-#include "../qsim/lib/statespace_custatevec.h"
+#include "../qsim/lib/simmux_gpu.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/shape_inference.h"
 #include "tensorflow/core/framework/tensor_shape.h"
@@ -48,7 +46,17 @@ class TfqSimulateExpectationOpCuQuantum : public tensorflow::OpKernel {
  public:
   explicit TfqSimulateExpectationOpCuQuantum(
       tensorflow::OpKernelConstruction* context)
-      : OpKernel(context) {}
+      : OpKernel(context) {
+    // Allocates handlers for initialization.
+    cublasCreate(&cublas_handle_);
+    custatevecCreate(&custatevec_handle_);
+  }
+
+  ~TfqSimulateExpectationOpCuQuantum() {
+    // Destroys handlers in sync with simulator lifetime.
+    cublasDestroy(cublas_handle_);
+    custatevecDestroy(custatevec_handle_);
+  }
 
   void Compute(tensorflow::OpKernelContext* context) override {
     // TODO (mbbrough): add more dimension checks for other inputs here.
@@ -93,7 +101,7 @@ class TfqSimulateExpectationOpCuQuantum : public tensorflow::OpKernel {
     std::vector<std::vector<qsim::GateFused<QsimGate>>> fused_circuits(
         programs.size(), std::vector<qsim::GateFused<QsimGate>>({}));
 
-    Status parse_status = Status::OK();
+    Status parse_status = ::tensorflow::Status();
     auto p_lock = tensorflow::mutex();
     auto construct_f = [&](int start, int end) {
       for (int i = start; i < end; i++) {
@@ -114,16 +122,8 @@ class TfqSimulateExpectationOpCuQuantum : public tensorflow::OpKernel {
       max_num_qubits = std::max(max_num_qubits, num);
     }
 
-    // create handles for simulator
-    cublasCreate(&cublas_handle_);
-    custatevecCreate(&custatevec_handle_);
-
     ComputeLarge(num_qubits, fused_circuits, pauli_sums, context,
                  &output_tensor);
-
-    // destroy handles in sync with simulator lifetime
-    cublasDestroy(cublas_handle_);
-    custatevecDestroy(custatevec_handle_);
   }
 
  private:
@@ -153,7 +153,7 @@ class TfqSimulateExpectationOpCuQuantum : public tensorflow::OpKernel {
     // Simulate programs one by one. Parallelizing over state vectors
     // we no longer parallelize over circuits. Each time we encounter a
     // a larger circuit we will grow the Statevector as necessary.
-    for (int i = 0; i < fused_circuits.size(); i++) {
+    for (size_t i = 0; i < fused_circuits.size(); i++) {
       int nq = num_qubits[i];
 
       if (nq > largest_nq) {
@@ -166,10 +166,10 @@ class TfqSimulateExpectationOpCuQuantum : public tensorflow::OpKernel {
       //  the state if there is a possibility that circuit[i] and
       //  circuit[i + 1] produce the same state.
       ss.SetStateZero(sv);
-      for (int j = 0; j < fused_circuits[i].size(); j++) {
+      for (size_t j = 0; j < fused_circuits[i].size(); j++) {
         qsim::ApplyFusedGate(sim, fused_circuits[i][j], sv);
       }
-      for (int j = 0; j < pauli_sums[i].size(); j++) {
+      for (size_t j = 0; j < pauli_sums[i].size(); j++) {
         // (#679) Just ignore empty program
         if (fused_circuits[i].size() == 0) {
           (*output_tensor)(i, j) = -2.0;
@@ -214,7 +214,7 @@ REGISTER_OP("TfqSimulateExpectationCuquantum")
           c->Dim(pauli_sums_shape, 1);
       c->set_output(0, c->Matrix(output_rows, output_cols));
 
-      return tensorflow::Status::OK();
+      return ::tensorflow::Status();
     });
 
 }  // namespace tfq
