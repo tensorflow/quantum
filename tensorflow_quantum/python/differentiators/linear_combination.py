@@ -305,8 +305,9 @@ class CentralDifference(LinearCombination):
             np.arange(1, error_order / 2 + 1)
         ])
         weights = []
-        n = error_order / 2
+        n = int(error_order / 2)
         for k in grid_points_to_eval:
+            k = int(k)
             numerator = (-1)**(k + 1) * np.math.factorial(n)**2
             denom = k * np.math.factorial(n - k) * np.math.factorial(n + k)
             weights.append(numerator / (denom * grid_spacing))
