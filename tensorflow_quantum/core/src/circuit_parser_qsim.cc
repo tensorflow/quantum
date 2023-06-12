@@ -29,7 +29,6 @@ limitations under the License.
 #include "absl/container/flat_hash_map.h"
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_split.h"
-#include "absl/strings/string_view.h"
 #include "absl/types/optional.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
@@ -58,8 +57,7 @@ inline Status ParseProtoArg(
   // iterator<Map<str, Arg>>
   const auto arg_v = op.args().find(arg_name);
   if (arg_v == op.args().end()) {
-    return Status(static_cast<tensorflow::errors::Code>(
-                      absl::StatusCode::kInvalidArgument),
+    return Status(tensorflow::error::INVALID_ARGUMENT,
                   "Could not find arg: " + arg_name + " in op.");
   }
   // find proto arg field.
@@ -71,8 +69,7 @@ inline Status ParseProtoArg(
     const auto iter = param_map.find(proto_arg.symbol());
     if (iter == param_map.end()) {
       return Status(
-          static_cast<tensorflow::errors::Code>(
-              absl::StatusCode::kInvalidArgument),
+          tensorflow::error::INVALID_ARGUMENT,
           "Could not find symbol in parameter map: " + proto_arg.symbol());
     }
     *result = iter->second.second;
@@ -80,7 +77,7 @@ inline Status ParseProtoArg(
       symbol_used->emplace(iter->first);
     }
   }
-  return ::tensorflow::Status();
+  return Status::OK();
 }
 
 inline Status ParseProtoControls(const Operation& op,
@@ -94,7 +91,7 @@ inline Status ParseProtoControls(const Operation& op,
 
   if (control_str == "" && control_v_str == "") {
     // empty default value set in serializer.py
-    return ::tensorflow::Status();
+    return Status::OK();
   }
 
   std::vector<absl::string_view> control_toks =
@@ -103,12 +100,11 @@ inline Status ParseProtoControls(const Operation& op,
       absl::StrSplit(control_v_str, ',');
 
   if (control_toks.size() != control_v_toks.size()) {
-    return Status(static_cast<tensorflow::errors::Code>(
-                      absl::StatusCode::kInvalidArgument),
+    return Status(tensorflow::error::INVALID_ARGUMENT,
                   "Mistmatched number of control qubits and control values.");
   }
   if (control_toks.empty()) {
-    return ::tensorflow::Status();
+    return Status::OK();
   }
   bool valid;
   unsigned int tmp;
@@ -123,13 +119,12 @@ inline Status ParseProtoControls(const Operation& op,
   for (auto tok : control_v_toks) {
     valid = absl::SimpleAtoi(tok, &tmp);
     if (!valid) {
-      return Status(static_cast<tensorflow::errors::Code>(
-                        absl::StatusCode::kInvalidArgument),
+      return Status(tensorflow::error::INVALID_ARGUMENT,
                     "Unparseable control value: " + std::string(tok));
     }
     control_values->push_back(tmp);
   }
-  return ::tensorflow::Status();
+  return Status::OK();
 }
 
 inline Status OptionalInsertControls(const Operation& op,
@@ -143,10 +138,10 @@ inline Status OptionalInsertControls(const Operation& op,
     return s;
   }
   if (control_qubits.empty()) {
-    return ::tensorflow::Status();
+    return Status::OK();
   }
   qsim::MakeControlledGate(control_qubits, control_values, *gate);
-  return ::tensorflow::Status();
+  return Status::OK();
 }
 
 // series of fixed signature gate builders.
@@ -175,7 +170,7 @@ inline Status SingleConstantGate(
     info.index = circuit->gates.size() - 1;
     metadata->push_back(info);
   }
-  return ::tensorflow::Status();
+  return Status::OK();
 }
 
 // two qubit gate Create(time, q0, q1)
@@ -201,7 +196,7 @@ inline Status TwoConstantGate(
     info.index = circuit->gates.size() - 1;
     metadata->push_back(info);
   }
-  return ::tensorflow::Status();
+  return Status::OK();
 }
 
 // single qubit eigen -> Create(time, q0, exponent, global_shift)
@@ -250,7 +245,7 @@ inline Status SingleEigenGate(
     }
     metadata->push_back(info);
   }
-  return ::tensorflow::Status();
+  return Status::OK();
 }
 
 // two qubit eigen -> Create(time, q0, q1, exp, gs)
@@ -301,7 +296,7 @@ inline Status TwoEigenGate(
     }
     metadata->push_back(info);
   }
-  return ::tensorflow::Status();
+  return Status::OK();
 }
 
 Status IGate(const Operation& op, const SymbolMap& param_map,
@@ -452,7 +447,7 @@ inline Status PhasedXGate(const Operation& op, const SymbolMap& param_map,
     }
     metadata->push_back(info);
   }
-  return ::tensorflow::Status();
+  return Status::OK();
 }
 
 // two qubit fsim -> Create(time, q0, q1, theta, phi)
@@ -509,7 +504,7 @@ inline Status FsimGate(const Operation& op, const SymbolMap& param_map,
     }
     metadata->push_back(info);
   }
-  return ::tensorflow::Status();
+  return Status::OK();
 }
 
 // two qubit phase iswap -> Create(time, q0, q1, pexp, exp)
@@ -567,7 +562,7 @@ inline Status PhasedISwapGate(const Operation& op, const SymbolMap& param_map,
     }
     metadata->push_back(info);
   }
-  return ::tensorflow::Status();
+  return Status::OK();
 }
 
 tensorflow::Status ParseAppendGate(const Operation& op,
@@ -595,8 +590,7 @@ tensorflow::Status ParseAppendGate(const Operation& op,
   auto build_f = func_map.find(op.gate().id());
   if (build_f == func_map.end()) {
     *lookup_succeeded = false;
-    return Status(static_cast<tensorflow::errors::Code>(
-                      absl::StatusCode::kInvalidArgument),
+    return Status(tensorflow::error::INVALID_ARGUMENT,
                   absl::StrCat("Could not parse gate id: ", op.gate().id(),
                                ". This is likely because a cirq.Channel was "
                                "used in an op that does not support them."));
@@ -624,7 +618,7 @@ inline Status AsymmetricDepolarizingChannel(const Operation& op,
   auto chan = qsim::Cirq::AsymmetricDepolarizingChannel<float>::Create(
       time, num_qubits - q - 1, p_x, p_y, p_z);
   ncircuit->channels.push_back(chan);
-  return ::tensorflow::Status();
+  return Status::OK();
 }
 
 inline Status DepolarizingChannel(const Operation& op,
@@ -644,7 +638,7 @@ inline Status DepolarizingChannel(const Operation& op,
   auto chan = qsim::Cirq::DepolarizingChannel<float>::Create(
       time, num_qubits - q - 1, p);
   ncircuit->channels.push_back(chan);
-  return ::tensorflow::Status();
+  return Status::OK();
 }
 
 inline Status GADChannel(const Operation& op, const unsigned int num_qubits,
@@ -667,7 +661,7 @@ inline Status GADChannel(const Operation& op, const unsigned int num_qubits,
   auto chan = qsim::Cirq::GeneralizedAmplitudeDampingChannel<float>::Create(
       time, num_qubits - q - 1, p, gamma);
   ncircuit->channels.push_back(chan);
-  return ::tensorflow::Status();
+  return Status::OK();
 }
 
 inline Status ResetChannel(const Operation& op, const unsigned int num_qubits,
@@ -679,7 +673,7 @@ inline Status ResetChannel(const Operation& op, const unsigned int num_qubits,
 
   auto chan = qsim::Cirq::ResetChannel<float>::Create(time, num_qubits - q - 1);
   ncircuit->channels.push_back(chan);
-  return ::tensorflow::Status();
+  return Status::OK();
 }
 
 inline Status AmplitudeDampingChannel(const Operation& op,
@@ -699,7 +693,7 @@ inline Status AmplitudeDampingChannel(const Operation& op,
   auto chan = qsim::Cirq::AmplitudeDampingChannel<float>::Create(
       time, num_qubits - q - 1, gamma);
   ncircuit->channels.push_back(chan);
-  return ::tensorflow::Status();
+  return Status::OK();
 }
 
 inline Status PhaseDampingChannel(const Operation& op,
@@ -720,7 +714,7 @@ inline Status PhaseDampingChannel(const Operation& op,
   auto chan = qsim::Cirq::PhaseDampingChannel<float>::Create(
       time, num_qubits - q - 1, gamma);
   ncircuit->channels.push_back(chan);
-  return ::tensorflow::Status();
+  return Status::OK();
 }
 
 inline Status PhaseFlipChannel(const Operation& op,
@@ -741,7 +735,7 @@ inline Status PhaseFlipChannel(const Operation& op,
   auto chan =
       qsim::Cirq::PhaseFlipChannel<float>::Create(time, num_qubits - q - 1, p);
   ncircuit->channels.push_back(chan);
-  return ::tensorflow::Status();
+  return Status::OK();
 }
 
 inline Status BitFlipChannel(const Operation& op, const unsigned int num_qubits,
@@ -761,7 +755,7 @@ inline Status BitFlipChannel(const Operation& op, const unsigned int num_qubits,
   auto chan =
       qsim::Cirq::BitFlipChannel<float>::Create(time, num_qubits - q - 1, p);
   ncircuit->channels.push_back(chan);
-  return ::tensorflow::Status();
+  return Status::OK();
 }
 
 tensorflow::Status ParseAppendChannel(const Operation& op,
@@ -780,8 +774,7 @@ tensorflow::Status ParseAppendChannel(const Operation& op,
 
   auto build_f = chan_func_map.find(op.gate().id());
   if (build_f == chan_func_map.end()) {
-    return Status(static_cast<tensorflow::errors::Code>(
-                      absl::StatusCode::kInvalidArgument),
+    return Status(tensorflow::error::INVALID_ARGUMENT,
                   absl::StrCat("Could not parse channel id: ", op.gate().id()));
   }
   return build_f->second(op, num_qubits, time, ncircuit);
@@ -797,7 +790,7 @@ tensorflow::Status NoisyQsimCircuitFromProgram(const Program& program,
   // Special case empty.
   ncircuit->num_qubits = num_qubits;
   if (num_qubits <= 0) {
-    return ::tensorflow::Status();
+    return Status::OK();
   }
 
   int time = 0;
@@ -841,7 +834,7 @@ tensorflow::Status NoisyQsimCircuitFromProgram(const Program& program,
           {qsim::gate::Measurement<QsimGate>::Create(time, all_qbs)}}});
   }
 
-  return ::tensorflow::Status();
+  return Status::OK();
 }
 
 tensorflow::Status QsimCircuitFromProgram(
@@ -854,7 +847,7 @@ tensorflow::Status QsimCircuitFromProgram(
   bool unused;
   // Special case empty.
   if (num_qubits <= 0) {
-    return ::tensorflow::Status();
+    return Status::OK();
   }
 
   circuit->gates.reserve(program.circuit().moments_size() * num_qubits);
@@ -876,7 +869,7 @@ tensorflow::Status QsimCircuitFromProgram(
   *fused_circuit = qsim::BasicGateFuser<qsim::IO, QsimGate>().FuseGates(
       qsim::BasicGateFuser<qsim::IO, QsimGate>::Parameter(),
       circuit->num_qubits, circuit->gates);
-  return ::tensorflow::Status();
+  return Status::OK();
 }
 
 Status QsimCircuitFromPauliTerm(

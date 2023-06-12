@@ -389,7 +389,7 @@ class SampledExpectationFunctionalTests(parameterized.TestCase,
                                outputs=[circuit_output])
 
         model.compile(
-            optimizer=tf.keras.optimizers.Adam(learning_rate=0.2),
+            optimizer=tf.keras.optimizers.Adam(learning_rate=0.05),
             loss=tf.keras.losses.mean_squared_error,
         )
         history = model.fit(x=[circuit, ops, n],

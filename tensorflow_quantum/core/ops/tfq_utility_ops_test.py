@@ -82,7 +82,7 @@ class AppendCircuitOpTest(tf.test.TestCase, parameterized.TestCase):
         # These tests really just makes sure we can cast output
         res = tfq_utility_ops.append_circuit([], [])
 
-        self.assertDTypeEqual(res.numpy().astype(str), np.dtype('<U1'))
+        self.assertDTypeEqual(res.numpy().astype(np.str), np.dtype('<U1'))
 
     @parameterized.parameters([{
         'max_n_bits': 20,

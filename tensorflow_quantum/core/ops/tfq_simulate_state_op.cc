@@ -69,7 +69,7 @@ class TfqSimulateStateOp : public tensorflow::OpKernel {
     std::vector<std::vector<qsim::GateFused<QsimGate>>> fused_circuits(
         programs.size(), std::vector<qsim::GateFused<QsimGate>>({}));
 
-    Status parse_status = ::tensorflow::Status();
+    Status parse_status = Status::OK();
     auto p_lock = tensorflow::mutex();
     auto construct_f = [&](int start, int end) {
       for (int i = start; i < end; i++) {
@@ -238,7 +238,7 @@ REGISTER_OP("TfqSimulateState")
                  {c->Dim(programs_shape, 0),
                   tensorflow::shape_inference::InferenceContext::kUnknownDim}));
 
-      return ::tensorflow::Status();
+      return tensorflow::Status::OK();
     });
 
 }  // namespace tfq

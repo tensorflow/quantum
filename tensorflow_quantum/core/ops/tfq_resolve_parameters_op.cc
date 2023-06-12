@@ -59,7 +59,7 @@ class TfqResolveParametersOp : public tensorflow::OpKernel {
             "Number of circuits and values do not match. Got ", programs.size(),
             " circuits and ", maps.size(), " values.")));
 
-    Status parse_status = ::tensorflow::Status();
+    Status parse_status = Status::OK();
     auto p_lock = tensorflow::mutex();
     auto DoWork = [&](int start, int end) {
       std::string temp;
@@ -100,7 +100,7 @@ REGISTER_OP("TfqResolveParameters")
 
       c->set_output(0, c->input(0));
 
-      return ::tensorflow::Status();
+      return tensorflow::Status::OK();
     });
 
 }  // namespace tfq

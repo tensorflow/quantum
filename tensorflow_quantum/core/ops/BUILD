@@ -55,7 +55,7 @@ cc_binary(
             "-DNOGDI",
             "/d2ReducedOptimizeHugeFunctions",
             "/arch:AVX",
-            "/std:c++17",
+            "/std:c++14",
             "-DTENSORFLOW_MONOLITHIC_BUILD",
             "/DPLATFORM_WINDOWS",
             "/DEIGEN_HAS_C99_MATH",
@@ -69,8 +69,8 @@ cc_binary(
         ],
         "//conditions:default": [
             "-pthread",
-            "-std=c++17",
-            "-D_GLIBCXX_USE_CXX11_ABI=1",
+            "-std=c++14",
+            "-D_GLIBCXX_USE_CXX11_ABI=0",
         ],
     }),
     features = select({
@@ -118,7 +118,7 @@ cc_binary(
             "-DNOGDI",
             "/d2ReducedOptimizeHugeFunctions",
             "/arch:AVX",
-            "/std:c++17",
+            "/std:c++14",
             "-DTENSORFLOW_MONOLITHIC_BUILD",
             "/DPLATFORM_WINDOWS",
             "/DEIGEN_HAS_C99_MATH",
@@ -132,8 +132,8 @@ cc_binary(
         ],
         "//conditions:default": [
             "-pthread",
-            "-std=c++17",
-            "-D_GLIBCXX_USE_CXX11_ABI=1",
+            "-std=c++14",
+            "-D_GLIBCXX_USE_CXX11_ABI=0",
         ],
     }),
     features = select({
@@ -176,7 +176,7 @@ cc_binary(
             "-DNOGDI",
             "/d2ReducedOptimizeHugeFunctions",
             "/arch:AVX",
-            "/std:c++17",
+            "/std:c++14",
             "-DTENSORFLOW_MONOLITHIC_BUILD",
             "/DPLATFORM_WINDOWS",
             "/DEIGEN_HAS_C99_MATH",
@@ -190,8 +190,8 @@ cc_binary(
         ],
         "//conditions:default": [
             "-pthread",
-            "-std=c++17",
-            "-D_GLIBCXX_USE_CXX11_ABI=1",
+            "-std=c++14",
+            "-D_GLIBCXX_USE_CXX11_ABI=0",
         ],
     }),
     features = select({
@@ -242,7 +242,7 @@ cc_binary(
             "-DNOGDI",
             "/d2ReducedOptimizeHugeFunctions",
             "/arch:AVX",
-            "/std:c++17",
+            "/std:c++14",
             "-DTENSORFLOW_MONOLITHIC_BUILD",
             "/DPLATFORM_WINDOWS",
             "/DEIGEN_HAS_C99_MATH",
@@ -256,8 +256,8 @@ cc_binary(
         ],
         "//conditions:default": [
             "-pthread",
-            "-std=c++17",
-            "-D_GLIBCXX_USE_CXX11_ABI=1",
+            "-std=c++14",
+            "-D_GLIBCXX_USE_CXX11_ABI=0",
         ],
     }),
     features = select({
@@ -301,7 +301,7 @@ cc_library(
             "-DNOGDI",
             "/d2ReducedOptimizeHugeFunctions",
             "/arch:AVX",
-            "/std:c++17",
+            "/std:c++14",
             "-DTENSORFLOW_MONOLITHIC_BUILD",
             "/DPLATFORM_WINDOWS",
             "/DEIGEN_HAS_C99_MATH",
@@ -315,8 +315,8 @@ cc_library(
         ],
         "//conditions:default": [
             "-pthread",
-            "-std=c++17",
-            "-D_GLIBCXX_USE_CXX11_ABI=1",
+            "-std=c++14",
+            "-D_GLIBCXX_USE_CXX11_ABI=0",
         ],
     }),
     deps = [
@@ -354,7 +354,7 @@ cc_binary(
             "-DNOGDI",
             "/d2ReducedOptimizeHugeFunctions",
             "/arch:AVX",
-            "/std:c++17",
+            "/std:c++14",
             "-DTENSORFLOW_MONOLITHIC_BUILD",
             "/DPLATFORM_WINDOWS",
             "/DEIGEN_HAS_C99_MATH",
@@ -368,8 +368,8 @@ cc_binary(
         ],
         "//conditions:default": [
             "-pthread",
-            "-std=c++17",
-            "-D_GLIBCXX_USE_CXX11_ABI=1",
+            "-std=c++14",
+            "-D_GLIBCXX_USE_CXX11_ABI=0",
         ],
     }),
     features = select({
@@ -416,7 +416,7 @@ cc_library(
             "-DNOGDI",
             "/d2ReducedOptimizeHugeFunctions",
             "/arch:AVX",
-            "/std:c++17",
+            "/std:c++14",
             "-DTENSORFLOW_MONOLITHIC_BUILD",
             "/DPLATFORM_WINDOWS",
             "/DEIGEN_HAS_C99_MATH",
@@ -430,8 +430,8 @@ cc_library(
         ],
         "//conditions:default": [
             "-pthread",
-            "-std=c++17",
-            "-D_GLIBCXX_USE_CXX11_ABI=1",
+            "-std=c++14",
+            "-D_GLIBCXX_USE_CXX11_ABI=0",
         ],
     }),
     deps = [

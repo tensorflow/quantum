@@ -326,7 +326,7 @@ REGISTER_OP("TfqPsDecompose")
 
       c->set_output(0, c->input(0));
 
-      return ::tensorflow::Status();
+      return tensorflow::Status::OK();
     });
 
 }  // namespace tfq

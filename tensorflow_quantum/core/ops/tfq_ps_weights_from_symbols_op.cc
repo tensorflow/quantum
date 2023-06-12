@@ -184,7 +184,7 @@ REGISTER_OP("TfqPsWeightsFromSymbols")
                   tensorflow::shape_inference::InferenceContext::kUnknownDim,
                   tensorflow::shape_inference::InferenceContext::kUnknownDim}));
 
-      return ::tensorflow::Status();
+      return tensorflow::Status::OK();
     });
 
 }  // namespace tfq

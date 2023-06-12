@@ -148,7 +148,7 @@ tensorflow::Status ComputeExpectationQsim(const tfq::proto::PauliSum& p_sum,
                                           bool fuse_paulis = true) {
   // apply the gates of the pauliterms to a copy of the state vector
   // and add up expectation value term by term.
-  tensorflow::Status status = ::tensorflow::Status();
+  tensorflow::Status status = tensorflow::Status::OK();
   for (const tfq::proto::PauliTerm& term : p_sum.terms()) {
     // catch identity terms
     if (term.paulis_size() == 0) {
@@ -204,11 +204,11 @@ tensorflow::Status ComputeSampledExpectationQsim(
   std::uniform_int_distribution<> distrib(1, 1 << 30);
 
   if (num_samples == 0) {
-    return ::tensorflow::Status();
+    return tensorflow::Status::OK();
   }
   // apply the gates of the pauliterms to a copy of the state vector
   // and add up expectation value term by term.
-  tensorflow::Status status = ::tensorflow::Status();
+  tensorflow::Status status = tensorflow::Status::OK();
   for (const tfq::proto::PauliTerm& term : p_sum.terms()) {
     // catch identity terms
     if (term.paulis_size() == 0) {
@@ -288,11 +288,11 @@ tensorflow::Status ComputeMPSSampledExpectationQsim(
   std::uniform_int_distribution<> distrib(1, 1 << 30);
 
   if (num_samples == 0) {
-    return ::tensorflow::Status();
+    return tensorflow::Status::OK();
   }
   // apply the gates of the pauliterms to a copy of the state vector
   // and add up expectation value term by term.
-  tensorflow::Status status = ::tensorflow::Status();
+  tensorflow::Status status = tensorflow::Status::OK();
   for (const tfq::proto::PauliTerm& term : p_sum.terms()) {
     // catch identity terms
     if (term.paulis_size() == 0) {
@@ -367,7 +367,7 @@ tensorflow::Status AccumulateOperators(
   // apply the gates of the pauliterms to a copy of the state vector
   // accumulating results as we go. Effectively doing O|psi> for an arbitrary
   // O. Result is stored on scratch.
-  tensorflow::Status status = ::tensorflow::Status();
+  tensorflow::Status status = tensorflow::Status::OK();
   ss.Copy(source, scratch);
   ss.SetAllZeros(dest);
 
@@ -424,7 +424,7 @@ tensorflow::Status AccumulateFusedCircuits(
     const std::vector<float>& coefficients,
     const std::vector<QsimFusedCircuit>& fused_circuits, const SimT& sim,
     const StateSpaceT& ss, StateT& scratch, StateT& dest) {
-  tensorflow::Status status = ::tensorflow::Status();
+  tensorflow::Status status = tensorflow::Status::OK();
   ss.SetAllZeros(dest);
 
   for (std::vector<qsim::GateFused<QsimGate>>::size_type i = 0;

@@ -99,7 +99,7 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
     std::vector<std::vector<GradientOfGate>> gradient_gates(
         programs.size(), std::vector<GradientOfGate>({}));
 
-    Status parse_status = ::tensorflow::Status();
+    Status parse_status = Status::OK();
     auto p_lock = tensorflow::mutex();
     auto construct_f = [&](int start, int end) {
       for (int i = start; i < end; i++) {
@@ -411,7 +411,7 @@ REGISTER_OP("TfqAdjointGradient")
           c->Dim(symbol_names_shape, 0);
       c->set_output(0, c->Matrix(output_rows, output_cols));
 
-      return ::tensorflow::Status();
+      return tensorflow::Status::OK();
     });
 
 }  // namespace tfq

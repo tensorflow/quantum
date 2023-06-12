@@ -18,7 +18,7 @@ import re
 
 from absl.testing import parameterized
 import nbformat
-import nbclient
+import nbconvert
 import tensorflow as tf
 
 # Must be run from the directory containing `quantum` repo.
@@ -46,7 +46,9 @@ class ExamplesTest(tf.test.TestCase, parameterized.TestCase):
                 src = re.sub('n_epochs ?= ?.*', 'n_epochs = 2', src)
                 cell['source'] = src
 
-        _ = nbclient.execute(nb, timeout=900, kernel_name="python3")
+        _ = nbconvert.preprocessors.execute.executenb(nb,
+                                                      timeout=900,
+                                                      kernel_name="python3")
 
 
 if __name__ == "__main__":

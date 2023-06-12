@@ -24,7 +24,7 @@ Some notes on benchmark configuration:
 
 For example, to benchmark a dense depth-10 Clifford circuit over 5 qubits call:
 ```
-bazel run -c opt --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=1" --cxxopt="-msse2" \
+bazel run -c opt --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=0" --cxxopt="-msse2" \
   --cxxopt="-msse3" --cxxopt="-msse4" \
   benchmarks/scripts:benchmark_clifford_circuit -- \
   --n_moments 5 --n_qubits 4 \
@@ -39,7 +39,7 @@ benchmarks/scripts/reports/CliffordBenchmarks.benchmark_clifford_circuit_4_5_1
 To benchmark the parameter shift differentiation method on a random depth-10 4-qubit circuit with 10 parameters call, where the circuit will be differentiated
 over 50 trials, each time over a batch of 10 circuits.
 ```
-bazel run -c opt --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=1" --cxxopt="-msse2" \
+bazel run -c opt --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=0" --cxxopt="-msse2" \
   --cxxopt="-msse3" --cxxopt="-msse4" \
   benchmarks/scripts:benchmark_op_gradients -- \
   --n_moments 10 --n_qubits 4 --n_symbols 10 \

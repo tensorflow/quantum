@@ -280,7 +280,7 @@ def tfi_chain(qubits, boundary_condition="closed", data_dir=None):
                  / np.pi
         # Parameters are stored as np.float32, but cirq expects np.float64
         # See https://github.com/quantumlib/Cirq/issues/3359
-        params = params.astype(float)
+        params = params.astype(np.float)
         additional_info.append(
             SpinSystemInfo(g=g,
                            gs=np.load(
@@ -517,7 +517,7 @@ def xxz_chain(qubits, boundary_condition="closed", data_dir=None):
                  / np.pi
         # Parameters are stored as np.float32, but cirq expects np.float64
         # See https://github.com/quantumlib/Cirq/issues/3359
-        params = params.astype(float)
+        params = params.astype(np.float)
         additional_info.append(
             SpinSystemInfo(g=g,
                            gs=np.load(

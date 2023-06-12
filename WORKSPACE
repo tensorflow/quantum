@@ -3,8 +3,8 @@
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
-EIGEN_COMMIT = "3bb6a48d8c171cf20b5f8e48bfb4e424fbd4f79e"
-EIGEN_SHA256 = "eca9847b3fe6249e0234a342b78f73feec07d29f534e914ba5f920f3e09383a3"
+EIGEN_COMMIT = "12e8d57108c50d8a63605c6eb0144c838c128337"
+EIGEN_SHA256 = "f689246e342c3955af48d26ce74ac34d21b579a00675c341721a735937919b02"
 
 
 http_archive(
@@ -33,10 +33,10 @@ http_archive(
 
 http_archive(
     name = "org_tensorflow",
-    sha256 = "e52cda3bae45f0ae0fccd4055e9fa29892b414f70e2df94df9a3a10319c75fff",
-    strip_prefix = "tensorflow-2.11.0",
+    sha256 = "249b48ddee927801c7a4f8e5442cf1a3c860f6f46b85a2ff7a78b501507dd561",
+    strip_prefix = "tensorflow-2.7.0",
     urls = [
-        "https://github.com/tensorflow/tensorflow/archive/refs/tags/v2.11.0.zip",
+        "https://github.com/tensorflow/tensorflow/archive/refs/tags/v2.7.0.zip",
     ],
 )
 

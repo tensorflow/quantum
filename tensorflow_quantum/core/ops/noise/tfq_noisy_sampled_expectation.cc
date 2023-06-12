@@ -112,7 +112,7 @@ class TfqNoisySampledExpectationOp : public tensorflow::OpKernel {
     std::vector<NoisyQsimCircuit> qsim_circuits(programs.size(),
                                                 NoisyQsimCircuit());
 
-    Status parse_status = ::tensorflow::Status();
+    Status parse_status = Status::OK();
     auto p_lock = tensorflow::mutex();
     auto construct_f = [&](int start, int end) {
       for (int i = start; i < end; i++) {
@@ -294,7 +294,7 @@ class TfqNoisySampledExpectationOp : public tensorflow::OpKernel {
     }
     random_gen.Init(tensorflow::random::New64(), tensorflow::random::New64());
 
-    Status compute_status = ::tensorflow::Status();
+    Status compute_status = Status::OK();
     auto c_lock = tensorflow::mutex();
     auto DoWork = [&](int start, int end) {
       // Begin simulation.
@@ -424,7 +424,7 @@ REGISTER_OP("TfqNoisySampledExpectation")
           c->Dim(pauli_sums_shape, 1);
       c->set_output(0, c->Matrix(output_rows, output_cols));
 
-      return ::tensorflow::Status();
+      return tensorflow::Status::OK();
     });
 
 }  // namespace tfq
