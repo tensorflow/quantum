@@ -99,6 +99,7 @@ if [[ "$PIP_MANYLINUX2010" == "0" ]]; then
   write_to_bazelrc "build:cuda --crosstool_top=@local_config_cuda//crosstool:toolchain"
 fi
 
+
 write_to_bazelrc "build --experimental_repo_remote_exec"
 write_to_bazelrc "build --spawn_strategy=standalone"
 write_to_bazelrc "build --strategy=Genrule=standalone"

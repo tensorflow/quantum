@@ -53,7 +53,7 @@ class InstallPlatlib(install):
 REQUIRED_PACKAGES = [
     'cirq-core==0.13.1', 'cirq-google>=0.13.1', 'sympy == 1.8',
     'googleapis-common-protos==1.52.0', 'google-api-core==1.21.0',
-    'google-auth==1.18.0', 'protobuf==3.19.5'
+    'google-auth==1.18.0', 'protobuf==3.19.4'
 ]
 
 # placed as extra to not have required overwrite existing nightly installs if
