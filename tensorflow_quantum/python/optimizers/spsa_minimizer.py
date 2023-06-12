@@ -45,6 +45,7 @@ def prefer_static_value(x):
     return x
 
 
+<<<<<<< HEAD
 SPSAOptimizerResults = collections.namedtuple(
     'SPSAOptimizerResults',
     [
@@ -89,6 +90,80 @@ SPSAOptimizerResults = collections.namedtuple(
         # Specifies maximum allowable increase in objective function
         # (only applies if blocking is true).
     ])
+=======
+class SPSAOptimizerResults(tf.experimental.ExtensionType):
+    converged: tf.Tensor
+    # Scalar boolean tensor indicating whether the minimum
+    # was found within tolerance.
+    num_iterations: tf.Tensor
+    # The number of iterations of the SPSA update.
+    num_objective_evaluations: tf.Tensor
+    # The total number of objective
+    # evaluations performed.
+    position: tf.Tensor
+    # A tensor containing the last argument value found
+    # during the search. If the search converged, then
+    # this value is the argmin of the objective function.
+    # A tensor containing the value of the objective from
+    # previous iteration
+    objective_value_previous_iteration: tf.Tensor
+    # Save the evaluated value of the objective function
+    # from the previous iteration
+    objective_value: tf.Tensor
+    # A tensor containing the value of the objective
+    # function at the `position`. If the search
+    # converged, then this is the (local) minimum of
+    # the objective function.
+    tolerance: tf.Tensor
+    # Define the stop criteria. Iteration will stop when the
+    # objective value difference between two iterations is
+    # smaller than tolerance
+    lr: tf.Tensor
+    # Specifies the learning rate
+    alpha: tf.Tensor
+    # Specifies scaling of the learning rate
+    perturb: tf.Tensor
+    # Specifies the size of the perturbations
+    gamma: tf.Tensor
+    # Specifies scaling of the size of the perturbations
+    blocking: tf.Tensor
+    # If true, then the optimizer will only accept updates that improve
+    # the objective function.
+    allowed_increase: tf.Tensor
+
+    # Specifies maximum allowable increase in objective function
+    # (only applies if blocking is true).
+
+    def to_dict(self):
+        return {
+            "converged":
+                self.converged,
+            "num_iterations":
+                self.num_iterations,
+            "num_objective_evaluations":
+                self.num_objective_evaluations,
+            "position":
+                self.position,
+            "objective_value":
+                self.objective_value,
+            "objective_value_previous_iteration":
+                self.objective_value_previous_iteration,
+            "tolerance":
+                self.tolerance,
+            "lr":
+                self.lr,
+            "alpha":
+                self.alpha,
+            "perturb":
+                self.perturb,
+            "gamma":
+                self.gamma,
+            "blocking":
+                self.blocking,
+            "allowed_increase":
+                self.allowed_increase,
+        }
+>>>>>>> parent of 39a811d (Format optimizers)
 
 
 def _get_initial_state(initial_position, tolerance, expectation_value_function,
@@ -99,7 +174,12 @@ def _get_initial_state(initial_position, tolerance, expectation_value_function,
         "num_iterations": tf.Variable(0),
         "num_objective_evaluations": tf.Variable(0),
         "position": tf.Variable(initial_position),
+<<<<<<< HEAD
         "objective_value": tf.Variable(0.),
+=======
+        "objective_value":
+            (tf.cast(expectation_value_function(initial_position), tf.float32)),
+>>>>>>> parent of 39a811d (Format optimizers)
         "objective_value_previous_iteration": tf.Variable(np.inf),
         "tolerance": tolerance,
         "lr": tf.Variable(lr),
@@ -256,6 +336,7 @@ def minimize(expectation_value_function,
             new_perturb = perturb_init / (tf.cast(state.num_iterations + 1,
                                                   tf.float32)**state.gamma)
 
+<<<<<<< HEAD
             state.lr.assign(new_lr)
             state.perturb.assign(new_perturb)
 
@@ -266,15 +347,38 @@ def minimize(expectation_value_function,
                        state.objective_value_previous_iteration) <
                 state.tolerance)
             return [state]
+=======
+            pre_state_params = state.to_dict()
+            pre_state_params.update({
+                "lr": new_lr,
+                "perturb": new_perturb,
+            })
+
+            post_state = _spsa_once(SPSAOptimizerResults(**pre_state_params))[0]
+            post_state_params = post_state.to_dict()
+            tf.print("asdf", state.objective_value.dtype,
+                     state.objective_value_previous_iteration.dtype)
+            post_state_params.update({
+                "num_iterations":
+                    post_state.num_iterations + 1,
+                "converged": (tf.abs(state.objective_value -
+                                     state.objective_value_previous_iteration) <
+                              state.tolerance),
+            })
+            return [SPSAOptimizerResults(**post_state_params)]
+>>>>>>> parent of 39a811d (Format optimizers)
 
         initial_state = _get_initial_state(initial_position, tolerance,
                                            expectation_value_function, lr,
                                            alpha, perturb, gamma, blocking,
                                            allowed_increase)
+<<<<<<< HEAD
 
         initial_state.objective_value.assign(
             tf.cast(expectation_value_function(initial_state.position),
                     tf.float32))
+=======
+>>>>>>> parent of 39a811d (Format optimizers)
 
         return tf.while_loop(cond=_cond,
                              body=_body,
