@@ -64,18 +64,15 @@ Status RegisterQubits(
     }
 
     if (splits.size() != 2) {
-      return Status(static_cast<tensorflow::errors::Code>(
-            absl::StatusCode::kInvalidArgument),
+      return Status(tensorflow::error::INVALID_ARGUMENT,
                     absl::StrCat("Unable to parse qubit: ", qb));
     }
     if (!absl::SimpleAtoi(splits[0], &r)) {
-      return Status(static_cast<tensorflow::errors::Code>(
-            absl::StatusCode::kInvalidArgument),
+      return Status(tensorflow::error::INVALID_ARGUMENT,
                     absl::StrCat("Unable to parse qubit: ", qb));
     }
     if (!absl::SimpleAtoi(splits[1], &c)) {
-      return Status(static_cast<tensorflow::errors::Code>(
-            absl::StatusCode::kInvalidArgument),
+      return Status(tensorflow::error::INVALID_ARGUMENT,
                     absl::StrCat("Unable to parse qubit: ", qb));
     }
     auto locs = std::pair<std::pair<int, int>, std::string>(
@@ -170,8 +167,7 @@ Status ResolveQubitIds(Program* program, unsigned int* num_qubits,
           const auto result = id_to_index.find(pair.qubit_id());
           if (result == id_to_index.end()) {
             return Status(
-                static_cast<tensorflow::errors::Code>(
-            absl::StatusCode::kInvalidArgument),
+                tensorflow::error::INVALID_ARGUMENT,
                 "Found a Pauli sum operating on qubits not found in circuit.");
           }
           pair.set_qubit_id(result->second);
@@ -262,8 +258,7 @@ Status ResolveQubitIds(Program* program, unsigned int* num_qubits,
           visited_qubits.erase(qubit.id());
           const auto result = id_to_index.find(qubit.id());
           if (result == id_to_index.end()) {
-            return Status(static_cast<tensorflow::errors::Code>(
-            absl::StatusCode::kInvalidArgument),
+            return Status(tensorflow::error::INVALID_ARGUMENT,
                           "A paired circuit contains qubits not found in "
                           "reference circuit.");
           }
@@ -285,8 +280,7 @@ Status ResolveQubitIds(Program* program, unsigned int* num_qubits,
           visited_qubits.erase(id);
           const auto result = id_to_index.find(id);
           if (result == id_to_index.end()) {
-            return Status(static_cast<tensorflow::errors::Code>(
-            absl::StatusCode::kInvalidArgument),
+            return Status(tensorflow::error::INVALID_ARGUMENT,
                           "A paired circuit contains qubits not found in "
                           "reference circuit.");
           }
@@ -300,8 +294,7 @@ Status ResolveQubitIds(Program* program, unsigned int* num_qubits,
     }
     if (!visited_qubits.empty()) {
       return Status(
-          static_cast<tensorflow::errors::Code>(
-            absl::StatusCode::kInvalidArgument),
+          tensorflow::error::INVALID_ARGUMENT,
           "A reference circuit contains qubits not found in paired circuit.");
     }
   }
@@ -321,8 +314,7 @@ Status ResolveSymbols(
           if (iter == param_map.end()) {
             if (resolve_all) {
               return Status(
-                  static_cast<tensorflow::errors::Code>(
-            absl::StatusCode::kInvalidArgument),
+                  tensorflow::error::INVALID_ARGUMENT,
                   "Could not find symbol in parameter map: " + arg.symbol());
             }
             continue;
@@ -362,8 +354,7 @@ Status CheckMPSSupported(const Program& program) {
       const int total_num_qubits = qubits.size() + control_ids.size();
       if (total_num_qubits > 2) {
         return Status(
-            static_cast<tensorflow::errors::Code>(
-            absl::StatusCode::kInvalidArgument),
+            tensorflow::error::INVALID_ARGUMENT,
             absl::StrCat("1D operations only support 1 and 2 qubit gates. "
                          "Found: ",
                          total_num_qubits, " qubit gate."));
@@ -381,8 +372,7 @@ Status CheckMPSSupported(const Program& program) {
 
         // Are the two qubits not neighbors?
         if (std::abs((int)qids[0] - (int)qids[1]) > 1) {
-          return Status(static_cast<tensorflow::errors::Code>(
-            absl::StatusCode::kInvalidArgument),
+          return Status(tensorflow::error::INVALID_ARGUMENT,
                         "A program is not in 1D topology. It contains an"
                         " operation with qubits not neighbors each other.");
         }
