@@ -24,6 +24,7 @@ py_library(
         ":tfq_adj_grad_op_py",
         ":tfq_ps_util_ops_py",
         ":tfq_simulate_ops_py",
+        ":tfq_simulate_ops_cuda_py",
         ":tfq_unitary_op_py",
         ":tfq_utility_ops_py",
         # test addons
