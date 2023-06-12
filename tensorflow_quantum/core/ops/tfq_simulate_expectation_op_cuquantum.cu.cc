@@ -14,8 +14,8 @@ limitations under the License.
 #include <vector>
 
 #include <chrono>
+#include <custatevec.h>
 
-#include "../cuquantum_libs/include/custatevec.h"
 #include "../qsim/lib/circuit.h"
 #include "../qsim/lib/gate_appl.h"
 #include "../qsim/lib/gates_cirq.h"
@@ -48,7 +48,7 @@ typedef qsim::Circuit<QsimGate> QsimCircuit;
 class TfqSimulateExpectationOpCuQuantum : public tensorflow::OpKernel {
  public:
   explicit TfqSimulateExpectationOpCuQuantum(tensorflow::OpKernelConstruction* context)
-      : OpKernel(context) {}
+      : OpKernel(context) {  }
 
   void Compute(tensorflow::OpKernelContext* context) override {
     // TODO (mbbrough): add more dimension checks for other inputs here.
@@ -141,7 +141,7 @@ class TfqSimulateExpectationOpCuQuantum : public tensorflow::OpKernel {
     // Launch the cuda kernel.
     // Begin simulation.
     int largest_nq = 1;
-    Simulator sim = Simulator(cublas_handle_, custatevec_handle_);
+    Simulator sim = Simulator(custatevec_handle_);
     StateSpace ss = StateSpace(cublas_handle_, custatevec_handle_);
     auto sv = ss.Create(largest_nq);
     ss.SetStateZero(sv);
@@ -201,7 +201,7 @@ class TfqSimulateExpectationOpCuQuantum : public tensorflow::OpKernel {
       int cur_op_index;
 
       // Launch custatevec, begin simulation.
-      auto sim = Simulator(cublas_handle_, custatevec_handle_);
+      auto sim = Simulator(custatevec_handle_);
       auto ss = StateSpace(cublas_handle_, custatevec_handle_);
       auto sv = ss.Create(largest_nq);
       auto scratch = ss.Create(largest_nq);
@@ -253,10 +253,10 @@ class TfqSimulateExpectationOpCuQuantum : public tensorflow::OpKernel {
 };
 
 REGISTER_KERNEL_BUILDER(
-    Name("TfqSimulateExpectationCuquantum").Device(tensorflow::DEVICE_CPU),
-    TfqSimulateExpectationOpCuQuantum);
+    Name("TfqSimulateExpectationOpCuQuantum").Device(tensorflow::DEVICE_CPU),
+    TfqSimulateExpectationOpCuQuantumOp);
 
-REGISTER_OP("TfqSimulateExpectationCuquantum")
+REGISTER_OP("TfqSimulateExpectationOpCuQuantum")
     .Input("programs: string")
     .Input("symbol_names: string")
     .Input("symbol_values: float")
