@@ -116,13 +116,7 @@ class TfqSimulateExpectationOpCuQuantum : public tensorflow::OpKernel {
     // create handles for simulator
     cublasCreate(&cublas_handle_);
     custatevecCreate(&custatevec_handle_);
-    if (max_num_qubits >= 26 || programs.size() == 1) {
-      ComputeLarge(num_qubits, fused_circuits, pauli_sums, context,
-                   &output_tensor); // HOW TO manage extraWorkspace size?
-    } else {
-      ComputeSmall(num_qubits, max_num_qubits, fused_circuits, pauli_sums,
-                   context, &output_tensor);
-    }
+
     // destroy handles in sync with simulator lifetime
     cublasDestroy(cublas_handle_);
     custatevecDestroy(custatevec_handle_);
