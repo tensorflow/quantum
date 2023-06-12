@@ -57,7 +57,8 @@ inline Status ParseProtoArg(
   // iterator<Map<str, Arg>>
   const auto arg_v = op.args().find(arg_name);
   if (arg_v == op.args().end()) {
-    return Status(tensorflow::error::INVALID_ARGUMENT,
+    return Status(static_cast<tensorflow::errors::Code>(
+            absl::StatusCode::kInvalidArgument),
                   "Could not find arg: " + arg_name + " in op.");
   }
   // find proto arg field.
@@ -69,7 +70,8 @@ inline Status ParseProtoArg(
     const auto iter = param_map.find(proto_arg.symbol());
     if (iter == param_map.end()) {
       return Status(
-          tensorflow::error::INVALID_ARGUMENT,
+          static_cast<tensorflow::errors::Code>(
+            absl::StatusCode::kInvalidArgument),
           "Could not find symbol in parameter map: " + proto_arg.symbol());
     }
     *result = iter->second.second;
@@ -100,7 +102,8 @@ inline Status ParseProtoControls(const Operation& op,
       absl::StrSplit(control_v_str, ',');
 
   if (control_toks.size() != control_v_toks.size()) {
-    return Status(tensorflow::error::INVALID_ARGUMENT,
+    return Status(static_cast<tensorflow::errors::Code>(
+            absl::StatusCode::kInvalidArgument),
                   "Mistmatched number of control qubits and control values.");
   }
   if (control_toks.empty()) {
@@ -119,7 +122,8 @@ inline Status ParseProtoControls(const Operation& op,
   for (auto tok : control_v_toks) {
     valid = absl::SimpleAtoi(tok, &tmp);
     if (!valid) {
-      return Status(tensorflow::error::INVALID_ARGUMENT,
+      return Status(static_cast<tensorflow::errors::Code>(
+            absl::StatusCode::kInvalidArgument),
                     "Unparseable control value: " + std::string(tok));
     }
     control_values->push_back(tmp);
@@ -590,7 +594,8 @@ tensorflow::Status ParseAppendGate(const Operation& op,
   auto build_f = func_map.find(op.gate().id());
   if (build_f == func_map.end()) {
     *lookup_succeeded = false;
-    return Status(tensorflow::error::INVALID_ARGUMENT,
+    return Status(static_cast<tensorflow::errors::Code>(
+            absl::StatusCode::kInvalidArgument),
                   absl::StrCat("Could not parse gate id: ", op.gate().id(),
                                ". This is likely because a cirq.Channel was "
                                "used in an op that does not support them."));
@@ -774,7 +779,8 @@ tensorflow::Status ParseAppendChannel(const Operation& op,
 
   auto build_f = chan_func_map.find(op.gate().id());
   if (build_f == chan_func_map.end()) {
-    return Status(tensorflow::error::INVALID_ARGUMENT,
+    return Status(static_cast<tensorflow::errors::Code>(
+            absl::StatusCode::kInvalidArgument),
                   absl::StrCat("Could not parse channel id: ", op.gate().id()));
   }
   return build_f->second(op, num_qubits, time, ncircuit);
