@@ -5,7 +5,7 @@ on: [pull_request]
 jobs:
   lint:
     name: Lint check
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v1
       - uses: actions/setup-python@v1
@@ -19,7 +19,7 @@ jobs:
 
   format:
     name: Formatting check
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-18.04
 
     steps:
       - uses: actions/checkout@v1
@@ -34,7 +34,7 @@ jobs:
 
   wheel-build:
     name: Wheel test
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-18.04
 
     steps:
       - uses: actions/checkout@v1
@@ -53,7 +53,7 @@ jobs:
 
   bazel-tests:
     name: Library tests
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-18.04
     needs: [lint, format]
 
     steps:
@@ -71,7 +71,7 @@ jobs:
 
   leak-tests:
     name: Memory Leak tests
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-18.04
     needs: [lint, format]
 
     steps:
@@ -89,7 +89,7 @@ jobs:
 
   tutorials-test:
     name: Tutorial tests
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-18.04
     needs: [lint, format, wheel-build]
 
     steps:

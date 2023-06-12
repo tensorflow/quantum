@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# =============================================================================
+# ==============================================================================
 echo "Testing All Bazel cc_tests with msan.";
 test_outputs=$(bazel test -c opt --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=1" \
   --cxxopt="-msse2" --cxxopt="-msse3" --cxxopt="-msse4" \

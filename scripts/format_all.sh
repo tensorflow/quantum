@@ -12,13 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# =============================================================================
+# ==============================================================================
 echo "Doing python language formatting..."
 python3 -m yapf --style=google --in-place --recursive ./benchmarks
 python3 -m yapf --style=google --in-place --recursive ./tensorflow_quantum
 echo -e "Done! \nDoing notebook formatting..."
 python3 ./scripts/format_ipynb.py
 echo -e "Done! \nDoing C++ formatting..."
-find tensorflow_quantum/ -iname *.h -o -iname *.cc | xargs clang-format-6.0 -i -style=google
+find tensorflow_quantum/ -iname *.h -o -iname *.cc | xargs clang-format -i -style=google
 echo "Done!"
 exit 0;
