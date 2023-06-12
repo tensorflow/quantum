@@ -4,16 +4,6 @@
   - The TensorFlow dependency has been upgraded from 2.7.0 to 2.11.0:
   - TensorFlow Quantum is now compiled with `_GLIBCXX_USE_CXX11_ABI=1`. Downstream projects that encounter `std::__cxx11` or `[abi:cxx11]` linker errors will need to adopt this compiler option. See [the GNU C++ Library docs on Dual ABI](https://gcc.gnu.org/onlinedocs/libstdc++/manual/using_dual_abi.html).
   - TensorFlow Quantum is now compiled with `-std=c++17`, see [install.md](/docs/install.md) for build instructions.
-- Cirq dependency has been upgraded from `0.13.1` to `>=1.0`
-  - `cirq_google.XMON` was deprecated : https://github.com/quantumlib/Cirq/issues/4856
-  - `QuantumEngineSampler` was deprecated : https://github.com/quantumlib/Cirq/issues/5371 
-    - So, we need [ProcessorSampler() for testing](https://github.com/quantumlib/Cirq/blob/master/cirq-google/cirq_google/engine/processor_sampler_test.py)
-  - `cirq.CNOT` interface was changed.
-    - https://quantumai.google/reference/python/cirq/CNOT
-    - No more control, target argument.
-  - `cirq.SingleQubitGate` was deprecated.
-    - For testing, use `cirq.testing.SingleQubitGate` : https://github.com/quantumlib/Cirq/pull/5272/files
-    - For implementation, use `cirq.Gate`.
 
 # Major Features and Improvements
 - Significant performance improvements by introducing cuQuantum support for circuit execution on Nvidia GPUs:
