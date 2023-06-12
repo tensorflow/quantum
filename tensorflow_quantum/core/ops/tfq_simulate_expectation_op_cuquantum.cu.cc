@@ -112,6 +112,7 @@ class TfqSimulateExpectationOpCuQuantum : public tensorflow::OpKernel {
     for (const int num : num_qubits) {
       max_num_qubits = std::max(max_num_qubits, num);
     }
+<<<<<<< HEAD:tensorflow_quantum/core/ops/tfq_simulate_expectation_op_cuquantum.cu.cc
 
     // create handles for simulator
     cublasCreate(&cublas_handle_);
@@ -125,6 +126,21 @@ class TfqSimulateExpectationOpCuQuantum : public tensorflow::OpKernel {
  private:
   cublasHandle_t cublas_handle_;
   custatevecHandle_t custatevec_handle_;
+=======
+    if (max_num_qubits >= 26 || programs.size() == 1 || true) {
+      ComputeLarge(num_qubits, fused_circuits, pauli_sums, context,
+                   &output_tensor);
+    } else {
+      ComputeSmall(num_qubits, max_num_qubits, fused_circuits, pauli_sums,
+                   context, &output_tensor);
+    }
+  }
+
+ private:
+  int num_threads_in_sim_;
+  int thread_per_block_;
+  int block_count_;
+>>>>>>> parent of 4f6290a (Fix ComputeSmall and enable it.):tensorflow_quantum/core/ops/tfq_simulate_expectation_op_cuda.cu.cc
 
   // Define the GPU implementation that launches the CUDA kernel.
   void ComputeLarge(
@@ -136,6 +152,7 @@ class TfqSimulateExpectationOpCuQuantum : public tensorflow::OpKernel {
     // Instantiate qsim objects.
     using Simulator = qsim::SimulatorCuStateVec<float>;
     using StateSpace = Simulator::StateSpace;
+<<<<<<< HEAD:tensorflow_quantum/core/ops/tfq_simulate_expectation_op_cuquantum.cu.cc
 
 
     // Launch the cuda kernel.
@@ -143,6 +160,26 @@ class TfqSimulateExpectationOpCuQuantum : public tensorflow::OpKernel {
     int largest_nq = 1;
     Simulator sim = Simulator(custatevec_handle_);
     StateSpace ss = StateSpace(cublas_handle_, custatevec_handle_);
+=======
+    // Launch the cuda kernel. These parameters came from:
+    // 1. min/max num_threads in //third_party/qsim/tests/simulator_cuda_test.cu
+    // 2. min/max num_threads & dblocks in
+    //    //third_party/qsim/tests/statespace_cuda_test.cu
+    // //third_party/qsim/lib/statespace_cuda.h:55-64
+    // num_dblocks has no explanation. just follow test code 2 or 16.
+    int block_count = 2;  // 2 or 16;
+    // num_threads = 2**q where q in [5..10]
+    int thread_per_block = 128;  // 32, 64, 128, 256, 512, 1024;
+    // TFQ GPU
+    StateSpace::Parameter param_ss;
+    param_ss.num_threads = thread_per_block;
+    param_ss.num_dblocks = block_count;
+
+    // Begin simulation.
+    int largest_nq = 1;
+    Simulator sim = Simulator();
+    StateSpace ss = StateSpace(param_ss);
+>>>>>>> parent of 4f6290a (Fix ComputeSmall and enable it.):tensorflow_quantum/core/ops/tfq_simulate_expectation_op_cuda.cu.cc
     auto sv = ss.Create(largest_nq);
     ss.SetStateZero(sv);
     auto scratch = ss.Create(largest_nq);
@@ -190,6 +227,13 @@ class TfqSimulateExpectationOpCuQuantum : public tensorflow::OpKernel {
     using Simulator = qsim::SimulatorCuStateVec<float>;
     using StateSpace = Simulator::StateSpace;
 
+<<<<<<< HEAD:tensorflow_quantum/core/ops/tfq_simulate_expectation_op_cuquantum.cu.cc
+=======
+    StateSpace::Parameter param_ss;
+    param_ss.num_threads = thread_per_block_;
+    param_ss.num_dblocks = block_count_;
+
+>>>>>>> parent of 4f6290a (Fix ComputeSmall and enable it.):tensorflow_quantum/core/ops/tfq_simulate_expectation_op_cuda.cu.cc
     const int output_dim_op_size = output_tensor->dimension(1);
 
     Status compute_status = Status::OK();
@@ -200,9 +244,15 @@ class TfqSimulateExpectationOpCuQuantum : public tensorflow::OpKernel {
       int largest_nq = 1;
       int cur_op_index;
 
+<<<<<<< HEAD:tensorflow_quantum/core/ops/tfq_simulate_expectation_op_cuquantum.cu.cc
       // Launch custatevec, begin simulation.
       auto sim = Simulator(custatevec_handle_);
       auto ss = StateSpace(cublas_handle_, custatevec_handle_);
+=======
+      // Begin simulation.
+      auto sim = Simulator();
+      auto ss = StateSpace(param_ss);
+>>>>>>> parent of 4f6290a (Fix ComputeSmall and enable it.):tensorflow_quantum/core/ops/tfq_simulate_expectation_op_cuda.cu.cc
       auto sv = ss.Create(largest_nq);
       auto scratch = ss.Create(largest_nq);
       for (int i = start; i < end; i++) {
