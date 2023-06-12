@@ -50,6 +50,5 @@ class ExamplesTest(tf.test.TestCase, parameterized.TestCase):
                                                       timeout=900,
                                                       kernel_name="python3")
 
-
 if __name__ == "__main__":
     tf.test.main()
