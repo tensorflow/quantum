@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-wget https://github.com/bazelbuild/bazel/releases/download/5.3.0/bazel_5.3.0-linux-x86_64.deb
-sudo dpkg -i bazel_5.3.0-linux-x86_64.deb
+wget https://github.com/bazelbuild/bazel/releases/download/5.1.0/bazel_5.1.0-linux-x86_64.deb
+sudo dpkg -i bazel_5.1.0-linux-x86_64.deb
 pip install --upgrade pip setuptools wheel
 pip install -r requirements.txt
