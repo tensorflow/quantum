@@ -112,21 +112,7 @@ class TfqSimulateExpectationOpCuQuantum : public tensorflow::OpKernel {
     for (const int num : num_qubits) {
       max_num_qubits = std::max(max_num_qubits, num);
     }
-<<<<<<< HEAD:tensorflow_quantum/core/ops/tfq_simulate_expectation_op_cuquantum.cu.cc
 
-    // create handles for simulator
-    cublasCreate(&cublas_handle_);
-    custatevecCreate(&custatevec_handle_);
-
-    // destroy handles in sync with simulator lifetime
-    cublasDestroy(cublas_handle_);
-    custatevecDestroy(custatevec_handle_);
-  }
-
- private:
-  cublasHandle_t cublas_handle_;
-  custatevecHandle_t custatevec_handle_;
-=======
     if (max_num_qubits >= 26 || programs.size() == 1 || true) {
       ComputeLarge(num_qubits, fused_circuits, pauli_sums, context,
                    &output_tensor);
