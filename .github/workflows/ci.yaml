@@ -5,7 +5,7 @@ on: [pull_request]
 jobs:
   lint:
     name: Lint check
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
       - uses: actions/setup-python@v1
@@ -19,7 +19,7 @@ jobs:
 
   format:
     name: Formatting check
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v1
@@ -27,6 +27,8 @@ jobs:
         with:
           python-version: '3.8'
           architecture: 'x64'
+      - name: get ubuntu version
+        run: lsb_release -a
       - name: Install Format tools
         run: pip install --upgrade pip setuptools; pip install -r requirements.txt; sudo apt-get install -y clang-format-6.0
       - name: Format Check
@@ -34,7 +36,7 @@ jobs:
 
   wheel-build:
     name: Wheel test
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v1
@@ -53,7 +55,7 @@ jobs:
 
   bazel-tests:
     name: Library tests
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     needs: [lint, format]
 
     steps:
@@ -71,7 +73,7 @@ jobs:
 
   leak-tests:
     name: Memory Leak tests
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     needs: [lint, format]
 
     steps:
@@ -89,7 +91,7 @@ jobs:
 
   tutorials-test:
     name: Tutorial tests
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     needs: [lint, format, wheel-build]
 
     steps:
