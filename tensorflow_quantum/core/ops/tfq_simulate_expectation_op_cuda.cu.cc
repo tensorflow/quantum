@@ -111,7 +111,6 @@ class TfqSimulateExpectationOpCuda : public tensorflow::OpKernel {
     for (const int num : num_qubits) {
       max_num_qubits = std::max(max_num_qubits, num);
     }
-<<<<<<< HEAD
     if (max_num_qubits >= 26 || programs.size() == 1) {
       ComputeLarge(num_qubits, fused_circuits, pauli_sums, context,
                    &output_tensor);
@@ -119,12 +118,6 @@ class TfqSimulateExpectationOpCuda : public tensorflow::OpKernel {
       ComputeSmall(num_qubits, max_num_qubits, fused_circuits, pauli_sums,
                    context, &output_tensor);
     }
-=======
-
-    ComputeLarge(num_qubits, fused_circuits, pauli_sums, context,
-                  &output_tensor);
-
->>>>>>> parent of 47e6aae (Fix lint)
   }
 
  private:
