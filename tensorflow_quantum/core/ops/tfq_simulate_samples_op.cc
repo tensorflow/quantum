@@ -48,7 +48,9 @@ typedef qsim::Circuit<QsimGate> QsimCircuit;
 class TfqSimulateSamplesOp : public tensorflow::OpKernel {
  public:
   explicit TfqSimulateSamplesOp(tensorflow::OpKernelConstruction* context)
-      : OpKernel(context) {}
+      : OpKernel(context) {
+        OP_REQUIRES_OK(context, random_gen_.Init(context));
+      }
 
   void Compute(tensorflow::OpKernelContext* context) override {
     // TODO (mbbrough): add more dimension checks for other inputs here.
@@ -129,6 +131,8 @@ class TfqSimulateSamplesOp : public tensorflow::OpKernel {
   }
 
  private:
+  tensorflow::GuardedPhiloxRandom random_gen_;
+
   void ComputeLarge(
       const std::vector<int>& num_qubits, const int max_num_qubits,
       const int num_samples,
@@ -146,15 +150,13 @@ class TfqSimulateSamplesOp : public tensorflow::OpKernel {
     StateSpace ss = StateSpace(tfq_for);
     auto sv = ss.Create(largest_nq);
 
-    tensorflow::GuardedPhiloxRandom random_gen;
-    random_gen.Init(tensorflow::random::New64(), tensorflow::random::New64());
-    auto local_gen = random_gen.ReserveSamples32(fused_circuits.size() + 1);
+    auto local_gen = random_gen_.ReserveSamples32(fused_circuits.size() + 1);
     tensorflow::random::SimplePhilox rand_source(&local_gen);
 
     // Simulate programs one by one. Parallelizing over state vectors
     // we no longer parallelize over circuits. Each time we encounter a
     // a larger circuit we will grow the Statevector as nescessary.
-    for (int i = 0; i < fused_circuits.size(); i++) {
+    for (size_t i = 0; i < fused_circuits.size(); i++) {
       int nq = num_qubits[i];
 
       if (nq > largest_nq) {
@@ -163,7 +165,7 @@ class TfqSimulateSamplesOp : public tensorflow::OpKernel {
         sv = ss.Create(largest_nq);
       }
       ss.SetStateZero(sv);
-      for (int j = 0; j < fused_circuits[i].size(); j++) {
+      for (size_t j = 0; j < fused_circuits[i].size(); j++) {
         qsim::ApplyFusedGate(sim, fused_circuits[i][j], sv);
       }
 
@@ -198,16 +200,13 @@ class TfqSimulateSamplesOp : public tensorflow::OpKernel {
     using Simulator = qsim::Simulator<const qsim::SequentialFor&>;
     using StateSpace = Simulator::StateSpace;
 
-    tensorflow::GuardedPhiloxRandom random_gen;
-    random_gen.Init(tensorflow::random::New64(), tensorflow::random::New64());
-
     auto DoWork = [&](int start, int end) {
       int largest_nq = 1;
       Simulator sim = Simulator(tfq_for);
       StateSpace ss = StateSpace(tfq_for);
       auto sv = ss.Create(largest_nq);
 
-      auto local_gen = random_gen.ReserveSamples32(fused_circuits.size() + 1);
+      auto local_gen = random_gen_.ReserveSamples32(fused_circuits.size() + 1);
       tensorflow::random::SimplePhilox rand_source(&local_gen);
 
       for (int i = start; i < end; i++) {
@@ -219,7 +218,7 @@ class TfqSimulateSamplesOp : public tensorflow::OpKernel {
           sv = ss.Create(largest_nq);
         }
         ss.SetStateZero(sv);
-        for (int j = 0; j < fused_circuits[i].size(); j++) {
+        for (size_t j = 0; j < fused_circuits[i].size(); j++) {
           qsim::ApplyFusedGate(sim, fused_circuits[i][j], sv);
         }
 
@@ -260,7 +259,10 @@ REGISTER_OP("TfqSimulateSamples")
     .Input("symbol_names: string")
     .Input("symbol_values: float")
     .Input("num_samples: int32")
+    .SetIsStateful()
     .Output("samples: int8")
+    .Attr("seed: int = 0")
+    .Attr("seed2: int = 0")
     .SetShapeFn([](tensorflow::shape_inference::InferenceContext* c) {
       tensorflow::shape_inference::ShapeHandle programs_shape;
       TF_RETURN_IF_ERROR(c->WithRank(c->input(0), 1, &programs_shape));
