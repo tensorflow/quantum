@@ -16,6 +16,7 @@
 # Remove PYTHONPATH collisions for protobuf.
 # pylint: disable=wrong-import-position
 import sys
+from cirq_google.engine.abstract_processor import AbstractProcessor
 
 NEW_PATH = [x for x in sys.path if 'com_google_protobuf' not in x]
 sys.path = NEW_PATH
@@ -349,11 +350,9 @@ class CirqSamplesTest(tf.test.TestCase, parameterized.TestCase):
         cirq_ops._get_cirq_samples()
         cirq_ops._get_cirq_samples(cirq.Simulator())
         cirq_ops._get_cirq_samples(cirq.DensityMatrixSimulator())
-        mock_engine = mock.Mock()
+        mock_processor = mock.create_autospec(AbstractProcessor)
         cirq_ops._get_cirq_samples(
-            cirq_google.QuantumEngineSampler(engine=mock_engine,
-                                             processor_id='test',
-                                             gate_set=cirq_google.XMON))
+            cirq_google.ProcessorSampler(processor=mock_processor))
 
     def test_cirq_sampling_op_inputs(self):
         """test input checking in the cirq sampling op."""
@@ -452,7 +451,9 @@ class CirqSamplesTest(tf.test.TestCase, parameterized.TestCase):
             def run_sweep(self, program, params, repetitions):
                 """Returns all ones in the correct sample shape."""
                 return [
-                    cirq.Result(
+                    cirq_google.EngineResult(
+                        job_id="1",
+                        job_finished_time="1",
                         params=param,
                         measurements={
                             'tfq':
