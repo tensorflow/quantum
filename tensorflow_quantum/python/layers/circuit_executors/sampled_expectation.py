@@ -22,6 +22,7 @@ import tensorflow as tf
 import cirq
 from tensorflow_quantum.core.ops import circuit_execution_ops
 from tensorflow_quantum.core.ops.noise import noisy_sampled_expectation_op
+from tensorflow_quantum.python import quantum_context
 from tensorflow_quantum.python.differentiators import differentiator as diff
 from tensorflow_quantum.python.differentiators import parameter_shift
 from tensorflow_quantum.python.layers.circuit_executors import input_checks
@@ -213,7 +214,11 @@ class SampledExpectation(tf.keras.layers.Layer):
 
     """
 
-    def __init__(self, backend='noiseless', differentiator=None, **kwargs):
+    def __init__(self,
+                 backend='noiseless',
+                 differentiator=None,
+                 use_cuquantum=False,
+                 **kwargs):
         """Instantiate this Layer.
 
         Create a layer that will output expectation values gained from
@@ -227,6 +232,7 @@ class SampledExpectation(tf.keras.layers.Layer):
                 derivative values of given operators_to_measure and circuit,
                 which must inherit `tfq.differentiators.Differentiator`.
                 Defaults to `parameter_shift.ParameterShift()` (None argument).
+            use_cuquantum: Calls TFQ GPU version op.
 
         """
         super().__init__(**kwargs)
@@ -246,10 +252,17 @@ class SampledExpectation(tf.keras.layers.Layer):
                             "not cirq.Sampler. Please use Expectation instead.")
 
         used_op = None
-        if backend == 'noiseless':
-            backend = None
-
-        if backend == 'noisy':
+        if backend == 'noiseless' or backend is None:
+            mode = quantum_context.get_quantum_concurrent_op_mode()
+            quantum_concurrent = False if use_cuquantum else mode
+            used_op = circuit_execution_ops.get_sampled_expectation_op(
+                backend=None,
+                use_cuquantum=use_cuquantum,
+                quantum_concurrent=quantum_concurrent,
+            )
+        elif backend == 'noisy':
+            if use_cuquantum:
+                raise ValueError('noisy backend does not currently support GPU')
             used_op = noisy_sampled_expectation_op.sampled_expectation
         else:
             used_op = circuit_execution_ops.get_sampled_expectation_op(
@@ -267,24 +280,30 @@ class SampledExpectation(tf.keras.layers.Layer):
              symbol_values=None,
              operators=None,
              repetitions=None,
-             initializer=tf.keras.initializers.RandomUniform(0, 2 * np.pi)):
+             initializer=None):
         """Keras call function.
 
-        Input options:
-            `inputs`, `symbol_names`, `symbol_values`:
-                see `input_checks.expand_circuits`
-            `operators`: see `input_checks.expand_operators`
-            `repetitions`: a Python `int` or a pre-converted
-                `tf.Tensor` containing a single `int` entry.
+        Args:
+            inputs: See `input_checks.expand_circuits.
+            symbol_names: See `input_checks.expand_circuits.
+            symbol_values: See `input_checks.expand_circuits.
+            operators: See `input_checks.expand_operators`
+            repetitions: A Python `int` or a pre-converted `tf.Tensor`
+                containing a single `int` entry.
+            initializer: The keras initializer object for weights.
+                Defaults to uniform distribution [0..2*pi]
 
-        Output shape:
+        Returns:
             `tf.Tensor` with shape [batch_size, n_ops] that holds the
-                expectation value for each circuit with each op applied to it
-                (after resolving the corresponding parameters in).
+            expectation value for each circuit with each op applied to it
+            (after resolving the corresponding parameters in).
         """
         values_empty = False
         if symbol_values is None:
             values_empty = True
+
+        if initializer is None:
+            initializer = tf.keras.initializers.RandomUniform(0, 2 * np.pi)
 
         inputs, symbol_names, symbol_values = input_checks.expand_circuits(
             inputs, symbol_names, symbol_values)
