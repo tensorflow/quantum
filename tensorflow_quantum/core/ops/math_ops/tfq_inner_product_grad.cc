@@ -398,13 +398,13 @@ class TfqInnerProductGradOp : public tensorflow::OpKernel {
           // if applicable compute control qubit mask and control value bits.
           uint64_t mask = 0;
           uint64_t cbits = 0;
-          for (size_t k = 0; k < cur_gate.controlled_by.size(); k++) {
+          for (int k = 0; k < cur_gate.controlled_by.size(); k++) {
             uint64_t control_loc = cur_gate.controlled_by[k];
             mask |= uint64_t{1} << control_loc;
             cbits |= ((cur_gate.cmask >> k) & 1) << control_loc;
           }
 
-          for (size_t k = 0;
+          for (int k = 0;
                k < gradient_gates[cur_batch_index][l - 1].grad_gates.size();
                k++) {
             // Copy sv_adj onto scratch2 in anticipation of non-unitary

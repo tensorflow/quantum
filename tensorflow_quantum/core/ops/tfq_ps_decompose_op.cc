@@ -65,11 +65,11 @@ class TfqPsDecomposeOp : public tensorflow::OpKernel {
         new_program.mutable_language()->set_gate_set("tfq_gate_set");
         new_program.mutable_circuit()->set_scheduling_strategy(
             Circuit::MOMENT_BY_MOMENT);
-        for (size_t j = 0; j < cur_program.circuit().moments().size(); j++) {
+        for (int j = 0; j < cur_program.circuit().moments().size(); j++) {
           Moment cur_moment(cur_program.circuit().moments().at(j));
           std::vector<Moment> temp_moment_list(max_buffer_moments, Moment());
           int num_extra_moments = 0;
-          for (size_t k = 0; k < cur_moment.operations().size(); k++) {
+          for (int k = 0; k < cur_moment.operations().size(); k++) {
             Operation cur_op = cur_moment.operations().at(k);
             auto &cur_op_map = *cur_op.mutable_args();
             if (cur_op.gate().id() == "PISP") {
