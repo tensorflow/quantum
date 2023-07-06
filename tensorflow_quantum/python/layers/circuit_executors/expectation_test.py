@@ -26,9 +26,12 @@ import sympy
 import tensorflow as tf
 
 import cirq
+from tensorflow_quantum.core.ops import circuit_execution_ops
 from tensorflow_quantum.python.layers.circuit_executors import expectation
 from tensorflow_quantum.python.differentiators import linear_combination
 from tensorflow_quantum.python import util
+
+RANDOM_SEED = 1234
 
 
 def _gen_single_bit_rotation_problem(bit, symbols, noisy):
@@ -47,7 +50,7 @@ def _gen_single_bit_rotation_problem(bit, symbols, noisy):
     return circuit
 
 
-class ExpectationTest(tf.test.TestCase):
+class ExpectationTest(parameterized.TestCase, tf.test.TestCase):
     """Basic tests for the expectation layer."""
 
     def test_expectation_instantiate(self):
@@ -75,11 +78,15 @@ class ExpectationTest(tf.test.TestCase):
             expectation.Expectation(backend=MySampler())
 
         with self.assertRaisesRegex(
-                TypeError, expected_regex="SimulatesExpectationValues or None"):
+                TypeError,
+                expected_regex="SimulatesExpectationValues or None",
+        ):
             expectation.Expectation(backend='junk')
 
         with self.assertRaisesRegex(
-                TypeError, expected_regex="tfq.differentiators.Differentiator"):
+                TypeError,
+                expected_regex="tfq.differentiators.Differentiator",
+        ):
             expectation.Expectation(differentiator='junk')
 
     def test_expectation_type_inputs_error(self):
@@ -188,7 +195,10 @@ class ExpectationTest(tf.test.TestCase):
 
         # Ensure tiling up of circuits works as expected.
         expectation.Expectation()(reg_circuit, operators=test_psum)
-        expectation.Expectation()(reg_circuit, operators=[test_psum, test_psum])
+        expectation.Expectation()(
+            reg_circuit,
+            operators=[test_psum, test_psum],
+        )
 
         # Ensure tiling up of symbol_values works as expected.
         expectation.Expectation()(symb_circuit,
@@ -275,10 +285,17 @@ class ExpectationTest(tf.test.TestCase):
             ], [cirq.Z(bit), cirq.Z(bit), cirq.Z(bit)]],
             repetitions=[[1, 2, 3], [4, 5, 6]])
 
-    def test_expectation_simple_tf_train(self):
+    @parameterized.parameters([{
+        'use_cuquantum': False,
+    }, {
+        'use_cuquantum': True,
+    }])
+    def test_expectation_simple_tf_train(self, use_cuquantum):
         """Train a layer using standard tf (not keras).
         This is a subtle test that will work since we don't use keras compile.
         """
+        tf.random.set_seed(RANDOM_SEED)
+        initializer = tf.keras.initializers.RandomUniform(0, 2 * np.pi)
         bit = cirq.GridQubit(0, 0)
         circuit = \
             cirq.Circuit(cirq.rx(sympy.Symbol('theta'))(bit))
@@ -289,7 +306,8 @@ class ExpectationTest(tf.test.TestCase):
             with tf.GradientTape() as tape:
                 circuit_out = layer(circuit,
                                     symbol_names=['theta'],
-                                    operators=op)
+                                    operators=op,
+                                    initializer=initializer)
                 mse = tf.square(tf.reduce_sum(tf.subtract(circuit_out, -1)))
             grads = tape.gradient(mse, layer.trainable_weights)
             optimizer.apply_gradients(zip(grads, layer.trainable_weights))
@@ -301,19 +319,30 @@ class ExpectationFunctionalTests(parameterized.TestCase, tf.test.TestCase):
 
     @parameterized.parameters([
         {
-            'backend': 'noisy'
+            'backend': 'noisy',
+            'use_cuquantum': False,
         },
         {
-            'backend': None  # old API usage
+            'backend': None,  # old API usage
+            'use_cuquantum': False,
+        },
+        {
+            'backend': None,
+            'use_cuquantum': True,
         }
     ])
-    def test_simple_param_value_input(self, backend):
+    def test_simple_param_value_input(self, backend, use_cuquantum):
         """Train a densely connected hybrid model.
 
-        This model will put a qubit in the zero or one state from a random state
-        given the input zero or one. This tests the input signature:
+        This model will put a qubit in the zero or one state from a random
+        state given the input zero or one. This tests the input signature:
         Expectation([input_value_batch]).
         """
+        if use_cuquantum and not circuit_execution_ops.is_gpu_configured():
+            # GPU is not set. Ignores this sub-test.
+            self.skipTest("GPU is not set. Ignoring gpu tests...")
+        tf.random.set_seed(RANDOM_SEED)
+        initializer = tf.keras.initializers.RandomUniform(0, 2 * np.pi)
         noisy = backend == 'noisy'
         bit = cirq.GridQubit(0, 0)
         symbols = sympy.symbols('x y z')
@@ -324,12 +353,15 @@ class ExpectationFunctionalTests(parameterized.TestCase, tf.test.TestCase):
         l1 = tf.keras.layers.Dense(10)(inputs)
         l2 = tf.keras.layers.Dense(3)(l1)
         reps = 1000 if noisy else None
-        outputs = expectation.Expectation(backend=backend)(
-            datum,
-            symbol_names=symbols,
-            operators=cirq.Z(bit),
-            symbol_values=l2,
-            repetitions=reps)
+        outputs = expectation.Expectation(
+            backend=backend,
+            use_cuquantum=use_cuquantum,
+        )(datum,
+          symbol_names=symbols,
+          operators=cirq.Z(bit),
+          symbol_values=l2,
+          repetitions=reps,
+          initializer=initializer)
         model = tf.keras.Model(inputs=[datum, inputs], outputs=outputs)
 
         data_in = np.array([[1], [0]], dtype=np.float32)
@@ -346,18 +378,29 @@ class ExpectationFunctionalTests(parameterized.TestCase, tf.test.TestCase):
 
     @parameterized.parameters([
         {
-            'backend': 'noisy'
+            'backend': 'noisy',
+            'use_cuquantum': False,
         },
         {
-            'backend': None  # old API usage
+            'backend': None,  # old API usage
+            'use_cuquantum': False,
+        },
+        {
+            'backend': None,
+            'use_cuquantum': True,
         }
     ])
-    def test_simple_op_input(self, backend):
+    def test_simple_op_input(self, backend, use_cuquantum):
         """Test a simple operator input
 
         Learn qubit in the z+ state using two different measurement operators.
         This tests input signature Expectation([operator_batch])
         """
+        if use_cuquantum and not circuit_execution_ops.is_gpu_configured():
+            # GPU is not set. Ignores this sub-test.
+            self.skipTest("GPU is not set. Ignoring gpu tests...")
+        tf.random.set_seed(RANDOM_SEED)
+        normal_initializer = tf.keras.initializers.RandomNormal()
         noisy = backend == 'noisy'
         bit = cirq.GridQubit(0, 0)
         symbols = sympy.symbols('x, y, z')
@@ -372,14 +415,19 @@ class ExpectationFunctionalTests(parameterized.TestCase, tf.test.TestCase):
         op_input = tf.keras.Input(shape=(1,), dtype=tf.dtypes.string)
 
         reps = 1000 if noisy else None
-        output = expectation.Expectation(backend=backend)(
-            circuit_input,
-            symbol_names=symbols,
-            operators=op_input,
-            initializer=tf.keras.initializers.RandomNormal(),
-            repetitions=reps)
+        output = expectation.Expectation(
+            backend=backend,
+            use_cuquantum=use_cuquantum,
+        )(circuit_input,
+          symbol_names=symbols,
+          operators=op_input,
+          initializer=normal_initializer,
+          repetitions=reps)
 
-        model = tf.keras.Model(inputs=[circuit_input, op_input], outputs=output)
+        model = tf.keras.Model(
+            inputs=[circuit_input, op_input],
+            outputs=output,
+        )
 
         model.compile(
             optimizer=tf.keras.optimizers.Adam(learning_rate=0.05),
@@ -394,22 +442,34 @@ class ExpectationFunctionalTests(parameterized.TestCase, tf.test.TestCase):
 
     @parameterized.parameters([
         {
-            'backend': 'noisy'
+            'backend': 'noisy',
+            'use_cuquantum': False,
         },
         {
-            'backend': None  # old api usage.
+            'backend': None,  # old api usage.
+            'use_cuquantum': False,
         },
         {
-            'backend': cirq.Simulator()
+            'backend': None,
+            'use_cuquantum': True,
+        },
+        {
+            'backend': cirq.Simulator(),
+            'use_cuquantum': False,
         }
     ])
-    def test_simple_op_and_param_input(self, backend):
+    def test_simple_op_and_param_input(self, backend, use_cuquantum):
         """Test a simple operator and parameter input.
 
         Train a NN to put a qubit in the z+ or x+ states based on a classical
         binary input. This tests the input signature:
         Expectation([value_batch, operator_batch]).
         """
+        if use_cuquantum and not circuit_execution_ops.is_gpu_configured():
+            # GPU is not set. Ignores this sub-test.
+            self.skipTest("GPU is not set. Ignoring gpu tests...")
+        tf.random.set_seed(RANDOM_SEED)
+        initializer = tf.keras.initializers.RandomUniform(0, 2 * np.pi)
         noisy = backend == 'noisy'
         bit = cirq.GridQubit(0, 0)
         symbols = sympy.symbols('x, y, z')
@@ -425,12 +485,15 @@ class ExpectationFunctionalTests(parameterized.TestCase, tf.test.TestCase):
         dense_1 = tf.keras.layers.Dense(10)(data_inp)
         dense_2 = tf.keras.layers.Dense(3)(dense_1)
         reps = 1000 if noisy else None
-        circuit_output = expectation.Expectation(backend=backend)(
-            circuit_inp,
-            symbol_names=symbols,
-            symbol_values=dense_2,
-            operators=op_inp,
-            repetitions=reps)
+        circuit_output = expectation.Expectation(
+            backend=backend,
+            use_cuquantum=use_cuquantum,
+        )(circuit_inp,
+          symbol_names=symbols,
+          symbol_values=dense_2,
+          operators=op_inp,
+          repetitions=reps,
+          initializer=initializer)
 
         functional_model = tf.keras.Model(
             inputs=[data_inp, op_inp, circuit_inp], outputs=[circuit_output])
@@ -447,18 +510,30 @@ class ExpectationFunctionalTests(parameterized.TestCase, tf.test.TestCase):
 
     @parameterized.parameters([
         {
-            'backend': 'noisy'
+            'backend': 'noisy',
+            'use_cuquantum': False,
         },
         {
-            'backend': None  # old api usage.
+            'backend': None,  # old API usage
+            'use_cuquantum': False,
+        },
+        {
+            'backend': None,
+            'use_cuquantum': True,
         }
     ])
-    def test_dnn_qnn_dnn(self, backend):
+    def test_dnn_qnn_dnn(self, backend, use_cuquantum):
         """Train a fully hybrid network using an Expectation layer.
 
         Train the network to output +-5 given an input of 1 or 0. This tests
         that everything works when Expectation layer is a middle layers.
         """
+        if use_cuquantum and not circuit_execution_ops.is_gpu_configured():
+            # GPU is not set. Ignores this sub-test.
+            self.skipTest("GPU is not set. Ignoring gpu tests...")
+        tf.random.set_seed(RANDOM_SEED)
+        initializer = tf.keras.initializers.RandomUniform(0, 2 * np.pi)
+
         noisy = backend == 'noisy'
         bit = cirq.GridQubit(0, 0)
         symbols = sympy.symbols('x, y, z')
@@ -472,12 +547,15 @@ class ExpectationFunctionalTests(parameterized.TestCase, tf.test.TestCase):
         d1 = tf.keras.layers.Dense(10)(classical_input)
         d2 = tf.keras.layers.Dense(3)(d1)
         reps = 1000 if noisy else None
-        quantum = expectation.Expectation(backend=backend)(
-            circuit_input,
-            symbol_names=symbols,
-            symbol_values=d2,
-            operators=cirq.Z(bit),
-            repetitions=reps)
+        quantum = expectation.Expectation(
+            backend=backend,
+            use_cuquantum=use_cuquantum,
+        )(circuit_input,
+          symbol_names=symbols,
+          symbol_values=d2,
+          operators=cirq.Z(bit),
+          repetitions=reps,
+          initializer=initializer)
         d3 = tf.keras.layers.Dense(1)(quantum)
 
         model = tf.keras.Model(inputs=[circuit_input, classical_input],

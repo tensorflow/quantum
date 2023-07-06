@@ -19,6 +19,7 @@ import tensorflow as tf
 
 from tensorflow_quantum.core.ops import circuit_execution_ops
 from tensorflow_quantum.core.ops.noise import noisy_samples_op
+from tensorflow_quantum.python import quantum_context
 from tensorflow_quantum.python.layers.circuit_executors import input_checks
 
 
@@ -139,7 +140,7 @@ class Sample(tf.keras.layers.Layer):
 
     """
 
-    def __init__(self, backend='noiseless', **kwargs):
+    def __init__(self, backend='noiseless', use_cuquantum=False, **kwargs):
         """Instantiate this Layer.
 
         Create a layer that will output bitstring samples taken from either a
@@ -150,12 +151,20 @@ class Sample(tf.keras.layers.Layer):
                 to the noiseless simulator. Options are {'noisy', 'noiseless'},
                 however users may also specify a preconfigured cirq execution
                 object to use instead, which must inherit `cirq.Sampler`.
+            use_cuquantum: Calls TFQ GPU version op.
         """
         super().__init__(**kwargs)
         used_op = None
-        if backend == 'noiseless':
-            used_op = circuit_execution_ops.get_sampling_op(None)
+        if backend == 'noiseless' or backend is None:
+            mode = quantum_context.get_quantum_concurrent_op_mode()
+            quantum_concurrent = False if use_cuquantum else mode
+            used_op = circuit_execution_ops.get_sampling_op(
+                None,
+                use_cuquantum=use_cuquantum,
+                quantum_concurrent=quantum_concurrent)
         elif backend == 'noisy':
+            if use_cuquantum:
+                raise ValueError('noisy backend has no GPU support.')
             used_op = noisy_samples_op.samples
         else:
             used_op = circuit_execution_ops.get_sampling_op(backend)
@@ -170,17 +179,18 @@ class Sample(tf.keras.layers.Layer):
              repetitions=None):
         """Keras call function.
 
-        Input options:
-            `inputs`, `symbol_names`, `symbol_values`:
-                see `input_checks.expand_circuits`
-            `repetitions`: a Python `int` or a pre-converted
-                `tf.Tensor` containing a single `int` entry.
+        Args:
+            inputs: See `input_checks.expand_circuits`.
+            symbol_names: See `input_checks.expand_circuits`.
+            symbol_values: See `input_checks.expand_circuits`.
+            repetitions: A Python `int` or a pre-converted `tf.Tensor`
+                containing a single `int` entry.
 
-        Output shape:
+        Returns:
             `tf.RaggedTensor` with shape:
-                [batch size of symbol_values, repetitions, <ragged string size>]
-                    or
-                [number of circuits, repetitions, <ragged string size>]
+            [batch size of symbol_values, repetitions, <ragged string size>]
+                or
+            [number of circuits, repetitions, <ragged string size>]
         """
         if repetitions is None:
             raise ValueError("Number of repetitions not specified.")

@@ -1,3 +1,5 @@
+load("@local_config_cuda//cuda:build_defs.bzl", "if_cuda_is_configured")
+
 package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
@@ -25,7 +27,9 @@ py_library(
     deps = [
         ":differentiator",
         "//tensorflow_quantum/core/ops:tfq_adj_grad_op_py",
-    ],
+    ] + if_cuda_is_configured([
+        "//tensorflow_quantum/core/ops:tfq_adj_grad_op_cuquantum_py",
+    ]),
 )
 
 py_test(
@@ -35,6 +39,7 @@ py_test(
     deps = [
         ":adjoint",
         "//tensorflow_quantum/core/ops:circuit_execution_ops",
+        "//tensorflow_quantum/python:util",
     ],
 )
 
@@ -118,6 +123,7 @@ py_test(
 py_test(
     name = "gradient_test",
     timeout = "eternal",
+    shard_count = 5,
     srcs = ["gradient_test.py"],
     python_version = "PY3",
     deps = [
