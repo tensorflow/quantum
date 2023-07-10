@@ -11,12 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# =============================================================================
+# ==============================================================================
 """Test the spin system dataset"""
 # Remove PYTHONPATH collisions for protobuf.
 # pylint: disable=wrong-import-position
 import sys
-
 NEW_PATH = [x for x in sys.path if 'com_google_protobuf' not in x]
 sys.path = NEW_PATH
 # pylint: enable=wrong-import-position
@@ -28,8 +27,7 @@ from tensorflow_quantum.datasets import spin_system
 from tensorflow_quantum.datasets.spin_system import SpinSystemInfo
 
 
-# TODO(#748): Inherit this class from tf.test.TestCase after fixing the issue.
-class TFIChainTest:
+class TFIChainTest(tf.test.TestCase):
     """Testing tfi_chain."""
     # pylint: disable=C0103
 

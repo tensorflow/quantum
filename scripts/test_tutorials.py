@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# =============================================================================
+# ==============================================================================
 """Module to ensure all notebooks execute without error by pytesting them."""
 import glob
 import re
@@ -47,7 +47,6 @@ class ExamplesTest(tf.test.TestCase, parameterized.TestCase):
                 cell['source'] = src
 
         _ = nbclient.execute(nb, timeout=900, kernel_name="python3")
-
 
 if __name__ == "__main__":
     tf.test.main()

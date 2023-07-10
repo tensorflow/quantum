@@ -12,4 +12,4 @@ google-api-core==1.21.0
 google-auth==1.18.0
 google-api-python-client==1.8.0
 grpcio==1.34.1
-protobuf==3.19.5
+protobuf==3.19.4

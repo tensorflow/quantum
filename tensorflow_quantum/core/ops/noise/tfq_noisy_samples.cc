@@ -159,7 +159,7 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
     // Simulate programs one by one. Parallelizing over state vectors
     // we no longer parallelize over circuits. Each time we encounter a
     // a larger circuit we will grow the Statevector as nescessary.
-    for (size_t i = 0; i < ncircuits.size(); i++) {
+    for (int i = 0; i < ncircuits.size(); i++) {
       int nq = num_qubits[i];
 
       if (nq > largest_nq) {
@@ -252,7 +252,7 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
       auto local_gen = random_gen.ReserveSamples32(needed_random);
       tensorflow::random::SimplePhilox rand_source(&local_gen);
 
-      for (size_t i = 0; i < ncircuits.size(); i++) {
+      for (int i = 0; i < ncircuits.size(); i++) {
         int nq = num_qubits[i];
         int j = start > 0 ? offset_prefix_sum[start - 1][i] : 0;
         int needed_samples = offset_prefix_sum[start][i] - j;

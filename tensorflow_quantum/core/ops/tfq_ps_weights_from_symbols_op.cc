@@ -82,9 +82,9 @@ class TfqPsWeightsFromSymbolOp : public tensorflow::OpKernel {
     auto DoWork = [&](int start, int end) {
       for (int i = start; i < end; i++) {
         Program cur_program = programs.at(i);
-        for (size_t j = 0; j < cur_program.circuit().moments().size(); j++) {
+        for (int j = 0; j < cur_program.circuit().moments().size(); j++) {
           Moment cur_moment = cur_program.circuit().moments().at(j);
-          for (size_t k = 0; k < cur_moment.operations().size(); k++) {
+          for (int k = 0; k < cur_moment.operations().size(); k++) {
             Operation cur_op = cur_moment.operations().at(k);
             if (ignored_symbol_set.contains(cur_op.gate().id())) continue;
 
@@ -146,10 +146,10 @@ class TfqPsWeightsFromSymbolOp : public tensorflow::OpKernel {
     auto DoWork2 = [&](int start, int end) {
       for (int i = start; i < end; i++) {
         for (int j = 0; j < n_symbols; j++) {
-          for (size_t k = 0; k < output_results.at(i).at(j).size(); k++) {
+          for (int k = 0; k < output_results.at(i).at(j).size(); k++) {
             output_tensor(i, j, k) = output_results.at(i).at(j).at(k);
           }
-          for (size_t k = output_results.at(i).at(j).size();
+          for (int k = output_results.at(i).at(j).size();
                k < largest_single_symbol; k++) {
             output_tensor(i, j, k) = 0.0f;
           }

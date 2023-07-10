@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# =============================================================================
+# ==============================================================================
 """TensorFlow Quantum adds qauntum computing primitives to TensorFlow.
 
 TensorFlow Quantum is an open source library for high performance batch
@@ -53,7 +53,7 @@ class InstallPlatlib(install):
 REQUIRED_PACKAGES = [
     'cirq-core~=1.0', 'cirq-google~=1.0', 'sympy == 1.8',
     'googleapis-common-protos==1.52.0', 'google-api-core==1.21.0',
-    'google-auth==1.18.0', 'protobuf==3.19.5'
+    'google-auth==1.18.0', 'protobuf==3.19.4'
 ]
 
 # placed as extra to not have required overwrite existing nightly installs if

@@ -38,7 +38,7 @@ void CreateGradientCircuit(
     const QsimCircuit& circuit, const std::vector<GateMetaData>& metadata,
     std::vector<std::vector<qsim::GateFused<QsimGate>>>* partial_fuses,
     std::vector<GradientOfGate>* grad_gates) {
-  for (size_t i = 0; i < metadata.size(); i++) {
+  for (int i = 0; i < metadata.size(); i++) {
     if (metadata[i].symbol_values.empty()) {
       continue;
     }
@@ -78,7 +78,7 @@ void CreateGradientCircuit(
     // PhasedX
     else if (circuit.gates[i].kind == qsim::Cirq::GateKind::kPhasedXPowGate) {
       // Process potentially several symbols.
-      for (size_t j = 0; j < metadata[i].symbol_values.size(); j++) {
+      for (int j = 0; j < metadata[i].symbol_values.size(); j++) {
         if (metadata[i].placeholder_names[j] ==
             GateParamNames::kPhaseExponent) {
           PopulateGradientPhasedXPhasedExponent(
@@ -103,7 +103,7 @@ void CreateGradientCircuit(
       // Process potentially several symbols.
 
       bool swapq = circuit.gates[i].swapped;
-      for (size_t j = 0; j < metadata[i].symbol_values.size(); j++) {
+      for (int j = 0; j < metadata[i].symbol_values.size(); j++) {
         if (metadata[i].placeholder_names[j] == GateParamNames::kTheta) {
           PopulateGradientFsimTheta(
               metadata[i].symbol_values[j], i,
@@ -128,7 +128,7 @@ void CreateGradientCircuit(
              qsim::Cirq::GateKind::kPhasedISwapPowGate) {
       // Process potentially several symbols.
       bool swapq = circuit.gates[i].swapped;
-      for (size_t j = 0; j < metadata[i].symbol_values.size(); j++) {
+      for (int j = 0; j < metadata[i].symbol_values.size(); j++) {
         if (metadata[i].placeholder_names[j] ==
             GateParamNames::kPhaseExponent) {
           PopulateGradientPhasedISwapPhasedExponent(
@@ -159,7 +159,7 @@ void CreateGradientCircuit(
 
   partial_fuses->assign(grad_gates->size() + 1,
                         std::vector<qsim::GateFused<QsimGate>>({}));
-  for (size_t i = 0; i < grad_gates->size(); i++) {
+  for (int i = 0; i < grad_gates->size(); i++) {
     right = circuit.gates.begin() + (*grad_gates)[i].index;
     (*partial_fuses)[i] =
         fuser.FuseGates(qsim::BasicGateFuser<qsim::IO, QsimGate>::Parameter(),
