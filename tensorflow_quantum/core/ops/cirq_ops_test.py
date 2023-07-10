@@ -16,8 +16,6 @@
 # Remove PYTHONPATH collisions for protobuf.
 # pylint: disable=wrong-import-position
 import sys
-from cirq_google.engine.abstract_processor import AbstractProcessor
-
 
 NEW_PATH = [x for x in sys.path if 'com_google_protobuf' not in x]
 sys.path = NEW_PATH
@@ -29,6 +27,7 @@ import tensorflow as tf
 from absl.testing import parameterized
 import cirq
 import cirq_google
+from cirq_google.engine.abstract_processor import AbstractProcessor
 
 from tensorflow_quantum.core.ops import cirq_ops
 from tensorflow_quantum.core.serialize import serializer
