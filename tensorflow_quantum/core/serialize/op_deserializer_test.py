@@ -38,7 +38,7 @@ def op_proto(json_dict):
 
 
 @cirq.value_equality
-class GateWithAttribute(cirq.SingleQubitGate):
+class GateWithAttribute(cirq.testing.SingleQubitGate):
     """GateAttribute helper class."""
 
     def __init__(self, val, not_req=None):

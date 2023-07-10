@@ -24,6 +24,8 @@ pip install gym==0.24.1
 pip install seaborn==0.12.0
 # tf_docs pip package needed for noise tutorial.
 pip install -q git+https://github.com/tensorflow/docs
+# ReCirq pip package needed for research tools.
+pip install --quiet git+https://github.com/quantumlib/ReCirq
 # Leave the quantum directory, otherwise errors may occur
 cd ..
 examples_output=$(python3 quantum/scripts/test_tutorials.py)
