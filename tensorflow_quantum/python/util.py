@@ -329,11 +329,11 @@ def convert_to_tensor(items_to_convert, deterministic_proto_serialize=False):
                             "got: {}".format(curr_type, type(item)))
             
     with concurrent.futures.ProcessPoolExecutor() as executor:
-        tensored_items = list(executor.map(convert_item, items_to_convert,
+        items = list(executor.map(convert_item, items_to_convert,
                                            [None]*len(items_to_convert)))
 
     # This will catch impossible dimensions
-    return tf.convert_to_tensor(tensored_items)
+    return tf.convert_to_tensor(items)
 
 
 def _parse_single(item):
