@@ -47,6 +47,7 @@ def _pad_state(sim, state, n):
         state = state.final_state_vector
     if isinstance(sim, cirq.DensityMatrixSimulator):
         state = state.final_density_matrix
+    state = np.atleast_1d(state)
     return np.pad(state, (0, (1 << n) - state.shape[-1]),
                   'constant',
                   constant_values=-2)

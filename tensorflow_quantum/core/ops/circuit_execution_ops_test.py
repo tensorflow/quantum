@@ -20,7 +20,6 @@ NEW_PATH = [x for x in sys.path if 'com_google_protobuf' not in x]
 sys.path = NEW_PATH
 # pylint: enable=wrong-import-position
 
-from unittest import mock
 import numpy as np
 import tensorflow as tf
 from absl.testing import parameterized
@@ -97,11 +96,8 @@ class OpGetterInputChecks(tf.test.TestCase):
         circuit_execution_ops.get_expectation_op()
         with self.assertRaisesRegex(NotImplementedError,
                                     expected_regex='Sample-based'):
-            mock_engine = mock.Mock()
             circuit_execution_ops.get_expectation_op(
-                cirq_google.QuantumEngineSampler(engine=mock_engine,
-                                                 processor_id='test',
-                                                 gate_set=cirq_google.XMON))
+                cirq_google.engine.ProcessorSampler(processor='test'))
         with self.assertRaisesRegex(
                 TypeError,
                 expected_regex="cirq.sim.simulator.SimulatesExpectationValues"):
@@ -118,11 +114,8 @@ class OpGetterInputChecks(tf.test.TestCase):
             backend=cirq.Simulator())
         circuit_execution_ops.get_sampled_expectation_op(
             backend=cirq.DensityMatrixSimulator())
-        mock_engine = mock.Mock()
         circuit_execution_ops.get_sampled_expectation_op(
-            cirq_google.QuantumEngineSampler(engine=mock_engine,
-                                             processor_id='test',
-                                             gate_set=cirq_google.XMON))
+            cirq_google.engine.ProcessorSampler(processor='test'))
         with self.assertRaisesRegex(TypeError, expected_regex="a Cirq.Sampler"):
             circuit_execution_ops.get_sampled_expectation_op(backend="junk")
 
@@ -137,11 +130,8 @@ class OpGetterInputChecks(tf.test.TestCase):
         circuit_execution_ops.get_sampling_op(backend=cirq.Simulator())
         circuit_execution_ops.get_sampling_op(
             backend=cirq.DensityMatrixSimulator())
-        mock_engine = mock.Mock()
         circuit_execution_ops.get_sampling_op(
-            backend=cirq_google.QuantumEngineSampler(engine=mock_engine,
-                                                     processor_id='test',
-                                                     gate_set=cirq_google.XMON))
+            backend=cirq_google.engine.ProcessorSampler(processor='test'))
         with self.assertRaisesRegex(TypeError,
                                     expected_regex="Expected a Cirq.Sampler"):
             circuit_execution_ops.get_sampling_op(backend="junk")
@@ -161,12 +151,8 @@ class OpGetterInputChecks(tf.test.TestCase):
             circuit_execution_ops.get_state_op(backend="junk")
         with self.assertRaisesRegex(TypeError,
                                     expected_regex="Cirq.SimulatesFinalState"):
-            mock_engine = mock.Mock()
             circuit_execution_ops.get_state_op(
-                backend=cirq_google.QuantumEngineSampler(
-                    engine=mock_engine,
-                    processor_id='test',
-                    gate_set=cirq_google.XMON))
+                cirq_google.engine.ProcessorSampler(processor='test'))
 
         with self.assertRaisesRegex(TypeError,
                                     expected_regex="must be type bool."):

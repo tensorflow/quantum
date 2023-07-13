@@ -38,15 +38,19 @@ def op_proto(json_dict):
 
 
 @cirq.value_equality
-class GateWithAttribute(cirq.SingleQubitGate):
+class GateWithAttribute(cirq.Gate):
     """GateAttribute helper class."""
 
     def __init__(self, val, not_req=None):
         self.val = val
         self.not_req = not_req
+        super(GateWithAttribute, self)
 
     def _value_equality_values_(self):
         return (self.val,)
+
+    def _num_qubits_(self):
+        return 1
 
 
 TEST_CASES = [

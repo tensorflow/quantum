@@ -127,7 +127,7 @@ def _serialize_controls(gate):
 def _serialize_control_vals(gate):
     """Helper to serialize control values if applicable.."""
     if hasattr(gate, '_tfq_control_values'):
-        return ','.join(str(v[0]) for v in gate._tfq_control_values)
+        return ','.join(str(v) for v in gate._tfq_control_values)
     return ''
 
 
@@ -872,7 +872,10 @@ def serialize_circuit(circuit_inp):
         for op in controlled_ops:
             tfq_compatible = op.sub_operation
             tfq_compatible._tfq_control_qubits = op.controls
-            tfq_compatible._tfq_control_values = op.control_values
+            val_list = list(op.control_values)
+            assert len(
+                val_list) == 1  # TFQ does not support superposition control.
+            tfq_compatible._tfq_control_values = val_list[0]
             new_ops[op.qubits] = tfq_compatible
 
         circuit[i] = cirq.Moment(
