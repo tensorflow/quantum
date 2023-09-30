@@ -130,7 +130,7 @@ class TfqPsSymbolReplaceOp : public tensorflow::OpKernel {
         ->workers->TransformRangeConcurrently(
             block_size, programs.size() * n_symbols, DoWork);
 
-    size_t biggest_pad = 0;
+    std::vector<std::string>::size_type biggest_pad = 0;
     Program empty = Program();
     empty.mutable_language()->set_gate_set("tfq_gate_set");
     empty.mutable_circuit();  // create empty circuits entry.
@@ -163,12 +163,14 @@ class TfqPsSymbolReplaceOp : public tensorflow::OpKernel {
       for (int i = start; i < end; i++) {
         int sidx = i % n_symbols;
         int pidx = i / n_symbols;
-        for (int j = 0; j < output_programs.at(pidx).at(sidx).size(); j++) {
+        for (std::vector<std::string>::size_type j = 0;
+             j < output_programs.at(pidx).at(sidx).size(); j++) {
           output_tensor(pidx, sidx, j) =
               output_programs.at(pidx).at(sidx).at(j);
         }
-        for (int j = output_programs.at(pidx).at(sidx).size(); j < biggest_pad;
-             j++) {
+        for (std::vector<std::string>::size_type j =
+                 output_programs.at(pidx).at(sidx).size();
+             j < biggest_pad; j++) {
           output_tensor(pidx, sidx, j) = empty_program;
         }
       }
