@@ -33,6 +33,13 @@ for Quantum Computing research that would not have otherwise been possible.
 
 See the [installation instructions](https://github.com/tensorflow/quantum/blob/master/docs/install.md).
 
+### Compatible Versions
+The installations work with the following versions:
+- Python 3.8.18
+- Cirq 0.13.1
+- Tensorflow 2.7.0
+- Tensorflow Quantum 0.7.2
+
 
 ## Examples
 
