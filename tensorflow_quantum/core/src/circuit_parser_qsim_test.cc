@@ -191,8 +191,7 @@ TEST_P(TwoQubitEigenFixture, TwoEigenGate) {
   // Test case where proto arg missing.
   ASSERT_EQ(QsimCircuitFromProgram(program_proto, symbol_map, 2, &test_circuit,
                                    &fused_circuit),
-            tensorflow::Status(static_cast<tensorflow::error::Code>(
-                                   absl::StatusCode::kInvalidArgument),
+            tensorflow::Status(absl::StatusCode::kInvalidArgument,
                                "Could not find arg: exponent in op."));
 
   test_circuit.gates.clear();
@@ -204,8 +203,7 @@ TEST_P(TwoQubitEigenFixture, TwoEigenGate) {
   ASSERT_EQ(
       QsimCircuitFromProgram(program_proto, symbol_map, 2, &test_circuit,
                              &fused_circuit),
-      tensorflow::Status(static_cast<tensorflow::error::Code>(
-                             absl::StatusCode::kInvalidArgument),
+      tensorflow::Status(absl::StatusCode::kInvalidArgument,
                          "Could not find symbol in parameter map: alpha"));
 }
 
@@ -363,8 +361,7 @@ TEST_P(SingleQubitEigenFixture, SingleEigenGate) {
   // Test case where proto arg missing.
   ASSERT_EQ(QsimCircuitFromProgram(program_proto, symbol_map, 1, &test_circuit,
                                    &fused_circuit),
-            tensorflow::Status(static_cast<tensorflow::error::Code>(
-                                   absl::StatusCode::kInvalidArgument),
+            tensorflow::Status(absl::StatusCode::kInvalidArgument,
                                "Could not find arg: exponent in op."));
 
   test_circuit.gates.clear();
@@ -376,8 +373,7 @@ TEST_P(SingleQubitEigenFixture, SingleEigenGate) {
   ASSERT_EQ(
       QsimCircuitFromProgram(program_proto, symbol_map, 1, &test_circuit,
                              &fused_circuit),
-      tensorflow::Status(static_cast<tensorflow::error::Code>(
-                             absl::StatusCode::kInvalidArgument),
+      tensorflow::Status(absl::StatusCode::kInvalidArgument,
                          "Could not find symbol in parameter map: alpha"));
 }
 
@@ -695,8 +691,7 @@ TEST(QsimCircuitParserTest, FsimGate) {
   // Test case where proto arg missing.
   ASSERT_EQ(QsimCircuitFromProgram(program_proto, symbol_map, 2, &test_circuit,
                                    &fused_circuit),
-            tensorflow::Status(static_cast<tensorflow::error::Code>(
-                                   absl::StatusCode::kInvalidArgument),
+            tensorflow::Status(absl::StatusCode::kInvalidArgument,
                                "Could not find arg: theta in op."));
 
   test_circuit.gates.clear();
@@ -708,8 +703,7 @@ TEST(QsimCircuitParserTest, FsimGate) {
   ASSERT_EQ(
       QsimCircuitFromProgram(program_proto, symbol_map, 2, &test_circuit,
                              &fused_circuit),
-      tensorflow::Status(static_cast<tensorflow::error::Code>(
-                             absl::StatusCode::kInvalidArgument),
+      tensorflow::Status(absl::StatusCode::kInvalidArgument,
                          "Could not find symbol in parameter map: alpha"));
 }
 
@@ -859,8 +853,7 @@ TEST(QsimCircuitParserTest, PhasedISwap) {
   // Test case where proto arg missing.
   ASSERT_EQ(QsimCircuitFromProgram(program_proto, symbol_map, 2, &test_circuit,
                                    &fused_circuit),
-            tensorflow::Status(static_cast<tensorflow::error::Code>(
-                                   absl::StatusCode::kInvalidArgument),
+            tensorflow::Status(                                   absl::StatusCode::kInvalidArgument,
                                "Could not find arg: phase_exponent in op."));
 
   test_circuit.gates.clear();
@@ -872,8 +865,7 @@ TEST(QsimCircuitParserTest, PhasedISwap) {
   ASSERT_EQ(
       QsimCircuitFromProgram(program_proto, symbol_map, 2, &test_circuit,
                              &fused_circuit),
-      tensorflow::Status(static_cast<tensorflow::error::Code>(
-                             absl::StatusCode::kInvalidArgument),
+      tensorflow::Status(                             absl::StatusCode::kInvalidArgument,
                          "Could not find symbol in parameter map: alpha"));
 }
 
@@ -1027,8 +1019,7 @@ TEST(QsimCircuitParserTest, PhasedXPow) {
   // Test case where proto arg missing.
   ASSERT_EQ(QsimCircuitFromProgram(program_proto, symbol_map, 1, &test_circuit,
                                    &fused_circuit),
-            tensorflow::Status(static_cast<tensorflow::error::Code>(
-                                   absl::StatusCode::kInvalidArgument),
+            tensorflow::Status(                                   absl::StatusCode::kInvalidArgument,
                                "Could not find arg: phase_exponent in op."));
 
   test_circuit.gates.clear();
@@ -1040,8 +1031,7 @@ TEST(QsimCircuitParserTest, PhasedXPow) {
   ASSERT_EQ(
       QsimCircuitFromProgram(program_proto, symbol_map, 1, &test_circuit,
                              &fused_circuit),
-      tensorflow::Status(static_cast<tensorflow::error::Code>(
-                             absl::StatusCode::kInvalidArgument),
+      tensorflow::Status(                             absl::StatusCode::kInvalidArgument,
                          "Could not find symbol in parameter map: alpha"));
 }
 
@@ -1134,8 +1124,7 @@ TEST(QsimCircuitParserTest, InvalidControlValues) {
 
   ASSERT_EQ(QsimCircuitFromProgram(program_proto, empty_map, 3, &test_circuit,
                                    &fused_circuit, &metadata),
-            tensorflow::Status(static_cast<tensorflow::error::Code>(
-                                   absl::StatusCode::kInvalidArgument),
+            tensorflow::Status(                                   absl::StatusCode::kInvalidArgument,
                                "Unparseable control value: junk"));
 }
 
@@ -1168,8 +1157,7 @@ TEST(QsimCircuitParserTest, MismatchControlNum) {
   ASSERT_EQ(QsimCircuitFromProgram(program_proto, empty_map, 3, &test_circuit,
                                    &fused_circuit, &metadata),
             tensorflow::Status(
-                static_cast<tensorflow::error::Code>(
-                    absl::StatusCode::kInvalidArgument),
+                                    absl::StatusCode::kInvalidArgument,
                 "Mistmatched number of control qubits and control values."));
 }
 
@@ -1571,8 +1559,7 @@ TEST(QsimCircuitParserTest, NoisyBadProto) {
   NoisyQsimCircuit test_circuit;
   ASSERT_EQ(
       NoisyQsimCircuitFromProgram(program_proto, {}, 1, false, &test_circuit),
-      tensorflow::Status(static_cast<tensorflow::error::Code>(
-                             absl::StatusCode::kInvalidArgument),
+      tensorflow::Status(                             absl::StatusCode::kInvalidArgument,
                          "Could not parse channel id: ABCDEFG"));
 }
 

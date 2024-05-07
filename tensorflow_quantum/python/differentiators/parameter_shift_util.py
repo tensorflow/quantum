@@ -22,7 +22,10 @@ PARAMETER_IMPURITY_NAME = '_impurity_for_param_shift'
 
 
 @tf.function
-def parse_programs(programs, symbol_names, symbol_values, n_symbols,
+def parse_programs(programs,
+                   symbol_names,
+                   symbol_values,
+                   n_symbols,
                    n_shifts=2):
     """Helper function to get parameter-shifted programs after parsing programs.
 
@@ -85,6 +88,7 @@ def parse_programs(programs, symbol_names, symbol_values, n_symbols,
                            axis=-1)
 
     weights_plus = coeff * np.pi * 0.5 * 0.5 * delta_eig
+    # pylint: disable=no-value-for-parameter,unexpected-keyword-arg
     weights = tf.concat([weights_plus, -weights_plus], axis=-1)
     shifts_plus = tf.math.divide_no_nan(tf.math.divide(1.0, delta_eig), coeff)
 
@@ -94,5 +98,5 @@ def parse_programs(programs, symbol_names, symbol_values, n_symbols,
                        axis=-1), [1, 1, n_param_gates, n_shifts])
 
     shifts = val + tf.concat([shifts_plus, -shifts_plus], axis=-1)
-
+    # pylint: enable=no-value-for-parameter,unexpected-keyword-arg
     return new_programs, weights, shifts, n_param_gates
