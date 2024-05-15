@@ -50,11 +50,7 @@ class InstallPlatlib(install):
             self.install_lib = self.install_platlib
 
 
-REQUIRED_PACKAGES = [
-    'cirq-core==1.3.0',
-    'cirq-google==1.3.0',
-    'sympy == 1.12'
-]
+REQUIRED_PACKAGES = ['cirq-core==1.3.0', 'cirq-google==1.3.0', 'sympy == 1.12']
 
 # placed as extra to not have required overwrite existing nightly installs if
 # they exist.
