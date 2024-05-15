@@ -7,9 +7,7 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 
 
-
 EIGEN_COMMIT = "aa6964bf3a34fd607837dd8123bc42465185c4f8"
-# EIGEN_SHA256 = "eca9847b3fe6249e0234a342b78f73feec07d29f534e914ba5f920f3e09383a3"
 
 
 http_archive(
@@ -21,7 +19,6 @@ cc_library(
   visibility = ["//visibility:public"],
 )
     """,
-    # sha256 = EIGEN_SHA256,
         strip_prefix = "eigen-{commit}".format(commit = EIGEN_COMMIT),
         urls = [
             "https://storage.googleapis.com/mirror.tensorflow.org/gitlab.com/libeigen/eigen/-/archive/{commit}/eigen-{commit}.tar.gz".format(commit = EIGEN_COMMIT),
