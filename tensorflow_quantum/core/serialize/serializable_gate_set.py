@@ -140,11 +140,11 @@ class SerializableGateSet:
         return msg
 
     def serialize_op(
-            self,
-            op,
-            msg=None,
-            *,
-            arg_function_language='',
+        self,
+        op,
+        msg=None,
+        *,
+        arg_function_language='',
     ):
         """Serialize an Operation to cirq_google.api.v2.Operation proto.
 
@@ -195,10 +195,10 @@ class SerializableGateSet:
         raise NotImplementedError('Program proto does not contain a circuit.')
 
     def deserialize_op(
-            self,
-            operation_proto,
-            *,
-            arg_function_language='',
+        self,
+        operation_proto,
+        *,
+        arg_function_language='',
     ):
         """Deserialize an Operation from a cirq_google.api.v2.Operation.
 
@@ -231,10 +231,10 @@ class SerializableGateSet:
                                   arg_function_language=arg_function_language)
 
     def _deserialize_circuit(
-            self,
-            circuit_proto,
-            *,
-            arg_function_language,
+        self,
+        circuit_proto,
+        *,
+        arg_function_language,
     ):
         moments = []
         for i, moment_proto in enumerate(circuit_proto.moments):

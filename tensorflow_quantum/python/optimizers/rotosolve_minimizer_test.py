@@ -16,6 +16,7 @@
 # Remove PYTHONPATH collisions for protobuf.
 # pylint: disable=wrong-import-position
 import sys
+
 NEW_PATH = [x for x in sys.path if 'com_google_protobuf' not in x]
 sys.path = NEW_PATH
 # pylint: enable=wrong-import-position
@@ -145,7 +146,7 @@ class RotosolveMinimizerTest(tf.test.TestCase, parameterized.TestCase):
         a, b = sympy.symbols('a b')  # parameters for the circuit
         circuit = cirq.Circuit(
             cirq.rx(a).on(q0),
-            cirq.ry(b).on(q1), cirq.CNOT(control=q0, target=q1))
+            cirq.ry(b).on(q1), cirq.CNOT(q0, q1))
 
         # Build the Keras model.
         model = tf.keras.Sequential([

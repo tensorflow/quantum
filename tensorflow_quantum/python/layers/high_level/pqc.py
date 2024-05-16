@@ -131,17 +131,17 @@ class PQC(tf.keras.layers.Layer):
     """
 
     def __init__(
-            self,
-            model_circuit,
-            operators,
-            *,
-            repetitions=None,
-            backend='noiseless',
-            differentiator=None,
-            initializer=tf.keras.initializers.RandomUniform(0, 2 * np.pi),
-            regularizer=None,
-            constraint=None,
-            **kwargs,
+        self,
+        model_circuit,
+        operators,
+        *,
+        repetitions=None,
+        backend='noiseless',
+        differentiator=None,
+        initializer=tf.keras.initializers.RandomUniform(0, 2 * np.pi),
+        regularizer=None,
+        constraint=None,
+        **kwargs,
     ):
         """Instantiate this layer.
 

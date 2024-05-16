@@ -24,10 +24,12 @@ from tensorflow_quantum.python import quantum_context
 
 class TFQStateVectorSimulator(enum.Enum):
     """Enum to make specifying TFQ simulators user-friendly."""
+    # pylint: disable=invalid-name
     expectation = tfq_simulate_ops.tfq_simulate_expectation
     samples = tfq_simulate_ops.tfq_simulate_samples
     state = tfq_simulate_ops.tfq_simulate_state
     sampled_expectation = tfq_simulate_ops.tfq_simulate_sampled_expectation
+    # pylint: enable=invalid-name
 
 
 def _check_quantum_concurrent(quantum_concurrent):
@@ -37,9 +39,9 @@ def _check_quantum_concurrent(quantum_concurrent):
 
 
 def get_expectation_op(
-        backend=None,
-        *,
-        quantum_concurrent=quantum_context.get_quantum_concurrent_op_mode()):
+    backend=None,
+    *,
+    quantum_concurrent=quantum_context.get_quantum_concurrent_op_mode()):
     """Get a TensorFlow op that will calculate batches of expectation values.
 
     This function produces a non-differentiable TF op that will calculate
@@ -150,9 +152,9 @@ def get_expectation_op(
 
 
 def get_sampling_op(
-        backend=None,
-        *,
-        quantum_concurrent=quantum_context.get_quantum_concurrent_op_mode()):
+    backend=None,
+    *,
+    quantum_concurrent=quantum_context.get_quantum_concurrent_op_mode()):
     """Get a Tensorflow op that produces samples from given quantum circuits.
 
     This function produces a non-differentiable op that will calculate
@@ -242,9 +244,9 @@ def get_sampling_op(
 
 
 def get_state_op(
-        backend=None,
-        *,
-        quantum_concurrent=quantum_context.get_quantum_concurrent_op_mode()):
+    backend=None,
+    *,
+    quantum_concurrent=quantum_context.get_quantum_concurrent_op_mode()):
     """Get a TensorFlow op that produces states from given quantum circuits.
 
     This function produces a non-differentiable op that will calculate
@@ -332,9 +334,9 @@ def get_state_op(
 
 
 def get_sampled_expectation_op(
-        backend=None,
-        *,
-        quantum_concurrent=quantum_context.get_quantum_concurrent_op_mode()):
+    backend=None,
+    *,
+    quantum_concurrent=quantum_context.get_quantum_concurrent_op_mode()):
     """Get a TensorFlow op that will calculate sampled expectation values.
 
     This function produces a non-differentiable TF op that will calculate
