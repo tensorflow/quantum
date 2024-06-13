@@ -493,8 +493,8 @@ TEST(UtilQsimTest, AccumulateOperatorsBasic) {
   p_term_scratch2->set_coefficient_real(-5.0);
 
   // 0.5 * (0.123ZX -3X + 4I) + 0.25 * (-5I) applied onto psi.
-  (void)AccumulateOperators({p_sum, p_sum2}, {0.5, 0.25}, sim, ss, sv, scratch,
-                            dest);
+  std::ignore = AccumulateOperators({p_sum, p_sum2}, {0.5, 0.25}, sim, ss, sv,
+                                    scratch, dest);
 
   // Check that dest got accumulated onto.
   EXPECT_NEAR(ss.GetAmpl(dest, 0).real(), 0.577925, 1e-5);
@@ -536,7 +536,7 @@ TEST(UtilQsimTest, AccumulateOperatorsEmpty) {
   auto scratch = ss.Create(2);
   auto dest = ss.Create(2);
 
-  (void)AccumulateOperators({}, {}, sim, ss, sv, scratch, dest);
+  std::ignore = AccumulateOperators({}, {}, sim, ss, sv, scratch, dest);
 
   // Check sv is still in zero state.
   EXPECT_NEAR(ss.GetAmpl(sv, 0).real(), 1.0, 1e-5);
@@ -600,7 +600,8 @@ TEST(UtilQsimTest, AccumulateFusedCircuitsBasic) {
   // Initialize coeffs.
   std::vector<float> coeffs = {1.23, 4.56};
 
-  (void)AccumulateFusedCircuits(coeffs, fused_circuits, sim, ss, scratch, dest);
+  std::ignore =
+      AccumulateFusedCircuits(coeffs, fused_circuits, sim, ss, scratch, dest);
 
   // Scratch has coeffs[r][c] * fused circuits[r][c] where r, c = last indices.
   // Check that dest got accumulated onto.
@@ -629,7 +630,7 @@ TEST(UtilQsimTest, AccumulateFusedCircuitsEmpty) {
   auto scratch = ss.Create(2);
   auto dest = ss.Create(2);
 
-  (void)AccumulateFusedCircuits({}, {}, sim, ss, scratch, dest);
+  std::ignore = AccumulateFusedCircuits({}, {}, sim, ss, scratch, dest);
 
   // scratch has garbage value.
   // Check that dest contains all zeros.
@@ -646,13 +647,13 @@ static void AssertWellBalanced(const std::vector<std::vector<int>>& n_reps,
                                const int& num_threads,
                                const std::vector<std::vector<int>>& offsets) {
   auto max_work = std::vector<int>(n_reps.size(), -1);
-  for (int i = 0; i < n_reps.size(); i++) {
-    for (int j = 0; j < n_reps[0].size(); j++) {
+  for (std::vector<std::vector<int>>::size_type i = 0; i < n_reps.size(); i++) {
+    for (std::vector<int>::size_type j = 0; j < n_reps[0].size(); j++) {
       max_work[i] = std::max(max_work[i], n_reps[i][j]);
     }
   }
 
-  for (int i = 0; i < n_reps.size(); i++) {
+  for (std::vector<std::vector<int>>::size_type i = 0; i < n_reps.size(); i++) {
     int sum = 0;
     int prev_local_work = 0;
     for (int k = 0; k < num_threads; k++) {
