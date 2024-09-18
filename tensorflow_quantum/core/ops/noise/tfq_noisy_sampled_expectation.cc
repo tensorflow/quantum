@@ -66,6 +66,11 @@ class TfqNoisySampledExpectationOp : public tensorflow::OpKernel {
                 tensorflow::errors::InvalidArgument(absl::StrCat(
                     "Expected 5 inputs, got ", num_inputs, " inputs.")));
 
+    OP_REQUIRES(
+        context, context->input(3).dims() == 2,
+        tensorflow::errors::InvalidArgument(absl::StrCat(
+            "pauli_sums must be rank 2. Got ", context->input(3).dims())));
+
     // Create the output Tensor.
     const int output_dim_batch_size = context->input(0).dim_size(0);
     const int output_dim_op_size = context->input(3).dim_size(1);

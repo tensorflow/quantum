@@ -19,7 +19,6 @@ import numbers
 import numpy as np
 import tensorflow as tf
 import cirq
-import cirq_google
 
 from tensorflow_quantum.core.ops import batch_util
 from tensorflow_quantum.core.proto import pauli_sum_pb2
@@ -472,7 +471,6 @@ def _get_cirq_samples(sampler=cirq.Simulator()):
         if not isinstance(num_samples.dtype.as_numpy_dtype(), numbers.Integral):
             raise TypeError("num_samples tensor must be of integer type")
 
-        serialized_programs = programs
         programs, resolvers = _batch_deserialize_helper(programs, symbol_names,
                                                         symbol_values)
 
@@ -491,49 +489,12 @@ def _get_cirq_samples(sampler=cirq.Simulator()):
         ]
         max_n_qubits = max(len(p.all_qubits()) for p in programs)
 
-        if isinstance(sampler, cirq_google.QuantumEngineSampler):
-            # group samples from identical circuits to reduce communication
-            # overhead. Have to keep track of the order in which things came
-            # in to make sure the output is ordered correctly
-            to_be_grouped = [
-                (ser_prog.numpy(), resolver, index)
-                for index, (
-                    ser_prog,
-                    resolver) in enumerate(zip(serialized_programs, resolvers))
-            ]
-
-            grouped = _group_tuples(to_be_grouped)
-
-            # start all the necessary jobs
-            results_mapping = {}
-            for key, value in grouped.items():
-                program = programs[value[0][1]]
-                resolvers = [x[0] for x in value]
-                orders = [x[1] for x in value]
-
-                # sampler.run_sweep blocks until results are in, so go around it
-                result = sampler._engine.run_sweep(
-                    program=program,
-                    params=resolvers,
-                    repetitions=num_samples,
-                    processor_ids=sampler._processor_ids,
-                    gate_set=sampler._gate_set)
-                results_mapping[result] = orders
-
-            # get all results
-            cirq_results = [None] * len(programs)
-            for key, value in results_mapping.items():
-                this_results = key.results()
-                for result, index in zip(this_results, value):
-                    cirq_results[index] = result
-
-        else:
-            # All other cirq.Samplers handled here.
-            cirq_results = []
-            for results in sampler.run_batch(programs,
-                                             params_list=resolvers,
-                                             repetitions=num_samples):
-                cirq_results.extend(results)
+        # All other cirq.Samplers handled here.
+        cirq_results = []
+        for results in sampler.run_batch(programs,
+                                         params_list=resolvers,
+                                         repetitions=num_samples):
+            cirq_results.extend(results)
 
         results = []
         for r in cirq_results:

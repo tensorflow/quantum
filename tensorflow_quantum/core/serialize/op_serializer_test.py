@@ -15,6 +15,7 @@
 # Remove PYTHONPATH collisions for protobuf.
 # pylint: disable=wrong-import-position
 import sys
+
 NEW_PATH = [x for x in sys.path if 'com_google_protobuf' not in x]
 sys.path = NEW_PATH
 # pylint: enable=wrong-import-position
@@ -38,19 +39,25 @@ def op_proto(json):
     return op
 
 
-class GateWithAttribute(cirq.SingleQubitGate):
+class GateWithAttribute(cirq.Gate):
     """GateAttribute helper class."""
 
     def __init__(self, val):
         self.val = val
 
+    def num_qubits(self):
+        return 1
 
-class GateWithProperty(cirq.SingleQubitGate):
+
+class GateWithProperty(cirq.Gate):
     """GateProperty helper class."""
 
     def __init__(self, val, not_req=None):
         self._val = val
         self._not_req = not_req
+
+    def num_qubits(self):
+        return 1
 
     @property
     def val(self):
@@ -58,11 +65,14 @@ class GateWithProperty(cirq.SingleQubitGate):
         return self._val
 
 
-class GateWithMethod(cirq.SingleQubitGate):
+class GateWithMethod(cirq.Gate):
     """GateMethod helper class."""
 
     def __init__(self, val):
         self._val = val
+
+    def num_qubits(self):
+        return 1
 
     def get_val(self):
         """get val."""
