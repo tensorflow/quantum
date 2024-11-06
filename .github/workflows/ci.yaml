@@ -89,9 +89,10 @@ jobs:
         run: ./scripts/msan_test.sh
 
       - name: Save artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/upload-artifact@v4
         with:
-          path: artifacts
+          name: artifacts
+          path: /home/runner/.cache/bazel/_bazel_runner/**/execroot/__main__/bazel-out/
 
   # tutorials-test:
   #   name: Tutorial tests
