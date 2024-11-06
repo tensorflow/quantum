@@ -76,28 +76,30 @@ jobs:
     # needs: [lint, format]
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Check out a copy of the TFQ repository.
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - name: Install Python.
+        uses: actions/setup-python@v5
         with:
           python-version: '3.10'
           architecture: 'x64'
 
-      - name: Install Bazel on CI
+      - name: Install Bazel.
         run: ./scripts/ci_install.sh
 
-      - name: Configure CI TF
+      - name: Configure TF and TFQ.
         run: echo "Y\n" | ./configure.sh
 
-      - name: Leak Test qsim and src
+      - name: Perform memory leakage test on qsim and TFQ src.
         run: ./scripts/msan_test.sh
         continue-on-error: true
 
-      - name: Save artifacts
+      - name: Save Bazel output as downloadable artifacts.
         uses: actions/upload-artifact@v4
         with:
-          name: artifacts
-          path: /home/runner/.cache/bazel/_bazel_runner
+          name: bazel-out
+          path: /home/runner/.cache/bazel/_bazel_runner/**/execroot/__main__/bazel-out/
 
   # saving-test:
   #   name: Test saving artifactes
