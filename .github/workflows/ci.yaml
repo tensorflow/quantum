@@ -73,7 +73,7 @@ jobs:
   leak-tests:
     name: Memory Leak tests
     runs-on: ubuntu-20.04
-    needs: [lint, format]
+    # needs: [lint, format]
 
     steps:
       - uses: actions/checkout@v4
