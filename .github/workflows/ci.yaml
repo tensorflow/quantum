@@ -77,26 +77,27 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-python@v5
         with:
           python-version: '3.10'
           architecture: 'x64'
+
       - name: Install Bazel on CI
         run: ./scripts/ci_install.sh
 
-      # - name: Configure CI TF
-      #   run: echo "Y\n" | ./configure.sh
-      # - name: Leak Test qsim and src
-      #   run: ./scripts/msan_test.sh
+      - name: Configure CI TF
+        run: echo "Y\n" | ./configure.sh
 
-      - run: ls -la > files.txt
+      - name: Leak Test qsim and src
+        run: ./scripts/msan_test.sh
+        continue-on-error: true
 
       - name: Save artifacts
         uses: actions/upload-artifact@v4
         with:
           name: artifacts
-          path: files.txt
-          # path: /home/runner/.cache/bazel/_bazel_runner
+          path: /home/runner/.cache/bazel/_bazel_runner
 
   # saving-test:
   #   name: Test saving artifactes
