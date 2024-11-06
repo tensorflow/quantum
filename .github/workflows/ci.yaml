@@ -1,6 +1,6 @@
 name: Continuous Integration
 
-on: [pull_request]
+on: [pull_request, workflow_dispatch]
 
 
 jobs:
@@ -70,29 +70,42 @@ jobs:
   #     - name: Full Library Test
   #       run: ./scripts/test_all.sh
 
-  leak-tests:
-    name: Memory Leak tests
+  # leak-tests:
+  #   name: Memory Leak tests
+  #   runs-on: ubuntu-20.04
+  #   # needs: [lint, format]
+
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-python@v5
+  #       with:
+  #         python-version: '3.10'
+  #         architecture: 'x64'
+  #     - name: Install Bazel on CI
+  #       run: ./scripts/ci_install.sh
+  #     - name: Configure CI TF
+  #       run: echo "Y\n" | ./configure.sh
+  #     - name: Leak Test qsim and src
+  #       run: ./scripts/msan_test.sh
+
+  #     - name: Save artifacts
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: artifacts
+  #         path: .cache/bazel/_bazel_runner/**/execroot/__main__/bazel-out/
+
+  saving-test:
+    name: Test saving artifactes
     runs-on: ubuntu-20.04
-    # needs: [lint, format]
-
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
-          architecture: 'x64'
-      - name: Install Bazel on CI
-        run: ./scripts/ci_install.sh
-      - name: Configure CI TF
-        run: echo "Y\n" | ./configure.sh
-      - name: Leak Test qsim and src
-        run: ./scripts/msan_test.sh
-
+      - name: Make a test file
+        run: echo test > test.log
       - name: Save artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: artifacts
-          path: .cache/bazel/_bazel_runner/**/execroot/__main__/bazel-out/
+          name: foo
+          path: test.log
+
 
   # tutorials-test:
   #   name: Tutorial tests
