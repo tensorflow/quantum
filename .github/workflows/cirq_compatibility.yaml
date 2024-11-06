@@ -21,7 +21,8 @@ jobs:
       - name: Install Cirq nightly
         run: pip install -U cirq --pre
       - name: Nightly tests
-        run: ./scripts/test_all.sh
+        run: ./scripts/msan_test.sh
+        # run: ./scripts/test_all.sh
 
       - name: Save artifacts
         uses: actions/download-artifact@v4
