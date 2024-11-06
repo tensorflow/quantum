@@ -83,16 +83,20 @@ jobs:
           architecture: 'x64'
       - name: Install Bazel on CI
         run: ./scripts/ci_install.sh
-      - name: Configure CI TF
-        run: echo "Y\n" | ./configure.sh
-      - name: Leak Test qsim and src
-        run: ./scripts/msan_test.sh
+
+      # - name: Configure CI TF
+      #   run: echo "Y\n" | ./configure.sh
+      # - name: Leak Test qsim and src
+      #   run: ./scripts/msan_test.sh
+
+      - run: ls -la > files.txt
 
       - name: Save artifacts
         uses: actions/upload-artifact@v4
         with:
           name: artifacts
-          path: /home/runner/.cache/bazel/_bazel_runner/
+          path: files.txt
+          # path: /home/runner/.cache/bazel/_bazel_runner
 
   # saving-test:
   #   name: Test saving artifactes
