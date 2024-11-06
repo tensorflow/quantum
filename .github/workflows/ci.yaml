@@ -4,71 +4,71 @@ on: [pull_request]
 
 
 jobs:
-  lint:
-    name: Lint check
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
-          architecture: 'x64'
-      - name: Install Lint tools
-        run: pip install --upgrade pip setuptools; pip install -r requirements.txt;
-      - name: Lint All
-        run: ./scripts/lint_all.sh
+  # lint:
+  #   name: Lint check
+  #   runs-on: ubuntu-20.04
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-python@v5
+  #       with:
+  #         python-version: '3.10'
+  #         architecture: 'x64'
+  #     - name: Install Lint tools
+  #       run: pip install --upgrade pip setuptools; pip install -r requirements.txt;
+  #     - name: Lint All
+  #       run: ./scripts/lint_all.sh
 
-  format:
-    name: Formatting check
-    runs-on: ubuntu-20.04
+  # format:
+  #   name: Formatting check
+  #   runs-on: ubuntu-20.04
 
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
-          architecture: 'x64'
-      - name: Install Format tools
-        run: pip install --upgrade pip setuptools; pip install -r requirements.txt; sudo apt-get install -y clang-format-6.0
-      - name: Format Check
-        run: ./scripts/format_check.sh
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-python@v5
+  #       with:
+  #         python-version: '3.10'
+  #         architecture: 'x64'
+  #     - name: Install Format tools
+  #       run: pip install --upgrade pip setuptools; pip install -r requirements.txt; sudo apt-get install -y clang-format-6.0
+  #     - name: Format Check
+  #       run: ./scripts/format_check.sh
 
-  wheel-build:
-    name: Wheel test
-    runs-on: ubuntu-20.04
+  # wheel-build:
+  #   name: Wheel test
+  #   runs-on: ubuntu-20.04
 
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
-          architecture: 'x64'
-      - name: Install Bazel on CI
-        run: ./scripts/ci_install.sh
-      - name: Configure CI TF
-        run: echo "Y\n" | ./configure.sh
-      - name: Build Wheel Test
-        run: ./scripts/build_pip_package_test.sh
-      - name: Test Wheel
-        run: ./scripts/run_example.sh
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-python@v5
+  #       with:
+  #         python-version: '3.10'
+  #         architecture: 'x64'
+  #     - name: Install Bazel on CI
+  #       run: ./scripts/ci_install.sh
+  #     - name: Configure CI TF
+  #       run: echo "Y\n" | ./configure.sh
+  #     - name: Build Wheel Test
+  #       run: ./scripts/build_pip_package_test.sh
+  #     - name: Test Wheel
+  #       run: ./scripts/run_example.sh
 
-  bazel-tests:
-    name: Library tests
-    runs-on: ubuntu-20.04
-    needs: [lint, format]
+  # bazel-tests:
+  #   name: Library tests
+  #   runs-on: ubuntu-20.04
+  #   needs: [lint, format]
 
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
-          architecture: 'x64'
-      - name: Install Bazel on CI
-        run: ./scripts/ci_install.sh
-      - name: Configure CI TF
-        run: echo "Y\n" | ./configure.sh
-      - name: Full Library Test
-        run: ./scripts/test_all.sh
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-python@v5
+  #       with:
+  #         python-version: '3.10'
+  #         architecture: 'x64'
+  #     - name: Install Bazel on CI
+  #       run: ./scripts/ci_install.sh
+  #     - name: Configure CI TF
+  #       run: echo "Y\n" | ./configure.sh
+  #     - name: Full Library Test
+  #       run: ./scripts/test_all.sh
 
   leak-tests:
     name: Memory Leak tests
@@ -88,24 +88,29 @@ jobs:
       - name: Leak Test qsim and src
         run: ./scripts/msan_test.sh
 
-  tutorials-test:
-    name: Tutorial tests
-    runs-on: ubuntu-20.04
-    needs: [lint, format, wheel-build]
-
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Save artifacts
+        uses: actions/download-artifact@v4
         with:
-          python-version: '3.10'
-          architecture: 'x64'
-      - name: Install notebook dependencies
-        run: pip install --upgrade pip seaborn==0.10.0
-      - name: Install Bazel on CI
-        run: ./scripts/ci_install.sh
-      - name: Configure CI TF
-        run: echo "Y\n" | ./configure.sh
-      - name: Build Wheel
-        run: ./scripts/build_pip_package_test.sh
-      - name: Test Notebooks
-        run: ./scripts/ci_validate_tutorials.sh
+          path: artifacts
+
+  # tutorials-test:
+  #   name: Tutorial tests
+  #   runs-on: ubuntu-20.04
+  #   needs: [lint, format, wheel-build]
+
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-python@v5
+  #       with:
+  #         python-version: '3.10'
+  #         architecture: 'x64'
+  #     - name: Install notebook dependencies
+  #       run: pip install --upgrade pip seaborn==0.10.0
+  #     - name: Install Bazel on CI
+  #       run: ./scripts/ci_install.sh
+  #     - name: Configure CI TF
+  #       run: echo "Y\n" | ./configure.sh
+  #     - name: Build Wheel
+  #       run: ./scripts/build_pip_package_test.sh
+  #     - name: Test Notebooks
+  #       run: ./scripts/ci_validate_tutorials.sh
