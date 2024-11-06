@@ -92,7 +92,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: artifacts
-          path: /home/runner/.cache/bazel/_bazel_runner/**/execroot/__main__/bazel-out/
+          path: .cache/bazel/_bazel_runner/**/execroot/__main__/bazel-out/
 
   # tutorials-test:
   #   name: Tutorial tests
