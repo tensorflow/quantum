@@ -15,10 +15,10 @@
 # ==============================================================================
 echo "Testing All Bazel cc_tests with msan.";
 
-test_outputs=$(bazel test -c dbg --cxxopt="-g" \
+test_outputs=$(bazel test -c dbg --cxxopt="-g" --cxxopt="-fno-omit-frame-pointer" \
   --cxxopt="-fsanitize=address" --linkopt="-fsanitize=address" \
-  --announce_rc --subcommands --verbose_failures \
-  --show_timestamps --worker_verbose --experimental_repo_remote_exec \
+  --announce_rc --verbose_failures \
+  --show_timestamps --experimental_repo_remote_exec \
   --notest_keep_going --test_output=errors \
   //tensorflow_quantum/core/src:all)
 exit_code=$?
