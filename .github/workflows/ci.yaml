@@ -79,14 +79,37 @@ jobs:
       - name: Check out a copy of the TFQ repository.
         uses: actions/checkout@v4
 
-      - name: Install Python.
+      - name: Set up Bazel.
+        uses: bazel-contrib/setup-bazel@0.9.1
+        env:
+          USE_BAZEL_VERSION: 6.5.0
+        with:
+          # Avoid downloading Bazel every time.
+          bazelisk-cache: true
+          # Store build cache per workflow.
+          disk-cache: ${{ github.workflow }}
+          # Share repository cache between workflows.
+          repository-cache: true
+
+      - name: Set up Python.
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
           architecture: 'x64'
 
-      - name: Install Bazel.
-        run: ./scripts/ci_install.sh
+      - name: Set up cache for Python dependencies.
+        uses: actions/cache@v4
+        id: cache
+        with:
+          path: ${{ env.pythonLocation }}
+          key: ${{ env.pythonLocation }}-${{ hashFiles('requirements.txt') }}
+          enableCrossOsArchive: true
+
+      - name: Install Python dependencies if needed.
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          pip install --upgrade pip setuptools wheel
+          pip install -r requirements.txt
 
       - name: Configure TF and TFQ.
         run: echo "Y\n" | ./configure.sh
