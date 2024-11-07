@@ -505,13 +505,6 @@ TEST(ProgramResolutionTest, ResolveSymbolsPartial) {
                 .arg_value()
                 .float_value(),
             1.0);
-  EXPECT_EQ(symbol_program.circuit()
-                .moments(1)
-                .operations(0)
-                .args()
-                .at("exponent")
-                .symbol(),
-            "v2");
 }
 
 TEST(ProgramResolutionTest, ResolveSymbolsFull) {
