@@ -122,7 +122,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: bazel-out
-          path: /home/runner/.bazel/execroot/__main__/bazel-out
+          path: /home/runner/.bazel/execroot/__main__/bazel-out/**/testlogs/
 
   # saving-test:
   #   name: Test saving artifactes
