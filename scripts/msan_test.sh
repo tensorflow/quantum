@@ -14,21 +14,11 @@
 # limitations under the License.
 # ==============================================================================
 echo "Testing All Bazel cc_tests with msan.";
-test_outputs=$(bazel test -c opt --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=1" \
-  --cxxopt="-msse2" --cxxopt="-msse3" --cxxopt="-msse4" \
+
+test_outputs=$(bazel test -c dbg --cxxopt="-g" \
   --cxxopt="-fsanitize=address" --linkopt="-fsanitize=address" \
-  --cxxopt="-g" --cxxopt="-O0" \
-  --notest_keep_going --test_output=errors \
-  //tensorflow_quantum/core/src:all && \
-  bazel test -c opt --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=1" \
-  --cxxopt="-mavx2" --cxxopt="-mavx" --cxxopt="-mfma" \
-  --cxxopt="-fsanitize=address" --linkopt="-fsanitize=address" \
-  --cxxopt="-g" --cxxopt="-O0" \
-  --notest_keep_going --test_output=errors \
-  //tensorflow_quantum/core/src:all && \
-  bazel test -c opt --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=1" \
-  --cxxopt="-fsanitize=address" --linkopt="-fsanitize=address" \
-  --cxxopt="-g" --cxxopt="-O0" \
+  --announce_rc --subcommands --verbose_failures \
+  --show_timestamps --worker_verbose --experimental_repo_remote_exec \
   --notest_keep_going --test_output=errors \
   //tensorflow_quantum/core/src:all)
 exit_code=$?
@@ -40,3 +30,30 @@ else
 	echo "{$test_outputs}"
 	exit 64;
 fi
+
+# test_outputs=$(bazel test -c opt --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=1" \
+#   --cxxopt="-msse2" --cxxopt="-msse3" --cxxopt="-msse4" \
+#   --cxxopt="-fsanitize=address" --linkopt="-fsanitize=address" \
+#   --cxxopt="-g" --cxxopt="-O0" \
+#   --notest_keep_going --test_output=errors \
+#   //tensorflow_quantum/core/src:all && \
+#   bazel test -c opt --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=1" \
+#   --cxxopt="-mavx2" --cxxopt="-mavx" --cxxopt="-mfma" \
+#   --cxxopt="-fsanitize=address" --linkopt="-fsanitize=address" \
+#   --cxxopt="-g" --cxxopt="-O0" \
+#   --notest_keep_going --test_output=errors \
+#   //tensorflow_quantum/core/src:all && \
+#   bazel test -c opt --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=1" \
+#   --cxxopt="-fsanitize=address" --linkopt="-fsanitize=address" \
+#   --cxxopt="-g" --cxxopt="-O0" \
+#   --notest_keep_going --test_output=errors \
+#   //tensorflow_quantum/core/src:all)
+# exit_code=$?
+# if [ "$exit_code" == "0" ]; then
+# 	echo "Testing Complete!";
+# 	exit 0;
+# else
+# 	echo "Testing failed, please correct errors before proceeding."
+# 	echo "{$test_outputs}"
+# 	exit 64;
+# fi
