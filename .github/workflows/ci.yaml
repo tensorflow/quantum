@@ -122,7 +122,14 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: bazel-out
-          path: /home/runner/.bazel/execroot/__main__/bazel-out/**/testlogs/
+          retention-days: 7
+          include-hidden-files: true
+          path: |
+            /home/runner/.bazel/execroot/__main__/bazel-out/
+            !/home/runner/.bazel/execroot/__main__/bazel-out/**/*.so
+            !/home/runner/.bazel/execroot/__main__/bazel-out/**/*.o
+            !/home/runner/.bazel/execroot/__main__/bazel-out/**/_objs
+            !/home/runner/.bazel/execroot/__main__/bazel-out/**/_solib_k8
 
   # saving-test:
   #   name: Test saving artifactes
