@@ -19,7 +19,7 @@ test_outputs=$(bazel test -c dbg --cxxopt="-g" --cxxopt="-fno-omit-frame-pointer
   --cxxopt="-fsanitize=address" --linkopt="-fsanitize=address" \
   --color=no --show_progress_rate_limit=0 --test_summary=short \
   --announce_rc --subcommands --verbose_failures --show_timestamps \
-  --notest_keep_going --test_output=errors \
+  --keep_going --test_output=errors \
   //tensorflow_quantum/core/src:all)
 exit_code=$?
 if [ "$exit_code" == "0" ]; then
