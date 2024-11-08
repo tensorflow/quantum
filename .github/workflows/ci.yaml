@@ -115,7 +115,7 @@ jobs:
         run: echo "Y\n" | ./configure.sh
 
       - name: Perform memory leakage test on qsim and TFQ src.
-        run: ./scripts/msan_test.sh 2>&1 | tee bazel-run.log
+        run: ./scripts/msan_test.sh 2>&1 | tee bazel-output.log
         continue-on-error: true
 
       - name: Save Bazel output as downloadable artifacts.
