@@ -15,6 +15,8 @@
 # ==============================================================================
 echo "Testing All Bazel cc_tests with msan.";
 
+export ASAN_OPTIONS=debug=1:check_initialization_order=true:detect_invalid_pointer_pairs=1
+
 test_outputs=$(bazel test -c dbg --cxxopt="-g" --cxxopt="-fno-omit-frame-pointer" \
   --cxxopt="-fsanitize=address" --linkopt="-fsanitize=address" \
   --color=no --show_progress_rate_limit=0 --test_summary=short \
