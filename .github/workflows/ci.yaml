@@ -103,7 +103,7 @@ jobs:
         id: cache
         with:
           key: venv-${{ runner.os }}-${{ steps.setup_python.outputs.python-version }}-${{ hashFiles('requirements.txt') }}
-          path .venv
+          path: .venv
           enableCrossOsArchive: true
 
       - name: Install Python dependencies (if needed).
