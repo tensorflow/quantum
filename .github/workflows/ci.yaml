@@ -76,6 +76,9 @@ jobs:
     # needs: [lint, format]
 
     steps:
+      - name: Check out a copy of the TFQ repository.
+        uses: actions/checkout@v4
+
       - name: Set up Bazel.
         uses: bazel-contrib/setup-bazel@0.9.1
         env:
