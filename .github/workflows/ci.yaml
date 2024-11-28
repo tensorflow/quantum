@@ -7,6 +7,33 @@ env:
   arch: 'x64'
 
 jobs:
+  set-up-python:
+    name: Create and cache Python environment.
+    steps:
+      - name: Set up Python.
+        uses: actions/setup-python@v5
+        id: setup_python
+        with:
+          python-version: ${{ env.python-version }}
+          architecture: ${{ env.arch }}
+
+      - name: Install Python dependencies (if needed).
+        run: |
+          python -m venv .venv
+          source .venv/bin/activate
+          pip install --upgrade pip setuptools wheel
+          pip install -r requirements.txt
+          echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
+          echo "VIRTUAL_ENV=$VIRTUAL_ENV" >> $GITHUB_ENV
+
+      - name: Saved cached virtualenv.
+        uses: actions/cache/save@v4
+        with:
+          key: venv-${{ runner.os }}-${{ env.python-version }}-${{ hashFiles('requirements.txt') }}
+          path: .venv
+
+
+
   # lint:
   #   name: Lint check
   #   runs-on: ubuntu-20.04
@@ -73,8 +100,9 @@ jobs:
   #     - name: Full Library Test
   #       run: ./scripts/test_all.sh
 
-  leak-tests:
+  run-leak-tests:
     name: Memory Leak tests
+    needs: set-up-python
     runs-on: ubuntu-20.04
     # needs: [lint, format]
 
@@ -101,7 +129,7 @@ jobs:
           python-version: ${{ env.python-version }}
           architecture: ${{ env.arch }}
 
-      - name: Restore cached virtualenv (if there is one).
+      - name: Restore cached virtualenv.
         uses: actions/cache/restore@v4
         id: cache
         with:
@@ -109,20 +137,26 @@ jobs:
           path: .venv
           enableCrossOsArchive: true
 
-      - name: Install Python dependencies (if needed).
+      - name: Activate virtualenv for this job.
         run: |
-          python -m venv .venv
           source .venv/bin/activate
-          pip install --upgrade pip setuptools wheel
-          pip install -r requirements.txt
           echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
           echo "VIRTUAL_ENV=$VIRTUAL_ENV" >> $GITHUB_ENV
 
-      - name: Saved cached virtualenv.
-        uses: actions/cache/save@v4
-        with:
-          key: venv-${{ runner.os }}-${{ env.python-version }}-${{ hashFiles('requirements.txt') }}
-          path: .venv
+      # - name: Install Python dependencies (if needed).
+      #   run: |
+      #     python -m venv .venv
+      #     source .venv/bin/activate
+      #     pip install --upgrade pip setuptools wheel
+      #     pip install -r requirements.txt
+      #     echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
+      #     echo "VIRTUAL_ENV=$VIRTUAL_ENV" >> $GITHUB_ENV
+
+      # - name: Saved cached virtualenv.
+      #   uses: actions/cache/save@v4
+      #   with:
+      #     key: venv-${{ runner.os }}-${{ env.python-version }}-${{ hashFiles('requirements.txt') }}
+      #     path: .venv
 
       - name: Configure TF and TFQ.
         run: echo "Y\n" | ./configure.sh
@@ -135,7 +169,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: bazel-out
-          retention-days: 7
+          retention-days: 14
           include-hidden-files: true
           path: |
             bazel-output.log
