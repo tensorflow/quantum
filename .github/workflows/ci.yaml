@@ -11,6 +11,9 @@ jobs:
     name: Create and cache Python environment.
     runs-on: ubuntu-20.04
     steps:
+      - name: Check out a copy of the TFQ repository.
+        uses: actions/checkout@v4
+
       - name: Set up Python.
         uses: actions/setup-python@v5
         id: setup_python
@@ -18,7 +21,7 @@ jobs:
           python-version: ${{ env.python-version }}
           architecture: ${{ env.arch }}
 
-      - name: Install Python dependencies (if needed).
+      - name: Install Python dependencies.
         run: |
           python -m venv .venv
           source .venv/bin/activate
