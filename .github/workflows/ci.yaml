@@ -36,6 +36,22 @@ jobs:
           key: venv-${{ runner.os }}-${{ env.python-version }}-${{ hashFiles('requirements.txt') }}
           path: .venv
 
+  set-up-bazel:
+    name: Set up and cache a copy of Bazel.
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Set up Bazel.
+        uses: bazel-contrib/setup-bazel@0.9.1
+        env:
+          USE_BAZEL_VERSION: 6.5.0
+        with:
+          # Avoid downloading Bazel every time.
+          bazelisk-cache: true
+          # Store build cache per workflow.
+          disk-cache: ${{ github.workflow }}
+          # Share repository cache between workflows.
+          repository-cache: true
+
 
 
   # lint:
@@ -106,7 +122,7 @@ jobs:
 
   run-leak-tests:
     name: Memory Leak tests
-    needs: set-up-python
+    needs: [set-up-python, set-up-bazel]
     runs-on: ubuntu-20.04
     # needs: [lint, format]
 
@@ -114,28 +130,26 @@ jobs:
       - name: Check out a copy of the TFQ repository.
         uses: actions/checkout@v4
 
-      - name: Set up Bazel.
-        uses: bazel-contrib/setup-bazel@0.9.1
-        env:
-          USE_BAZEL_VERSION: 6.5.0
-        with:
-          # Avoid downloading Bazel every time.
-          bazelisk-cache: true
-          # Store build cache per workflow.
-          disk-cache: ${{ github.workflow }}
-          # Share repository cache between workflows.
-          repository-cache: true
+      # - name: Set up Bazel.
+      #   uses: bazel-contrib/setup-bazel@0.9.1
+      #   env:
+      #     USE_BAZEL_VERSION: 6.5.0
+      #   with:
+      #     # Avoid downloading Bazel every time.
+      #     bazelisk-cache: true
+      #     # Store build cache per workflow.
+      #     disk-cache: ${{ github.workflow }}
+      #     # Share repository cache between workflows.
+      #     repository-cache: true
 
       - name: Set up Python.
         uses: actions/setup-python@v5
-        id: setup_python
         with:
           python-version: ${{ env.python-version }}
           architecture: ${{ env.arch }}
 
       - name: Restore cached virtualenv.
         uses: actions/cache/restore@v4
-        id: cache
         with:
           key: venv-${{ runner.os }}-${{ env.python-version }}-${{ hashFiles('requirements.txt') }}
           path: .venv
@@ -217,3 +231,4 @@ jobs:
   #       run: ./scripts/build_pip_package_test.sh
   #     - name: Test Notebooks
   #       run: ./scripts/ci_validate_tutorials.sh
+.
