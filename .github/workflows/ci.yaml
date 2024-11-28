@@ -76,9 +76,6 @@ jobs:
     # needs: [lint, format]
 
     steps:
-      - name: Check out a copy of the TFQ repository.
-        uses: actions/checkout@v4
-
       - name: Set up Bazel.
         uses: bazel-contrib/setup-bazel@0.9.1
         env:
@@ -101,8 +98,10 @@ jobs:
         uses: actions/cache@v4
         id: cache
         with:
-          path: ${{ env.pythonLocation }}
-          key: ${{ env.pythonLocation }}-${{ hashFiles('requirements.txt') }}
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
           enableCrossOsArchive: true
 
       - name: Install Python dependencies if needed.
