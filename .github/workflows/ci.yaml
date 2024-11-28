@@ -9,6 +9,7 @@ env:
 jobs:
   set-up-python:
     name: Create and cache Python environment.
+    runs-on ubuntu-20.04
     steps:
       - name: Set up Python.
         uses: actions/setup-python@v5
