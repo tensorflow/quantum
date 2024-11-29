@@ -115,7 +115,7 @@ jobs:
           python3 -c 'import tensorflow as tf; print(tf.version.VERSION)'
 
       - name: Save the updated Python virtualenv
-        if: always() && steps.cache.outputs.have_tfq != 'true'
+        if: steps.cache.outputs.have_tfq != 'true'
         uses: actions/cache/save@v4
         with:
           key: venv-${{env.py-version}}-${{env.arch}}-${{hashFiles('requirements.txt')}}
@@ -201,7 +201,7 @@ jobs:
           pip install -U /tmp/tensorflow_quantum/*.whl
 
       - name: Save the updated Python virtualenv
-        if: always() && steps.cache.outputs.have_tfq != 'true'
+        if: steps.cache.outputs.have_tfq != 'true'
         uses: actions/cache/save@v4
         with:
           key: venv-${{env.py-version}}-${{env.arch}}-${{hashFiles('requirements.txt')}}
