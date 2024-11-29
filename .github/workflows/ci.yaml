@@ -40,30 +40,30 @@ permissions:
 
 run-name: Run CI for "${{github.event.pull_request.title || github.event.workflow_dispatch.display_title}}" by @${{github.triggering_actor}}
 jobs:
-  set-up-bazel:
-    name: Install & cache a copy of Bazel
-    runs-on: ubuntu-20.04
-    steps:
-      - name: Set up Bazel.
-        uses: bazel-contrib/setup-bazel@0.9.1
-        env:
-          USE_BAZEL_VERSION: ${{env.bazel-version}}
-        with:
-          # Avoid downloading Bazel every time.
-          bazelisk-cache: true
-          # Store build cache per workflow.
-          disk-cache: ${{github.workflow}}
-          # Share repository cache between workflows.
-          repository-cache: true
-          # Cache external/  repositories.
-          external-cache: true
+  # set-up-bazel:
+  #   name: Install & cache a copy of Bazel
+  #   runs-on: ubuntu-20.04
+  #   steps:
+  #     - name: Set up Bazel.
+  #       uses: bazel-contrib/setup-bazel@0.9.1
+  #       env:
+  #         USE_BAZEL_VERSION: ${{env.bazel-version}}
+  #       with:
+  #         # Avoid downloading Bazel every time.
+  #         bazelisk-cache: true
+  #         # Store build cache per workflow.
+  #         disk-cache: ${{github.workflow}}
+  #         # Share repository cache between workflows.
+  #         repository-cache: true
+  #         # Cache external/  repositories.
+  #         external-cache: true
 
-      - run: |
-          # Save information to the run log, in case it's needed for debugging.
-          set -x -e
-          uname -a
-          which bazel
-          bazel --version
+  #     - run: |
+  #         # Save information to the run log, in case it's needed for debugging.
+  #         set -x -e
+  #         uname -a
+  #         which bazel
+  #         bazel --version
 
   set-up-python:
     name: Create & cache Python environment
@@ -125,11 +125,25 @@ jobs:
 
   build-tfq:
     name: Configure, build, & cache TFQ
-    needs: [set-up-bazel, set-up-python]
+    needs: [set-up-python]
     runs-on: ubuntu-20.04
     steps:
       - name: Check out a copy of the TFQ git repository
         uses: actions/checkout@v4
+
+      - name: Set up Bazel.
+        uses: bazel-contrib/setup-bazel@0.9.1
+        env:
+          USE_BAZEL_VERSION: ${{env.bazel-version}}
+        with:
+          # Avoid downloading Bazel every time.
+          bazelisk-cache: true
+          # Store build cache per workflow.
+          disk-cache: ${{github.workflow}}
+          # Share repository cache between workflows.
+          repository-cache: true
+          # Cache external/  repositories.
+          external-cache: true
 
       - name: Restore cached Python virtualenv
         uses: actions/cache/restore@v4
@@ -181,7 +195,7 @@ jobs:
         #   ./scripts/build_pip_package_test.sh
         run: |
           set -x -e
-          build -c opt --cxxopt="-msse2" --cxxopt="-msse3" --cxxopt="-msse4" release:build_pip_package
+          bazel build -c opt --cxxopt="-msse2" --cxxopt="-msse3" --cxxopt="-msse4" release:build_pip_package
           rm -f /tmp/tensorflow_quantum/*
           bazel-bin/release/build_pip_package /tmp/tensorflow_quantum/
           pip install -U /tmp/tensorflow_quantum/*.whl
@@ -265,21 +279,26 @@ jobs:
   run-leak-tests:
     name: Test for memory leaks
     # needs: [lint, format]
-    needs: [set-up-bazel, set-up-python, build-tfq]
+    needs: [set-up-python, build-tfq]
     runs-on: ubuntu-20.04
 
     steps:
       - name: Check out a copy of the TFQ git repository
         uses: actions/checkout@v4
 
-      - name: Restore cached Bazel configuration
-        uses: actions/cache/restore@v4
+      - name: Set up Bazel.
+        uses: bazel-contrib/setup-bazel@0.9.1
+        env:
+          USE_BAZEL_VERSION: ${{env.bazel-version}}
         with:
-          key: bazel-${{env.bazel-version}}-${{runner.os}}-${{env.arch}}-${{env.py-version}}
-          path: bazel-cache
-      - run: |
-          set -x -e
-          cp bazel-cache/.bazelrc .bazelrc
+          # Avoid downloading Bazel every time.
+          bazelisk-cache: true
+          # Store build cache per workflow.
+          disk-cache: ${{github.workflow}}
+          # Share repository cache between workflows.
+          repository-cache: true
+          # Cache external/  repositories.
+          external-cache: true
 
       - name: Restore cached Python virtualenv
         uses: actions/cache/restore@v4
