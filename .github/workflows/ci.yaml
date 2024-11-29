@@ -30,9 +30,9 @@ on:
 
 env:
   arch: x64
-  py-version: '3.10'
-  py-venv: ./.venv
-  bazel-version: '6.5.0'
+  py_version: '3.10'
+  venv: ./.venv
+  bazel_version: '6.5.0'
   save_artifacts: false
 
 permissions:
@@ -47,7 +47,7 @@ jobs:
   #     - name: Set up Bazel
   #       uses: bazel-contrib/setup-bazel@0.9.1
   #       env:
-  #         USE_BAZEL_VERSION: ${{env.bazel-version}}
+  #         USE_BAZEL_VERSION: ${{env.bazel_version}}
   #       with:
   #         # Avoid downloading Bazel every time.
   #         bazelisk-cache: true
@@ -75,34 +75,38 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: ${{env.py-version}}
+          python-version: ${{env.py_version}}
           architecture: ${{env.arch}}
 
-      - name: Configure a cache for the Python virtualenv
+      - name: Set the cache key for the Python virtualenv cache
+        run: |
+          set -x -e
+          base="venv-${{env.py_version}}-${{env.arch}}"
+          key="$base-${{hashFiles('requirements.txt')}}"
+          echo "venv_cache_key=$key" >> $GITHUB_ENV
+
+      - name: Configure the cache for the Python virtualenv
         uses: actions/cache@v4
+        id: cache
         with:
-          key: venv-${{env.py-version}}-${{env.arch}}-${{hashFiles('requirements.txt')}}
-#          restore-keys: venv-${{env.py-version}}-${{env.arch}}-${{hashFiles('requirements.txt')}}
-          path: ${{env.py-venv}}
+          path: ${{env.venv}}
+          key: ${{env.venv_cache_key}}
 
       - name: Test whether the virtualenv cache is already populated
-        id: cache
         run: |
-          if [ -f "${{env.py-venv}}/bin/activate" ]; then
-            echo "Found cached virtualenv for Python ${{env.py-version}}."
+          if [ ${{steps.cache.outputs.cache-hit}} != true ]; then
+            echo "Found cached virtualenv for Python ${{env.py_version}}."
             echo "Will use it and skip remaining 'pip install' steps."
-            echo "have_virtualenv=true" >> "$GITHUB_OUTPUT"
           else
             echo "No cached Python virtualenv found; proceeding to create one."
-            echo "have_virtualenv=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Install Python dependencies into the virtualenv if needed
-        if: steps.cache.outputs.have_virtualenv != 'true'
+        if: steps.cache.outputs.cache-hit != 'true'
         run: |
           set -x -e
-          python -m venv ${{env.py-venv}}
-          source ${{env.py-venv}}/bin/activate
+          python -m venv ${{env.venv}}
+          source ${{env.venv}}/bin/activate
           pip install --upgrade pip setuptools wheel
           pip install -r requirements.txt
           echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
@@ -114,13 +118,18 @@ jobs:
           python3 -c 'import site; print(site.getsitepackages())'
           python3 -c 'import tensorflow as tf; print(tf.version.VERSION)'
 
-      # - name: Save the updated Python virtualenv
-      #   if: steps.cache.outputs.have_virtualenv != 'true'
-      #   uses: actions/cache/save@v4
-      #   with:
-      #     key: venv-${{env.py-version}}-${{env.arch}}-${{hashFiles('requirements.txt')}}
-      #     path: ${{env.py-venv}}
-      #     enableCrossOsArchive: true
+      - name: Delete the previous virtualenv cache contents
+        if: steps.cache.outputs.cache-hit != 'true'
+        continue-on-error: true
+        run: |
+          gh extension install actions/gh-actions-cache
+          gh actions-cache delete "${{env.venv_cache_key}}" --confirm
+
+      - name: Save the updated Python virtualenv
+        uses: actions/cache/save@v4
+        with:
+          path: ${{env.venv}}
+          key: ${{env.venv_cache_key}}
 
   build-tfq:
     name: Configure, build, & cache TFQ
@@ -133,7 +142,7 @@ jobs:
       - name: Set up Bazel
         uses: bazel-contrib/setup-bazel@0.9.1
         env:
-          USE_BAZEL_VERSION: ${{env.bazel-version}}
+          USE_BAZEL_VERSION: ${{env.bazel_version}}
         with:
           # Avoid downloading Bazel every time.
           bazelisk-cache: true
@@ -147,21 +156,21 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: ${{env.py-version}}
+          python-version: ${{env.py_version}}
           architecture: ${{env.arch}}
 
       - name: Restore cached Python virtualenv
         uses: actions/cache@v4
         with:
-          key: venv-${{env.py-version}}-${{env.arch}}-${{hashFiles('requirements.txt')}}
-#          restore-keys: venv-${{env.py-version}}-${{env.arch}}-${{hashFiles('requirements.txt')}}
-          path: ${{env.py-venv}}
+          path: ${{env.venv}}
+          key: venv-${{env.py_version}}-${{env.arch}}-${{hashFiles('requirements.txt')}}
+#          restore-keys: venv-${{env.py_version}}-${{env.arch}}-${{hashFiles('requirements.txt')}}
           enableCrossOsArchive: true
 
       - name: Activate the Python virtualenv for this job
         run: |
           set -x -e
-          source ${{env.py-venv}}/bin/activate
+          source ${{env.venv}}/bin/activate
           echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
           echo "$GITHUB_PATH"
 
@@ -183,8 +192,8 @@ jobs:
         if: steps.cache.outputs.have_tfq != 'true'
         uses: actions/cache@v4
         with:
-          key: bazel-${{env.bazel-version}}-${{runner.os}}-${{env.arch}}-${{env.py-version}}
           path: bazel-cache
+          key: bazel-${{env.bazel_version}}-${{runner.os}}-${{env.arch}}-${{env.py_version}}
 
       - name: Configure TFQ
         if: steps.cache.outputs.have_tfq != 'true'
@@ -209,8 +218,8 @@ jobs:
       #   if: steps.cache.outputs.have_tfq != 'true'
       #   uses: actions/cache/save@v4
       #   with:
-      #     key: venv-${{env.py-version}}-${{env.arch}}-${{hashFiles('requirements.txt')}}
-      #     path: ${{env.py-venv}}
+      #     path: ${{env.venv}}
+      #     key: venv-${{env.py_version}}-${{env.arch}}-${{hashFiles('requirements.txt')}}
       #     enableCrossOsArchive: true
 
 
@@ -293,7 +302,7 @@ jobs:
       - name: Set up Bazel
         uses: bazel-contrib/setup-bazel@0.9.1
         env:
-          USE_BAZEL_VERSION: ${{env.bazel-version}}
+          USE_BAZEL_VERSION: ${{env.bazel_version}}
         with:
           # Avoid downloading Bazel every time.
           bazelisk-cache: true
@@ -307,26 +316,26 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: ${{env.py-version}}
+          python-version: ${{env.py_version}}
           architecture: ${{env.arch}}
-          cache: ${{env.py-venv}}
+          cache: ${{env.venv}}
 
       - name: Activate the Python virtualenv for this job
         run: |
           set -x -e
-          source ${{env.py-venv}}/bin/activate
+          source ${{env.venv}}/bin/activate
           echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
           echo "$GITHUB_PATH"
 
       # - name: Restore cached Python virtualenv
       #   uses: actions/cache/restore@v4
       #   with:
-      #     key: venv-${{env.py-version}}-${{env.arch}}-${{hashFiles('requirements.txt')}}
-      #     path: ${{env.py-venv}}
+      #     path: ${{env.venv}}
+      #     key: venv-${{env.py_version}}-${{env.arch}}-${{hashFiles('requirements.txt')}}
       #     enableCrossOsArchive: true
       # - run: |
       #     set -x -e
-      #     source ${{env.py-venv}}/bin/activate
+      #     source ${{env.venv}}/bin/activate
       #     echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
       #     echo "$GITHUB_PATH"
 
