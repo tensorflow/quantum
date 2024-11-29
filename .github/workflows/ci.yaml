@@ -80,7 +80,6 @@ jobs:
 
       - name: Configure a cache for the Python virtualenv
         uses: actions/cache@v4
-        id: cache
         with:
           key: venv-${{env.py-version}}-${{env.arch}}-${{hashFiles('requirements.txt')}}
 #          restore-keys: venv-${{env.py-version}}-${{env.arch}}-${{hashFiles('requirements.txt')}}
@@ -116,7 +115,7 @@ jobs:
           python3 -c 'import tensorflow as tf; print(tf.version.VERSION)'
 
       # - name: Save the updated Python virtualenv
-      #   if: steps.cache.outputs.have_tfq != 'true'
+      #   if: steps.cache.outputs.have_virtualenv != 'true'
       #   uses: actions/cache/save@v4
       #   with:
       #     key: venv-${{env.py-version}}-${{env.arch}}-${{hashFiles('requirements.txt')}}
