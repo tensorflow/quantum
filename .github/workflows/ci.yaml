@@ -84,12 +84,6 @@ jobs:
       - name: Check out a copy of the TFQ git repository.
         uses: actions/checkout@v4
 
-      # - name: Install Python.
-      #   uses: actions/setup-python@v5
-      #   with:
-      #     python-version: ${{env.py-version}}
-      #     architecture: ${{env.arch}}
-
       - name: Restore cached Python virtualenv.
         uses: actions/cache/restore@v4
         with:
@@ -197,12 +191,6 @@ jobs:
       - name: Check out a copy of the TFQ git repository.
         uses: actions/checkout@v4
 
-      # - name: Install Python.
-      #   uses: actions/setup-python@v5
-      #   with:
-      #     python-version: ${{env.py-version}}
-      #     architecture: ${{env.arch}}
-
       - name: Restore cached Python virtualenv.
         uses: actions/cache/restore@v4
         with:
@@ -221,10 +209,9 @@ jobs:
         with:
           key: bazel-${{env.bazel-version}}-${{runner.os}}-${{env.arch}}-${{env.py-version}}
           path: bazel-cache
-
       - run: |
           set -x -e
-          cp .bazel-cache/.bazelrc .bazelrc
+          cp bazel-cache/.bazelrc .bazelrc
 
       - name: Perform memory leakage test on qsim and TFQ src.
         run: ./scripts/msan_test.sh 2>&1 | tee bazel-output.log
