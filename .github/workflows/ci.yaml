@@ -144,6 +144,8 @@ jobs:
         # TODO: don't add path again
         run: |
           source ${{env.py-venv}}/bin/activate
+          echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
+          echo "VIRTUAL_ENV=$VIRTUAL_ENV" >> $GITHUB_ENV
 
       - name: Configure a cache for the Bazel configuration
         if: steps.cache.outputs.have_tfq != 'true'
