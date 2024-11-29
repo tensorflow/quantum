@@ -149,15 +149,14 @@ jobs:
         with:
           python-version: ${{env.py-version}}
           architecture: ${{env.arch}}
-          cache: ${{env.py-venv}}
 
-      # - name: Restore cached Python virtualenv
-      #   uses: actions/cache/restore@v4
-      #   with:
-      #     key: venv-${{env.py-version}}-${{env.arch}}-${{hashFiles('requirements.txt')}}
-      #     restore-keys: venv-${{env.py-version}}-${{env.arch}}-${{hashFiles('requirements.txt')}}
-      #     path: ${{env.py-venv}}
-      #     enableCrossOsArchive: true
+      - name: Restore cached Python virtualenv
+        uses: actions/cache@v4
+        with:
+          key: venv-${{env.py-version}}-${{env.arch}}-${{hashFiles('requirements.txt')}}
+#          restore-keys: venv-${{env.py-version}}-${{env.arch}}-${{hashFiles('requirements.txt')}}
+          path: ${{env.py-venv}}
+          enableCrossOsArchive: true
 
       - name: Activate the Python virtualenv for this job
         run: |
