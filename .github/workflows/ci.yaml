@@ -69,8 +69,8 @@ jobs:
       - name: Check out a copy of the TFQ git repository
         uses: actions/checkout@v4
 
-      - name: Configure a cache for the Python environment
-        uses: actions/cache@v4
+      - name: Set up the cache for the Python virtualenv
+        uses: actions/cache/restore@v4
         id: cache
         with:
           key: venv-${{env.py-version}}-${{env.arch}}-${{hashFiles('requirements.txt')}}
@@ -110,6 +110,14 @@ jobs:
           python3 -c 'import site; print(site.getsitepackages())'
           python3 -c 'import tensorflow as tf; print(tf.version.VERSION)'
 
+      - name: Save the updated Python virtualenv
+        if: always() && steps.cache.outputs.have_tfq != 'true'
+        uses: actions/cache/save@v4
+        with:
+          key: venv-${{env.py-version}}-${{env.arch}}-${{hashFiles('requirements.txt')}}
+          path: ${{env.py-venv}}
+          enableCrossOsArchive: true
+
   build-tfq:
     name: Configure, build, & cache TFQ
     needs: [set-up-bazel, set-up-python]
@@ -127,8 +135,10 @@ jobs:
 
       - name: Activate the virtualenv for this job
         run: |
+          set -x -e
           source ${{env.py-venv}}/bin/activate
           echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
+          echo "$GITHUB_PATH"
 
       - name: Test whether we've already installed TFQ into the virtualenv
         id: cache
@@ -161,11 +171,17 @@ jobs:
 
       - name: Build wheel for TFQ and install it into the Python virtualenv
         if: steps.cache.outputs.have_tfq != 'true'
+        # run: |
+        #   ./scripts/build_pip_package_test.sh
         run: |
-          ./scripts/build_pip_package_test.sh
+          set -x -e
+          build -c opt --cxxopt="-msse2" --cxxopt="-msse3" --cxxopt="-msse4" release:build_pip_package
+          rm -f /tmp/tensorflow_quantum/*
+          bazel-bin/release/build_pip_package /tmp/tensorflow_quantum/
+          pip install -U /tmp/tensorflow_quantum/*.whl
 
       - name: Save the updated Python virtualenv
-        if: steps.cache.outputs.have_tfq != 'true'
+        if: always() && steps.cache.outputs.have_tfq != 'true'
         uses: actions/cache/save@v4
         with:
           key: venv-${{env.py-version}}-${{env.arch}}-${{hashFiles('requirements.txt')}}
@@ -265,8 +281,10 @@ jobs:
           path: ${{env.py-venv}}
           enableCrossOsArchive: true
       - run: |
+          set -x -e
           source ${{env.py-venv}}/bin/activate
           echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
+          echo "$GITHUB_PATH"
 
       - name: Perform memory leakage test on qsim and TFQ src
         run: ./scripts/msan_test.sh 2>&1 | tee bazel-output.log
