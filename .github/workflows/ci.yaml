@@ -114,6 +114,7 @@ jobs:
         run: |
           set -x -e
           echo "Y\n" | ./configure.sh
+          mkdir -p bazel-cache
           cp .bazelrc bazel-cache/
 
       - name: Build wheel for TFQ and install it into the Python virtualenv.
