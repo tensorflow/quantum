@@ -119,11 +119,16 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Restore cached Python virtualenv
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           key: venv-${{env.py-version}}-${{env.arch}}-${{hashFiles('requirements.txt')}}
           path: ${{env.py-venv}}
           enableCrossOsArchive: true
+
+      - name: Activate the virtualenv for this job
+        run: |
+          source ${{env.py-venv}}/bin/activate
+          echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
 
       - name: Test whether we've already installed TFQ into the virtualenv
         id: cache
@@ -138,14 +143,6 @@ jobs:
           fi
 
         # Remaining steps test have_tfq and are skipped if the value is false.
-
-      - name: Activate the virtualenv for this job
-        if: steps.cache.outputs.have_tfq != 'true'
-        # TODO: don't add path again
-        run: |
-          source ${{env.py-venv}}/bin/activate
-          echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
-          echo "VIRTUAL_ENV=$VIRTUAL_ENV" >> $GITHUB_ENV
 
       - name: Configure a cache for the Bazel configuration
         if: steps.cache.outputs.have_tfq != 'true'
@@ -166,6 +163,15 @@ jobs:
         if: steps.cache.outputs.have_tfq != 'true'
         run: |
           ./scripts/build_pip_package_test.sh
+
+      - name: Save the updated Python virtualenv
+        if: steps.cache.outputs.have_tfq != 'true'
+        uses: actions/cache/save@v4
+        with:
+          key: venv-${{env.py-version}}-${{env.arch}}-${{hashFiles('requirements.txt')}}
+          path: ${{env.py-venv}}
+          enableCrossOsArchive: true
+
 
   # lint:
   #   name: Lint check
@@ -258,12 +264,9 @@ jobs:
           key: venv-${{env.py-version}}-${{env.arch}}-${{hashFiles('requirements.txt')}}
           path: ${{env.py-venv}}
           enableCrossOsArchive: true
-
-      - name: Activate the virtualenv for this job
-        run: |
+      - run: |
           source ${{env.py-venv}}/bin/activate
           echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
-          echo "VIRTUAL_ENV=$VIRTUAL_ENV" >> $GITHUB_ENV
 
       - name: Perform memory leakage test on qsim and TFQ src
         run: ./scripts/msan_test.sh 2>&1 | tee bazel-output.log
