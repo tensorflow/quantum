@@ -99,8 +99,11 @@ jobs:
           echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
           echo "VIRTUAL_ENV=$VIRTUAL_ENV" >> $GITHUB_ENV
 
-      - name: Configure TF and TFQ.
+      - name: Configure TFQ.
         run: echo "Y\n" | ./configure.sh
+
+      - name: Build and install Python wheel for TFQ.
+        run: ./scripts/build_pip_package_test.sh
 
 
   # lint:
@@ -197,9 +200,6 @@ jobs:
           source ${{env.py-venv-path}}/bin/activate
           echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
           echo "VIRTUAL_ENV=$VIRTUAL_ENV" >> $GITHUB_ENV
-
-      # - name: Configure TF and TFQ.
-      #   run: echo "Y\n" | ./configure.sh
 
       - name: Perform memory leakage test on qsim and TFQ src.
         run: ./scripts/msan_test.sh 2>&1 | tee bazel-output.log
