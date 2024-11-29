@@ -1,13 +1,41 @@
-name: Continuous Integration
+# Copyright 2024 The TensorFlow Quantum Authors. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
-on: [pull_request, workflow_dispatch]
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Summary: GitHub continuous integration workflow for TensorFlow Quantum.
+#
+# This workflow is executed on pull requests. It test and validates code
+# changes before they are merged into the main codebase.
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+name: Continuous integration
+
+on:
+  pull_request:
+  workflow_dispatch:
+    save_artifacts:
+      description: Save build artifacts and make them available for downloading.
+      type: boolean
 
 env:
   arch: 'x64'
   py-version: '3.10'
   py-venv: '.venv'
   bazel-version: 6.5.0
+  save_artifacts: false
 
+run-name: Run CI for ${{github.ref_name}} (${{github.event.head_commit.message}}) by ${{github.triggering_actor}}
 jobs:
   set-up-bazel:
     name: Install & cache a copy of Bazel.
@@ -83,7 +111,7 @@ jobs:
           python3 -c 'import tensorflow as tf; print(tf.version.VERSION)'
 
   build-tfq:
-    name: Configure, build, & cache a copy of TFQ.
+    name: Configure, build, & cache TFQ.
     needs: [set-up-bazel, set-up-python]
     runs-on: ubuntu-20.04
     steps:
@@ -206,10 +234,10 @@ jobs:
   #       run: ./scripts/test_all.sh
 
   run-leak-tests:
-    name: Memory Leak tests
+    name: Test for memory leaks
+    # needs: [lint, format]
     needs: [set-up-bazel, set-up-python, build-tfq]
     runs-on: ubuntu-20.04
-    # needs: [lint, format]
 
     steps:
       - name: Check out a copy of the TFQ git repository.
@@ -254,19 +282,6 @@ jobs:
       #       !/home/runner/.bazel/execroot/__main__/bazel-out/**/*.o
       #       !/home/runner/.bazel/execroot/__main__/bazel-out/**/_objs
       #       !/home/runner/.bazel/execroot/__main__/bazel-out/**/_solib_k8
-
-  # saving-test:
-  #   name: Test saving artifactes
-  #   runs-on: ubuntu-20.04
-  #   steps:
-  #     - name: Make a test file
-  #       run: echo test > test.log
-  #     - name: Save artifacts
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: foo
-  #         path: test.log
-
 
   # tutorials-test:
   #   name: Tutorial tests
