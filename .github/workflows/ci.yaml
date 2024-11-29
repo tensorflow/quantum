@@ -37,6 +37,7 @@ env:
 
 permissions:
   actions: write
+  contents: write
 
 run-name: Run CI for "${{github.event.pull_request.title || github.event.workflow_dispatch.display_title}}" by @${{github.triggering_actor}}
 jobs:
