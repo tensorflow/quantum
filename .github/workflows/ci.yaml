@@ -77,6 +77,7 @@ jobs:
         id: cache
         with:
           key: venv-${{env.py-version}}-${{env.arch}}-${{hashFiles('requirements.txt')}}
+          restore-key: venv-${{env.py-version}}-${{env.arch}}-${{hashFiles('requirements.txt')}}
           path: ${{env.py-venv}}
 
       - name: Test whether the Python cache is already populated
@@ -118,6 +119,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           key: venv-${{env.py-version}}-${{env.arch}}-${{hashFiles('requirements.txt')}}
+          restore-key: venv-${{env.py-version}}-${{env.arch}}-${{hashFiles('requirements.txt')}}
           path: ${{env.py-venv}}
           enableCrossOsArchive: true
 
@@ -133,6 +135,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           key: venv-${{env.py-version}}-${{env.arch}}-${{hashFiles('requirements.txt')}}
+          restore-key: venv-${{env.py-version}}-${{env.arch}}-${{hashFiles('requirements.txt')}}
           path: ${{env.py-venv}}
           enableCrossOsArchive: true
 
@@ -188,6 +191,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           key: venv-${{env.py-version}}-${{env.arch}}-${{hashFiles('requirements.txt')}}
+          restore-key: venv-${{env.py-version}}-${{env.arch}}-${{hashFiles('requirements.txt')}}
           path: ${{env.py-venv}}
           enableCrossOsArchive: true
 
