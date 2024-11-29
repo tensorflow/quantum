@@ -3,8 +3,10 @@ name: Continuous Integration
 on: [pull_request, workflow_dispatch]
 
 env:
-  python-version: '3.10'
   arch: 'x64'
+  py-version: '3.10'
+  py-venv-path: '.venv'
+  bazel-output: '.bazel'
 
 jobs:
   set-up-python:
@@ -14,35 +16,39 @@ jobs:
       - name: Check out a copy of the TFQ git repository.
         uses: actions/checkout@v4
 
-      - name: Set Python cache key and path.
+      - name: Configure a cache for the Python environment.
         uses: actions/cache@v4
-        id: py-cache
+        id: cache
         with:
-          key: venv-${{runner.os}}-${{env.python-version}}-${{hashFiles('requirements.txt')}}
-          path: .venv
+          key: venv-${{runner.os}}-${{env.py-version}}-${{hashFiles('requirements.txt')}}
+          # actions/cache is generic; what is cached is determined by setting
+          # the following variable. Later steps in this job assume this path.
+          path: ${{env.py-venv-path}}
 
-      - name: Inform user about cache status.
+      - name: Inform the user about the Python cache status.
         run: |
-          if [ "${{ steps.py-cache.outputs.cache-hit }}" == "true" ]; then
-            echo "Found cached Python ${{env.python-version}} environment."
+          if [ "${{steps.cache.outputs.cache-hit}}" == "true" ]; then
+            echo "Found cached Python ${{env.py-version}} environment."
+            echo "Will use it and skip pip install steps."
           else
             echo "No cached Python environment found."
           fi
 
-        # The rest of this job only runs if cache-hit is false.
+        # Note that The remaining steps in this job test the cache-hit result
+        # and only execute if it's false.
 
       - name: Set up Python.
-        if: steps.py-cache.outputs.cache-hit != 'true'
+        if: steps.cache.outputs.cache-hit != 'true'
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ env.python-version }}
-          architecture: ${{ env.arch }}
+          python-version: ${{env.py-version}}
+          architecture: ${{env.arch}}
 
-      - name: Install Python dependencies.
-        if: steps.py-cache.outputs.cache-hit != 'true'
+      - name: Install Python dependencies into the Python environment.
+        if: steps.cache.outputs.cache-hit != 'true'
         run: |
-          python -m venv .venv
-          source .venv/bin/activate
+          python -m venv ${{env.py-venv-path}}
+          source ${{env.py-venv-path}}/bin/activate
           pip install --upgrade pip setuptools wheel
           pip install -r requirements.txt
           echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
@@ -60,10 +66,41 @@ jobs:
           # Avoid downloading Bazel every time.
           bazelisk-cache: true
           # Store build cache per workflow.
-          disk-cache: ${{ github.workflow }}
+          disk-cache: ${{hashFiles('.bazelrc', 'configure.sh', 'WORKSPACE')}}
           # Share repository cache between workflows.
           repository-cache: true
+          # Cache external/  repositories.
+          external-cache: true
 
+  build-tfq:
+    name: Configure, build, and cache a copy of the current version of TFQ.
+    needs: [set-up-bazel, set-up-python]
+    runs-on: ubuntu-20.04
+    steps:
+      # - name: Check out a copy of the TFQ git repository.
+      #   uses: actions/checkout@v4
+
+      # - name: Install Python.
+      #   uses: actions/setup-python@v5
+      #   with:
+      #     python-version: ${{env.py-version}}
+      #     architecture: ${{env.arch}}
+
+      # - name: Restore cached Python virtualenv.
+      #   uses: actions/cache/restore@v4
+      #   with:
+      #     key: venv-${{runner.os}}-${{env.py-version}}-${{hashFiles('requirements.txt')}}
+      #     path: ${{env.py-venv-path}}
+      #     enableCrossOsArchive: true
+
+      # - name: Activate the virtualenv for this job.
+      #   run: |
+      #     source ${{env.py-venv-path}}/bin/activate
+      #     echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
+      #     echo "VIRTUAL_ENV=$VIRTUAL_ENV" >> $GITHUB_ENV
+
+      - name: Configure TF and TFQ.
+        run: echo "Y\n" | ./configure.sh
 
 
   # lint:
@@ -134,80 +171,53 @@ jobs:
 
   run-leak-tests:
     name: Memory Leak tests
-    needs: [set-up-bazel, set-up-python]
+    needs: [set-up-bazel, set-up-python, build-tfq]
     runs-on: ubuntu-20.04
     # needs: [lint, format]
 
     steps:
-      - name: Check out a copy of the TFQ repository.
-        uses: actions/checkout@v4
+      # - name: Check out a copy of the TFQ git repository.
+      #   uses: actions/checkout@v4
 
-      # - name: Set up Bazel.
-      #   uses: bazel-contrib/setup-bazel@0.9.1
-      #   env:
-      #     USE_BAZEL_VERSION: 6.5.0
+      # - name: Install Python.
+      #   uses: actions/setup-python@v5
       #   with:
-      #     # Avoid downloading Bazel every time.
-      #     bazelisk-cache: true
-      #     # Store build cache per workflow.
-      #     disk-cache: ${{ github.workflow }}
-      #     # Share repository cache between workflows.
-      #     repository-cache: true
+      #     python-version: ${{env.py-version}}
+      #     architecture: ${{env.arch}}
 
-      - name: Set up Python.
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.python-version }}
-          architecture: ${{ env.arch }}
+      # - name: Restore cached Python virtualenv.
+      #   uses: actions/cache/restore@v4
+      #   with:
+      #     key: venv-${{runner.os}}-${{env.py-version}}-${{hashFiles('requirements.txt')}}
+      #     path: ${{env.py-venv-path}}
+      #     enableCrossOsArchive: true
 
-      - name: Restore cached virtualenv.
-        uses: actions/cache/restore@v4
-        with:
-          key: venv-${{ runner.os }}-${{ env.python-version }}-${{ hashFiles('requirements.txt') }}
-          path: .venv
-          enableCrossOsArchive: true
-
-      - name: Activate virtualenv for this job.
-        run: |
-          source .venv/bin/activate
-          echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
-          echo "VIRTUAL_ENV=$VIRTUAL_ENV" >> $GITHUB_ENV
-
-      # - name: Install Python dependencies (if needed).
+      # - name: Activate the virtualenv for this job.
       #   run: |
-      #     python -m venv .venv
-      #     source .venv/bin/activate
-      #     pip install --upgrade pip setuptools wheel
-      #     pip install -r requirements.txt
+      #     source ${{env.py-venv-path}}/bin/activate
       #     echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
       #     echo "VIRTUAL_ENV=$VIRTUAL_ENV" >> $GITHUB_ENV
 
-      # - name: Saved cached virtualenv.
-      #   uses: actions/cache/save@v4
-      #   with:
-      #     key: venv-${{ runner.os }}-${{ env.python-version }}-${{ hashFiles('requirements.txt') }}
-      #     path: .venv
-
-      - name: Configure TF and TFQ.
-        run: echo "Y\n" | ./configure.sh
+      # - name: Configure TF and TFQ.
+      #   run: echo "Y\n" | ./configure.sh
 
       - name: Perform memory leakage test on qsim and TFQ src.
         run: ./scripts/msan_test.sh 2>&1 | tee bazel-output.log
         continue-on-error: true
 
-      - name: Save Bazel output as downloadable artifacts.
-        uses: actions/upload-artifact@v4
-        with:
-          name: bazel-out
-          retention-days: 14
-          include-hidden-files: true
-          path: |
-            bazel-output.log
-            /home/runner/.bazel/execroot/__main__/bazel-out/
-            !/home/runner/.bazel/execroot/__main__/bazel-out/**/*.so
-            !/home/runner/.bazel/execroot/__main__/bazel-out/**/*.o
-            !/home/runner/.bazel/execroot/__main__/bazel-out/**/_objs
-            !/home/runner/.bazel/execroot/__main__/bazel-out/**/_solib_k8
+      # - name: Save Bazel output as downloadable artifacts.
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: bazel-out
+      #     retention-days: 14
+      #     include-hidden-files: true
+      #     path: |
+      #       bazel-output.log
+      #       /home/runner/.bazel/execroot/__main__/bazel-out/
+      #       !/home/runner/.bazel/execroot/__main__/bazel-out/**/*.so
+      #       !/home/runner/.bazel/execroot/__main__/bazel-out/**/*.o
+      #       !/home/runner/.bazel/execroot/__main__/bazel-out/**/_objs
+      #       !/home/runner/.bazel/execroot/__main__/bazel-out/**/_solib_k8
 
   # saving-test:
   #   name: Test saving artifactes
