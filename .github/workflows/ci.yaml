@@ -94,7 +94,7 @@ jobs:
 
       - name: Test whether the virtualenv cache is already populated
         run: |
-          if [ ${{steps.cache.outputs.cache-hit}} != true ]; then
+          if [ ${{steps.cache.outputs.cache-hit}} == true ]; then
             echo "Found cached virtualenv for Python ${{env.py_version}}."
             echo "Will use it and skip remaining 'pip install' steps."
           else
@@ -119,7 +119,7 @@ jobs:
           python3 -c 'import tensorflow as tf; print(tf.version.VERSION)'
 
       - name: Delete the previous virtualenv cache contents
-        if: steps.cache.outputs.cache-hit != 'true'
+        if: steps.cache.outputs.cache-hit == 'true'
         continue-on-error: true
         run: |
           gh extension install actions/gh-actions-cache
