@@ -25,7 +25,7 @@ on:
   pull_request:
   workflow_dispatch:
     save_artifacts:
-      description: Save build artifacts and make them available for downloading.
+      description: Save build artifacts & make them available for downloading.
       type: boolean
 
 env:
@@ -35,10 +35,10 @@ env:
   bazel-version: 6.5.0
   save_artifacts: false
 
-run-name: Run CI for ${{github.ref_name}} (${{github.event.head_commit.message}}) by ${{github.triggering_actor}}
+run-name: Run CI for "${{github.event.pull_request.title || github.event.workflow_dispatch.display_title}}" by @${{github.triggering_actor}}
 jobs:
   set-up-bazel:
-    name: Install & cache a copy of Bazel.
+    name: Install & cache a copy of Bazel
     runs-on: ubuntu-20.04
     steps:
       - name: Set up Bazel.
@@ -63,20 +63,20 @@ jobs:
           bazel --version
 
   set-up-python:
-    name: Create & cache Python environment.
+    name: Create & cache Python environment
     runs-on: ubuntu-20.04
     steps:
-      - name: Check out a copy of the TFQ git repository.
+      - name: Check out a copy of the TFQ git repository
         uses: actions/checkout@v4
 
-      - name: Configure a cache for the Python environment.
+      - name: Configure a cache for the Python environment
         uses: actions/cache@v4
         id: cache
         with:
           key: venv-${{env.py-version}}-${{env.arch}}-${{hashFiles('requirements.txt')}}
           path: ${{env.py-venv}}
 
-      - name: Test whether the Python cache is already populated.
+      - name: Test whether the Python cache is already populated
         run: |
           if [ "${{steps.cache.outputs.cache-hit}}" == "true" ]; then
             echo "Found cached Python ${{env.py-version}} environment."
@@ -87,14 +87,14 @@ jobs:
 
         # Remaining steps test cache-hit and are skipped if the value is false.
 
-      - name: Set up Python.
+      - name: Set up Python
         if: steps.cache.outputs.cache-hit != 'true'
         uses: actions/setup-python@v5
         with:
           python-version: ${{env.py-version}}
           architecture: ${{env.arch}}
 
-      - name: Install Python dependencies into the Python environment.
+      - name: Install Python dependencies into the Python environment
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
           set -x -e
@@ -111,21 +111,21 @@ jobs:
           python3 -c 'import tensorflow as tf; print(tf.version.VERSION)'
 
   build-tfq:
-    name: Configure, build, & cache TFQ.
+    name: Configure, build, & cache TFQ
     needs: [set-up-bazel, set-up-python]
     runs-on: ubuntu-20.04
     steps:
-      - name: Check out a copy of the TFQ git repository.
+      - name: Check out a copy of the TFQ git repository
         uses: actions/checkout@v4
 
-      - name: Restore cached Python virtualenv.
-        uses: actions/cache/restore@v4
+      - name: Restore cached Python virtualenv
+        uses: actions/cache@v4
         with:
           key: venv-${{env.py-version}}-${{env.arch}}-${{hashFiles('requirements.txt')}}
           path: ${{env.py-venv}}
           enableCrossOsArchive: true
 
-      - name: Test whether we've already installed TFQ into the virtualenv.
+      - name: Test whether we've already installed TFQ into the virtualenv
         id: cache
         run: |
           if pip freeze | grep -q tensorflow-quantum; then
@@ -139,22 +139,20 @@ jobs:
 
         # Remaining steps test have_tfq and are skipped if the value is false.
 
-      - name: Activate the virtualenv for this job.
+      - name: Activate the virtualenv for this job
         if: steps.cache.outputs.have_tfq != 'true'
         # TODO: don't add path again
         run: |
           source ${{env.py-venv}}/bin/activate
-          echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
-          echo "VIRTUAL_ENV=$VIRTUAL_ENV" >> $GITHUB_ENV
 
-      - name: Configure a cache for the Bazel configuration.
+      - name: Configure a cache for the Bazel configuration
         if: steps.cache.outputs.have_tfq != 'true'
         uses: actions/cache@v4
         with:
           key: bazel-${{env.bazel-version}}-${{runner.os}}-${{env.arch}}-${{env.py-version}}
           path: bazel-cache
 
-      - name: Configure TFQ.
+      - name: Configure TFQ
         if: steps.cache.outputs.have_tfq != 'true'
         run: |
           set -x -e
@@ -162,7 +160,7 @@ jobs:
           mkdir -p bazel-cache
           cp .bazelrc bazel-cache/
 
-      - name: Build wheel for TFQ and install it into the Python virtualenv.
+      - name: Build wheel for TFQ and install it into the Python virtualenv
         if: steps.cache.outputs.have_tfq != 'true'
         run: |
           ./scripts/build_pip_package_test.sh
@@ -240,10 +238,10 @@ jobs:
     runs-on: ubuntu-20.04
 
     steps:
-      - name: Check out a copy of the TFQ git repository.
+      - name: Check out a copy of the TFQ git repository
         uses: actions/checkout@v4
 
-      - name: Restore cached Bazel configuration.
+      - name: Restore cached Bazel configuration
         uses: actions/cache/restore@v4
         with:
           key: bazel-${{env.bazel-version}}-${{runner.os}}-${{env.arch}}-${{env.py-version}}
@@ -252,24 +250,24 @@ jobs:
           set -x -e
           cp bazel-cache/.bazelrc .bazelrc
 
-      - name: Restore cached Python virtualenv.
+      - name: Restore cached Python virtualenv
         uses: actions/cache/restore@v4
         with:
           key: venv-${{env.py-version}}-${{env.arch}}-${{hashFiles('requirements.txt')}}
           path: ${{env.py-venv}}
           enableCrossOsArchive: true
 
-      - name: Activate the virtualenv for this job.
+      - name: Activate the virtualenv for this job
         run: |
           source ${{env.py-venv}}/bin/activate
           echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
           echo "VIRTUAL_ENV=$VIRTUAL_ENV" >> $GITHUB_ENV
 
-      - name: Perform memory leakage test on qsim and TFQ src.
+      - name: Perform memory leakage test on qsim and TFQ src
         run: ./scripts/msan_test.sh 2>&1 | tee bazel-output.log
         continue-on-error: true
 
-      # - name: Save Bazel output as downloadable artifacts.
+      # - name: Save Bazel output as downloadable artifacts
       #   uses: actions/upload-artifact@v4
       #   with:
       #     name: bazel-out
