@@ -9,8 +9,33 @@ env:
   bazel-version: 6.5.0
 
 jobs:
+  set-up-bazel:
+    name: Install & cache a copy of Bazel.
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Set up Bazel.
+        uses: bazel-contrib/setup-bazel@0.9.1
+        env:
+          USE_BAZEL_VERSION: ${{env.bazel-version}}
+        with:
+          # Avoid downloading Bazel every time.
+          bazelisk-cache: true
+          # Store build cache per workflow.
+          disk-cache: ${{github.workflow}}
+          # Share repository cache between workflows.
+          repository-cache: true
+          # Cache external/  repositories.
+          external-cache: true
+
+      - run: |
+          # Save information to the run log, in case it's needed for debugging.
+          set -x -e
+          uname -a
+          which bazel
+          bazel --version
+
   set-up-python:
-    name: Create and cache Python environment.
+    name: Create & cache Python environment.
     runs-on: ubuntu-20.04
     steps:
       - name: Check out a copy of the TFQ git repository.
@@ -32,8 +57,7 @@ jobs:
             echo "No cached Python environment found."
           fi
 
-        # Note that The remaining steps in this job test the cache-hit result,
-        # and the steps only execute if the result is false.
+        # Remaining steps test cache-hit and are skipped if the value is false.
 
       - name: Set up Python.
         if: steps.cache.outputs.cache-hit != 'true'
@@ -52,32 +76,14 @@ jobs:
           pip install -r requirements.txt
           echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
           echo "VIRTUAL_ENV=$VIRTUAL_ENV" >> $GITHUB_ENV
-          # Save information to the run log for debugging.
+          # Save information to the run log, in case it's needed for debugging.
           which python
           python --version
           python3 -c 'import site; print(site.getsitepackages())'
           python3 -c 'import tensorflow as tf; print(tf.version.VERSION)'
 
-  set-up-bazel:
-    name: Install and cache a copy of Bazel.
-    runs-on: ubuntu-20.04
-    steps:
-      - name: Set up Bazel.
-        uses: bazel-contrib/setup-bazel@0.9.1
-        env:
-          USE_BAZEL_VERSION: ${{env.bazel-version}}
-        with:
-          # Avoid downloading Bazel every time.
-          bazelisk-cache: true
-          # Store build cache per workflow.
-          disk-cache: ${{github.workflow}}
-          # Share repository cache between workflows.
-          repository-cache: true
-          # Cache external/  repositories.
-          external-cache: true
-
   build-tfq:
-    name: Configure, build, and cache a copy of the current version of TFQ.
+    name: Configure, build, & cache a copy of TFQ.
     needs: [set-up-bazel, set-up-python]
     runs-on: ubuntu-20.04
     steps:
@@ -91,7 +97,22 @@ jobs:
           path: ${{env.py-venv}}
           enableCrossOsArchive: true
 
+      - name: Test whether we've already installed TFQ into the virtualenv.
+        id: cache
+        run: |
+          if pip freeze | grep -q tensorflow-quantum; then
+            echo "Found tensorflow-quantum in pip list."
+            echo "Will skip build & install steps."
+            echo "have_tfq=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Tensorflow-quantum not found in pip list."
+            echo "have_tfq=false" >> "$GITHUB_OUTPUT"
+          fi
+
+        # Remaining steps test have_tfq and are skipped if the value is false.
+
       - name: Activate the virtualenv for this job.
+        if: steps.cache.outputs.have_tfq != 'true'
         # TODO: don't add path again
         run: |
           source ${{env.py-venv}}/bin/activate
@@ -99,12 +120,14 @@ jobs:
           echo "VIRTUAL_ENV=$VIRTUAL_ENV" >> $GITHUB_ENV
 
       - name: Configure a cache for the Bazel configuration.
+        if: steps.cache.outputs.have_tfq != 'true'
         uses: actions/cache@v4
         with:
           key: bazel-${{env.bazel-version}}-${{runner.os}}-${{env.arch}}-${{env.py-version}}
           path: bazel-cache
 
       - name: Configure TFQ.
+        if: steps.cache.outputs.have_tfq != 'true'
         run: |
           set -x -e
           echo "Y\n" | ./configure.sh
@@ -112,6 +135,7 @@ jobs:
           cp .bazelrc bazel-cache/
 
       - name: Build wheel for TFQ and install it into the Python virtualenv.
+        if: steps.cache.outputs.have_tfq != 'true'
         run: |
           ./scripts/build_pip_package_test.sh
 
@@ -191,6 +215,15 @@ jobs:
       - name: Check out a copy of the TFQ git repository.
         uses: actions/checkout@v4
 
+      - name: Restore cached Bazel configuration.
+        uses: actions/cache/restore@v4
+        with:
+          key: bazel-${{env.bazel-version}}-${{runner.os}}-${{env.arch}}-${{env.py-version}}
+          path: bazel-cache
+      - run: |
+          set -x -e
+          cp bazel-cache/.bazelrc .bazelrc
+
       - name: Restore cached Python virtualenv.
         uses: actions/cache/restore@v4
         with:
@@ -203,15 +236,6 @@ jobs:
           source ${{env.py-venv}}/bin/activate
           echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
           echo "VIRTUAL_ENV=$VIRTUAL_ENV" >> $GITHUB_ENV
-
-      - name: Restore cached Bazel configuration.
-        uses: actions/cache/restore@v4
-        with:
-          key: bazel-${{env.bazel-version}}-${{runner.os}}-${{env.arch}}-${{env.py-version}}
-          path: bazel-cache
-      - run: |
-          set -x -e
-          cp bazel-cache/.bazelrc .bazelrc
 
       - name: Perform memory leakage test on qsim and TFQ src.
         run: ./scripts/msan_test.sh 2>&1 | tee bazel-output.log
