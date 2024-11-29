@@ -11,17 +11,35 @@ jobs:
     name: Create and cache Python environment.
     runs-on: ubuntu-20.04
     steps:
-      - name: Check out a copy of the TFQ repository.
+      - name: Check out a copy of the TFQ git repository.
         uses: actions/checkout@v4
 
+      - name: Set Python cache key and path.
+        uses: actions/cache@v4
+        id: py-cache
+        with:
+          key: venv-${{runner.os}}-${{env.python-version}}-${{hashFiles('requirements.txt')}}
+          path: .venv
+
+      - name: Inform user about cache status.
+        run: |
+          if [ "${{ steps.py-cache.outputs.cache-hit }} == 'true' ]; then
+            echo "Found cached Python ${{env.python-version}} environment."
+          else
+            echo "No cached Python environment found."
+          fi
+
+        # The rest of this job only runs if cache-hit is false.
+
       - name: Set up Python.
+        if: steps.py-cache.outputs.cache-hit != 'true'
         uses: actions/setup-python@v5
-        id: setup_python
         with:
           python-version: ${{ env.python-version }}
           architecture: ${{ env.arch }}
 
       - name: Install Python dependencies.
+        if: steps.py-cache.outputs.cache-hit != 'true'
         run: |
           python -m venv .venv
           source .venv/bin/activate
@@ -30,14 +48,8 @@ jobs:
           echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
           echo "VIRTUAL_ENV=$VIRTUAL_ENV" >> $GITHUB_ENV
 
-      - name: Saved cached virtualenv.
-        uses: actions/cache/save@v4
-        with:
-          key: venv-${{ runner.os }}-${{ env.python-version }}-${{ hashFiles('requirements.txt') }}
-          path: .venv
-
   set-up-bazel:
-    name: Set up and cache a copy of Bazel.
+    name: Install and cache a copy of Bazel.
     runs-on: ubuntu-20.04
     steps:
       - name: Set up Bazel.
@@ -122,7 +134,7 @@ jobs:
 
   run-leak-tests:
     name: Memory Leak tests
-    needs: [set-up-python, set-up-bazel]
+    needs: [set-up-bazel, set-up-python]
     runs-on: ubuntu-20.04
     # needs: [lint, format]
 
@@ -231,4 +243,3 @@ jobs:
   #       run: ./scripts/build_pip_package_test.sh
   #     - name: Test Notebooks
   #       run: ./scripts/ci_validate_tutorials.sh
-
