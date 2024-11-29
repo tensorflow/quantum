@@ -5,8 +5,8 @@ on: [pull_request, workflow_dispatch]
 env:
   arch: 'x64'
   py-version: '3.10'
-  py-venv-path: '.venv'
-  bazel-output: '.bazel'
+  py-venv: '.venv'
+  bazel-version: 6.5.0
 
 jobs:
   set-up-python:
@@ -20,12 +20,10 @@ jobs:
         uses: actions/cache@v4
         id: cache
         with:
-          key: venv-${{runner.os}}-${{env.py-version}}-${{hashFiles('requirements.txt')}}
-          # actions/cache is generic; what is cached is determined by setting
-          # the following variable. Later steps in this job assume this path.
-          path: ${{env.py-venv-path}}
+          key: venv-${{env.py-version}}-${{env.arch}}-${{hashFiles('requirements.txt')}}
+          path: ${{env.py-venv}}
 
-      - name: Inform the user about the Python cache status.
+      - name: Test whether the Python cache is already populated.
         run: |
           if [ "${{steps.cache.outputs.cache-hit}}" == "true" ]; then
             echo "Found cached Python ${{env.py-version}} environment."
@@ -34,8 +32,8 @@ jobs:
             echo "No cached Python environment found."
           fi
 
-        # Note that The remaining steps in this job test the cache-hit result
-        # and only execute if it's false.
+        # Note that The remaining steps in this job test the cache-hit result,
+        # and the steps only execute if the result is false.
 
       - name: Set up Python.
         if: steps.cache.outputs.cache-hit != 'true'
@@ -47,12 +45,18 @@ jobs:
       - name: Install Python dependencies into the Python environment.
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
-          python -m venv ${{env.py-venv-path}}
-          source ${{env.py-venv-path}}/bin/activate
+          set -x -e
+          python -m venv ${{env.py-venv}}
+          source ${{env.py-venv}}/bin/activate
           pip install --upgrade pip setuptools wheel
           pip install -r requirements.txt
           echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
           echo "VIRTUAL_ENV=$VIRTUAL_ENV" >> $GITHUB_ENV
+          # Save information to the run log for debugging.
+          which python
+          python --version
+          python3 -c 'import site; print(site.getsitepackages())'
+          python3 -c 'import tensorflow as tf; print(tf.version.VERSION)'
 
   set-up-bazel:
     name: Install and cache a copy of Bazel.
@@ -61,7 +65,7 @@ jobs:
       - name: Set up Bazel.
         uses: bazel-contrib/setup-bazel@0.9.1
         env:
-          USE_BAZEL_VERSION: 6.5.0
+          USE_BAZEL_VERSION: ${{env.bazel-version}}
         with:
           # Avoid downloading Bazel every time.
           bazelisk-cache: true
@@ -89,22 +93,32 @@ jobs:
       - name: Restore cached Python virtualenv.
         uses: actions/cache/restore@v4
         with:
-          key: venv-${{runner.os}}-${{env.py-version}}-${{hashFiles('requirements.txt')}}
-          path: ${{env.py-venv-path}}
+          key: venv-${{env.py-version}}-${{env.arch}}-${{hashFiles('requirements.txt')}}
+          path: ${{env.py-venv}}
           enableCrossOsArchive: true
 
       - name: Activate the virtualenv for this job.
+        # TODO: don't add path again
         run: |
-          source ${{env.py-venv-path}}/bin/activate
+          source ${{env.py-venv}}/bin/activate
           echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
           echo "VIRTUAL_ENV=$VIRTUAL_ENV" >> $GITHUB_ENV
 
+      - name: Configure a cache for the Bazel configuration.
+        uses: actions/cache@v4
+        with:
+          key: bazel-${{env.bazel-version}}-${{runner.os}}-${{env.arch}}-${{env.py-version}}
+          path: bazel-cache
+
       - name: Configure TFQ.
-        run: echo "Y\n" | ./configure.sh
+        run: |
+          set -x -e
+          echo "Y\n" | ./configure.sh
+          cp .bazelrc bazel-cache/
 
-      - name: Build and install Python wheel for TFQ.
-        run: ./scripts/build_pip_package_test.sh
-
+      - name: Build wheel for TFQ and install it into the Python virtualenv.
+        run: |
+          ./scripts/build_pip_package_test.sh
 
   # lint:
   #   name: Lint check
@@ -191,15 +205,25 @@ jobs:
       - name: Restore cached Python virtualenv.
         uses: actions/cache/restore@v4
         with:
-          key: venv-${{runner.os}}-${{env.py-version}}-${{hashFiles('requirements.txt')}}
-          path: ${{env.py-venv-path}}
+          key: venv-${{env.py-version}}-${{env.arch}}-${{hashFiles('requirements.txt')}}
+          path: ${{env.py-venv}}
           enableCrossOsArchive: true
 
       - name: Activate the virtualenv for this job.
         run: |
-          source ${{env.py-venv-path}}/bin/activate
+          source ${{env.py-venv}}/bin/activate
           echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
           echo "VIRTUAL_ENV=$VIRTUAL_ENV" >> $GITHUB_ENV
+
+      - name: Restore cached Bazel configuration.
+        uses: actions/cache/restore@v4
+        with:
+          key: bazel-${{env.bazel-version}}-${{runner.os}}-${{env.arch}}-${{env.py-version}}
+          path: bazel-cache
+
+      - run: |
+          set -x -e
+          cp .bazel-cache/.bazelrc .bazelrc
 
       - name: Perform memory leakage test on qsim and TFQ src.
         run: ./scripts/msan_test.sh 2>&1 | tee bazel-output.log
