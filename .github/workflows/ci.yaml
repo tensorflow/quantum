@@ -23,7 +23,7 @@ jobs:
 
       - name: Inform user about cache status.
         run: |
-          if [ "${{ steps.py-cache.outputs.cache-hit }} == 'true' ]; then
+          if [ "${{ steps.py-cache.outputs.cache-hit }}" == "true" ]; then
             echo "Found cached Python ${{env.python-version}} environment."
           else
             echo "No cached Python environment found."
