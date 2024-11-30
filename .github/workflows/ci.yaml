@@ -94,20 +94,6 @@ jobs:
       - name: Check out a copy of the TFQ git repository
         uses: actions/checkout@v4
 
-      - name: Set up Bazel
-        uses: bazel-contrib/setup-bazel@0.9.1
-        env:
-          USE_BAZEL_VERSION: ${{env.bazel_version}}
-        with:
-          # Avoid downloading Bazel every time.
-          bazelisk-cache: true
-          # Store build cache per workflow.
-          disk-cache: ${{github.workflow}}
-          # Cache external/  repositories.
-          external-cache: true
-          # Share repository cache between workflows.
-          repository-cache: trie
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -126,12 +112,25 @@ jobs:
       - name: Configure and build TFQ
         run: |
           echo "Y\n" | ./configure.sh
-          # The bazel-cache action will save ~/.bazelrc automatically.
           set -x -e
           pwd
           echo $HOME
-          cp .bazelrc $HOME/.bazelrc
-          bazel build -c opt --cxxopt="-msse2" --cxxopt="-msse3" --cxxopt="-msse4" //tensorflow_quantum/...
+          cp .bazelrc $HOME/.bazel/.bazelrc
+          # bazel build -c opt --cxxopt="-msse2" --cxxopt="-msse3" --cxxopt="-msse4" //tensorflow_quantum/...
+
+      - name: Cache Bazel outputs
+        uses: bazel-contrib/setup-bazel@0.9.1
+        env:
+          USE_BAZEL_VERSION: ${{env.bazel_version}}
+        with:
+          # Avoid downloading Bazel every time.
+          bazelisk-cache: true
+          # Store build cache per workflow.
+          disk-cache: ${{github.workflow}}
+          # Cache external/  repositories.
+          external-cache: true
+          # Share repository cache between workflows.
+          repository-cache: trie
 
   # lint:
   #   name: Lint check
