@@ -69,7 +69,7 @@ jobs:
     name: Initialize the workflow
     runs-on: ubuntu-20.04
     steps:
-      run: |
+      - run: |
         echo "have_venv=false" >> $GITHUB_ENV
 
   virtualenv-setup:
