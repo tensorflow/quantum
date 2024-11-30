@@ -38,7 +38,7 @@ env:
 permissions:
   actions: write
 
-run-name: Run CI for "${{github.event.pull_request.title || github.event.workflow_dispatch.display_title}}" by @${{github.triggering_actor}}
+run-name: Run CI for "${{github.event.pull_request.title}}" by @${{github.triggering_actor}}
 jobs:
   initialization:
     name: Initialize the workflow
@@ -119,19 +119,18 @@ jobs:
         with:
           path: ${{env.venv}}
           key: venv-python-${{env.py_version}}-${{runner.os}}-${{env.arch}}
-
-      - name: Activate the Python virtualenv for this job
-        run: |
+      - run: |
           source ${{env.venv}}/bin/activate
-          set -x -e
           echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
-          echo "$GITHUB_PATH"
 
       - name: Configure and build TFQ
-        # The bazel-cache action will save the .bazelrc file automatically.
         run: |
-          set -x -e
           echo "Y\n" | ./configure.sh
+          # The bazel-cache action will save ~/.bazelrc automatically.
+          set -x -e
+          pwd
+          echo $HOME
+          cp .bazelrc $HOME/.bazelrc
           bazel build -c opt --cxxopt="-msse2" --cxxopt="-msse3" --cxxopt="-msse4" //tensorflow_quantum/...
 
   # lint:
@@ -203,7 +202,7 @@ jobs:
   run-leak-tests:
     name: Test for memory leaks
     # needs: [lint, format]
-    needs: [virtualenv-setup, build-tfq]
+    needs: [build-tfq]
     runs-on: ubuntu-20.04
 
     steps:
@@ -235,25 +234,9 @@ jobs:
         with:
           path: ${{env.venv}}
           key: venv-python-${{env.py_version}}-${{runner.os}}-${{env.arch}}
-
-      - name: Activate the Python virtualenv for this job
-        run: |
+      - run: |
           source ${{env.venv}}/bin/activate
-          set -x -e
           echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
-          echo "$GITHUB_PATH"
-
-      # - name: Restore cached Python virtualenv
-      #   uses: actions/cache/restore@v4
-      #   with:
-      #     path: ${{env.venv}}
-      #     key: venv-${{env.py_version}}-${{env.arch}}-${{hashFiles('requirements.txt')}}
-      #     enableCrossOsArchive: true
-      # - run: |
-      #     set -x -e
-      #     source ${{env.venv}}/bin/activate
-      #     echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
-      #     echo "$GITHUB_PATH"
 
       - name: Perform memory leakage test on qsim and TFQ src
         run: ./scripts/msan_test.sh 2>&1 | tee bazel-output.log
