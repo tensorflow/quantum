@@ -47,8 +47,6 @@ jobs:
       # TODO: there's a lookup option to actions/cache
       - run: |
           echo "init_venv=not_done" >> $GITHUB_OUTPUT
-          vkey="venv-python-${{env.py_version}}-${{runner.os}}-${{env.arch}}"
-          echo "venv_key=$vkey" >> $GITHUB_ENV
 
   virtualenv-setup:
     name: Create & cache Python environment
@@ -69,7 +67,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{env.venv}}
-          key: ${{env.venv_key}}
+          key: venv-python-${{env.py_version}}-${{runner.os}}-${{env.arch}}
 
       - name: Install Python dependencies into the virtualenv
         run: |
@@ -120,7 +118,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{env.venv}}
-          key: ${{env.venv_key}}
+          key: venv-python-${{env.py_version}}-${{runner.os}}-${{env.arch}}
 
       - name: Activate the Python virtualenv for this job
         run: |
@@ -236,7 +234,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{env.venv}}
-          key: ${{env.venv_key}}
+          key: venv-python-${{env.py_version}}-${{runner.os}}-${{env.arch}}
 
       - name: Activate the Python virtualenv for this job
         run: |
