@@ -34,7 +34,7 @@ env:
   venv: ./.venv
   bazel_version: '6.5.0'
   save_artifacts: false
-  GH_TOKEN: ${{github.token}}
+  GH_TOKEN: ${{secrets.PERSONAL_CI_TOKEN}}
 
 permissions:
   actions: write
