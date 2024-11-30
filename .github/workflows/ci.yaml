@@ -125,7 +125,7 @@ jobs:
         if: steps.cache.outputs.cache-hit == 'true'
         continue-on-error: true
         env:
-          GH_TOKEN: ${{github.token}}
+          GH_TOKEN: ${{secrets.PERSONAL_CI_TOKEN}}
         run: |
           gh extension install actions/gh-actions-cache
           gh actions-cache delete "${{env.venv_cache_key}}" --confirm
