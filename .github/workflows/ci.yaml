@@ -24,9 +24,14 @@ name: Continuous integration
 on:
   pull_request:
   workflow_dispatch:
-    save_artifacts:
-      description: Save build artifacts & make them available for downloading.
+    bazel_version:
+      description: Version of Bazel to use
       type: boolean
+      default: '6.5.0'
+    save_artifacts:
+      description: Make build artifacts available for downloading.
+      type: boolean
+      default: false
 
 env:
   arch: x64
@@ -87,7 +92,7 @@ jobs:
           python3 -c 'import tensorflow as tf; print(tf.version.VERSION)'
 
   build-tfq:
-    name: Configure, build, & cache TFQ
+    name: Configure & build TFQ
     needs: [virtualenv-setup]
     runs-on: ubuntu-20.04
     steps:
@@ -129,17 +134,17 @@ jobs:
         run: |
           echo "Y\n" | ./configure.sh
 
-      - name: Cache the .bazelrc file
+      - name: Cache the TFQ .bazelrc file
         uses: actions/cache@v4
         with:
           path: .bazelrc
           key: bazelrc-${{runner.os}}-${{env.arch}}-${{hashFiles('.bazelrc')}}
 
       - name: Build TFQ
+        # The Bazel outputs will be cached automatically by the setup-bazel
+        # set earlier in this job.
         run: |
-          set -x -e
-          # bazel build -c opt --cxxopt="-msse2" --cxxopt="-msse3" --cxxopt="-msse4" //tensorflow_quantum/...
-
+          bazel build -c opt --cxxopt="-msse2" --cxxopt="-msse3" --cxxopt="-msse4" //tensorflow_quantum/...
 
   # lint:
   #   name: Lint check
@@ -234,7 +239,7 @@ jobs:
           source ${{env.venv}}/bin/activate
           echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
 
-      - name: Restore the Bazel environment
+      - name: Restore the cached Bazel environment
         uses: bazel-contrib/setup-bazel@0.9.1
         env:
           USE_BAZEL_VERSION: ${{env.bazel_version}}
@@ -248,14 +253,7 @@ jobs:
           # Cache external/  repositories.
           external-cache: true
 
-      - name: test
-        run: |
-          set -x -e
-          if [ -f $HOME/.bazelrc ]; then
-            cat ~/.bazelrc
-          fi
-
-      - name: Restore the .bazelrc file
+      - name: Restore the cached TFQ .bazelrc file
         uses: actions/cache/restore@v4
         with:
           path: .bazelrc
@@ -265,9 +263,6 @@ jobs:
         continue-on-error: true
         run: |
           set -x -e
-          echo ================
-          cat .bazelrc
-          echo ================
           ./scripts/msan_test.sh 2>&1 | tee bazel-output.log
 
       # - name: Save Bazel output as downloadable artifacts
