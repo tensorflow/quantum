@@ -64,7 +64,6 @@ jobs:
         with:
           python-version: ${{env.py_version}}
           architecture: ${{env.arch}}
-          key: 
 
       - name: Set up a cache for the Python virtualenv
         uses: actions/cache@v4
