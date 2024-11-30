@@ -129,7 +129,7 @@ jobs:
         run: |
           echo "Y\n" | ./configure.sh
           mkdir -p $HOME/.bazel
-          cat .bazelrc >> $HOME/.bazel/.bazelrc
+          cp .bazelrc $HOME/.bazel/
 
       - name: Build TFQ
         run: |
@@ -216,7 +216,24 @@ jobs:
       - name: Check out a copy of the TFQ git repository
         uses: actions/checkout@v4
 
-      - name: Set up Bazel
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{env.py_version}}
+          architecture: ${{env.arch}}
+
+      - name: Restore cached Python virtualenv
+        uses: actions/cache@v4
+        with:
+          path: ${{env.venv}}
+          key: venv-python-${{env.py_version}}-${{runner.os}}-${{env.arch}}
+
+      - name: Activate the Python virtualenv
+        run: |
+          source ${{env.venv}}/bin/activate
+          echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
+
+      - name: Restore the Bazel environment
         uses: bazel-contrib/setup-bazel@0.9.1
         env:
           USE_BAZEL_VERSION: ${{env.bazel_version}}
@@ -230,20 +247,10 @@ jobs:
           # Cache external/  repositories.
           external-cache: true
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{env.py_version}}
-          architecture: ${{env.arch}}
-
-      - name: Restore cached Python virtualenv
-        uses: actions/cache@v4
-        with:
-          path: ${{env.venv}}
-          key: venv-python-${{env.py_version}}-${{runner.os}}-${{env.arch}}
-      - run: |
-          source ${{env.venv}}/bin/activate
-          echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
+      - name: Restore the .bazelrc file
+        run: |
+          set -x -e
+          cat $HOME/.bazel/.bazelrc >> .bazelrc
 
       - name: Perform memory leakage test on qsim and TFQ src
         continue-on-error: true
