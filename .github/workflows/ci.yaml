@@ -70,7 +70,7 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - run: |
-        echo "have_venv=false" >> $GITHUB_ENV
+          echo "have_venv=false" >> $GITHUB_ENV
 
   virtualenv-setup:
     name: Create & cache Python environment
