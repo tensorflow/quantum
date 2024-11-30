@@ -22,7 +22,7 @@
 name: Continuous integration
 
 on:
-  pull_request:
+  pull_request_target:
   workflow_dispatch:
     save_artifacts:
       description: Save build artifacts & make them available for downloading.
@@ -125,7 +125,7 @@ jobs:
         if: steps.cache.outputs.cache-hit == 'true'
         continue-on-error: true
         env:
-          GH_TOKEN: ${{secrets.PERSONAL_CI_TOKEN}}
+          GH_TOKEN: ${{github.token}}
         run: |
           gh extension install actions/gh-actions-cache
           gh actions-cache delete "${{env.venv_cache_key}}" --confirm
