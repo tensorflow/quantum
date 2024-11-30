@@ -105,22 +105,13 @@ jobs:
         with:
           path: ${{env.venv}}
           key: venv-python-${{env.py_version}}-${{runner.os}}-${{env.arch}}
-      - run: |
+
+      - name: Activate the Python virtualenv
+        run: |
           source ${{env.venv}}/bin/activate
           echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
 
-      - name: Configure and build TFQ
-        run: |
-          echo "Y\n" | ./configure.sh
-          set -x -e
-          pwd
-          echo ================
-          cat .bazelrc
-          echo ================
-          cp .bazelrc $HOME/
-          # bazel build -c opt --cxxopt="-msse2" --cxxopt="-msse3" --cxxopt="-msse4" //tensorflow_quantum/...
-
-      - name: Cache Bazel outputs
+      - name: Set up Bazel
         uses: bazel-contrib/setup-bazel@0.9.1
         env:
           USE_BAZEL_VERSION: ${{env.bazel_version}}
@@ -132,7 +123,22 @@ jobs:
           # Cache external/  repositories.
           external-cache: true
           # Share repository cache between workflows.
-          repository-cache: trie
+          repository-cache: true
+
+      - name: Configure TFQ and save the .bazelrc file
+        run: |
+          echo "Y\n" | ./configure.sh
+          mkdir -p $HOME/.bazel
+          cat .bazelrc >> $HOME/.bazel/.bazelrc
+
+      - name: Build TFQ
+        run: |
+          set -x -e
+          echo ================
+          cat .bazelrc
+          echo ================
+          # bazel build -c opt --cxxopt="-msse2" --cxxopt="-msse3" --cxxopt="-msse4" //tensorflow_quantum/...
+
 
   # lint:
   #   name: Lint check
@@ -243,10 +249,6 @@ jobs:
         continue-on-error: true
         run: |
           set -x -e
-          pwd
-          echo $HOME
-          ls  $HOME/.bazelrc
-          cat $HOME/.bazelrc
           ./scripts/msan_test.sh 2>&1 | tee bazel-output.log
 
       # - name: Save Bazel output as downloadable artifacts
