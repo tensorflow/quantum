@@ -34,6 +34,7 @@ env:
   venv: ./.venv
   bazel_version: '6.5.0'
   save_artifacts: false
+  GH_TOKEN: ${{github.token}}
 
 permissions:
   actions: write
@@ -124,8 +125,6 @@ jobs:
       - name: Delete the previous virtualenv cache contents
         if: steps.cache.outputs.cache-hit == 'true'
         continue-on-error: true
-        env:
-          GH_TOKEN: ${{github.token}}
         run: |
           gh extension install actions/gh-actions-cache
           gh actions-cache delete "${{env.venv_cache_key}}" --confirm
