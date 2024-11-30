@@ -70,12 +70,12 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - run: |
-          echo "have_venv=false" >> $GITHUB_ENV
+          echo "have_venv=false" >> $GITHUB_OUTPUT
 
   virtualenv-setup:
     name: Create & cache Python environment
     needs: [initialization]
-    if: ${{env.have_venv}} != true
+    if: needs.initialization.outputs.have_venv != true
     runs-on: ubuntu-20.04
     steps:
       - name: Check out a copy of the TFQ git repository
