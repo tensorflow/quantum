@@ -239,8 +239,14 @@ jobs:
           echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
 
       - name: Perform memory leakage test on qsim and TFQ src
-        run: ./scripts/msan_test.sh 2>&1 | tee bazel-output.log
         continue-on-error: true
+        run: |
+          set -x -e
+          pwd
+          echo $HOME
+          ls  $HOME/.bazelrc
+          cat $HOME/.bazelrc
+          ./scripts/msan_test.sh 2>&1 | tee bazel-output.log
 
       # - name: Save Bazel output as downloadable artifacts
       #   uses: actions/upload-artifact@v4
