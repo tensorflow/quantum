@@ -24,7 +24,8 @@ name: Continuous integration
 on:
   pull_request_target:
     types: [opened, edited, synchronize, reopened]
-    branches: [master]
+    paths:
+      - '**'
   workflow_dispatch:
     save_artifacts:
       description: Save build artifacts & make them available for downloading.
