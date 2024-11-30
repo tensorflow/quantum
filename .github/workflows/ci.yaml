@@ -37,7 +37,9 @@ env:
 
 permissions:
   actions: write
+  # TODO: not needed but leaving until "resource not accessible ..." is solved
   contents: write
+  pull-requests: write
 
 run-name: Run CI for "${{github.event.pull_request.title || github.event.workflow_dispatch.display_title}}" by @${{github.triggering_actor}}
 jobs:
@@ -123,7 +125,7 @@ jobs:
         if: steps.cache.outputs.cache-hit == 'true'
         continue-on-error: true
         env:
-          GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+          GH_TOKEN: ${{github.token}}
         run: |
           gh extension install actions/gh-actions-cache
           gh actions-cache delete "${{env.venv_cache_key}}" --confirm
