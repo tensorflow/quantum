@@ -53,7 +53,7 @@ jobs:
   virtualenv-setup:
     name: Create & cache Python environment
     needs: [initialization]
-    if: needs.initialization.outputs.init_venv != done
+    if: needs.initialization.outputs.init_venv != 'done'
     runs-on: ubuntu-20.04
     steps:
       - name: Check out a copy of the TFQ git repository
