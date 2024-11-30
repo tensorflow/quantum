@@ -22,6 +22,7 @@
 name: Continuous integration
 
 on:
+  push:
   pull_request_target:
     types: [opened, edited, synchronize, reopened, converted_to_draft]
     paths:
