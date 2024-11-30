@@ -125,18 +125,19 @@ jobs:
           # Share repository cache between workflows.
           repository-cache: true
 
-      - name: Configure TFQ and save the .bazelrc file
+      - name: Configure TFQ
         run: |
           echo "Y\n" | ./configure.sh
-          mkdir -p $HOME/.cache/bazel-disk
-          cp .bazelrc $HOME/.cache/bazel-disk/
+
+      - name: Cache the .bazelrc file
+        uses: actions/cache@v4
+        with:
+          path: .bazelrc
+          key: bazelrc-${{runner.os}}-${{env.arch}}-${{hashFiles('.bazelrc')}}
 
       - name: Build TFQ
         run: |
           set -x -e
-          echo ================
-          cat .bazelrc
-          echo ================
           # bazel build -c opt --cxxopt="-msse2" --cxxopt="-msse3" --cxxopt="-msse4" //tensorflow_quantum/...
 
 
@@ -222,7 +223,7 @@ jobs:
           python-version: ${{env.py_version}}
           architecture: ${{env.arch}}
 
-      - name: Restore cached Python virtualenv
+      - name: Restore the cached Python virtualenv
         uses: actions/cache@v4
         with:
           path: ${{env.venv}}
@@ -247,18 +248,26 @@ jobs:
           # Cache external/  repositories.
           external-cache: true
 
-      - name: Restore the .bazelrc file
+      - name: test
         run: |
           set -x -e
-          cat $HOME/.cache/bazel-disk/.bazelrc >> .bazelrc
-          echo ================
-          cat .bazelrc
-          echo ================
+          if [ -f $HOME/.bazelrc ]; then
+            cat ~/.bazelrc
+          fi
+
+      - name: Restore the .bazelrc file
+        uses: actions/cache/restore@v4
+        with:
+          path: .bazelrc
+          key: bazelrc-${{runner.os}}-${{env.arch}}-${{hashFiles('.bazelrc')}}
 
       - name: Perform memory leakage test on qsim and TFQ src
         continue-on-error: true
         run: |
           set -x -e
+          echo ================
+          cat .bazelrc
+          echo ================
           ./scripts/msan_test.sh 2>&1 | tee bazel-output.log
 
       # - name: Save Bazel output as downloadable artifacts
