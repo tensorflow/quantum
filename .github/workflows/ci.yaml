@@ -128,8 +128,8 @@ jobs:
       - name: Configure TFQ and save the .bazelrc file
         run: |
           echo "Y\n" | ./configure.sh
-          mkdir -p $HOME/.bazel
-          cp .bazelrc $HOME/.bazel/
+          mkdir -p $HOME/.cache/bazel-disk
+          cp .bazelrc $HOME/.cache/bazel-disk/
 
       - name: Build TFQ
         run: |
@@ -250,7 +250,10 @@ jobs:
       - name: Restore the .bazelrc file
         run: |
           set -x -e
-          cat $HOME/.bazel/.bazelrc >> .bazelrc
+          cat $HOME/.cache/bazel-disk/.bazelrc >> .bazelrc
+          echo ================
+          cat .bazelrc
+          echo ================
 
       - name: Perform memory leakage test on qsim and TFQ src
         continue-on-error: true
