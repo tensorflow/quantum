@@ -41,6 +41,7 @@ permissions:
   # TODO: not needed but leaving until "resource not accessible ..." is solved
   contents: write
   pull-requests: write
+  checks: write
 
 run-name: Run CI for "${{github.event.pull_request.title || github.event.workflow_dispatch.display_title}}" by @${{github.triggering_actor}}
 jobs:
