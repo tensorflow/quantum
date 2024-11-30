@@ -34,14 +34,9 @@ env:
   venv: ./.venv
   bazel_version: '6.5.0'
   save_artifacts: false
-  GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
 
 permissions:
   actions: write
-  # TODO: not needed but leaving until "resource not accessible ..." is solved
-  contents: write
-  pull-requests: write
-  checks: write
 
 run-name: Run CI for "${{github.event.pull_request.title || github.event.workflow_dispatch.display_title}}" by @${{github.triggering_actor}}
 jobs:
@@ -70,8 +65,17 @@ jobs:
   #         which bazel
   #         bazel --version
 
-  set-up-python:
+  initialization:
+    name: Initialize the workflow
+    runs-on: ubuntu-20.04
+    steps:
+      run: |
+        echo "have_venv=false" >> $GITHUB_ENV
+
+  virtualenv-setup:
     name: Create & cache Python environment
+    needs: [initialization]
+    if: ${{env.have_venv}} != true
     runs-on: ubuntu-20.04
     steps:
       - name: Check out a copy of the TFQ git repository
@@ -83,31 +87,25 @@ jobs:
           python-version: ${{env.py_version}}
           architecture: ${{env.arch}}
 
-      - name: Set the cache key for the Python virtualenv cache
-        run: |
-          set -x -e
-          base="venv-${{env.py_version}}-${{env.arch}}"
-          key="$base-${{hashFiles('requirements.txt')}}"
-          echo "venv_cache_key=$key" >> $GITHUB_ENV
-
-      - name: Configure the cache for the Python virtualenv
+      - name: Set up a cache for the Python virtualenv
+        # if: steps.cache.outputs.cache-hit != 'true'
         uses: actions/cache@v4
-        id: cache
         with:
           path: ${{env.venv}}
-          key: ${{env.venv_cache_key}}
+          key: venv-${{env.py_version}}-${{env.arch}}
+#          key: ${{env.venv_cache_key}}
 
-      - name: Test whether the virtualenv cache is already populated
-        run: |
-          if [ ${{steps.cache.outputs.cache-hit}} == true ]; then
-            echo "Found cached virtualenv for Python ${{env.py_version}}."
-            echo "Will use it and skip remaining 'pip install' steps."
-          else
-            echo "No cached Python virtualenv found; proceeding to create one."
-          fi
+      # - name: Test whether the virtualenv cache is already populated
+      #   run: |
+      #     if [ ${{steps.cache.outputs.cache-hit}} == true ]; then
+      #       echo "Found cached virtualenv for Python ${{env.py_version}}."
+      #       echo "Will use it and skip remaining 'pip install' steps."
+      #     else
+      #       echo "No cached Python virtualenv found; proceeding to create one."
+      #     fi
 
-      - name: Install Python dependencies into the virtualenv if needed
-        if: steps.cache.outputs.cache-hit != 'true'
+      - name: Install Python dependencies into the virtualenv
+        # if: steps.cache.outputs.cache-hit != 'true'
         run: |
           set -x -e
           python -m venv ${{env.venv}}
@@ -117,28 +115,24 @@ jobs:
           echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
           echo "VIRTUAL_ENV=$VIRTUAL_ENV" >> $GITHUB_ENV
           echo "PATH=$PATH" >> $GITHUB_ENV
+          echo "have_venv=true" >> $GITHUB_ENV
           # Save information to the run log, in case it's needed for debugging.
           which python
           python --version
           python3 -c 'import site; print(site.getsitepackages())'
           python3 -c 'import tensorflow as tf; print(tf.version.VERSION)'
 
-      - name: Delete the previous virtualenv cache contents
-        if: steps.cache.outputs.cache-hit == 'true'
-        continue-on-error: true
-        run: |
-          gh extension install actions/gh-actions-cache
-          gh actions-cache delete "${{env.venv_cache_key}}" --confirm
+      # - name: Set the cache key for the Python virtualenv cache
+      #   run: |
+      #     set -x -e
+      #     base="venv-${{env.py_version}}-${{env.arch}}"
+      #     key="$base-${{hashFiles('${{env.venv}}/*')}}"
+      #     echo "venv_cache_key=$key" >> $GITHUB_ENV
 
-      - name: Save the updated Python virtualenv
-        uses: actions/cache/save@v4
-        with:
-          path: ${{env.venv}}
-          key: ${{env.venv_cache_key}}
 
   build-tfq:
     name: Configure, build, & cache TFQ
-    needs: [set-up-python]
+    needs: [virtualenv-setup]
     runs-on: ubuntu-20.04
     steps:
       - name: Check out a copy of the TFQ git repository
@@ -168,9 +162,10 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{env.venv}}
-          key: venv-${{env.py_version}}-${{env.arch}}-${{hashFiles('requirements.txt')}}
-#          restore-keys: venv-${{env.py_version}}-${{env.arch}}-${{hashFiles('requirements.txt')}}
-          enableCrossOsArchive: true
+          key: venv-${{env.py_version}}-${{env.arch}}
+          # key: ${{env.venv_cache_key}}
+          # restore-keys: venv-${{env.py_version}}-${{env.arch}}-${{hashFiles('requirements.txt')}}
+          # enableCrossOsArchive: true
 
       - name: Activate the Python virtualenv for this job
         run: |
@@ -179,45 +174,26 @@ jobs:
           echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
           echo "$GITHUB_PATH"
 
-      - name: Test whether we've already installed TFQ into the virtualenv
-        id: cache
-        run: |
-          if pip freeze | grep -q tensorflow-quantum; then
-            echo "Found tensorflow-quantum in pip list."
-            echo "Will skip build & install steps."
-            echo "have_tfq=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "Tensorflow-quantum not found in pip list."
-            echo "have_tfq=false" >> "$GITHUB_OUTPUT"
-          fi
+      # - name: Set up a cache for the Bazel configuration
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: bazel-cache
+      #     key: bazel-${{env.bazel_version}}-${{runner.os}}-${{env.arch}}-${{env.py_version}}
 
-        # Remaining steps test have_tfq and are skipped if the value is false.
-
-      - name: Set up a cache for the Bazel configuration
-        if: steps.cache.outputs.have_tfq != 'true'
-        uses: actions/cache@v4
-        with:
-          path: bazel-cache
-          key: bazel-${{env.bazel_version}}-${{runner.os}}-${{env.arch}}-${{env.py_version}}
-
-      - name: Configure TFQ
-        if: steps.cache.outputs.have_tfq != 'true'
+      - name: Configure and build TFQ
+        # The bazel-cache action will save the .bazelrc file automatically.
         run: |
           set -x -e
           echo "Y\n" | ./configure.sh
-          mkdir -p bazel-cache
-          cp .bazelrc bazel-cache/
+          bazel build -c opt --cxxopt="-msse2" --cxxopt="-msse3" --cxxopt="-msse4" //tensorflow_quantum/...
+          # mkdir -p bazel-cache
+          # cp .bazelrc bazel-cache/
 
-      - name: Build wheel for TFQ and install it into the Python virtualenv
-        if: steps.cache.outputs.have_tfq != 'true'
-        # run: |
-        #   ./scripts/build_pip_package_test.sh
-        run: |
-          set -x -e
-          bazel build -c opt --cxxopt="-msse2" --cxxopt="-msse3" --cxxopt="-msse4" release:build_pip_package
-          rm -f /tmp/tensorflow_quantum/*
-          bazel-bin/release/build_pip_package /tmp/tensorflow_quantum/
-          pip install -U /tmp/tensorflow_quantum/*.whl
+      # - name: Build TFQ
+      #   # if: steps.cache.outputs.have_tfq != 'true'
+      #   run: |
+      #     set -x -e
+      #     bazel build -c opt --cxxopt="-msse2" --cxxopt="-msse3" --cxxopt="-msse4" //tensorflow_quantum/...
 
       # - name: Save the updated Python virtualenv
       #   if: steps.cache.outputs.have_tfq != 'true'
@@ -297,7 +273,7 @@ jobs:
   run-leak-tests:
     name: Test for memory leaks
     # needs: [lint, format]
-    needs: [set-up-python, build-tfq]
+    needs: [virtualenv-setup, build-tfq]
     runs-on: ubuntu-20.04
 
     steps:
