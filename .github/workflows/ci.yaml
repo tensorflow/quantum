@@ -49,7 +49,7 @@ jobs:
           echo "init_venv=not_done" >> $GITHUB_OUTPUT
 
   virtualenv-setup:
-    name: Set up Python environment
+    name: Set up the Python environment
     needs: [initialization]
     if: needs.initialization.outputs.init_venv != 'done'
     runs-on: ubuntu-20.04
@@ -114,10 +114,10 @@ jobs:
           echo "Y\n" | ./configure.sh
           set -x -e
           pwd
-          echo $HOME
-          cat $HOME/.bazelrc
-          # mkdir -p $HOME/.bazel
-          # cp .bazelrc $HOME/.bazel/.bazelrc
+          echo ================
+          cat .bazelrc
+          echo ================
+          cp .bazelrc $HOME/
           # bazel build -c opt --cxxopt="-msse2" --cxxopt="-msse3" --cxxopt="-msse4" //tensorflow_quantum/...
 
       - name: Cache Bazel outputs
