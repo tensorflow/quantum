@@ -136,8 +136,8 @@ jobs:
           else
             echo ":x: Failed one or more tests." >> $GITHUB_STEP_SUMMARY
           fi
-          if [[ ${{github.event.inputs.save_artifacts}} != true \
-                && ${{env.save_artifacts}} != true ]]; then
+          if [[ "${{github.event.inputs.save_artifacts}}" != "true" \
+                && "${{env.save_artifacts}}" != "true" ]]; then
             echo "Build artifacts not saved because" >> $GITHUB_STEP_SUMMARY
             echo -n "the option was not enabled." >> $GITHUB_STEP_SUMMARY
           fi
