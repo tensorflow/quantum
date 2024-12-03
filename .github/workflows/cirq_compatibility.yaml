@@ -87,14 +87,10 @@ jobs:
         env:
           USE_BAZEL_VERSION: ${{github.event.inputs.bazel_version || env.bazel_version}}
         with:
-          # Avoid downloading Bazel every time.
-          bazelisk-cache: true
-          # Store build cache per workflow.
           disk-cache: ${{github.workflow}}
-          # Cache external/  repositories.
-          external-cache: true
-          # Share repository cache between workflows.
+          bazelisk-cache: true
           repository-cache: true
+          external-cache: true
 
       - name: Configure TFQ
         run: |
