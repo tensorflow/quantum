@@ -30,8 +30,8 @@ name: Cirq compatibility
 
 # Default values.
 env:
-  py_version: 3.10
-  bazel_version: 6.5.0
+  py_version: '3.10'
+  bazel_version: '6.5.0'
   arch: x64
   save_artifacts: false
 
