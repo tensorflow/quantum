@@ -114,7 +114,7 @@ jobs:
           fi
 
       - name: Set up Bazel with caching
-        if: env.use_bazel_disk_cache == true
+        if: env.use_bazel_disk_cache == 'true'
         uses: bazel-contrib/setup-bazel@0.9.1
         env:
           USE_BAZEL_VERSION: ${{github.event.inputs.bazel_version || env.bazel_version}}
@@ -128,7 +128,7 @@ jobs:
             test --cache_test_results=${{env.cache_bazel_tests}}
 
       - name: Set up Bazel without caching
-        if: env.use_bazel_disk_cache == false
+        if: env.use_bazel_disk_cache == 'false'
         uses: bazel-contrib/setup-bazel@0.9.1
         env:
           USE_BAZEL_VERSION: ${{github.event.inputs.bazel_version || env.bazel_version}}
