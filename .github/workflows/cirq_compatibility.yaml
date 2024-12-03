@@ -34,6 +34,10 @@ env:
   bazel_version: 6.5.0
   # Machine architecture.
   arch: x64
+  # Additional .bazelrc options to use.
+  bazelrc_additions: |
+    common --announce_rc
+    build --verbose_failures
 
 on:
   # Nightly runs.
@@ -53,11 +57,11 @@ on:
         type: boolean
         default: true
       cache_bazel_tests:
-        description: Use Bazel--cache_test_results=yes?
+        description: Allow Bazel to cache test results?
         type: boolean
         default: true
       save_artifacts:
-        description: Make build artifacts downloadable?
+        description: Make Bazel build outputs downloadable?
         type: boolean
         default: true
   pull_request:
@@ -69,14 +73,6 @@ jobs:
     name: Run TFQ tests
     runs-on: ubuntu-20.04
     steps:
-      - name: Configure run-time options
-        run: |
-          if [[ "${{github.event.inputs.cache_bazel_tests}}" != "false" ]]; then
-            echo "cache_test_results=yes" >> "$GITHUB_ENV"
-          else
-            echo "cache_test_results=no" >> "$GITHUB_ENV"
-          fi
-
       - name: Check out a copy of the TFQ git repository
         uses: actions/checkout@v4
         with:
@@ -84,13 +80,14 @@ jobs:
           repository: ${{github.event.pull_request.head.repo.full_name}}
 
       - name: Set up Python
+        id: python
         uses: actions/setup-python@v5
         with:
           python-version: ${{github.event.inputs.py_version || env.py_version}}
           architecture: ${{github.event.inputs.arch || env.arch}}
           cache: pip
 
-      - name: Install TensorFlow and other Python dependencies
+      - name: Install TensorFlow Quantum dependencies
         run: |
           pip install --upgrade pip setuptools wheel
           pip install -r requirements.txt
@@ -99,10 +96,25 @@ jobs:
         run: |
           pip install -U cirq --pre
 
+      - name: Configure Bazel options
+        run: |
+          # If we didn't get a cache hit on the installed Python environment,
+          # something's changed, and we want to make sure to re-run all tests.
+          if [[ "${{steps.python.outputs.cache-hit}}" == "true"
+                 && "${{github.event.inputs.cache_bazel_tests}}" != "false" ]]; then
+            echo "cache_bazel_tests=auto" >> "$GITHUB_ENV"
+          else
+            echo "cache_bazel_tests=no" >> "$GITHUB_ENV"
+          fi
+          # Use the disk cache unless told not to.
+          if [[ "${{github.event.inputs.use_bazel_disk_cache}}" != "false" ]]; then
+            echo "use_bazel_disk_cache=true" >> "$GITHUB_ENV"
+          else
+            echo "use_bazel_disk_cache=false" >> "$GITHUB_ENV"
+          fi
+
       - name: Set up Bazel with caching
-        if: >-
-          "${{github.event.inputs.use_bazel_disk_cache == ''}}"
-          || github.event.inputs.use_bazel_disk_cache == true
+        if: env.use_bazel_disk_cache == true
         uses: bazel-contrib/setup-bazel@0.9.1
         env:
           USE_BAZEL_VERSION: ${{github.event.inputs.bazel_version || env.bazel_version}}
@@ -111,15 +123,19 @@ jobs:
           bazelisk-cache: true
           external-cache: true
           repository-cache: true
-          bazelrc: test --cache_test_results=${{env.cache_test_results}}
+          bazelrc: |
+            ${{env.bazelrc_additions}}
+            test --cache_test_results=${{env.cache_bazel_tests}}
 
       - name: Set up Bazel without caching
-        if: "${{github.event.inputs.use_bazel_disk_cache == 'false'}}"
+        if: env.use_bazel_disk_cache == false
         uses: bazel-contrib/setup-bazel@0.9.1
         env:
           USE_BAZEL_VERSION: ${{github.event.inputs.bazel_version || env.bazel_version}}
         with:
-          bazelrc: test --cache_test_results=${{env.cache_test_results}}
+          bazelrc: |
+            ${{env.bazelrc_additions}}
+            test --cache_test_results=${{env.cache_bazel_tests}}
 
       - name: Configure TFQ
         run: |
