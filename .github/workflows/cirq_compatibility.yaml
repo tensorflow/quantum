@@ -54,7 +54,6 @@ on:
     branches:
       - master
 
-run-test: Test the main branch of TFQ against the latest Cirq release
 jobs:
   test-compatibility:
     name: Run TFQ tests
