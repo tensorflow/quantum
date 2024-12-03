@@ -119,8 +119,8 @@ jobs:
           set -x -e
           set -o pipefail
           ./scripts/test_all.sh 2>&1 | tee unit-tests-output.log; exit_code=$?
+          echo "exit_code=$exit_code" >> $GITHUB_ENV
           touch msan-tests-output.log
-          echo "exit_code=$exit_code" >> $GITHUB_OUTPUT
 
       - name: Report errors if there were any
         # The steps above avoided exiting on errors so that the artifact-saving
