@@ -109,34 +109,13 @@ jobs:
         # Without continue-on-error, subsequent steps won't run when errors
         # occur -- but that's exactly when we *want* subsequent steps to run.
         continue-on-error: true
-        # TODO: when the msan tests are working again, replace the "touch"
-        # line below with this:
-        #
-        #  ./scripts/msan_test.sh 2>&1 | tee msan-tests-output.log; exit_code=$?
-        #  echo "exit_code=$exit_code" >> $GITHUB_OUTPUT
-        #
+        # TODO: when the msan tests are working again, add them below.
         run: |
           set -x -e
           set -o pipefail
           ./scripts/test_all.sh 2>&1 | tee unit-tests-output.log; exit_code=$?
           echo "exit_code=$exit_code" >> $GITHUB_ENV
           touch msan-tests-output.log
-
-      - name: Report errors if there were any
-        # The steps above avoided exiting on errors so that the artifact-saving
-        # step could run even if errors occurred. We still need to report
-        # errors, though, so we have to do it ourselves.
-        run: |
-          if [[ $exit_code == 0 ]]; then
-            echo ":white_check_mark: Passed all tests." >> $GITHUB_STEP_SUMMARY
-          else
-            echo ":x: Failed one or more tests." >> $GITHUB_STEP_SUMMARY
-          fi
-          if [[ "${{github.event.inputs.save_artifacts}}" != "true" \
-                && "${{env.save_artifacts}}" != "true" ]]; then
-            echo "Build artifacts not saved because" >> $GITHUB_STEP_SUMMARY
-            echo -n "the option was not enabled." >> $GITHUB_STEP_SUMMARY
-          fi
 
       - name: Save Bazel output as downloadable artifacts (if requested)
         if: github.event.inputs.save_artifacts == true || env.save_artifacts == true
@@ -153,3 +132,20 @@ jobs:
             !/home/runner/.bazel/execroot/__main__/bazel-out/**/*.o
             !/home/runner/.bazel/execroot/__main__/bazel-out/**/_objs
             !/home/runner/.bazel/execroot/__main__/bazel-out/**/_solib_k8
+
+      - name: Report errors if there were any
+        # The steps above avoided exiting on errors so that the artifact-saving
+        # step could run even if errors occurred. We still need to report
+        # errors, though, so we have to do it ourselves. While we're at it,
+        # remind the user why build artifacts might not be downloadable.
+        env:
+          not_saved: >-
+            Build artifacts not saved because the option was not enabled.
+        run: |
+          if [[ "${{github.event.inputs.save_artifacts}}" != "true" \
+                && "${{env.save_artifacts}}" != "true" ]]; then
+            echo ${{env.not_saved}} >> $GITHUB_STEP_SUMMARY
+          fi
+          if [[ ${{env.exit_code}} != 0 ]]; then
+            exit 1
+          fi
