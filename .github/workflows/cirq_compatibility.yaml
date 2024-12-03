@@ -100,7 +100,9 @@ jobs:
           pip install -U cirq --pre
 
       - name: Set up Bazel with caching
-        if: github.event.inputs.use_bazel_disk_cache != false
+        if: >-
+          "${{github.event.inputs.use_bazel_disk_cache == ''}}"
+          || github.event.inputs.use_bazel_disk_cache == true
         uses: bazel-contrib/setup-bazel@0.9.1
         env:
           USE_BAZEL_VERSION: ${{github.event.inputs.bazel_version || env.bazel_version}}
