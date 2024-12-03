@@ -50,6 +50,9 @@ on:
     save_artifacts:
       description: Make build artifacts downloadable
       type: boolean
+  pull_request:
+    branches:
+      - master
 
 run-test: Test the main branch of TFQ against the latest Cirq release
 jobs:
@@ -68,6 +71,9 @@ jobs:
     steps:
       - name: Check out a copy of the TFQ git repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{github.event.pull_request.head.ref}}
+          repository: ${{github.event.pull_request.head.repo.full_name}}
 
       - name: Set up Python
         uses: actions/setup-python@v5
