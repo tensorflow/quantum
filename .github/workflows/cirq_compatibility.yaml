@@ -71,7 +71,7 @@ jobs:
     steps:
       - name: Configure run-time options
         run: |
-          if [[ "${{github.event.inputs.cache_bazel_tests}}" == "true" ]]; then
+          if [[ "${{github.event.inputs.cache_bazel_tests}}" != "false" ]]; then
             echo "cache_test_results=yes" >> "$GITHUB_ENV"
           else
             echo "cache_test_results=no" >> "$GITHUB_ENV"
