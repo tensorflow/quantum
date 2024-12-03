@@ -15,15 +15,13 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Summary: GitHub CI workflow for testing TFQ against Cirq releases
 #
-# This workflow is executed every night on a schedule. For testing, it can
-# also be invoked manually from the GitHub Actions web interface.
+# This workflow is executed every night on a schedule. By default, this
+# workflow will save Bazel build artifacts if an error occurs during a run.
 #
-# When invoked manually, the GitHub Actions interface on the web page for the
-# run will present a form with a number of fields that can be set. One of them
-# controls whether build artifacts are made available for downloading. When
-# set to "true", the execution summary page for the workflow on GitHub will
-# contain additional info and a link for downloading the build artifacts. This
-# info and link will not be present on the summary page otherwise.
+# For testing, this workflow can be invoked manually from the GitHub page at
+# https://github.com/tensorflow/quantum/actions/workflows/cirq_compatibility.yaml
+# Clicking the "Run workflow" button there will present a form interface with
+# options for overridding some of the parameters for the run.
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 name: Cirq compatibility nightly tests
@@ -36,8 +34,6 @@ env:
   bazel_version: 6.5.0
   # Machine architecture.
   arch: x64
-  # Whether to save artifacts for downloading when an error occurs.
-  save_artifacts: true
 
 on:
   # Nightly runs.
@@ -55,6 +51,7 @@ on:
       save_artifacts:
         description: Make build artifacts downloadable
         type: boolean
+        default: true
   pull_request:
     branches:
       - master
@@ -106,7 +103,7 @@ jobs:
           python -c 'import tensorflow; print(tensorflow.version.VERSION)'
           python -c 'import cirq; print(cirq.__version__)'
           # Run the TFQ configuration script.
-          echo "Y\n" | ./configure.sh
+          printf "Y\n" | ./configure.sh
 
       - name: Run TFQ unit tests
         # TODO: when the msan tests are working again, replace the "touch"
@@ -116,11 +113,10 @@ jobs:
           ./scripts/test_all.sh 2>&1 | tee unit-tests-output.log
           touch msan-tests-output.log
 
-      - name: Save Bazel output as downloadable artifacts (if requested)
+      - name: Make Bazel artifacts downloadable (if desired)
         if: >-
-          (success() || failure())
-          && (github.event.inputs.save_artifacts == true
-              || env.save_artifacts == true)
+          github.event.inputs.save_artifacts == true
+          && (failure() || github.event_name == 'workflow_dispatch')
         uses: actions/upload-artifact@v4
         with:
           name: bazel-out
