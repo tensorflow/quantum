@@ -48,12 +48,16 @@ on:
         description: Version of Bazel Python to use
       arch:
         description: Computer architecture to use
-      cache_test_results:
-        description: Value of Bazel --cache_test_results
+      use_bazel_disk_cache:
+        description: Use Bazel disk_cache between runs?
+        type: boolean
+        default: true
+      cache_bazel_tests:
+        description: Use Bazel--cache_test_results=yes?
         type: boolean
         default: true
       save_artifacts:
-        description: Make build artifacts downloadable
+        description: Make build artifacts downloadable?
         type: boolean
         default: true
   pull_request:
@@ -65,6 +69,14 @@ jobs:
     name: Run TFQ tests
     runs-on: ubuntu-20.04
     steps:
+      - name: Configure run-time options
+        run: |
+          if [[ "${{github.event.inputs.cache_bazel_tests}}" == "true" ]]; then
+            echo "cache_test_results=yes" >> "$GITHUB_ENV"
+          else
+            echo "cache_test_results=no" >> "$GITHUB_ENV"
+          fi
+
       - name: Check out a copy of the TFQ git repository
         uses: actions/checkout@v4
         with:
@@ -87,15 +99,25 @@ jobs:
         run: |
           pip install -U cirq --pre
 
-      - name: Set up Bazel
+      - name: Set up Bazel with caching
+        if: github.event.inputs.use_bazel_disk_cache == true
         uses: bazel-contrib/setup-bazel@0.9.1
         env:
           USE_BAZEL_VERSION: ${{github.event.inputs.bazel_version || env.bazel_version}}
         with:
           disk-cache: ${{github.workflow}}
-          bazelisk-cache: ${{github.event.inputs.cache_test_results}}
-          repository-cache: ${{github.event.inputs.cache_test_results}}
-          external-cache: ${{github.event.inputs.cache_test_results}}
+          bazelisk-cache: true
+          external-cache: true
+          repository-cache: true
+          bazelrc: test --cache_test_results=${{env.cache_test_results}}
+
+      - name: Set up Bazel without caching
+        if: github.event.inputs.use_bazel_disk_cache == false
+        uses: bazel-contrib/setup-bazel@0.9.1
+        env:
+          USE_BAZEL_VERSION: ${{github.event.inputs.bazel_version || env.bazel_version}}
+        with:
+          bazelrc: test --cache_test_results=${{env.cache_test_results}}
 
       - name: Configure TFQ
         run: |
