@@ -59,14 +59,10 @@ jobs:
     name: Run TFQ tests
     runs-on: ubuntu-20.04
     env:
-      ARCH: >-
-        ${{github.event.inputs.arch || env.arch}}
-      PY_VERSION: >-
-        ${{github.event.inputs.py_version || env.py_version}}
-      BAZEL_VERSION: >-
-        ${{github.event.inputs.bazel_version || env.bazel_version}}
-      SAVE_ARTIFACTS: >-
-        ${{github.event.inputs.save_artifacts || env.save_artifacts}}
+      ARCH: ${{github.event.inputs.arch || env.arch}}
+      PY_VERSION: ${{github.event.inputs.py_version || env.py_version}}
+      BAZEL_VERSION: ${{github.event.inputs.bazel_version || env.bazel_version}}
+      SAVE_ARTIFACTS: ${{github.event.inputs.save_artifacts || env.save_artifacts}}
     steps:
       - name: Check out a copy of the TFQ git repository
         uses: actions/checkout@v4
