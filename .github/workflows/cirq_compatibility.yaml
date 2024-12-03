@@ -130,11 +130,15 @@ jobs:
         # step could run even if errors occurred. We still need to report
         # errors, though, so we have to do it ourselves.
         run: |
-          echo \#\# Cirq compatibility test results >> $GITHUB_STEP_SUMMARY
           if [[ $exit_code == 0 ]]; then
-            echo Passed all tests. >> $GITHUB_STEP_SUMMARY
+            echo ":white_check_mark: Passed all tests." >> $GITHUB_STEP_SUMMARY
           else
-            echo Failed one or more tests. >> $GITHUB_STEP_SUMMARY
+            echo ":x: Failed one or more tests." >> $GITHUB_STEP_SUMMARY
+          fi
+          if [[ ${{github.event.inputs.save_artifacts}} != true \
+                && ${{env.save_artifacts}} != true ]]; then
+            echo "Build artifacts not saved because" >> $GITHUB_STEP_SUMMARY
+            echo -n "the option was not enabled." >> $GITHUB_STEP_SUMMARY
           fi
 
       - name: Save Bazel output as downloadable artifacts (if requested)
