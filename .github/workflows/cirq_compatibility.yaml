@@ -1,4 +1,4 @@
-# Copyright 2024 The TensorFlow Quantum Authors. All Rights Reserved.
+# Copyright 2024 The TensorFlow Quantum Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -48,6 +48,10 @@ on:
         description: Version of Bazel Python to use
       arch:
         description: Computer architecture to use
+      cache_test_results:
+        description: Value of Bazel --cache_test_results
+        type: boolean
+        default: true
       save_artifacts:
         description: Make build artifacts downloadable
         type: boolean
@@ -89,9 +93,9 @@ jobs:
           USE_BAZEL_VERSION: ${{github.event.inputs.bazel_version || env.bazel_version}}
         with:
           disk-cache: ${{github.workflow}}
-          bazelisk-cache: true
-          repository-cache: true
-          external-cache: true
+          bazelisk-cache: ${{github.event.inputs.cache_test_results}}
+          repository-cache: ${{github.event.inputs.cache_test_results}}
+          external-cache: ${{github.event.inputs.cache_test_results}}
 
       - name: Configure TFQ
         run: |
