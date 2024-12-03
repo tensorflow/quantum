@@ -103,10 +103,10 @@ jobs:
           which python
           python --version
           python -c 'import site; print(site.getsitepackages())'
-          python -c 'import tensorflow as tf; print(tf.version.VERSION)'
+          python -c 'import tensorflow; print(tensorflow.version.VERSION)'
           python -c 'import cirq; print(cirq.__version__)'
           # Run the TFQ configuration script.
-          set -x -e "Y\n" | ./configure.sh
+          echo "Y\n" | ./configure.sh
 
       - name: Run TFQ unit tests
         id: unit-tests
