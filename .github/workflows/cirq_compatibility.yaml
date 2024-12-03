@@ -31,7 +31,7 @@ name: Cirq compatibility
 # Default values.
 env:
   py_version: '3.10'
-  bazel_version: '6.5.0'
+  bazel_version: 6.5.0
   arch: x64
   save_artifacts: false
 
@@ -71,6 +71,7 @@ jobs:
         with:
           python-version: ${{github.event.inputs.py_version || env.py_version}}
           architecture: ${{github.event.inputs.arch || env.arch}}
+          cache: pip
 
       - name: Install TensorFlow and other Python dependencies
         run: |
