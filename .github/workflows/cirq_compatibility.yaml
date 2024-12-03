@@ -26,14 +26,18 @@
 # info and link will not be present on the summary page otherwise.
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-name: Cirq compatibility
+name: Cirq compatibility nightly tests
 
-# Default values.
+# Default values. These can be overridden when workflow dispatch is used.
 env:
+  # Python version to test against.
   py_version: '3.10'
+  # Bazel version. Note: this needs to match what is used in TF & TFQ.
   bazel_version: 6.5.0
+  # Machine architecture.
   arch: x64
-  save_artifacts: false
+  # Whether to save artifacts for downloading when an error occurs.
+  save_artifacts: true
 
 on:
   # Nightly runs.
@@ -105,20 +109,18 @@ jobs:
           echo "Y\n" | ./configure.sh
 
       - name: Run TFQ unit tests
-        id: unit-tests
-        # Without continue-on-error, subsequent steps won't run when errors
-        # occur -- but that's exactly when we *want* subsequent steps to run.
-        continue-on-error: true
-        # TODO: when the msan tests are working again, add them below.
+        # TODO: when the msan tests are working again, replace the "touch"
+        # line with ./scripts/msan_test.sh 2>&1 | tee msan-tests-output.log
         run: |
           set -x -e
-          set -o pipefail
-          ./scripts/test_all.sh 2>&1 | tee unit-tests-output.log; exit_code=$?
-          echo "exit_code=$exit_code" >> $GITHUB_ENV
+          ./scripts/test_all.sh 2>&1 | tee unit-tests-output.log
           touch msan-tests-output.log
 
       - name: Save Bazel output as downloadable artifacts (if requested)
-        if: github.event.inputs.save_artifacts == true || env.save_artifacts == true
+        if: >-
+          (success() || failure())
+          && (github.event.inputs.save_artifacts == true
+              || env.save_artifacts == true)
         uses: actions/upload-artifact@v4
         with:
           name: bazel-out
@@ -132,20 +134,3 @@ jobs:
             !/home/runner/.bazel/execroot/__main__/bazel-out/**/*.o
             !/home/runner/.bazel/execroot/__main__/bazel-out/**/_objs
             !/home/runner/.bazel/execroot/__main__/bazel-out/**/_solib_k8
-
-      - name: Report errors if there were any
-        # The steps above avoided exiting on errors so that the artifact-saving
-        # step could run even if errors occurred. We still need to report
-        # errors, though, so we have to do it ourselves. While we're at it,
-        # remind the user why build artifacts might not be downloadable.
-        env:
-          not_saved: >-
-            Build artifacts not saved because the option was not enabled.
-        run: |
-          if [[ "${{github.event.inputs.save_artifacts}}" != "true" \
-                && "${{env.save_artifacts}}" != "true" ]]; then
-            echo ${{env.not_saved}} >> $GITHUB_STEP_SUMMARY
-          fi
-          if [[ ${{env.exit_code}} != 0 ]]; then
-            exit 1
-          fi
