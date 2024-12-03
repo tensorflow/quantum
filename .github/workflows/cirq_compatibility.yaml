@@ -41,15 +41,16 @@ on:
     - cron: 0 0 * * *
   # Manual on-demand invocations.
   workflow_dispatch:
-    py_version:
-      description: Version of Python to use
-    bazel_version:
-      description: Version of Bazel Python to use
-    arch:
-      description: Computer architecture to use
-    save_artifacts:
-      description: Make build artifacts downloadable
-      type: boolean
+    inputs:
+      py_version:
+        description: Version of Python to use
+      bazel_version:
+        description: Version of Bazel Python to use
+      arch:
+        description: Computer architecture to use
+      save_artifacts:
+        description: Make build artifacts downloadable
+        type: boolean
   pull_request:
     branches:
       - master
@@ -58,11 +59,6 @@ jobs:
   test-compatibility:
     name: Run TFQ tests
     runs-on: ubuntu-20.04
-    env:
-      ARCH: ${{github.event.inputs.arch || env.arch}}
-      PY_VERSION: ${{github.event.inputs.py_version || env.py_version}}
-      BAZEL_VERSION: ${{github.event.inputs.bazel_version || env.bazel_version}}
-      SAVE_ARTIFACTS: ${{github.event.inputs.save_artifacts || env.save_artifacts}}
     steps:
       - name: Check out a copy of the TFQ git repository
         uses: actions/checkout@v4
@@ -73,8 +69,8 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: ${{env.PY_VERSION}}
-          architecture: ${{env.ARCH}}
+          python-version: ${{github.event.inputs.py_version || env.py_version}}
+          architecture: ${{github.event.inputs.arch || env.arch}}
 
       - name: Install TensorFlow and other Python dependencies
         run: |
@@ -88,7 +84,7 @@ jobs:
       - name: Set up Bazel
         uses: bazel-contrib/setup-bazel@0.9.1
         env:
-          USE_BAZEL_VERSION: ${{env.BAZEL_VERSION}}
+          USE_BAZEL_VERSION: ${{github.event.inputs.bazel_version || env.bazel_version}}
         with:
           # Avoid downloading Bazel every time.
           bazelisk-cache: true
@@ -142,7 +138,7 @@ jobs:
           fi
 
       - name: Save Bazel output as downloadable artifacts (if requested)
-        if: env.SAVE_ARTIFACTS == true
+        if: github.event.inputs.save_artifacts == true || env.save_artifacts == true
         uses: actions/upload-artifact@v4
         with:
           name: bazel-out
