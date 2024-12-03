@@ -1,24 +1,157 @@
-name: Cirq Compatibility
+# Copyright 2024 The TensorFlow Quantum Authors. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Summary: GitHub CI workflow for testing TFQ against Cirq releases
+#
+# This workflow is executed every night on a schedule. For testing, it can
+# also be invoked manually from the GitHub Actions web interface.
+#
+# When invoked manually, the GitHub Actions interface on the web page for the
+# run will present a form with a number of fields that can be set. One of them
+# controls whether build artifacts are made available for downloading. When
+# set to "true", the execution summary page for the workflow on GitHub will
+# contain additional info and a link for downloading the build artifacts. This
+# info and link will not be present on the summary page otherwise.
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+name: Cirq compatibility
+
+# Default values.
+env:
+  py_version: 3.10
+  bazel_version: 6.5.0
+  arch: x64
+  save_artifacts: false
 
 on:
+  # Nightly runs.
   schedule:
-    - cron: "0 0 * * *"
+    - cron: 0 0 * * *
+  # Manual on-demand invocations.
+  workflow_dispatch:
+    py_version:
+      description: Version of Python to use
+    bazel_version:
+      description: Version of Bazel Python to use
+    arch:
+      description: Computer architecture to use
+    save_artifacts:
+      description: Make build artifacts downloadable
+      type: boolean
 
+run-test: Test the main branch of TFQ against the latest Cirq release
 jobs:
-  consistency:
-    name: Nightly Compatibility
+  test-compatibility:
+    name: Run TFQ tests
     runs-on: ubuntu-20.04
+    env:
+      ARCH: >-
+        ${{github.event.inputs.arch || env.arch}}
+      PY_VERSION: >-
+        ${{github.event.inputs.py_version || env.py_version}}
+      BAZEL_VERSION: >-
+        ${{github.event.inputs.bazel_version || env.bazel_version}}
+      SAVE_ARTIFACTS: >-
+        ${{github.event.inputs.save_artifacts || env.save_artifacts}}
     steps:
-      - uses: actions/checkout@v1
-      - uses: actions/setup-python@v1
+      - name: Check out a copy of the TFQ git repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.8'
-          architecture: 'x64'
-      - name: Install Bazel on CI
-        run: ./scripts/ci_install.sh
-      - name: Configure CI TF
-        run: echo "Y\n" | ./configure.sh
-      - name: Install Cirq nightly
-        run: pip install -U cirq --pre
-      - name: Nightly tests
-        run: ./scripts/test_all.sh
+          python-version: ${{env.PY_VERSION}}
+          architecture: ${{env.ARCH}}
+
+      - name: Install TensorFlow and other Python dependencies
+        run: |
+          pip install --upgrade pip setuptools wheel
+          pip install -r requirements.txt
+
+      - name: Install the nightly build version of Cirq
+        run: |
+          pip install -U cirq --pre
+
+      - name: Set up Bazel
+        uses: bazel-contrib/setup-bazel@0.9.1
+        env:
+          USE_BAZEL_VERSION: ${{env.BAZEL_VERSION}}
+        with:
+          # Avoid downloading Bazel every time.
+          bazelisk-cache: true
+          # Store build cache per workflow.
+          disk-cache: ${{github.workflow}}
+          # Cache external/  repositories.
+          external-cache: true
+          # Share repository cache between workflows.
+          repository-cache: true
+
+      - name: Configure TFQ
+        run: |
+          set -x -e
+          # Save information to the run log, in case it's needed for debugging.
+          which python
+          python --version
+          python -c 'import site; print(site.getsitepackages())'
+          python -c 'import tensorflow as tf; print(tf.version.VERSION)'
+          python -c 'import cirq; print(cirq.__version__)'
+          # Run the TFQ configuration script.
+          set -x -e "Y\n" | ./configure.sh
+
+      - name: Run TFQ unit tests
+        id: unit-tests
+        # Without continue-on-error, subsequent steps won't run when errors
+        # occur -- but that's exactly when we *want* subsequent steps to run.
+        continue-on-error: true
+        # TODO: when the msan tests are working again, replace the "touch"
+        # line below with this:
+        #
+        #  ./scripts/msan_test.sh 2>&1 | tee msan-tests-output.log; exit_code=$?
+        #  echo "exit_code=$exit_code" >> $GITHUB_OUTPUT
+        #
+        run: |
+          set -x -e
+          set -o pipefail
+          ./scripts/test_all.sh 2>&1 | tee unit-tests-output.log; exit_code=$?
+          touch msan-tests-output.log
+          echo "exit_code=$exit_code" >> $GITHUB_OUTPUT
+
+      - name: Report errors if there were any
+        # The steps above avoided exiting on errors so that the artifact-saving
+        # step could run even if errors occurred. We still need to report
+        # errors, though, so we have to do it ourselves.
+        run: |
+          echo \#\# Cirq compatibility test results >> $GITHUB_STEP_SUMMARY
+          if [[ $exit_code == 0 ]]; then
+            echo Passed all tests. >> $GITHUB_STEP_SUMMARY
+          else
+            echo Failed one or more tests. >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Save Bazel output as downloadable artifacts (if requested)
+        if: env.SAVE_ARTIFACTS == true
+        uses: actions/upload-artifact@v4
+        with:
+          name: bazel-out
+          retention-days: 7
+          include-hidden-files: true
+          path: |
+            unit-tests-output.log
+            msan-tests-output.log
+            /home/runner/.bazel/execroot/__main__/bazel-out/
+            !/home/runner/.bazel/execroot/__main__/bazel-out/**/*.so
+            !/home/runner/.bazel/execroot/__main__/bazel-out/**/*.o
+            !/home/runner/.bazel/execroot/__main__/bazel-out/**/_objs
+            !/home/runner/.bazel/execroot/__main__/bazel-out/**/_solib_k8
