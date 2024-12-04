@@ -24,7 +24,7 @@
 # options for overridding some of the parameters for the run.
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-name: Cirq compatibility nightly tests
+name: Cirq compatibility tests
 
 # Default values. These can be overridden when workflow dispatch is used.
 env:
@@ -150,12 +150,12 @@ jobs:
           # Run the TFQ configuration script.
           printf "Y\n" | ./configure.sh
 
-      - name: Run TFQ unit tests
+      - name: Run TFQ tests
         # TODO: when the msan tests are working again, replace the "touch"
         # line with ./scripts/msan_test.sh 2>&1 | tee msan-tests-output.log
         run: |
           set -x -e
-          ./scripts/test_all.sh 2>&1 | tee unit-tests-output.log
+          ./scripts/test_all.sh 2>&1 | tee main-tests-output.log
           touch msan-tests-output.log
 
       - name: Make Bazel artifacts downloadable (if desired)
@@ -168,7 +168,7 @@ jobs:
           retention-days: 7
           include-hidden-files: true
           path: |
-            unit-tests-output.log
+            main-tests-output.log
             msan-tests-output.log
             /home/runner/.bazel/execroot/__main__/bazel-out/
             !/home/runner/.bazel/execroot/__main__/bazel-out/**/*.so
