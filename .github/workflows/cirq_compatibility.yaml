@@ -65,9 +65,6 @@ on:
         description: Make Bazel build outputs downloadable?
         type: boolean
         default: true
-  pull_request:
-    branches:
-      - master
 
 jobs:
   test-compatibility:
@@ -76,9 +73,6 @@ jobs:
     steps:
       - name: Check out a copy of the TFQ git repository
         uses: actions/checkout@v4
-        with:
-          ref: ${{github.event.pull_request.head.ref}}
-          repository: ${{github.event.pull_request.head.repo.full_name}}
 
       - name: Set up Python
         id: python
