@@ -38,6 +38,7 @@ env:
   bazelrc_additions: |
     common --announce_rc
     build --verbose_failures
+    test --test_timeout=3000
 
 on:
   # Nightly runs.
