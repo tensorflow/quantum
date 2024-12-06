@@ -259,8 +259,8 @@ def minimize(expectation_value_function,
             next_state_params = post_state.to_dict()
             next_state_params.update({
                 "converged": (tf.abs(post_state.objective_value -
-                                     post_state.objective_value_prev) <
-                              post_state.tolerance),
+                                     post_state.objective_value_prev)
+                              < post_state.tolerance),
                 "num_iterations": post_state.num_iterations + 1,
             })
             return [RotosolveOptimizerResults(**next_state_params)]

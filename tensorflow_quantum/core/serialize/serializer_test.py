@@ -16,6 +16,7 @@
 # Remove PYTHONPATH collisions for protobuf.
 # pylint: disable=wrong-import-position
 import sys
+
 NEW_PATH = [x for x in sys.path if 'com_google_protobuf' not in x]
 sys.path = NEW_PATH
 # pylint: enable=wrong-import-position
@@ -93,16 +94,26 @@ def _build_op_proto(gate_id, arg_names, arg_vals, qubit_ids):
 
     circuit_proto = program_proto.circuit
     circuit_proto.scheduling_strategy = circuit_proto.MOMENT_BY_MOMENT
-    circuit_proto.moments.add(operations=[program_pb2.Operation(
-        gate = program_pb2.Gate(id=gate_id),
-        args = {arg_names[i]: (program_pb2.Arg(symbol=arg_vals[i]) \
-        if isinstance(arg_vals[i], str) else \
-            program_pb2.Arg(
-                arg_value=program_pb2.ArgValue(
-                    float_value=np.round(float(arg_vals[i]), 6)))) \
-                for i in range(len(arg_vals))},
-        qubits=[program_pb2.Qubit(
-            id=q_id) for q_id in qubit_ids])])
+
+    qubit_protos = [program_pb2.Qubit(id=q_id) for q_id in qubit_ids]
+
+    def _create_arg(value):
+        """Creates a program_pb2.Arg based on the value type."""
+        if isinstance(value, str):
+            return program_pb2.Arg(symbol=value)
+        return program_pb2.Arg(arg_value=program_pb2.ArgValue(
+            float_value=round(float(value), 6)))
+
+    qubit_protos = [program_pb2.Qubit(id=q_id) for q_id in qubit_ids]
+    all_operations = [
+        program_pb2.Operation(gate=program_pb2.Gate(id=gate_id),
+                              args={
+                                  name: _create_arg(value)
+                                  for name, value in zip(arg_names, arg_vals)
+                              },
+                              qubits=qubit_protos)
+    ]
+    circuit_proto.moments.add(operations=all_operations)
 
     # Add in empty control information
     t = program_proto.circuit.moments[0].operations[0]

@@ -11,7 +11,7 @@ jobs:
       - uses: actions/checkout@v1
       - uses: actions/setup-python@v1
         with:
-          python-version: '3.9'
+          python-version: '3.10'
           architecture: 'x64'
       - name: Install Lint tools
         run: pip install --upgrade pip setuptools; pip install -r requirements.txt;
@@ -26,7 +26,7 @@ jobs:
       - uses: actions/checkout@v1
       - uses: actions/setup-python@v1
         with:
-          python-version: '3.9'
+          python-version: '3.10'
           architecture: 'x64'
       - name: Install Format tools
         run: pip install --upgrade pip setuptools; pip install -r requirements.txt; sudo apt-get install -y clang-format-6.0
@@ -41,7 +41,7 @@ jobs:
       - uses: actions/checkout@v1
       - uses: actions/setup-python@v1
         with:
-          python-version: '3.9'
+          python-version: '3.10'
           architecture: 'x64'
       - name: Install Bazel on CI
         run: ./scripts/ci_install.sh
@@ -61,7 +61,7 @@ jobs:
       - uses: actions/checkout@v1
       - uses: actions/setup-python@v1
         with:
-          python-version: '3.9'
+          python-version: '3.10'
           architecture: 'x64'
       - name: Install Bazel on CI
         run: ./scripts/ci_install.sh
@@ -70,23 +70,28 @@ jobs:
       - name: Full Library Test
         run: ./scripts/test_all.sh
 
-  leak-tests:
-    name: Memory Leak tests
-    runs-on: ubuntu-20.04
-    needs: [lint, format]
-
-    steps:
-      - uses: actions/checkout@v1
-      - uses: actions/setup-python@v1
-        with:
-          python-version: '3.9'
-          architecture: 'x64'
-      - name: Install Bazel on CI
-        run: ./scripts/ci_install.sh
-      - name: Configure CI TF
-        run: echo "Y\n" | ./configure.sh
-      - name: Leak Test qsim and src
-        run: ./scripts/msan_test.sh
+  # 2024-11-30 [mhucka] temporarily turning off leak-tests because it produces
+  # false positives on GH that we can't immediately address. TODO: if updating
+  # TFQ to use Clang and the latest TF does not resolve this, find a way to
+  # skip the handful of failing tests and renable the rest of the msan tests.
+  #
+  # leak-tests:
+  #   name: Memory Leak tests
+  #   runs-on: ubuntu-20.04
+  #   needs: [lint, format]
+  #
+  #   steps:
+  #     - uses: actions/checkout@v1
+  #     - uses: actions/setup-python@v1
+  #       with:
+  #         python-version: '3.10'
+  #         architecture: 'x64'
+  #     - name: Install Bazel on CI
+  #       run: ./scripts/ci_install.sh
+  #     - name: Configure CI TF
+  #       run: echo "Y\n" | ./configure.sh
+  #     - name: Leak Test qsim and src
+  #       run: ./scripts/msan_test.sh
 
   tutorials-test:
     name: Tutorial tests
@@ -97,7 +102,7 @@ jobs:
       - uses: actions/checkout@v1
       - uses: actions/setup-python@v1
         with:
-          python-version: '3.9'
+          python-version: '3.10'
           architecture: 'x64'
       - name: Install notebook dependencies
         run: pip install --upgrade pip seaborn==0.10.0
