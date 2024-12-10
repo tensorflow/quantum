@@ -372,7 +372,7 @@ Status CheckMPSSupported(const Program& program) {
       }
 
       if (total_num_qubits == 2) {
-        int j = 0;
+        unsigned int j = 0;
         std::vector<int> qids(2, -1234);
         for (; j < qubits.size(); j++) {
           (void)absl::SimpleAtoi(qubits[j].id(), &qids[j]);
