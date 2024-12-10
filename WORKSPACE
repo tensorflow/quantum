@@ -12,6 +12,7 @@ EIGEN_COMMIT = "aa6964bf3a34fd607837dd8123bc42465185c4f8"
 
 http_archive(
     name = "eigen",
+    sha256 = "35ba771e30c735a4215ed784d7e032086cf89fe6622dce4d793c45dd74373362",
     build_file_content = """
 cc_library(
   name = "eigen3",
@@ -41,7 +42,7 @@ http_archive(
     patches = [
         "//third_party/tf:tf.patch",
     ],
-    # sha256 = "e52cda3bae45f0ae0fccd4055e9fa29892b414f70e2df94df9a3a10319c75fff",
+    sha256 = "f771db8d96ca13c72f73c85c9cfb6f5358e2de3dd62a97a9ae4b672fe4c6d094",
     strip_prefix = "tensorflow-2.15.0",
     urls = [
         "https://github.com/tensorflow/tensorflow/archive/refs/tags/v2.15.0.zip",
