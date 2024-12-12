@@ -331,7 +331,7 @@ class Differentiator(metaclass=abc.ABCMeta):
         """Differentiate a circuit with analytical expectation.
 
         This is called at graph runtime by TensorFlow. `differentiate_analytic`
-        calls he inheriting differentiator's `get_gradient_circuits` and uses
+        calls the inheriting differentiator's `get_gradient_circuits` and uses
         those components to construct the gradient.
 
         Note: the default implementation does not use `forward_pass_vals`; the
