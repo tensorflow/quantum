@@ -212,7 +212,7 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
         }
 
         ss.SetStateZero(sv);
-        for (int j = 0; j < full_fuse[i].size(); j++) {
+        for (size_t j = 0; j < full_fuse[i].size(); j++) {
           qsim::ApplyFusedGate(sim, full_fuse[i][j], sv);
         }
 
@@ -241,13 +241,13 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
           // if applicable compute control qubit mask and control value bits.
           uint64_t mask = 0;
           uint64_t cbits = 0;
-          for (int k = 0; k < cur_gate.controlled_by.size(); k++) {
+          for (size_t k = 0; k < cur_gate.controlled_by.size(); k++) {
             uint64_t control_loc = cur_gate.controlled_by[k];
             mask |= uint64_t{1} << control_loc;
             cbits |= ((cur_gate.cmask >> k) & 1) << control_loc;
           }
 
-          for (int k = 0; k < gradient_gates[i][j - 1].grad_gates.size(); k++) {
+          for (size_t k = 0; k < gradient_gates[i][j - 1].grad_gates.size(); k++) {
             // Copy sv onto scratch2 in anticipation of non-unitary "gradient
             // gate".
             ss.Copy(sv, scratch2);
@@ -307,7 +307,7 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
     auto scratch = ss.Create(largest_nq);
     auto scratch2 = ss.Create(largest_nq);
 
-    for (int i = 0; i < partial_fused_circuits.size(); i++) {
+    for (size_t i = 0; i < partial_fused_circuits.size(); i++) {
       int nq = num_qubits[i];
 
       if (nq > largest_nq) {
@@ -324,7 +324,7 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
       }
 
       ss.SetStateZero(sv);
-      for (int j = 0; j < full_fuse[i].size(); j++) {
+      for (size_t j = 0; j < full_fuse[i].size(); j++) {
         qsim::ApplyFusedGate(sim, full_fuse[i][j], sv);
       }
 
@@ -352,13 +352,13 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
         // if applicable compute control qubit mask and control value bits.
         uint64_t mask = 0;
         uint64_t cbits = 0;
-        for (int k = 0; k < cur_gate.controlled_by.size(); k++) {
+        for (size_t k = 0; k < cur_gate.controlled_by.size(); k++) {
           uint64_t control_loc = cur_gate.controlled_by[k];
           mask |= uint64_t{1} << control_loc;
           cbits |= ((cur_gate.cmask >> k) & 1) << control_loc;
         }
 
-        for (int k = 0; k < gradient_gates[i][j - 1].grad_gates.size(); k++) {
+        for (size_t k = 0; k < gradient_gates[i][j - 1].grad_gates.size(); k++) {
           // Copy sv onto scratch2 in anticipation of non-unitary "gradient
           // gate".
           ss.Copy(sv, scratch2);

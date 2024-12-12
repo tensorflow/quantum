@@ -25,13 +25,13 @@ static void AssertWellBalanced(const std::vector<std::vector<int>>& n_reps,
                                const int& num_threads,
                                const std::vector<std::vector<int>>& offsets) {
   auto max_work = std::vector<int>(n_reps.size(), -1);
-  for (int i = 0; i < n_reps.size(); i++) {
-    for (int j = 0; j < n_reps[0].size(); j++) {
+  for (size_t i = 0; i < n_reps.size(); i++) {
+    for (size_t j = 0; j < n_reps[0].size(); j++) {
       max_work[i] = std::max(max_work[i], n_reps[i][j]);
     }
   }
 
-  for (int i = 0; i < n_reps.size(); i++) {
+  for (size_t i = 0; i < n_reps.size(); i++) {
     int sum = 0;
     int prev_local_work = 0;
     for (int k = 0; k < num_threads; k++) {

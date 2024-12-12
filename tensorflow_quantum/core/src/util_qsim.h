@@ -427,11 +427,9 @@ tensorflow::Status AccumulateFusedCircuits(
   tensorflow::Status status = ::tensorflow::Status();
   ss.SetAllZeros(dest);
 
-  for (std::vector<qsim::GateFused<QsimGate>>::size_type i = 0;
-       i < fused_circuits.size(); i++) {
+  for (std::vector<qsim::GateFused<QsimGate>>::size_type i = 0; i < fused_circuits.size(); i++) {
     ss.SetStateZero(scratch);
-    for (std::vector<qsim::GateFused<QsimGate>>::size_type j = 0;
-         j < fused_circuits[i].size(); j++) {
+    for (std::vector<qsim::GateFused<QsimGate>>::size_type j = 0; j < fused_circuits[i].size(); j++) {
       qsim::ApplyFusedGate(sim, fused_circuits[i][j], scratch);
     }
     ss.Multiply(coefficients[i], scratch);
