@@ -30,7 +30,7 @@ for fname in NOTEBOOKS:
         try:
             fmt_lines = yapf.yapf_api.FormatCode(''.join(lines),
                                                  style_config="google")[0]
-        except SyntaxError:
+        except (SyntaxError, yapf.yapflib.errors.YapfError):
             continue
         # google style always adds an EOF newline; undo this.
         all_cells[i]['source'] = fmt_lines[:-1]

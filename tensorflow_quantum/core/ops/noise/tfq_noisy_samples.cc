@@ -40,6 +40,7 @@ limitations under the License.
 #include "tensorflow_quantum/core/ops/parse_context.h"
 #include "tensorflow_quantum/core/proto/program.pb.h"
 #include "tensorflow_quantum/core/src/circuit_parser_qsim.h"
+#include "tensorflow_quantum/core/src/util_balance_trajectory.h"
 #include "tensorflow_quantum/core/src/util_qsim.h"
 
 namespace tfq {
@@ -159,7 +160,7 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
     // Simulate programs one by one. Parallelizing over state vectors
     // we no longer parallelize over circuits. Each time we encounter a
     // a larger circuit we will grow the Statevector as nescessary.
-    for (int i = 0; i < ncircuits.size(); i++) {
+    for (size_t i = 0; i < ncircuits.size(); i++) {
       int nq = num_qubits[i];
 
       if (nq > largest_nq) {
@@ -181,7 +182,7 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
 
         QTSimulator::RunOnce(param, ncircuits[i], rand_source.Rand64(), ss, sim,
                              sv, gathered_samples);
-        uint64_t q_ind = 0;
+        int q_ind = 0;
         uint64_t mask = 1;
         bool val = 0;
         while (q_ind < nq) {
@@ -252,7 +253,7 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
       auto local_gen = random_gen.ReserveSamples32(needed_random);
       tensorflow::random::SimplePhilox rand_source(&local_gen);
 
-      for (int i = 0; i < ncircuits.size(); i++) {
+      for (size_t i = 0; i < ncircuits.size(); i++) {
         int nq = num_qubits[i];
         int j = start > 0 ? offset_prefix_sum[start - 1][i] : 0;
         int needed_samples = offset_prefix_sum[start][i] - j;
@@ -278,7 +279,7 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
           QTSimulator::RunOnce(param, ncircuits[i], rand_source.Rand64(), ss,
                                sim, sv, gathered_samples);
 
-          uint64_t q_ind = 0;
+          int q_ind = 0;
           uint64_t mask = 1;
           bool val = 0;
           while (q_ind < nq) {
