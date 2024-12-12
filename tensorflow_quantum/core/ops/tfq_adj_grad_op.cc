@@ -247,7 +247,8 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
             cbits |= ((cur_gate.cmask >> k) & 1) << control_loc;
           }
 
-          for (size_t k = 0; k < gradient_gates[i][j - 1].grad_gates.size(); k++) {
+          for (size_t k = 0; k < gradient_gates[i][j - 1].grad_gates.size();
+               k++) {
             // Copy sv onto scratch2 in anticipation of non-unitary "gradient
             // gate".
             ss.Copy(sv, scratch2);
@@ -358,7 +359,8 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
           cbits |= ((cur_gate.cmask >> k) & 1) << control_loc;
         }
 
-        for (size_t k = 0; k < gradient_gates[i][j - 1].grad_gates.size(); k++) {
+        for (size_t k = 0; k < gradient_gates[i][j - 1].grad_gates.size();
+             k++) {
           // Copy sv onto scratch2 in anticipation of non-unitary "gradient
           // gate".
           ss.Copy(sv, scratch2);

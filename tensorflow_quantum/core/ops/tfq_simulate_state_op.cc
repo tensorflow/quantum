@@ -151,8 +151,8 @@ class TfqSimulateStateOp : public tensorflow::OpKernel {
 
       // Parallel copy state vector information from qsim into tensorflow
       // tensors.
-      auto copy_f = [i, nq, &output_tensor, &ss, &sv](
-                         uint64_t start, uint64_t end) {
+      auto copy_f = [i, nq, &output_tensor, &ss, &sv](uint64_t start,
+                                                      uint64_t end) {
         uint64_t crossover = uint64_t(1) << nq;
         uint64_t upper = std::min(end, crossover);
 
