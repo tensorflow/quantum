@@ -195,7 +195,7 @@ def _tf_pip_impl(repository_ctx):
         repository_ctx,
         None,
         "",
-        "libtensorflow_framework.so",
+        "libtensorflow_framework_so",
         [tf_shared_library_path],
         ["_pywrap_tensorflow_internal.lib"  if _is_windows(repository_ctx) else "libtensorflow_framework.so"],
     )
@@ -206,7 +206,7 @@ def _tf_pip_impl(repository_ctx):
         repository_ctx,
         None,
         "",
-        "test_log_pb2.py",
+        "test_log_pb2_py",
         [tf_test_log_proto_path],
         ["test_log_pb2.py"],
     )
