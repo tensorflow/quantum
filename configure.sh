@@ -102,6 +102,28 @@ write_to_bazelrc "build -c opt"
 write_to_bazelrc "build --cxxopt=\"-D_GLIBCXX_USE_CXX11_ABI=1\""
 write_to_bazelrc "build --cxxopt=\"-std=c++17\""
 
+# The transitive inclusion of build rules from TensorFlow ends up including
+# and building two copies of zlib (one from bazel_rules, one from the TF code
+# baase itself). The version of zlib you get (at least in TF 2.15.0) ends up
+# producing many compiler warnings that "a function declaration without a
+# prototype is deprecated". It's difficult to patch the particular build rules
+# involved, so the approach taken here is to silence those warnings for stuff
+# in external/. TODO: figure out how to patch the BUILD files and put it there.
+write_to_bazelrc "build --per_file_copt=external/.*@-Wno-deprecated-non-prototype"
+write_to_bazelrc "build --host_per_file_copt=external/.*@-Wno-deprecated-non-prototype"
+
+# Similarly, these are other harmless warnings about unused functions coming
+# from things pulled in by the TF bazel config rules.
+write_to_bazelrc "build --per_file_copt=external/com_google_protobuf/.*@-Wno-unused-function"
+write_to_bazelrc "build --host_per_file_copt=external/com_google_protobuf/.*@-Wno-unused-function"
+
+# The following supress warnings coming from qsim.
+# TODO: fix the code in qsim & update TFQ to use the updated version.
+write_to_bazelrc "build --per_file_copt=tensorflow_quantum/core/ops/noise/tfq_.*@-Wno-unused-but-set-variable"
+write_to_bazelrc "build --host_per_file_copt=tensorflow_quantum/core/ops/noise/tfq_.*@-Wno-unused-but-set-variable"
+write_to_bazelrc "build --per_file_copt=tensorflow_quantum/core/ops/math_ops/tfq_.*@-Wno-deprecated-declarations"
+write_to_bazelrc "build --host_per_file_copt=tensorflow_quantum/core/ops/math_ops/tfq_.*@-Wno-deprecated-declarations"
+
 
 if is_windows; then
   # Use pywrap_tensorflow instead of tensorflow_framework on Windows
