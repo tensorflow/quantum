@@ -41,6 +41,7 @@ limitations under the License.
 #include "tensorflow_quantum/core/ops/parse_context.h"
 #include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
 #include "tensorflow_quantum/core/proto/program.pb.h"
+#include "tensorflow_quantum/core/src/util_balance_trajectory.h"
 #include "tensorflow_quantum/core/src/util_qsim.h"
 
 namespace tfq {
