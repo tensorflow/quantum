@@ -60,6 +60,7 @@ cc_binary(
         "//tensorflow_quantum/core/ops:parse_context",
         "//tensorflow_quantum/core/ops:tfq_simulate_utils",
         "//tensorflow_quantum/core/src:circuit_parser_qsim",
+        "//tensorflow_quantum/core/src:util_balance_trajectory",
         "//tensorflow_quantum/core/src:util_qsim",
         "@qsim//lib:qsim_lib",
         # tensorflow core framework
