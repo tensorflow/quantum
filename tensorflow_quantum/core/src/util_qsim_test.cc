@@ -103,7 +103,7 @@ TEST_P(TwoTermSampledExpectationFixture, CorrectnessTest) {
 }
 
 // clang-format off
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     SingleTermSampledExpectationTests, TwoTermSampledExpectationFixture,
     ::testing::Values(std::make_tuple("ZZ", 0.0),
                       std::make_tuple("ZX", 0.1234),
@@ -168,7 +168,7 @@ TEST_P(TwoTermExpectationFixture, CorrectnessTest) {
 }
 
 // clang-format off
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     SingleTermExpectationTests, TwoTermExpectationFixture,
     ::testing::Values(std::make_tuple("ZZ", 0.0),
                       std::make_tuple("ZX", 0.1234),
