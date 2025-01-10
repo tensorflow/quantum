@@ -96,7 +96,7 @@ inline void AssertChannelEqual(const QsimChannel& a, const QsimChannel& b) {
     auto a_k_ops = a[i].ops;
     auto b_k_ops = b[i].ops;
     EXPECT_EQ(a_k_ops.size(), b_k_ops.size());
-    for (int j = 0; j < a_k_ops.size(); j++) {
+    for (size_t j = 0; j < a_k_ops.size(); j++) {
       AssertOneQubitEqual(a_k_ops[j], b_k_ops[j]);
     }
   }
