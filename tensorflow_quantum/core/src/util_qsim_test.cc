@@ -376,7 +376,7 @@ TEST(UtilQsimTest, ApplyGateDagger) {
   for (const auto& gate : simple_circuit.gates) {
     qsim::ApplyGate(sim, gate, sv);
   }
-  for (int i = simple_circuit.gates.size() - 1; i >= 0; i--) {
+  for (size_t i = simple_circuit.gates.size() - 1; i >= 0; i--) {
     ApplyGateDagger(sim, simple_circuit.gates[i], sv);
   }
 
