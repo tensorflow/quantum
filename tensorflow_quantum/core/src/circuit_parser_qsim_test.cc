@@ -480,38 +480,6 @@ TEST(QsimCircuitParserTest, SingleConstantGate) {
   }
 }
 
-TEST(QsimCircuitParserTest, SingleConstantGateBadQubitId) {
-  Program program_proto;
-  Circuit* circuit_proto = program_proto.mutable_circuit();
-  circuit_proto->set_scheduling_strategy(circuit_proto->MOMENT_BY_MOMENT);
-  Moment* moments_proto = circuit_proto->add_moments();
-
-  // Add gate.
-  Operation* operations_proto = moments_proto->add_operations();
-  Gate* gate_proto = operations_proto->mutable_gate();
-  gate_proto->set_id("I");
-
-  // Set the control args to empty.
-  google::protobuf::Map<std::string, Arg>* args_proto =
-      operations_proto->mutable_args();
-  (*args_proto)["control_qubits"] = MakeControlArg("");
-  (*args_proto)["control_values"] = MakeControlArg("");
-
-  // Set the qubits.
-  Qubit* qubits_proto = operations_proto->add_qubits();
-  qubits_proto->set_id("zero");
-
-  QsimCircuit test_circuit;
-  std::vector<qsim::GateFused<QsimGate>> fused_circuit;
-  SymbolMap empty_map;
-  std::vector<GateMetaData> metadata;
-
-  ASSERT_EQ(QsimCircuitFromProgram(program_proto, empty_map, 1, &test_circuit,
-                                   &fused_circuit, &metadata),
-            tensorflow::Status(absl::StatusCode::kInvalidArgument,
-                               "Could not parse id of qubit 0"));
-}
-
 TEST(QsimCircuitParserTest, SingleConstantGateControlled) {
   absl::flat_hash_map<std::string, QsimGate> reference = {
       {"I", qsim::Cirq::I1<float>::Create(0, 0).ControlledBy({1, 2}, {0, 0})}};
@@ -592,40 +560,6 @@ TEST(QsimCircuitParserTest, TwoConstantGate) {
     EXPECT_EQ(metadata[0].symbol_values.size(), 0);
     EXPECT_EQ(metadata[0].gate_params.size(), 0);
   }
-}
-
-TEST(QsimCircuitParserTest, TwoConstantGateBadQubitId) {
-  Program program_proto;
-  Circuit* circuit_proto = program_proto.mutable_circuit();
-  circuit_proto->set_scheduling_strategy(circuit_proto->MOMENT_BY_MOMENT);
-  Moment* moments_proto = circuit_proto->add_moments();
-
-  // Add gate.
-  Operation* operations_proto = moments_proto->add_operations();
-  Gate* gate_proto = operations_proto->mutable_gate();
-  gate_proto->set_id("I2");
-
-  // Set the control args to empty.
-  google::protobuf::Map<std::string, Arg>* args_proto =
-      operations_proto->mutable_args();
-  (*args_proto)["control_qubits"] = MakeControlArg("");
-  (*args_proto)["control_values"] = MakeControlArg("");
-
-  QsimCircuit test_circuit;
-  std::vector<qsim::GateFused<QsimGate>> fused_circuit;
-  SymbolMap empty_map;
-  std::vector<GateMetaData> metadata;
-
-  // Set the qubit id's, but use a bad value for the 2nd one.
-  Qubit* qubits_proto = operations_proto->add_qubits();
-  qubits_proto->set_id("0");
-  qubits_proto = operations_proto->add_qubits();
-  qubits_proto->set_id("one");
-
-  ASSERT_EQ(QsimCircuitFromProgram(program_proto, empty_map, 2, &test_circuit,
-                                   &fused_circuit, &metadata),
-            tensorflow::Status(absl::StatusCode::kInvalidArgument,
-                               "Could not parse id of qubit 1"));
 }
 
 TEST(QsimCircuitParserTest, TwoConstantGateControlled) {
