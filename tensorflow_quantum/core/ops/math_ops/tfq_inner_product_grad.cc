@@ -61,9 +61,9 @@ class TfqInnerProductGradOp : public tensorflow::OpKernel {
             "other_programs must be rank 2. Got ", context->input(3).dims())));
 
     // Create the output Tensor.
-    const int output_dim_batch_size = context->input(0).dim_size(0);
-    size_t output_dim_internal_size = context->input(3).dim_size(1);
-    size_t output_dim_symbol_size = context->input(1).dim_size(0);
+    const size_t output_dim_batch_size = context->input(0).dim_size(0);
+    const size_t output_dim_internal_size = context->input(3).dim_size(1);
+    const size_t output_dim_symbol_size = context->input(1).dim_size(0);
     OP_REQUIRES(context, output_dim_symbol_size > 0,
                 tensorflow::errors::InvalidArgument(absl::StrCat(
                     "The number of symbols must be a positive integer, got ",
