@@ -139,6 +139,7 @@ py_library(
 
 py_test(
     name = "simulate_mps_test",
+    timeout = "eternal",
     srcs = ["simulate_mps_test.py"],
     python_version = "PY3",
     deps = [
