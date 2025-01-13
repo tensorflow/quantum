@@ -68,7 +68,17 @@ jobs:
       - name: Configure CI TF
         run: echo "Y\n" | ./configure.sh
       - name: Full Library Test
-        run: ./scripts/test_all.sh
+        run: |
+          bazel test -c opt \
+          --test_timeout_filters=-eternal \
+          --test_output=errors \
+          --experimental_repo_remote_exec \
+          --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=1" \
+          --cxxopt="-std=c++17" \
+          --cxxopt="-msse2" \
+          --cxxopt="-msse3" \
+          --cxxopt="-msse4" \
+          //tensorflow_quantum/...
 
   # 2024-11-30 [mhucka] temporarily turning off leak-tests because it produces
   # false positives on GH that we can't immediately address. TODO: if updating
