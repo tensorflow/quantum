@@ -64,7 +64,7 @@ Arg MakeControlArg(const std::string& val) {
 }
 
 inline void AssertControlEqual(const QsimGate& a, const QsimGate& b) {
-  for (int i = 0; i < a.controlled_by.size(); i++) {
+  for (unsigned int i = 0; i < a.controlled_by.size(); i++) {
     ASSERT_EQ(a.controlled_by[i], b.controlled_by[i]);
   }
   ASSERT_EQ(a.cmask, b.cmask);
@@ -89,14 +89,14 @@ inline void AssertOneQubitEqual(const QsimGate& a, const QsimGate& b) {
 
 inline void AssertChannelEqual(const QsimChannel& a, const QsimChannel& b) {
   ASSERT_EQ(a.size(), b.size());
-  for (int i = 0; i < a.size(); i++) {
+  for (unsigned int i = 0; i < a.size(); i++) {
     ASSERT_EQ(a[i].kind, b[i].kind);
     ASSERT_EQ(a[i].unitary, b[i].unitary);
     ASSERT_NEAR(a[i].prob, b[i].prob, 1e-5);
     auto a_k_ops = a[i].ops;
     auto b_k_ops = b[i].ops;
     EXPECT_EQ(a_k_ops.size(), b_k_ops.size());
-    for (int j = 0; j < a_k_ops.size(); j++) {
+    for (size_t j = 0; j < a_k_ops.size(); j++) {
       AssertOneQubitEqual(a_k_ops[j], b_k_ops[j]);
     }
   }
