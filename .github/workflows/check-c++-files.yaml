@@ -1,0 +1,104 @@
+# Summary: TFQ continuous integration workflow for checking C++ files.
+# This workflow runs clang-formmat. It only examines C++ and Protobuf files.
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+name: C++ & Protobuf file checks
+run-name: >
+  C++ & Protobuf lint & format checks for ${{github.event_name}}
+  by ${{github.triggering_actor}}
+
+env:
+  # Version of clang-format to use. Can be overridden with workflow_dispatch.
+  # Note: as of 2025-01-14, v. 18 is the latest available on GitHub, and you
+  # have to use Ubuntu 24 to get it.
+  clang_format_ver: '18'
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - '**.cc'
+      - '**.h'
+      - '**.proto'
+
+  push:
+    paths:
+      - '**.cc'
+      - '**.h'
+      - '**.proto'
+
+# Cancel previously-started but still active workflow runs on the same branch.
+concurrency:
+  group: ${{github.workflow}}-${{github.event.pull_request.number||github.ref}}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  format:
+    name: Check the format of C++ and Protobuf files
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Count how many git commits need to be fetched
+        id: commits
+        env:
+          commits: ${{toJson(github.event.commits)}}
+        run: |
+          printf "%s" "$commits" > ./commits.json
+          num_commits="$(jq length < ./commits.json)"
+          (( num_commits++ ))
+          jq 'sort_by(.timestamp)' < ./commits.json > ./sorted-commits.json
+          first=$(jq -r 'first | .id' < ./sorted-commits.json)
+          last=$(jq -r 'last | .id' < ./sorted-commits.json)
+          # shellcheck disable=SC2086
+          {
+          echo num_commits="$num_commits"
+          echo first_sha=$first
+          echo last_sha=$last
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Check out a copy of the TFQ git repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: ${{steps.commits.outputs.num_commits}}
+
+      - name: Run clang-format on C++ and Protobuf files
+        env:
+          first_sha: ${{steps.commits.outputs.first_sha}}
+          last_sha: ${{steps.commits.outputs.last_sha}}
+        run: |
+          set +e
+          set -x
+          # shellcheck disable=SC2086
+          # Get the commit that came before the set of commits in this event.
+          starting_sha=$(git rev-parse $first_sha^)
+          ending_sha=$last_sha
+          # Run git-clang-format on the range of commits in this event.
+          version="${{inputs.clang_format_ver || env.clang_format_ver}}"
+          git clang-format-$version -v --style google --diff \
+            "$starting_sha" "$ending_sha" > diff.out 2>&1
+          exit_code=$?
+          if (( exit_code == 1 )); then
+            # Write output both here and to the job summary.
+            TERM=xterm-color
+            bo=$'\e[1m'
+            bl=$'\e[38;5;117m'
+            rs=$'\e[0m'
+            hi="👋🏻"
+            u="https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}"
+            echo "$hi ${bl}Visit $bo$u${rs}$bl for formatted diff output$rs $hi"
+            echo "::group::clang-format output"
+            cat diff.out
+            echo "::endgroup::"
+            # shellcheck disable=SC2006
+            {
+            echo "## Output from <code>clang-format</code> version $version"
+            echo ""
+            echo '```diff'
+            echo "$(< diff.out)"
+            echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+          exit $exit_code
