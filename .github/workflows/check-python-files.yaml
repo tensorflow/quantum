@@ -1,0 +1,247 @@
+# Summary: TFQ continuous integration workflow for checking Python files.
+#
+# This workflow runs pylint and yapf. It only examines .py files. It reads the
+# requirements.txt file to find out the versions of pylint and yapf to
+# install, and uses caching to speed up the loading of the Python environment.
+# It can also be invoked manually using the "Run workflow" button on the page at
+# https://github.com/tensorflow/quantum/actions/workflows/lint-python-files.yaml
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+name: Python file checks
+run-name: >
+  Python lint & format checks for ${{github.event_name}}
+  by ${{github.triggering_actor}}
+
+env:
+  # Python version to use. Can be overridden when workflow dispatch is used.
+  python_ver: '3.10'
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - '**.py'
+
+  push:
+    branches:
+      - main
+    paths:
+      - '**.py'
+
+  # Allow manual invocation, with options that might be useful for debugging.
+  workflow_dispatch:
+    inputs:
+      files:
+        description: "Files and/or directories to check:"
+        type: string
+      python_ver:
+        description: 'Python version:'
+        type: string
+      pylint_ver:
+        description: 'Pylint version:'
+        type: string
+      yapf_ver:
+        description: 'Yapf version:'
+        type: string
+
+# Cancel previously-started but still active workflow runs on the same branch.
+concurrency:
+  group: ${{github.workflow}}-${{github.event.pull_request.number||github.ref}}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  setup:
+    name: Set up Python environment
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    outputs:
+      cache_key: ${{steps.parameters.outputs.cache_key}}
+      cache_paths: ${{steps.parameters.outputs.cache_paths}}
+      files: ${{steps.files.outputs.files_to_check}}
+    steps:
+      - name: Check out a copy of the TFQ git repository
+        uses: actions/checkout@v4
+
+        # Note: setup-python has a cache facility, but we don't use it here
+        # because we want to cache more Python things than setup-python does.
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{inputs.python_ver || env.python_ver}}
+
+      - name: Set cache parameters
+        id: parameters
+        run: |
+          key="${{github.workflow_ref}}-${{hashFiles('requirements.txt')}}"
+          echo "cache_key=$key" >> "$GITHUB_OUTPUT"
+          # The paths used for actions/cache need to be on separate lines.
+          # Constructing a multiline value for an output variable is awkward.
+          # shellcheck disable=SC2005
+          {
+          echo 'cache_paths<<EOF'
+          echo "$(pip cache dir)"
+          echo "${{env.pythonLocation}}"
+          echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Test if the cache already exists
+        uses: actions/cache@v4
+        id: check_cache
+        with:
+          lookup-only: true
+          key: ${{steps.parameters.outputs.cache_key}}
+          path: ${{steps.parameters.outputs.cache_paths}}
+
+      - if: steps.check_cache.outputs.cache-hit != 'true'
+        name: Set up the cache
+        uses: actions/cache@v4
+        id: restore_cache
+        with:
+          key: ${{steps.parameters.outputs.cache_key}}
+          path: ${{steps.parameters.outputs.cache_paths}}
+
+      - if: github.event_name != 'workflow_dispatch'
+        name: Get the list of Python files changed in the triggering event
+        id: changes
+        uses: tj-actions/changed-files@v45
+        # Although this workflow is triggered only if Python files are changed,
+        # they might not be the *only* files changed; hence, we have to filter
+        # the set of files down to just the Python files.
+        with:
+          files: |
+            **.py
+
+      - name: Determine the files to be checked
+        id: files
+        run: |
+          # Files/dirs given during manual invocation take precedence.
+          if [[ "${{github.event_name}}" == "workflow_dispatch" ]]; then
+            if [[ -n "${{inputs.files}}" ]]; then
+              files="${{inputs.files}}"
+            else
+              echo "::error title=Error::No file names or directories provided."
+              exit 1
+            fi
+          else
+            files="${{steps.changes.outputs.all_changed_files}}"
+          fi
+          echo "files_to_check=$files" >> "$GITHUB_OUTPUT"
+
+      - if: steps.check_cache.outputs.cache-hit != 'true'
+        name: Determine the versions of Pylint and Yapf to use
+        id: req
+        run: |
+          # Get the pylint & yapf versions from requirements.txt.
+          # In case of multiple values in the file, the last one will win.
+          echo "pylint_version=" >> "$GITHUB_OUTPUT"
+          echo "yapf_version=" >> "$GITHUB_OUTPUT"
+          number_regex='[0-9]+(\.[0-9]+)?(\.[0-9]+)?'
+          while IFS= read -r line; do
+            if [[ $line =~ ^pylint.* ]]; then
+              if [[ $line =~ $number_regex ]]; then
+                version="${BASH_REMATCH[0]}"
+                echo "pylint_version=$version" >> "$GITHUB_OUTPUT"
+                continue
+              fi
+            fi
+            if [[ $line =~ ^yapf.* ]]; then
+              if [[ $line =~ $number_regex ]]; then
+                version="${BASH_REMATCH[0]}"
+                echo "yapf_version=$version" >> "$GITHUB_OUTPUT"
+                continue
+              fi
+            fi
+          done < "requirements.txt"
+          # If given versions in manual invocation, use them instead.
+          if [[ "${{inputs.pylint_ver}}" != "" ]]; then
+            echo "pylint_version=${{inputs.pylint_ver}}" >> "$GITHUB_OUTPUT"
+          fi
+          if [[ "${{inputs.yapf_ver}}" != "" ]]; then
+            echo "yapf_version=${{inputs.yapf_ver}}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - if: steps.check_cache.outputs.cache-hit != 'true'
+        name: Install Pylint and Yapf
+        run: |
+          python -m pip install pylint==${{steps.req.outputs.pylint_version}}
+          python -m pip install yapf==${{steps.req.outputs.yapf_version}}
+
+  lint:
+    name: Lint Python files
+    needs: setup
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Check out a copy of the TFQ git repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{inputs.python_ver || env.python_ver}}
+
+      - name: Restore the Python cache
+        uses: actions/cache@v4
+        with:
+          key: ${{needs.setup.outputs.cache_key}}
+          path: ${{needs.setup.outputs.cache_paths}}
+          fail-on-cache-miss: true
+
+      - name: Set up pylint output problem matcher
+        run: echo "::add-matcher::.github/problem-matchers/pylint.json"
+
+      - name: Lint the changed Python files
+        run: |
+          pylint ${{needs.setup.outputs.files}}
+
+  format:
+    name: Check the format of Python files
+    needs: setup
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Check out a copy of the TFQ git repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{inputs.python_ver || env.python_ver}}
+
+      - name: Restore the Python cache
+        uses: actions/cache@v4
+        with:
+          key: ${{needs.setup.outputs.cache_key}}
+          path: ${{needs.setup.outputs.cache_paths}}
+          fail-on-cache-miss: true
+
+      - name: Run Yapf on the Python changed files
+        run: |
+          set +e
+          yapf --parallel --diff --style=google \
+            "${{needs.setup.outputs.files}}" > diff.out 2>&1
+          exit_code=$?
+          if [[ -s ./diff.out ]]; then
+            # Write output both here and to the job summary.
+            TERM=xterm-color
+            bo=$'\e[1m'
+            bl=$'\e[38;5;117m'
+            rs=$'\e[0m'
+            hi="👋🏻"
+            u="https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}"
+            echo "$hi ${bl}Visit $bo$u${rs}$bl for formatted diff output$rs $hi"
+            echo "::group::Yapf output"
+            cat diff.out
+            echo "::endgroup::"
+            # shellcheck disable=SC2006
+            {
+            echo "## Output from <code>yapf</code>"
+            echo ""
+            echo '```diff'
+            echo "$(< diff.out)"
+            echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+          exit $exit_code
