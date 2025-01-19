@@ -9,7 +9,7 @@
 # principles. It uses GitHub "problem matchers" to write error outputs to the
 # workflow summary to make it easier to learn the outcome. Finally, It can be
 # invoked manually using the "Run workflow" button on the page at
-# https://github.com/tensorflow/quantum/actions/workflows/lint-python-files.yaml
+# https://github.com/tensorflow/quantum/actions/workflows/ci-file-checks.yaml
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 name: CI file checks
