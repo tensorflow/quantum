@@ -1,0 +1,34 @@
+name: CI file checks
+
+on: [pull_request]
+
+jobs:
+  lint:
+    name: Lint check
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-python@v1
+        with:
+          python-version: '3.10'
+          architecture: 'x64'
+      - name: Install Lint tools
+        run: pip install --upgrade pip setuptools; pip install -r requirements.txt;
+      - name: Lint All
+        run: ./scripts/lint_all.sh
+
+  format:
+    name: Formatting check
+    runs-on: ubuntu-20.04
+
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-python@v1
+        with:
+          python-version: '3.10'
+          architecture: 'x64'
+      - name: Install Format tools
+        run: pip install --upgrade pip setuptools; pip install -r requirements.txt; sudo apt-get install -y clang-format-6.0
+      - name: Format Check
+        run: ./scripts/format_check.sh
+
