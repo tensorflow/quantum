@@ -146,7 +146,7 @@ class NoisyControlledPQCTest(tf.test.TestCase, parameterized.TestCase):
                                                         sample_based=False)
         self.assertEqual(layer.symbols, [a, b, c, d])
 
-    @parameterized.parameters([{'sample_based': True, 'sample_based': False}])
+    @parameterized.parameters([{'sample_based': True}, {'sample_based': False}])
     def test_controlled_pqc_simple_learn(self, sample_based):
         """Test a simple learning scenario using analytic and sample expectation
         on many backends."""
