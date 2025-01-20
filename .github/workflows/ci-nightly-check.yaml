@@ -1,0 +1,116 @@
+# Summary: TFQ nightly full build & test.
+#
+# This workflow compiles TFQ and runs all test cases, to verify everything
+# works. Unlike the CI checks invoked on PRs and similar events, this workflow
+# builds everything without caching and runs the full test suite, including
+# "eternal" tests that take a long time to run. It is meant to guard against
+# failures that might be missed when skipping the long-running tests or using
+# caching to speed up the CI runs.
+#
+# This workflow also can be invoked manually via the "Run workflow" button at
+# https://github.com/tensorflow/quantum/actions/workflows/ci-build-checks.yaml
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+name: CI nightly test
+run-name: Continuous integration nightly build & test
+
+on:
+  schedule:
+    - cron: "15 6 * * *"
+
+  workflow_dispatch:
+    inputs:
+      py_version:
+        description: "Python version:"
+        type: string
+        default: "3.10.15"
+
+      save_artifacts:
+        description: Make Bazel build outputs downloadable
+        type: boolean
+        default: true
+
+env:
+  # Default Python version to use.
+  py_version: "3.10.15"
+
+  # Additional .bazelrc options to use.
+  bazelrc_additions: |
+    common --announce_rc
+    build --subcommands
+    build --auto_output_filter=none
+    build --show_progress_rate_limit=1
+    build --verbose_failures
+    test --test_output=errors
+    test --test_summary=detailed
+    test --test_timeout=6000
+    test --test_verbose_timeout_warnings
+
+concurrency:
+  # Cancel any previously-started but still active runs on the same branch.
+  cancel-in-progress: true
+  group: ${{github.workflow}}-${{github.event.pull_request.number||github.ref}}
+
+jobs:
+  Nightly:
+    name: Build and test
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Check out a copy of the TFQ git repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{inputs.py_version || env.py_version}}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{inputs.py_version || env.py_version}}
+
+      - name: Set up Bazel
+        uses: bazel-contrib/setup-bazel@0.9.1
+        with:
+          bazelrc: ${{env.bazelrc_additions}}
+
+      - name: Build wheel
+        run: |
+          set -x
+          pip install --upgrade pip setuptools wheel
+          # The next script does a pip install, configure, & bazel build.
+          ./scripts/build_pip_package_test.sh
+
+      - name: Test wheel
+        run: |
+          set -x
+          ./scripts/run_example.sh
+
+      - name: Test rest of TFQ
+        run: |
+          set -x -o pipefail
+          ./scripts/test_all.sh 2>&1 | tee test_all.log
+
+      - name: Test tutorials
+        run: |
+          set -x -o pipefail
+          pip install jupyter
+          pip install nbclient==0.6.5 jupyter-client==6.1.12 ipython==7.22.0
+          pip install ipykernel==5.1.1
+          pip install gym==0.24.1
+          pip install seaborn==0.12.0
+          pip install -q git+https://github.com/tensorflow/docs
+          cd ..
+          python quantum/scripts/test_tutorials.py 2>&1 | \
+            tee quantum/test_tutorials.log
+
+      - if: failure() || inputs.save_artifacts == 'true'
+        name: Make artifacts downloadable
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-artifacts
+          retention-days: 7
+          include-hidden-files: true
+          path: |
+            test_all.log
+            test_tutorials.log
+            /home/runner/.bazel/execroot/__main__/bazel-out/
+            !/home/runner/.bazel/execroot/__main__/bazel-out/**/*.so
+            !/home/runner/.bazel/execroot/__main__/bazel-out/**/*.o
+            !/home/runner/.bazel/execroot/__main__/bazel-out/**/_objs
+            !/home/runner/.bazel/execroot/__main__/bazel-out/**/_solib_k8
