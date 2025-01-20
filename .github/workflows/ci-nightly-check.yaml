@@ -26,7 +26,7 @@ on:
         default: "3.10.15"
 
       save_artifacts:
-        description: Make Bazel build outputs downloadable
+        description: Make Bazel artifacts downloadable
         type: boolean
         default: true
 
