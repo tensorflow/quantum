@@ -4,7 +4,7 @@
 # workflow will save Bazel build artifacts if an error occurs during a run.
 #
 # For testing, this workflow can be invoked manually from the GitHub page at
-# https://github.com/tensorflow/quantum/actions/workflows/cirq_compatibility.yaml
+# https://github.com/tensorflow/quantum/actions/workflows/ci-nightly-cirq-test.yaml
 # Clicking the "Run workflow" button there will present a form interface with
 # options for overridding some of the parameters for the run.
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -94,7 +94,7 @@ jobs:
         run: |
           pip install -U cirq --pre
 
-      - name: Configure Bazel options
+d      - name: Configure Bazel options
         run: |
           # If we didn't get a cache hit on the installed Python environment,
           # something's changed, and we want to make sure to re-run all tests.
