@@ -94,7 +94,7 @@ jobs:
         run: |
           pip install -U cirq --pre
 
-d      - name: Configure Bazel options
+      - name: Configure Bazel options
         run: |
           # If we didn't get a cache hit on the installed Python environment,
           # something's changed, and we want to make sure to re-run all tests.
