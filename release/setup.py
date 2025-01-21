@@ -109,6 +109,7 @@ setup(
         'Topic :: Scientific/Engineering :: Artificial Intelligence',
         'Topic :: Scientific/Engineering :: Mathematics',
         'Topic :: Scientific/Engineering :: Physics',
+        'Topic :: Scientific/Engineering :: Quantum Computing',
     ],
     license='Apache 2.0',
     keywords='tensorflow machine learning quantum qml',
