@@ -7,6 +7,9 @@
 # failures that might be missed when skipping the long-running tests or using
 # caching to speed up the CI runs.
 #
+# For efficiency, it checks if there have been any commits in the past 24 hrs
+# and does not proceed if there have been none.
+#
 # This workflow also can be invoked manually via the "Run workflow" button at
 # https://github.com/tensorflow/quantum/actions/workflows/ci-build-checks.yaml
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -52,8 +55,27 @@ concurrency:
   group: ${{github.workflow}}-${{github.event.pull_request.number||github.ref}}
 
 jobs:
+  Decision:
+    runs-on: ubuntu-24.04
+    outputs:
+      run: ${{steps.commits.outputs.count > 0}}
+    steps:
+      - name: Check out a sparse copy of the git repo for TFQ
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: .
+
+      - name: Get number of commits in the last 24 hrs
+        id: commits
+        run: |
+          set -x
+          count=$(git log --oneline --since '24 hours ago' | wc -l)
+          echo "count=$count" >> "$GITHUB_OUTPUT"
+
   Nightly:
+    if: needs.Decision.outputs.run == 'true'
     name: Build and test
+    needs: Decision
     runs-on: ubuntu-20.04
     steps:
       - name: Check out a copy of the TFQ git repository
