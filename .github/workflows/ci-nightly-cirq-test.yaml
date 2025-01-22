@@ -1,70 +1,73 @@
-# Copyright 2024 The TensorFlow Quantum Authors
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Summary: GitHub CI workflow for testing TFQ against Cirq releases
 #
 # This workflow is executed every night on a schedule. By default, this
 # workflow will save Bazel build artifacts if an error occurs during a run.
 #
 # For testing, this workflow can be invoked manually from the GitHub page at
-# https://github.com/tensorflow/quantum/actions/workflows/cirq_compatibility.yaml
+# https://github.com/tensorflow/quantum/actions/workflows/ci-nightly-cirq-test.yaml
 # Clicking the "Run workflow" button there will present a form interface with
 # options for overridding some of the parameters for the run.
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-name: Cirq compatibility tests
+name: CI nightly Cirq test
+run-name: Continuous integration Cirq compatibility test
 
-# Default values. These can be overridden when workflow dispatch is used.
+on:
+  schedule:
+    - cron: "10 7 * * *"
+
+  # Manual on-demand invocations.
+  workflow_dispatch:
+    inputs:
+      py_version:
+        description: Version of Python to use
+        type: string
+        default: "3.10.15"
+
+      bazel_version:
+        description: Version of Bazel Python to use
+        type: string
+
+      arch:
+        description: Computer architecture to use
+        type: string
+        default: "x64"
+
+      use_bazel_disk_cache:
+        description: Use Bazel disk_cache between runs
+        type: boolean
+        default: true
+
+      cache_bazel_tests:
+        description: Allow Bazel to cache test results
+        type: boolean
+        default: true
+
+      save_artifacts:
+        description: Make Bazel outputs downloadable
+        type: boolean
+        default: true
+
 env:
-  # Python version to test against.
-  py_version: '3.10'
+  # Default Python version to use.
+  py_version: "3.10.15"
+
   # Bazel version. Note: this needs to match what is used in TF & TFQ.
   bazel_version: 6.5.0
-  # Machine architecture.
+
+  # Machine architecture to use.
   arch: x64
+
   # Additional .bazelrc options to use.
   bazelrc_additions: |
     common --announce_rc
     build --verbose_failures
     test --test_timeout=3000
 
-on:
-  # Nightly runs.
-  schedule:
-    - cron: 0 0 * * *
-  # Manual on-demand invocations.
-  workflow_dispatch:
-    inputs:
-      py_version:
-        description: Version of Python to use
-      bazel_version:
-        description: Version of Bazel Python to use
-      arch:
-        description: Computer architecture to use
-      use_bazel_disk_cache:
-        description: Use Bazel disk_cache between runs?
-        type: boolean
-        default: true
-      cache_bazel_tests:
-        description: Allow Bazel to cache test results?
-        type: boolean
-        default: true
-      save_artifacts:
-        description: Make Bazel build outputs downloadable?
-        type: boolean
-        default: true
+concurrency:
+  # Cancel any previously-started but still active runs on the same branch.
+  cancel-in-progress: true
+  group: ${{github.workflow}}-${{github.event.pull_request.number||github.ref}}
 
 jobs:
   test-compatibility:
@@ -74,12 +77,12 @@ jobs:
       - name: Check out a copy of the TFQ git repository
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Set up Python ${{inputs.py_version || env.py_version}}
         id: python
         uses: actions/setup-python@v5
         with:
-          python-version: ${{github.event.inputs.py_version || env.py_version}}
-          architecture: ${{github.event.inputs.arch || env.arch}}
+          python-version: ${{inputs.py_version || env.py_version}}
+          architecture: ${{inputs.arch || env.arch}}
           cache: pip
 
       - name: Install TensorFlow Quantum dependencies
@@ -110,9 +113,9 @@ jobs:
 
       - name: Set up Bazel with caching
         if: env.use_bazel_disk_cache == 'true'
-        uses: bazel-contrib/setup-bazel@0.9.1
+        uses: bazel-contrib/setup-bazel@0.12.1
         env:
-          USE_BAZEL_VERSION: ${{github.event.inputs.bazel_version || env.bazel_version}}
+          USE_BAZEL_VERSION: ${{inputs.bazel_version || env.bazel_version}}
         with:
           disk-cache: ${{github.workflow}}
           bazelisk-cache: true
@@ -124,9 +127,9 @@ jobs:
 
       - name: Set up Bazel without caching
         if: env.use_bazel_disk_cache == 'false'
-        uses: bazel-contrib/setup-bazel@0.9.1
+        uses: bazel-contrib/setup-bazel@0.12.1
         env:
-          USE_BAZEL_VERSION: ${{github.event.inputs.bazel_version || env.bazel_version}}
+          USE_BAZEL_VERSION: ${{inputs.bazel_version || env.bazel_version}}
         with:
           bazelrc: |
             ${{env.bazelrc_additions}}
@@ -134,7 +137,7 @@ jobs:
 
       - name: Configure TFQ
         run: |
-          set -x -e
+          set -x
           # Save information to the run log, in case it's needed for debugging.
           which python
           python --version
@@ -148,7 +151,7 @@ jobs:
         # TODO: when the msan tests are working again, replace the "touch"
         # line with ./scripts/msan_test.sh 2>&1 | tee msan-tests-output.log
         run: |
-          set -x -e
+          set -x -o pipefail
           ./scripts/test_all.sh 2>&1 | tee main-tests-output.log
           touch msan-tests-output.log
 
