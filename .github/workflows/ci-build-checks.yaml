@@ -28,32 +28,32 @@ on:
   workflow_dispatch:
     inputs:
       sha:
-        description: "SHA of commit to run against:"
+        description: 'SHA of commit to run against:'
         type: string
         required: true
 
-      py_version:
-        description: "Python version:"
+      python_ver:
+        description: 'Python version:'
         type: string
-        default: "3.10.15"
+        default: '3.10.15'
 
       extra_bazel_options:
-        description: "Extra Bazel options:"
+        description: 'Extra Bazel options:'
         type: string
 
       remake_python_cache:
-        description: "Delete & remake the Python cache"
+        description: 'Delete & remake the Python cache'
         type: boolean
         default: false
 
       debug:
-        description: "Print additional workflow info"
+        description: 'Print additional workflow info'
         type: boolean
         default: false
 
 env:
   # Default Python version to use. Important: give it a full x.y.z number.
-  py_version: '3.10.15'
+  python_ver: '3.10.15'
 
   # Additional .bazelrc options to use.
   bazelrc_additions: |
@@ -122,7 +122,7 @@ jobs:
           GH_TOKEN: ${{github.token}}
         # Note that this approach doesn't need to check out a copy of the repo.
         run: |
-          set -x
+          set -x +e
           # shellcheck disable=SC2207
           # Get an array of paths changed in this workflow trigger event.
           if [[ "${{github.event_name}}" == "pull_request" ]]; then
@@ -130,13 +130,31 @@ jobs:
             paths=($(gh pr view $url --json files --jq '.files | .[].path'))
           else
             # There's no event sha for manual runs, so we rely on user input.
-            sha=${{github.sha || inputs.sha}}
-            url="/repos/${{github.repository}}/commits/$sha"
+            # Make sure the sha is valid.
+            if [[ "${{github.event_name}}" == "workflow_dispatch" ]]; then
+              url="repos/${{github.repository}}/commits/${{inputs.sha}}"
+              full_sha="$(gh api $url -q '.sha')"
+              exit_code=$?
+              if [[ "$exit_code" == "0" ]]; then
+                sha=$full_sha
+              else
+                {
+                echo "### :x: Workflow error"
+                echo "The SHA provided to _Run Workflow_ does not exist:"
+                echo "<code>${{inputs.sha}}</code>"
+                } >> "$GITHUB_STEP_SUMMARY"
+                exit 1
+              fi
+            else
+              sha=${{github.sha}}
+            fi
+            url="repos/${{github.repository}}/commits/$sha"
+            # shellcheck disable=SC2086
             paths=($(gh api $url --jq '.files[].filename'))
           fi
           # Test array of paths against the patterns of changes we can ignore.
           # Default to no-changes if every path matches at least one pattern.
-          echo "have_changes=false" >> "$GITHUB_OUTPUT"
+          echo 'have_changes=false' >> "$GITHUB_OUTPUT"
           ignorable=(${{env.ignore_patterns}})
           for path in "${paths[@]}"; do
             for pattern in "${ignorable[@]}"; do
@@ -144,7 +162,7 @@ jobs:
               [[ $path =~ $pattern ]] && continue 2
             done
             # None of the patterns matched this path.
-            echo "have_changes=true" >> "$GITHUB_OUTPUT"
+            echo 'have_changes=true' >> "$GITHUB_OUTPUT"
             break
           done
 
@@ -163,12 +181,11 @@ jobs:
         uses: actions/checkout@v4
 
         # Note: setup-python has a cache facility, but we don't use it here
-        # because we want to cache more things than setup-python does.
-      - name: Set up Python ${{inputs.py_version || env.py_version}}
-        id: python
+        # because we want to cache more Python things than setup-python does.
+      - name: Set up Python ${{inputs.python_ver || env.python_ver}}
         uses: actions/setup-python@v5
         with:
-          python-version: ${{inputs.py_version || env.py_version}}
+          python-version: ${{inputs.python_ver || env.python_ver}}
 
       - name: Set cache keys and other parameters
         id: parameters
@@ -257,13 +274,14 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: ${{inputs.py_version || env.py_version}}
+          python-version: ${{inputs.python_ver || env.python_ver}}
 
       - name: Restore our Python cache
         uses: actions/cache@v4
         with:
           key: ${{needs.Setup.outputs.python_cache_key}}
           path: ${{needs.Setup.outputs.python_cache_paths}}
+          fail-on-cache-miss: true
 
       - name: Set up Bazel
         uses: bazel-contrib/setup-bazel@0.12.0
@@ -325,13 +343,14 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: ${{inputs.py_version || env.py_version}}
+          python-version: ${{inputs.python_ver || env.python_ver}}
 
       - name: Restore our Python cache
         uses: actions/cache@v4
         with:
           key: ${{needs.Setup.outputs.python_cache_key}}
           path: ${{needs.Setup.outputs.python_cache_paths}}
+          fail-on-cache-miss: true
 
       - name: Get the Python wheel we built
         uses: actions/download-artifact@v4
@@ -345,7 +364,7 @@ jobs:
 
       - name: Test the wheel
         run: |
-          set -x -e
+          set -x +e
           ./scripts/run_example.sh
 
   Bazel_tests:
@@ -360,13 +379,14 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: ${{inputs.py_version || env.py_version}}
+          python-version: ${{inputs.python_ver || env.python_ver}}
 
       - name: Restore our Python cache
         uses: actions/cache@v4
         with:
           key: ${{needs.Setup.outputs.python_cache_key}}
           path: ${{needs.Setup.outputs.python_cache_paths}}
+          fail-on-cache-miss: true
 
       - name: Set up Bazel
         uses: bazel-contrib/setup-bazel@0.12.0
@@ -380,7 +400,7 @@ jobs:
       - name: Run all Bazel tests
         id: test
         run: |
-          set -x -e -o pipefail
+          set -x +e -o pipefail
           printf "Y\n" | ./configure.sh
           bazel test ${{inputs.extra_bazel_options}} \
             //tensorflow_quantum/... 2>&1 | tee bazel-tests.log
@@ -413,13 +433,14 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: ${{inputs.py_version || env.py_version}}
+          python-version: ${{inputs.python_ver || env.python_ver}}
 
       - name: Restore our Python cache
         uses: actions/cache@v4
         with:
           key: ${{needs.Setup.outputs.python_cache_key}}
           path: ${{needs.Setup.outputs.python_cache_paths}}
+          fail-on-cache-miss: true
 
       - name: Get the Python wheel we built
         uses: actions/download-artifact@v4
@@ -437,7 +458,7 @@ jobs:
           examples_output=$(python3 quantum/scripts/test_tutorials.py)
           exit_code=$?
           if [ "$exit_code" != "0" ]; then
-            echo "Tutorials failed to run to completion:"
+            echo 'Tutorials failed to run to completion:'
             echo "{$examples_output}"
             exit 64;
           fi
@@ -457,13 +478,14 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: ${{inputs.py_version || env.py_version}}
+          python-version: ${{inputs.python_ver || env.python_ver}}
 
       - name: Restore our Python cache
         uses: actions/cache@v4
         with:
           key: ${{needs.Setup.outputs.python_cache_key}}
           path: ${{needs.Setup.outputs.python_cache_paths}}
+          fail-on-cache-miss: true
 
       - name: Set up Bazel
         uses: bazel-contrib/setup-bazel@0.12.0
@@ -476,33 +498,33 @@ jobs:
 
       - name: Print debugging info
         run: |
-          echo ""
+          echo ''
           echo "::group::Contents of $(pwd)"
           ls -la
-          echo "::endgroup::"
+          echo '::endgroup::'
 
-          echo "::group::Pip info"
+          echo '::group::Pip info'
           pip --version
           pip list
-          echo "::endgroup::"
+          echo '::endgroup::'
 
-          echo "::group::Python installation"
+          echo '::group::Python installation'
           pyversion="$(python --version | awk '{print $2}')"
           ls -l /opt/hostedtoolcache/{.,Python,Python/"$pyversion"/x64/bin}
-          echo "::endgroup::"
+          echo '::endgroup::'
 
-          echo "::group::Bazel info"
+          echo '::group::Bazel info'
           bazel --version
           ls -la /home/runner/.cache
           if [[ -e /home/runner/.bazel ]]; then
             ls -la /home/runner/.bazel
           fi
-          echo "::endgroup::"
+          echo '::endgroup::'
 
-          echo "::group::Contents of /home/runner/.bazelrc"
+          echo '::group::Contents of /home/runner/.bazelrc'
           cat /home/runner/.bazelrc
-          echo "::endgroup::"
+          echo '::endgroup::'
 
-          echo "::group::Environment variables"
+          echo '::group::Environment variables'
           env
-          echo "::endgroup::"
+          echo '::endgroup::'
