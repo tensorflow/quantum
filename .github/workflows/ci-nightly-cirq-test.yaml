@@ -9,7 +9,7 @@
 # options for overridding some of the parameters for the run.
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-name: CI nightly Cirq test
+name: CI nightly Cirq compatibility test
 run-name: Continuous integration Cirq compatibility test
 
 on:
