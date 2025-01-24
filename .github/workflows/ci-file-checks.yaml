@@ -79,6 +79,8 @@ jobs:
       python_files: ${{steps.filter.outputs.python_files}}
       cc: ${{steps.filter.outputs.cc}}
       cc_files: ${{steps.filter.outputs.cc_files}}
+      yaml: ${{steps.filter.outputs.yaml}}
+      yaml_files: ${{steps.filter.outputs.yaml_files}}
     steps:
       # When invoked manually, use the given SHA to figure out the change list.
       - if: github.event_name == 'workflow_dispatch'
@@ -125,6 +127,9 @@ jobs:
                   - '**/*.cc'
                   - '**/*.h'
                   - '**/*.proto'
+            yaml:
+              - added|modified:
+                  - '**/*.yaml'
 
   Setup:
     if: needs.Changes.outputs.python == 'true'
@@ -336,3 +341,27 @@ jobs:
             } >> "$GITHUB_STEP_SUMMARY"
           fi
           exit $exit_code
+
+  Yaml-lint:
+    if: needs.Changes.outputs.yaml == 'true'
+    name: YAML lint
+    needs: Changes
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out a copy of the TFQ git repository
+        uses: actions/checkout@v4
+
+      - name: Set up yamllint output problem matcher
+        run: echo '::add-matcher::.github/problem-matchers/yamllint.json'
+
+      - name: Find out the yamllint version
+        id: yamllint
+        run: |
+          version=$(yamllint --version)
+          echo "version=${version#yamllint }" >> "$GITHUB_OUTPUT"
+
+      - name: Run yamllint ${{steps.yamllint.outputs.version}}
+        run: |
+          set -x
+          # shellcheck disable=SC2086
+          yamllint --format github ${{needs.Changes.outputs.yaml_files}}
