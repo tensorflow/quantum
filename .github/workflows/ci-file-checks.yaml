@@ -19,7 +19,7 @@ on:
   pull_request:
     types: [opened, synchronize]
     branches:
-      - main
+      - master
 
   merge_group:
     types:
@@ -27,7 +27,7 @@ on:
 
   push:
     branches:
-      - main
+      - master
 
   # Allow manual invocation, with options that can be useful for debugging.
   workflow_dispatch:
