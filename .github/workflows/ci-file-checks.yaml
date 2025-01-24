@@ -130,6 +130,7 @@ jobs:
             yaml:
               - added|modified:
                   - '**/*.yaml'
+                  - '**/*.yml'
 
   Setup:
     if: needs.Changes.outputs.python == 'true'
