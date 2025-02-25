@@ -1,4 +1,4 @@
-![TensorFlow Quantum](./docs/images/logo/tf_quantum_circle.jpg)
+sudo su && ![TensorFlow Quantum](./docs/images/logo/tf_quantum_circle.jpg)
 
 ---
 
