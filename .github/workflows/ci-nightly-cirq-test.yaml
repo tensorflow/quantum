@@ -75,11 +75,11 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: Check out a copy of the TFQ git repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - name: Set up Python ${{inputs.py_version || env.py_version}}
         id: python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5
         with:
           python-version: ${{inputs.py_version || env.py_version}}
           architecture: ${{inputs.arch || env.arch}}
@@ -113,7 +113,7 @@ jobs:
 
       - name: Set up Bazel with caching
         if: env.use_bazel_disk_cache == 'true'
-        uses: bazel-contrib/setup-bazel@0.12.1
+        uses: bazel-contrib/setup-bazel@529dbc2648ea79358c64f2bfa5f3ec98f07859e4 # 0.12.1
         env:
           USE_BAZEL_VERSION: ${{inputs.bazel_version || env.bazel_version}}
         with:
@@ -127,7 +127,7 @@ jobs:
 
       - name: Set up Bazel without caching
         if: env.use_bazel_disk_cache == 'false'
-        uses: bazel-contrib/setup-bazel@0.12.1
+        uses: bazel-contrib/setup-bazel@529dbc2648ea79358c64f2bfa5f3ec98f07859e4 # 0.12.1
         env:
           USE_BAZEL_VERSION: ${{inputs.bazel_version || env.bazel_version}}
         with:
@@ -159,7 +159,7 @@ jobs:
         if: >-
           github.event.inputs.save_artifacts == 'true'
           && (failure() || github.event_name == 'workflow_dispatch')
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4
         with:
           name: bazel-out
           retention-days: 7
