@@ -85,10 +85,13 @@ env:
     ^\.github/problem-matchers/.*
     ^benchmarks/.*
 
+# Cancel any previously-started but still active runs on the same branch.
 concurrency:
-  # Cancel any previously-started but still active runs on the same branch.
   cancel-in-progress: true
   group: ${{github.workflow}}-${{github.event.pull_request.number||github.ref}}
+
+# Declare default permissions as read-only.
+permissions: read-all
 
 jobs:
   # Summary of basic strategy:
