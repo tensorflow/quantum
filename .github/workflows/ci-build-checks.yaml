@@ -169,7 +169,7 @@ jobs:
   Setup:
     if: needs.Decision.outputs.need_run == 'true'
     needs: Decision
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     timeout-minutes: 15
     outputs:
       python_cache_key: ${{steps.parameters.outputs.python_cache_key}}
@@ -266,7 +266,7 @@ jobs:
     if: needs.Decision.outputs.need_run == 'true'
     name: Build Python wheel
     needs: [Decision, Setup]
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Check out a copy of the TFQ git repository
         uses: actions/checkout@v4
@@ -335,7 +335,7 @@ jobs:
     if: needs.Decision.outputs.need_run == 'true'
     name: Test the Python wheel
     needs: [Decision, Setup, Build_wheel]
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Check out a copy of the TFQ git repository
         uses: actions/checkout@v4
@@ -371,7 +371,7 @@ jobs:
     if: needs.Decision.outputs.need_run == 'true'
     name: Test the rest of TFQ
     needs: [Decision, Setup, Build_wheel]
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Check out a copy of the TFQ git repository
         uses: actions/checkout@v4
@@ -424,7 +424,7 @@ jobs:
   Tutorial_tests:
     if: needs.Decision.outputs.need_run == 'true'
     name: Test the tutorials
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: [Decision, Setup, Build_wheel]
     steps:
       - name: Check out a copy of the TFQ git repository
@@ -470,7 +470,7 @@ jobs:
     if: failure() || needs.setup.outputs.debug == 'true'
     name: Print debugging info
     needs: [Decision, Setup, Build_wheel, Bazel_tests]
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Check out a copy of the TFQ git repository
         uses: actions/checkout@v4
