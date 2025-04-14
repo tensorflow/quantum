@@ -92,6 +92,8 @@ jobs:
 
       - name: Install the nightly build version of Cirq
         run: |
+          echo 'numpy<2.0.0' > constraint.txt
+          export PIP_CONSTRAINT=constraint.txt
           pip install -U cirq --pre
 
       - name: Configure Bazel options
