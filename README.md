@@ -2,7 +2,7 @@
 <div align="center">
 
 <img width="450px" alt="TensorFlow Quantum logo"
-src="docs/images/logo/TensorFlow_Quantum_logo.svg">
+src="docs/images/logo/tf_quantum1.svg">
 
 High-performance Python framework for hybrid quantum-classical machine learning
 
