@@ -13,6 +13,11 @@ name: CI nightly Cirq compatibility test
 run-name: Continuous integration Cirq compatibility test
 
 on:
+  push:
+    paths:
+      - .github/workflows/ci-nightly-cirq-test.yaml
+
+
   schedule:
     - cron: "10 7 * * *"
 
