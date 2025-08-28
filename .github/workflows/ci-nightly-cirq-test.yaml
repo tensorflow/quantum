@@ -22,10 +22,10 @@ on:
       py_version:
         description: Version of Python to use
         type: string
-        default: "3.10.15"
+        default: "3.11.9"
 
       bazel_version:
-        description: Version of Bazel Python to use
+        description: Version of Bazel to use
         type: string
 
       arch:
@@ -50,7 +50,7 @@ on:
 
 env:
   # Default Python version to use.
-  py_version: "3.10.15"
+  py_version: "3.11.9"
 
   # Bazel version. Note: this needs to match what is used in TF & TFQ.
   bazel_version: 6.5.0
