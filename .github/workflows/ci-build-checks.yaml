@@ -127,8 +127,8 @@ jobs:
           # shellcheck disable=SC2207
           # Get an array of paths changed in this workflow trigger event.
           if [[ "${{github.event_name}}" == "pull_request" ]]; then
-            url=${{github.event.pull_request.url}}
-            paths=($(gh pr view $url --json files --jq '.files | .[].path'))
+            pr=${{github.event.pull_request.number}}
+            paths=($(gh pr view $pr --json files --jq '.files | .[].path'))
           else
             # There's no event sha for manual runs, so we rely on user input.
             # Make sure the sha is valid.
