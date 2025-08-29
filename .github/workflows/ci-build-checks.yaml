@@ -85,6 +85,9 @@ env:
     ^\.github/problem-matchers/.*
     ^benchmarks/.*
 
+# Declare default workflow permissions as read only.
+permissions: read-all
+
 concurrency:
   # Cancel any previously-started but still active runs on the same branch.
   cancel-in-progress: true

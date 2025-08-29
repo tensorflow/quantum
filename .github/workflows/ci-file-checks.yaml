@@ -65,6 +65,9 @@ env:
   # GitHub, and you have to use Ubuntu 24 to get it.
   clang_format_ver: '18'
 
+# Declare default workflow permissions as read only.
+permissions: read-all
+
 concurrency:
   # Cancel any previously-started but still active runs on the same branch.
   cancel-in-progress: true

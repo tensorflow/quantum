@@ -6,7 +6,7 @@
 # For testing, this workflow can be invoked manually from the GitHub page at
 # https://github.com/tensorflow/quantum/actions/workflows/ci-nightly-cirq-test.yaml
 # Clicking the "Run workflow" button there will present a form interface with
-# options for overridding some of the parameters for the run.
+# options for overriding some of the parameters for the run.
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 name: CI nightly Cirq compatibility test
@@ -68,6 +68,9 @@ concurrency:
   # Cancel any previously-started but still active runs on the same branch.
   cancel-in-progress: true
   group: ${{github.workflow}}-${{github.event.pull_request.number||github.ref}}
+
+# Declare default workflow permissions as read only.
+permissions: read-all
 
 jobs:
   test-compatibility:

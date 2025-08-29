@@ -54,6 +54,9 @@ concurrency:
   cancel-in-progress: true
   group: ${{github.workflow}}-${{github.event.pull_request.number||github.ref}}
 
+# Declare default workflow permissions as read only.
+permissions: read-all
+
 jobs:
   Decision:
     runs-on: ubuntu-24.04
