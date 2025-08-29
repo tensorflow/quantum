@@ -120,6 +120,7 @@ jobs:
         id: files
         env:
           GH_TOKEN: ${{github.token}}
+          GH_REPO: ${{github.repository}}
         # Note that this approach doesn't need to check out a copy of the repo.
         run: |
           set -x +e
@@ -232,6 +233,7 @@ jobs:
         continue-on-error: true
         env:
           GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+          GH_REPO: ${{github.repository}}
         run: |
           key="${{steps.parameters.outputs.python_cache_key}}"
           gh extension install actions/gh-actions-cache

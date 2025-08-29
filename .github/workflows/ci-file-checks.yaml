@@ -87,6 +87,7 @@ jobs:
         name: Use the user-provided SHA as the basis for comparison
         env:
           GH_TOKEN: ${{github.token}}
+          GH_REPO: ${{github.repository}}
         run: |
           set -x +e
           url="repos/${{github.repository}}/commits/${{inputs.sha}}"
@@ -181,6 +182,7 @@ jobs:
         continue-on-error: true
         env:
           GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+          GH_REPO: ${{github.repository}}
         run: |
           key="${{steps.parameters.outputs.cache_key}}"
           gh extension install actions/gh-actions-cache
