@@ -12,8 +12,8 @@
 # https://github.com/tensorflow/quantum/actions/workflows/ci-file-checks.yaml
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-name: CI file checks
-run-name: Continuous integration file checks
+name: 'CI: lint & check formating'
+run-name: Continuous integration lint and format checks
 
 on:
   pull_request:
