@@ -1,0 +1,84 @@
+name: Continuous Integration
+
+on: [pull_request]
+
+jobs:
+  wheel-build:
+    name: Wheel test
+    runs-on: ubuntu-20.04
+
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-python@v1
+        with:
+          python-version: '3.10'
+          architecture: 'x64'
+      - name: Install Bazel on CI
+        run: ./scripts/ci_install.sh
+      - name: Configure CI TF
+        run: echo "Y\n" | ./configure.sh
+      - name: Build Wheel Test
+        run: ./scripts/build_pip_package_test.sh
+      - name: Test Wheel
+        run: ./scripts/run_example.sh
+
+  bazel-tests:
+    name: Library tests
+    runs-on: ubuntu-20.04
+
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-python@v1
+        with:
+          python-version: '3.10'
+          architecture: 'x64'
+      - name: Install Bazel on CI
+        run: ./scripts/ci_install.sh
+      - name: Configure CI TF
+        run: echo "Y\n" | ./configure.sh
+      - name: Full Library Test
+        run: ./scripts/test_all.sh
+
+  # 2024-11-30 [mhucka] temporarily turning off leak-tests because it produces
+  # false positives on GH that we can't immediately address. TODO: if updating
+  # TFQ to use Clang and the latest TF does not resolve this, find a way to
+  # skip the handful of failing tests and renable the rest of the msan tests.
+  #
+  # leak-tests:
+  #   name: Memory Leak tests
+  #   runs-on: ubuntu-20.04
+  #
+  #   steps:
+  #     - uses: actions/checkout@v1
+  #     - uses: actions/setup-python@v1
+  #       with:
+  #         python-version: '3.10'
+  #         architecture: 'x64'
+  #     - name: Install Bazel on CI
+  #       run: ./scripts/ci_install.sh
+  #     - name: Configure CI TF
+  #       run: echo "Y\n" | ./configure.sh
+  #     - name: Leak Test qsim and src
+  #       run: ./scripts/msan_test.sh
+
+  tutorials-test:
+    name: Tutorial tests
+    runs-on: ubuntu-20.04
+    needs: wheel-build
+
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-python@v1
+        with:
+          python-version: '3.10'
+          architecture: 'x64'
+      - name: Install notebook dependencies
+        run: pip install --upgrade pip seaborn==0.10.0
+      - name: Install Bazel on CI
+        run: ./scripts/ci_install.sh
+      - name: Configure CI TF
+        run: echo "Y\n" | ./configure.sh
+      - name: Build Wheel
+        run: ./scripts/build_pip_package_test.sh
+      - name: Test Notebooks
+        run: ./scripts/ci_validate_tutorials.sh
