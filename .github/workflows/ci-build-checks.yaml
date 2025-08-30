@@ -6,6 +6,7 @@
 # Bazel artifacts, and can be invoked manually via the "Run workflow" button at
 # https://github.com/tensorflow/quantum/actions/workflows/ci-build-checks.yaml
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# yamllint disable rule:line-length
 
 name: CI build checks
 run-name: Continuous integration build & test
@@ -179,12 +180,12 @@ jobs:
       debug: ${{steps.parameters.outputs.debug}}
     steps:
       - name: Check out a copy of the TFQ git repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
         # Note: setup-python has a cache facility, but we don't use it here
         # because we want to cache more Python things than setup-python does.
       - name: Set up Python ${{inputs.python_ver || env.python_ver}}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5
         with:
           python-version: ${{inputs.python_ver || env.python_ver}}
 
@@ -219,7 +220,7 @@ jobs:
           fi
 
       - name: Test if the cache already exists
-        uses: actions/cache@v4
+        uses: actions/cache@0c907a75c2c80ebcb7f088228285e798b750cf8f # v4
         id: check_cache
         with:
           lookup-only: true
@@ -243,7 +244,7 @@ jobs:
           steps.check_cache.outputs.cache-hit != 'true' ||
           inputs.remake_python_cache == 'true'
         name: Set up the Python cache
-        uses: actions/cache@v4
+        uses: actions/cache@0c907a75c2c80ebcb7f088228285e798b750cf8f # v4
         id: restore_cache
         with:
           key: ${{steps.parameters.outputs.python_cache_key}}
@@ -271,22 +272,22 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Check out a copy of the TFQ git repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5
         with:
           python-version: ${{inputs.python_ver || env.python_ver}}
 
       - name: Restore our Python cache
-        uses: actions/cache@v4
+        uses: actions/cache@0c907a75c2c80ebcb7f088228285e798b750cf8f # v4
         with:
           key: ${{needs.Setup.outputs.python_cache_key}}
           path: ${{needs.Setup.outputs.python_cache_paths}}
           fail-on-cache-miss: true
 
       - name: Set up Bazel
-        uses: bazel-contrib/setup-bazel@0.12.0
+        uses: bazel-contrib/setup-bazel@c50333a3696ad2e6df1e7a2f9b417c5336db774f # 0.12.0
         # Note that we don't need to set the Bazel version to use, because it
         # knows to use what's in the .bazel-version file.
         with:
@@ -309,7 +310,7 @@ jobs:
           pip install -U ./wheel/*.whl
 
       - name: Save the wheel for the tutorial tests
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4
         with:
           name: wheel-${{github.run_id}}
           path: ./wheel
@@ -318,7 +319,7 @@ jobs:
 
       - if: failure() || needs.Setup.outputs.debug == 'true'
         name: Make Bazel artifacts downloadable for analysis
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4
         with:
           name: bazel-build-artifacts-${{github.run_id}}
           retention-days: 14
@@ -340,22 +341,22 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Check out a copy of the TFQ git repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5
         with:
           python-version: ${{inputs.python_ver || env.python_ver}}
 
       - name: Restore our Python cache
-        uses: actions/cache@v4
+        uses: actions/cache@0c907a75c2c80ebcb7f088228285e798b750cf8f # v4
         with:
           key: ${{needs.Setup.outputs.python_cache_key}}
           path: ${{needs.Setup.outputs.python_cache_paths}}
           fail-on-cache-miss: true
 
       - name: Get the Python wheel we built
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4
         with:
           name: wheel-${{github.run_id}}
           path: ./wheel
@@ -376,22 +377,22 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Check out a copy of the TFQ git repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5
         with:
           python-version: ${{inputs.python_ver || env.python_ver}}
 
       - name: Restore our Python cache
-        uses: actions/cache@v4
+        uses: actions/cache@0c907a75c2c80ebcb7f088228285e798b750cf8f # v4
         with:
           key: ${{needs.Setup.outputs.python_cache_key}}
           path: ${{needs.Setup.outputs.python_cache_paths}}
           fail-on-cache-miss: true
 
       - name: Set up Bazel
-        uses: bazel-contrib/setup-bazel@0.12.0
+        uses: bazel-contrib/setup-bazel@c50333a3696ad2e6df1e7a2f9b417c5336db774f # 0.12.0
         with:
           bazelrc: ${{env.bazelrc_additions}}
           bazelisk-cache: true
@@ -409,7 +410,7 @@ jobs:
 
       - if: failure() || needs.Setup.outputs.debug == 'true'
         name: Make Bazel artifacts downloadable for analysis
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4
         with:
           name: bazel-tests-${{github.run_id}}
           retention-days: 7
@@ -430,22 +431,22 @@ jobs:
     needs: [Decision, Setup, Build_wheel]
     steps:
       - name: Check out a copy of the TFQ git repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5
         with:
           python-version: ${{inputs.python_ver || env.python_ver}}
 
       - name: Restore our Python cache
-        uses: actions/cache@v4
+        uses: actions/cache@0c907a75c2c80ebcb7f088228285e798b750cf8f # v4
         with:
           key: ${{needs.Setup.outputs.python_cache_key}}
           path: ${{needs.Setup.outputs.python_cache_paths}}
           fail-on-cache-miss: true
 
       - name: Get the Python wheel we built
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4
         with:
           name: wheel-${{github.run_id}}
           path: ./wheel
@@ -475,22 +476,22 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Check out a copy of the TFQ git repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5
         with:
           python-version: ${{inputs.python_ver || env.python_ver}}
 
       - name: Restore our Python cache
-        uses: actions/cache@v4
+        uses: actions/cache@0c907a75c2c80ebcb7f088228285e798b750cf8f # v4
         with:
           key: ${{needs.Setup.outputs.python_cache_key}}
           path: ${{needs.Setup.outputs.python_cache_paths}}
           fail-on-cache-miss: true
 
       - name: Set up Bazel
-        uses: bazel-contrib/setup-bazel@0.12.0
+        uses: bazel-contrib/setup-bazel@c50333a3696ad2e6df1e7a2f9b417c5336db774f # 0.12.0
         with:
           bazelrc: ${{env.bazelrc_additions}}
           bazelisk-cache: true
