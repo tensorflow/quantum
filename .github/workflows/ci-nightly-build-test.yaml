@@ -13,6 +13,7 @@
 # This workflow also can be invoked manually via the "Run workflow" button at
 # https://github.com/tensorflow/quantum/actions/workflows/ci-build-checks.yaml
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# yamllint disable rule:line-length
 
 name: CI nightly full test
 run-name: Continuous integration nightly build & test
@@ -64,7 +65,7 @@ jobs:
       run: ${{steps.commits.outputs.count > 0}}
     steps:
       - name: Check out a sparse copy of the git repo for TFQ
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         with:
           sparse-checkout: .
 
@@ -82,15 +83,15 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Check out a copy of the TFQ git repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - name: Set up Python ${{inputs.py_version || env.py_version}}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5
         with:
           python-version: ${{inputs.py_version || env.py_version}}
 
       - name: Set up Bazel
-        uses: bazel-contrib/setup-bazel@0.9.1
+        uses: bazel-contrib/setup-bazel@f3f50ea6791b9b0f4c4eeabba4507422426462f5 # 0.9.1
         with:
           bazelrc: ${{env.bazelrc_additions}}
 
@@ -126,7 +127,7 @@ jobs:
 
       - if: failure() || inputs.save_artifacts == 'true'
         name: Make artifacts downloadable
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4
         with:
           name: test-artifacts
           retention-days: 7
