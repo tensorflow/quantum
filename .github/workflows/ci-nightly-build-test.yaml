@@ -13,6 +13,7 @@
 # This workflow also can be invoked manually via the "Run workflow" button at
 # https://github.com/tensorflow/quantum/actions/workflows/ci-build-checks.yaml
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# yamllint disable rule:line-length
 
 name: CI nightly full test
 run-name: Continuous integration nightly build & test

@@ -6,6 +6,7 @@
 # Bazel artifacts, and can be invoked manually via the "Run workflow" button at
 # https://github.com/tensorflow/quantum/actions/workflows/ci-build-checks.yaml
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# yamllint disable rule:line-length
 
 name: CI build checks
 run-name: Continuous integration build & test

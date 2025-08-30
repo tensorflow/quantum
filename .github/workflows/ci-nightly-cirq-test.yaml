@@ -8,6 +8,7 @@
 # Clicking the "Run workflow" button there will present a form interface with
 # options for overridding some of the parameters for the run.
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# yamllint disable rule:line-length
 
 name: CI nightly Cirq compatibility test
 run-name: Continuous integration Cirq compatibility test
