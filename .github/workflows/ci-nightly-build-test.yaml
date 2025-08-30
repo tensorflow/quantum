@@ -76,7 +76,7 @@ jobs:
     if: needs.Decision.outputs.run == 'true'
     name: Build and test
     needs: Decision
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Check out a copy of the TFQ git repository
         uses: actions/checkout@v4
