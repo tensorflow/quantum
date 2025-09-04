@@ -30,6 +30,23 @@ from tensorflow_quantum.python.layers.circuit_executors import input_checks
 class Expectation(tf.keras.layers.Layer):
     """A Layer that calculates an expectation value.
 
+    Args:
+        backend (Union[str, cirq.Sampler, cirq.sim.simulator.SimulatesExpectationValues], optional):
+            Backend simulator to use. Default is 'noiseless'.
+        differentiator (Optional[tfq.differentiators.Differentiator]):
+            Differentiation scheme for gradients.
+        **kwargs: Additional keyword arguments for the parent class.
+
+    Input shape:
+        - circuits: tf.Tensor or list of shape [batch_size], each entry a serialized circuit (from tfq.convert_to_tensor).
+        - symbol_names: list or tf.Tensor of shape [n_symbols], names of circuit parameters (optional).
+        - symbol_values: tf.Tensor of shape [batch_size, n_symbols], values for circuit parameters (optional).
+        - operators: list or tf.Tensor of shape [n_ops], observables to measure (optional).
+        - repetitions: int or tf.Tensor, number of measurement repetitions (optional, only for noisy backend).
+
+    Output shape:
+        tf.Tensor of shape [batch_size, n_ops], expectation values for each circuit and operator.
+
     Given an input circuit and set of parameter values, prepare a quantum state
     and output expectation values taken on that state with respect to some
     observables to the tensorflow graph.
@@ -273,15 +290,18 @@ class Expectation(tf.keras.layers.Layer):
              initializer=tf.keras.initializers.RandomUniform(0, 2 * np.pi)):
         """Keras call function.
 
-        Input options:
-            `inputs`, `symbol_names`, `symbol_values`:
-                see `input_checks.expand_circuits`
-            `operators`: see `input_checks.expand_operators`
+        Args:
+            inputs (tf.Tensor or list): Circuits to execute, shape [batch_size].
+            symbol_names (list or tf.Tensor, optional): Names of circuit parameters, shape [n_symbols].
+            symbol_values (tf.Tensor, optional): Values for circuit parameters, shape [batch_size, n_symbols].
+            operators (list or tf.Tensor, optional): Observables to measure, shape [n_ops].
+            repetitions (int or tf.Tensor, optional): Number of measurement repetitions (for noisy backend).
+            initializer (tf.keras.initializers.Initializer, optional): Initializer for circuit parameters.
 
-        Output shape:
-            `tf.Tensor` with shape [batch_size, n_ops] that holds the
-                expectation value for each circuit with each op applied to it
-                (after resolving the corresponding parameters in).
+        Returns:
+            tf.Tensor: Tensor of shape [batch_size, n_ops] that holds the
+            expectation value for each circuit with each op applied to it
+            (after resolving the corresponding parameters in).
         """
         values_empty = False
         if symbol_values is None:
