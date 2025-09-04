@@ -113,7 +113,7 @@ def _apply_random_control(gate, all_qubits):
     if n_open == 0:
         # No open qubits to control. Return unmodified gate.
         return gate
-    control_locs = random.sample(open_qubits, n_open)
+    control_locs = random.sample(list(open_qubits), n_open)
     control_values = random.choices([0, 1], k=n_open)
     # TODO(tonybruguier,#636): Here we call the parent's class controlled_by
     # because Cirq's breaking change #4167 created 3-qubit gates that cannot be
