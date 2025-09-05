@@ -12,8 +12,8 @@
 # https://github.com/tensorflow/quantum/actions/workflows/ci-file-checks.yaml
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-name: CI file checks
-run-name: Continuous integration file checks
+name: 'CI: lint & check formating'
+run-name: Continuous integration lint and format checks
 
 on:
   pull_request:
@@ -109,10 +109,10 @@ jobs:
           echo base=${{github.ref_name}} >> "$GITHUB_ENV"
 
       - name: Check out a copy of the TFQ git repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - name: Determine files changed by this ${{github.event_name}} event
-        uses: dorny/paths-filter@v3
+        uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3
         id: filter
         with:
           base: ${{env.base}}
@@ -142,12 +142,12 @@ jobs:
       cache_paths: ${{steps.parameters.outputs.cache_paths}}
     steps:
       - name: Check out a copy of the TFQ git repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
         # Note: setup-python has a cache facility, but we don't use it here
         # because we want to cache more Python things than setup-python does.
       - name: Set up Python ${{inputs.python_ver || env.python_ver}}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5
         with:
           python-version: ${{inputs.python_ver || env.python_ver}}
 
@@ -167,7 +167,7 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Test if the cache already exists
-        uses: actions/cache@v4
+        uses: actions/cache@0c907a75c2c80ebcb7f088228285e798b750cf8f # v4
         id: check_cache
         with:
           lookup-only: true
@@ -190,7 +190,7 @@ jobs:
           steps.check_cache.outputs.cache-hit != 'true' ||
           inputs.remake_python_cache == 'true'
         name: Set up the Python cache
-        uses: actions/cache@v4
+        uses: actions/cache@0c907a75c2c80ebcb7f088228285e798b750cf8f # v4
         id: restore_cache
         with:
           key: ${{steps.parameters.outputs.cache_key}}
@@ -227,7 +227,7 @@ jobs:
       changed_files: ${{needs.Changes.outputs.cc_files}}
     steps:
       - name: Check out a copy of the TFQ git repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - name: Set up clang-format output problem matcher
         run: echo '::add-matcher::.github/problem-matchers/clang-format.json'
@@ -264,15 +264,15 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Check out a copy of the TFQ git repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5
         with:
           python-version: ${{inputs.python_ver || env.python_ver}}
 
       - name: Restore the Python cache
-        uses: actions/cache@v4
+        uses: actions/cache@0c907a75c2c80ebcb7f088228285e798b750cf8f # v4
         with:
           key: ${{needs.Setup.outputs.cache_key}}
           path: ${{needs.Setup.outputs.cache_paths}}
@@ -304,15 +304,15 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Check out a copy of the TFQ git repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5
         with:
           python-version: ${{inputs.python_ver || env.python_ver}}
 
       - name: Restore the Python cache
-        uses: actions/cache@v4
+        uses: actions/cache@0c907a75c2c80ebcb7f088228285e798b750cf8f # v4
         with:
           key: ${{needs.Setup.outputs.cache_key}}
           path: ${{needs.Setup.outputs.cache_paths}}
@@ -350,7 +350,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Check out a copy of the TFQ git repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
 
       - name: Set up yamllint output problem matcher
         run: echo '::add-matcher::.github/problem-matchers/yamllint.json'
