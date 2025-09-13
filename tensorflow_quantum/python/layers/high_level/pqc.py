@@ -29,21 +29,32 @@ class PQC(tf.keras.layers.Layer):
     """Parametrized Quantum Circuit (PQC) Layer.
 
     Args:
-        model_circuit (cirq.Circuit): Circuit with sympy.Symbols to be trained.
-        operators (Union[cirq.PauliSum, cirq.PauliString, list]): Observable(s) to measure.
-        repetitions (Optional[int]): Number of measurement repetitions. If None, analytic expectation is used.
-        backend (Union[str, cirq.Sampler, cirq.sim.simulator.SimulatesExpectationValues]): Backend simulator.
-        differentiator (Optional[tfq.differentiators.Differentiator]): Differentiation scheme.
-        initializer (tf.keras.initializers.Initializer): Initializer for circuit parameters.
-        regularizer (Optional[tf.keras.regularizers.Regularizer]): Regularizer for circuit parameters.
-        constraint (Optional[tf.keras.constraints.Constraint]): Constraint for circuit parameters.
+        model_circuit (cirq.Circuit):
+            Circuit with sympy.Symbols to be trained.
+        operators (Union[cirq.PauliSum, cirq.PauliString, list]):
+            Observable(s) to measure.
+        repetitions (Optional[int]):
+            Number of measurement repetitions. If None, analytic expectation is used.
+        backend (Union[str, cirq.Sampler,
+            cirq.sim.simulator.SimulatesExpectationValues]):
+            Backend simulator.
+        differentiator (Optional[tfq.differentiators.Differentiator]):
+            Differentiation scheme.
+        initializer (tf.keras.initializers.Initializer):
+            Initializer for circuit parameters.
+        regularizer (Optional[tf.keras.regularizers.Regularizer]):
+            Regularizer for circuit parameters.
+        constraint (Optional[tf.keras.constraints.Constraint]):
+            Constraint for circuit parameters.
         **kwargs: Additional keyword arguments for the parent class.
 
     Input shape:
-        tf.Tensor of shape [batch_size], each entry a serialized circuit (from tfq.convert_to_tensor).
+        tf.Tensor of shape [batch_size], each entry a serialized circuit
+        (from tfq.convert_to_tensor).
 
     Output shape:
-        tf.Tensor of shape [batch_size, n_operators], expectation values for each operator.
+        tf.Tensor of shape [batch_size, n_operators], expectation values
+        for each operator.
      
     This layer is for training parameterized quantum models.
     Given a parameterized circuit, this layer initializes the parameters
