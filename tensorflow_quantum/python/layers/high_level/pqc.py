@@ -34,7 +34,8 @@ class PQC(tf.keras.layers.Layer):
         operators (Union[cirq.PauliSum, cirq.PauliString, list]):
             Observable(s) to measure.
         repetitions (Optional[int]):
-            Number of measurement repetitions. If None, analytic expectation is used.
+            Number of measurement repetitions. If None, analytic
+            expectation is used.
         backend (Union[str, cirq.Sampler,
             cirq.sim.simulator.SimulatesExpectationValues]):
             Backend simulator.
