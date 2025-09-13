@@ -4,6 +4,8 @@ run-name: Continuous integration build and test
 
 on: [pull_request]
 
+permissions: read-all
+
 jobs:
   wheel-build:
     name: Wheel test
