@@ -223,10 +223,9 @@ class Expectation(tf.keras.layers.Layer):
     something like `tfq.layers.Expectation()(cirq.Circuit(...), ...)` please
     be sure to instead use `tfq.layers.Expectation()(circuit_input, ...)`
     where `circuit_input` is a `tf.keras.Input` that is filled with
-    `tfq.conver_to_tensor([cirq.Circuit(..)] * batch_size)` at runtime. This
+    `tfq.convert_to_tensor([cirq.Circuit(..)] * batch_size)` at runtime. This
     is because compiled Keras models require non keyword layer `call` inputs to
     be traceable back to a `tf.keras.Input`.
-
     """
 
     def __init__(self, backend='noiseless', differentiator=None, **kwargs):
@@ -249,6 +248,7 @@ class Expectation(tf.keras.layers.Layer):
                 which uses `tfq.differentiators.ParameterShift()`. If
                 `backend` is also 'noiseless' then default is
                 `tfq.differentiators.Adjoint`.
+            **kwargs: Additional keyword arguments for the parent class.
 
         """
         super().__init__(**kwargs)
