@@ -24,6 +24,8 @@ on:
     types:
       - checks_requested
 
+permissions: read-all
+
 jobs:
   wheel-build:
     name: Wheel test
