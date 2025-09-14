@@ -1,0 +1,3 @@
+extensions = [
+    'sphinx.ext.mathjax',
+]
