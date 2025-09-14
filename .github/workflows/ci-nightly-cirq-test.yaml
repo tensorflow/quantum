@@ -97,7 +97,7 @@ jobs:
         run: |
           echo 'numpy<2.0.0' > constraint.txt
           export PIP_CONSTRAINT=constraint.txt
-          pip install -U cirq --pre
+          pip install --upgrade cirq~=1.0.dev
 
       - name: Configure Bazel options
         run: |
