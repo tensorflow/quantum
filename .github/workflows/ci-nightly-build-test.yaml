@@ -4,7 +4,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#     http://www.apache.org/licenses/LICENSE-2.0
+#     https://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -26,7 +26,7 @@
 #
 # This workflow also can be invoked manually via the "Run workflow" button at
 # https://github.com/tensorflow/quantum/actions/workflows/ci-build-checks.yaml
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 # yamllint disable rule:line-length
 
 name: CI nightly full test
@@ -68,6 +68,8 @@ concurrency:
   # Cancel any previously-started but still active runs on the same branch.
   cancel-in-progress: true
   group: ${{github.workflow}}-${{github.event.pull_request.number||github.ref}}
+
+permissions: read-all
 
 jobs:
   Decision:

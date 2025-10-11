@@ -4,7 +4,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#     http://www.apache.org/licenses/LICENSE-2.0
+#     https://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,10 +24,9 @@
 # workflow summary to make it easier to learn the outcome. Finally, It can be
 # invoked manually using the "Run workflow" button on the page at
 # https://github.com/tensorflow/quantum/actions/workflows/ci-file-checks.yaml
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-name: CI file checks
-run-name: Continuous integration file checks
+name: 'CI: lint & check formating'
+run-name: Continuous integration lint and format checks
 
 on:
   pull_request:
@@ -83,6 +82,8 @@ concurrency:
   # Cancel any previously-started but still active runs on the same branch.
   cancel-in-progress: true
   group: ${{github.workflow}}-${{github.event.pull_request.number||github.ref}}
+
+permissions: read-all
 
 jobs:
   Changes:
