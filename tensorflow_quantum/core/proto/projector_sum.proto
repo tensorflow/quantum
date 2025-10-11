@@ -34,4 +34,3 @@ message ProjectorDictEntry {
   // False means |0> and true means |1>.
   bool basis_state = 2;
 }
-
