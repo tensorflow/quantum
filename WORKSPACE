@@ -37,34 +37,25 @@ http_archive(
     urls = ["https://github.com/quantumlib/qsim/archive/refs/tags/v0.13.3.zip"],
 )
 
+local_repository(
+    name = "python",
+    path = "third_party/python_legacy",
+)
+
 http_archive(
     name = "org_tensorflow",
-    patches = [
-        "//third_party/tf:tf.patch",
-    ],
-    sha256 = "f771db8d96ca13c72f73c85c9cfb6f5358e2de3dd62a97a9ae4b672fe4c6d094",
-    strip_prefix = "tensorflow-2.15.0",
-    urls = [
-        "https://github.com/tensorflow/tensorflow/archive/refs/tags/v2.15.0.zip",
-    ],
+    patches = ["//third_party/tf:tf.patch"],
+    sha256 = "c8c8936e7b6156e669e08b3c388452bb973c1f41538149fce7ed4a4849c7a012",
+    strip_prefix = "tensorflow-2.16.2",
+    urls = ["https://github.com/tensorflow/tensorflow/archive/refs/tags/v2.16.2.zip"],
 )
 
 
-load("@org_tensorflow//tensorflow:workspace3.bzl", "tf_workspace3")
+load("@org_tensorflow//tensorflow:workspace3.bzl", "tf_workspace3"); tf_workspace3()
+load("@org_tensorflow//tensorflow:workspace2.bzl", "tf_workspace2"); tf_workspace2()
+load("@org_tensorflow//tensorflow:workspace1.bzl", "tf_workspace1"); tf_workspace1()
+load("@org_tensorflow//tensorflow:workspace0.bzl", "tf_workspace0"); tf_workspace0()
 
-tf_workspace3()
-
-load("@org_tensorflow//tensorflow:workspace2.bzl", "tf_workspace2")
-
-tf_workspace2()
-
-load("@org_tensorflow//tensorflow:workspace1.bzl", "tf_workspace1")
-
-tf_workspace1()
-
-load("@org_tensorflow//tensorflow:workspace0.bzl", "tf_workspace0")
-
-tf_workspace0()
 
 load("//third_party/tf:tf_configure.bzl", "tf_configure")
 

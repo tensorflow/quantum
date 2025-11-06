@@ -50,12 +50,12 @@ class InstallPlatlib(install):
             self.install_lib = self.install_platlib
 
 
-REQUIRED_PACKAGES = ['cirq-core==1.3.0', 'cirq-google==1.3.0', 'sympy == 1.12']
+REQUIRED_PACKAGES = ['cirq-core==1.3.0', 'cirq-google==1.3.0', 'sympy == 1.14']
 
 # placed as extra to not have required overwrite existing nightly installs if
 # they exist.
-EXTRA_PACKAGES = ['tensorflow == 2.15.0']
-CUR_VERSION = '0.7.4'
+EXTRA_PACKAGES = ["tensorflow>=2.16,<2.17"]
+CUR_VERSION = '0.7.5'
 
 
 class BinaryDistribution(Distribution):
