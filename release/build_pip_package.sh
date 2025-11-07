@@ -15,46 +15,59 @@
 # ==============================================================================
 set -e
 set -x
-PY="${PYTHON_BIN_PATH:-python3}"
+
+# Pick the Python that TFQ/TensorFlow used during configure/build.
+# Order: explicit env -> 3.11 -> python3
+PY="${PYTHON_BIN_PATH:-}"
+if [[ -z "$PY" ]]; then
+  if command -v python3.11 >/dev/null 2>&1; then
+    PY="$(command -v python3.11)"
+  elif command -v python3 >/dev/null 2>&1; then
+    PY="$(command -v python3)"
+  else
+    echo "ERROR: No suitable python found. Set PYTHON_BIN_PATH." >&2
+    exit 2
+  fi
+fi
+echo "Using Python: $PY"
+
+# Ensure packaging tools are present in THIS interpreter
+"$PY" - <<'PY' || { "$PY" -m pip install --upgrade pip setuptools wheel; }
+import importlib
+for m in ["setuptools","wheel"]:
+    importlib.import_module(m)
+PY
 
 EXPORT_DIR="bazel-bin/release/build_pip_package.runfiles/__main__"
 
-function main() {
-  DEST=${1}
-  EXTRA_FLAGS=${2}
+main() {
+  DEST="$1"
+  EXTRA_FLAGS="$2"
 
-  if [[ -z ${DEST} ]]; then
+  if [[ -z "$DEST" ]]; then
     echo "No destination directory provided."
     exit 1
   fi
 
-  mkdir -p ${DEST}
-  echo "=== destination directory: ${DEST}"
+  mkdir -p "$DEST"
+  echo "=== destination directory: $DEST"
 
-  TMPDIR=$(mktemp -d -t tmp.XXXXXXXXXX)
-
-  echo $(date) : "=== Using tmpdir: ${TMPDIR}"
-
+  TMPDIR="$(mktemp -d -t tmp.XXXXXXXXXX)"
+  echo "$(date) : === Using tmpdir: $TMPDIR"
   echo "=== Copy TFQ files"
 
-  # Copy over files necessary to run setup.py
-  cp ${EXPORT_DIR}/release/setup.py "${TMPDIR}"
-  cp ${EXPORT_DIR}/release/MANIFEST.in "${TMPDIR}"
+  cp "${EXPORT_DIR}/release/setup.py"        "$TMPDIR"
+  cp "${EXPORT_DIR}/release/MANIFEST.in"     "$TMPDIR"
+  mkdir "$TMPDIR/tensorflow_quantum"
+  cp -r -v "${EXPORT_DIR}/tensorflow_quantum/"* "$TMPDIR/tensorflow_quantum/"
 
-  # Copy over all files in the tensorflow_quantum/ directory that are included in the BUILD
-  # rule.
-  mkdir "${TMPDIR}"/tensorflow_quantum
-  cp -r -v ${EXPORT_DIR}/tensorflow_quantum/* "${TMPDIR}"/tensorflow_quantum/
-
-  pushd ${TMPDIR}
-  echo $(date) : "=== Building wheel"
-
-  "$PY" setup.py bdist_wheel ${EXTRA_FLAGS} > /dev/null
-
-  cp dist/*.whl "${DEST}"
+  pushd "$TMPDIR"
+  echo "$(date) : === Building wheel"
+  "$PY" setup.py bdist_wheel $EXTRA_FLAGS > /dev/null
+  cp dist/*.whl "$DEST"
   popd
-  rm -rf ${TMPDIR}
-  echo $(date) : "=== Output wheel file is in: ${DEST}"
+  rm -rf "$TMPDIR"
+  echo "$(date) : === Output wheel file is in: $DEST"
 }
 
 main "$@"
