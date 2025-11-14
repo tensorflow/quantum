@@ -24,7 +24,6 @@ import nbclient  # pylint: disable=import-error
 import nbformat
 from nbformat.v4 import new_code_cell
 
-
 # -----------------------------------------------------------------------------
 # Config
 # -----------------------------------------------------------------------------
