@@ -140,8 +140,8 @@ class ExamplesTest(parameterized.TestCase):
 
         dur = time.time() - start
         print("[       OK ] "
-            f"ExamplesTest.test_notebook ('{nb_path}') "
-            f"({dur:.2f}s)")
+              f"ExamplesTest.test_notebook ('{nb_path}') "
+              f"({dur:.2f}s)")
 
 
 if __name__ == "__main__":
