@@ -31,7 +31,7 @@ $PIP install --no-cache-dir -U \
 
 # Tutorial deps
 $PIP install --no-cache-dir -U seaborn==0.12.2
-$PIP install --no-cache-dir -U gym==0.26.2 shimmy==0.2.1
+$PIP install --no-cache-dir -U gym==0.25.2 shimmy==0.2.1
 $PIP install --no-cache-dir -q git+https://github.com/tensorflow/docs
 
 # Kernel for this interpreter
