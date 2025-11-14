@@ -1,4 +1,4 @@
-# Copyright 2020 The TensorFlow Quantum Authors.
+# Copyright 2020 The TensorFlow Quantum Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# =============================================================================
+# ==============================================================================
 """Module to ensure all notebooks execute without error by pytesting them."""
 
 import glob
@@ -37,8 +37,7 @@ CELL_TIMEOUT_SEC = int(os.environ.get("NB_CELL_TIMEOUT", "900"))
 def _discover_tutorials(root=DEFAULT_TUTORIAL_ROOT):
     """Return a sorted list of *.ipynb under the tutorials folder."""
     paths = sorted(
-        glob.glob(os.path.join(root, "**", "*.ipynb"), recursive=True)
-    )
+        glob.glob(os.path.join(root, "**", "*.ipynb"), recursive=True))
     # Skip checkpoints and hidden files.
     clean = []
     for nb_path in paths:
@@ -100,8 +99,7 @@ def _gym_compat_cell():
         "        def _make(name, *args, **kwargs):\n"
         "            return _wrap_env(_orig_make(name, *args, **kwargs))\n"
         "\n"
-        "        gym.make = _make\n"
-    )
+        "        gym.make = _make\n")
     return new_code_cell(shim)
 
 
@@ -136,17 +134,12 @@ class ExamplesTest(parameterized.TestCase):
         except nbclient.exceptions.CellTimeoutError as err:
             # Re-raise as a standard error to avoid constructor signature
             # requirements on nbclient's exception types.
-            raise RuntimeError(
-                f"Notebook timed out: {nb_path}"
-            ) from err
+            raise RuntimeError(f"Notebook timed out: {nb_path}") from err
         except nbclient.exceptions.CellExecutionError as err:
-            raise RuntimeError(
-                f"Execution error in: {nb_path}\n{err}"
-            ) from err
+            raise RuntimeError(f"Execution error in: {nb_path}\n{err}") from err
 
         dur = time.time() - start
-        print(
-            "[       OK ] "
+        print("[       OK ] "
             f"ExamplesTest.test_notebook ('{nb_path}') "
             f"({dur:.2f}s)"
         )
