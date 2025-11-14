@@ -20,7 +20,7 @@ import time
 import unittest
 
 from absl.testing import parameterized
-import nbclient
+import nbclient  # pylint: disable=import-error
 import nbformat
 from nbformat.v4 import new_code_cell
 
@@ -141,8 +141,7 @@ class ExamplesTest(parameterized.TestCase):
         dur = time.time() - start
         print("[       OK ] "
             f"ExamplesTest.test_notebook ('{nb_path}') "
-            f"({dur:.2f}s)"
-        )
+            f"({dur:.2f}s)")
 
 
 if __name__ == "__main__":
