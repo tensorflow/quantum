@@ -19,12 +19,26 @@ PLATFORM="$(uname -s | tr 'A-Z' 'a-z')"
 
 
 # --- helpers ---------------------------------------------------------------
-write_bazelrc()      { echo "$1" >> .bazelrc; }
-write_tf_rc()        { echo "$1" >> .tf_configure.bazelrc; }
-die() { echo "ERROR: $*" >&2; exit 1; }
+write_bazelrc() {
+  echo "${1}" >> .bazelrc
+}
 
-is_macos()    { [[ "${PLATFORM}" == "darwin" ]]; }
-is_windows()  { [[ "${PLATFORM}" =~ msys_nt*|mingw*|cygwin*|uwin* ]]; }
+write_tf_rc() {
+  echo "${1}" >> .tf_configure.bazelrc
+}
+
+die() {
+  echo "ERROR: $*" >&2
+  exit 1
+}
+
+is_macos() {
+  [[ "${PLATFORM}" == "darwin" ]]
+}
+
+is_windows() {
+  [[ "${PLATFORM}" =~ msys_nt*|mingw*|cygwin*|uwin* ]]
+}
 
 write_legacy_python_repo() {
   mkdir -p third_party/python_legacy
@@ -67,31 +81,44 @@ done
 
 # --- choose interpreter (venv/conda/system) --------------------------------
 if [[ -n "${USER_PY}" ]]; then
-  PY="$USER_PY"
+  # 1) Explicit --python=... flag
+  PY="${USER_PY}"
 elif [[ -n "${PYTHON_BIN_PATH:-}" ]]; then
-  PY="$PYTHON_BIN_PATH"
+  # 2) Explicit environment override
+  PY="${PYTHON_BIN_PATH}"
 elif [[ -n "${CONDA_PREFIX:-}" && -x "${CONDA_PREFIX}/bin/python" ]]; then
+  # 3) Conda environment python, if available
   PY="${CONDA_PREFIX}/bin/python"
-elif command -v python3.11 >/dev/null 2>&1; then
-  PY="$(command -v python3.11)"
-elif command -v python3 >/dev/null 2>&1; then
-  PY="$(command -v python3)"
 else
-  die "No suitable Python found. Pass --python=/path/to/python or set PYTHON_BIN_PATH."
+  # 4) Fallback: system python3, but require >= 3.10
+  if ! command -v python3 >/dev/null 2>&1; then
+    die "python3 not found. Pass --python=/path/to/python3.10+ or set PYTHON_BIN_PATH."
+  fi
+
+  if ! python3 - <<'PY'
+import sys
+raise SystemExit(0 if sys.version_info[:2] >= (3, 10) else 1)
+PY
+  then
+    die "Python 3.10+ required for TensorFlow Quantum; found $(python3 -V 2>&1). Pass --python=/path/to/python3.10+ or set PYTHON_BIN_PATH."
+  fi
+
+  PY="$(command -v python3)"
 fi
 
 # Normalize to an absolute path (readlink -f is GNU; fall back to python)
 if command -v readlink >/dev/null 2>&1; then
-  PY_ABS="$(readlink -f "$PY" 2>/dev/null || true)"
+  PY_ABS="$(readlink -f "${PY}" 2>/dev/null || true)"
 fi
 if [[ -z "${PY_ABS:-}" ]]; then
-  PY_ABS="$("$PY" - <<'PY'
+  PY_ABS="$("${PY}" - <<'PY'
 import os,sys
 print(os.path.abspath(sys.executable))
 PY
 )"
 fi
-PYTHON_BIN_PATH="$PY_ABS"
+PYTHON_BIN_PATH="${PY_ABS}"
+
 
 # --- choose CPU/GPU like upstream script (default CPU) ---------------------
 TF_NEED_CUDA=""
@@ -109,12 +136,12 @@ done
 TF_CUDA_VERSION="11"
 
 # --- sanity: python is importable and has TF -------------------------------
-if [[ ! -x "$PYTHON_BIN_PATH" ]]; then
-  die "$PYTHON_BIN_PATH not found/executable."
+if [[ ! -x "${PYTHON_BIN_PATH}" ]]; then
+  die "${PYTHON_BIN_PATH} not found/executable."
 fi
 
 # Ensure TF is importable from system python (user should have installed it).
-"$PYTHON_BIN_PATH" - <<'PY' || { echo "ERROR: tensorflow not importable by chosen Python."; exit 1; }
+"${PYTHON_BIN_PATH}" - <<'PY' || { echo "ERROR: tensorflow not importable by chosen Python."; exit 1; }
 import tensorflow as tf
 import tensorflow.sysconfig as sc
 print("TF:", tf.__version__)

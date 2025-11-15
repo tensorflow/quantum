@@ -17,26 +17,32 @@ set -e
 set -x
 
 # Pick the Python that TFQ/TensorFlow used during configure/build.
-# Order: explicit env -> 3.11 -> python3
+# Order: explicit env -> python3 (>= 3.10)
 PY="${PYTHON_BIN_PATH:-}"
-if [[ -z "$PY" ]]; then
-  if command -v python3.11 >/dev/null 2>&1; then
-    PY="$(command -v python3.11)"
-  elif command -v python3 >/dev/null 2>&1; then
-    PY="$(command -v python3)"
-  else
-    echo "ERROR: No suitable python found. Set PYTHON_BIN_PATH." >&2
+if [[ -z "${PY}" ]]; then
+  if ! command -v python3 >/dev/null 2>&1; then
+    echo "ERROR: python3 not found. Set PYTHON_BIN_PATH to a Python 3.10+ interpreter." >&2
     exit 2
   fi
+
+  # Require Python >= 3.10 for TFQ.
+  if ! python3 - <<'PY'
+import sys
+sys.exit(0 if sys.version_info[:2] >= (3, 10) else 1)
+PY
+  then
+    echo "ERROR: Python 3.10+ required for TensorFlow Quantum; found $(python3 -V 2>&1)." >&2
+    exit 2
+  fi
+
+  PY="$(command -v python3)"
 fi
-echo "Using Python: $PY"
+echo "Using Python: ${PY}"
 
 # Ensure packaging tools are present in THIS interpreter
-"$PY" - <<'PY' || { "$PY" -m pip install --upgrade pip setuptools wheel; }
-import importlib
-for m in ["setuptools","wheel"]:
-    importlib.import_module(m)
-PY
+if ! "${PY}" -m pip show -q setuptools wheel >/dev/null 2>&1; then
+  "${PY}" -m pip install --upgrade pip setuptools wheel
+fi
 
 EXPORT_DIR="bazel-bin/release/build_pip_package.runfiles/__main__"
 
@@ -44,30 +50,32 @@ main() {
   DEST="$1"
   EXTRA_FLAGS="$2"
 
-  if [[ -z "$DEST" ]]; then
+  if [[ -z "${DEST}" ]]; then
     echo "No destination directory provided."
     exit 1
   fi
 
-  mkdir -p "$DEST"
-  echo "=== destination directory: $DEST"
+mkdir -p "${DEST}"
+  echo "=== destination directory: ${DEST}"
 
+  # Build the pip package in a temporary directory.
   TMPDIR="$(mktemp -d -t tmp.XXXXXXXXXX)"
-  echo "$(date) : === Using tmpdir: $TMPDIR"
+  echo "$(date) : === Using tmpdir: ${TMPDIR}"
   echo "=== Copy TFQ files"
 
-  cp "${EXPORT_DIR}/release/setup.py"        "$TMPDIR"
-  cp "${EXPORT_DIR}/release/MANIFEST.in"     "$TMPDIR"
-  mkdir "$TMPDIR/tensorflow_quantum"
-  cp -r -v "${EXPORT_DIR}/tensorflow_quantum/"* "$TMPDIR/tensorflow_quantum/"
+  # Copy over files necessary to run setup.py
+  cp "${EXPORT_DIR}/release/setup.py"        "${TMPDIR}"
+  cp "${EXPORT_DIR}/release/MANIFEST.in"     "${TMPDIR}"
+  mkdir "${TMPDIR}/tensorflow_quantum"
+  cp -r -v "${EXPORT_DIR}/tensorflow_quantum/"* "${TMPDIR}/tensorflow_quantum/"
 
-  pushd "$TMPDIR"
+  pushd "${TMPDIR}"
   echo "$(date) : === Building wheel"
-  "$PY" setup.py bdist_wheel $EXTRA_FLAGS > /dev/null
-  cp dist/*.whl "$DEST"
+  "${PY}" setup.py bdist_wheel ${EXTRA_FLAGS} > /dev/null
+  cp dist/*.whl "${DEST}"
   popd
-  rm -rf "$TMPDIR"
-  echo "$(date) : === Output wheel file is in: $DEST"
+  rm -rf "${TMPDIR}"
+  echo "$(date) : === Output wheel file is in: ${DEST}"
 }
 
 main "$@"

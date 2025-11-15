@@ -13,56 +13,35 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-#!/usr/bin/env bash
-set -euo pipefail
+#!/bin/bash
+set -e
 
-PY="${PYTHON_BIN_PATH:-python3}"
-PIP="$PY -m pip"
-LOG_FILE="${LOG_FILE:-tutorials_run.log}"
-
-export TF_CPP_MIN_LOG_LEVEL=1
+# Use legacy tf.keras (Keras 2) with TF 2.16
 export TF_USE_LEGACY_KERAS=1
-export SDL_VIDEODRIVER=dummy
-export PYGAME_HIDE_SUPPORT_PROMPT=1
 
-# Jupyter stack
-$PIP install --no-cache-dir -U \
-  ipython==8.26.0 ipykernel==6.29.5 jupyter-client==8.6.0 nbclient==0.9.0
+# Tools for running notebooks non-interactively
+pip install \
+  "nbclient==0.6.5" \
+  "jupyter-client==7.4.9" \
+  "ipython>=8.10.0" \
+  "ipykernel>=6.29.0"
 
-# Tutorial deps
-$PIP install --no-cache-dir -U seaborn==0.12.2
-$PIP install --no-cache-dir -U gym==0.25.2 shimmy==0.2.1
-$PIP install --no-cache-dir -q git+https://github.com/tensorflow/docs
-
-# Kernel for this interpreter
-KERNEL_NAME="tfq-py"
-echo "==[ci_validate_tutorials] Installing ipykernel '${KERNEL_NAME}'"
-$PY -m ipykernel install --user --name "$KERNEL_NAME" --display-name "Python (tfq)"
-KERNEL_DIR="$("$PY" - <<'PY'
-import os
-home=os.path.expanduser("~")
-cand=[os.path.join(home,".local/share/jupyter/kernels"),
-      os.path.join(home,"Library/Jupyter/kernels"),
-      os.path.join("/usr/local/share/jupyter/kernels")]
-print(next((p for p in cand if os.path.isdir(p)), os.getcwd()))
-PY
-)"
-echo "==[ci_validate_tutorials] Kernel installed at: ${KERNEL_DIR}/${KERNEL_NAME}"
-
-# More headroom just in case
-export NB_KERNEL_NAME="$KERNEL_NAME"
-export NBCLIENT_TIMEOUT="${NBCLIENT_TIMEOUT:-1800}"
-
-echo "==[ci_validate_tutorials] Launching test_tutorials.py with $PY (kernel=${KERNEL_NAME})"
+# OpenAI Gym pip package needed for the quantum reinforcement learning tutorial
+pip install gym==0.24.1
+# seaborn has also numpy dependency, it requires version >= 0.12.0.
+pip install seaborn==0.12.0
+# tf_docs pip package needed for noise tutorial.
+pip install -q git+https://github.com/tensorflow/docs
+# Leave the quantum directory, otherwise errors may occur
 cd ..
-( set -o pipefail; "$PY" quantum/scripts/test_tutorials.py 2>&1 | tee "${LOG_FILE}" )
-status="${PIPESTATUS[0]}"
 
-if [[ "$status" == "0" ]]; then
-  echo "==[ci_validate_tutorials] Tutorials completed successfully."
-  exit 0
+examples_output=$(python3 quantum/scripts/test_tutorials.py)
+exit_code=$?
+
+if [ "$exit_code" == "0" ]; then
+	exit 0;
 else
-  echo "==[ci_validate_tutorials] Tutorials failed. See ${LOG_FILE}"
-  exit 64
+	echo "Tutorials failed to run to completion:"
+	echo "{$examples_output}"
+	exit 64;
 fi
-
