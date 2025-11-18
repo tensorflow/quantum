@@ -55,7 +55,7 @@ main() {
     exit 1
   fi
 
-mkdir -p "${DEST}"
+  mkdir -p "${DEST}"
   echo "=== destination directory: ${DEST}"
 
   # Build the pip package in a temporary directory.
