@@ -65,6 +65,7 @@ tf_workspace1()
 
 load("@org_tensorflow//tensorflow:workspace0.bzl", "tf_workspace0")
 
+tf_workspace0()
 
 load("//third_party/tf:tf_configure.bzl", "tf_configure")
 
