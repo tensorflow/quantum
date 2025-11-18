@@ -141,38 +141,40 @@ if [[ ! -x "${PYTHON_BIN_PATH}" ]]; then
 fi
 
 # Ensure TF is importable from system python (user should have installed it).
-"${PYTHON_BIN_PATH}" - <<'PY' || { echo "ERROR: tensorflow not importable by chosen Python."; exit 1; }
-import tensorflow as tf
-import tensorflow.sysconfig as sc
-print("TF:", tf.__version__)
-print("include:", sc.get_include())
-print("lib:", sc.get_lib())
-PY
+tf_output=$("${PYTHON_BIN_PATH}" - <<'PY'
+import sys
+import os
+import glob
 
-# --- discover TF include/lib robustly --------------------------------------
-HDR="$("$PYTHON_BIN_PATH" - <<'PY'
-import tensorflow.sysconfig as sc
+try:
+    import tensorflow as tf
+    import tensorflow.sysconfig as sc
+except ImportError:
+    sys.exit(1)
+
 print(sc.get_include())
-PY
-)"
 
-LIBDIR="$("$PYTHON_BIN_PATH" - <<'PY'
-import os, tensorflow.sysconfig as sc
-p = sc.get_lib()
-print(p if os.path.isdir(p) else os.path.dirname(p))
-PY
-)"
+lib_path = sc.get_lib()
+lib_dir = lib_path if os.path.isdir(lib_path) else os.path.dirname(lib_path)
+print(lib_dir)
 
-LIBNAME="$("$PYTHON_BIN_PATH" - <<'PY'
-import os, glob, tensorflow.sysconfig as sc
-p = sc.get_lib()
-d = p if os.path.isdir(p) else os.path.dirname(p)
-cands = glob.glob(os.path.join(d,'libtensorflow_framework.so*')) \
-     or glob.glob(os.path.join(d,'libtensorflow.so*')) \
-     or glob.glob(os.path.join(d,'_pywrap_tensorflow_internal.*'))
+cands = (glob.glob(os.path.join(lib_dir, 'libtensorflow_framework.so*')) or
+         glob.glob(os.path.join(lib_dir, 'libtensorflow.so*')) or
+         glob.glob(os.path.join(lib_dir, '_pywrap_tensorflow_internal.*')))
 print(os.path.basename(cands[0]) if cands else 'libtensorflow_framework.so.2')
 PY
-)"
+)
+
+if [[ $? -ne 0 ]]; then
+  echo "ERROR: tensorflow not importable by Python (${PYTHON_BIN_PATH})" >&2
+  exit 1
+fi
+
+{
+  read -r HDR
+  read -r LIBDIR
+  read -r LIBNAME
+} <<< "${tf_output}"
 
 echo "Detected:"
 echo "  PYTHON_BIN_PATH=$PYTHON_BIN_PATH"
