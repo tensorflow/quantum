@@ -19,28 +19,28 @@ PLATFORM="$(uname -s | tr 'A-Z' 'a-z')"
 
 
 # --- helpers ---------------------------------------------------------------
-write_bazelrc() {
+function write_bazelrc() {
   echo "${1}" >> .bazelrc
 }
 
-write_tf_rc() {
+function write_tf_rc() {
   echo "${1}" >> .tf_configure.bazelrc
 }
 
-die() {
+function die() {
   echo "ERROR: $*" >&2
   exit 1
 }
 
-is_macos() {
+function is_macos() {
   [[ "${PLATFORM}" == "darwin" ]]
 }
 
-is_windows() {
+function is_windows() {
   [[ "${PLATFORM}" =~ msys_nt*|mingw*|cygwin*|uwin* ]]
 }
 
-write_legacy_python_repo() {
+function write_legacy_python_repo() {
   mkdir -p third_party/python_legacy
 
   # empty WORKSPACE
@@ -111,11 +111,7 @@ if command -v readlink >/dev/null 2>&1; then
   PY_ABS="$(readlink -f "${PY}" 2>/dev/null || true)"
 fi
 if [[ -z "${PY_ABS:-}" ]]; then
-  PY_ABS="$("${PY}" - <<'PY'
-import os,sys
-print(os.path.abspath(sys.executable))
-PY
-)"
+  PY_ABS="$("${PY}" -c 'import os,sys; print(os.path.abspath(sys.executable))')"
 fi
 PYTHON_BIN_PATH="${PY_ABS}"
 
