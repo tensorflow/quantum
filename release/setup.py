@@ -58,7 +58,7 @@ REQUIRED_PACKAGES = [
 # Placed as extras to avoid overwriting existing nightly TF installs.
 EXTRA_PACKAGES = ["tensorflow>=2.16,<2.17"]
 
-CUR_VERSION = "0.7.5"
+CUR_VERSION = "0.7.4"
 
 
 class BinaryDistribution(Distribution):
