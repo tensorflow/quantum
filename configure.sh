@@ -13,7 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-set -euo pipefail
+
+set -uo pipefail
 
 PLATFORM="$(uname -s | tr 'A-Z' 'a-z')"
 
