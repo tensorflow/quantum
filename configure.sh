@@ -179,18 +179,18 @@ fi
 } <<< "${tf_output}"
 
 echo "Detected:"
-echo "  PYTHON_BIN_PATH=$PYTHON_BIN_PATH"
-echo "  TF_HEADER_DIR=$HDR"
-echo "  TF_SHARED_LIBRARY_DIR=$LIBDIR"
-echo "  TF_SHARED_LIBRARY_NAME=$LIBNAME"
+echo "  PYTHON_BIN_PATH=${PYTHON_BIN_PATH}"
+echo "  TF_HEADER_DIR=${HDR}"
+echo "  TF_SHARED_LIBRARY_DIR=${LIBDIR}"
+echo "  TF_SHARED_LIBRARY_NAME=${LIBNAME}"
 
 # --- write .tf_configure.bazelrc (repo_env for repository rules) -----------
-write_tf_rc "build --repo_env=PYTHON_BIN_PATH=$PYTHON_BIN_PATH"
-write_tf_rc "build --repo_env=TF_HEADER_DIR=$HDR"
-write_tf_rc "build --repo_env=TF_SHARED_LIBRARY_DIR=$LIBDIR"
-write_tf_rc "build --repo_env=TF_SHARED_LIBRARY_NAME=$LIBNAME"
-write_tf_rc "build --repo_env=TF_NEED_CUDA=$TF_NEED_CUDA"
-write_tf_rc "build --repo_env=TF_CUDA_VERSION=$TF_CUDA_VERSION"
+write_tf_rc "build --repo_env=PYTHON_BIN_PATH=${PYTHON_BIN_PATH}"
+write_tf_rc "build --repo_env=TF_HEADER_DIR=${HDR}"
+write_tf_rc "build --repo_env=TF_SHARED_LIBRARY_DIR=${LIBDIR}"
+write_tf_rc "build --repo_env=TF_SHARED_LIBRARY_NAME=${LIBNAME}"
+write_tf_rc "build --repo_env=TF_NEED_CUDA=${TF_NEED_CUDA}"
+write_tf_rc "build --repo_env=TF_CUDA_VERSION=${TF_CUDA_VERSION}"
 
 # Make sure repo rules and sub-config see legacy Keras (keras 2 instead of Keras 3)
 write_tf_rc "build --repo_env=TF_USE_LEGACY_KERAS=1"
@@ -207,9 +207,9 @@ write_bazelrc "build --experimental_repo_remote_exec"
 write_bazelrc "build --spawn_strategy=standalone"
 write_bazelrc "build --strategy=Genrule=standalone"
 write_bazelrc "build -c opt"
-write_bazelrc "build --cxxopt=\"-D_GLIBCXX_USE_CXX11_ABI=1\""
-write_bazelrc "build --cxxopt=\"-std=c++17\""
-write_bazelrc "build --action_env=PYTHON_BIN_PATH=$PYTHON_BIN_PATH"
+write_bazelrc "build --cxxopt=-D_GLIBCXX_USE_CXX11_ABI=1"
+write_bazelrc "build --cxxopt=-std=c++17"
+write_bazelrc "build --action_env=PYTHON_BIN_PATH=${PYTHON_BIN_PATH}"
 write_bazelrc "build --action_env=TF_USE_LEGACY_KERAS=1"
 write_bazelrc "test  --action_env=TF_USE_LEGACY_KERAS=1"
 
@@ -235,7 +235,7 @@ if ! is_windows; then
 fi
 
 # CUDA toggle
-if [[ "$TF_NEED_CUDA" == "1" ]]; then
+if [[ "${TF_NEED_CUDA}" == "1" ]]; then
   write_bazelrc "build:cuda --define=using_cuda=true --define=using_cuda_nvcc=true"
   write_bazelrc "build:cuda --@local_config_cuda//:enable_cuda"
   write_bazelrc "build:cuda --crosstool_top=@local_config_cuda//crosstool:toolchain"
