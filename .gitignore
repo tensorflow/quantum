@@ -51,3 +51,6 @@ venv/*
 # vscode
 .vscode/*
 *~
+
+# Things created by configure.sh
+third_party/python_legacy
