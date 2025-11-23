@@ -111,13 +111,10 @@ PY
   PY="$(command -v python3)"
 fi
 
-# Normalize to an absolute path (readlink -f is GNU; fall back to python)
-if command -v readlink >/dev/null 2>&1; then
-  PY_ABS="$(readlink -f "${PY}" 2>/dev/null || true)"
-fi
-if [[ -z "${PY_ABS:-}" ]]; then
-  PY_ABS="$("${PY}" -c 'import os,sys; print(os.path.abspath(sys.executable))')"
-fi
+# Normalize to an absolute path. Use Python to print sys.executable because
+# tools like pyenv use shim scripts that readlink would resolve to the script
+# itself, not the actual interpreter binary.
+PY_ABS="$("${PY}" -c 'import os,sys; print(os.path.abspath(sys.executable))')"
 PYTHON_BIN_PATH="${PY_ABS}"
 
 
