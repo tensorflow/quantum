@@ -42,6 +42,7 @@ py_library(
     name = "differentiator",
     srcs = ["differentiator.py"],
     srcs_version = "PY3",
+    deps = ["@pypi//tensorflow"],
 )
 
 py_library(

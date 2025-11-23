@@ -1,14 +1,41 @@
 # This file includes external dependencies that are required to compile the
 # TensorFlow op.
 
-
-
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
+# TensorFlow's .bzl files, loaded later in this file, also load rules_python
+# but we need a slightly newer version that is still compatible with TF's.
+http_archive(
+    name = "rules_python",
+    sha256 = "c68bdc4fbec25de5b5493b8819cfc877c4ea299c0dcb15c244c5a00208cde311",
+    strip_prefix = "rules_python-0.31.0",
+    url = "https://github.com/bazelbuild/rules_python/releases/download/0.31.0/rules_python-0.31.0.tar.gz",
+)
 
+load("@rules_python//python:repositories.bzl", "py_repositories")
+
+py_repositories()
+
+local_repository(
+    name = "python",
+    path = "third_party/python_legacy",
+)
+
+load("@python//:defs.bzl", "interpreter")
+
+load("@rules_python//python:pip.bzl", "pip_parse")
+
+pip_parse(
+    name = "pypi",
+    requirements_lock = "//:requirements.txt",
+    python_interpreter = interpreter,
+)
+
+load("@pypi//:requirements.bzl", "install_deps")
+
+install_deps()
 
 EIGEN_COMMIT = "aa6964bf3a34fd607837dd8123bc42465185c4f8"
-
 
 http_archive(
     name = "eigen",
@@ -37,10 +64,6 @@ http_archive(
     urls = ["https://github.com/quantumlib/qsim/archive/refs/tags/v0.13.3.zip"],
 )
 
-local_repository(
-    name = "python",
-    path = "third_party/python_legacy",
-)
 
 http_archive(
     name = "org_tensorflow",
