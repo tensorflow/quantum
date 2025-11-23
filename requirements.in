@@ -1,0 +1,7 @@
+# Core development requirements for TensorFlow Quantum. This file is processed
+# by pip-compile (from pip-tools) to produce requirements.txt.
+
+cirq-core~=1.3.0
+cirq-google~=1.3.0
+tensorflow>=2.16,<2.17
+tf-keras~=2.16.0
