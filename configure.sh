@@ -104,7 +104,8 @@ import sys
 raise SystemExit(0 if sys.version_info[:2] >= (3, 10) else 1)
 PY
   then
-    die "Python 3.10+ required for TensorFlow Quantum; found $(python3 -V 2>&1). Pass --python=/path/to/python3.10+ or set PYTHON_BIN_PATH."
+    die "Python 3.10+ required for TensorFlow Quantum, but found " \
+      "$(python3 -V 2>&1). Pass --python=/path/to/python3.10+ or set PYTHON_BIN_PATH."
   fi
 
   PY="$(command -v python3)"
