@@ -123,12 +123,13 @@ PYTHON_BIN_PATH="${PY_ABS}"
 
 # --- choose CPU/GPU like upstream script (default CPU) ---------------------
 TF_NEED_CUDA=""
+y_for_cpu='Build against TensorFlow CPU backend? (Type n to use GPU) [Y/n] '
 while [[ -z "${TF_NEED_CUDA}" ]]; do
-  read -p "Build against TensorFlow CPU pip package? [Y/n] " INPUT || true
+  read -p "${y_for_cpu}" INPUT || true
   case "${INPUT:-Y}" in
     [Yy]* ) echo "CPU build selected."; TF_NEED_CUDA=0;;
     [Nn]* ) echo "GPU build selected."; TF_NEED_CUDA=1;;
-    * ) echo "Please answer Y or n.";;
+    * ) echo "Please answer y or n.";;
   esac
 done
 
