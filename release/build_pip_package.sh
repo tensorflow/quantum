@@ -39,9 +39,9 @@ PY
 fi
 echo "Using Python: ${PY}"
 
-# Ensure packaging tools are present in THIS interpreter
-if ! "${PY}" -m pip show -q setuptools wheel >/dev/null 2>&1; then
-  "${PY}" -m pip install --upgrade pip setuptools wheel
+# Ensure packaging tools are present in THIS interpreter.
+if ! "${PY}" -m pip show -q setuptools wheel build >/dev/null 2>&1; then
+  "${PY}" -m pip install --upgrade pip setuptools wheel build
 fi
 
 EXPORT_DIR="bazel-bin/release/build_pip_package.runfiles/__main__"
@@ -71,7 +71,7 @@ main() {
 
   pushd "${TMPDIR}"
   echo "$(date) : === Building wheel"
-  "${PY}" setup.py bdist_wheel ${EXTRA_FLAGS} > /dev/null
+  "${PY}" -m build --wheel ${EXTRA_FLAGS} > /dev/null
   cp dist/*.whl "${DEST}"
   popd
   rm -rf "${TMPDIR}"
