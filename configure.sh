@@ -208,16 +208,22 @@ write_bazelrc "common --cxxopt=-std=c++17"
 write_bazelrc "common --action_env=PYTHON_BIN_PATH=${PYTHON_BIN_PATH}"
 write_bazelrc "common --action_env=TF_USE_LEGACY_KERAS=1"
 write_bazelrc "build -c opt"
+write_bazelrc ""
 
+# The following supressions are for warnings coming from external dependencies.
+# They're most likely inconsequential or false positives. Since we can't fix
+# them, we suppress the warnings to reduce noise during builds.
 
-# zlib / protobuf warning suppressions
 write_bazelrc "build --per_file_copt=external/.*@-Wno-deprecated-non-prototype"
 write_bazelrc "build --host_per_file_copt=external/.*@-Wno-deprecated-non-prototype"
 write_bazelrc "build --per_file_copt=external/com_google_protobuf/.*@-Wno-unused-function"
 write_bazelrc "build --host_per_file_copt=external/com_google_protobuf/.*@-Wno-unused-function"
+write_bazelrc "build --per_file_copt=external/com_google_protobuf/.*@-Wno-stringop-overflow"
+write_bazelrc "build --host_per_file_copt=external/com_google_protobuf/.*@-Wno-stringop-overflow"
+write_bazelrc "build --per_file_copt=external/eigen/.*@-Wno-maybe-uninitialized"
+write_bazelrc "build --host_per_file_copt=external/eigen/.*@-Wno-maybe-uninitialized"
 
-# qsim warnings
-# The following supress warnings coming from qsim.
+# The following warnings come from qsim.
 # TODO: fix the code in qsim & update TFQ to use the updated version.
 write_bazelrc "build --per_file_copt=tensorflow_quantum/core/ops/noise/tfq_.*@-Wno-unused-but-set-variable"
 write_bazelrc "build --host_per_file_copt=tensorflow_quantum/core/ops/noise/tfq_.*@-Wno-unused-but-set-variable"
