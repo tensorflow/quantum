@@ -13,8 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+
 set -e
-set -x
 
 # Pick the Python that TFQ/TensorFlow used during configure/build.
 # Order: explicit env -> python3 (>= 3.10)
@@ -71,7 +71,7 @@ main() {
 
   pushd "${TMPDIR}"
   echo "$(date) : === Building wheel"
-  "${PY}" -m build --wheel ${EXTRA_FLAGS} > /dev/null
+  "${PY}" -m build -v --wheel ${EXTRA_FLAGS} > /dev/null
   cp dist/*.whl "${DEST}"
   popd
   rm -rf "${TMPDIR}"
