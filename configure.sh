@@ -68,7 +68,9 @@ interpreter = "${PYTHON_BIN_PATH}"
 py_runtime = native.py_runtime
 EOF
 
-  echo "Wrote third_party/python_legacy with interpreter=${PYTHON_BIN_PATH}"
+  echo
+  echo "Created third_party/python_legacy."
+  echo "Python interpreter = ${PYTHON_BIN_PATH}"
 }
 
 # --- start fresh -----------------------------------------------------------
@@ -140,6 +142,8 @@ if [[ ! -x "${PYTHON_BIN_PATH}" ]]; then
 fi
 
 # Ensure TF is importable from system python (user should have installed it).
+echo "Next, you may see warnings printed by loading TensorFlow packages."
+echo "Do not be alarmed unless there are errors."
 tf_output=$("${PYTHON_BIN_PATH}" - <<'PY'
 import sys
 import os
@@ -175,7 +179,8 @@ fi
   read -r LIBNAME
 } <<< "${tf_output}"
 
-echo "Detected:"
+echo
+echo "Configuration values detected:"
 echo "  PYTHON_BIN_PATH=${PYTHON_BIN_PATH}"
 echo "  TF_HEADER_DIR=${HDR}"
 echo "  TF_SHARED_LIBRARY_DIR=${LIBDIR}"
@@ -255,5 +260,4 @@ fi
 write_bazelrc ""
 write_bazelrc "try-import %workspace%/.bazelrc.user"
 
-echo
 echo "Wrote .tf_configure.bazelrc and .bazelrc successfully."
