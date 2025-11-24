@@ -24,19 +24,25 @@ on:
     types:
       - checks_requested
 
+concurrency:
+  cancel-in-progress: true
+  group: ${{github.workflow}}-${{github.event.pull_request.number||github.ref}}
+
 permissions: read-all
 
 jobs:
   wheel-build:
     name: Wheel test
     runs-on: ubuntu-22.04
+    timeout-minutes: 60
 
     steps:
-      - uses: actions/checkout@544eadc6bf3d226fd7a7a9f0dc5b5bf7ca0675b9 # v1
-      - uses: actions/setup-python@0f07f7f756721ebd886c2462646a35f78a8bc4de # v1
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+      - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v5
         with:
           python-version: '3.10'
           architecture: 'x64'
+          cache: pip
       - name: Install Bazel on CI
         run: ./scripts/ci_install.sh
       - name: Configure CI TF
@@ -49,13 +55,15 @@ jobs:
   bazel-tests:
     name: Library tests
     runs-on: ubuntu-22.04
+    timeout-minutes: 60
 
     steps:
-      - uses: actions/checkout@544eadc6bf3d226fd7a7a9f0dc5b5bf7ca0675b9 # v1
-      - uses: actions/setup-python@0f07f7f756721ebd886c2462646a35f78a8bc4de # v1
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+      - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v5
         with:
           python-version: '3.10'
           architecture: 'x64'
+          cache: pip
       - name: Install Bazel on CI
         run: ./scripts/ci_install.sh
       - name: Configure CI TF
@@ -89,13 +97,15 @@ jobs:
     name: Tutorial tests
     runs-on: ubuntu-22.04
     needs: wheel-build
+    timeout-minutes: 60
 
     steps:
-      - uses: actions/checkout@544eadc6bf3d226fd7a7a9f0dc5b5bf7ca0675b9 # v1
-      - uses: actions/setup-python@0f07f7f756721ebd886c2462646a35f78a8bc4de # v1
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+      - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v5
         with:
           python-version: '3.10'
           architecture: 'x64'
+          cache: pip
       - name: Install notebook dependencies
         run: pip install --upgrade pip seaborn==0.10.0
       - name: Install Bazel on CI
