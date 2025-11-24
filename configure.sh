@@ -132,7 +132,7 @@ done
 
 # For TF >= 2.1 this value isn’t actually consulted by TFQ,
 # but we keep a compatible prompt/flag.
-TF_CUDA_VERSION="11"
+TF_CUDA_VERSION="12"
 
 # --- sanity: python is importable and has TF -------------------------------
 if [[ ! -x "${PYTHON_BIN_PATH}" ]]; then
@@ -187,7 +187,6 @@ write_tf_rc "build --repo_env=TF_HEADER_DIR=${HDR}"
 write_tf_rc "build --repo_env=TF_SHARED_LIBRARY_DIR=${LIBDIR}"
 write_tf_rc "build --repo_env=TF_SHARED_LIBRARY_NAME=${LIBNAME}"
 write_tf_rc "build --repo_env=TF_NEED_CUDA=${TF_NEED_CUDA}"
-write_tf_rc "build --repo_env=TF_CUDA_VERSION=${TF_CUDA_VERSION}"
 
 # Make sure repo rules and sub-config see legacy Keras (keras 2 instead of Keras 3)
 write_tf_rc "build --repo_env=TF_USE_LEGACY_KERAS=1"
@@ -201,12 +200,12 @@ write_bazelrc "# overwritten the next time you run configure.sh."
 write_bazelrc ""
 write_bazelrc "try-import %workspace%/.tf_configure.bazelrc"
 write_bazelrc "common --experimental_repo_remote_exec"
-write_bazelrc "common --spawn_strategy=standalone"
-write_bazelrc "common --strategy=Genrule=standalone"
-write_bazelrc "common --cxxopt=-D_GLIBCXX_USE_CXX11_ABI=1"
-write_bazelrc "common --cxxopt=-std=c++17"
-write_bazelrc "common --action_env=PYTHON_BIN_PATH=${PYTHON_BIN_PATH}"
-write_bazelrc "common --action_env=TF_USE_LEGACY_KERAS=1"
+write_bazelrc "build --spawn_strategy=standalone"
+write_bazelrc "build --strategy=Genrule=standalone"
+write_bazelrc "build --action_env=PYTHON_BIN_PATH=${PYTHON_BIN_PATH}"
+write_bazelrc "build --action_env=TF_USE_LEGACY_KERAS=1"
+write_bazelrc "build --cxxopt=-D_GLIBCXX_USE_CXX11_ABI=1"
+write_bazelrc "build --cxxopt=-std=c++17"
 write_bazelrc "build -c opt"
 write_bazelrc ""
 
@@ -230,14 +229,15 @@ write_bazelrc "build --host_per_file_copt=tensorflow_quantum/core/ops/noise/tfq_
 write_bazelrc "build --per_file_copt=tensorflow_quantum/core/ops/math_ops/tfq_.*@-Wno-deprecated-declarations"
 write_bazelrc "build --host_per_file_copt=tensorflow_quantum/core/ops/math_ops/tfq_.*@-Wno-deprecated-declarations"
 
-
 # rpath so the dynamic linker finds TF’s shared lib
 if ! is_windows; then
+  write_bazelrc ""
   write_bazelrc "build --linkopt=-Wl,-rpath,${LIBDIR}"
 fi
 
 # CUDA toggle
 if [[ "${TF_NEED_CUDA}" == "1" ]]; then
+  write_bazelrc ""
   write_bazelrc "build:cuda --define=using_cuda=true --define=using_cuda_nvcc=true"
   write_bazelrc "build:cuda --@local_config_cuda//:enable_cuda"
   write_bazelrc "build:cuda --crosstool_top=@local_config_cuda//crosstool:toolchain"
@@ -248,7 +248,8 @@ if [[ "${TF_NEED_CUDA}" == "1" ]]; then
     write_tf_rc "build --repo_env=CUDNN_INSTALL_PATH=/usr/lib/x86_64-linux-gnu"
     write_tf_rc "build --repo_env=CUDA_TOOLKIT_PATH=/usr/local/cuda"
   fi
-  write_bazelrc "common --config=cuda"
+  write_bazelrc "build --config=cuda"
+  write_bazelrc "test --config=cuda"
 fi
 
 echo
