@@ -30,6 +30,7 @@ jobs:
   wheel-build:
     name: Wheel test
     runs-on: ubuntu-22.04
+    timeout-minutes: 60
 
     steps:
       - uses: actions/checkout@544eadc6bf3d226fd7a7a9f0dc5b5bf7ca0675b9 # v1
@@ -48,7 +49,8 @@ jobs:
 
   bazel-tests:
     name: Library tests
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-22.04-x64-8-core
+    timeout-minutes: 60
 
     steps:
       - uses: actions/checkout@544eadc6bf3d226fd7a7a9f0dc5b5bf7ca0675b9 # v1
@@ -89,6 +91,7 @@ jobs:
     name: Tutorial tests
     runs-on: ubuntu-22.04
     needs: wheel-build
+    timeout-minutes: 60
 
     steps:
       - uses: actions/checkout@544eadc6bf3d226fd7a7a9f0dc5b5bf7ca0675b9 # v1
