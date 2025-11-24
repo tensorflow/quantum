@@ -189,7 +189,7 @@ werkzeug==3.1.3
     # via tensorboard
 wheel==0.45.1
     # via astunparse
-wrapt==2.0.1
+wrapt==1.17.3
     # via tensorflow
 
 # The following packages are considered to be unsafe in a requirements file:
