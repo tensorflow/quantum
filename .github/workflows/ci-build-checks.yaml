@@ -38,6 +38,7 @@ jobs:
         with:
           python-version: '3.10'
           architecture: 'x64'
+          cache: pip
       - name: Install Bazel on CI
         run: ./scripts/ci_install.sh
       - name: Configure CI TF
@@ -58,6 +59,7 @@ jobs:
         with:
           python-version: '3.10'
           architecture: 'x64'
+          cache: pip
       - name: Install Bazel on CI
         run: ./scripts/ci_install.sh
       - name: Configure CI TF
@@ -99,6 +101,7 @@ jobs:
         with:
           python-version: '3.10'
           architecture: 'x64'
+          cache: pip
       - name: Install notebook dependencies
         run: pip install --upgrade pip seaborn==0.10.0
       - name: Install Bazel on CI
