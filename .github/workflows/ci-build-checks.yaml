@@ -54,7 +54,7 @@ jobs:
 
   bazel-tests:
     name: Library tests
-    runs-on: ubuntu-22.04-x64-8-core
+    runs-on: ubuntu-22.04
     timeout-minutes: 60
 
     steps:
