@@ -24,16 +24,12 @@ University of Waterloo and the Quantum AI team at Google along with help
 from many other contributors within Google.
 """
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function
 
 import sys
 from datetime import date
 
-from setuptools import Extension
-from setuptools import find_packages
-from setuptools import setup
+from setuptools import Extension, find_packages, setup
 from setuptools.command.install import install
 from setuptools.dist import Distribution
 
@@ -65,6 +61,7 @@ class BinaryDistribution(Distribution):
     """Create OS-specific wheels."""
 
     def has_ext_modules(self):
+        """whether this has external modules."""
         return True
 
 
