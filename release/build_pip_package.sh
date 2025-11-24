@@ -40,9 +40,7 @@ fi
 echo "Using Python: ${PY}"
 
 # Ensure packaging tools are present in THIS interpreter.
-if ! "${PY}" -m pip show -q setuptools wheel build >/dev/null 2>&1; then
-  "${PY}" -m pip install --upgrade pip setuptools wheel build
-fi
+pip install -qq setuptools wheel build
 
 EXPORT_DIR="bazel-bin/release/build_pip_package.runfiles/__main__"
 
