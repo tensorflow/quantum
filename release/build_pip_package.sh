@@ -45,8 +45,8 @@ pip install -qq setuptools wheel build
 EXPORT_DIR="bazel-bin/release/build_pip_package.runfiles/__main__"
 
 main() {
-  DEST="$1"
-  EXTRA_FLAGS="$2"
+  DEST="${1}"
+  EXTRA_FLAGS="${2}"
 
   if [[ -z "${DEST}" ]]; then
     echo "No destination directory provided."
@@ -62,8 +62,8 @@ main() {
   echo "=== Copy TFQ files"
 
   # Copy over files necessary to run setup.py
-  cp "${EXPORT_DIR}/release/setup.py"        "${TMPDIR}"
-  cp "${EXPORT_DIR}/release/MANIFEST.in"     "${TMPDIR}"
+  cp "${EXPORT_DIR}/release/setup.py" "${TMPDIR}"
+  cp "${EXPORT_DIR}/release/MANIFEST.in" "${TMPDIR}"
   mkdir "${TMPDIR}/tensorflow_quantum"
   cp -r -v "${EXPORT_DIR}/tensorflow_quantum/"* "${TMPDIR}/tensorflow_quantum/"
 
