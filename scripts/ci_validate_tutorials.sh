@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-#!/bin/bash
+
 set -e
 
 # Use legacy tf.keras (Keras 2) with TF 2.16
