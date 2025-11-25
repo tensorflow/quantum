@@ -188,7 +188,7 @@ python-dateutil==2.9.0.post0
     #   pandas
 pytz==2025.2
     # via pandas
-pyyaml==6.0.3
+pyyaml
     # via tensorflow-docs
 pyzmq==27.1.0
     # via jupyter-client
