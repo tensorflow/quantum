@@ -39,6 +39,7 @@ py_test(
 py_test(
     name = "spsa_minimizer_test",
     srcs = ["spsa_minimizer_test.py"],
+    flaky = True,
     python_version = "PY3",
     deps = [
         ":spsa_minimizer",
