@@ -54,12 +54,12 @@ main() {
   fi
 
   mkdir -p "${DEST}"
-  echo "=== destination directory: ${DEST}"
+  echo "=== Destination directory for wheel file: ${DEST}"
 
   # Build the pip package in a temporary directory.
   TMPDIR="$(mktemp -d -t tmp.XXXXXXXXXX)"
   echo "$(date) : === Using tmpdir: ${TMPDIR}"
-  echo "=== Copy TFQ files"
+  echo "=== Copying TFQ files"
 
   # Copy over files necessary to run setup.py
   cp "${EXPORT_DIR}/release/setup.py" "${TMPDIR}"
@@ -73,7 +73,7 @@ main() {
   cp dist/*.whl "${DEST}"
   popd
   rm -rf "${TMPDIR}"
-  echo "$(date) : === Output wheel file is in: ${DEST}"
+  echo "$(date) : === Done."
 }
 
 main "$@"
