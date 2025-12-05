@@ -49,6 +49,9 @@ REQUIRED_PACKAGES = [
     "cirq-core==1.3.0",
     "cirq-google==1.3.0",
     "sympy==1.14",
+    # The following makes it easier to the right version on Colab. Once TFQ
+    # works with the latest version of TF, this may become unnecessary.
+    "protobuf==4.25.8",
 ]
 
 # Placed as extras to avoid overwriting existing nightly TF installs.
