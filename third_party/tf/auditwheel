@@ -16,6 +16,11 @@ echo "Found policy file at ${POLICY_FILE}"
 # Splice in the name of the TensorFlow shared library file.
 sed -i "s|libresolv.so.2\"|libresolv.so.2\", \"${LIB_NAME}\"|g" "${POLICY_FILE}"
 
-cat "${POLICY_FILE}"
+for arg in "$@"; do
+  if [ "${arg}" = "--verbose" ]; then
+    cat "${POLICY_FILE}"
+    break
+  fi
+done
 
 auditwheel $@
