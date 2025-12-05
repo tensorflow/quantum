@@ -29,6 +29,10 @@ pip_parse(
     name = "pypi",
     requirements_lock = "//:requirements.txt",
     python_interpreter = interpreter,
+    extra_pip_args = [
+        "--index-url",
+        "https://pypi.org/simple/",
+    ],
 )
 
 load("@pypi//:requirements.bzl", "install_deps")
