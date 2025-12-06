@@ -239,6 +239,8 @@ write_bazelrc "build --host_per_file_copt=tensorflow_quantum/core/ops/math_ops/t
 
 # CUDA toggle
 if [[ "${TF_NEED_CUDA}" == "1" ]]; then
+  write_tf_rc "build --repo_env=TF_CUDA_VERSION=${TF_CUDA_VERSION}"
+
   write_bazelrc ""
   write_bazelrc "build:cuda --define=using_cuda=true --define=using_cuda_nvcc=true"
   write_bazelrc "build:cuda --@local_config_cuda//:enable_cuda"
