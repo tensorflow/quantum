@@ -110,8 +110,8 @@ chmod +x "${build_script}"
 
 # Change to the top of the local TFQ git tree.
 thisdir=$(CDPATH="" cd -- "$(dirname -- "$0")" && pwd -P)
-repo_dir=$(git -C "${thisdir}" rev-parse --show-toplevel) || exit $?
-cd "${repo_dir}" || exit $?
+repo_dir=$(git -C "${thisdir}" rev-parse --show-toplevel)
+cd "${repo_dir}"
 
 echo "Running Docker from working directory ${repo_dir}."
 docker run -it --rm --network host \
