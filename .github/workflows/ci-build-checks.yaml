@@ -54,7 +54,7 @@ jobs:
 
   bazel-tests:
     name: Library tests
-    runs-on: ubuntu-22.04
+    runs-on: linux-x86-n2-32
     timeout-minutes: 60
 
     steps:
@@ -97,7 +97,7 @@ jobs:
 
   tutorials-test:
     name: Tutorial tests
-    runs-on: ubuntu-22.04
+    runs-on: linux-x86-n2-32
     needs: wheel-build
     timeout-minutes: 60
 
