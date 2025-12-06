@@ -546,6 +546,7 @@ py_library(
         "//tensorflow_quantum/core/proto:pauli_sum_py_proto",
         "//tensorflow_quantum/core/proto:projector_sum_py_proto",
         "//tensorflow_quantum/core/serialize:serializer",
+        "@pypi//tensorflow",
     ],
 )
 
@@ -567,6 +568,7 @@ py_library(
     srcs_version = "PY3",
     deps = [
         "//tensorflow_quantum/core/serialize:serializer",
+        "@pypi//tensorflow",
     ],
 )
 
@@ -628,5 +630,5 @@ py_library(
     name = "load_module",
     srcs = ["load_module.py"],
     srcs_version = "PY3",
-    deps = [],
+    deps = ["@pypi//tensorflow"],
 )

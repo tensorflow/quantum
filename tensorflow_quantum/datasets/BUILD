@@ -19,12 +19,14 @@ py_library(
     name = "cluster_state",
     srcs = ["cluster_state.py"],
     srcs_version = "PY3",
+    deps = ["@pypi//tensorflow"],
 )
 
 py_library(
     name = "spin_system",
     srcs = ["spin_system.py"],
     srcs_version = "PY3",
+    deps = ["@pypi//tensorflow"],
 )
 
 py_test(
