@@ -55,6 +55,8 @@ jobs:
   bazel-tests:
     name: Library tests
     runs-on: linux-x86-n2-32
+    container:
+      image: us-docker.pkg.dev/ml-oss-artifacts-published/ml-public-container/ml-build:latest
     timeout-minutes: 60
 
     steps:
@@ -98,6 +100,8 @@ jobs:
   tutorials-test:
     name: Tutorial tests
     runs-on: linux-x86-n2-32
+    container:
+      image: us-docker.pkg.dev/ml-oss-artifacts-published/ml-public-container/ml-build:latest
     needs: wheel-build
     timeout-minutes: 60
 
