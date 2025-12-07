@@ -34,8 +34,6 @@ jobs:
   wheel-build:
     name: Wheel test
     runs-on: ubuntu-22.04
-    container:
-      image: us-docker.pkg.dev/ml-oss-artifacts-published/ml-public-container/ml-build:latest
     timeout-minutes: 60
 
     steps:
