@@ -49,7 +49,11 @@ jobs:
           printf 'PIP_ROOT_USER_ACTION=ignore' | \
             sudo tee -a /etc/environment > /dev/null
           printf "[global]\nroot-user-action = ignore" | \
-            sudo tee /etc/pip.conf > /dev/null
+            sudo tee -a /etc/pip.conf > /dev/null
+
+          sudo mkdir -p /root/.config/pip
+          printf "[global]\nroot-user-action = ignore\n" | sudo tee /root/.config/pip/pip.conf > /dev/null
+
           # This file, though it's empty, hangs the Bazel install step.
           rm -f /etc/bazel.bazelrc
       - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
