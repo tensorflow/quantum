@@ -121,15 +121,16 @@ jobs:
 
   tutorials-test:
     name: Tutorial tests
-    runs-on: linux-x86-n2-32
-    container:
-      image: us-docker.pkg.dev/ml-oss-artifacts-published/ml-public-container/ml-build:latest
+    runs-on: ubuntu-22.04
     needs: wheel-build
     timeout-minutes: 60
+    # Run tutorial tests with parallelism via sharding supported by absl-py.
     strategy:
       fail-fast: false
       matrix:
-        shard: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        shard: [0, 1, 2, 3, 4, 5, 6, 7, 8]
+    env:
+      TEST_TOTAL_SHARDS: 9
 
     steps:
       - name: Adjust the ml-build runner to our needs
@@ -157,8 +158,7 @@ jobs:
       - name: Build Wheel
         run: ./scripts/build_pip_package_test.sh
       - name: Test Notebooks
-        # These env. vars. are used by absl-py to run tests in parallel.
         env:
-          TEST_TOTAL_SHARDS: 9
+          # Environment var. used by absl-py to run tests in parallel.
           TEST_SHARD_INDEX: ${{matrix.shard}}
         run: ./scripts/ci_validate_tutorials.sh
