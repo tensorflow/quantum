@@ -72,7 +72,8 @@ jobs:
           cache: pip
       - name: Install Bazel on CI
         run: |
-          export DEBIAN_FRONTEND=noninteractive
+          cat /etc/bazel.bazelrc
+          rm -f /etc/bazel.bazelrc
           ./scripts/ci_install.sh
       - name: Configure CI TF
         run: echo "Y\n" | ./configure.sh
