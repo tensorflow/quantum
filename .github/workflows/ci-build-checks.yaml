@@ -38,27 +38,25 @@ jobs:
   #     image: us-docker.pkg.dev/ml-oss-artifacts-published/ml-public-container/ml-build:latest
   #   timeout-minutes: 60
 
-  #   steps:
-  #     - name: Adjust the ml-build runner to our needs
-  #       run: |
-  #         # lsb-release (needed by setup-python) is missing in ml-build runners
-  #         sudo apt-get update && sudo apt-get install -y lsb-release
-  #         # This file, though it's empty, hangs the Bazel install step.
-  #         rm -f /etc/bazel.bazelrc
-  #     - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
-  #     - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v5
-  #       with:
-  #         python-version: '3.10'
-  #         architecture: 'x64'
-  #         cache: pip
-  #     - name: Install Bazel on CI
-  #       run: ./scripts/ci_install.sh
-  #     - name: Configure CI TF
-  #       run: printf "Y\n" | ./configure.sh
-  #     - name: Build Wheel Test
-  #       run: ./scripts/build_pip_package_test.sh
-  #     - name: Test Wheel
-  #       run: ./scripts/run_example.sh
+    # steps:
+    #   - name: Adjust the ml-build runner to our needs
+    #     run: |
+    #       # lsb-release (needed by setup-python) is missing in ml-build runners
+    #       sudo apt-get update && sudo apt-get install -y lsb-release
+    #       # This file, though it's empty, hangs the Bazel install step.
+    #       rm -f /etc/bazel.bazelrc
+    #   - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+    #   - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v5
+    #     with:
+    #       python-version: '3.10'
+    #       architecture: 'x64'
+    #       cache: pip
+    #   - name: Install Bazel on CI
+    #     run: ./scripts/ci_install.sh
+    #   - name: Build & test wheel for TFQ
+    #     run: ./scripts/build_pip_package_test.sh
+    #   - name: Test Wheel
+    #     run: ./scripts/run_example.sh
 
   # bazel-tests:
   #   name: Library tests
@@ -112,7 +110,6 @@ jobs:
   tutorials-test:
     name: Tutorial tests
     runs-on: ubuntu-22.04
-    # needs: wheel-build
     timeout-minutes: 60
 
     steps:
@@ -128,13 +125,15 @@ jobs:
           python-version: '3.10'
           architecture: 'x64'
           cache: pip
+
       - name: Install notebook dependencies
-        run: pip install --upgrade pip seaborn==0.10.0
+        run: |
+          pip install --upgrade pip
+          pip install nbclient==0.6.5 jupyter-client==7.4.9 'ipython>=8.10.0' 'ipykernel>=6.29.0' gym~=0.24.1 seaborn~=0.12.0 tensorflow-docs
+
       - name: Install Bazel on CI
         run: ./scripts/ci_install.sh
-      - name: Configure CI TF
-        run: printf "Y\n" | ./configure.sh
-      - name: Build Wheel
+      - name: Build TFQ Wheel
         run: ./scripts/build_pip_package_test.sh
       # - name: Test Notebooks
       #   env:
