@@ -52,7 +52,9 @@ jobs:
           architecture: 'x64'
           cache: pip
       - name: Install Bazel on CI
-        run: ./scripts/ci_install.sh
+        run: |
+          rm -f /etc/bazel.bazelrc
+          ./scripts/ci_install.sh
       - name: Configure CI TF
         run: echo "Y\n" | ./configure.sh
       - name: Build Wheel Test
@@ -135,7 +137,9 @@ jobs:
       - name: Install notebook dependencies
         run: pip install --upgrade pip seaborn==0.10.0
       - name: Install Bazel on CI
-        run: ./scripts/ci_install.sh
+        run: |
+          rm -f /etc/bazel.bazelrc
+          ./scripts/ci_install.sh
       - name: Configure CI TF
         run: echo "Y\n" | ./configure.sh
       - name: Build Wheel
