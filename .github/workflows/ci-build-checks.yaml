@@ -30,10 +30,6 @@ concurrency:
 
 permissions: read-all
 
-env:
-  # Tell pip not to print error messages about running commands as root.
-  PIP_ROOT_USER_ACTION: ignore
-
 jobs:
   wheel-build:
     name: Wheel test
@@ -62,6 +58,10 @@ jobs:
           python-version: '3.10'
           architecture: 'x64'
           cache: pip
+        env:
+          # Tell pip not to print error messages about running commands as root
+          PIP_ROOT_USER_ACTION: ignore
+
       # - name: Install Bazel on CI
       #   run: ./scripts/ci_install.sh
       # - name: Configure CI TF
