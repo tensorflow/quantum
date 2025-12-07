@@ -14,13 +14,18 @@
 # limitations under the License.
 # =============================================================================
 
-# Summary: build TFQ using a TensorFlow build Docker container. Basic steps:
+# Summary: build a wheel for TFQ using a TensorFlow SIG Build container.
+# Run this script with the option "-h" to get a usage summary.
+#
+# To ensure binary compatibility with TensorFlow, TFQ distributions are built
+# using TensorFlow's SIG Build containers and Crosstool C++ toolchain. This
+# script encapsulates the process. The basic steps this script performs are:
 #
 # 1. Write to a file a small shell script that does the following:
 #
 #    a) pip install TFQ's requirements.txt file
 #    b) run TFQ's configure.sh script
-#    c) run bazel to build build_pip_package
+#    c) run Bazel to build build_pip_package
 #    d) run the resulting build_pip_package
 #    e) copy the wheel created by build_pip_package to ./wheels
 #
@@ -33,23 +38,29 @@
 
 set -eu
 
+# Find the top of the local TFQ git tree. Do it early in case this fails.
+thisdir=$(CDPATH="" cd -- "$(dirname -- "$0")" && pwd -P)
+repo_dir=$(git -C "${thisdir}" rev-parse --show-toplevel)
+
 # Default values for variables that can be changed via command line flags.
 tf_version="2.16"
-py_version="3.11"
+py_version=$(python3 --version | cut -d' ' -f2 | cut -d. -f1,2)
 cuda_version="12"
 cleanup="true"
 
 usage="Usage: ${0} [OPTIONS]
+Build a distribution wheel for TensorFlow Quantum.
+
 Configuration options:
-  -c N   CUDA version (default: ${cuda_version})
-  -p N   Python version (default: ${py_version})
-  -t N   TensorFlow version (default: ${tf_version})
+  -c X.Y  Use CUDA version X.Y (default: ${cuda_version})
+  -p X.Y  Use Python version X.Y (default: ${py_version})
+  -t X.Y  Use TensorFlow version X.Y (default: ${tf_version})
 
 General options:
   -e     Don't run bazel clean at the end (default: do)
   -h     Show this help message and exit"
 
-while getopts "c:p:t:he" opt; do
+while getopts "c:p:t:eh" opt; do
     case "${opt}" in
         c) cuda_version="${OPTARG}" ;;
         p) py_version="${OPTARG}" ;;
@@ -62,7 +73,7 @@ done
 shift $((OPTIND -1))
 
 # See https://hub.docker.com/r/tensorflow/build/tags for available containers.
-image_tag="tensorflow/build:${tf_version}-python${py_version}"
+docker_image="tensorflow/build:${tf_version}-python${py_version}"
 
 # This should match what TensorFlow's .bazelrc file uses.
 crosstool="@sigbuild-r${tf_version}-clang_config_cuda//crosstool:toolchain"
@@ -84,16 +95,15 @@ PREFIX='[DOCKER] '
 exec > >(sed "s/^/${PREFIX} /")
 exec 2> >(sed "s/^/${PREFIX} /" >&2)
 printf "Build configuration inside Docker container:\n"
-printf "  Docker imnage:    ${image_tag}\n"
+printf "  Docker image:     ${docker_image}\n"
+printf "  Crosstool:        ${crosstool}\n"
 printf "  TF version:       ${tf_version}\n"
 printf "  Python version:   ${py_version}\n"
 printf "  CUDA version:     ${cuda_version}\n"
-printf "  Docker image:     ${image_tag}\n"
-printf "  Crosstool:        ${crosstool}\n"
 printf "  vCPUs available:  $(nproc)\n"
 printf "\n:::::::: Configuring Python environment ::::::::\n\n"
-python3 -m pip install --upgrade pip
-pip install -r requirements.txt
+python3 -m pip install --upgrade pip --root-user-action ignore
+pip install -r requirements.txt --root-user-action ignore
 printf "\n:::::::: Configuring TensorFlow Quantum build ::::::::\n\n"
 printf "Y\n" | ./configure.sh
 printf "\n:::::::: Starting Bazel build ::::::::\n\n"
@@ -108,26 +118,21 @@ EOF
 
 chmod +x "${build_script}"
 
-# Change to the top of the local TFQ git tree.
-thisdir=$(CDPATH="" cd -- "$(dirname -- "$0")" && pwd -P)
-repo_dir=$(git -C "${thisdir}" rev-parse --show-toplevel)
-cd "${repo_dir}"
-
-echo "Running Docker from working directory ${repo_dir}."
+echo "Running Docker image ${docker_image}"
 docker run -it --rm --network host \
     -w /tfq \
-    -v "${PWD}":/tfq \
+    -v "${repo_dir}":/tfq \
     -v /tmp/tensorflow_quantum:/build_output \
     -v "${build_script}:/tmp/build_script.sh" \
+    -e HOST_PERMS="$(id -u):$(id -g)" \
     -e build_flags="--crosstool_top=${crosstool} ${BUILD_OPTIONS}" \
     -e cuda_version="${cuda_version}" \
     -e py_version="${py_version}" \
     -e tf_version="${tf_version}" \
-    -e image_tag="${image_tag}" \
+    -e docker_image="${docker_image}" \
     -e crosstool="${crosstool}" \
     -e cleanup="${cleanup}" \
-    -e HOST_PERMS="$(id -u):$(id -g)" \
-    "${image_tag}" \
+    "${docker_image}" \
     /tmp/build_script.sh
 
 # Run basic checks on the wheel file.
