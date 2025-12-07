@@ -40,13 +40,13 @@ jobs:
 
     steps:
       - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
-      - name: Install lsb-release
+      - name: Install lsb-release (needed by setup-python)
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends lsb-release
+      - name: Configure pip not to print irrelevant error about running as root
+        run: echo "PIP_ROOT_USER_ACTION='ignore'" | sudo tee -a /etc/environment
       - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v5
-        env:
-          PIP_ROOT_USER_ACTION: ignore
         with:
           python-version: '3.10'
           architecture: 'x64'
@@ -77,6 +77,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends lsb-release
+      - name: Configure pip not to print irrelevant error about running as root
+        run: echo "PIP_ROOT_USER_ACTION='ignore'" | sudo tee -a /etc/environment
       - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v5
         with:
           python-version: '3.10'
@@ -129,6 +131,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends lsb-release
+      - name: Configure pip not to print irrelevant error about running as root
+        run: echo "PIP_ROOT_USER_ACTION='ignore'" | sudo tee -a /etc/environment
       - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v5
         with:
           python-version: '3.10'
