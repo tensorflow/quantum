@@ -33,7 +33,7 @@ permissions: read-all
 jobs:
   wheel-build:
     name: Wheel test
-    runs-on: ubuntu-22.04
+    runs-on: linux-x86-n2-32
     timeout-minutes: 60
 
     steps:
@@ -72,7 +72,6 @@ jobs:
           cache: pip
       - name: Install Bazel on CI
         run: |
-          cat /etc/bazel.bazelrc
           rm -f /etc/bazel.bazelrc
           ./scripts/ci_install.sh
       - name: Configure CI TF
@@ -120,9 +119,7 @@ jobs:
       - name: Install notebook dependencies
         run: pip install --upgrade pip seaborn==0.10.0
       - name: Install Bazel on CI
-        run: |
-          export DEBIAN_FRONTEND=noninteractive
-          ./scripts/ci_install.sh
+        run: ./scripts/ci_install.sh
       - name: Configure CI TF
         run: echo "Y\n" | ./configure.sh
       - name: Build Wheel
