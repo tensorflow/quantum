@@ -39,136 +39,112 @@ jobs:
     timeout-minutes: 60
 
     steps:
-      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
-
       - name: Adjust the ml-build runner to our needs
         run: |
           # lsb-release (needed by setup-python) is missing in ml-build runners
           sudo apt-get update && sudo apt-get install -y lsb-release
-          # Pass PIP_ROOT_USER_ACTION to pip inside sudo action in setup-python
-          printf 'Defaults env_keep += "PIP_ROOT_USER_ACTION"' | \
-            sudo tee -a /etc/sudoers > /dev/null
-          printf 'PIP_ROOT_USER_ACTION=ignore' | \
-            sudo tee -a /etc/environment > /dev/null
-          printf "[global]\nroot-user-action = ignore" | \
-            sudo tee -a /etc/pip.conf > /dev/null
-
-          sudo mkdir -p /root/.config/pip
-          printf "[global]\nroot-user-action = ignore\n" | sudo tee /root/.config/pip/pip.conf > /dev/null
-
           # This file, though it's empty, hangs the Bazel install step.
           rm -f /etc/bazel.bazelrc
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
       - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v5
         with:
           python-version: '3.10'
           architecture: 'x64'
           cache: pip
-        env:
-          # Tell pip not to print error messages about running commands as root
-          PIP_ROOT_USER_ACTION: ignore
+      - name: Install Bazel on CI
+        run: ./scripts/ci_install.sh
+      - name: Configure CI TF
+        run: printf "Y\n" | ./configure.sh
+      - name: Build Wheel Test
+        run: ./scripts/build_pip_package_test.sh
+      - name: Test Wheel
+        run: ./scripts/run_example.sh
 
-      # - name: Install Bazel on CI
-      #   run: ./scripts/ci_install.sh
-      # - name: Configure CI TF
-      #   run: printf "Y\n" | ./configure.sh
-      # - name: Build Wheel Test
-      #   run: ./scripts/build_pip_package_test.sh
-      # - name: Test Wheel
-      #   run: ./scripts/run_example.sh
+  bazel-tests:
+    name: Library tests
+    runs-on: linux-x86-n2-32
+    container:
+      image: us-docker.pkg.dev/ml-oss-artifacts-published/ml-public-container/ml-build:latest
+    timeout-minutes: 60
 
-  # bazel-tests:
-  #   name: Library tests
-  #   runs-on: linux-x86-n2-32
-  #   container:
-  #     image: us-docker.pkg.dev/ml-oss-artifacts-published/ml-public-container/ml-build:latest
-  #   timeout-minutes: 60
+    steps:
+      - name: Adjust the ml-build runner to our needs
+        run: |
+          # lsb-release (needed by setup-python) is missing in ml-build runners
+          sudo apt-get update && sudo apt-get install -y lsb-release
+          # This file, though it's empty, hangs the Bazel install step.
+          rm -f /etc/bazel.bazelrc
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+      - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v5
+        with:
+          python-version: '3.10'
+          architecture: 'x64'
+          cache: pip
+      - name: Install Bazel on CI
+        run: ./scripts/ci_install.sh
+      - name: Configure CI TF
+        run: printf "Y\n" | ./configure.sh
+      - name: Full Library Test
+        run: ./scripts/test_all.sh
 
-  #   steps:
-  #     - name: Adjust the ml-build runner to our needs
-  #       run: |
-  #         # lsb-release (needed by setup-python) is missing in ml-build runners
-  #         sudo apt-get update && sudo apt-get install -y lsb-release
-  #         # We need sudo to pass this environment variable to subprocesses.
-  #         printf 'Defaults env_keep += "PIP_ROOT_USER_ACTION"' | \
-  #           sudo tee /etc/sudoers.d/pip-root-action > /dev/null
-  #         sudo chmod 440 /etc/sudoers.d/pip-root-action
-  #         # This file, though it's empty, hangs the Bazel install step.
-  #         rm -f /etc/bazel.bazelrc
-  #     - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
-  #     - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v5
-  #       with:
-  #         python-version: '3.10'
-  #         architecture: 'x64'
-  #         cache: pip
-  #     - name: Install Bazel on CI
-  #       run: ./scripts/ci_install.sh
-  #     - name: Configure CI TF
-  #       run: printf "Y\n" | ./configure.sh
-  #     - name: Full Library Test
-  #       run: ./scripts/test_all.sh
-
-  # # 2024-11-30 [mhucka] temporarily turning off leak-tests because it produces
-  # # false positives on GH that we can't immediately address. TODO: if updating
-  # # TFQ to use Clang and the latest TF does not resolve this, find a way to
-  # # skip the handful of failing tests and renable the rest of the msan tests.
-  # #
-  # # leak-tests:
-  # #   name: Memory Leak tests
-  # #   runs-on: ubuntu-22.04
-  # #
-  # #   steps:
-  # #     - uses: actions/checkout@v1
-  # #     - uses: actions/setup-python@v1
-  # #       with:
-  # #         python-version: '3.10'
-  # #         architecture: 'x64'
-  # #     - name: Install Bazel on CI
-  # #       run: ./scripts/ci_install.sh
-  # #     - name: Configure CI TF
-  # #       run: printf "Y\n" | ./configure.sh
-  # #     - name: Leak Test qsim and src
-  # #       run: ./scripts/msan_test.sh
-
-  # tutorials-test:
-  #   name: Tutorial tests
+  # 2024-11-30 [mhucka] temporarily turning off leak-tests because it produces
+  # false positives on GH that we can't immediately address. TODO: if updating
+  # TFQ to use Clang and the latest TF does not resolve this, find a way to
+  # skip the handful of failing tests and renable the rest of the msan tests.
+  #
+  # leak-tests:
+  #   name: Memory Leak tests
   #   runs-on: ubuntu-22.04
-  #   needs: wheel-build
-  #   timeout-minutes: 60
-  #   # Run tutorial tests with parallelism via sharding supported by absl-py.
-  #   strategy:
-  #     fail-fast: false
-  #     matrix:
-  #       shard: [0, 1, 2, 3, 4, 5, 6, 7, 8]
-  #   env:
-  #     TEST_TOTAL_SHARDS: 9
-
+  #
   #   steps:
-  #     - name: Adjust the ml-build runner to our needs
-  #       run: |
-  #         # lsb-release (needed by setup-python) is missing in ml-build runners
-  #         sudo apt-get update && sudo apt-get install -y lsb-release
-  #         # We need sudo to pass this environment variable to subprocesses.
-  #         printf 'Defaults env_keep += "PIP_ROOT_USER_ACTION"' | \
-  #           sudo tee /etc/sudoers.d/pip-root-action > /dev/null
-  #         sudo chmod 440 /etc/sudoers.d/pip-root-action
-  #         # This file, though it's empty, hangs the Bazel install step.
-  #         rm -f /etc/bazel.bazelrc
-  #     - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
-  #     - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v5
+  #     - uses: actions/checkout@v1
+  #     - uses: actions/setup-python@v1
   #       with:
   #         python-version: '3.10'
   #         architecture: 'x64'
-  #         cache: pip
-  #     - name: Install notebook dependencies
-  #       run: pip install --upgrade pip seaborn==0.10.0
   #     - name: Install Bazel on CI
   #       run: ./scripts/ci_install.sh
   #     - name: Configure CI TF
   #       run: printf "Y\n" | ./configure.sh
-  #     - name: Build Wheel
-  #       run: ./scripts/build_pip_package_test.sh
-  #     - name: Test Notebooks
-  #       env:
-  #         # Environment var. used by absl-py to run tests in parallel.
-  #         TEST_SHARD_INDEX: ${{matrix.shard}}
-  #       run: ./scripts/ci_validate_tutorials.sh
+  #     - name: Leak Test qsim and src
+  #       run: ./scripts/msan_test.sh
+
+  tutorials-test:
+    name: Tutorial tests
+    runs-on: ubuntu-22.04
+    needs: wheel-build
+    timeout-minutes: 60
+    # Run tutorial tests with parallelism via sharding supported by absl-py.
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5, 6, 7, 8]
+    env:
+      TEST_TOTAL_SHARDS: 9
+
+    steps:
+      - name: Adjust the ml-build runner to our needs
+        run: |
+          # lsb-release (needed by setup-python) is missing in ml-build runners
+          sudo apt-get update && sudo apt-get install -y lsb-release
+          # This file, though it's empty, hangs the Bazel install step.
+          rm -f /etc/bazel.bazelrc
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+      - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v5
+        with:
+          python-version: '3.10'
+          architecture: 'x64'
+          cache: pip
+      - name: Install notebook dependencies
+        run: pip install --upgrade pip seaborn==0.10.0
+      - name: Install Bazel on CI
+        run: ./scripts/ci_install.sh
+      - name: Configure CI TF
+        run: printf "Y\n" | ./configure.sh
+      - name: Build Wheel
+        run: ./scripts/build_pip_package_test.sh
+      - name: Test Notebooks
+        env:
+          # Environment var. used by absl-py to run tests in parallel.
+          TEST_SHARD_INDEX: ${{matrix.shard}}
+        run: ./scripts/ci_validate_tutorials.sh
