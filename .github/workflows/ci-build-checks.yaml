@@ -73,6 +73,8 @@ jobs:
           architecture: 'x64'
           cache: pip
       - name: Install Bazel on CI
+        env:
+          DEBIAN_FRONTEND: noninteractive
         run: ./scripts/ci_install.sh
       - name: Configure CI TF
         run: echo "Y\n" | ./configure.sh
@@ -119,6 +121,8 @@ jobs:
       - name: Install notebook dependencies
         run: pip install --upgrade pip seaborn==0.10.0
       - name: Install Bazel on CI
+        env:
+          DEBIAN_FRONTEND: noninteractive
         run: ./scripts/ci_install.sh
       - name: Configure CI TF
         run: echo "Y\n" | ./configure.sh
