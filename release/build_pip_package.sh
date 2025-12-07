@@ -40,7 +40,7 @@ fi
 echo "Using Python: ${PY}"
 
 # Ensure packaging tools are present in THIS interpreter.
-pip install -qq setuptools wheel build
+pip install -qq setuptools wheel build --root-user-action ignore
 
 EXPORT_DIR="bazel-bin/release/build_pip_package.runfiles/__main__"
 
