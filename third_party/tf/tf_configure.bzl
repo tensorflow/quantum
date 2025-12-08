@@ -1,4 +1,4 @@
-# Copyright 2025 The TensorFlow Quantum Authors
+# Copyright 2020 The TensorFlow Quantum Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -158,7 +158,7 @@ def _symlink_genrule_for_dir(
     tf_pip_dir_rename_pair_len = len(tf_pip_dir_rename_pair)
     if tf_pip_dir_rename_pair_len != 0 and tf_pip_dir_rename_pair_len !=2:
       _fail("The size of argument tf_pip_dir_rename_pair should be either 0 or 2, but %d is given." % tf_pip_dir_rename_pair_len)
-    
+
     if src_dir != None:
         src_dir = _norm_path(src_dir)
         dest_dir = _norm_path(dest_dir)
@@ -172,7 +172,7 @@ def _symlink_genrule_for_dir(
         src_files = files.splitlines()
     command = []
     outs = []
-    
+
     for i in range(len(dest_files)):
         if dest_files[i] != "":
             # If we have only one file to link we do not want to use the dest_dir, as
