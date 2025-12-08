@@ -31,8 +31,8 @@ class Expectation(tf.keras.layers.Layer):
     """A Layer that calculates an expectation value.
 
     Args:
-        backend (Union[str, cirq.Sampler,
-        cirq.sim.simulator.SimulatesExpectationValues], optional):
+        backend (Union[str, cirq.sim.simulator.SimulatesExpectationValues],
+        optional):
             Backend simulator to use. Default is 'noiseless'.
         differentiator (Optional[tfq.differentiators.Differentiator]):
             Differentiation scheme for gradients.
