@@ -37,12 +37,6 @@ jobs:
     timeout-minutes: 60
 
     steps:
-      - name: Adjust the ml-build runner to our needs
-        run: |
-          # lsb-release (needed by setup-python) is missing in ml-build runners
-          sudo apt-get update && sudo apt-get install -y lsb-release
-          # This file, though it's empty, hangs the Bazel install step.
-          rm -f /etc/bazel.bazelrc
       - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
       - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v5
         with:
