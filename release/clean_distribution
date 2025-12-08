@@ -26,11 +26,12 @@ set -eu
 
 # Find the top of the local TFQ git tree. Do it early in case this fails.
 thisdir=$(CDPATH="" cd -- "$(dirname -- "$0")" && pwd -P)
-repo_dir=$(git -C "${thisdir}" rev-parse --show-toplevel 2>/dev/null)
+repo_dir=$(git -C "${thisdir}" rev-parse --show-toplevel 2>/dev/null || \
+  echo "${thisdir}/..")
 
 # Default values for variables that can be changed via command line flags.
 docker_image="quay.io/pypa/manylinux_2_34_x86_64"
-platform_tag="manylinux_2_17_x86_64"
+platform="manylinux_2_17_x86_64"
 py_version=$(python3 --version | cut -d' ' -f2 | cut -d. -f1,2)
 action="repair"
 verbose=""
@@ -41,7 +42,7 @@ Run auditwheel on the given wheel file. Available options:
 Configuration options:
   -m IMG  Use manylinux Docker image IMG (default: ${docker_image})
   -p X.Y  Use Python version X.Y (default: ${py_version})
-  -t TAG  Pass --plat TAG to auditwheel (default: ${platform_tag})
+  -t TAG  Pass --plat TAG to auditwheel (default: ${platform})
 
 General options:
   -h  Show this help message and exit
@@ -57,7 +58,7 @@ while getopts "hm:np:st:v" opt; do
     n) dry_run="true" ;;
     p) py_version="${OPTARG}" ;;
     s) action="show" ;;
-    t) platform_tag="${OPTARG}" ;;
+    t) platform="${OPTARG}" ;;
     v) verbose="--verbose" ;;
     *) echo "${usage}" >&2; exit 1 ;;
   esac
@@ -74,7 +75,7 @@ wheel_name="$(basename "${1}")"
 
 args=""
 if [ "${action}" = "repair" ]; then
-  args="${verbose} --exclude libtensorflow_framework.so.2 --plat ${platform_tag}"
+  args="${verbose} --exclude libtensorflow_framework.so.2 --plat ${platform}"
 fi
 
 # Use 'set --' to build the command in the positional parameters ($1, $2, ...)

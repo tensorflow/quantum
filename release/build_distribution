@@ -40,7 +40,8 @@ set -eu
 
 # Find the top of the local TFQ git tree. Do it early in case this fails.
 thisdir=$(CDPATH="" cd -- "$(dirname -- "$0")" && pwd -P)
-repo_dir=$(git -C "${thisdir}" rev-parse --show-toplevel 2>/dev/null || echo "${thisdir}/..")
+repo_dir=$(git -C "${thisdir}" rev-parse --show-toplevel 2>/dev/null || \
+  echo "${thisdir}/..")
 
 # Default values for variables that can be changed via command line flags.
 tf_version="2.16"
