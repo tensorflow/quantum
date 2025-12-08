@@ -49,13 +49,19 @@ REQUIRED_PACKAGES = [
     "cirq-core==1.3.0",
     "cirq-google==1.3.0",
     "sympy==1.14",
+    "tf-keras~=2.16.0",
     # The following makes it easier to the right version on Colab. Once TFQ
     # works with the latest version of TF, this may become unnecessary.
     "protobuf==4.25.8",
 ]
 
 # Placed as extras to avoid overwriting existing nightly TF installs.
-EXTRA_PACKAGES = ["tensorflow>=2.16,<2.17"]
+# Users can run "pip install tensorflow-quantum[and-tensorflow]" to get it all.
+EXTRA_PACKAGES = {}
+EXTRA_PACKAGES["and-tensorflow"] = ["tensorflow>=2.16,<2.17"]
+EXTRA_PACKAGES["and_tensorflow"] = EXTRA_PACKAGES["and-tensorflow"]
+# "extras" was used before 0.7.4. Prefer "and-tensorflow" in 0.7.4+.
+EXTRA_PACKAGES["extras"] = EXTRA_PACKAGES["and-tensorflow"]
 
 CUR_VERSION = "0.7.4"
 
@@ -88,8 +94,9 @@ setup(
     author_email="tensorflow-quantum-team@google.com",
     url="https://github.com/tensorflow/quantum/",
     packages=find_packages(),
+    python_requires='>=3.10',
     install_requires=REQUIRED_PACKAGES,
-    extras_require={"extras": EXTRA_PACKAGES},
+    extras_require=EXTRA_PACKAGES,
     include_package_data=True,
     # ext_modules=[Extension('_foo', ['stub.cc'])],
     zip_safe=False,
