@@ -12,12 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Tests for build_distribution script."""
+
 import os
 import subprocess
 import unittest
 
 
 class BuildDistributionTest(unittest.TestCase):
+    """Tests for build_distribution script."""
 
     def setUp(self):
         # Find the repo root. Default to the current directory if that fails.
@@ -34,7 +37,8 @@ class BuildDistributionTest(unittest.TestCase):
     def test_dry_run(self):
         """Test build_distribution script in dry-run mode."""
         cmd = [self.script, "-n", "-c", "11.2", "-p", "3.9", "-t", "2.10"]
-        result = subprocess.run(cmd, capture_output=True, text=True)
+        result = subprocess.run(cmd, capture_output=True, text=True,
+                                check=False)
         self.assertEqual(result.returncode, 0,
                          f"Script failed with stderr: {result.stderr}")
         output = result.stdout
@@ -53,7 +57,8 @@ class BuildDistributionTest(unittest.TestCase):
     def test_defaults(self):
         """Test build_distribution script defaults."""
         cmd = [self.script, "-n"]
-        result = subprocess.run(cmd, capture_output=True, text=True)
+        result = subprocess.run(cmd, capture_output=True, text=True,
+                                check=False)
         self.assertEqual(result.returncode, 0,
                          f"Script failed with stderr: {result.stderr}")
         output = result.stdout
@@ -64,7 +69,8 @@ class BuildDistributionTest(unittest.TestCase):
     def test_help(self):
         """Test build_distribution script help flag."""
         cmd = [self.script, "-h"]
-        result = subprocess.run(cmd, capture_output=True, text=True)
+        result = subprocess.run(cmd, capture_output=True, text=True,
+                                check=False)
         self.assertEqual(result.returncode, 0,
                          f"Script failed with stderr: {result.stderr}")
         self.assertIn("Usage:", result.stdout)
@@ -74,13 +80,15 @@ class BuildDistributionTest(unittest.TestCase):
     def test_invalid_option(self):
         """Test build_distribution script with invalid option."""
         cmd = [self.script, "-z"]
-        result = subprocess.run(cmd, capture_output=True, text=True)
+        result = subprocess.run(cmd, capture_output=True, text=True,
+                                check=False)
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("Usage:", result.stdout + result.stderr)
         stderr = result.stderr.lower()
         self.assertTrue(
             "illegal option" in stderr or "invalid option" in stderr,
-            f"Expected 'illegal option' or 'invalid option' in stderr, got: {stderr}"
+            "Expected 'illegal option' or 'invalid option' in stderr, "
+            f"got: {stderr}"
         )
 
 
