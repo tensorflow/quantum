@@ -96,7 +96,6 @@ jobs:
   tutorials-test:
     name: Tutorial tests
     runs-on: ubuntu-22.04
-    needs: wheel-build
     timeout-minutes: 60
 
     steps:
