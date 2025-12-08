@@ -7,10 +7,6 @@ licenses(["notice"])
 # Export for the PIP package.
 exports_files(["__init__.py"])
 
-config_setting(
-    name = "windows",
-    constraint_values = ["@bazel_tools//platforms:windows"],
-)
 
 cc_binary(
     name = "_tfq_noise_ops.so",
@@ -19,51 +15,52 @@ cc_binary(
         "tfq_noisy_sampled_expectation.cc",
         "tfq_noisy_samples.cc"
     ],
-    copts = select({
-        ":windows": [
-            "/D__CLANG_SUPPORT_DYN_ANNOTATION__",
-            "/D_USE_MATH_DEFINES",
-            "/DEIGEN_MPL2_ONLY",
-            "/DEIGEN_MAX_ALIGN_BYTES=64",
-            "/DEIGEN_HAS_TYPE_TRAITS=0",
-            "/DTF_USE_SNAPPY",
-            "/showIncludes",
-            "/MD",
-            "/O2",
-            "/DNDEBUG",
-            "/w",
-            "-DWIN32_LEAN_AND_MEAN",
-            "-DNOGDI",
-            "/d2ReducedOptimizeHugeFunctions",
-            "/arch:AVX",
-            "/std:c++17",
-            "-DTENSORFLOW_MONOLITHIC_BUILD",
-            "/DPLATFORM_WINDOWS",
-            "/DEIGEN_HAS_C99_MATH",
-            "/DTENSORFLOW_USE_EIGEN_THREADPOOL",
-            "/DEIGEN_AVOID_STL_ARRAY",
-            "/Iexternal/gemmlowp",
-            "/wd4018",
-            "/wd4577",
-            "/DNOGDI",
-            "/UTF_COMPILE_LIBRARY",
-        ],
-        "//conditions:default": [
-            "-pthread",
-            "-std=c++17",
-            "-D_GLIBCXX_USE_CXX11_ABI=1",
-        ],
-    }),
-    features = select({
-        ":windows": ["windows_export_all_symbols"],
-        "//conditions:default": [],
-    }),
+    # copts = select({
+    #     ":windows": [
+    #         "/D__CLANG_SUPPORT_DYN_ANNOTATION__",
+    #         "/D_USE_MATH_DEFINES",
+    #         "/DEIGEN_MPL2_ONLY",
+    #         "/DEIGEN_MAX_ALIGN_BYTES=64",
+    #         "/DEIGEN_HAS_TYPE_TRAITS=0",
+    #         "/DTF_USE_SNAPPY",
+    #         "/showIncludes",
+    #         "/MD",
+    #         "/O2",
+    #         "/DNDEBUG",
+    #         "/w",
+    #         "-DWIN32_LEAN_AND_MEAN",
+    #         "-DNOGDI",
+    #         "/d2ReducedOptimizeHugeFunctions",
+    #         "/arch:AVX",
+    #         "/std:c++17",
+    #         "-DTENSORFLOW_MONOLITHIC_BUILD",
+    #         "/DPLATFORM_WINDOWS",
+    #         "/DEIGEN_HAS_C99_MATH",
+    #         "/DTENSORFLOW_USE_EIGEN_THREADPOOL",
+    #         "/DEIGEN_AVOID_STL_ARRAY",
+    #         "/Iexternal/gemmlowp",
+    #         "/wd4018",
+    #         "/wd4577",
+    #         "/DNOGDI",
+    #         "/UTF_COMPILE_LIBRARY",
+    #     ],
+    #     "//conditions:default": [
+    #         "-pthread",
+    #         "-std=c++17",
+    #         "-D_GLIBCXX_USE_CXX11_ABI=1",
+    #     ],
+    # }),
+    # features = select({
+    #     ":windows": ["windows_export_all_symbols"],
+    #     "//conditions:default": [],
+    # }),
     linkshared = 1,
     deps = [
         # cirq cc proto
         "//tensorflow_quantum/core/ops:parse_context",
         "//tensorflow_quantum/core/ops:tfq_simulate_utils",
         "//tensorflow_quantum/core/src:circuit_parser_qsim",
+        "//tensorflow_quantum/core/src:util_balance_trajectory",
         "//tensorflow_quantum/core/src:util_qsim",
         "@qsim//lib:qsim_lib",
         # tensorflow core framework

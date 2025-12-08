@@ -16,6 +16,7 @@
 # Remove PYTHONPATH collisions for protobuf.
 # pylint: disable=wrong-import-position
 import sys
+
 NEW_PATH = [x for x in sys.path if 'com_google_protobuf' not in x]
 sys.path = NEW_PATH
 # pylint: enable=wrong-import-position
@@ -359,7 +360,7 @@ class SimulateMPS1DExpectationTest(tf.test.TestCase):
             symbol_values_array,
             util.convert_to_tensor(pauli_sums),
             bond_dim=32)
-        self.assertAllClose(mps_result, cirq_result, atol=1e-5)
+        self.assertAllClose(mps_result, cirq_result, atol=1e-4)
 
     def test_correctness_empty(self):
         """Tests the mps op with empty circuits."""

@@ -1,0 +1,383 @@
+# Copyright 2025 The TensorFlow Quantum Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Summary: TFQ continuous integration workflow for static code analysis.
+#
+# This workflow runs linters and code format/style checkers on certain events
+# such as pull requests and merge-queue merges. It tries to be as efficient as
+# possible by only running jobs when specific types of files were affected by
+# a PR, and by caching the Python installation so that it doesn't have to be
+# re-installed on every run. It reads the requirements.txt file to find out
+# the required versions of some program like pylint and yapf, to adhere to DRY
+# principles. It uses GitHub "problem matchers" to write error outputs to the
+# workflow summary to make it easier to learn the outcome. Finally, It can be
+# invoked manually using the "Run workflow" button on the page at
+# https://github.com/tensorflow/quantum/actions/workflows/ci-file-checks.yaml
+
+name: 'CI: lint & check formating'
+run-name: Continuous integration lint and format checks
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    branches:
+      - master
+
+  merge_group:
+    types:
+      - checks_requested
+
+  push:
+    branches:
+      - master
+
+  # Allow manual invocation, with options that can be useful for debugging.
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: 'SHA of commit to run against:'
+        type: string
+        required: true
+
+      python_ver:
+        description: 'Python version:'
+        type: string
+
+      pylint_ver:
+        description: 'Pylint version:'
+        type: string
+
+      yapf_ver:
+        description: 'Yapf version:'
+        type: string
+
+      clang_format_ver:
+        description: 'clang-format version:'
+        type: string
+
+      remake_python_cache:
+        description: 'Delete & remake the Python cache'
+        type: boolean
+        default: false
+
+env:
+  # Default Python version to use.
+  python_ver: '3.10'
+  # Note: as of 2025-01-16, clang-format v. 18 is the latest available on
+  # GitHub, and you have to use Ubuntu 24 to get it.
+  clang_format_ver: '18'
+
+concurrency:
+  # Cancel any previously-started but still active runs on the same branch.
+  cancel-in-progress: true
+  group: ${{github.workflow}}-${{github.event.pull_request.number||github.ref}}
+
+permissions: read-all
+
+jobs:
+  Changes:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      python: ${{steps.filter.outputs.python}}
+      python_files: ${{steps.filter.outputs.python_files}}
+      cc: ${{steps.filter.outputs.cc}}
+      cc_files: ${{steps.filter.outputs.cc_files}}
+      yaml: ${{steps.filter.outputs.yaml}}
+      yaml_files: ${{steps.filter.outputs.yaml_files}}
+    steps:
+      # When invoked manually, use the given SHA to figure out the change list.
+      - if: github.event_name == 'workflow_dispatch'
+        name: Use the user-provided SHA as the basis for comparison
+        env:
+          GH_TOKEN: ${{github.token}}
+        run: |
+          set -x +e
+          url="repos/${{github.repository}}/commits/${{inputs.sha}}"
+          full_sha="$(gh api $url -q '.sha')"
+          exit_code=$?
+          if [[ "$exit_code" == "0" ]]; then
+            echo "base=$full_sha" >> "$GITHUB_ENV"
+          else
+            {
+            echo "### :x: Workflow error"
+            echo "The SHA provided to _Run Workflow_ does not exist:"
+            echo "<code>${{inputs.sha}}</code>"
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
+      - if: github.event_name != 'workflow_dispatch'
+        name: Use ref ${{github.ref_name}} as the basis for comparison
+        run: |
+          echo base=${{github.ref_name}} >> "$GITHUB_ENV"
+
+      - name: Check out a copy of the TFQ git repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+
+      - name: Determine files changed by this ${{github.event_name}} event
+        uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3
+        id: filter
+        with:
+          base: ${{env.base}}
+          list-files: 'shell'
+          # The outputs will be variables named "foo_files" for a filter "foo".
+          filters: |
+            python:
+              - added|modified:
+                  - '**/*.py'
+            cc:
+              - added|modified:
+                  - '**/*.cc'
+                  - '**/*.h'
+                  - '**/*.proto'
+            yaml:
+              - added|modified:
+                  - '**/*.yaml'
+                  - '**/*.yml'
+
+  Setup:
+    if: needs.Changes.outputs.python == 'true'
+    needs: Changes
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    outputs:
+      cache_key: ${{steps.parameters.outputs.cache_key}}
+      cache_paths: ${{steps.parameters.outputs.cache_paths}}
+    steps:
+      - name: Check out a copy of the TFQ git repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+
+        # Note: setup-python has a cache facility, but we don't use it here
+        # because we want to cache more Python things than setup-python does.
+      - name: Set up Python ${{inputs.python_ver || env.python_ver}}
+        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5
+        with:
+          python-version: ${{inputs.python_ver || env.python_ver}}
+
+      - name: Set cache keys and other parameters
+        id: parameters
+        run: |
+          key="${{github.workflow_ref}}-${{hashFiles('requirements.txt')}}"
+          echo "cache_key=$key" >> "$GITHUB_OUTPUT"
+          # The paths used for actions/cache need to be on separate lines.
+          # Constructing a multiline value for an output variable is awkward.
+          # shellcheck disable=SC2005
+          {
+          echo "cache_paths<<EOF"
+          echo "$(pip cache dir)"
+          echo "${{env.pythonLocation}}"
+          echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Test if the cache already exists
+        uses: actions/cache@0c907a75c2c80ebcb7f088228285e798b750cf8f # v4
+        id: check_cache
+        with:
+          lookup-only: true
+          key: ${{steps.parameters.outputs.cache_key}}
+          path: ${{steps.parameters.outputs.cache_paths}}
+
+      - if: >-
+          steps.check_cache.outputs.cache-hit == 'true' &&
+          inputs.remake_python_cache == 'true'
+        name: Clear the Python cache
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+        run: |
+          key="${{steps.parameters.outputs.cache_key}}"
+          gh extension install actions/gh-actions-cache
+          gh actions-cache delete "$key" --confirm
+
+      - if: >-
+          steps.check_cache.outputs.cache-hit != 'true' ||
+          inputs.remake_python_cache == 'true'
+        name: Set up the Python cache
+        uses: actions/cache@0c907a75c2c80ebcb7f088228285e798b750cf8f # v4
+        id: restore_cache
+        with:
+          key: ${{steps.parameters.outputs.cache_key}}
+          path: ${{steps.parameters.outputs.cache_paths}}
+
+      - if: >-
+          steps.check_cache.outputs.cache-hit != 'true' ||
+          inputs.remake_python_cache == 'true'
+        name: Install TFQ dependencies
+        # Need to install all requirements b/c Pylint needs to load modules.
+        run: |
+          pip install -r requirements.txt
+
+      - if: ${{inputs.pylint_ver != ''}}
+        name: Install requested version ${{inputs.pylint_ver}} of Pylint
+        # Override version of Pylint installed from requirements.txt
+        run: |
+          set -x
+          pip install pylint==${{inputs.pylint_ver}}
+
+      - if: ${{inputs.yapf_ver != ''}}
+        name: Install requested version ${{inputs.yapf_ver}} of Yapf
+        # Override version of Yapf installed from requirements.txt
+        run: |
+          set -x
+          pip install yapf==${{inputs.yapf_ver}}
+
+  Cplusplus-format:
+    if: needs.Changes.outputs.cc == 'true'
+    name: Check C++ and Protobuf coding style
+    needs: Changes
+    runs-on: ubuntu-24.04
+    env:
+      changed_files: ${{needs.Changes.outputs.cc_files}}
+    steps:
+      - name: Check out a copy of the TFQ git repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+
+      - name: Set up clang-format output problem matcher
+        run: echo '::add-matcher::.github/problem-matchers/clang-format.json'
+
+      - name: Run clang-format on C++ and Protobuf files
+        run: |
+          set -x +e -o pipefail
+          version=${{inputs.clang_format_ver || env.clang_format_ver}}
+          clang-format-$version --verbose -Werror --style google --dry-run \
+            ${{env.changed_files}} > diff.out 2>&1
+          exit_code=$?
+          if [[ "$exit_code" != "0" ]]; then
+            # Write output both here and to the job summary.
+            bo=$'\e[1m'; bl=$'\e[38;5;117m'; rs=$'\e[0m'; hi='👋🏻'
+            u="https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}"
+            echo "$hi ${bl}Visit $bo$u${rs}$bl for formatted diff output$rs $hi"
+            echo '::group::clang-format output'
+            cat diff.out
+            echo '::endgroup::'
+            # shellcheck disable=SC2006
+            {
+            echo "### Output from <code>clang-format</code> version $version"
+            echo '```diff'
+            echo "$(< diff.out)"
+            echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+          exit $exit_code
+
+  Python-lint:
+    if: needs.Changes.outputs.python == 'true'
+    name: Check Python lint
+    needs: [Changes, Setup]
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Check out a copy of the TFQ git repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+
+      - name: Set up Python
+        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5
+        with:
+          python-version: ${{inputs.python_ver || env.python_ver}}
+
+      - name: Restore the Python cache
+        uses: actions/cache@0c907a75c2c80ebcb7f088228285e798b750cf8f # v4
+        with:
+          key: ${{needs.Setup.outputs.cache_key}}
+          path: ${{needs.Setup.outputs.cache_paths}}
+          fail-on-cache-miss: true
+
+      - name: Set up Pylint output problem matcher
+        run: echo '::add-matcher::.github/problem-matchers/pylint.json'
+
+      - name: Lint the changed Python files
+        run: |
+          set +e -o pipefail
+          pylint -v ${{needs.Changes.outputs.python_files}} |& tee ./pylint.out
+          exit_code=$?
+          if [[ "$exit_code" != "0" ]]; then
+            {
+            echo '### Output from <code>pylint</code>'
+            echo ''
+            echo '```'
+            echo "$(< ./pylint.out)"
+            echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+          exit $exit_code
+
+  Python-format:
+    if: needs.Changes.outputs.python == 'true'
+    name: Check Python coding style
+    needs: [Changes, Setup]
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Check out a copy of the TFQ git repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+
+      - name: Set up Python
+        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5
+        with:
+          python-version: ${{inputs.python_ver || env.python_ver}}
+
+      - name: Restore the Python cache
+        uses: actions/cache@0c907a75c2c80ebcb7f088228285e798b750cf8f # v4
+        with:
+          key: ${{needs.Setup.outputs.cache_key}}
+          path: ${{needs.Setup.outputs.cache_paths}}
+          fail-on-cache-miss: true
+
+      - name: Run Yapf on the Python changed files
+        run: |
+          set +e
+          yapf --parallel --diff --style=google \
+            ${{needs.Changes.outputs.python_files}} > diff.out 2>&1
+          exit_code=$?
+          if [[ -s ./diff.out ]]; then
+            # Write output both here and to the job summary.
+            bo=$'\e[1m'; bl=$'\e[38;5;117m'; rs=$'\e[0m'; hi='👋🏻'
+            u="https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}"
+            echo "$hi ${bl}Visit $bo$u${rs}$bl for formatted diff output$rs $hi"
+            echo '::group::Yapf output'
+            cat diff.out
+            echo '::endgroup::'
+            # shellcheck disable=SC2006
+            {
+            echo '### Output from <code>yapf</code>'
+            echo ''
+            echo '```diff'
+            echo "$(< diff.out)"
+            echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+          exit $exit_code
+
+  Yaml-lint:
+    if: needs.Changes.outputs.yaml == 'true'
+    name: YAML lint
+    needs: Changes
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out a copy of the TFQ git repository
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+
+      - name: Set up yamllint output problem matcher
+        run: echo '::add-matcher::.github/problem-matchers/yamllint.json'
+
+      - name: Find out the yamllint version
+        id: yamllint
+        run: |
+          version=$(yamllint --version)
+          echo "version=${version#yamllint }" >> "$GITHUB_OUTPUT"
+
+      - name: Run yamllint ${{steps.yamllint.outputs.version}}
+        run: |
+          set -x
+          # shellcheck disable=SC2086
+          yamllint --format github ${{needs.Changes.outputs.yaml_files}}

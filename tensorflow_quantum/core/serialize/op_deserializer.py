@@ -57,10 +57,10 @@ def qubit_from_proto(proto_id):
 
 
 def _arg_from_proto(
-        arg_proto,
-        *,
-        arg_function_language,
-        required_arg_name=None,
+    arg_proto,
+    *,
+    arg_function_language,
+    required_arg_name=None,
 ):
     """Extracts a python value from an argument value proto.
     Args:

@@ -62,32 +62,32 @@ while [[ "$TF_NEED_CUDA" == "" ]]; do
 done
 
 while [[ "$TF_CUDA_VERSION" == "" ]]; do
-  read -p "Are you building against TensorFlow 2.11(including RCs) or newer?[Y/n] " INPUT
+  read -p "Are you building against TensorFlow 2.1(including RCs) or newer?[Y/n] " INPUT
   case $INPUT in
-    [Yy]* ) echo "Build against TensorFlow 2.11 or newer."; TF_CUDA_VERSION=11;;
-    [Nn]* ) echo "Build against TensorFlow <2.11."; TF_CUDA_VERSION=10.0;;
-    "" ) echo "Build against TensorFlow 2.11 or newer."; TF_CUDA_VERSION=11;;
+    [Yy]* ) echo "Build against TensorFlow 2.1 or newer."; TF_CUDA_VERSION=11;;
+    [Nn]* ) echo "Build against TensorFlow <2.1."; TF_CUDA_VERSION=10.0;;
+    "" ) echo "Build against TensorFlow 2.1 or newer."; TF_CUDA_VERSION=11;;
     * ) echo "Invalid selection: " $INPUT;;
   esac
 done
 
 
 # Check if it's installed
-if [[ $(pip show tensorflow) == *tensorflow* ]] || [[ $(pip show tf-nightly) == *tf-nightly* ]]; then
-  echo 'Using installed tensorflow'
-else
-  # Uninstall CPU version if it is installed.
-  if [[ $(pip show tensorflow-cpu) == *tensorflow-cpu* ]]; then
-    echo 'Already have tensorflow non-gpu installed. Uninstalling......\n'
-    pip uninstall tensorflow
-  elif [[ $(pip show tf-nightly-cpu) == *tf-nightly-cpu* ]]; then
-    echo 'Already have tensorflow non-gpu installed. Uninstalling......\n'
-    pip uninstall tf-nightly
-  fi
-  # Install GPU version
-  echo 'Installing tensorflow .....\n'
-  pip install tensorflow
-fi
+# if [[ $(pip show tensorflow) == *tensorflow* ]] || [[ $(pip show tf-nightly) == *tf-nightly* ]]; then
+#   echo 'Using installed tensorflow'
+# else
+#   # Uninstall CPU version if it is installed.
+#   if [[ $(pip show tensorflow-cpu) == *tensorflow-cpu* ]]; then
+#     echo 'Already have tensorflow non-gpu installed. Uninstalling......\n'
+#     pip uninstall tensorflow
+#   elif [[ $(pip show tf-nightly-cpu) == *tf-nightly-cpu* ]]; then
+#     echo 'Already have tensorflow non-gpu installed. Uninstalling......\n'
+#     pip uninstall tf-nightly
+#   fi
+#   # Install GPU version
+#   echo 'Installing tensorflow .....\n'
+#   pip install tensorflow
+# fi
 
 
 
@@ -101,6 +101,28 @@ write_to_bazelrc "build --strategy=Genrule=standalone"
 write_to_bazelrc "build -c opt"
 write_to_bazelrc "build --cxxopt=\"-D_GLIBCXX_USE_CXX11_ABI=1\""
 write_to_bazelrc "build --cxxopt=\"-std=c++17\""
+
+# The transitive inclusion of build rules from TensorFlow ends up including
+# and building two copies of zlib (one from bazel_rules, one from the TF code
+# baase itself). The version of zlib you get (at least in TF 2.15.0) ends up
+# producing many compiler warnings that "a function declaration without a
+# prototype is deprecated". It's difficult to patch the particular build rules
+# involved, so the approach taken here is to silence those warnings for stuff
+# in external/. TODO: figure out how to patch the BUILD files and put it there.
+write_to_bazelrc "build --per_file_copt=external/.*@-Wno-deprecated-non-prototype"
+write_to_bazelrc "build --host_per_file_copt=external/.*@-Wno-deprecated-non-prototype"
+
+# Similarly, these are other harmless warnings about unused functions coming
+# from things pulled in by the TF bazel config rules.
+write_to_bazelrc "build --per_file_copt=external/com_google_protobuf/.*@-Wno-unused-function"
+write_to_bazelrc "build --host_per_file_copt=external/com_google_protobuf/.*@-Wno-unused-function"
+
+# The following supress warnings coming from qsim.
+# TODO: fix the code in qsim & update TFQ to use the updated version.
+write_to_bazelrc "build --per_file_copt=tensorflow_quantum/core/ops/noise/tfq_.*@-Wno-unused-but-set-variable"
+write_to_bazelrc "build --host_per_file_copt=tensorflow_quantum/core/ops/noise/tfq_.*@-Wno-unused-but-set-variable"
+write_to_bazelrc "build --per_file_copt=tensorflow_quantum/core/ops/math_ops/tfq_.*@-Wno-deprecated-declarations"
+write_to_bazelrc "build --host_per_file_copt=tensorflow_quantum/core/ops/math_ops/tfq_.*@-Wno-deprecated-declarations"
 
 
 if is_windows; then

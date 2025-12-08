@@ -50,16 +50,12 @@ class InstallPlatlib(install):
             self.install_lib = self.install_platlib
 
 
-REQUIRED_PACKAGES = [
-    'cirq-core==0.13.1', 'cirq-google>=0.13.1', 'sympy == 1.8',
-    'googleapis-common-protos==1.52.0', 'google-api-core==1.21.0',
-    'google-auth==1.18.0', 'protobuf==3.19.5'
-]
+REQUIRED_PACKAGES = ['cirq-core==1.3.0', 'cirq-google==1.3.0', 'sympy == 1.12']
 
 # placed as extra to not have required overwrite existing nightly installs if
 # they exist.
-EXTRA_PACKAGES = ['tensorflow == 2.11.0']
-CUR_VERSION = '0.7.3'
+EXTRA_PACKAGES = ['tensorflow == 2.15.0']
+CUR_VERSION = '0.7.4'
 
 
 class BinaryDistribution(Distribution):
@@ -107,10 +103,13 @@ setup(
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
         'Topic :: Scientific/Engineering',
         'Topic :: Scientific/Engineering :: Artificial Intelligence',
         'Topic :: Scientific/Engineering :: Mathematics',
         'Topic :: Scientific/Engineering :: Physics',
+        'Topic :: Scientific/Engineering :: Quantum Computing',
     ],
     license='Apache 2.0',
     keywords='tensorflow machine learning quantum qml',

@@ -176,11 +176,11 @@ class GateOpSerializer:
         return supported_gate_type and self.can_serialize_predicate(op)
 
     def to_proto(
-            self,
-            op,
-            msg=None,
-            *,
-            arg_function_language='',
+        self,
+        op,
+        msg=None,
+        *,
+        arg_function_language='',
     ):
         """Returns the cirq_google.api.v2.Operation message as a proto dict."""
 

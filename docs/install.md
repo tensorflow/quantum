@@ -10,14 +10,14 @@ There are a few ways to set up your environment to use TensorFlow Quantum (TFQ):
   Python's pip package manager.
 * Or build TensorFlow Quantum from source.
 
-TensorFlow Quantum is supported on Python 3.7, 3.8, and 3.9 and depends directly on [Cirq](https://github.com/quantumlib/Cirq).
+TensorFlow Quantum is supported on Python 3.9, 3.10, and 3.11 and depends directly on [Cirq](https://github.com/quantumlib/Cirq).
 
 ## Pip package
 
 ### Requirements
 
-* pip 19.0 or later (requires `manylinux2010` support)
-* [TensorFlow == 2.11.0](https://www.tensorflow.org/install/pip)
+* pip 19.0 or later (requires `manylinux2014` support)
+* [TensorFlow == 2.15.0](https://www.tensorflow.org/install/pip)
 
 See the [TensorFlow install guide](https://www.tensorflow.org/install/pip) to
 set up your Python development environment and an (optional) virtual environment.
@@ -27,7 +27,7 @@ Upgrade `pip` and install TensorFlow
 <!-- common_typos_disable -->
 <pre class="devsite-click-to-copy">
   <code class="devsite-terminal">pip3 install --upgrade pip</code>
-  <code class="devsite-terminal">pip3 install tensorflow==2.11.0</code>
+  <code class="devsite-terminal">pip3 install tensorflow==2.15.0</code>
 </pre>
 <!-- common_typos_enable -->
 
@@ -57,13 +57,13 @@ The following steps are tested for Ubuntu-like systems.
 
 ### 1. Set up a Python 3 development environment
 
-First we need the Python 3.8 development tools.
+First we need the Python 3.10 development tools.
 <!-- common_typos_disable -->
 <pre class="devsite-click-to-copy">
   <code class="devsite-terminal">sudo apt update</code>
-  <code class="devsite-terminal">sudo apt-get install pkg-config zip g++ zlib1g-dev unzip python3.8</code>
-  <code class="devsite-terminal">sudo apt install python3.8 python3.8-dev python3.8-venv python3-pip</code>
-  <code class="devsite-terminal">python3.8 -m pip install --upgrade pip</code>
+  <code class="devsite-terminal">sudo apt-get install pkg-config zip g++ zlib1g-dev unzip python3.10</code>
+  <code class="devsite-terminal">sudo apt install python3.10 python3.10-dev python3.10-venv python3-pip</code>
+  <code class="devsite-terminal">python3.10 -m pip install --upgrade pip</code>
 </pre>
 <!-- common_typos_enable -->
 
@@ -72,7 +72,7 @@ First we need the Python 3.8 development tools.
 Go to your workspace directory and make a virtual environment for TFQ development.
 <!-- common_typos_disable -->
 <pre class="devsite-click-to-copy">
-  <code class="devsite-terminal">python3.8 -m venv quantum_env</code>
+  <code class="devsite-terminal">python3.10 -m venv quantum_env</code>
   <code class="devsite-terminal">source quantum_env/bin/activate</code>
 </pre>
 <!-- common_typos_enable -->
@@ -84,21 +84,20 @@ As noted in the TensorFlow
 guide, the <a href="https://bazel.build/" class="external">Bazel</a>
 build system will be required.
 
-Our latest source builds use TensorFlow 2.11.0. To ensure compatibility we use `bazel` version 5.3.0. To remove any existing version of Bazel:
-
+Our latest source builds use TensorFlow 2.15.0. To ensure compatibility we use `bazel` version 6.5.0. To remove any existing version of Bazel:
 <!-- common_typos_disable -->
 <pre class="devsite-click-to-copy">
   <code class="devsite-terminal">sudo apt-get remove bazel</code>
 </pre>
 <!-- common_typos_enable -->
 
-Download and install `bazel` version 5.3.0:
+Download and install `bazel` version 6.5.0:
 
 <!-- common_typos_disable -->
 <pre class="devsite-click-to-copy">
-  <code class="devsite-terminal">wget https://github.com/bazelbuild/bazel/releases/download/5.3.0/bazel_5.3.0-linux-x86_64.deb
+  <code class="devsite-terminal">wget https://github.com/bazelbuild/bazel/releases/download/6.5.0/bazel_6.5.0-linux-x86_64.deb
 </code>
-  <code class="devsite-terminal">sudo dpkg -i bazel_5.3.0-linux-x86_64.deb</code>
+  <code class="devsite-terminal">sudo dpkg -i bazel_6.5.0-linux-x86_64.deb</code>
 </pre>
 <!-- common_typos_enable -->
 
@@ -122,7 +121,7 @@ Finally, confirm installation of the correct `bazel` version:
 ### 4. Build TensorFlow from source
 
 Here we adapt instructions from the TensorFlow [build from source](https://www.tensorflow.org/install/source)
-guide, see the link for further details. TensorFlow Quantum is compatible with TensorFlow version&nbsp;2.11.0.
+guide, see the link for further details. TensorFlow Quantum is compatible with TensorFlow version&nbsp;2.15.0.
 
 Download the
 <a href="https://github.com/tensorflow/tensorflow" class="external">TensorFlow source code</a>:
@@ -131,7 +130,7 @@ Download the
 <pre class="devsite-click-to-copy">
   <code class="devsite-terminal">git clone https://github.com/tensorflow/tensorflow.git</code>
   <code class="devsite-terminal">cd tensorflow</code>
-  <code class="devsite-terminal">git checkout v2.11.0</code>
+  <code class="devsite-terminal">git checkout v2.15.0</code>
 </pre>
 
 Be sure the virtual environment you created in step 2 is activated. Then, install the TensorFlow dependencies:
@@ -141,7 +140,7 @@ Be sure the virtual environment you created in step 2 is activated. Then, instal
   <code class="devsite-terminal">pip install -U pip six numpy wheel setuptools mock 'future>=0.17.1'</code>
   <code class="devsite-terminal">pip install -U keras_applications --no-deps</code>
   <code class="devsite-terminal">pip install -U keras_preprocessing --no-deps</code>
-  <code class="devsite-terminal">pip install numpy==1.24.2</code>
+  <code class="devsite-terminal">pip install numpy==1.23.5</code>
   <code class="devsite-terminal">pip install packaging requests</code>
 </pre>
 <!-- common_typos_enable -->

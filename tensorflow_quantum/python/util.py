@@ -113,7 +113,7 @@ def _apply_random_control(gate, all_qubits):
     if n_open == 0:
         # No open qubits to control. Return unmodified gate.
         return gate
-    control_locs = random.sample(open_qubits, n_open)
+    control_locs = random.sample(list(open_qubits), n_open)
     control_values = random.choices([0, 1], k=n_open)
     # TODO(tonybruguier,#636): Here we call the parent's class controlled_by
     # because Cirq's breaking change #4167 created 3-qubit gates that cannot be
@@ -577,8 +577,9 @@ def gate_approx_eq(gate_true, gate_deser, atol=1e-5):
         raise TypeError(f"`gate_true` not a cirq gate, got {type(gate_true)}")
     if not isinstance(gate_deser, cirq.Gate):
         raise TypeError(f"`gate_deser` not a cirq gate, got {type(gate_deser)}")
-    if isinstance(gate_true, cirq.ControlledGate) != isinstance(
-            gate_deser, cirq.ControlledGate):
+    if isinstance(gate_true,
+                  cirq.ControlledGate) != isinstance(gate_deser,
+                                                     cirq.ControlledGate):
         return False
     if isinstance(gate_true, cirq.ControlledGate):
         if gate_true.control_qid_shape != gate_deser.control_qid_shape:

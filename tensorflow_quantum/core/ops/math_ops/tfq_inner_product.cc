@@ -54,6 +54,11 @@ class TfqInnerProductOp : public tensorflow::OpKernel {
                 tensorflow::errors::InvalidArgument(absl::StrCat(
                     "Expected 4 inputs, got ", num_inputs, " inputs.")));
 
+    OP_REQUIRES(
+        context, context->input(3).dims() == 2,
+        tensorflow::errors::InvalidArgument(absl::StrCat(
+            "other_programs must be rank 2. Got ", context->input(3).dims())));
+
     // Create the output Tensor.
     const int output_dim_batch_size = context->input(0).dim_size(0);
     const int output_dim_internal_size = context->input(3).dim_size(1);
@@ -174,7 +179,7 @@ class TfqInnerProductOp : public tensorflow::OpKernel {
     // Simulate programs one by one. Parallelizing over state vectors
     // we no longer parallelize over circuits. Each time we encounter a
     // a larger circuit we will grow the Statevector as necessary.
-    for (int i = 0; i < fused_circuits.size(); i++) {
+    for (size_t i = 0; i < fused_circuits.size(); i++) {
       int nq = num_qubits[i];
       if (nq > largest_nq) {
         // need to switch to larger statespace.
@@ -186,10 +191,10 @@ class TfqInnerProductOp : public tensorflow::OpKernel {
       //  the state if there is a possibility that circuit[i] and
       //  circuit[i + 1] produce the same state.
       ss.SetStateZero(sv);
-      for (int j = 0; j < fused_circuits[i].size(); j++) {
+      for (size_t j = 0; j < fused_circuits[i].size(); j++) {
         qsim::ApplyFusedGate(sim, fused_circuits[i][j], sv);
       }
-      for (int j = 0; j < other_fused_circuits[i].size(); j++) {
+      for (size_t j = 0; j < other_fused_circuits[i].size(); j++) {
         // (#679) Just ignore empty program
         if (fused_circuits[i].size() == 0) {
           (*output_tensor)(i, j) = std::complex<float>(1, 0);
@@ -197,7 +202,7 @@ class TfqInnerProductOp : public tensorflow::OpKernel {
         }
 
         ss.SetStateZero(scratch);
-        for (int k = 0; k < other_fused_circuits[i][j].size(); k++) {
+        for (size_t k = 0; k < other_fused_circuits[i][j].size(); k++) {
           qsim::ApplyFusedGate(sim, other_fused_circuits[i][j][k], scratch);
         }
 
@@ -255,13 +260,13 @@ class TfqInnerProductOp : public tensorflow::OpKernel {
           // no need to update scratch_state since ComputeExpectation
           // will take care of things for us.
           ss.SetStateZero(sv);
-          for (int j = 0; j < fused_circuits[cur_batch_index].size(); j++) {
+          for (size_t j = 0; j < fused_circuits[cur_batch_index].size(); j++) {
             qsim::ApplyFusedGate(sim, fused_circuits[cur_batch_index][j], sv);
           }
         }
 
         ss.SetStateZero(scratch);
-        for (int k = 0;
+        for (size_t k = 0;
              k <
              other_fused_circuits[cur_batch_index][cur_internal_index].size();
              k++) {

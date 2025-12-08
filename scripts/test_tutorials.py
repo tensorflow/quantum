@@ -48,6 +48,5 @@ class ExamplesTest(tf.test.TestCase, parameterized.TestCase):
 
         _ = nbclient.execute(nb, timeout=900, kernel_name="python3")
 
-
 if __name__ == "__main__":
     tf.test.main()
