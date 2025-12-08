@@ -56,7 +56,7 @@ class PQC(tf.keras.layers.Layer):
     Output shape:
         tf.Tensor of shape [batch_size, n_operators], expectation values
         for each operator.
-     
+
     This layer is for training parameterized quantum models.
     Given a parameterized circuit, this layer initializes the parameters
     and manages them in a Keras native way.
@@ -175,7 +175,7 @@ class PQC(tf.keras.layers.Layer):
         """Instantiate this layer.
 
         Create a layer that will output expectation values of the given
-        operators when fed quantum data to it's input layer. This layer will
+        operators when fed quantum data to its input layer. This layer will
         accept one input tensor representing a quantum data source (these
         circuits must not contain any symbols) and append the model_circuit to
         them, execute them and then finally output the expectation values.
