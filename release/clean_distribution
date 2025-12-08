@@ -26,7 +26,7 @@ set -eu
 
 # Find the top of the local TFQ git tree. Do it early in case this fails.
 thisdir=$(CDPATH="" cd -- "$(dirname -- "$0")" && pwd -P)
-repo_dir=$(git -C "${thisdir}" rev-parse --show-toplevel)
+repo_dir=$(git -C "${thisdir}" rev-parse --show-toplevel 2>/dev/null)
 
 # Default values for variables that can be changed via command line flags.
 docker_image="quay.io/pypa/manylinux_2_34_x86_64"
@@ -45,25 +45,28 @@ Configuration options:
 
 General options:
   -h  Show this help message and exit
+  -n  Dry run: print commands but don't execute them
   -s  Run 'auditwheel show', not repair (default: run 'auditwheel repair')
   -v  Produce verbose output"
 
-while getopts "m:p:t:hsv" opt; do
-    case "${opt}" in
-        m) docker_image="${OPTARG}" ;;
-        p) py_version="${OPTARG}" ;;
-        s) action="show" ;;
-        t) platform_tag="${OPTARG}" ;;
-        v) verbose="--verbose" ;;
-        h) echo "${usage}"; exit 0 ;;
-        *) echo "${usage}" >&2; exit 1 ;;
-    esac
+dry_run="false"
+while getopts "hm:np:st:v" opt; do
+  case "${opt}" in
+    h) echo "${usage}"; exit 0 ;;
+    m) docker_image="${OPTARG}" ;;
+    n) dry_run="true" ;;
+    p) py_version="${OPTARG}" ;;
+    s) action="show" ;;
+    t) platform_tag="${OPTARG}" ;;
+    v) verbose="--verbose" ;;
+    *) echo "${usage}" >&2; exit 1 ;;
+  esac
 done
 shift $((OPTIND -1))
 if [ ! $# -ge 1 ]; then
-    echo "ERROR: insufficient arguments."
-    echo "${usage}" >&2
-    exit 1
+  echo "ERROR: insufficient arguments."
+  echo "${usage}" >&2
+  exit 1
 fi
 
 wheel_path="$(realpath "${1}")"
@@ -71,17 +74,26 @@ wheel_name="$(basename "${1}")"
 
 args=""
 if [ "${action}" = "repair" ]; then
-    args="${verbose} --exclude libtensorflow_framework.so.2 --plat ${platform_tag} -w /tfq/wheelhouse"
+  args="${verbose} --exclude libtensorflow_framework.so.2 --plat ${platform_tag}"
 fi
 
-echo "Running 'auditwheel ${action}' inside Docker with image ${docker_image}"
-docker run -it --rm --network host \
-    -w /tfq \
-    -v "${repo_dir}":/tfq \
-    -v "${wheel_path}":"/tmp/${wheel_name}" \
-    "${docker_image}" \
-    bash -c "auditwheel ${action} ${args} /tmp/${wheel_name}"
+# Use 'set --' to build the command in the positional parameters ($1, $2, ...)
+set -- docker run -it --rm --network host \
+  -w /tfq \
+  -v "${repo_dir}":/tfq \
+  -v "${wheel_path}":"/tmp/${wheel_name}" \
+  "${docker_image}" \
+  bash -c "auditwheel ${action} ${args} -w /tfq/wheelhouse /tmp/${wheel_name}"
 
-if [ "${action}" = "repair" ]; then
+if [ "${dry_run}" = "true" ]; then
+  # Loop through the positional parameters and simply print them.
+  printf "(Dry run) "
+  printf '%s ' "$@"
+  echo
+else
+  echo "Running 'auditwheel ${action}' in Docker with image ${docker_image}"
+  "$@"
+  if [ "${action}" = "repair" ]; then
     echo "Done. New wheel file written to ${repo_dir}/wheelhouse"
+  fi
 fi

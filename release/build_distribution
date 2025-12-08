@@ -40,7 +40,7 @@ set -eu
 
 # Find the top of the local TFQ git tree. Do it early in case this fails.
 thisdir=$(CDPATH="" cd -- "$(dirname -- "$0")" && pwd -P)
-repo_dir=$(git -C "${thisdir}" rev-parse --show-toplevel)
+repo_dir=$(git -C "${thisdir}" rev-parse --show-toplevel 2>/dev/null || echo "${thisdir}/..")
 
 # Default values for variables that can be changed via command line flags.
 tf_version="2.16"
@@ -58,17 +58,20 @@ Configuration options:
 
 General options:
   -e     Don't run bazel clean at the end (default: do)
+  -n     Dry run: print commands but don't execute them
   -h     Show this help message and exit"
 
-while getopts "c:p:t:eh" opt; do
-    case "${opt}" in
-        c) cuda_version="${OPTARG}" ;;
-        p) py_version="${OPTARG}" ;;
-        t) tf_version="${OPTARG}" ;;
-        e) cleanup="false" ;;
-        h) echo "${usage}"; exit 0 ;;
-        *) echo "${usage}" >&2; exit 1 ;;
-    esac
+dry_run="false"
+while getopts "c:ehnp:t:" opt; do
+  case "${opt}" in
+    c) cuda_version="${OPTARG}" ;;
+    e) cleanup="false" ;;
+    h) echo "${usage}"; exit 0 ;;
+    n) dry_run="true" ;;
+    p) py_version="${OPTARG}" ;;
+    t) tf_version="${OPTARG}" ;;
+    *) echo "${usage}" >&2; exit 1 ;;
+  esac
 done
 shift $((OPTIND -1))
 
@@ -118,29 +121,36 @@ EOF
 
 chmod +x "${build_script}"
 
-echo "Running Docker image ${docker_image}"
-docker run -it --rm --network host \
-    -w /tfq \
-    -v "${repo_dir}":/tfq \
-    -v /tmp/tensorflow_quantum:/build_output \
-    -v "${build_script}:/tmp/build_script.sh" \
-    -e HOST_PERMS="$(id -u):$(id -g)" \
-    -e build_flags="--crosstool_top=${crosstool} ${BUILD_OPTIONS}" \
-    -e cuda_version="${cuda_version}" \
-    -e py_version="${py_version}" \
-    -e tf_version="${tf_version}" \
-    -e docker_image="${docker_image}" \
-    -e crosstool="${crosstool}" \
-    -e cleanup="${cleanup}" \
-    "${docker_image}" \
-    /tmp/build_script.sh
+# Use 'set --' to build the command in the positional parameters ($1, $2, ...)
+set -- docker run -it --rm --network host \
+  -w /tfq \
+  -v "${repo_dir}":/tfq \
+  -v /tmp/tensorflow_quantum:/build_output \
+  -v "${build_script}:/tmp/build_script.sh" \
+  -e HOST_PERMS="$(id -u):$(id -g)" \
+  -e build_flags="--crosstool_top=${crosstool} ${BUILD_OPTIONS}" \
+  -e cuda_version="${cuda_version}" \
+  -e py_version="${py_version}" \
+  -e tf_version="${tf_version}" \
+  -e docker_image="${docker_image}" \
+  -e crosstool="${crosstool}" \
+  -e cleanup="${cleanup}" \
+  "${docker_image}" \
+  /tmp/build_script.sh
 
-# Run basic checks on the wheel file.
-echo
-echo "Doing basic checks on the wheel file."
-pip install -qq check-wheel-contents
-check-wheel-contents /tmp/tensorflow_quantum/*.whl
+if [ "${dry_run}" == "true" ]; then
+  # Loop through the positional parameters and simply print them.
+  printf "(Dry run) "
+  printf '%s ' "$@"
+  echo
+  echo '(Dry run) check-wheel-contents /tmp/tensorflow_quantum/*.whl'
+else
+  "$@"
 
-echo
-echo "Done. Look for wheel in /tmp/tensorflow_quantum/."
-ls -l /tmp/tensorflow_quantum/
+  # Do some basic checks on the wheel file.
+  pip install -qq check-wheel-contents
+  check-wheel-contents /tmp/tensorflow_quantum/*.whl
+
+  echo "Done. Look for wheel in /tmp/tensorflow_quantum/."
+  ls -l /tmp/tensorflow_quantum/
+fi
