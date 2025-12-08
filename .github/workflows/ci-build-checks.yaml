@@ -45,8 +45,6 @@ jobs:
           cache: pip
       - name: Install Bazel on CI
         run: ./scripts/ci_install.sh
-      - name: Configure CI TF
-        run: echo "Y\n" | ./configure.sh
       - name: Build Wheel Test
         run: ./scripts/build_pip_package_test.sh
       - name: Test Wheel
@@ -112,8 +110,6 @@ jobs:
         run: pip install --upgrade pip seaborn==0.10.0
       - name: Install Bazel on CI
         run: ./scripts/ci_install.sh
-      - name: Configure CI TF
-        run: echo "Y\n" | ./configure.sh
       - name: Build Wheel
         run: ./scripts/build_pip_package_test.sh
       - name: Test Notebooks
