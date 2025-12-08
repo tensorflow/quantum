@@ -52,7 +52,7 @@ tensorflow/*
 venv/*
 quantum_env/*
 
-# Ignore Emacs backup and checkpoint files.
+# Ignore Emacs backup, checkpoint, and other files.
 .\#*
 \#*\#
 .git/COMMIT_EDITMSG
