@@ -18,23 +18,25 @@ import unittest
 
 
 class BuildDistributionTest(unittest.TestCase):
+
     def setUp(self):
         # Find the repo root. Default to the current directory if that fails.
         try:
             self.repo_root = subprocess.check_output(
                 ["git", "rev-parse", "--show-toplevel"],
-                universal_newlines=True
-            ).strip()
+                universal_newlines=True).strip()
         except subprocess.CalledProcessError:
             self.repo_root = os.getcwd()
 
-        self.script = os.path.join(self.repo_root, "release", "build_distribution")
+        self.script = os.path.join(self.repo_root, "release",
+                                   "build_distribution")
 
     def test_dry_run(self):
         """Test build_distribution script in dry-run mode."""
         cmd = [self.script, "-n", "-c", "11.2", "-p", "3.9", "-t", "2.10"]
         result = subprocess.run(cmd, capture_output=True, text=True)
-        self.assertEqual(result.returncode, 0, f"Script failed with stderr: {result.stderr}")
+        self.assertEqual(result.returncode, 0,
+                         f"Script failed with stderr: {result.stderr}")
         output = result.stdout
 
         self.assertIn("(Dry run) docker run", output)
@@ -44,13 +46,16 @@ class BuildDistributionTest(unittest.TestCase):
         self.assertIn("py_version=3.9", output)
         self.assertIn("tf_version=2.10", output)
 
-        self.assertIn("(Dry run) check-wheel-contents /tmp/tensorflow_quantum/*.whl", output)
+        self.assertIn(
+            "(Dry run) check-wheel-contents /tmp/tensorflow_quantum/*.whl",
+            output)
 
     def test_defaults(self):
         """Test build_distribution script defaults."""
         cmd = [self.script, "-n"]
         result = subprocess.run(cmd, capture_output=True, text=True)
-        self.assertEqual(result.returncode, 0, f"Script failed with stderr: {result.stderr}")
+        self.assertEqual(result.returncode, 0,
+                         f"Script failed with stderr: {result.stderr}")
         output = result.stdout
         # Check default cuda version (12) and default cleanup (true)
         self.assertIn("cuda_version=12", output)
@@ -60,9 +65,11 @@ class BuildDistributionTest(unittest.TestCase):
         """Test build_distribution script help flag."""
         cmd = [self.script, "-h"]
         result = subprocess.run(cmd, capture_output=True, text=True)
-        self.assertEqual(result.returncode, 0, f"Script failed with stderr: {result.stderr}")
+        self.assertEqual(result.returncode, 0,
+                         f"Script failed with stderr: {result.stderr}")
         self.assertIn("Usage:", result.stdout)
-        self.assertIn("Build a distribution wheel for TensorFlow Quantum.", result.stdout)
+        self.assertIn("Build a distribution wheel for TensorFlow Quantum.",
+                      result.stdout)
 
     def test_invalid_option(self):
         """Test build_distribution script with invalid option."""
@@ -71,8 +78,11 @@ class BuildDistributionTest(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("Usage:", result.stdout + result.stderr)
         stderr = result.stderr.lower()
-        self.assertTrue("illegal option" in stderr or "invalid option" in stderr,
-            f"Expected 'illegal option' or 'invalid option' in stderr, got: {stderr}")
+        self.assertTrue(
+            "illegal option" in stderr or "invalid option" in stderr,
+            f"Expected 'illegal option' or 'invalid option' in stderr, got: {stderr}"
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

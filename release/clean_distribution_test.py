@@ -18,24 +18,26 @@ import unittest
 
 
 class CleanDistributionTest(unittest.TestCase):
+
     def setUp(self):
         # Find the repo root
         try:
             self.repo_root = subprocess.check_output(
                 ["git", "rev-parse", "--show-toplevel"],
-                universal_newlines=True
-            ).strip()
+                universal_newlines=True).strip()
         except subprocess.CalledProcessError:
             self.repo_root = os.getcwd()
 
-        self.script = os.path.join(self.repo_root, "release", "clean_distribution")
+        self.script = os.path.join(self.repo_root, "release",
+                                   "clean_distribution")
 
     def test_dry_run(self):
         """Test clean_distribution script in dry-run mode."""
         wheel_path = "fake.whl"
         cmd = [self.script, "-n", "-p", "3.10", wheel_path]
         result = subprocess.run(cmd, capture_output=True, text=True)
-        self.assertEqual(result.returncode, 0, f"Script failed with stderr: {result.stderr}")
+        self.assertEqual(result.returncode, 0,
+                         f"Script failed with stderr: {result.stderr}")
         output = result.stdout
 
         self.assertIn("(Dry run) docker run", output)
@@ -47,7 +49,8 @@ class CleanDistributionTest(unittest.TestCase):
         wheel_path = "fake.whl"
         cmd = [self.script, "-n", "-s", wheel_path]
         result = subprocess.run(cmd, capture_output=True, text=True)
-        self.assertEqual(result.returncode, 0, f"Script failed with stderr: {result.stderr}")
+        self.assertEqual(result.returncode, 0,
+                         f"Script failed with stderr: {result.stderr}")
         output = result.stdout
 
         self.assertIn("auditwheel show", output)
@@ -57,13 +60,15 @@ class CleanDistributionTest(unittest.TestCase):
         cmd = [self.script, "-n"]
         result = subprocess.run(cmd, capture_output=True, text=True)
         self.assertNotEqual(result.returncode, 0)
-        self.assertIn("ERROR: insufficient arguments", result.stdout + result.stderr)
+        self.assertIn("ERROR: insufficient arguments",
+                      result.stdout + result.stderr)
 
     def test_help(self):
         """Test clean_distribution script help flag."""
         cmd = [self.script, "-h"]
         result = subprocess.run(cmd, capture_output=True, text=True)
-        self.assertEqual(result.returncode, 0, f"Script failed with stderr: {result.stderr}")
+        self.assertEqual(result.returncode, 0,
+                         f"Script failed with stderr: {result.stderr}")
         self.assertIn("Usage:", result.stdout)
         self.assertIn("Run auditwheel on the given wheel file.", result.stdout)
 
@@ -74,8 +79,11 @@ class CleanDistributionTest(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("Usage:", result.stdout + result.stderr)
         stderr = result.stderr.lower()
-        self.assertTrue("illegal option" in stderr or "invalid option" in stderr,
-            f"Expected 'illegal option' or 'invalid option' in stderr, got: {stderr}")
+        self.assertTrue(
+            "illegal option" in stderr or "invalid option" in stderr,
+            f"Expected 'illegal option' or 'invalid option' in stderr, got: {stderr}"
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
