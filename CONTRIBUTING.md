@@ -125,7 +125,7 @@ that supports C++17, and [Bazel](https://bazel.build/) version 6.5.0.
     you can use other methods and tools if you are more comfortable with them:
 
     ```shell
-    python3 -m venv quantum_env
+    python -m venv quantum_env
     source quantum_env/bin/activate
     ```
 
