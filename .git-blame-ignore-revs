@@ -1,12 +1,12 @@
-# Summary: run the following command to configure git to use this file:
+# Usage: run the following command to configure git to use this file:
 #
 #   git config blame.ignoreRevsFile .git-blame-ignore-revs
 #
-# `git-blame` can be instructed to ignore certain commits. This is useful to do
-# for commits that only involve large refactoring and reformatting operations.
-# The format of this file is one full 40-character commit hash (SHA-1) per
-# line. Blank lines and comments (such as this) are allowed.
+# Summary: `git-blame` can be instructed to ignore certain commits. This is
+# useful to do for commits that only involve large refactoring and reformatting
+# operations. The format of this file is one full 40-character commit hash
+# (SHA-1) per line. Blank lines and comments (such as this) are allowed.
 # ==============================================================================
 
-# Running code through ./scripts/format_all.sh (PR #926).
+# Output of running ./scripts/format_all.sh (PR #926).
 17b108d8485cb7848f8eae5b87c9cc521987bca9
