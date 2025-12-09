@@ -1,14 +1,45 @@
 # This file includes external dependencies that are required to compile the
 # TensorFlow op.
 
-
-
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
+# TensorFlow's .bzl files, loaded later in this file, also load rules_python
+# but we need a slightly newer version that is still compatible with TF's.
+http_archive(
+    name = "rules_python",
+    sha256 = "c68bdc4fbec25de5b5493b8819cfc877c4ea299c0dcb15c244c5a00208cde311",
+    strip_prefix = "rules_python-0.31.0",
+    url = "https://github.com/bazelbuild/rules_python/releases/download/0.31.0/rules_python-0.31.0.tar.gz",
+)
 
+load("@rules_python//python:repositories.bzl", "py_repositories")
+
+py_repositories()
+
+local_repository(
+    name = "python",
+    path = "third_party/python_legacy",
+)
+
+load("@python//:defs.bzl", "interpreter")
+
+load("@rules_python//python:pip.bzl", "pip_parse")
+
+pip_parse(
+    name = "pypi",
+    requirements_lock = "//:requirements.txt",
+    python_interpreter = interpreter,
+    extra_pip_args = [
+        "--index-url",
+        "https://pypi.org/simple/",
+    ],
+)
+
+load("@pypi//:requirements.bzl", "install_deps")
+
+install_deps()
 
 EIGEN_COMMIT = "aa6964bf3a34fd607837dd8123bc42465185c4f8"
-
 
 http_archive(
     name = "eigen",
@@ -37,16 +68,13 @@ http_archive(
     urls = ["https://github.com/quantumlib/qsim/archive/refs/tags/v0.13.3.zip"],
 )
 
+
 http_archive(
     name = "org_tensorflow",
-    patches = [
-        "//third_party/tf:tf.patch",
-    ],
-    sha256 = "f771db8d96ca13c72f73c85c9cfb6f5358e2de3dd62a97a9ae4b672fe4c6d094",
-    strip_prefix = "tensorflow-2.15.0",
-    urls = [
-        "https://github.com/tensorflow/tensorflow/archive/refs/tags/v2.15.0.zip",
-    ],
+    patches = ["//third_party/tf:tf.patch"],
+    sha256 = "c8c8936e7b6156e669e08b3c388452bb973c1f41538149fce7ed4a4849c7a012",
+    strip_prefix = "tensorflow-2.16.2",
+    urls = ["https://github.com/tensorflow/tensorflow/archive/refs/tags/v2.16.2.zip"],
 )
 
 
@@ -73,8 +101,8 @@ tf_configure(name = "local_config_tf")
 http_archive(
     name = "six_archive",
     build_file = "@com_google_protobuf//:six.BUILD",
-    sha256 = "105f8d68616f8248e24bf0e9372ef04d3cc10104f1980f54d57b2ce73a5ad56a",
-    url = "https://pypi.python.org/packages/source/s/six/six-1.10.0.tar.gz#md5=34eed507548117b2ab523ab14b2f8b55",
+    sha256 = "ff70335d468e7eb6ec65b95b99d3a2836546063f63acc5171de367e834932a81",
+    url = "https://files.pythonhosted.org/packages/94/e7/b2c673351809dca68a0e064b6af791aa332cf192da575fd474ed7d6f16a2/six-1.17.0.tar.gz",
 )
 
 bind(
