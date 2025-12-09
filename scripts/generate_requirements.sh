@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Copyright 2025 The TensorFlow Quantum Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,19 +23,20 @@ thisdir=$(CDPATH="" cd -- "$(dirname -- "$0")" && pwd -P)
 repo_dir=$(git -C "${thisdir}" rev-parse --show-toplevel 2>/dev/null || \
   echo "${thisdir}/..")
 
-echo "Running pip-compile …"
+echo "Running pip-compile in ${repo_dir} …"
 pip-compile -q --no-strip-extras --allow-unsafe
 
+declare -a inplace_edit=(-i)
 if [[ "$(uname -s)" == "Darwin" ]]; then
-  # macOS's default sed handles -i option differently.
-  sed_arg="-i ''"
-else
-  sed_arg="-i"
+  # macOS uses BSD sed, which requires a suffix for -i.
+  inplace_edit+=('')
 fi
 
 echo "Adjusting output of pip-compile …"
-sed "${sed_arg}" -e '/^--index-url/d' requirements.txt
-sed "${sed_arg}" -e '/^--extra-index-url/d' requirements.txt
-sed "${sed_arg}" -e 's/^pyyaml==.*/pyyaml/' requirements.txt
+sed "${inplace_edit[@]}" \
+  -e '/^--index-url/d' \
+  -e '/^--extra-index-url/d' \
+  -e 's/^pyyaml==.*/pyyaml/' \
+  requirements.txt
 
 echo "Done."
