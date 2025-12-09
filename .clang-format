@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# ============================================================================
 
 # Summary: configure clang-format for this project's style guidelines.
 # This should be kept in sync with TensorFlow's .clang-format.
