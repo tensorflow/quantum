@@ -1,0 +1,100 @@
+#!/usr/bin/env bash
+# Copyright 2025 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# =============================================================================
+
+# Summary: bundle external shared libraries into the final TFQ wheel.
+# Run this script with the option "-h" to get a usage summary.
+#
+# This uses auditwheel to "repair" the wheel: copy external shared libraries
+# into the wheel itself and modify the RPATH entries such that these libraries
+# will be picked up at runtime. This accomplishes a similar result as if the
+# libraries had been statically linked.
+
+set -eu
+
+# Find the top of the local TFQ git tree. Do it early in case this fails.
+thisdir=$(CDPATH="" cd -- "$(dirname -- "$0")" && pwd -P)
+repo_dir=$(git -C "${thisdir}" rev-parse --show-toplevel 2>/dev/null || \
+  echo "${thisdir}/..")
+
+# Default values for variables that can be changed via command line flags.
+docker_image="quay.io/pypa/manylinux_2_34_x86_64"
+platform="manylinux_2_17_x86_64"
+py_version=$(python3 --version | cut -d' ' -f2 | cut -d. -f1,2)
+action="repair"
+verbose=""
+
+usage="Usage: ${0} [OPTIONS] /path/to/wheel.whl
+Run auditwheel on the given wheel file. Available options:
+
+Configuration options:
+  -m IMG  Use manylinux Docker image IMG (default: ${docker_image})
+  -p X.Y  Use Python version X.Y (default: ${py_version})
+  -t TAG  Pass --plat TAG to auditwheel (default: ${platform})
+
+General options:
+  -h  Show this help message and exit
+  -n  Dry run: print commands but don't execute them
+  -s  Run 'auditwheel show', not repair (default: run 'auditwheel repair')
+  -v  Produce verbose output"
+
+dry_run="false"
+while getopts "hm:np:st:v" opt; do
+  case "${opt}" in
+    h) echo "${usage}"; exit 0 ;;
+    m) docker_image="${OPTARG}" ;;
+    n) dry_run="true" ;;
+    p) py_version="${OPTARG}" ;;
+    s) action="show" ;;
+    t) platform="${OPTARG}" ;;
+    v) verbose="--verbose" ;;
+    *) echo "${usage}" >&2; exit 1 ;;
+  esac
+done
+shift $((OPTIND -1))
+if [ ! $# -ge 1 ]; then
+  echo "ERROR: insufficient arguments."
+  echo "${usage}" >&2
+  exit 1
+fi
+
+wheel_path="$(realpath "${1}")"
+wheel_name="$(basename "${1}")"
+
+args=""
+if [ "${action}" = "repair" ]; then
+  args="${verbose} --exclude libtensorflow_framework.so.2 --plat ${platform}"
+fi
+
+# Use 'set --' to build the command in the positional parameters ($1, $2, ...)
+set -- docker run -it --rm --network host \
+  -w /tfq \
+  -v "${repo_dir}":/tfq \
+  -v "${wheel_path}":"/tmp/${wheel_name}" \
+  "${docker_image}" \
+  bash -c "auditwheel ${action} ${args} -w /tfq/wheelhouse /tmp/${wheel_name}"
+
+if [ "${dry_run}" = "true" ]; then
+  # Loop through the positional parameters and simply print them.
+  printf "(Dry run) "
+  printf '%s ' "$@"
+  echo
+else
+  echo "Running 'auditwheel ${action}' in Docker with image ${docker_image}"
+  "$@"
+  if [ "${action}" = "repair" ]; then
+    echo "Done. New wheel file written to ${repo_dir}/wheelhouse"
+  fi
+fi
