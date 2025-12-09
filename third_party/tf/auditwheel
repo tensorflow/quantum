@@ -1,9 +1,26 @@
-TF_SHARED_LIBRARY_NAME=$(grep -r TF_SHARED_LIBRARY_NAME .bazelrc | awk -F= '{print$2}')
+#!/usr/bin/env bash
 
-POLICY_JSON=$(find / -name manylinux-policy.json)
+set -e
 
-sed -i "s/libresolv.so.2\"/libresolv.so.2\", $TF_SHARED_LIBRARY_NAME/g" $POLICY_JSON
+LIB_NAME=$(grep -r TF_SHARED_LIBRARY_NAME .tf_configure.bazelrc | \
+    awk -F= '{print$3}')
 
-cat $POLICY_JSON
+# Find the policy file inside the Docker container environment.
+PKG_ROOT=$(pipx runpip auditwheel show auditwheel | \
+  grep "^Location:" | \
+  sed 's/^Location: //')
+
+POLICY_FILE="${PKG_ROOT}/auditwheel/policy/manylinux-policy.json"
+echo "Found policy file at ${POLICY_FILE}"
+
+# Splice in the name of the TensorFlow shared library file.
+sed -i "s|libresolv.so.2\"|libresolv.so.2\", \"${LIB_NAME}\"|g" "${POLICY_FILE}"
+
+for arg in "$@"; do
+  if [ "${arg}" = "--verbose" ]; then
+    cat "${POLICY_FILE}"
+    break
+  fi
+done
 
 auditwheel $@
