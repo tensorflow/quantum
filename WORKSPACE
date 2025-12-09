@@ -101,8 +101,8 @@ tf_configure(name = "local_config_tf")
 http_archive(
     name = "six_archive",
     build_file = "@com_google_protobuf//:six.BUILD",
-    sha256 = "105f8d68616f8248e24bf0e9372ef04d3cc10104f1980f54d57b2ce73a5ad56a",
-    url = "https://pypi.python.org/packages/source/s/six/six-1.10.0.tar.gz#md5=34eed507548117b2ab523ab14b2f8b55",
+    sha256 = "ff70335d468e7eb6ec65b95b99d3a2836546063f63acc5171de367e834932a81",
+    url = "https://files.pythonhosted.org/packages/94/e7/b2c673351809dca68a0e064b6af791aa332cf192da575fd474ed7d6f16a2/six-1.17.0.tar.gz",
 )
 
 bind(
