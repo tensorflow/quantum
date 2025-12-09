@@ -37,10 +37,10 @@ using ::tfq::proto::Program;
 
 class TfqPsDecomposeOp : public tensorflow::OpKernel {
  public:
-  explicit TfqPsDecomposeOp(tensorflow::OpKernelConstruction *context)
+  explicit TfqPsDecomposeOp(tensorflow::OpKernelConstruction* context)
       : OpKernel(context) {}
 
-  void Compute(tensorflow::OpKernelContext *context) override {
+  void Compute(tensorflow::OpKernelContext* context) override {
     std::vector<Program> programs;
 
     const int num_inputs = context->num_inputs();
@@ -50,7 +50,7 @@ class TfqPsDecomposeOp : public tensorflow::OpKernel {
 
     OP_REQUIRES_OK(context, ParsePrograms(context, "programs", &programs));
 
-    tensorflow::Tensor *output = nullptr;
+    tensorflow::Tensor* output = nullptr;
     OP_REQUIRES_OK(context, context->allocate_output(
                                 0, context->input(0).shape(), &output));
     auto output_tensor = output->flat<tensorflow::tstring>();
@@ -71,7 +71,7 @@ class TfqPsDecomposeOp : public tensorflow::OpKernel {
           int num_extra_moments = 0;
           for (int k = 0; k < cur_moment.operations().size(); k++) {
             Operation cur_op = cur_moment.operations().at(k);
-            auto &cur_op_map = *cur_op.mutable_args();
+            auto& cur_op_map = *cur_op.mutable_args();
             if (cur_op.gate().id() == "PISP") {
               auto exponent = cur_op_map.at("exponent");
               auto phase_exponent = cur_op_map.at("phase_exponent");
@@ -161,17 +161,17 @@ class TfqPsDecomposeOp : public tensorflow::OpKernel {
  private:
   // Helper functions for decompositions of ISwapPowGate, PhasedX, FSIM,
   //  PhasedISwapPow.
-  Operation getOpForISP(Operation &cur_op, std::string id, std::string symbol) {
+  Operation getOpForISP(Operation& cur_op, std::string id, std::string symbol) {
     // Step 1. parse the current op.
-    auto &cur_op_map = *cur_op.mutable_args();
+    auto& cur_op_map = *cur_op.mutable_args();
     float cur_exponent_scalar =
         cur_op_map["exponent_scalar"].arg_value().float_value();
-    auto &cur_op_qubits = cur_op.qubits();
+    auto& cur_op_qubits = cur_op.qubits();
     // Step 2. create a new op.
     Operation new_op;
     new_op.mutable_gate()->set_id(id);
     // Step 3. add global_shift, exponent_scalar, exponent.
-    auto &new_op_map = *new_op.mutable_args();
+    auto& new_op_map = *new_op.mutable_args();
     new_op_map["global_shift"].mutable_arg_value()->set_float_value(-0.5);
     new_op_map["exponent_scalar"].mutable_arg_value()->set_float_value(
         cur_exponent_scalar * -0.5);
@@ -186,11 +186,11 @@ class TfqPsDecomposeOp : public tensorflow::OpKernel {
     return new_op;
   }
 
-  Operation getOpForPXP(Operation &cur_op, std::string id, std::string key,
+  Operation getOpForPXP(Operation& cur_op, std::string id, std::string key,
                         bool sign_flip = false) {
     // Step 1. parse the current op.
-    auto &cur_op_map = *cur_op.mutable_args();
-    auto &cur_op_qubits = cur_op.qubits();
+    auto& cur_op_map = *cur_op.mutable_args();
+    auto& cur_op_qubits = cur_op.qubits();
     auto target_exponent = cur_op_map[key];
     float target_exponent_scalar =
         cur_op_map[absl::StrCat(key, "_scalar")].arg_value().float_value();
@@ -199,7 +199,7 @@ class TfqPsDecomposeOp : public tensorflow::OpKernel {
     Operation new_op;
     new_op.mutable_gate()->set_id(id);
     // Step 3. add global_shift, exponent_scalar, exponent.
-    auto &new_op_map = *new_op.mutable_args();
+    auto& new_op_map = *new_op.mutable_args();
     new_op_map["global_shift"].mutable_arg_value()->set_float_value(0.0);
     switch (target_exponent.arg_case()) {
       case Arg::ArgCase::kSymbol:
@@ -228,10 +228,10 @@ class TfqPsDecomposeOp : public tensorflow::OpKernel {
     return new_op;
   }
 
-  Operation getOpForPISP(Operation &cur_op, bool sign_flip, bool use_target) {
+  Operation getOpForPISP(Operation& cur_op, bool sign_flip, bool use_target) {
     // Step 1. parse the current op.
-    auto &cur_op_map = *cur_op.mutable_args();
-    auto &cur_op_qubits = cur_op.qubits();
+    auto& cur_op_map = *cur_op.mutable_args();
+    auto& cur_op_qubits = cur_op.qubits();
     auto target_exponent = cur_op_map["phase_exponent"];
     float target_exponent_scalar =
         cur_op_map["phase_exponent_scalar"].arg_value().float_value();
@@ -240,7 +240,7 @@ class TfqPsDecomposeOp : public tensorflow::OpKernel {
     Operation new_op;
     new_op.mutable_gate()->set_id("ZP");
     // Step 3. add global_shift, exponent_scalar, exponent.
-    auto &new_op_map = *new_op.mutable_args();
+    auto& new_op_map = *new_op.mutable_args();
     new_op_map["global_shift"].mutable_arg_value()->set_float_value(0.0);
     switch (target_exponent.arg_case()) {
       case Arg::ArgCase::kSymbol:
@@ -269,11 +269,11 @@ class TfqPsDecomposeOp : public tensorflow::OpKernel {
     return new_op;
   }
 
-  Operation getOpForFSIM(Operation &cur_op, std::string id, std::string key,
+  Operation getOpForFSIM(Operation& cur_op, std::string id, std::string key,
                          bool use_global_shift = false) {
     // Step 1. parse the current op.
-    auto &cur_op_map = *cur_op.mutable_args();
-    auto &cur_op_qubits = cur_op.qubits();
+    auto& cur_op_map = *cur_op.mutable_args();
+    auto& cur_op_qubits = cur_op.qubits();
     auto target_exponent = cur_op_map[key];
     float target_exponent_scalar =
         cur_op_map[absl::StrCat(key, "_scalar")].arg_value().float_value();
@@ -283,7 +283,7 @@ class TfqPsDecomposeOp : public tensorflow::OpKernel {
     Operation new_op;
     new_op.mutable_gate()->set_id(id);
     // Step 3. add global_shift, exponent_scalar, exponent.
-    auto &new_op_map = *new_op.mutable_args();
+    auto& new_op_map = *new_op.mutable_args();
     new_op_map["global_shift"].mutable_arg_value()->set_float_value(
         global_shift);
     switch (target_exponent.arg_case()) {
@@ -320,7 +320,7 @@ REGISTER_KERNEL_BUILDER(Name("TfqPsDecompose").Device(tensorflow::DEVICE_CPU),
 REGISTER_OP("TfqPsDecompose")
     .Input("programs: string")
     .Output("ps_programs: string")
-    .SetShapeFn([](tensorflow::shape_inference::InferenceContext *c) {
+    .SetShapeFn([](tensorflow::shape_inference::InferenceContext* c) {
       tensorflow::shape_inference::ShapeHandle programs_shape;
       TF_RETURN_IF_ERROR(c->WithRank(c->input(0), 1, &programs_shape));
 

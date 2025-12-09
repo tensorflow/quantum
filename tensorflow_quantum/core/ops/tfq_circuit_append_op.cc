@@ -31,10 +31,10 @@ using ::tfq::proto::Program;
 
 class TfqCircuitAppendOp : public tensorflow::OpKernel {
  public:
-  explicit TfqCircuitAppendOp(tensorflow::OpKernelConstruction *context)
+  explicit TfqCircuitAppendOp(tensorflow::OpKernelConstruction* context)
       : OpKernel(context) {}
 
-  void Compute(tensorflow::OpKernelContext *context) override {
+  void Compute(tensorflow::OpKernelContext* context) override {
     std::vector<Program> programs;
     std::vector<Program> programs_to_append;
 
@@ -46,7 +46,7 @@ class TfqCircuitAppendOp : public tensorflow::OpKernel {
     OP_REQUIRES_OK(context, GetProgramsAndProgramsToAppend(
                                 context, &programs, &programs_to_append));
 
-    tensorflow::Tensor *output = nullptr;
+    tensorflow::Tensor* output = nullptr;
     OP_REQUIRES_OK(context, context->allocate_output(
                                 0, context->input(0).shape(), &output));
     auto output_tensor = output->flat<tensorflow::tstring>();
@@ -56,7 +56,7 @@ class TfqCircuitAppendOp : public tensorflow::OpKernel {
       for (int i = start; i < end; i++) {
         for (int j = 0; j < programs_to_append.at(i).circuit().moments().size();
              j++) {
-          Moment *new_moment = programs.at(i).mutable_circuit()->add_moments();
+          Moment* new_moment = programs.at(i).mutable_circuit()->add_moments();
           *new_moment = programs_to_append.at(i).circuit().moments(j);
         }
         programs.at(i).SerializeToString(&temp);
@@ -80,7 +80,7 @@ REGISTER_OP("TfqAppendCircuit")
     .Input("programs: string")
     .Input("programs_to_append: string")
     .Output("programs_extended: string")
-    .SetShapeFn([](tensorflow::shape_inference::InferenceContext *c) {
+    .SetShapeFn([](tensorflow::shape_inference::InferenceContext* c) {
       tensorflow::shape_inference::ShapeHandle programs_shape;
       TF_RETURN_IF_ERROR(c->WithRank(c->input(0), 1, &programs_shape));
 
