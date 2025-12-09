@@ -113,7 +113,14 @@ that supports C++17, and [Bazel](https://bazel.build/) version 6.5.0.
     cd quantum
     ```
 
-3.  Set up a Python virtual environment. Here is an example of doing that with
+3.  Configure git to ignore certain commits (such as large reformatting or
+    refactoring operations) when producing output from `git blame`:
+
+    ```shell
+    git config blame.ignoreRevsFile .git-blame-ignore-revs
+    ```
+
+4.  Set up a Python virtual environment. Here is an example of doing that with
     Python's built-in [venv](https://docs.python.org/3/library/venv.html), but
     you can use other methods and tools if you are more comfortable with them:
 
@@ -122,7 +129,7 @@ that supports C++17, and [Bazel](https://bazel.build/) version 6.5.0.
     source quantum_env/bin/activate
     ```
 
-4.  Install the TFQ Python requirements into the virtual environment:
+5.  Install the TFQ Python requirements into the virtual environment:
 
     ```shell
     pip install -r requirements.txt
