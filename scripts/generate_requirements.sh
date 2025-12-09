@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 # Copyright 2025 The TensorFlow Quantum Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,7 +14,8 @@
 # limitations under the License.
 # ==============================================================================
 
-# Summary: regenerate requirements.txt using pip-compile & munging the result.
+# Summary: produce requirements.txt using pip-compile & munging the result.
+# Usage: ./generate_requirements.sh
 
 set -eu
 
