@@ -17,7 +17,7 @@
 set -uo pipefail
 
 PLATFORM="$(uname -s | tr 'A-Z' 'a-z')"
-
+ARCH=$(uname -m)
 
 # --- helpers ---------------------------------------------------------------
 function write_bazelrc() {
@@ -39,6 +39,16 @@ function is_macos() {
 
 function is_windows() {
   [[ "${PLATFORM}" =~ msys_nt*|mingw*|cygwin*|uwin* ]]
+}
+
+function inside_docker() {
+  if [[ -f /.dockerenv ]]; then
+    return 1
+  elif [[ "${PLATFORM}" = "linux" ]] && grep -q docker /proc/1/cgroup; then
+    return 1
+  else
+    return 0
+  fi
 }
 
 function write_legacy_python_repo() {
@@ -116,6 +126,11 @@ fi
 PY_ABS="$("${PY}" -c 'import os,sys; print(os.path.abspath(sys.executable))')"
 PYTHON_BIN_PATH="${PY_ABS}"
 
+# --- identify ourselves (useful mainly when redirecting output) ------------
+echo "Configuring TensorFlow Quantum build."
+info_string="Running on a ${ARCH} $(uname -s) system"
+inside_docker && echo "${info_string}." || echo "${info_string} inside Docker."
+echo
 
 # --- choose CPU/GPU like upstream script (default CPU) ---------------------
 TF_NEED_CUDA=""
