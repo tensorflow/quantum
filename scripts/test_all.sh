@@ -14,7 +14,7 @@
 # limitations under the License.
 # ==============================================================================
 echo "Testing All Bazel py_test and cc_tests.";
-test_outputs=$(bazel test -c opt --test_output=errors --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=1" --cxxopt="-std=c++17" --cxxopt="-msse2" --cxxopt="-msse3" --cxxopt="-msse4" //tensorflow_quantum/...)
+test_outputs=$(bazel test -c opt --experimental_repo_remote_exec --test_output=errors --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=1" --cxxopt="-std=c++17" --cxxopt="-msse2" --cxxopt="-msse3" --cxxopt="-msse4" //tensorflow_quantum/...)
 exit_code=$?
 if [ "$exit_code" == "0" ]; then
 	echo "Testing Complete!";
