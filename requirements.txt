@@ -4,7 +4,6 @@
 #
 #    pip-compile --allow-unsafe --no-strip-extras
 #
-
 absl-py==2.1.0
     # via
     #   keras
@@ -189,7 +188,7 @@ python-dateutil==2.9.0.post0
     #   pandas
 pytz==2025.2
     # via pandas
-pyyaml
+pyyaml==6.0.3
     # via tensorflow-docs
 pyzmq==27.1.0
     # via jupyter-client
@@ -270,7 +269,7 @@ yapf==0.43.0
     # via -r requirements.in
 
 # The following packages are considered to be unsafe in a requirements file:
-setuptools==68.2.2
+setuptools==78.1.1
     # via
     #   tensorboard
     #   tensorflow
