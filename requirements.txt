@@ -4,7 +4,6 @@
 #
 #    pip-compile --allow-unsafe --no-strip-extras
 #
-
 absl-py==2.1.0
     # via
     #   keras
@@ -43,7 +42,7 @@ duet==0.2.9
     # via cirq-core
 flatbuffers==25.9.23
     # via tensorflow
-fonttools==4.60.1
+fonttools==4.60.2
     # via matplotlib
 gast==0.6.0
     # via tensorflow
@@ -189,7 +188,7 @@ python-dateutil==2.9.0.post0
     #   pandas
 pytz==2025.2
     # via pandas
-pyyaml
+pyyaml==6.0.3
     # via tensorflow-docs
 pyzmq==27.1.0
     # via jupyter-client
