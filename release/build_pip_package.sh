@@ -16,6 +16,9 @@
 
 set -e
 
+# Ensure packaging tools are present in THIS interpreter.
+pip install -qq setuptools wheel build --root-user-action ignore
+
 EXPORT_DIR="bazel-bin/release/build_pip_package.runfiles/__main__"
 
 function main() {
