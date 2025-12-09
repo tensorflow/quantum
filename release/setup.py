@@ -31,6 +31,8 @@ from setuptools import find_packages, setup
 from setuptools.command.install import install
 from setuptools.dist import Distribution
 
+CUR_VERSION = "0.7.4"
+
 DOCLINES = __doc__.split("\n")
 
 
@@ -48,20 +50,20 @@ REQUIRED_PACKAGES = [
     "cirq-google==1.3.0",
     "sympy==1.14",
     "tf-keras~=2.16.0",
-    # The following makes it easier to the right version on Colab. Once TFQ
-    # works with the latest version of TF, this may become unnecessary.
+    # The following makes it easier to get the right version on Colab. Once
+    # TFQ works with the latest version of TF, this may become unnecessary.
     "protobuf==4.25.8",
 ]
 
-# Placed as extras to avoid overwriting existing nightly TF installs.
-# Users can run "pip install tensorflow-quantum[and-tensorflow]" to get it all.
+# TF requirement is placed as an extras to avoid overwriting existing nightly TF
+# installations. Users can run "pip install tensorflow-quantum[and-tensorflow]"
+# to get everything in one go (or "pip install tensorflow tensorflow-quantum").
 EXTRA_PACKAGES = {}
 EXTRA_PACKAGES["and-tensorflow"] = ["tensorflow>=2.16,<2.17"]
-EXTRA_PACKAGES["and_tensorflow"] = EXTRA_PACKAGES["and-tensorflow"]
 # "extras" was used before 0.7.4. Prefer "and-tensorflow" in 0.7.4+.
 EXTRA_PACKAGES["extras"] = EXTRA_PACKAGES["and-tensorflow"]
-
-CUR_VERSION = "0.7.4"
+# Add an alias in case people type an underscore instead of a dash.
+EXTRA_PACKAGES["and_tensorflow"] = EXTRA_PACKAGES["and-tensorflow"]
 
 
 class BinaryDistribution(Distribution):
