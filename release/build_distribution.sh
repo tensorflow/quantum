@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 # Copyright 2025 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -92,7 +92,7 @@ trap 'rm -f "${build_script}" || true' EXIT
 
 # The printf'ed section dividers are to make it easier to search the output.
 cat <<'EOF' > "${build_script}"
-#!/usr/bin/env bash
+#!/bin/bash
 set -o errexit
 cd /tfq
 PREFIX='[DOCKER] '
