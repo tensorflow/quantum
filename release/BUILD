@@ -82,26 +82,3 @@ sh_binary(
         "//tensorflow_quantum/python/optimizers:spsa_minimizer",
     ],
 )
-
-exports_files([
-    "build_distribution",
-    "clean_distribution",
-])
-
-py_test(
-    name = "build_distribution_test",
-    srcs = ["build_distribution_test.py"],
-    data = [
-        "build_distribution",
-    ],
-    python_version = "PY3",
-)
-
-py_test(
-    name = "clean_distribution_test",
-    srcs = ["clean_distribution_test.py"],
-    data = [
-        "clean_distribution",
-    ],
-    python_version = "PY3",
-)
