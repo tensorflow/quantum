@@ -4,7 +4,14 @@ Welcome, and thank you for your interest in contributing to our project! We're
 excited to work with you. To ensure a smooth and effective collaboration, please
 follow these guidelines.
 
-## Getting Started
+Table of contents quick links:
+
+*   [Getting started](#getting-started)
+*   [Development process](#development-process)
+*   [Coding conventions](#coding-conventions)
+*   [Contribution workflow](#contribution-workflow)
+
+## Getting started
 
 Before you write any code, please complete the following steps. This will set
 you up for success and ensure your contributions can be merged smoothly.
