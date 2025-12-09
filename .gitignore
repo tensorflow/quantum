@@ -16,8 +16,9 @@
 *.pickle
 *.bak
 
-# ignore compiled python files
+# Ignore compiled Python files and wheels.
 *.pyc
+*.whl
 
 # ignore idea SDK
 .idea/*
@@ -27,6 +28,7 @@
 *__pycache__/*
 *.cache/*
 *.ipynb_checkpoints*
+.ipynb_checkpoints
 
 # Mac only
 .DS_Store
@@ -46,8 +48,10 @@ third_party/python_legacy
 # Local TF Copy
 tensorflow/*
 
-# virtual enviroments
-venv/*
+# Ignore Python virtual enviroments
+venv/
+quantum_env/
+quantum_venv/
 
 # ignore emacs temp files
 *#
