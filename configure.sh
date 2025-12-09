@@ -73,9 +73,6 @@ EOF
   echo "Python interpreter = ${PYTHON_BIN_PATH}"
 }
 
-# --- start fresh -----------------------------------------------------------
-rm -f .bazelrc .tf_configure.bazelrc
-
 # --- parse args ------------------------------------------------------------
 USER_PY=""
 for arg in "$@"; do
@@ -185,6 +182,9 @@ echo "  PYTHON_BIN_PATH=${PYTHON_BIN_PATH}"
 echo "  TF_HEADER_DIR=${HDR}"
 echo "  TF_SHARED_LIBRARY_DIR=${LIBDIR}"
 echo "  TF_SHARED_LIBRARY_NAME=${LIBNAME}"
+
+# --- start fresh -----------------------------------------------------------
+rm -f .bazelrc .tf_configure.bazelrc
 
 # --- write .tf_configure.bazelrc (repo_env for repository rules) -----------
 write_tf_rc "build --repo_env=PYTHON_BIN_PATH=${PYTHON_BIN_PATH}"
