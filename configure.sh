@@ -254,6 +254,8 @@ if [[ "${TF_NEED_CUDA}" == "1" ]]; then
   fi
   write_bazelrc "build --config=cuda"
   write_bazelrc "test --config=cuda"
+else
+  write_bazelrc "build --define=using_cuda=false"
 fi
 
 # Follow TensorFlow's approach and load an optional user bazelrc file.
