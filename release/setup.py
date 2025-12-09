@@ -24,12 +24,10 @@ University of Waterloo and the Quantum AI team at Google along with help
 from many other contributors within Google.
 """
 
-from __future__ import absolute_import, division, print_function
-
 import sys
 from datetime import date
 
-from setuptools import Extension, find_packages, setup
+from setuptools import find_packages, setup
 from setuptools.command.install import install
 from setuptools.dist import Distribution
 
@@ -98,7 +96,6 @@ setup(
     install_requires=REQUIRED_PACKAGES,
     extras_require=EXTRA_PACKAGES,
     include_package_data=True,
-    # ext_modules=[Extension('_foo', ['stub.cc'])],
     zip_safe=False,
     distclass=BinaryDistribution,
     classifiers=[
