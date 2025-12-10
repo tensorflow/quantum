@@ -36,6 +36,7 @@ py_library(
     name = "quantum_context",
     srcs = ["quantum_context.py"],
     srcs_version = "PY3",
+    deps = ["@pypi//tensorflow"],
 )
 
 py_test(
@@ -52,6 +53,7 @@ py_library(
     deps = [
         "//tensorflow_quantum/core/proto:program_py_proto",
         "//tensorflow_quantum/core/serialize:serializer",
+        "@pypi//tensorflow",
     ],
 )
 
