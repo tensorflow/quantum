@@ -174,7 +174,9 @@ lib_dir = lib_path if os.path.isdir(lib_path) else os.path.dirname(lib_path)
 print(lib_dir)
 
 cands = (glob.glob(os.path.join(lib_dir, 'libtensorflow_framework.so*')) or
+         glob.glob(os.path.join(lib_dir, 'libtensorflow_framework*.dylib')) or
          glob.glob(os.path.join(lib_dir, 'libtensorflow.so*')) or
+         glob.glob(os.path.join(lib_dir, 'libtensorflow*.dylib')) or
          glob.glob(os.path.join(lib_dir, '_pywrap_tensorflow_internal.*')))
 print(os.path.basename(cands[0]) if cands else 'libtensorflow_framework.so.2')
 PY

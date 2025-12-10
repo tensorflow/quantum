@@ -17,7 +17,7 @@ TensorFlow Quantum is supported on Python 3.9, 3.10, and 3.11 and depends direct
 ### Requirements
 
 * pip 19.0 or later (requires `manylinux2014` support)
-* [TensorFlow == 2.15.0](https://www.tensorflow.org/install/pip)
+* [TensorFlow >= 2.16, < 2.17](https://www.tensorflow.org/install/pip)
 
 See the [TensorFlow install guide](https://www.tensorflow.org/install/pip) to
 set up your Python development environment and an (optional) virtual environment.
@@ -27,7 +27,7 @@ Upgrade `pip` and install TensorFlow
 <!-- common_typos_disable -->
 <pre class="devsite-click-to-copy">
   <code class="devsite-terminal">pip3 install --upgrade pip</code>
-  <code class="devsite-terminal">pip3 install tensorflow==2.15.0</code>
+  <code class="devsite-terminal">pip3 install "tensorflow>=2.16,<2.17"</code>
 </pre>
 <!-- common_typos_enable -->
 
@@ -54,6 +54,13 @@ Nightly builds which might depend on newer version of TensorFlow can be installe
 ## Build from source
 
 The following steps are tested for Ubuntu-like systems.
+
+### macOS (Apple Silicon) Users
+
+For macOS users, especially on Apple Silicon (M1/M2/etc.), you can often skip building TensorFlow from source (Step 4) if a compatible version is available via pip.
+Ensure you have `tensorflow` installed (`pip install "tensorflow>=2.16,<2.17"`).
+Then proceed to clone TensorFlow Quantum (Step 5) and build it (Step 6).
+Note that `configure.sh` will detect your installed TensorFlow libraries.
 
 ### 1. Set up a Python 3 development environment
 
@@ -84,7 +91,7 @@ As noted in the TensorFlow
 guide, the <a href="https://bazel.build/" class="external">Bazel</a>
 build system will be required.
 
-Our latest source builds use TensorFlow 2.15.0. To ensure compatibility we use `bazel` version 6.5.0. To remove any existing version of Bazel:
+Our latest source builds use TensorFlow 2.16.x. To ensure compatibility we use `bazel` version 6.5.0. To remove any existing version of Bazel:
 <!-- common_typos_disable -->
 <pre class="devsite-click-to-copy">
   <code class="devsite-terminal">sudo apt-get remove bazel</code>
@@ -121,7 +128,7 @@ Finally, confirm installation of the correct `bazel` version:
 ### 4. Build TensorFlow from source
 
 Here we adapt instructions from the TensorFlow [build from source](https://www.tensorflow.org/install/source)
-guide, see the link for further details. TensorFlow Quantum is compatible with TensorFlow version&nbsp;2.15.0.
+guide, see the link for further details. TensorFlow Quantum is compatible with TensorFlow version&nbsp;2.16.x.
 
 Download the
 <a href="https://github.com/tensorflow/tensorflow" class="external">TensorFlow source code</a>:
@@ -130,7 +137,7 @@ Download the
 <pre class="devsite-click-to-copy">
   <code class="devsite-terminal">git clone https://github.com/tensorflow/tensorflow.git</code>
   <code class="devsite-terminal">cd tensorflow</code>
-  <code class="devsite-terminal">git checkout v2.15.0</code>
+  <code class="devsite-terminal">git checkout v2.16.1</code>
 </pre>
 
 Be sure the virtual environment you created in step 2 is activated. Then, install the TensorFlow dependencies:
