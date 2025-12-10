@@ -32,6 +32,9 @@ on:
 
   workflow_dispatch:
     inputs:
+      runner:
+        description: "GitHub job runner to use:"
+        default: "linux-x86-n2-32"
       py_version:
         description: "Python version:"
         type: string
@@ -94,7 +97,7 @@ jobs:
     if: needs.check-recent.outputs.have-changes == 'true'
     name: Build and test
     needs: check-recent
-    runs-on: linux-x86-n2-32
+    runs-on: ${{inputs.runner || "linux-x86-n2-32"}}
     timeout-minutes: 60
     steps:
       - name: Check out a copy of the TFQ git repository

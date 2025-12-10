@@ -30,8 +30,11 @@ on:
   # Manual on-demand invocations.
   workflow_dispatch:
     inputs:
+      runner:
+        description: "GitHub job runner to use:"
+        default: "linux-x86-n2-32"
       save_artifacts:
-        description: Make Bazel outputs downloadable
+        description: "Make Bazel outputs downloadable:"
         type: boolean
         default: true
       debug:
@@ -59,7 +62,7 @@ permissions: read-all
 jobs:
   test-compatibility:
     name: Build and test with latest Cirq
-    runs-on: linux-x86-n2-32
+    runs-on: ${{inputs.runner || "linux-x86-n2-32"}}
     timeout-minutes: 60
     steps:
       - name: Check out a copy of the TFQ git repository
