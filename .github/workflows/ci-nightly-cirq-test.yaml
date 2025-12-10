@@ -16,15 +16,12 @@
 #
 # This workflow is executed every night on a schedule. By default, this
 # workflow will save Bazel build artifacts if an error occurs during a run.
-# For testing, this workflow can be invoked manually from the GitHub page at
-# https://github.com/tensorflow/quantum/actions/workflows/ci-nightly-cirq-test.yaml
-# Clicking the "Run workflow" button there will present a form interface with
-# options for overridding some of the parameters for the run.
+# For testing, this workflow can be invoked manually.
 
 # yamllint disable rule:line-length
 
-name: CI nightly Cirq compatibility test
-run-name: Continuous integration Cirq compatibility test
+name: Nightly Cirq compatibility test
+run-name: "Nightly build and test against latest dev version of Cirq"
 
 on:
   schedule:
@@ -33,50 +30,24 @@ on:
   # Manual on-demand invocations.
   workflow_dispatch:
     inputs:
-      py_version:
-        description: Version of Python to use
-        type: string
-        default: "3.10.15"
-
-      bazel_version:
-        description: Version of Bazel Python to use
-        type: string
-
-      arch:
-        description: Computer architecture to use
-        type: string
-        default: "x64"
-
-      use_disk_cache:
-        description: Use Bazel disk_cache between runs
-        type: boolean
-        default: true
-
-      use_test_cache:
-        description: Allow Bazel to cache test results
-        type: boolean
-        default: true
-
       save_artifacts:
         description: Make Bazel outputs downloadable
         type: boolean
         default: true
+      debug:
+        description: 'Run with debugging options'
+        type: boolean
+        default: true
 
 env:
-  # Default Python version to use.
-  py_version: "3.10.15"
-
-  # Bazel version. Note: this needs to match what is used in TF & TFQ.
-  bazel_version: 6.5.0
-
-  # Machine architecture to use.
-  arch: x64
-
   # Additional .bazelrc options to use.
   bazelrc_additions: |
     common --announce_rc
     build --verbose_failures
     test --test_timeout=3000
+
+  # Equivalent to doing "set -x" in shell scripts.
+  SHELLOPTS: ${{inputs.debug && 'xtrace'}}
 
 concurrency:
   # Cancel any previously-started but still active runs on the same branch.
@@ -87,24 +58,30 @@ permissions: read-all
 
 jobs:
   test-compatibility:
-    name: Run TFQ tests
-    runs-on: ubuntu-22.04
+    name: Build and test with latest Cirq
+    runs-on: linux-x86-n2-32
+    timeout-minutes: 60
     steps:
       - name: Check out a copy of the TFQ git repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
-      - name: Set up Python ${{inputs.py_version || env.py_version}}
-        id: python
+      - name: Set up Python
         uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5
         with:
-          python-version: ${{inputs.py_version || env.py_version}}
-          architecture: ${{inputs.arch || env.arch}}
+          python-version: '3.10.15'
           cache: pip
 
+      - name: Set up Bazel
+        uses: bazel-contrib/setup-bazel@529dbc2648ea79358c64f2bfa5f3ec98f07859e4 # 0.12.1
+        with:
+          bazelisk-cache: true
+          repository-cache: true
+          bazelrc: |
+            ${{env.bazelrc_additions}}
+            test --cache_test_results=no
+
       - name: Install TensorFlow Quantum dependencies
-        run: |
-          pip install --upgrade pip setuptools wheel
-          pip install -r requirements.txt
+        run: pip install -r requirements.txt
 
       - name: Install the nightly build version of Cirq
         run: |
@@ -112,50 +89,8 @@ jobs:
           export PIP_CONSTRAINT=constraint.txt
           pip install --upgrade cirq~=1.0.dev
 
-      - name: Configure Bazel options
-        run: |
-          # If we didn't get a cache hit on the installed Python environment,
-          # something's changed, and we want to make sure to re-run all tests.
-          if [[ "${{steps.python.outputs.cache-hit}}" == "true"
-                && "${{github.event.inputs.use_test_cache}}" != "false" ]]; then
-            echo "use_test_cache=auto" >> "$GITHUB_ENV"
-          else
-            echo "use_test_cache=no" >> "$GITHUB_ENV"
-          fi
-          # Use the disk cache unless told not to.
-          if [[ "${{github.event.inputs.use_disk_cache}}" != "false" ]]; then
-            echo "use_disk_cache=true" >> "$GITHUB_ENV"
-          else
-            echo "use_disk_cache=false" >> "$GITHUB_ENV"
-          fi
-
-      - name: Set up Bazel with caching
-        if: env.use_bazel_disk_cache == 'true'
-        uses: bazel-contrib/setup-bazel@529dbc2648ea79358c64f2bfa5f3ec98f07859e4 # 0.12.1
-        env:
-          USE_BAZEL_VERSION: ${{inputs.bazel_version || env.bazel_version}}
-        with:
-          disk-cache: ${{github.workflow}}
-          bazelisk-cache: true
-          external-cache: true
-          repository-cache: true
-          bazelrc: |
-            ${{env.bazelrc_additions}}
-            test --cache_test_results=${{env.use_test_cache}}
-
-      - name: Set up Bazel without caching
-        if: env.use_bazel_disk_cache == 'false'
-        uses: bazel-contrib/setup-bazel@529dbc2648ea79358c64f2bfa5f3ec98f07859e4 # 0.12.1
-        env:
-          USE_BAZEL_VERSION: ${{inputs.bazel_version || env.bazel_version}}
-        with:
-          bazelrc: |
-            ${{env.bazelrc_additions}}
-            test --cache_test_results=${{env.use_test_cache}}
-
       - name: Configure TFQ
         run: |
-          set -x
           # Save information to the run log, in case it's needed for debugging.
           which python
           python --version
@@ -166,25 +101,17 @@ jobs:
           printf "Y\n" | ./configure.sh
 
       - name: Run TFQ tests
-        # TODO: when the msan tests are working again, replace the "touch"
-        # line with ./scripts/msan_test.sh 2>&1 | tee msan-tests-output.log
-        run: |
-          set -x -o pipefail
-          ./scripts/test_all.sh 2>&1 | tee main-tests-output.log
-          touch msan-tests-output.log
+        # TODO: when the msan tests work again, add ./scripts/msan_test.sh.
+        run: ./scripts/test_all.sh
 
-      - name: Make Bazel artifacts downloadable (if desired)
-        if: >-
-          github.event.inputs.save_artifacts == 'true'
-          && (failure() || github.event_name == 'workflow_dispatch')
+      - if: failure() || inputs.save_artifacts == 'true'
+        name: Make artifacts downloadable
         uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4
         with:
           name: bazel-out
           retention-days: 7
           include-hidden-files: true
           path: |
-            main-tests-output.log
-            msan-tests-output.log
             /home/runner/.bazel/execroot/__main__/bazel-out/
             !/home/runner/.bazel/execroot/__main__/bazel-out/**/*.so
             !/home/runner/.bazel/execroot/__main__/bazel-out/**/*.o
