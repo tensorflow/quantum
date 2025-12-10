@@ -64,9 +64,6 @@ env:
     test --test_timeout=6000
     test --test_verbose_timeout_warnings
 
-  # Equivalent to doing 'set -x' in shell scripts.
-  SHELLOPTS: ${{inputs.debug && 'xtrace'}}
-
 concurrency:
   # Cancel any previously-started but still active runs on the same branch.
   cancel-in-progress: true
@@ -115,6 +112,10 @@ jobs:
           bazelisk-cache: true
           repository-cache: true
           bazelrc: ${{env.bazelrc_additions}}
+
+      - name: Turn on debug tracing
+        if: inputs.debug || runner.debug
+        run: set -x
 
       - name: Build wheel
         run: ./scripts/build_pip_package_test.sh

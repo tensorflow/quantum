@@ -49,9 +49,6 @@ env:
     build --verbose_failures
     test --test_timeout=3000
 
-  # Equivalent to doing 'set -x' in shell scripts.
-  SHELLOPTS: ${{inputs.debug && 'xtrace'}}
-
 concurrency:
   # Cancel any previously-started but still active runs on the same branch.
   cancel-in-progress: true
@@ -85,6 +82,10 @@ jobs:
 
       - name: Install TensorFlow Quantum dependencies
         run: pip install -r requirements.txt
+
+      - name: Turn on debug tracing
+        if: inputs.debug || runner.debug
+        run: set -x
 
       - name: Install the nightly build version of Cirq
         run: |
