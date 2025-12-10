@@ -23,22 +23,22 @@
 
 # yamllint disable rule:line-length
 
-name: "Nightly build & test"
-run-name: "Nightly full build and test (conditional on recent changes)"
+name: 'Nightly build & test'
+run-name: 'Nightly full build and test (conditional on recent changes)'
 
 on:
   schedule:
-    - cron: "15 6 * * *"
+    - cron: '15 6 * * *'
 
   workflow_dispatch:
     inputs:
       runner:
-        description: "GitHub job runner to use:"
-        default: "linux-x86-n2-32"
+        description: 'GitHub job runner to use:'
+        default: 'linux-x86-n2-32'
       py_version:
-        description: "Python version:"
+        description: 'Python version:'
         type: string
-        default: "3.10.15"
+        default: '3.10.15'
       save_artifacts:
         description: Make Bazel artifacts downloadable
         type: boolean
@@ -50,7 +50,7 @@ on:
 
 env:
   # Default Python version to use.
-  py_version: "3.10.15"
+  py_version: '3.10.15'
 
   # Additional .bazelrc options to use.
   bazelrc_additions: |
@@ -64,7 +64,7 @@ env:
     test --test_timeout=6000
     test --test_verbose_timeout_warnings
 
-  # Equivalent to doing "set -x" in shell scripts.
+  # Equivalent to doing 'set -x' in shell scripts.
   SHELLOPTS: ${{inputs.debug && 'xtrace'}}
 
 concurrency:
@@ -76,7 +76,7 @@ permissions: read-all
 
 jobs:
   check-recent:
-    name: "(Check for changes)"
+    name: '(Check for changes)'
     runs-on: ubuntu-slim
     timeout-minutes: 10
     outputs:
@@ -97,7 +97,7 @@ jobs:
     if: needs.check-recent.outputs.have-changes == 'true'
     name: Build and test
     needs: check-recent
-    runs-on: ${{inputs.runner || "linux-x86-n2-32"}}
+    runs-on: ${{inputs.runner || 'linux-x86-n2-32'}}
     timeout-minutes: 60
     steps:
       - name: Check out a copy of the TFQ git repository

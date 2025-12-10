@@ -21,20 +21,20 @@
 # yamllint disable rule:line-length
 
 name: Nightly Cirq compatibility test
-run-name: "Nightly build and test against latest dev version of Cirq"
+run-name: 'Nightly build and test against latest dev version of Cirq'
 
 on:
   schedule:
-    - cron: "10 7 * * *"
+    - cron: '10 7 * * *'
 
   # Manual on-demand invocations.
   workflow_dispatch:
     inputs:
       runner:
-        description: "GitHub job runner to use:"
-        default: "linux-x86-n2-32"
+        description: 'GitHub job runner to use:'
+        default: 'linux-x86-n2-32'
       save_artifacts:
-        description: "Make Bazel outputs downloadable:"
+        description: 'Make Bazel outputs downloadable:'
         type: boolean
         default: true
       debug:
@@ -49,7 +49,7 @@ env:
     build --verbose_failures
     test --test_timeout=3000
 
-  # Equivalent to doing "set -x" in shell scripts.
+  # Equivalent to doing 'set -x' in shell scripts.
   SHELLOPTS: ${{inputs.debug && 'xtrace'}}
 
 concurrency:
@@ -62,7 +62,7 @@ permissions: read-all
 jobs:
   test-compatibility:
     name: Build and test with latest Cirq
-    runs-on: ${{inputs.runner || "linux-x86-n2-32"}}
+    runs-on: ${{inputs.runner || 'linux-x86-n2-32'}}
     timeout-minutes: 60
     steps:
       - name: Check out a copy of the TFQ git repository
