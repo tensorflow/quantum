@@ -104,12 +104,14 @@ jobs:
         uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5
         with:
           python-version: ${{inputs.py_version || env.py_version}}
+          cache: pip
 
       - name: Set up Bazel
         uses: bazel-contrib/setup-bazel@f3f50ea6791b9b0f4c4eeabba4507422426462f5 # 0.9.1
         with:
+          bazelisk-cache: true
+          repository-cache: true
           bazelrc: ${{env.bazelrc_additions}}
-          bazelisk-version: 1.x
 
       - name: Build wheel
         run: ./scripts/build_pip_package_test.sh
@@ -118,10 +120,10 @@ jobs:
         run: ./scripts/run_example.sh
 
       - name: Test rest of TFQ
-        run: ./scripts/test_all.sh |& tee test_all.log
+        run: ./scripts/test_all.sh
 
       - name: Test tutorials
-        run: ./scripts/ci_validate_tutorials.sh |& tee test_tutorials.log
+        run: ./scripts/ci_validate_tutorials.sh
 
       - if: failure() || inputs.save_artifacts == 'true'
         name: Make artifacts downloadable
@@ -131,8 +133,6 @@ jobs:
           retention-days: 7
           include-hidden-files: true
           path: |
-            test_all.log
-            test_tutorials.log
             /home/runner/.bazel/execroot/__main__/bazel-out/
             !/home/runner/.bazel/execroot/__main__/bazel-out/**/*.so
             !/home/runner/.bazel/execroot/__main__/bazel-out/**/*.o
