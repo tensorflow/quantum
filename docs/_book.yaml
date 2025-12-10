@@ -54,6 +54,8 @@ upper_tabs:
         path: /quantum/tutorials/research_tools
       - title: "Quantum reinforcement learning"
         path: /quantum/tutorials/quantum_reinforcement_learning
+      - title: "Quantum Generative Adversarial Networks"
+        path: /quantum/tutorials/noise_suppression
 
     - name: API
       skip_translation: true
