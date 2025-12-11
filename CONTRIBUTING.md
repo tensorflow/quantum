@@ -173,7 +173,7 @@ section, you should be able to build TFQ with these steps:
 2.  Build a pip package for TFQ:
 
     ```shell
-    bazel build -c opt release:build_pip_package
+    bazel build -c opt --cxxopt="-O3" --cxxopt="-march=native" release:build_pip_package
     bazel-bin/release/build_pip_package /tmp/tfquantum/
     ```
 
