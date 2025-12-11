@@ -303,7 +303,7 @@ For other kinds of comments, follow these guidelines:
 *   _Use complete sentences_: Start comments with a capital letter and use
     proper punctuation and correct grammar.
 
-### Git commit do's and don't's
+### <a name="git-commits"></a>Git commit do's and don't's
 
 We strive to follow the principles of granular commits. Making smaller, focused
 commits has many benefits: changes are easier for reviewers to understand and
@@ -374,13 +374,19 @@ already forked the repo and [set up your development environment](#dev-env).)
     git checkout -b SOME-BRANCH-NAME
     ```
 
-3.  Make your changes. Remember to write and run tests for your changes. Commit
-    changes often. Write small, focused commits with clear messages.
+3.  Make your changes. Follow the project [coding
+    conventions](#coding-conventions). Commit changes often and follow the
+    guidelines for [Git commit do's and don't's](#git-commits). Write small,
+    focused commits with clear messages.
 
     ```shell
     git add -A
     git commit
     ```
+
+4.  Remember to write and run tests for your changes. Run the [scripts for
+    testing changes locally](#running-tests-locally) to make sure everything
+    works.
 
 ### Submit your changes for review
 
