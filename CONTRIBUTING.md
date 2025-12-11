@@ -287,9 +287,9 @@ level of the TensorFlow Quantum repository.
 
 ### Comment conventions
 
-Every source file must begin with a header comment containing a copyright
-statement and license. License headers are necessary in Python, C++, Bash/shell,
-and other programming language files.
+This project uses the Apache 2.0 license. Every source file must begin with a
+header comment containing a copyright statement and license. License headers are
+necessary in Python, C++, Bash/shell, and other programming language files.
 
 For other kinds of comments, follow these guidelines:
 
