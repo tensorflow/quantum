@@ -80,7 +80,7 @@ jobs:
       have-changes: ${{steps.commits.outputs.count > 0}}
     steps:
       - name: Check out a sparse copy of the git repo for TFQ
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
         with:
           sparse-checkout: .
 
@@ -98,7 +98,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Check out a copy of the TFQ git repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
 
       - name: Set up Python ${{inputs.py_version || env.py_version}}
         uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5
@@ -107,7 +107,7 @@ jobs:
           cache: pip
 
       - name: Set up Bazel
-        uses: bazel-contrib/setup-bazel@f3f50ea6791b9b0f4c4eeabba4507422426462f5 # 0.9.1
+        uses: bazel-contrib/setup-bazel@4fd964a13a440a8aeb0be47350db2fc640f19ca8 # v1
         with:
           bazelisk-cache: true
           repository-cache: true
@@ -131,7 +131,7 @@ jobs:
 
       - if: failure() || inputs.save_artifacts == 'true'
         name: Make artifacts downloadable
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: test-artifacts
           retention-days: 7
