@@ -45,7 +45,7 @@ if [[ -e "${pins_file}" ]]; then
     constraint+=(--constraint "${pins_file}")
 fi
 
-# Tell pip-compile to put this command in the comment header in requirements.txt
+# Tell pip-compile to reference this script in the requirements.txt comments.
 export CUSTOM_COMPILE_COMMAND="${0}"
 
 echo "Running pip-compile in ${repo_dir} …"
