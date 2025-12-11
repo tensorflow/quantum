@@ -67,7 +67,21 @@ License Agreement (CLA)](https://cla.developers.google.com/).
 Only original works from you and other people who signed the CLA can be merged
 into this project.
 
-### <a name="opportunities"></a>Finding opportunities to make contributions
+### <a name="opportunities"></a>Look for opportunities to make contributions
+
+Contributions to this project can take many forms.
+
+#### Bug reports
+
+Navigate to the [Issues tab](https://github.com/tensorflow/quantum/issues) on
+GitHub and click on the _New issue_ button. When reporting problems, please make
+sure to include:
+
+*   A clear description of the problem
+*   Steps necessary to reproduce the problem
+*   System information (operating system, version of TFQ)
+
+#### Code contributions/patches/pull requests
 
 The best way to get started is by tackling an existing issue.
 
@@ -80,6 +94,16 @@ The best way to get started is by tackling an existing issue.
 
 3.  Once you pick an issue, leave a comment to let others know you are working
     on it. This helps prevent duplicated effort.
+
+#### Feature requests
+
+Navigate to the [Issues tab](https://github.com/tensorflow/quantum/issues) on
+GitHub and click on the _New issue_ button. When reporting problems, please make
+sure to include:
+
+*   A clear explanation of the feature you would like
+*   Approaches or solutions you have thought of
+*   System information (if relevant)
 
 ## Development process
 
