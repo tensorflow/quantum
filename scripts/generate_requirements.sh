@@ -15,7 +15,7 @@
 # ==============================================================================
 
 # Summary: produce requirements.txt using pip-compile & munging the result.
-# Usage: ./generate_requirements.sh
+# Usage: ./scripts/generate_requirements.sh from the top dir of the repo.
 
 set -eu
 
@@ -39,23 +39,22 @@ if ! pip show -qq pip-tools; then
     exit 1
 fi
 
+declare -a constraint=()
+pins_file="$(realpath --relative-to=. "${repo_dir}/requirements-pins.txt")"
+if [[ -e "${pins_file}" ]]; then
+    constraint+=(--constraint "${pins_file}")
+fi
+
 # Tell pip-compile to put this command in the comment header in requirements.txt
 export CUSTOM_COMPILE_COMMAND="${0}"
 
-constraint=""
-constraint_file="${repo_dir}/requirements-pins.txt"
-if [[ -e "${constraint_file}" ]]; then
-    constraint="--constraint $(realpath --relative-to=. "${constraint_file}")"
-fi
-
 echo "Running pip-compile in ${repo_dir} …"
-# shellcheck disable=SC2086
 pip-compile -q \
     --rebuild \
     --allow-unsafe \
     --no-strip-extras \
     --no-emit-index-url \
-     ${constraint}
+     "${constraint[@]}"
 
 declare -a inplace_edit=(-i)
 if [[ "$(uname -s)" == "Darwin" ]]; then
@@ -64,9 +63,9 @@ if [[ "$(uname -s)" == "Darwin" ]]; then
 fi
 
 # Pyyaml is a transitive dependency, and pinning the version (as pip-compile
-# does) leads to unsatisfiable constraints on some platforms. However, we
-# don't need pyyaml to be a particular version. There's no easy way to tell
-# pip-compile not to constrain a particular package, so
+# does) leads to unsatisfiable constraints on some platforms. However, we don't
+# need pyyaml to be a particular version. Unfortnately, there's no easy way to
+# tell pip-compile not to constrain a particular package, so we do this:
 echo "Adjusting output of pip-compile …"
 sed "${inplace_edit[@]}" \
   -e 's/^pyyaml==.*/pyyaml/' \
