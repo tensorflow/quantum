@@ -40,5 +40,6 @@ def main():
     else:
         print("All notebooks passed nbformat validation.")
 
+
 if __name__ == "__main__":
     main()
