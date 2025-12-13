@@ -10,14 +10,14 @@ There are a few ways to set up your environment to use TensorFlow Quantum (TFQ):
   Python's pip package manager.
 * Or build TensorFlow Quantum from source.
 
-TensorFlow Quantum is supported on Python 3.9, 3.10, and 3.11 and depends directly on [Cirq](https://github.com/quantumlib/Cirq).
+TensorFlow Quantum is supported on Python 3.10, 3.11, and 3.12 and depends directly on [Cirq](https://github.com/quantumlib/Cirq).
 
 ## Pip package
 
 ### Requirements
 
 * pip 19.0 or later (requires `manylinux2014` support)
-* [TensorFlow == 2.15.0](https://www.tensorflow.org/install/pip)
+* [TensorFlow == 2.16.2](https://www.tensorflow.org/install/pip)
 
 See the [TensorFlow install guide](https://www.tensorflow.org/install/pip) to
 set up your Python development environment and an (optional) virtual environment.
@@ -27,7 +27,7 @@ Upgrade `pip` and install TensorFlow
 <!-- common_typos_disable -->
 <pre class="devsite-click-to-copy">
   <code class="devsite-terminal">pip3 install --upgrade pip</code>
-  <code class="devsite-terminal">pip3 install tensorflow==2.15.0</code>
+  <code class="devsite-terminal">pip3 install tensorflow==2.16.2</code>
 </pre>
 <!-- common_typos_enable -->
 
@@ -43,13 +43,13 @@ Install the latest stable release of TensorFlow Quantum:
 
 Success: TensorFlow Quantum is now installed.
 
-Nightly builds which might depend on newer version of TensorFlow can be installed with:
+<!-- Nightly builds which might depend on newer version of TensorFlow can be installed with: -->
 
-<!-- common_typos_disable -->
-<pre class="devsite-click-to-copy">
-  <code class="devsite-terminal">pip3 install -U tfq-nightly</code>
-</pre>
-<!-- common_typos_enable -->
+<!-- <\!-- common_typos_disable -\-> -->
+<!-- <pre class="devsite-click-to-copy"> -->
+<!--   <code class="devsite-terminal">pip3 install -U tfq-nightly</code> -->
+<!-- </pre> -->
+<!-- <\!-- common_typos_enable -\-> -->
 
 ## Build from source
 
@@ -58,6 +58,7 @@ The following steps are tested for Ubuntu-like systems.
 ### 1. Set up a Python 3 development environment
 
 First we need the Python 3.10 development tools.
+
 <!-- common_typos_disable -->
 <pre class="devsite-click-to-copy">
   <code class="devsite-terminal">sudo apt update</code>
@@ -70,12 +71,16 @@ First we need the Python 3.10 development tools.
 ### 2. Create a virtual environment
 
 Go to your workspace directory and make a virtual environment for TFQ development.
+
 <!-- common_typos_disable -->
 <pre class="devsite-click-to-copy">
   <code class="devsite-terminal">python3.10 -m venv quantum_env</code>
   <code class="devsite-terminal">source quantum_env/bin/activate</code>
 </pre>
 <!-- common_typos_enable -->
+
+Make sure that the virtual environment is activated for the rest of the steps
+below, and every time you want to use TFQ in the future.
 
 ### 3. Install Bazel
 
@@ -84,7 +89,8 @@ As noted in the TensorFlow
 guide, the <a href="https://bazel.build/" class="external">Bazel</a>
 build system will be required.
 
-Our latest source builds use TensorFlow 2.15.0. To ensure compatibility we use `bazel` version 6.5.0. To remove any existing version of Bazel:
+Our latest source builds use TensorFlow 2.16.2. To ensure compatibility we use `bazel` version 6.5.0. To remove any existing version of Bazel:
+
 <!-- common_typos_disable -->
 <pre class="devsite-click-to-copy">
   <code class="devsite-terminal">sudo apt-get remove bazel</code>
@@ -121,7 +127,7 @@ Finally, confirm installation of the correct `bazel` version:
 ### 4. Build TensorFlow from source
 
 Here we adapt instructions from the TensorFlow [build from source](https://www.tensorflow.org/install/source)
-guide, see the link for further details. TensorFlow Quantum is compatible with TensorFlow version&nbsp;2.15.0.
+guide, see the link for further details. TensorFlow Quantum is compatible with TensorFlow version&nbsp;2.16.2.
 
 Download the
 <a href="https://github.com/tensorflow/tensorflow" class="external">TensorFlow source code</a>:
@@ -130,18 +136,17 @@ Download the
 <pre class="devsite-click-to-copy">
   <code class="devsite-terminal">git clone https://github.com/tensorflow/tensorflow.git</code>
   <code class="devsite-terminal">cd tensorflow</code>
-  <code class="devsite-terminal">git checkout v2.15.0</code>
+  <code class="devsite-terminal">git checkout v2.16.2</code>
 </pre>
 
-Be sure the virtual environment you created in step 2 is activated. Then, install the TensorFlow dependencies:
+Be sure the virtual environment you created in step 2 is activated. Then,
+install the TensorFlow dependencies using the command below, substituting your
+actual version of Python in place of 3_10 (e.g., if your Python is 3.11, use
+file `requirements_lock_3_11.txt`):
 
 <!-- common_typos_disable -->
 <pre class="devsite-click-to-copy">
-  <code class="devsite-terminal">pip install -U pip six numpy wheel setuptools mock 'future>=0.17.1'</code>
-  <code class="devsite-terminal">pip install -U keras_applications --no-deps</code>
-  <code class="devsite-terminal">pip install -U keras_preprocessing --no-deps</code>
-  <code class="devsite-terminal">pip install numpy==1.23.5</code>
-  <code class="devsite-terminal">pip install packaging requests</code>
+  <code class="devsite-terminal">pip install -r requirements_lock_3_10.txt</code>
 </pre>
 <!-- common_typos_enable -->
 
@@ -153,7 +158,7 @@ Configure the TensorFlow build. When asked for the Python interpreter and librar
 </pre>
 <!-- common_typos_enable -->
 
-Build the TensorFlow package (Since TF v2.8, `_GLIBCXX_USE_CXX11_ABI` is set to 1, and the c++ codes are all compiled with `-std=c++17`):
+Build the TensorFlow package:
 
 <!-- common_typos_disable -->
 <pre class="devsite-click-to-copy">
@@ -185,26 +190,51 @@ We use the standard [fork and pull request workflow](https://guides.github.com/a
 </pre>
 <!-- common_typos_enable -->
 
+### 6. Build and install TensorFlow Quantum
 
-### 6. Build the TensorFlow Quantum pip package
+Be sure the virtual environment you created in step 2 is activated. Then, run
+the command below to install the TensorFlow Quantum dependencies:
 
-Build the TensorFlow Quantum pip package and install:
+<!-- common_typos_disable -->
+<pre class="devsite-click-to-copy">
+  <code class="devsite-terminal">pip install -r requirements.txt</code>
+</pre>
+<!-- common_typos_enable -->
+
+Next, use TensorFlow Quantum's `configure.sh` script to configure the TFQ
+build:
 
 <!-- common_typos_disable -->
 <pre class="devsite-click-to-copy">
   <code class="devsite-terminal">./configure.sh</code>
-  <code class="devsite-terminal">bazel build -c opt --cxxopt="-O3" --cxxopt="-march=native" --cxxopt="-std=c++17" --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=1" release:build_pip_package</code>
+</pre>
+<!-- common_typos_enable -->
+
+Now build TensorFlow Quantum:
+
+<!-- common_typos_disable -->
+<pre class="devsite-click-to-copy">
+  <code class="devsite-terminal">bazel build -c opt --cxxopt="-O3" --cxxopt="-march=native" release:build_pip_package</code>
+</pre>
+<!-- common_typos_enable -->
+
+After the build is complete, run the next command to create a Python package
+for TensorFlow Quantum and write it to a temporary directory (we use
+`/tmp/tfquantum/` in this example):
+
+<!-- common_typos_disable -->
+<pre class="devsite-click-to-copy">
   <code class="devsite-terminal">bazel-bin/release/build_pip_package /tmp/tfquantum/</code>
-  <code class="devsite-terminal">python3 -m pip install /tmp/tfquantum/<var>name_of_generated_wheel</var>.whl</code>
+  <code class="devsite-terminal">pip install /tmp/tfquantum/<var>name_of_generated_wheel</var>.whl</code>
 </pre>
 <!-- common_typos_enable -->
 
 To confirm that TensorFlow Quantum has successfully been installed, you can run the tests:
+
 <!-- common_typos_disable -->
 <pre class="devsite-click-to-copy">
   <code class="devsite-terminal">./scripts/test_all.sh</code>
 </pre>
 <!-- common_typos_enable -->
-
 
 Success: TensorFlow Quantum is now installed.
