@@ -41,10 +41,10 @@ typedef qsim::Circuit<QsimGate> QsimCircuit;
 
 class TfqCalculateUnitaryOp : public tensorflow::OpKernel {
  public:
-  explicit TfqCalculateUnitaryOp(tensorflow::OpKernelConstruction *context)
+  explicit TfqCalculateUnitaryOp(tensorflow::OpKernelConstruction* context)
       : OpKernel(context) {}
 
-  void Compute(tensorflow::OpKernelContext *context) override {
+  void Compute(tensorflow::OpKernelContext* context) override {
     // TODO (mbbrough): add more dimension checks for other inputs here.
     DCHECK_EQ(3, context->num_inputs());
 
@@ -99,13 +99,13 @@ class TfqCalculateUnitaryOp : public tensorflow::OpKernel {
     output_shape.AddDim(1 << max_num_qubits);
     output_shape.AddDim(1 << max_num_qubits);
 
-    tensorflow::Tensor *output = nullptr;
+    tensorflow::Tensor* output = nullptr;
     OP_REQUIRES_OK(context, context->allocate_output(0, output_shape, &output));
     auto output_tensor = output->tensor<std::complex<float>, 3>();
 
     // Instantiate qsim objects.
     const auto tfq_for = tfq::QsimFor(context);
-    using UCalculator = qsim::unitary::UnitaryCalculator<const tfq::QsimFor &>;
+    using UCalculator = qsim::unitary::UnitaryCalculator<const tfq::QsimFor&>;
     using UnitarySpace = UCalculator::UnitarySpace;
     using Unitary = UnitarySpace::Unitary;
 
@@ -166,7 +166,7 @@ REGISTER_OP("TfqCalculateUnitary")
     .Input("symbol_names: string")
     .Input("symbol_values: float")
     .Output("unitary: complex64")
-    .SetShapeFn([](tensorflow::shape_inference::InferenceContext *c) {
+    .SetShapeFn([](tensorflow::shape_inference::InferenceContext* c) {
       tensorflow::shape_inference::ShapeHandle programs_shape;
       TF_RETURN_IF_ERROR(c->WithRank(c->input(0), 1, &programs_shape));
 
