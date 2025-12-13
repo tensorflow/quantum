@@ -24,15 +24,6 @@ thisdir=$(CDPATH="" cd -- "$(dirname -- "${0}")" && pwd -P)
 repo_dir=$(git -C "${thisdir}" rev-parse --show-toplevel 2>/dev/null || \
   echo "${thisdir}/..")
 
-usage="Usage: ${0}
-Generate TFQ requirements.txt file from requirements.in."
-
-# Exit early if the user requested help.
-if [[ "${1:-}" == "-h" || "${1:-}" == "--help" || "${1:-}" == "help" ]]; then
-    echo "$usage"
-    exit 0
-fi
-
 # Ensure we have pip-compile.
 if ! pip show -qq pip-tools; then
     echo "Python pip-tools not found. Please run 'pip install pip-tools'."
