@@ -24,11 +24,13 @@
 .idea/*
 *.iml
 
-# ignore cache
+# ignore caches
 *__pycache__/*
 *.cache/*
 *.ipynb_checkpoints*
 .ipynb_checkpoints
+.mypy_cache
+.pytest_cache
 
 # Mac only
 .DS_Store
@@ -53,8 +55,11 @@ venv/
 quantum_env/
 quantum_venv/
 
-# ignore emacs temp files
-*#
+# Ignore Emacs backup, checkpoint, and other files.
+.\#*
+\#*\#
+.git/COMMIT_EDITMSG
+TAGS
 
 # vscode
 .vscode/*
