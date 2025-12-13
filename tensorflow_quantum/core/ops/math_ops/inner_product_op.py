@@ -77,8 +77,8 @@ def inner_product(programs, symbol_names, symbol_values, other_programs):
 
     Calculates out[i][j] as:
     $$
-    \langle \psi_{\text{programs[i]}}(\text{symbol\_values[i]}) \mid
-    \psi_{\text{other\_programs[j]}} \rangle
+    \langle \psi_{\text{programs[i]}}(\text{symbol_values[i]}) \mid
+    \psi_{\text{other_programs[j]}} \rangle
     $$
 
 
