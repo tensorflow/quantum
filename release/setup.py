@@ -31,7 +31,7 @@ from setuptools import find_packages, setup
 from setuptools.command.install import install
 from setuptools.dist import Distribution
 
-CUR_VERSION = "0.7.4"
+CUR_VERSION = "0.8.0"
 
 DOCLINES = __doc__.split("\n")
 
