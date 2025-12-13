@@ -16,6 +16,10 @@
 
 set -e
 
+# Ensure packaging tools are present in this interpreter, and don't complain
+# if running as root (which happens inside Docker containers).
+pip install -qq setuptools wheel build --root-user-action ignore
+
 # Pick the Python that TFQ/TensorFlow used during configure/build.
 # Order: explicit env -> python3 (>= 3.10)
 PY="${PYTHON_BIN_PATH:-}"
@@ -72,8 +76,8 @@ main() {
   "${PY}" -m build -v --wheel ${EXTRA_FLAGS} > /dev/null
   cp dist/*.whl "${DEST}"
   popd
-  rm -rf "${TMPDIR}"
-  echo $(date) : "=== Output wheel file is in: ${DEST}"
+  rm -rf ${TMPDIR}
+  echo "$(date) : === Done."
 }
 
 main "$@"
