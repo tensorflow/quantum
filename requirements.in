@@ -18,6 +18,11 @@
 # scripts/generate_requirements.sh.
 cirq-core~=1.3.0
 cirq-google~=1.3.0
+# Contourpy 1.3.3 requires Python >= 3.11, so we need to limit to 1.3.2.
+contourpy<=1.3.2
+numpy<2.0
+# SciPy 1.13 allows for NumPy 2.x, which leads to conflicts at install time.
+scipy<=1.12.0
 tensorflow>=2.16,<2.17
 tf-keras~=2.16.0
 
