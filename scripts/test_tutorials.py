@@ -45,8 +45,20 @@ class ExamplesTest(tf.test.TestCase, parameterized.TestCase):
         for cell in nb.get("cells"):
             if cell["cell_type"] == "code":
                 src = cell["source"]
-                # Comment out lines containing '!' but not '!='.
-                src = re.sub(r"\!(?!=)", r"#!", src)
+                # Comment out lines with '!' or '%' (typically magic commands)
+                # but not '!='. Preserve indentation to avoid syntax errors.
+                lines = src.split('\n')
+                new_lines = []
+                for line in lines:
+                    if re.match(r"^\s*(\!|%)(?!=)", line):
+                        # Replace ! or % with 'pass # !' or 'pass # %'
+                        match = re.search(r"(\!|%)", line)
+                        idx = match.start()
+                        new_lines.append(line[:idx] + "pass # " + line[idx:])
+                    else:
+                        new_lines.append(line)
+                src = '\n'.join(new_lines)
+
                 # For mnist.ipynb to reduce runtime in test.
                 src = re.sub(r"NUM_EXAMPLES ?= ?.*", "NUM_EXAMPLES = 10", src)
                 # For quantum_reinforcement_learning.ipynb:
