@@ -227,7 +227,6 @@ for TensorFlow Quantum and write it to a temporary directory (we use
 <!-- common_typos_enable -->
 
 To confirm that TensorFlow Quantum has successfully been installed, you can run the tests:
-
 <!-- common_typos_disable -->
 <pre class="devsite-click-to-copy">
   <code class="devsite-terminal">./scripts/test_all.sh</code>
