@@ -23,7 +23,6 @@ See the [TensorFlow install guide](https://www.tensorflow.org/install/pip) to
 set up your Python development environment and an (optional) virtual environment.
 
 Upgrade `pip` and install TensorFlow
-
 <!-- common_typos_disable -->
 <pre class="devsite-click-to-copy">
   <code class="devsite-terminal">pip3 install --upgrade pip</code>
@@ -58,7 +57,6 @@ The following steps are tested for Ubuntu-like systems.
 ### 1. Set up a Python 3 development environment
 
 First we need the Python 3.10 development tools.
-
 <!-- common_typos_disable -->
 <pre class="devsite-click-to-copy">
   <code class="devsite-terminal">sudo apt update</code>
@@ -71,7 +69,6 @@ First we need the Python 3.10 development tools.
 ### 2. Create a virtual environment
 
 Go to your workspace directory and make a virtual environment for TFQ development.
-
 <!-- common_typos_disable -->
 <pre class="devsite-click-to-copy">
   <code class="devsite-terminal">python3.10 -m venv quantum_env</code>
@@ -89,8 +86,8 @@ As noted in the TensorFlow
 guide, the <a href="https://bazel.build/" class="external">Bazel</a>
 build system will be required.
 
-Our latest source builds use TensorFlow 2.16.2. To ensure compatibility we use `bazel` version 6.5.0. To remove any existing version of Bazel:
-
+Our latest source builds use TensorFlow 2.16.2. To ensure compatibility we use
+`bazel` version 6.5.0. To remove any existing version of Bazel:
 <!-- common_typos_disable -->
 <pre class="devsite-click-to-copy">
   <code class="devsite-terminal">sudo apt-get remove bazel</code>
@@ -236,5 +233,6 @@ To confirm that TensorFlow Quantum has successfully been installed, you can run 
   <code class="devsite-terminal">./scripts/test_all.sh</code>
 </pre>
 <!-- common_typos_enable -->
+
 
 Success: TensorFlow Quantum is now installed.
