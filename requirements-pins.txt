@@ -1,0 +1,12 @@
+# Summary: requirements constraints for TensorFlow Quantum.
+#
+# This file is used to constrain the versions of transitive dependencies during
+# the 'pip-compile' process. This is the recommended way to apply security
+# patches without polluting requirements.in.
+#
+# This file currently requires manual updates when necessary, such as when
+# Dependabot opens PRs to update a transitive dependency in requirements.txt.
+
+fonttools>=4.60.2
+urllib3>=2.6.0
+werkzeug>=3.1.4
