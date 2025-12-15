@@ -47,19 +47,4 @@ pip-compile -q \
     --no-emit-index-url \
      "${constraint[@]}"
 
-declare -a inplace_edit=(-i)
-if [[ "$(uname -s)" == "Darwin" ]]; then
-  # macOS uses BSD sed, which requires a suffix for -i.
-  inplace_edit+=('')
-fi
-
-# Pyyaml is a transitive dependency, and pinning the version (as pip-compile
-# does) leads to unsatisfiable constraints on some platforms. However, we don't
-# need pyyaml to be a particular version. Unfortnately, there's no easy way to
-# tell pip-compile not to constrain a particular package, so we do this:
-echo "Adjusting output of pip-compile …"
-sed "${inplace_edit[@]}" \
-  -e 's/^pyyaml==.*/pyyaml/' \
-  requirements.txt
-
 echo "Done."
