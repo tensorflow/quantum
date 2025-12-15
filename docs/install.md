@@ -133,7 +133,7 @@ Download the
 <pre class="devsite-click-to-copy">
   <code class="devsite-terminal">git clone https://github.com/tensorflow/tensorflow.git</code>
   <code class="devsite-terminal">cd tensorflow</code>
-  <code class="devsite-terminal">git checkout v2.16.2</code>
+  <code class="devsite-terminal">git checkout r2.16</code>
 </pre>
 
 Be sure the virtual environment you created in step 2 is activated. Then,
