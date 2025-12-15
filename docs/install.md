@@ -123,11 +123,11 @@ Finally, confirm installation of the correct `bazel` version:
 
 ### 4. Build TensorFlow from source
 
-Here we adapt instructions from the TensorFlow [build from source](https://www.tensorflow.org/install/source)
-guide, see the link for further details. TensorFlow Quantum is compatible with TensorFlow version&nbsp;2.16.2.
-
-Download the
-<a href="https://github.com/tensorflow/tensorflow" class="external">TensorFlow source code</a>:
+TensorFlow Quantum is compatible with TensorFlow version&nbsp;2.16.2. To build
+TensorFlow from sources, download the <a
+href="https://github.com/tensorflow/tensorflow" class="external">TensorFlow
+source code</a> by cloning the git repository, then switch to the `r2.16`
+branch:
 
 <!-- common_typos_disable -->
 <pre class="devsite-click-to-copy">
@@ -136,41 +136,18 @@ Download the
   <code class="devsite-terminal">git checkout r2.16</code>
 </pre>
 
-Be sure the virtual environment you created in step 2 is activated. Then,
-install the TensorFlow dependencies using the command below, substituting your
-actual version of Python in place of 3_10 (e.g., if your Python is 3.11, use
-file `requirements_lock_3_11.txt`):
+Be sure the virtual environment you created in step 2 is activated, then follow
+the TensorFlow instructions for how to [build and install the pip
+package](https://www.tensorflow.org/install/source#build_and_install_the_pip_package)
+on your system.
+
+Note: it may take over an hour to build TensorFlow.
+
+After the build is complete, and you have installed the pip package, leave the
+TensorFlow directory before moving on to step 5:
 
 <!-- common_typos_disable -->
 <pre class="devsite-click-to-copy">
-  <code class="devsite-terminal">pip install -r requirements_lock_3_10.txt</code>
-</pre>
-<!-- common_typos_enable -->
-
-Configure the TensorFlow build. When asked for the Python interpreter and library locations, be sure to specify locations inside your virtual environment folder.  The remaining options can be left at default values.
-
-<!-- common_typos_disable -->
-<pre class="devsite-click-to-copy">
-  <code class="devsite-terminal">./configure</code>
-</pre>
-<!-- common_typos_enable -->
-
-Build the TensorFlow package:
-
-<!-- common_typos_disable -->
-<pre class="devsite-click-to-copy">
-  <code class="devsite-terminal">bazel build -c opt --cxxopt="-O3" --cxxopt="-march=native" --cxxopt="-std=c++17" --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=1" //tensorflow/tools/pip_package:build_pip_package</code>
-</pre>
-<!-- common_typos_enable -->
-
-Note: It may take over an hour to build the package.
-
-After the build is complete, install the package and leave the TensorFlow directory:
-
-<!-- common_typos_disable -->
-<pre class="devsite-click-to-copy">
-  <code class="devsite-terminal">./bazel-bin/tensorflow/tools/pip_package/build_pip_package /tmp/tensorflow_pkg</code>
-  <code class="devsite-terminal">pip install /tmp/tensorflow_pkg/<var>name_of_generated_wheel</var>.whl</code>
   <code class="devsite-terminal">cd ..</code>
 </pre>
 <!-- common_typos_enable -->
@@ -215,9 +192,9 @@ Now build TensorFlow Quantum:
 </pre>
 <!-- common_typos_enable -->
 
-After the build is complete, run the next command to create a Python package
-for TensorFlow Quantum and write it to a temporary directory (we use
-`/tmp/tfquantum/` in this example):
+After the build is complete, run the next two commands to create a Python
+package for TensorFlow Quantum and write it to a temporary directory (we use
+`/tmp/tfquantum/` in this example), then install it using pip:
 
 <!-- common_typos_disable -->
 <pre class="devsite-click-to-copy">
