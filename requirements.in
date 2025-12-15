@@ -18,14 +18,18 @@
 # scripts/generate_requirements.sh.
 cirq-core~=1.3.0
 cirq-google~=1.3.0
+numpy<2.0
 tensorflow>=2.16,<2.17
 tf-keras~=2.16.0
+scipy<=1.12.0
+sympy==1.14
 
-# TODO: the next ones are not truly core requirements. A better place should be
-# found for them (long with others needed by scripts/*). They're here as a
-# stop-gap measure until then.
-yapf==0.43.0
-pylint==3.3.3
-nbformat==5.1.3
-nbclient==0.6.5
-tensorflow-docs
+# This needs to match what TensorFlow uses to avoid problems with distutils.
+setuptools==68.2.2
+
+# The rest are transitive dependencies that need to be constrained either
+# because pip may try to install incompatible versions, or the higher versions
+# require Python 3.11+ and we want to maintain Python 3.10 compatibility.
+jax<=0.5
+contourpy<=1.3.2
+networkx<=3.4
