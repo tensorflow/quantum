@@ -25,8 +25,8 @@ set up your Python development environment and an (optional) virtual environment
 Upgrade `pip` and install TensorFlow
 <!-- common_typos_disable -->
 <pre class="devsite-click-to-copy">
-  <code class="devsite-terminal">pip3 install --upgrade pip</code>
-  <code class="devsite-terminal">pip3 install tensorflow==2.16.2</code>
+  <code class="devsite-terminal">pip install --upgrade pip</code>
+  <code class="devsite-terminal">pip install tensorflow==2.16.2</code>
 </pre>
 <!-- common_typos_enable -->
 
@@ -36,7 +36,7 @@ Install the latest stable release of TensorFlow Quantum:
 
 <!-- common_typos_disable -->
 <pre class="devsite-click-to-copy">
-  <code class="devsite-terminal">pip3 install -U tensorflow-quantum</code>
+  <code class="devsite-terminal">pip install -U tensorflow-quantum</code>
 </pre>
 <!-- common_typos_enable -->
 
@@ -46,7 +46,7 @@ Success: TensorFlow Quantum is now installed.
 
 <!-- <\!-- common_typos_disable -\-> -->
 <!-- <pre class="devsite-click-to-copy"> -->
-<!--   <code class="devsite-terminal">pip3 install -U tfq-nightly</code> -->
+<!--   <code class="devsite-terminal">pip install -U tfq-nightly</code> -->
 <!-- </pre> -->
 <!-- <\!-- common_typos_enable -\-> -->
 
