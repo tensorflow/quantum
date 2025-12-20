@@ -15,21 +15,22 @@
 # ==============================================================================
 
 # Summary: produce requirements.txt using pip-compile & munging the result.
-# Usage: ./scripts/generate_requirements.sh from the top dir of the repo.
+# Usage: ./scripts/generate_requirements.sh
 
-set -eu
+set -eo pipefail
 
-# Find the top of the local TFQ git tree. Do it early in case this fails.
+# Change to the top of the local TFQ git tree. Do it early in case this fails.
 thisdir=$(CDPATH="" cd -- "$(dirname -- "${0}")" && pwd -P)
 repo_dir=$(git -C "${thisdir}" rev-parse --show-toplevel 2>/dev/null || \
-  echo "${thisdir}/..")
+    echo "${thisdir}/..")
+cd "${repo_dir}"
 
-# Ensure we have pip-compile.
 if ! pip show -qq pip-tools; then
-    echo "Python pip-tools not found. Please run 'pip install pip-tools'."
+    echo "ERROR: 'pip-compile' not found. Please install 'pip-tools'." >&2
     exit 1
 fi
 
+# Don't force the use of a constraint file, but use it if exists.
 declare -a constraint=()
 pins_file="$(realpath --relative-to=. "${repo_dir}/requirements-pins.txt")"
 if [[ -e "${pins_file}" ]]; then
@@ -45,6 +46,6 @@ pip-compile -q \
     --allow-unsafe \
     --no-strip-extras \
     --no-emit-index-url \
-     "${constraint[@]}"
+    "${constraint[@]}"
 
 echo "Done."
