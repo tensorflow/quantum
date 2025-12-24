@@ -16,26 +16,22 @@
 
 set -e
 
-# Ensure packaging tools are present in this interpreter, and don't complain
-# if running as root (which happens inside Docker containers).
-pip install -qq setuptools wheel build --root-user-action ignore
-
 # Pick the Python that TFQ/TensorFlow used during configure/build.
-# Order: explicit env -> python3 (>= 3.10)
+# Order: explicit env -> python3 (>= 3.9)
 PY="${PYTHON_BIN_PATH:-}"
 if [[ -z "${PY}" ]]; then
   if ! command -v python3 >/dev/null 2>&1; then
-    echo "ERROR: python3 not found. Set PYTHON_BIN_PATH to a Python 3.10+ interpreter." >&2
+    echo "ERROR: python3 not found. Set PYTHON_BIN_PATH to a Python 3.9+ interpreter." >&2
     exit 2
   fi
 
-  # Require Python >= 3.10 for TFQ.
+  # Require Python >= 3.9 for TFQ.
   if ! python3 - <<'PY'
 import sys
-sys.exit(0 if sys.version_info[:2] >= (3, 10) else 1)
+sys.exit(0 if sys.version_info[:2] >= (3, 9) else 1)
 PY
   then
-    echo "ERROR: Python 3.10+ required for TensorFlow Quantum; found $(python3 -V 2>&1)." >&2
+    echo "ERROR: Python 3.9+ required for TensorFlow Quantum; found $(python3 -V 2>&1)." >&2
     exit 2
   fi
 
@@ -44,7 +40,7 @@ fi
 echo "Using Python: ${PY}"
 
 # Ensure packaging tools are present in THIS interpreter.
-pip install -qq setuptools wheel build --root-user-action ignore
+"${PY}" -m pip install -qq setuptools wheel build --root-user-action ignore
 
 EXPORT_DIR="bazel-bin/release/build_pip_package.runfiles/__main__"
 
@@ -76,7 +72,7 @@ main() {
   "${PY}" -m build -v --wheel ${EXTRA_FLAGS} > /dev/null
   cp dist/*.whl "${DEST}"
   popd
-  rm -rf ${TMPDIR}
+  rm -rf "${TMPDIR}"
   echo "$(date) : === Done."
 }
 
