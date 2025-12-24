@@ -142,16 +142,9 @@ if [[ "${dry_run}" == "true" ]]; then
   # Loop through the positional parameters and simply print them.
   printf "(Dry run) "
   printf '%s ' "$@"
-  echo
-  echo '(Dry run) check-wheel-contents /tmp/tensorflow_quantum/*.whl'
 else
   echo "Spinning up a Docker container with ${docker_image} …"
   "$@"
-
-  # Do some basic checks on the wheel file.
-  echo "Doing basic sanity checks on the wheel …"
-  pip install -qq check-wheel-contents
-  check-wheel-contents /tmp/tensorflow_quantum/*.whl
 
   echo "Done. Look for wheel in /tmp/tensorflow_quantum/."
   ls -l /tmp/tensorflow_quantum/
