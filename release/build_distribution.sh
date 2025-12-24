@@ -1,11 +1,11 @@
 #!/bin/bash
-# Copyright 2025 Google LLC
+# Copyright 2025 The TensorFlow Quantum Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#     https://www.apache.org/licenses/LICENSE-2.0
+# https://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -36,11 +36,11 @@
 #
 # 4. Exit.
 
-set -eu
+set -eu -o pipefail
 
 # Find the top of the local TFQ git tree. Do it early in case this fails.
-thisdir=$(CDPATH="" cd -- "$(dirname -- "$0")" && pwd -P)
-repo_dir=$(git -C "${thisdir}" rev-parse --show-toplevel 2>/dev/null || \
+thisdir=$(CDPATH="" cd -- "$(dirname -- "${0}")" && pwd -P)
+repo_dir=$(git -C "${thisdir}" rev-parse --show-toplevel 2> /dev/null || \
   echo "${thisdir}/..")
 
 # Default values for variables that can be changed via command line flags.
@@ -113,7 +113,7 @@ printf "\n:::::::: Starting Bazel build ::::::::\n\n"
 bazel build ${build_flags} release:build_pip_package
 printf "\n:::::::: Creating Python wheel ::::::::\n\n"
 bazel-bin/release/build_pip_package /build_output/
-if [ "${cleanup}" == "true" ]; then
+if [[ "${cleanup}" == "true" ]]; then
   printf "\n:::::::: Cleaning up ::::::::\n\n"
   bazel clean --async
 fi
@@ -138,7 +138,7 @@ set -- docker run -it --rm --network host \
   "${docker_image}" \
   /tmp/build_script.sh
 
-if [ "${dry_run}" == "true" ]; then
+if [[ "${dry_run}" == "true" ]]; then
   # Loop through the positional parameters and simply print them.
   printf "(Dry run) "
   printf '%s ' "$@"
