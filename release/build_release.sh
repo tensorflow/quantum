@@ -14,8 +14,6 @@
 # limitations under the License.
 # =============================================================================
 
-set -eu -o pipefail
-
 # Summary: do all the steps to generate a wheel for a TFQ release.
 #
 # This sets up a clean pyenv virtualenv for a given Python version, then runs
@@ -23,19 +21,19 @@ set -eu -o pipefail
 # by printing some info about the wheel. The wheel is left in ./wheelhouse/.
 # The TFQ release number is extracted from setup.py.
 #
-# Note: this uses build_distribution.sh, which builds the TFQ pip package inside
-# a Docker container. The TFQ git directory where this script is found is mapped
-# directly inside the running Docker environment. The approach makes it easy to
-# iterate on changes to TFQ files in the current directory, and avoids a lot of
-# frustrating "which copy of such-and-such file did it use?" questions. However,
-# it also brings a risk of unexpected impact of left-overs in the current
-# directory. To avoid this, it's best to make a copy of your TFQ git repository
-# (or git-clone a fresh copy from GitHub) and clean it before proceeding.
+# This script uses build_distribution.sh. The latter builds the TFQ pip package
+# inside a TensorFlow Docker container, and maps your local TFQ source tree
+# directly inside the running Docker environment at mount point /tfq. The
+# present does not assume /tfq, but does assume that relative paths work.
+
+set -eu -o pipefail
 
 usage="Usage: ${0} PYTHON_VERSION [BUILD_NUMBER]
-Build a release for TFQ. This runs scripts to build and clean a distribution
-for Python version PYTHON_VERSION, which must be given as a full x.y.z version
-string. Optionally accepts a build number as a second argument."
+Build a release for TFQ.
+
+This runs scripts to build and clean a distribution for Python version
+PYTHON_VERSION, which must be given as a full x.y.z version string.
+Optionally accepts a build number as a second argument."
 
 function quit() {
   printf 'Error: %b\n' "$*" >&2
@@ -50,9 +48,7 @@ cd "${repo_dir}"
 
 # ~~~~~~~~ Parse arguments and do basic sanity checks ~~~~~~~~
 
-if (( $# < 1 )); then
-  quit "Must provide at least one argument, the Python version.\n\n${usage}"
-fi
+(( $# > 0 )) || quit "Must provide at least one argument.\n\n${usage}"
 
 py_version="${1}"
 if ! [[ "${py_version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
@@ -60,32 +56,26 @@ if ! [[ "${py_version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
 fi
 
 build_number=""
-if (( $# > 1 )); then
-  build_number="-${2}"
-fi
+(( $# > 1 )) && build_number="-${2}"
 
 setup_file="${repo_dir}/release/setup.py"
-if [[ -r "${setup_file}" ]]; then
-  tfq_version=$(grep -m 1 CUR_VERSION "${setup_file}" | cut -f2 -d'"')
-else
-  quit "Cannot read ${setup_file}"
-fi
+[[ -r "${setup_file}" ]] || quit "Cannot read ${setup_file}"
+tfq_version=$(grep -m 1 CUR_VERSION "${setup_file}" | cut -f2 -d'"')
 
-for program in python3 pip pyenv jq; do
+version=${tfq_version}${build_number}
+
+for program in docker pyenv jq; do
   if ! command -v "${program}" > /dev/null 2>&1; then
     quit "Cannot run ${program} -- maybe it is not installed?"
   fi
 done
 
-version=${tfq_version}${build_number}
-
 # ~~~~~~~~ Set up a new virtual environment ~~~~~~~~
 
 # Since the build is done inside a Docker container, it is not really necessary
 # to create a virtual Python environment for that part of the process. However,
-# we do run some Python commands before and after, and we want those to be done
-# in an environment we control with the same Python version being targeted for
-# the build. It provides additional isolation.
+# we run some Python commands before and after, and want those to be done in an
+# environment with the same Python version being targeted for the build.
 
 echo "~~~~ Starting ${0} for TFQ release ${version}"
 echo "~~~~ Current directory: $(pwd)"
@@ -100,7 +90,7 @@ pyenv deactivate >& /dev/null  || true
 # Ensure we have the requested version of Python.
 pyenv install -s "${py_version}"
 
-# (Re)create a pyenv virtual env with an expressive name.
+# (Re)create a pyenv virtual env.
 pyenv virtualenv-delete -f tfq-build-venv || true
 pyenv virtualenv -v "${py_version}" tfq-build-venv
 pyenv activate tfq-build-venv
