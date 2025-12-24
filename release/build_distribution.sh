@@ -69,7 +69,7 @@ while getopts "c:ehnp:t:" opt; do
     e) cleanup="false" ;;
     h) echo "${usage}"; exit 0 ;;
     n) dry_run="true" ;;
-    p) py_version="${OPTARG}" ;;
+    p) py_version=$(echo "${OPTARG}" | cut -d. -f1,2) ;;
     t) tf_version="${OPTARG}" ;;
     *) echo "${usage}" >&2; exit 1 ;;
   esac
