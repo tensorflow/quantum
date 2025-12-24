@@ -70,7 +70,7 @@ if (( $# < 1 )); then
   exit 1
 fi
 
-wheel_path="$(realpath "${1}")"
+wheel_path="$(cd "$(dirname "${1}")" && pwd)/$(basename "${1}")"
 wheel_name="$(basename "${1}")"
 
 args=""
