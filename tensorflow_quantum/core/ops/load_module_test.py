@@ -33,7 +33,7 @@ class LoadModuleTest(tf.test.TestCase, parameterized.TestCase):
         self.assertIsNone(loader._module)
 
     def test_lazy_loader_loads_on_attribute_access(self):
-        """Test that _LazyLoader loads the module when an attribute is accessed."""
+        """Test that _LazyLoader loads the module on attribute access."""
         loader = load_module("_tfq_utility_ops.so")
         # Access an attribute to trigger loading
         _ = loader.tfq_append_circuit

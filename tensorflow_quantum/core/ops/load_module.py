@@ -21,26 +21,57 @@ from tensorflow.python.framework import load_library
 from tensorflow.python.platform import resource_loader
 
 
-def load_module(name):
-    """Loads the module with the given name.
+class _LazyLoader:
+    """Lazily loads a TensorFlow op library on first attribute access.
 
-    First attempts to load the module as though it was embedded into the binary
-    using Bazel. If that fails, then it attempts to load the module as though
-    it was installed in site-packages via PIP.
+    This defers the call to `load_library.load_op_library` until the module
+    is actually used, preventing TensorFlow device initialization at import
+    time. This allows users to configure TensorFlow devices (e.g., enabling
+    memory growth) after importing tensorflow_quantum.
+    """
+
+    def __init__(self, name):
+        """Initialize the lazy loader.
+
+        Args:
+            name: The name of the module, e.g. "_tfq_simulate_ops.so"
+        """
+        self._name = name
+        self._module = None
+
+    def _load(self):
+        """Load the module if not already loaded."""
+        if self._module is None:
+            try:
+                path = resource_loader.get_path_to_datafile(self._name)
+                self._module = load_library.load_op_library(path)
+            except:
+                path = os.path.join(get_python_lib(),
+                                    "tensorflow_quantum/core/ops", self._name)
+                self._module = load_library.load_op_library(path)
+        return self._module
+
+    def __getattr__(self, name):
+        """Load the module on first attribute access and delegate."""
+        module = self._load()
+        return getattr(module, name)
+
+
+def load_module(name):
+    """Returns a lazy loader for the module with the given name.
+
+    The actual library loading is deferred until the module is first used.
+    This prevents TensorFlow device initialization at import time, allowing
+    users to configure TensorFlow devices after importing tensorflow_quantum.
 
     Args:
         name: The name of the module, e.g. "_tfq_simulate_ops.so"
 
     Returns:
-        A python module containing the Python wrappers for the Ops.
+        A lazy loader object that behaves like the loaded module but defers
+        loading until first attribute access.
 
     Raises:
-        RuntimeError: If the library cannot be found.
+        RuntimeError: If the library cannot be found when first accessed.
     """
-    try:
-        path = resource_loader.get_path_to_datafile(name)
-        return load_library.load_op_library(path)
-    except:
-        path = os.path.join(get_python_lib(), "tensorflow_quantum/core/ops",
-                            name)
-        return load_library.load_op_library(path)
+    return _LazyLoader(name)

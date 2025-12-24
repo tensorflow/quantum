@@ -28,6 +28,7 @@ Usage:
     python test_device_config_after_import.py
 """
 
+import sys
 import tensorflow as tf
 
 # Import tensorflow_quantum BEFORE configuring devices.
@@ -44,7 +45,7 @@ if gpus:
         print(f"  - Configured memory growth for GPU: {gpus[0]}")
     except RuntimeError as e:
         print(f"FAILED: {e}")
-        exit(1)
+        sys.exit(1)
 else:
     # No GPU available, but we can still test that importing TFQ
     # doesn't prematurely initialize devices by checking CPU config
