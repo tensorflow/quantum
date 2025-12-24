@@ -128,9 +128,13 @@ echo
 echo
 echo "~~~~ Inspecting the wheel."
 
-pip install -qq wheel-inspect
+pip install -qq wheel-inspect check-wheel-contents
 
 final_wheel="wheelhouse/$(/bin/ls -t ./wheelhouse | head -n 1)"
+
+echo "Check wheel contents:"
+echo
+check-wheel-contents "${final_wheel}"
 
 echo
 echo "Requires_python value in wheel: "
