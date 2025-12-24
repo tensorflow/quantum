@@ -111,7 +111,7 @@ pip install wheel-inspect check-wheel-contents
 # ~~~~~~~~ Build & clean the wheel ~~~~~~~~
 
 echo
-echo "~~~~ Starting build of TFQ ${version}."
+echo "~~~~ Starting build of TFQ ${version}"
 ./release/build_distribution.sh -p "${py_version}"
 
 # The wheel that was just created will be the most recent file.
@@ -127,7 +127,7 @@ echo "~~~~ Cleaning wheel ${tmp_wheel}"
 final_wheel="wheelhouse/$(/bin/ls -t ./wheelhouse | head -n 1)"
 
 echo
-echo "~~~~ Inspecting the wheel."
+echo "~~~~ Inspecting the wheel"
 
 echo
 echo "Check wheel contents:"
