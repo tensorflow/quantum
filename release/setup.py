@@ -50,6 +50,14 @@ REQUIRED_PACKAGES = [
     "cirq-google==1.3.0",
     "sympy==1.14",
     "tf-keras~=2.16.0",
+    # The following are transitive dependencies that need to be constrained to
+    # avoid incompatible versions or because some (e.g., contourpy 1.3.3)
+    # require Python 3.11+ and we want to maintain Python 3.10 compatibility.
+    # TODO: revisit after we reach compatibility with TensorFlow 2.19+.
+    "contourpy<=1.3.2",
+    "jax<=0.5",
+    "numpy<2.0",
+    "scipy<=1.12.0",
     # The following makes it easier to get the right version on Colab. Once
     # TFQ works with the latest version of TF, this may become unnecessary.
     "protobuf==4.25.8",
