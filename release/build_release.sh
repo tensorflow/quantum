@@ -41,7 +41,7 @@ function quit() {
 
 function have() {
   unset -v have
-  type $1 &> /dev/null
+  type "$1" &> /dev/null
 }
 
 # ~~~~~~~~ Sanity checks ~~~~~~~~
@@ -97,11 +97,11 @@ eval "$(pyenv init -)"
 pyenv deactivate >& /dev/null  || true
 
 # Ensure we have the requested version of Python.
-pyenv install -s ${py_version}
+pyenv install -s "${py_version}"
 
 # (Re)create a pyenv virtual env with an expressive name.
 pyenv virtualenv-delete -f tfq-build-venv || true
-pyenv virtualenv -v ${py_version} tfq-build-venv
+pyenv virtualenv -v "${py_version}" tfq-build-venv
 pyenv activate tfq-build-venv
 
 pip install --upgrade pip
