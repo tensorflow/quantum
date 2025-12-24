@@ -57,12 +57,10 @@ REQUIRED_PACKAGES = [
     "contourpy<=1.3.0",
     "numpy<2.0",
     "scipy<=1.12.0",
-
     "jax<0.4.24",
     "jaxlib<0.4.24",
     "pillow<=11.0",
     "networkx<3.3",
-
     "h5py==3.10.0",
     "matplotlib<3.10",
     "importlib_metadata<5",
