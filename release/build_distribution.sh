@@ -98,17 +98,16 @@ cd /tfq
 PREFIX='[DOCKER] '
 exec > >(sed "s/^/${PREFIX} /")
 exec 2> >(sed "s/^/${PREFIX} /" >&2)
-printf "Build configuration inside Docker container:\n"
+printf ":::::::: Build configuration inside Docker container ::::::::\n"
 printf "  Docker image:     ${docker_image}\n"
 printf "  Crosstool:        ${crosstool}\n"
 printf "  TF version:       ${tf_version}\n"
 printf "  Python version:   ${py_version}\n"
 printf "  CUDA version:     ${cuda_version}\n"
 printf "  vCPUs available:  $(nproc)\n"
-printf "\n:::::::: Configuring Python environment ::::::::\n\n"
+printf "\n\n:::::::: Configuring Python environment ::::::::\n\n"
 python3 -m pip install --upgrade pip --root-user-action ignore
 pip install -r requirements.txt --root-user-action ignore
-printf "\n:::::::: Configuring TensorFlow Quantum build ::::::::\n\n"
 printf "Y\n" | ./configure.sh
 printf "\n:::::::: Starting Bazel build ::::::::\n\n"
 bazel build ${build_flags} release:build_pip_package
