@@ -32,29 +32,31 @@ set -eu -o pipefail
 # directory. To avoid this, it's best to make a copy of your TFQ git repository
 # (or git-clone a fresh copy from GitHub) and clean it before proceeding.
 
-# ~~~~~~~~ Helpers ~~~~~~~~
+usage="Usage: ${0} PYTHON_VERSION [BUILD_NUMBER]
+Build a release for TFQ. This runs scripts to build and clean a distribution
+for Python version PYTHON_VERSION, which must be given as a full x.y.z version
+string. Optionally accepts a build number as a second argument."
 
 function quit() {
-  echo "ERROR: $*." >&2
+  printf 'Error: %b\n' "$*" >&2
   exit 1
 }
 
-function have() {
-  unset -v have
-  type "$1" &> /dev/null
-}
-
-# ~~~~~~~~ Sanity checks ~~~~~~~~
-
 # Go to the top of the local TFQ git tree. Do it early in case this fails.
-thisdir=$(CDPATH="" cd -- "$(dirname -- "$0")" && pwd -P)
+thisdir=$(CDPATH="" cd -- "$(dirname -- "${0}")" && pwd -P)
 repo_dir=$(git -C "${thisdir}" rev-parse --show-toplevel 2>/dev/null || \
-  quit "this script must be run from inside the TFQ git tree")
+  quit "This script must be run from inside the TFQ git tree.")
 cd "${repo_dir}"
+
+# ~~~~~~~~ Parse arguments and do basic sanity checks ~~~~~~~~
+
+if (( $# < 1 )); then
+  quit "Must provide at least one argument, the Python version.\n\n${usage}"
+fi
 
 py_version="${1}"
 if ! [[ "${py_version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-  quit "the first argument must be a full Python version number"
+  quit "The first argument must be a Python version number in the form x.y.z."
 fi
 
 build_number=""
@@ -66,12 +68,12 @@ setup_file="${repo_dir}/release/setup.py"
 if [[ -r "${setup_file}" ]]; then
   tfq_version=$(grep -m 1 CUR_VERSION "${setup_file}" | cut -f2 -d'"')
 else
-  quit "cannot read ${setup_file}"
+  quit "Cannot read ${setup_file}"
 fi
 
 for program in python3 pip pyenv jq; do
-  if ! have $program; then
-    quit "cannot run $program -- maybe it is not installed?"
+  if ! command -v "${program}" > /dev/null 2>&1; then
+    quit "Cannot run ${program} -- maybe it is not installed?"
   fi
 done
 
@@ -88,7 +90,6 @@ version=${tfq_version}${build_number}
 echo "~~~~ Starting ${0} for TFQ release ${version}"
 echo "~~~~ Current directory: $(pwd)"
 echo "~~~~ (Re)creating virtual environment 'tfq-build-venv'"
-echo
 
 # Ensure pyenv is activated.
 eval "$(pyenv init -)"
@@ -105,13 +106,12 @@ pyenv virtualenv -v "${py_version}" tfq-build-venv
 pyenv activate tfq-build-venv
 
 pip install --upgrade pip
+pip install wheel-inspect check-wheel-contents
 
 # ~~~~~~~~ Build & clean the wheel ~~~~~~~~
 
 echo
 echo "~~~~ Starting build of TFQ ${version}."
-echo
-
 ./release/build_distribution.sh -p "${py_version}"
 
 # The wheel that was just created will be the most recent file.
@@ -120,24 +120,21 @@ tmp_wheel="/tmp/tensorflow_quantum/${tmp_wheel_name}"
 
 echo
 echo "~~~~ Cleaning wheel ${tmp_wheel}"
-echo
 ./release/clean_distribution.sh "${tmp_wheel}"
 
 # ~~~~~~~~ Check the result ~~~~~~~~
 
+final_wheel="wheelhouse/$(/bin/ls -t ./wheelhouse | head -n 1)"
+
 echo
 echo "~~~~ Inspecting the wheel."
 
-pip install -qq wheel-inspect check-wheel-contents
-
-final_wheel="wheelhouse/$(/bin/ls -t ./wheelhouse | head -n 1)"
-
-echo "Check wheel contents:"
 echo
+echo "Check wheel contents:"
 check-wheel-contents "${final_wheel}"
 
 echo
-echo "Requires_python value in wheel: "
+echo "Requires_python value in wheel:"
 wheel2json "${final_wheel}" | jq -r '.dist_info.metadata."requires_python"'
 
 echo
