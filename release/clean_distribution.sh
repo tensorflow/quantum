@@ -22,10 +22,10 @@
 # will be picked up at runtime. This accomplishes a similar result as if the
 # libraries had been statically linked.
 
-set -eu
+set -eu -o pipefail
 
 # Find the top of the local TFQ git tree. Do it early in case this fails.
-thisdir=$(CDPATH="" cd -- "$(dirname -- "$0")" && pwd -P)
+thisdir=$(CDPATH="" cd -- "$(dirname -- "${0}")" && pwd -P)
 repo_dir=$(git -C "${thisdir}" rev-parse --show-toplevel 2>/dev/null || \
   echo "${thisdir}/..")
 
@@ -64,8 +64,8 @@ while getopts "hm:np:st:v" opt; do
   esac
 done
 shift $((OPTIND -1))
-if [ ! $# -ge 1 ]; then
-  echo "ERROR: insufficient arguments."
+if (( $# < 1 )); then
+  echo "ERROR: need at least one argument argument."
   echo "${usage}" >&2
   exit 1
 fi
@@ -74,7 +74,7 @@ wheel_path="$(realpath "${1}")"
 wheel_name="$(basename "${1}")"
 
 args=""
-if [ "${action}" = "repair" ]; then
+if [[ "${action}" == "repair" ]]; then
   args="${verbose} --exclude libtensorflow_framework.so.2 --plat ${platform}"
 fi
 
@@ -86,7 +86,7 @@ set -- docker run -it --rm --network host \
   "${docker_image}" \
   bash -c "auditwheel ${action} ${args} -w /tfq/wheelhouse /tmp/${wheel_name}"
 
-if [ "${dry_run}" = "true" ]; then
+if [[ "${dry_run}" == "true" ]]; then
   # Loop through the positional parameters and simply print them.
   printf "(Dry run) "
   printf '%s ' "$@"
@@ -94,7 +94,7 @@ if [ "${dry_run}" = "true" ]; then
 else
   echo "Running 'auditwheel ${action}' in Docker with image ${docker_image}"
   "$@"
-  if [ "${action}" = "repair" ]; then
+  if [[ "${action}" == "repair" ]]; then
     echo "Done. New wheel file written to ${repo_dir}/wheelhouse"
   fi
 fi
