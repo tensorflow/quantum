@@ -88,17 +88,6 @@ platform tags of the TFQ wheel must match the tags of the current TensorFlow
 version you are targeting. (Visit `https://pypi.org/project/tensorflow/<target
 TF version>/#files` to determine what the tags are).
 
-## Testing the scripts
-
-There are some basic unit tests in the fils `build_distribution_test.py` and
-`clean_distribution_test.py`. They can be run using as follows:
-
-```shell
-# Move to the top-level directory of the repo before running the tests.
-cd ..
-bazel test //release:build_distribution_test //release:clean_distribution_test
-```
-
 ## More information
 
 "TensorFlow SIG Build" is a community group dedicated to the TensorFlow build
