@@ -51,14 +51,9 @@ RUN apt-get update -q && \
     add-apt-repository -y ppa:deadsnakes/ppa && \
     apt-get update -q
 
-# The following conditional is to handle Python 3.12's removal of distutils.
-RUN distutils_pkg="python${PYTHON_VERSION}-distutils" && \
-    if [[ "${PYTHON_VERSION#*.}" -ge 12 ]]; then \
-        distutils_pkg="python3-setuptools"; \
-    fi && \
-    apt-get install -yq --no-install-recommends python${PYTHON_VERSION} \
-        python${PYTHON_VERSION}-dev python${PYTHON_VERSION}-venv ${distutils_pkg} \
-        python3-pip python-is-python3
+RUN apt-get install -yq --no-install-recommends python${PYTHON_VERSION} \
+        python${PYTHON_VERSION}-dev python${PYTHON_VERSION}-venv python3-pip \
+        python-is-python3
 
 # Use update-alternatives to make the desired version be the default.
 # hadolint ignore=SC3010
@@ -69,10 +64,6 @@ RUN python_path="" bin="/usr/bin" && \
         "20.04") python_path="${bin}/python3.8"  ;; \
         *) python_path=$(readlink -f ${bin}/python3) ;; \
     esac && \
-    if [[ ! -f "${python_path}" ]]; then \
-        echo "ERROR: ${python_path} does not exist." >&2; \
-        exit 1; \
-    fi && \
     update-alternatives --install ${bin}/python3 python3 "${python_path}" 1 && \
     update-alternatives --install ${bin}/python3 python3 "${bin}/python${PYTHON_VERSION}" 2
 
