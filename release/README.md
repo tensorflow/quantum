@@ -21,8 +21,8 @@ themselves when they want to install TFQ, each release of TFQ must be pinned to
 a specific version of TensorFlow. As a consequence, TFQ releases will not work
 with any other version of TensorFlow than the one they are pinned to.
 
-Python wheels for TFQ are produced by compiling them locally with a toolchain
-that matches that used by the version of TensorFlow being targeted by a given
+Python wheels for TFQ are produced by compiling them with a toolchain that
+matches that used to build the version of TensorFlow being targeted by a given
 version of TFQ. A number of elements affect whether the whole process succeeds
 and the resulting wheel is portable to environments other than the specific
 computer TFQ is built on, including:
@@ -54,7 +54,7 @@ libraries.
 
 3.  Git clone the TensorFlow Quantum repo to a directory on your computer.
 
-4.  `cd` into this local clone directory.
+4.  `cd` into your local clone directory in a Bash shell.
 
 ### Build the release
 
@@ -64,47 +64,49 @@ libraries.
 2.  If the previous step completes successfully, proceed to the next section
     below and test the wheel.
 
-3.  Repeat steps 1&ndash;2 for other Python versions.
+3.  Repeat steps 1&ndash;2 above for other Python versions.
 
 ### Testing the release
 
 Testing is currently not automated to the degree that building a release is.
-Assuming that one of the procedures above was used to create one or more wheels
-for a TFQ release, here are the steps for testing each one.
+The following is the current process.
 
 1.  First, perform a quick local test.
 
-    1.  `cd` out of the TFQ source directory. This is a critical step, because
+    1.  `cd` out of the TFQ source directory. This is essential, because
         importing TFQ into a Python interpreter when the current directory is
         the TFQ source tree will result in baffling errors (usually something
         about `pauli_sum_pb2` not found).
 
     1.  Create a fresh Python virtual environment.
 
-    1.  Run `pip install /path/to/whl/file`, where `/path/to/whl/file` is the
-        path to the wheel file corresponding to the version of Python you are
-        running.
+    1.  Run `pip install /path/to/wheel`, where `/path/to/wheel` is the path to
+        the wheel file corresponding to the version of Python you are running.
 
-    1.  Run the following snippet. If this results in an error, stop and debug
-        the problem.
+    1.  (Currently required because TFQ requires the legacy version of Keras.)
+        Set the environment variable `TF_USE_LEGACY_KERAS` to `1` before
+        loading any TensorFlow or TensorFlow Quantum code. You can set it in
+        your shell before starting Python; alternatively, you can execute the
+        following Python code before any `import tensorflow` or `import
+        tensorflow_quantum` statements:
 
         ```python
-        import tensorflow_quantum as tfq
-        `print(tfq.__version__)
+        import os
+        os.environ["TF_USE_LEGACY_KERAS"] = "1"
         ```
 
-    1.  If the previous snippet ran without error, next try running some
-        more elaborate TFQ example code.
+    1.  Run some example TFQ code. If it runs without problems, go on to the
+        next step; if it fails, debug the error.
 
 2.  Second, test in Colab.
 
-    1.  Go to a remotely hosted Colab and make a copy of the Hello Many Worlds
-        [tutorial notebook](
+    1.  Go to a remotely hosted Colab and make a copy of the [Hello Many Worlds
+        tutorial notebook](
         https://www.tensorflow.org/quantum/tutorials/hello_many_worlds).
 
     1.  Using the Colab file explorer, upload a TFQ wheel you created matching
         the version of Python running in Colab. (At the time of this writing,
-        this is Python 3.12.)
+        Colab uses Python 3.12.)
 
     1.  When the upload finishes, right-click on the file name in the Colab file
         explorer and copy the path to the file in Colab.
@@ -124,41 +126,6 @@ for a TFQ release, here are the steps for testing each one.
     1.  If the notebook executes all the way through without error,
         congratulations! If something fails, proceed to debug the problem.
 
-## Alternative procedure
-
-As mentioned above, `build_release.sh` relies on other scripts to do the main
-work. Those steps can be run manually, and sometimes that's useful to do that
-when debugging problems. The steps in this more manual approach are:
-
-1.  Create a Python virtual environment. (The maintainers currently use `pyenv`
-    but Python's built-in `venv` should work too.)
-
-2.  Run `pip install -r requirements.txt`
-
-3.  Run `./release/build_distribution.sh`
-
-4.  If the above succeeds, it will leave the wheel in `/tmp/tensorflow_quantum/`
-    on your system. Take note of the name of the wheel file that
-    `build_distribution.sh` prints when it finishes.
-
-5.  Run `./release/clean_distribution.sh /tmp/tensorflow_quantum/WHEEL_FILE`,
-    where `WHEEL_FILE` is the file noted in the previous step. If this works, it
-    will create a new wheel file in `../wheelhouse`. If an error occurs, it will
-    hopefully report the problem. If the error is a platform tag mismatch, run
-    `./release/clean_distribution.sh -s /tmp/tensorflow_quantum/WHEEL_FILE`;
-    this will run auditwheel's `show` command on the wheel file to indicate what
-    version of `manylinux` this wheel can be made to run on if you use
-    `auditwheel` to repair it. With that information, you may be able to edit
-    the `build_distribution.sh` script to experiment with different values for
-    the Crosstool and/or the Docker images used.
-
-6.  If the previous step succeeded, go to the next section (Testing the
-    release files) and do preliminary testing on the wheel.
-
-7.  If the tests succeed, repeat the `build_distribution.sh` and
-    `clean_distribution.sh` steps for different versions of Python. If the
-    preliminary tests fail, proceed to debugging the reason.
-
 ## More information
 
 "TensorFlow SIG Build" is a community group dedicated to the TensorFlow build
@@ -166,7 +133,41 @@ process. This repository is a showcase of resources, guides, tools, and builds
 contributed by the community, for the community. The following resources may be
 useful when trying to figure out how to make this all work.
 
-*   The "TF SIG Build Dockerfiles" document:
-    https://github.com/tensorflow/build/tree/ff4320fee2cf48568ebd2f476d7714438bfa0bee/tf_sig_build_dockerfiles#readme
+*   [The "TF SIG Build Dockerfiles" README file](
+    https://github.com/tensorflow/build/tree/ff4320fee2cf48568ebd2f476d7714438bfa0bee/tf_sig_build_dockerfiles#readme)
 
 *   Other info in the SIG Build repo: https://github.com/tensorflow/build
+
+The script `build_release.sh` relies on other scripts to do the main work.
+Those steps can be run manually, and sometimes it is useful to do so when
+debugging problems. The steps are:
+
+1.  `cd` to the top level of your git clone of the TensorFlow Quantum repo.
+
+1.  Create a Python virtual environment for one of the supported versions of
+    Python. (The maintainers currently use `pyenv` but Python's built-in
+    `venv` should work too.)
+
+1.  Run `pip install -r requirements.txt`
+
+1.  Run `./release/build_distribution.sh`
+
+1.  If the above succeeds, it will leave the wheel in `/tmp/tensorflow_quantum/`
+    on your system. Take note of the name of the wheel file that
+    `build_distribution.sh` prints when it finishes.
+
+1.  Run `./release/clean_distribution.sh /tmp/tensorflow_quantum/WHEEL_FILE`,
+    where `WHEEL_FILE` is the file noted in the previous step. If this works, it
+    will create a new wheel file in a subdirectory named `wheelhouse`. If an
+    error occurs, it will hopefully report the problem. If the error is a Python
+    platform tag mismatch, run `./release/clean_distribution.sh -s
+    /tmp/tensorflow_quantum/WHEEL_FILE`; this will run `auditwheel show` on the
+    wheel file to indicate what version of `manylinux` this wheel can be made to
+    run on if you use `auditwheel` to repair it. With that information, you may
+    be able to edit the `build_distribution.sh` script to experiment with
+    different values for the Crosstool and/or the Docker images used.
+
+1.  If the previous step succeeded, go to testing the release.
+
+1.  If the tests succeed, repeat the `build_distribution.sh` and
+    `clean_distribution.sh` steps for different versions of Python.
