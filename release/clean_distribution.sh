@@ -24,10 +24,15 @@
 
 set -eu -o pipefail
 
+function quit() {
+  printf 'Error: %b\n' "$*" >&2
+  exit 1
+}
+
 # Find the top of the local TFQ git tree. Do it early in case this fails.
-thisdir=$(CDPATH="" cd -- "$(dirname -- "${0}")" && pwd -P)
-repo_dir=$(git -C "${thisdir}" rev-parse --show-toplevel 2>/dev/null || \
-  echo "${thisdir}/..")
+thisdir=$(dirname "${BASH_SOURCE[0]:?}")
+repo_dir=$(git -C "${thisdir}" rev-parse --show-toplevel 2> /dev/null) || \
+  quit "This script must be run from inside the TFQ git tree."
 
 # Default values for variables that can be changed via command line flags.
 docker_image="quay.io/pypa/manylinux_2_34_x86_64"
@@ -60,14 +65,12 @@ while getopts "hm:np:st:v" opt; do
     s) action="show" ;;
     t) platform="${OPTARG}" ;;
     v) verbose="--verbose" ;;
-    *) echo "${usage}" >&2; exit 1 ;;
+    *) quit "${usage}" ;;
   esac
 done
 shift $((OPTIND -1))
 if (( $# < 1 )); then
-  echo "ERROR: need at least one argument argument."
-  echo "${usage}" >&2
-  exit 1
+  quit "Must provide at least one argument.\n\n${usage}"
 fi
 
 wheel_path="$(cd "$(dirname "${1}")" && pwd)/$(basename "${1}")"

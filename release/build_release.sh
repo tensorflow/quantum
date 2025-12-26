@@ -28,6 +28,17 @@
 
 set -eu -o pipefail
 
+function quit() {
+  printf 'Error: %b\n' "$*" >&2
+  exit 1
+}
+
+# Go to the top of the local TFQ git tree. Do it early in case this fails.
+thisdir=$(dirname "${BASH_SOURCE[0]:?}")
+repo_dir=$(git -C "${thisdir}" rev-parse --show-toplevel 2> /dev/null) || \
+  quit "This script must be run from inside the TFQ git tree."
+cd "${repo_dir}"
+
 usage="Usage: ${0} PYTHON_VERSION [BUILD_NUMBER]
 Build a release for TFQ.
 
@@ -35,20 +46,11 @@ This runs scripts to build and clean a distribution for Python version
 PYTHON_VERSION, which must be given as a full x.y.z version string.
 Optionally accepts a build number as a second argument."
 
-function quit() {
-  printf 'Error: %b\n' "$*" >&2
-  exit 1
-}
-
-# Go to the top of the local TFQ git tree. Do it early in case this fails.
-thisdir=$(CDPATH="" cd -- "$(dirname -- "${0}")" && pwd -P)
-repo_dir=$(git -C "${thisdir}" rev-parse --show-toplevel 2>/dev/null || \
-  quit "This script must be run from inside the TFQ git tree.")
-cd "${repo_dir}"
-
 # ~~~~~~~~ Parse arguments and do basic sanity checks ~~~~~~~~
 
-(( $# > 0 )) || quit "Must provide at least one argument.\n\n${usage}"
+if (( $# < 1 )); then
+  quit "Must provide at least one argument.\n\n${usage}"
+fi
 
 py_version="${1}"
 if ! [[ "${py_version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
@@ -56,14 +58,19 @@ if ! [[ "${py_version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
 fi
 
 build_number=""
-(( $# > 1 )) && build_number="-${2}"
+if (( $# > 1 )); then
+  build_number="-${2}"
+fi
 
 setup_file="${repo_dir}/release/setup.py"
-[[ -r "${setup_file}" ]] || quit "Cannot read ${setup_file}"
-tfq_version=$(grep -m 1 CUR_VERSION "${setup_file}" | cut -f2 -d'"')
+if ! [[ -r "${setup_file}" ]]; then
+  quit "Cannot read ${setup_file}"
+fi
+tfq_cur_version=$(grep -m 1 CUR_VERSION "${setup_file}" | cut -f2 -d'"')
 
-version=${tfq_version}${build_number}
+tfq_version=${tfq_cur_version}${build_number}
 
+# Test these upfront to avoid failing mid-way through a long process.
 for program in docker pyenv jq; do
   if ! command -v "${program}" > /dev/null 2>&1; then
     quit "Cannot run ${program} -- maybe it is not installed?"
@@ -77,7 +84,7 @@ done
 # we run some Python commands before and after, and want those to be done in an
 # environment with the same Python version being targeted for the build.
 
-echo "~~~~ Starting ${0} for TFQ release ${version}"
+echo "~~~~ Starting ${0} for TFQ release ${tfq_version}"
 echo "~~~~ Current directory: $(pwd)"
 echo "~~~~ (Re)creating virtual environment 'tfq-build-venv'"
 
@@ -101,7 +108,7 @@ pip install wheel-inspect check-wheel-contents
 # ~~~~~~~~ Build & clean the wheel ~~~~~~~~
 
 echo
-echo "~~~~ Starting build of TFQ ${version}"
+echo "~~~~ Starting build of TFQ ${tfq_version}"
 ./release/build_distribution.sh -p "${py_version}"
 
 # The wheel that was just created will be the most recent file.

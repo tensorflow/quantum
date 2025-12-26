@@ -38,10 +38,15 @@
 
 set -eu -o pipefail
 
+function quit() {
+  printf 'Error: %b\n' "$*" >&2
+  exit 1
+}
+
 # Find the top of the local TFQ git tree. Do it early in case this fails.
-thisdir=$(CDPATH="" cd -- "$(dirname -- "${0}")" && pwd -P)
-repo_dir=$(git -C "${thisdir}" rev-parse --show-toplevel 2> /dev/null || \
-  echo "${thisdir}/..")
+thisdir=$(dirname "${BASH_SOURCE[0]:?}")
+repo_dir=$(git -C "${thisdir}" rev-parse --show-toplevel 2> /dev/null) || \
+  quit "This script must be run from inside the TFQ git tree."
 
 # Default values for variables that can be changed via command line flags.
 tf_version="2.16"
@@ -71,7 +76,7 @@ while getopts "c:ehnp:t:" opt; do
     n) dry_run="true" ;;
     p) py_version=$(echo "${OPTARG}" | cut -d. -f1,2) ;;
     t) tf_version="${OPTARG}" ;;
-    *) echo "${usage}" >&2; exit 1 ;;
+    *) quit "${usage}" ;;
   esac
 done
 shift $((OPTIND -1))
