@@ -10,7 +10,7 @@ There are a few ways to set up your environment to use TensorFlow Quantum (TFQ):
   Python's pip package manager.
 * Or build TensorFlow Quantum from source.
 
-TensorFlow Quantum is supported on Python 3.10, 3.11, and 3.12 and depends directly on [Cirq](https://github.com/quantumlib/Cirq).
+TensorFlow Quantum is supported on Python version 3.9 through 3.12 and depends directly on [Cirq](https://github.com/quantumlib/Cirq).
 
 ## Pip package
 
@@ -56,7 +56,7 @@ The following steps are tested for Ubuntu-like systems.
 
 ### 1. Set up a Python 3 development environment
 
-First we need the Python 3.10 development tools.
+We will use Python 3.10 as an example. First, we need the Python 3.10 development tools.
 <!-- common_typos_disable -->
 <pre class="devsite-click-to-copy">
   <code class="devsite-terminal">sudo apt update</code>
@@ -87,7 +87,7 @@ guide, the <a href="https://bazel.build/" class="external">Bazel</a>
 build system will be required.
 
 Our latest source builds use TensorFlow 2.16.2. To ensure compatibility we use
-`bazel` version 6.5.0. To remove any existing version of Bazel:
+the same version of `bazel`, 6.5.0. To remove any existing version of Bazel:
 <!-- common_typos_disable -->
 <pre class="devsite-click-to-copy">
   <code class="devsite-terminal">sudo apt-get remove bazel</code>
