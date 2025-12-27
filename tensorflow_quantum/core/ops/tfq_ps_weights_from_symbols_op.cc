@@ -37,10 +37,10 @@ using ::tfq::proto::Program;
 
 class TfqPsWeightsFromSymbolOp : public tensorflow::OpKernel {
  public:
-  explicit TfqPsWeightsFromSymbolOp(tensorflow::OpKernelConstruction *context)
+  explicit TfqPsWeightsFromSymbolOp(tensorflow::OpKernelConstruction* context)
       : OpKernel(context) {}
 
-  void Compute(tensorflow::OpKernelContext *context) override {
+  void Compute(tensorflow::OpKernelContext* context) override {
     std::vector<Program> programs;
 
     const int num_inputs = context->num_inputs();
@@ -51,7 +51,7 @@ class TfqPsWeightsFromSymbolOp : public tensorflow::OpKernel {
     OP_REQUIRES_OK(context, ParsePrograms(context, "programs", &programs));
 
     // Parse the input string here.
-    const Tensor *symbols_tensor;
+    const Tensor* symbols_tensor;
     OP_REQUIRES_OK(context, context->input("symbols", &symbols_tensor));
     OP_REQUIRES(
         context, symbols_tensor->dims() == 1,
@@ -88,7 +88,7 @@ class TfqPsWeightsFromSymbolOp : public tensorflow::OpKernel {
             Operation cur_op = cur_moment.operations().at(k);
             if (ignored_symbol_set.contains(cur_op.gate().id())) continue;
 
-            const auto &cur_op_map = *cur_op.mutable_args();
+            const auto& cur_op_map = *cur_op.mutable_args();
             const auto exponent = cur_op_map.at("exponent");
             if (exponent.arg_case() == Arg::ArgCase::kSymbol) {
               // this gate has parameterized exponent.
@@ -131,7 +131,7 @@ class TfqPsWeightsFromSymbolOp : public tensorflow::OpKernel {
           std::max(n_single_symbol.at(i), largest_single_symbol);
     }
 
-    tensorflow::Tensor *output = nullptr;
+    tensorflow::Tensor* output = nullptr;
     tensorflow::TensorShape output_shape;
     // batch size.
     output_shape.AddDim(programs.size());
@@ -171,7 +171,7 @@ REGISTER_OP("TfqPsWeightsFromSymbols")
     .Input("programs: string")
     .Input("symbols: string")
     .Output("weights: float")
-    .SetShapeFn([](tensorflow::shape_inference::InferenceContext *c) {
+    .SetShapeFn([](tensorflow::shape_inference::InferenceContext* c) {
       tensorflow::shape_inference::ShapeHandle programs_shape;
       TF_RETURN_IF_ERROR(c->WithRank(c->input(0), 1, &programs_shape));
 
