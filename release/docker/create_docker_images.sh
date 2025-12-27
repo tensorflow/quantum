@@ -25,31 +25,44 @@ set -e
 
 declare -a ubuntu_versions=()
 declare -a python_versions=()
-declare -a docker_args=()
 
 ubuntu_versions+=( "22.04" "24.04" )
 python_versions+=( "3.9" "3.10" "3.11" "3.12" )
+
+usage="Usage: ${0} [OPTIONS]
+
+Build a set of basic Ubuntu Linux x86_64 Docker images with
+Python preinstalled.
+
+General options:
+  -h     Show this help message and exit
+  -v     Run Docker build with verbose progress output"
+
+while getopts "hv" opt; do
+  case "${opt}" in
+        h) echo "${usage}"; exit 0 ;;
+        v) export BUILDKIT_PROGRESS=plain ;;
+        ?) echo "${usage}"; exit 1 ;;
+    esac
+done
+
 total_items=$(( ${#ubuntu_versions[@]} * ${#python_versions[@]}))
+echo "Building a total of ${total_items} Docker images."
 
-echo "~~~~ Building a total of ${total_items} Docker images"
-
-# Flag --no-cache forces containers to be rebuilt.
-docker_args+=( "--no-cache" )
-
-# shellcheck disable=SC2068,SC2145
+start_time="$(date +"%Y-%m-%d-%H%M")"
 for os_version in "${ubuntu_versions[@]}"; do
     for py_version in "${python_versions[@]}"; do
         echo
         echo "~~~~ Python ${py_version} on Ubuntu ${os_version}"
-        docker build \
+        # shellcheck disable=SC2086  # Lack of quotes around vars is ok here.
+        docker build --no-cache --label "build-datetime=${start_time}" \
             --build-arg PYTHON_VERSION="${py_version}" \
             --build-arg UBUNTU_VERSION="${os_version}" \
-            ${docker_args[@]}\
             -t ubuntu${os_version%%.*}-cp${py_version//./}:latest .
     done
 done
 
 echo
-echo "~~~~ Done. Created the following Docker images:"
+echo "~~~~ Done. The following Docker images were created:"
 echo
-docker images --filter "reference=ubuntu*-cp*"
+docker images --filter "label=build-datetime=${start_time}"
