@@ -8,13 +8,8 @@ contributions.
 Please **do not** use GitHub issues to report security vulnerabilities; GitHub
 issues are public, and doing so could allow someone to exploit the information
 before the problem can be addressed. Instead, please use the *Report a
-vulnerability* interface from the *Security* tab at the top of this GitHub
+vulnerability* button from the *Security* tab at the top of this GitHub
 repository page.
-
-<div align="center">
-<img width="75%" alt="Location of the report button on the repository page"
-    src="/.github/report-vulnerability-button.png">
-</div>
 
 Please report security issues in third-party modules to the person or team
 maintaining the module rather than this project's stewards, unless you believe
