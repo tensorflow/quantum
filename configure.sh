@@ -103,18 +103,18 @@ elif [[ -n "${CONDA_PREFIX:-}" && -x "${CONDA_PREFIX}/bin/python" ]]; then
   # 3) Conda environment python, if available
   PY="${CONDA_PREFIX}/bin/python"
 else
-  # 4) Fallback: system python3, but require >= 3.10
+  # 4) Fallback: system python3, but require >= 3.9
   if ! command -v python3 >/dev/null 2>&1; then
-    die "python3 not found. Pass --python=/path/to/python3.10+ or set PYTHON_BIN_PATH."
+    die "python3 not found. Pass --python=/path/to/python3.9+ or set PYTHON_BIN_PATH."
   fi
 
   if ! python3 - <<'PY'
 import sys
-raise SystemExit(0 if sys.version_info[:2] >= (3, 10) else 1)
+raise SystemExit(0 if sys.version_info[:2] >= (3, 9) else 1)
 PY
   then
-    die "Python 3.10+ required for TensorFlow Quantum, but found " \
-      "$(python3 -V 2>&1). Pass --python=/path/to/python3.10+ or set PYTHON_BIN_PATH."
+    die "Python 3.9+ required for TensorFlow Quantum, but found " \
+      "$(python3 -V 2>&1). Pass --python=/path/to/python3.9+ or set PYTHON_BIN_PATH."
   fi
 
   PY="$(command -v python3)"
