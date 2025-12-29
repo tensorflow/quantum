@@ -39,27 +39,36 @@ repo_dir=$(git -C "${thisdir}" rev-parse --show-toplevel 2> /dev/null) || \
   quit "This script must be run from inside the TFQ git tree."
 cd "${repo_dir}"
 
-usage="Usage: ${0} PYTHON_VERSION [BUILD_NUMBER]
-Build a release for TFQ.
+# Default values
+py_version=$(python3 --version | cut -d' ' -f2)
+build_number=""
 
-This runs scripts to build and clean a distribution for Python version
-PYTHON_VERSION, which must be given as a full x.y.z version string.
-Optionally accepts a build number as a second argument."
+usage="Usage: ${0} [OPTIONS]
+
+Build a release of TensorFlow Quantum for a given Python version. Execution is
+done inside a Python virtual environment set up using pyenv and venv. The
+version used is by default the same version as whatever 'python' is in your
+environment; option '-p' can be used to specify a different version.
+
+Options:
+  -b NUMBER   Build number (optional)
+  -h          Show this help message and exit
+  -p VERSION  Python version (x.y.z) to use"
 
 # ~~~~~~~~ Parse arguments and do basic sanity checks ~~~~~~~~
 
-if (( $# < 1 )); then
-  quit "Must provide at least one argument.\n\n${usage}"
-fi
+while getopts "b:hp:" opt; do
+  case "${opt}" in
+    b) build_number="-${OPTARG}" ;;
+    h) echo "${usage}"; exit 0 ;;
+    p) py_version="${OPTARG}" ;;
+    *) quit "${usage}" ;;
+  esac
+done
+shift $((OPTIND -1))
 
-py_version="${1}"
 if ! [[ "${py_version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-  quit "The first argument must be a Python version number in the form x.y.z."
-fi
-
-build_number=""
-if (( $# > 1 )); then
-  build_number="-${2}"
+  quit "The Python version must be a full version number in the form x.y.z."
 fi
 
 setup_file="${repo_dir}/release/setup.py"
@@ -67,7 +76,6 @@ if ! [[ -r "${setup_file}" ]]; then
   quit "Cannot read ${setup_file}"
 fi
 tfq_cur_version=$(grep -m 1 CUR_VERSION "${setup_file}" | cut -f2 -d'"')
-
 tfq_version=${tfq_cur_version}${build_number}
 
 # Test these upfront to avoid failing mid-way through a long process.
@@ -84,7 +92,7 @@ done
 # we run some Python commands before and after, and want those to be done in an
 # environment with the same Python version being targeted for the build.
 
-echo "~~~~ Starting ${0} for TFQ release ${tfq_version}"
+echo "Building TFQ ${tfq_version} for Python ${py_version}"
 echo "~~~~ Current directory: $(pwd)"
 echo "~~~~ (Re)creating virtual environment 'tfq-build-venv'"
 
