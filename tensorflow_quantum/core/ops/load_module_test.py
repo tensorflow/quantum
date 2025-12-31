@@ -104,17 +104,15 @@ class LoadModuleTest(tf.test.TestCase):
                 sys.exit(1)
         """)
 
-        result = subprocess.run(
-            [sys.executable, "-c", test_code],
-            capture_output=True,
-            text=True
-        )
+        result = subprocess.run([sys.executable, "-c", test_code],
+                                capture_output=True,
+                                text=True,
+                                check=False)
 
         self.assertEqual(
             result.returncode, 0,
             f"Device configuration after import failed.\n"
-            f"stdout: {result.stdout}\nstderr: {result.stderr}"
-        )
+            f"stdout: {result.stdout}\nstderr: {result.stderr}")
         self.assertIn("SUCCESS", result.stdout)
 
 
