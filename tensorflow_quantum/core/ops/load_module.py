@@ -15,13 +15,14 @@
 """Module to load python op libraries."""
 
 import os
+import types
 from distutils.sysconfig import get_python_lib
 
 from tensorflow.python.framework import load_library
 from tensorflow.python.platform import resource_loader
 
 
-class _LazyLoader:
+class _LazyLoader(types.ModuleType):
     """Lazily loads a TensorFlow op library on first attribute access.
 
     This defers the call to `load_library.load_op_library` until the module
@@ -36,6 +37,7 @@ class _LazyLoader:
         Args:
             name: The name of the module, e.g. "_tfq_simulate_ops.so"
         """
+        super().__init__(name)
         self._name = name
         self._module = None
 
@@ -55,6 +57,11 @@ class _LazyLoader:
         """Load the module on first attribute access and delegate."""
         module = self._load()
         return getattr(module, name)
+
+    def __dir__(self):
+        """Return the directory of the loaded module for introspection."""
+        module = self._load()
+        return dir(module)
 
 
 def load_module(name):
