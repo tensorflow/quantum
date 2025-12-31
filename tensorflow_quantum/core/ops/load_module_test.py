@@ -109,10 +109,9 @@ class LoadModuleTest(tf.test.TestCase):
                                 text=True,
                                 check=False)
 
-        self.assertEqual(
-            result.returncode, 0,
-            f"Device configuration after import failed.\n"
-            f"stdout: {result.stdout}\nstderr: {result.stderr}")
+        error_msg = (f"Device configuration after import failed.\n"
+                     f"stdout: {result.stdout}\nstderr: {result.stderr}")
+        self.assertEqual(result.returncode, 0, error_msg)
         self.assertIn("SUCCESS", result.stdout)
 
 
