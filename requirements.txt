@@ -176,7 +176,7 @@ pyasn1==0.6.1
     #   rsa
 pyasn1-modules==0.4.2
     # via google-auth
-pygments==2.19.2
+pygments==3.2.5
     # via rich
 pylint==3.3.3
     # via -r requirements.in
@@ -232,7 +232,7 @@ tensorflow==2.16.2
     #   tf-keras
 tensorflow-docs==2025.2.19.33219
     # via -r requirements.in
-tensorflow-io-gcs-filesystem==0.37.1
+tensorflow-io-gcs-filesystem==0.38.1
     # via tensorflow
 termcolor==3.2.0
     # via tensorflow
