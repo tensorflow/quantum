@@ -14,43 +14,43 @@
 
 # Summary: TFQ nightly full build & test.
 #
-# This workflow compiles TFQ and runs all test cases, to verify everything
-# works. Unlike the CI checks invoked on PRs and similar events, this workflow
-# builds everything without caching and runs the full test suite, including
-# "eternal" tests that take a long time to run. It is meant to guard against
-# failures that might be missed when skipping the long-running tests or using
-# caching to speed up the CI runs.
-#
+# Unlike the CI checks invoked on PRs and similar events, this workflow builds
+# everything without caching and runs the full test suite, including "eternal"
+# tests that take a long time to run. It is meant to guard against failures that
+# might be missed when skipping long-running tests or using caches in CI runs.
 # For efficiency, it checks if there have been any commits in the past 24 hrs
 # and does not proceed if there have been none.
-#
-# This workflow also can be invoked manually via the "Run workflow" button at
-# https://github.com/tensorflow/quantum/actions/workflows/ci-build-checks.yaml
 
 # yamllint disable rule:line-length
 
-name: CI nightly full test
-run-name: Continuous integration nightly build & test
+name: 'Nightly build & test'
+run-name: 'Nightly full build and test (conditional on recent changes)'
 
 on:
   schedule:
-    - cron: "15 6 * * *"
+    - cron: '15 6 * * *'
 
   workflow_dispatch:
     inputs:
+      runner:
+        description: 'GitHub job runner to use:'
+        default: linux-x86-n2-32
       py_version:
-        description: "Python version:"
+        description: 'Python version:'
         type: string
-        default: "3.10.15"
-
+        default: '3.10.15'
       save_artifacts:
         description: Make Bazel artifacts downloadable
+        type: boolean
+        default: true
+      debug:
+        description: 'Run with debugging options'
         type: boolean
         default: true
 
 env:
   # Default Python version to use.
-  py_version: "3.10.15"
+  py_version: '3.10.15'
 
   # Additional .bazelrc options to use.
   bazelrc_additions: |
@@ -72,82 +72,71 @@ concurrency:
 permissions: read-all
 
 jobs:
-  Decision:
-    runs-on: ubuntu-24.04
+  check-recent:
+    name: '(Check for changes)'
+    runs-on: ubuntu-slim
+    timeout-minutes: 10
     outputs:
-      run: ${{steps.commits.outputs.count > 0}}
+      have-changes: ${{steps.commits.outputs.count > 0}}
     steps:
       - name: Check out a sparse copy of the git repo for TFQ
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
         with:
           sparse-checkout: .
 
       - name: Get number of commits in the last 24 hrs
         id: commits
         run: |
-          set -x
           count=$(git log --oneline --since '24 hours ago' | wc -l)
           echo "count=$count" >> "$GITHUB_OUTPUT"
 
-  Nightly:
-    if: needs.Decision.outputs.run == 'true'
+  nightly:
+    if: needs.check-recent.outputs.have-changes == 'true'
     name: Build and test
-    needs: Decision
-    runs-on: ubuntu-22.04
+    needs: check-recent
+    runs-on: ${{inputs.runner}}
+    timeout-minutes: 60
     steps:
       - name: Check out a copy of the TFQ git repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
 
       - name: Set up Python ${{inputs.py_version || env.py_version}}
         uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5
         with:
           python-version: ${{inputs.py_version || env.py_version}}
+          cache: pip
 
       - name: Set up Bazel
-        uses: bazel-contrib/setup-bazel@f3f50ea6791b9b0f4c4eeabba4507422426462f5 # 0.9.1
+        uses: bazel-contrib/setup-bazel@4fd964a13a440a8aeb0be47350db2fc640f19ca8 # v1
         with:
+          bazelisk-cache: true
+          repository-cache: true
           bazelrc: ${{env.bazelrc_additions}}
 
+      - name: Turn on debug tracing
+        if: inputs.debug || runner.debug
+        run: set -x
+
       - name: Build wheel
-        run: |
-          set -x
-          pip install --upgrade pip setuptools wheel
-          # The next script does a pip install, configure, & bazel build.
-          ./scripts/build_pip_package_test.sh
+        run: ./scripts/build_pip_package_test.sh
 
       - name: Test wheel
-        run: |
-          set -x
-          ./scripts/run_example.sh
+        run: ./scripts/run_example.sh
 
       - name: Test rest of TFQ
-        run: |
-          set -x -o pipefail
-          ./scripts/test_all.sh 2>&1 | tee test_all.log
+        run: ./scripts/test_all.sh
 
       - name: Test tutorials
-        run: |
-          set -x -o pipefail
-          pip install jupyter
-          pip install nbclient==0.6.5 jupyter-client==6.1.12 ipython==7.22.0
-          pip install ipykernel==5.1.1
-          pip install gym==0.24.1
-          pip install seaborn==0.12.0
-          pip install -q git+https://github.com/tensorflow/docs
-          cd ..
-          python quantum/scripts/test_tutorials.py 2>&1 | \
-            tee quantum/test_tutorials.log
+        run: ./scripts/ci_validate_tutorials.sh
 
       - if: failure() || inputs.save_artifacts == 'true'
         name: Make artifacts downloadable
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: test-artifacts
           retention-days: 7
           include-hidden-files: true
           path: |
-            test_all.log
-            test_tutorials.log
             /home/runner/.bazel/execroot/__main__/bazel-out/
             !/home/runner/.bazel/execroot/__main__/bazel-out/**/*.so
             !/home/runner/.bazel/execroot/__main__/bazel-out/**/*.o
