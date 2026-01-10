@@ -1,10 +1,10 @@
-# Copyright 2025 The TensorFlow Quantum Authors
+# Copyright 2020 The TensorFlow Probability Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#     http://www.apache.org/licenses/LICENSE-2.0
+#     https://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,13 +13,14 @@
 # limitations under the License.
 # ============================================================================
 
-# Summary: yamllint configuration for TensorFlow Quantum.
-# See https://yamllint.readthedocs.io/ for info about configuration options.
+# Summary: configure actionlint (https://github.com/rhysd/actionlint) to
+# recognize action runner names/labels that we use.
 
-rules:
-  line-length:
-    # A common occurrence in YAML files is long URLs. The next two settings are
-    # not specific to URLs, but help. It saves developer time by not requiring
-    # comment directives to disable warnings at every occurrence.
-    allow-non-breakable-words: true
-    allow-non-breakable-inline-mappings: true
+self-hosted-runner:
+  labels:
+    # Google self-hosted runners defined in TensorFlow org.
+    - linux-x86-n2-32
+
+    # New from GitHub (late 2025) but currently not known by actionlint.
+    # https://docs.github.com/en/actions/reference/runners/github-hosted-runners
+    - ubuntu-slim
