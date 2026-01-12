@@ -13,35 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
-root = true
+# Summary: configure yapf (https://github.com/google/yapf) for this project.
 
-# We follow the TensorFlow coding style
-# https://www.tensorflow.org/community/contribute/code_style
-
-# IMPORTANT: some of the other config files (.clang-format, etc.) also have
-# the same settings and need to be updated if changes are made to this file.
-[*]
-charset = utf-8
-indent_style = space
-insert_final_newline = true
-spelling_language = en-US
-trim_trailing_whitespace = true
-max_line_length = 80
-
-[{BUILD,*.BUILD,*.bzl,*.bazel,.bazelrc,WORKSPACE}]
-indent_size = 4
-
-[{*.cc,*.h}]
-indent_size = 2
-
-[*.json]
-indent_size = 2
-
-[*.py]
-indent_size = 4
-
-[*.sh]
-indent_size = 2
-
-[{*.yaml,*.yml,*.cff}]
-indent_size = 2
+[style]
+based_on_style = google
