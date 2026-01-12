@@ -49,5 +49,5 @@ indent_size = 4
 [*.sh]
 indent_size = 2
 
-[*.yml,*.yaml]
+[{*.yml,*.yaml}]
 indent_size = 2
