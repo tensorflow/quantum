@@ -11,21 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Common editor configurations for this project.
-#
-# EditorConfig is a file format for specifying some common style parameters.
-# Many IDEs & editors read .editorconfig files, either natively or via plugins.
-# We mostly follow Google's style guides (https://google.github.io/styleguide/)
-# with only a few deviations for line length and indentation in some files.
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ============================================================================
 
 root = true
 
-# IMPORTANT: some of the other config files (.markdownlintrc, .jsonlintrc.yaml,
-# etc.) also have settings for indent and line length. When making changes to
-# this file, make sure to update the other files to match.
+# We follow the TensorFlow coding style
+# https://www.tensorflow.org/community/contribute/code_style
+
+# IMPORTANT: some of the other config files (.clang-format, etc.) also have
+# the same settings and need to be updated if changes are made to this file.
 [*]
 charset = utf-8
 indent_style = space
