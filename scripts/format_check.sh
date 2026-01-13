@@ -91,6 +91,14 @@ else
     exit 1
 fi
 
+# Check Jupyter Notebook format using nbformat
+echo "Checking Jupyter Notebook format with nbformat..."
+python3 scripts/validate_notebooks.py
+if [ $? -ne 0 ]; then
+    echo "One or more notebooks failed nbformat validation."
+    exit 1
+fi
+
 echo "Checking C++ formatting...";
 formatting_outputs=$(find tensorflow_quantum/ -iname *.h -o -iname *.cc | xargs clang-format -style=google -output-replacements-xml);
 CFORMATCHECK=0
