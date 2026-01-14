@@ -24,6 +24,7 @@ tf-keras~=2.17.0
 setuptools==75.0.0
 wheel==0.44.0
 contourpy<=1.3.2
+networkx<=3.4.2
 
 # TODO: the next ones are not truly core requirements. A better place should be
 # found for them (long with others needed by scripts/*). They're here as a
