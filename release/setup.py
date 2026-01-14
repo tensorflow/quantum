@@ -52,10 +52,13 @@ REQUIRED_PACKAGES = [
     "tf-keras~=2.17.0",
     # The following are transitive dependencies that need to be constrained to
     # avoid incompatible versions or because some (e.g., contourpy 1.3.3)
-    # require Python 3.11+ and we want to maintain Python 3.10 compatibility.
+    # require Python 3.11+ and we want to maintain Python 3.9 compatibility.
     # TODO: revisit after we reach compatibility with TensorFlow 2.19+.
     "contourpy<=1.3.2",
+    "h5py==3.10.0",
+    "importlib_metadata<5",
     "jax<=0.5",
+    "matplotlib<3.10",
     "numpy<2.0",
     "scipy<=1.12.0",
     # The following makes it easier to get the right version on Colab. Once
@@ -102,7 +105,7 @@ setup(
     author_email="tensorflow-quantum-team@google.com",
     url="https://github.com/tensorflow/quantum/",
     packages=find_packages(),
-    python_requires='>=3.10',
+    python_requires='>=3.9',
     install_requires=REQUIRED_PACKAGES,
     extras_require=EXTRA_PACKAGES,
     include_package_data=True,
