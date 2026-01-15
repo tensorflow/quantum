@@ -48,13 +48,9 @@ libraries.
 
 1.  Make sure you have `pyenv`, `pip`, and `jq` installed on your system.
 
-2.  (Optional) Preinstall Python versions 3.9, 3.10, 3.11, and 3.12 into `pyenv`
-    so that `build_release.sh` can create virtual environments with those Python
-    versions without having to install the requested version(s) itself.
+2.  Git clone the TensorFlow Quantum repo to a directory on your computer.
 
-3.  Git clone the TensorFlow Quantum repo to a directory on your computer.
-
-4.  `cd` into your local clone directory in a Bash shell.
+3.  `cd` into your local clone directory in a Bash shell.
 
 ### Build the release
 
@@ -81,7 +77,8 @@ The following is the current process.
     1.  Create a fresh Python virtual environment.
 
     1.  Run `pip install /path/to/wheel`, where `/path/to/wheel` is the path to
-        the wheel file corresponding to the version of Python you are running.
+        the wheel file you built in the previous section corresponding to the
+        version of Python in your Python virtual environment.
 
     1.  (Currently required because TFQ requires the legacy version of Keras.)
         Set the environment variable `TF_USE_LEGACY_KERAS` to `1` before
