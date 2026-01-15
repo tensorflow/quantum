@@ -39,21 +39,32 @@ ENV LC_ALL=C.UTF-8
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Ensure the shell is Bash.
-SHELL ["/bin/bash", "-e", "-c"]
+SHELL ["/bin/bash", "-eo", "pipefail", "-c"]
 
 # Tell the Dockerfile linter not to warn about how we use apt.
 # hadolint global ignore=DL3008,DL3009
 
-# Add the deadsnakes Python package archive to access older Python versions.
-RUN apt-get update -q && \
-    apt-get install -yq --no-install-recommends software-properties-common \
-        gnupg pkg-config git zip unzip zlib1g-dev && \
-    add-apt-repository -y ppa:deadsnakes/ppa && \
-    apt-get update -q
+RUN apt-get -q update -q && \
+    apt-get install -y --no-install-recommends ca-certificates \
+         pkg-config gnupg curl lsb-release git zip unzip
 
-RUN apt-get install -yq --no-install-recommends python${PYTHON_VERSION} \
-        python${PYTHON_VERSION}-dev python${PYTHON_VERSION}-venv python3-pip \
-        python-is-python3
+# We avoid the use of "add-apt-repository" because it is only available from the
+# "software-properties-common" package, and installing that package brings in a
+# lot of other unrelated unnecessary packages. Instead, we fetch the GPG key for
+# the deadsnakes package archive and install it where apt can find it.
+ENV ID=0xF23C5A6CF475977595C89F51BA6932366A755776
+ENV GPG_FILE="/etc/apt/trusted.gpg.d/deadsnakes.gpg"
+RUN curl -sSL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=${ID}" | \
+    gpg --dearmor -o ${GPG_FILE}
+
+ENV PPA_URL="https://ppa.launchpadcontent.net/deadsnakes/ppa/ubuntu"
+ENV APT_FILE="/etc/apt/sources.list.d/deadsnakes.list"
+RUN echo "deb [signed-by=${GPG_FILE}] ${PPA_URL} $(lsb_release -cs) main" > "${APT_FILE}"
+
+RUN apt-get -q update -q && \
+    apt-get install -yq --no-install-recommends make clang g++ zlib1g-dev \
+        python${PYTHON_VERSION} python${PYTHON_VERSION}-dev \
+        python${PYTHON_VERSION}-venv python3-pip python-is-python3
 
 # Use update-alternatives to make the desired version be the default.
 # hadolint ignore=SC3010
