@@ -7,10 +7,9 @@ testing TensorFlow Quantum builds and tutorials in relatively isolated
 environments.
 
 The script [`create_docker_images.sh`](create_docker_images.sh) creates separate
-images with a range of Python versions (currently 3.9&ndash;3.12) installed in
-Ubuntu 22.04 and 24.04. The result is a set of images with names like
-`ubuntu22-cp39`, `ubuntu22-cp310`, etc. The script `create_docker_images.sh` is
-meant to be run simply like this:
+images with a range of Python versions installed in Ubuntu 22.04 and 24.04. The
+result is a set of images with names like `ubuntu22-cp39`, `ubuntu22-cp310`,
+etc. The script `create_docker_images.sh` is meant to be run simply like this:
 
 ```shell
 ./create_docker_images.sh
