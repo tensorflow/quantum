@@ -31,7 +31,7 @@ from setuptools import find_packages, setup
 from setuptools.command.install import install
 from setuptools.dist import Distribution
 
-CUR_VERSION = "0.7.4"
+CUR_VERSION = "0.7.6"
 
 DOCLINES = __doc__.split("\n")
 
@@ -48,19 +48,24 @@ class InstallPlatlib(install):
 REQUIRED_PACKAGES = [
     "cirq-core==1.3.0",
     "cirq-google==1.3.0",
+    "numpy<2.0",
+    "protobuf==4.25.8",
+    "scipy<=1.12.0",
     "sympy==1.14",
     "tf-keras~=2.16.0",
+
     # The following are transitive dependencies that need to be constrained to
     # avoid incompatible versions or because some (e.g., contourpy 1.3.3)
-    # require Python 3.11+ and we want to maintain Python 3.10 compatibility.
+    # require Python 3.11+ and we want to maintain Python 3.9 compatibility.
     # TODO: revisit after we reach compatibility with TensorFlow 2.19+.
-    "contourpy<=1.3.2",
-    "jax<=0.5",
-    "numpy<2.0",
-    "scipy<=1.12.0",
-    # The following makes it easier to get the right version on Colab. Once
-    # TFQ works with the latest version of TF, this may become unnecessary.
-    "protobuf==4.25.8",
+    "contourpy<=1.3.0",
+    "h5py==3.10.0",
+    "importlib_metadata<5",
+    "jax<0.4.24",
+    "jaxlib<0.4.24",
+    "matplotlib<3.10",
+    "networkx<3.3",
+    "pillow<=11.0",
 ]
 
 # TF requirement is placed as an extras to avoid overwriting existing nightly TF
@@ -102,7 +107,7 @@ setup(
     author_email="tensorflow-quantum-team@google.com",
     url="https://github.com/tensorflow/quantum/",
     packages=find_packages(),
-    python_requires='>=3.10',
+    python_requires='>=3.9',
     install_requires=REQUIRED_PACKAGES,
     extras_require=EXTRA_PACKAGES,
     include_package_data=True,
@@ -114,10 +119,10 @@ setup(
         "Intended Audience :: Education",
         "Intended Audience :: Science/Research",
         "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
-        "Programming Language :: Python :: 3.13",
         "Topic :: Scientific/Engineering",
         "Topic :: Scientific/Engineering :: Artificial Intelligence",
         "Topic :: Scientific/Engineering :: Mathematics",
