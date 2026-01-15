@@ -17,7 +17,7 @@
 # Summary: produce requirements.txt using pip-compile & munging the result.
 # Usage: ./scripts/generate_requirements.sh
 
-set -eo pipefail
+set -eu
 
 # Go to the top of the local TFQ git tree. Do it early in case this fails.
 thisdir=$(CDPATH="" cd -- "$(dirname -- "${0}")" && pwd -P)
