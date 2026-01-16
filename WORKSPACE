@@ -44,6 +44,9 @@ load("@pypi//:requirements.bzl", "install_deps")
 
 install_deps()
 
+# Eigen commit used by TensorFlow / TFQ.
+# This commit corresponds to Eigen version 3.4.90
+# (verified via Eigen/src/Core/util/Macros.h).
 EIGEN_COMMIT = "c1d637433e3b3f9012b226c2c9125c494b470ae6"
 
 http_archive(
