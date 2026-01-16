@@ -4,7 +4,6 @@
 #
 #    pip-compile --allow-unsafe --no-strip-extras
 #
-
 absl-py==2.1.0
     # via
     #   keras
@@ -170,7 +169,7 @@ protobuf==4.25.8
     #   tensorboard
     #   tensorflow
     #   tensorflow-docs
-pyasn1==0.6.1
+pyasn1==0.6.2
     # via
     #   pyasn1-modules
     #   rsa
@@ -189,7 +188,7 @@ python-dateutil==2.9.0.post0
     #   pandas
 pytz==2025.2
     # via pandas
-pyyaml
+pyyaml==6.0.3
     # via tensorflow-docs
 pyzmq==27.1.0
     # via jupyter-client
