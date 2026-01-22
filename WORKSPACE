@@ -3,6 +3,11 @@
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
+local_repository(
+    name = "pypi_setuptools",
+    path = "third_party/pypi_setuptools",
+)
+
 # TensorFlow's .bzl files, loaded later in this file, also load rules_python
 # but we need a slightly newer version that is still compatible with TF's.
 http_archive(
@@ -39,11 +44,14 @@ load("@pypi//:requirements.bzl", "install_deps")
 
 install_deps()
 
-EIGEN_COMMIT = "aa6964bf3a34fd607837dd8123bc42465185c4f8"
+# Eigen commit used by TensorFlow / TFQ.
+# This commit corresponds to Eigen version 3.4.90
+# (verified via Eigen/src/Core/util/Macros.h).
+EIGEN_COMMIT = "c1d637433e3b3f9012b226c2c9125c494b470ae6"
 
 http_archive(
     name = "eigen",
-    sha256 = "35ba771e30c735a4215ed784d7e032086cf89fe6622dce4d793c45dd74373362",
+    sha256 = "0992b93a590c39e196a9efdb5b4919fbf3fb485e7e656c6a87b21ddadb7f6ad2",
     build_file_content = """
 cc_library(
   name = "eigen3",
@@ -71,10 +79,10 @@ http_archive(
 
 http_archive(
     name = "org_tensorflow",
-    patches = ["//third_party/tf:tf.patch"],
-    sha256 = "c8c8936e7b6156e669e08b3c388452bb973c1f41538149fce7ed4a4849c7a012",
-    strip_prefix = "tensorflow-2.16.2",
-    urls = ["https://github.com/tensorflow/tensorflow/archive/refs/tags/v2.16.2.zip"],
+    # patches = ["//third_party/tf:tf.patch"],
+    sha256 = "75d63eab5c4b41a831e39e2e3795e1f9dcc247e8fcca11bf3f3e1a6ac35e55d0",
+    strip_prefix = "tensorflow-2.17.1",
+    urls = ["https://github.com/tensorflow/tensorflow/archive/refs/tags/v2.17.1.zip"],
 )
 
 
