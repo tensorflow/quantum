@@ -79,7 +79,6 @@ http_archive(
 
 http_archive(
     name = "org_tensorflow",
-    # patches = ["//third_party/tf:tf.patch"],
     sha256 = "75d63eab5c4b41a831e39e2e3795e1f9dcc247e8fcca11bf3f3e1a6ac35e55d0",
     strip_prefix = "tensorflow-2.17.1",
     urls = ["https://github.com/tensorflow/tensorflow/archive/refs/tags/v2.17.1.zip"],
