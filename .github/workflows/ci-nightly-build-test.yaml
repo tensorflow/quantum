@@ -93,7 +93,9 @@ jobs:
     if: needs.Decision.outputs.run == 'true'
     name: Build and test
     needs: Decision
-    runs-on: ubuntu-22.04
+    container:
+      image: us-docker.pkg.dev/ml-oss-artifacts-published/ml-public-container/ml-build:infrastructure-public-image-82c7ac59ba4b
+    runs-on: linux-x86-n2-32
     steps:
       - name: Check out a copy of the TFQ git repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
