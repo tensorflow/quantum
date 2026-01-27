@@ -38,7 +38,7 @@ ENV LC_ALL=C.UTF-8
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Ensure the shell is Bash.
-SHELL ["/bin/bash", "-eo", "pipefail", "-c"]
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # Tell the Dockerfile linter not to warn about how we use apt.
 # hadolint global ignore=DL3008,DL3009
@@ -77,8 +77,11 @@ RUN python_path="" bin="/usr/bin" && \
     update-alternatives --install ${bin}/python3 python3 "${python_path}" 1 && \
     update-alternatives --install ${bin}/python3 python3 "${bin}/python${PYTHON_VERSION}" 2
 
-# Install pip.
-RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python3
+# Install pip, trying ensurepip first and falling back to get-pip.py.
+RUN export PIP_BREAK_SYSTEM_PACKAGES=1 PIP_ROOT_USER_ACTION=ignore && \
+    (python3 -m ensurepip --upgrade --default-pip || \
+        (curl -sS https://bootstrap.pypa.io/get-pip.py | python3)) && \
+    python3 -m pip install --no-cache-dir --upgrade 'pip>19'
 
 # Clean up before finishing.
 RUN apt-get clean
