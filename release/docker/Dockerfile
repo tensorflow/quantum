@@ -17,14 +17,14 @@
 # This accepts 2 optional build arguments to set the Ubuntu & Python versions.
 # Usage example:
 #
-#   docker build --no-cache --build-arg PYTHON_VERSION=3.9 \
+#   docker build --no-cache --build-arg PYTHON_VERSION=3.10 \
 #     --build-arg UBUNTU_VERSION=24.04 -t my-image:latest .
 #
 # Note that the name and tag ("my-image" and "latest" in the example above) are
 # yours to choose. They're not set using the arguments or linked to their values.
 
 # Default values for build arguments:
-ARG PYTHON_VERSION=3.9
+ARG PYTHON_VERSION=3.10
 ARG UBUNTU_VERSION=22.04
 
 FROM ubuntu:${UBUNTU_VERSION}

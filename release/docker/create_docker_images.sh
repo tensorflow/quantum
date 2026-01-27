@@ -27,7 +27,7 @@ declare -a ubuntu_versions=()
 declare -a python_versions=()
 
 ubuntu_versions+=( "22.04" "24.04" )
-python_versions+=( "3.9" "3.10" "3.11" "3.12" "3.13" )
+python_versions+=( "3.10" "3.11" "3.12" "3.13" )
 
 usage="Usage: ${0} [OPTIONS]
 
