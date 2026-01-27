@@ -63,7 +63,7 @@ RUN echo "deb [signed-by=${GPG_FILE}] ${PPA_URL} $(lsb_release -cs) main" > "${A
 RUN apt-get -q update -q && \
     apt-get install -yq --no-install-recommends make clang g++ zlib1g-dev \
         python${PYTHON_VERSION} python${PYTHON_VERSION}-dev \
-        python${PYTHON_VERSION}-venv python3-pip python-is-python3
+        python${PYTHON_VERSION}-venv python-is-python3
 
 # Use update-alternatives to make the desired version be the default.
 # hadolint ignore=SC3010
@@ -76,6 +76,9 @@ RUN python_path="" bin="/usr/bin" && \
     esac && \
     update-alternatives --install ${bin}/python3 python3 "${python_path}" 1 && \
     update-alternatives --install ${bin}/python3 python3 "${bin}/python${PYTHON_VERSION}" 2
+
+# Install pip.
+RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python3
 
 # Clean up before finishing.
 # hadolint ignore=DL3027
