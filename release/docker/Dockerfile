@@ -81,7 +81,6 @@ RUN python_path="" bin="/usr/bin" && \
 RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python3
 
 # Clean up before finishing.
-# hadolint ignore=DL3027
-RUN apt clean
+RUN apt-get clean
 
 CMD ["/bin/bash"]
