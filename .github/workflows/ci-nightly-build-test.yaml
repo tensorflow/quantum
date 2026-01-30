@@ -131,7 +131,7 @@ jobs:
           pip install jupyter
           pip install nbclient==0.6.5 jupyter-client==6.1.12 ipython==7.22.0
           pip install ipykernel==5.1.1
-          pip install gym==0.24.1
+          pip install gymnasium[classic-control]==1.2.3
           pip install seaborn==0.12.0
           pip install -q git+https://github.com/tensorflow/docs
           cd ..
