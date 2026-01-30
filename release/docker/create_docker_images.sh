@@ -19,7 +19,7 @@
 # Docker images using the Dockerfile in this directory.
 #
 # Example of how the resulting images can be run
-#   docker run -it --rm --network host -v .:/tfq ubuntu22-cp39
+#   docker run -it --rm --network host -v .:/tfq ubuntu22-cp310
 
 set -e
 
