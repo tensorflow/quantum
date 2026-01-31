@@ -29,22 +29,25 @@ if ! pip show -qq pip-tools; then
   exit 1
 fi
 
+# Special case: don't pin PyYAML in requirements.txt, because its inclusion can
+# lead to pip trying to uninstall an existing version installed by distutils.
+declare -a constraints=()
+constraints+=(--unsafe-package pyyaml)
+
 # Don't force the use of a constraint file, but use it if exists.
-declare -a constraint=()
 pins_file="$(realpath --relative-to=. "${repo_dir}/requirements-pins.txt")"
 if [[ -e "${pins_file}" ]]; then
-  constraint+=(--constraint "${pins_file}")
+  constraints+=(--constraints "${pins_file}")
 fi
 
-# Tell pip-compile to reference this script in the requirements.txt header.
+# Have pip-compile mention this script in the requirements.txt header it writes.
 export CUSTOM_COMPILE_COMMAND="${0}"
 
 echo "Running pip-compile in ${repo_dir} …"
 pip-compile -q \
   --rebuild \
-  --allow-unsafe \
   --no-strip-extras \
   --no-emit-index-url \
-  "${constraint[@]}"
+  "${constraints[@]}"
 
 echo "Done."
