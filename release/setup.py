@@ -96,6 +96,7 @@ setup(
     version=BUILD_VERSION,
     description="Library for hybrid quantum-classical machine learning.",
     long_description="\n".join(DOCLINES[2:]),
+    long_description_content_type="text/plain",
     author="The TensorFlow Quantum Authors",
     author_email="tensorflow-quantum-team@google.com",
     url="https://github.com/tensorflow/quantum/",
