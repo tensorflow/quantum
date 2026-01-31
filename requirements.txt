@@ -75,9 +75,7 @@ isort==5.13.2
 jax==0.4.34
     # via -r requirements.in
 jaxlib==0.4.34
-    # via
-    #   -r requirements.in
-    #   jax
+    # via jax
 jinja2==3.1.6
     # via tensorflow-docs
 jsonschema==4.26.0
@@ -91,9 +89,7 @@ jupyter-core==5.9.1
     #   jupyter-client
     #   nbformat
 keras==3.12.0
-    # via
-    #   -r requirements.in
-    #   tensorflow
+    # via tensorflow
 kiwisolver==1.4.7
     # via matplotlib
 libclang==18.1.1
@@ -228,7 +224,6 @@ scipy==1.15.3
     #   jaxlib
 setuptools==80.10.1
     # via
-    #   -r requirements.in
     #   tensorboard
     #   tensorflow
 six==1.17.0

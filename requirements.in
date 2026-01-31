@@ -20,12 +20,9 @@
 cirq-core~=1.3.0
 cirq-google~=1.3.0
 jax<0.5
-jaxlib<0.5
-keras==3.12.0
 numpy<2.0
 scipy~=1.15.3
 sympy==1.14
-setuptools>58
 tensorflow>=2.17,<2.18
 tf-keras~=2.17.0
 

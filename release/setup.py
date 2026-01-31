@@ -58,7 +58,6 @@ REQUIRED_PACKAGES = [
     # package & that newer version requires, e.g., NumPy 2.x or Python 3.11+.
     # Ideally these can be removed once TFQ is compatible with recent TFs.
     "jax<0.5",
-    "jaxlib<0.5",
     "pandas<3",
     "contourpy<1.3.3",
 ]
