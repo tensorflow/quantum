@@ -31,7 +31,7 @@ from setuptools import find_packages, setup
 from setuptools.command.install import install
 from setuptools.dist import Distribution
 
-CUR_VERSION = "0.7.6"
+CUR_VERSION = "0.7.7"
 
 DOCLINES = __doc__.split("\n")
 
@@ -46,31 +46,35 @@ class InstallPlatlib(install):
 
 
 REQUIRED_PACKAGES = [
-    "cirq-core==1.3.0",
-    "cirq-google==1.3.0",
+    "cirq-core==1.5.0",
+    "cirq-google==1.5.0",
     "sympy==1.14",
-    "tf-keras~=2.17.0",
+    "tf-keras>=2.18,<2.19",
     # The following are transitive dependencies that need to be constrained to
     # avoid incompatible versions or because some (e.g., contourpy 1.3.3)
     # require Python 3.11+ and we want to maintain Python 3.9 compatibility.
     # TODO: revisit after we reach compatibility with TensorFlow 2.19+.
-    "contourpy<=1.3.2",
-    "h5py==3.10.0",
-    "importlib_metadata<5",
-    "jax<=0.5",
-    "matplotlib<3.10",
-    "numpy<2.0",
-    "scipy<=1.12.0",
+    "contourpy>=1.3.2,<1.3.3",
+    "h5py>=3.15.1,<4",
+    "importlib_metadata>=8.7.1,<9; python_version<'3.12'",
+    "jax>=0.5,<0.6",
+    "jaxlib>=0.5,<0.6",
+    "matplotlib>=3.10.8,<3.11",
+    "numpy>=2,<3",
+
+    # SciPy compatible with py310 + numpy2;
+    "scipy>=1.15.3,<2",
+
     # The following makes it easier to get the right version on Colab. Once
     # TFQ works with the latest version of TF, this may become unnecessary.
-    "protobuf==4.25.8",
+    "protobuf>=4.25.8,<5",
 ]
 
 # TF requirement is placed as an extras to avoid overwriting existing nightly TF
 # installations. Users can run "pip install tensorflow-quantum[and-tensorflow]"
 # to get everything in one go (or "pip install tensorflow tensorflow-quantum").
 EXTRA_PACKAGES = {}
-EXTRA_PACKAGES["and-tensorflow"] = ["tensorflow>=2.17,<2.18"]
+EXTRA_PACKAGES["and-tensorflow"] = ["tensorflow>=2.18,<2.19"]
 # "extras" was used before 0.7.4. Prefer "and-tensorflow" in 0.7.4+.
 EXTRA_PACKAGES["extras"] = EXTRA_PACKAGES["and-tensorflow"]
 # Add an alias in case people type an underscore instead of a dash.
@@ -106,7 +110,7 @@ setup(
     author_email="tensorflow-quantum-team@google.com",
     url="https://github.com/tensorflow/quantum/",
     packages=find_packages(),
-    python_requires='>=3.9',
+    python_requires='>=3.10',
     install_requires=REQUIRED_PACKAGES,
     extras_require=EXTRA_PACKAGES,
     include_package_data=True,

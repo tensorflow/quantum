@@ -1,0 +1,4 @@
+package(default_visibility = ["//visibility:public"])
+
+# This package only exists so Bazel can resolve:
+#   @local_config_cuda//cuda:build_defs.bzl

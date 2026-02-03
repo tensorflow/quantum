@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 """Compute gradients by combining function values linearly."""
+import math
 import numbers
 
 import numpy as np
@@ -240,9 +241,9 @@ class ForwardDifference(LinearCombination):
                 weight = -1 * np.sum(
                     [1 / j for j in np.arange(1, error_order + 1)])
             else:
-                weight = ((-1) ** (point+1) * np.math.factorial(error_order))/\
-                         (point * np.math.factorial(error_order-point)
-                          * np.math.factorial(point))
+                weight = ((-1) ** (point+1) * math.factorial(error_order))/\
+                         (point * math.factorial(error_order-point)
+                          * math.factorial(point))
             weights.append(weight / grid_spacing)
         super().__init__(weights, grid_points_to_eval * grid_spacing)
 
@@ -308,7 +309,7 @@ class CentralDifference(LinearCombination):
         n = int(error_order / 2)
         for k in grid_points_to_eval:
             k = int(k)
-            numerator = (-1)**(k + 1) * np.math.factorial(n)**2
-            denom = k * np.math.factorial(n - k) * np.math.factorial(n + k)
+            numerator = (-1)**(k + 1) * math.factorial(n)**2
+            denom = k * math.factorial(n - k) * math.factorial(n + k)
             weights.append(numerator / (denom * grid_spacing))
         super().__init__(weights, grid_points_to_eval * grid_spacing)
