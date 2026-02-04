@@ -63,7 +63,7 @@ REQUIRED_PACKAGES = [
     "scipy<=1.12.0",
     # The following makes it easier to get the right version on Colab. Once
     # TFQ works with the latest version of TF, this may become unnecessary.
-    "protobuf==4.25.8",
+    "protobuf==6.33.5",
 ]
 
 # TF requirement is placed as an extras to avoid overwriting existing nightly TF
