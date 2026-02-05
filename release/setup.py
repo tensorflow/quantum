@@ -33,6 +33,7 @@ from setuptools import find_packages, setup
 from setuptools.command.install import install
 from setuptools.dist import Distribution
 
+
 def read_version():
     """Return the package version from tensorflow_quantum/__init__.py."""
     init_path = (Path(__file__).parent.parent / "tensorflow_quantum" /
