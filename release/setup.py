@@ -58,7 +58,6 @@ REQUIRED_PACKAGES = [
     # package & that newer version requires, e.g., NumPy 2.x or Python 3.11+.
     # Ideally these can be removed once TFQ is compatible with recent TFs.
     "jax<0.5",
-    "pandas<3",
     "contourpy<1.3.3",
 ]
 
@@ -66,7 +65,7 @@ REQUIRED_PACKAGES = [
 # installations. Users can run "pip install tensorflow-quantum[and-tensorflow]"
 # to get everything in one go (or "pip install tensorflow tensorflow-quantum").
 EXTRA_PACKAGES = {}
-EXTRA_PACKAGES["and-tensorflow"] = ["tensorflow>=2.16,<2.18"]
+EXTRA_PACKAGES["and-tensorflow"] = ["tensorflow>=2.17,<2.18"]
 # "extras" was used before 0.7.4. Prefer "and-tensorflow" in 0.7.4+.
 EXTRA_PACKAGES["extras"] = EXTRA_PACKAGES["and-tensorflow"]
 
