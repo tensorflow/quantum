@@ -54,7 +54,7 @@ jobs:
     name: Library tests
     runs-on: linux-x86-n2-32
     container:
-      image: us-docker.pkg.dev/ml-oss-artifacts-published/ml-public-container/ml-build:latest
+      image: us-docker.pkg.dev/ml-oss-artifacts-published/ml-public-container/ml-build:infrastructure-public-image-82c7ac59ba4b
     timeout-minutes: 60
 
     steps:
@@ -103,7 +103,7 @@ jobs:
     name: Tutorial tests
     runs-on: linux-x86-n2-32
     container:
-      image: us-docker.pkg.dev/ml-oss-artifacts-published/ml-public-container/ml-build:latest
+      image: us-docker.pkg.dev/ml-oss-artifacts-published/ml-public-container/ml-build:infrastructure-public-image-82c7ac59ba4b
     timeout-minutes: 60
 
     steps:
