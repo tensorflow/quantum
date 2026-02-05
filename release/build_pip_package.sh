@@ -73,7 +73,7 @@ main() {
   cp dist/*.whl "${DEST}"
   popd
   rm -rf "${TMPDIR}"
-  echo "$(date) : === Done."
+  echo $(date) : "=== Output wheel file is in: ${DEST}"
 }
 
 main "$@"
