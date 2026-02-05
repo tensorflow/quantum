@@ -17,21 +17,21 @@
 set -e
 
 # Pick the Python that TFQ/TensorFlow used during configure/build.
-# Order: explicit env -> python3 (>= 3.9)
+# Order: explicit env -> python3 (>= 3.10)
 PY="${PYTHON_BIN_PATH:-}"
 if [[ -z "${PY}" ]]; then
   if ! command -v python3 >/dev/null 2>&1; then
-    echo "ERROR: python3 not found. Set PYTHON_BIN_PATH to a Python 3.9+ interpreter." >&2
+    echo "ERROR: python3 not found. Set PYTHON_BIN_PATH to a Python 3.10+ interpreter." >&2
     exit 2
   fi
 
-  # Require Python >= 3.9 for TFQ.
+  # Require Python >= 3.10 for TFQ.
   if ! python3 - <<'PY'
 import sys
-sys.exit(0 if sys.version_info[:2] >= (3, 9) else 1)
+sys.exit(0 if sys.version_info[:2] >= (3, 10) else 1)
 PY
   then
-    echo "ERROR: Python 3.9+ required for TensorFlow Quantum; found $(python3 -V 2>&1)." >&2
+    echo "ERROR: Python 3.10+ required for TensorFlow Quantum; found $(python3 -V 2>&1)." >&2
     exit 2
   fi
 
