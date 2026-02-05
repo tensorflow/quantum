@@ -34,7 +34,7 @@ fi
 declare -a constraints=()
 constraints+=(--unsafe-package pyyaml)
 
-# Don't force the use of a constraint file, but use it if exists.
+# Check for a constraints file and use it if it exists.
 pins_file="$(realpath --relative-to=. "${repo_dir}/requirements-pins.txt")"
 if [[ -e "${pins_file}" ]]; then
   constraints+=(--constraints "${pins_file}")
