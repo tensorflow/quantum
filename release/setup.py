@@ -35,16 +35,14 @@ from setuptools.dist import Distribution
 
 def read_version():
     """Return the package version from tensorflow_quantum/__init__.py."""
-    init_path = (
-        Path(__file__).parent.parent / "tensorflow_quantum" / "__init__.py"
-    )
+    init_path = (Path(__file__).parent.parent / "tensorflow_quantum" /
+                 "__init__.py")
     init_text = init_path.read_text(encoding="utf-8")
 
     match = re.search(r'__version__\s*=\s*[\'"]([^\'"]+)[\'"]', init_text)
     if not match:
         raise RuntimeError(
-            "Cannot find __version__ in tensorflow_quantum/__init__.py"
-        )
+            "Cannot find __version__ in tensorflow_quantum/__init__.py")
     return match.group(1)
 
 
