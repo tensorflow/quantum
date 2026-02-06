@@ -77,8 +77,6 @@ EXTRA_PACKAGES = {}
 EXTRA_PACKAGES["and-tensorflow"] = ["tensorflow>=2.18,<2.19"]
 # "extras" was used before 0.7.4. Prefer "and-tensorflow" in 0.7.4+.
 EXTRA_PACKAGES["extras"] = EXTRA_PACKAGES["and-tensorflow"]
-# Add an alias in case people type an underscore instead of a dash.
-EXTRA_PACKAGES["and_tensorflow"] = EXTRA_PACKAGES["and-tensorflow"]
 
 
 class BinaryDistribution(Distribution):
