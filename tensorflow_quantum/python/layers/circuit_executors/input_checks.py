@@ -70,7 +70,7 @@ def expand_circuits(inputs,
                                             dtype=tf.dtypes.string)
     if not tf.is_tensor(symbol_names):
         raise TypeError("symbol_names cannot be parsed to string"
-                        " tensor given input: ".format(symbol_names))
+                        " tensor given input: {}".format(symbol_names))
 
     # Ingest and promote symbol_values.
     if isinstance(symbol_values, (list, tuple, np.ndarray)):
@@ -78,7 +78,7 @@ def expand_circuits(inputs,
                                              dtype=tf.dtypes.float32)
     if not tf.is_tensor(symbol_values):
         raise TypeError("symbol_values cannot be parsed to float32"
-                        " tensor given input: ".format(symbol_values))
+                        " tensor given input: {}".format(symbol_values))
 
     symbol_batch_dim = tf.gather(tf.shape(symbol_values), 0)
 
@@ -97,8 +97,7 @@ def expand_circuits(inputs,
             inputs, deterministic_proto_serialize=deterministic_proto_serialize)
 
     if not tf.is_tensor(inputs):
-        raise TypeError("circuits cannot be parsed with given input:"
-                        " ".format(inputs))
+        raise TypeError("circuits cannot be parsed with given input: {}".format(inputs))
 
     if symbols_empty:
         # No symbol_values were provided. so we must tile up the
@@ -161,6 +160,6 @@ def expand_operators(operators=None,
 
     if not tf.is_tensor(operators):
         raise TypeError("operators cannot be parsed to string tensor"
-                        " given input: ".format(operators))
+                        " given input: {}".format(operators))
 
     return operators

@@ -160,7 +160,7 @@ class ControlledPQC(tf.keras.layers.Layer):
         # Ingest model_circuit.
         if not isinstance(model_circuit, cirq.Circuit):
             raise TypeError("model_circuit must be a cirq.Circuit object."
-                            " Given: ".format(model_circuit))
+                            " Given: {}".format(model_circuit))
 
         self._symbols_list = list(
             sorted(util.get_circuit_symbols(model_circuit)))
@@ -199,7 +199,7 @@ class ControlledPQC(tf.keras.layers.Layer):
 
         if not self._analytic and not isinstance(repetitions, numbers.Integral):
             raise TypeError("repetitions must be a positive integer value."
-                            " Given: ".format(repetitions))
+                            " Given: {}".format(repetitions))
 
         if not self._analytic and repetitions <= 0:
             raise ValueError("Repetitions must be greater than zero.")
