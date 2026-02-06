@@ -156,6 +156,7 @@ packaging==26.0
     #   matplotlib
     #   tensorboard
     #   tensorflow
+    #   wheel
 pandas==2.3.3
     # via cirq-core
 pillow==11.0.0
@@ -198,6 +199,8 @@ python-dateutil==2.9.0.post0
     #   pandas
 pytz==2025.2
     # via pandas
+pyyaml==6.0.3
+    # via tensorflow-docs
 pyzmq==27.1.0
     # via jupyter-client
 referencing==0.37.0
@@ -222,10 +225,6 @@ scipy==1.15.3
     #   cirq-core
     #   jax
     #   jaxlib
-setuptools==80.10.1
-    # via
-    #   tensorboard
-    #   tensorflow
 six==1.17.0
     # via
     #   astunparse
@@ -285,7 +284,7 @@ urllib3==2.6.3
     # via requests
 werkzeug==3.1.5
     # via tensorboard
-wheel==0.44.0
+wheel==0.46.2
     # via astunparse
 wrapt==1.17.3
     # via tensorflow
@@ -293,4 +292,7 @@ yapf==0.43.0
     # via -r requirements.in
 
 # The following packages are considered to be unsafe in a requirements file:
-# pyyaml
+setuptools==80.10.1
+    # via
+    #   tensorboard
+    #   tensorflow
