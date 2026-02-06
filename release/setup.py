@@ -48,22 +48,17 @@ class InstallPlatlib(install):
 REQUIRED_PACKAGES = [
     "cirq-core==1.3.0",
     "cirq-google==1.3.0",
+    "numpy<2.0",
+    "scipy~=1.15.3",
     "sympy==1.14",
     "tf-keras~=2.17.0",
-    # The following are transitive dependencies that need to be constrained to
-    # avoid incompatible versions or because some (e.g., contourpy 1.3.3)
-    # require Python 3.11+ and we want to maintain Python 3.9 compatibility.
-    # TODO: revisit after we reach compatibility with TensorFlow 2.19+.
-    "contourpy<=1.3.2",
-    "h5py==3.10.0",
-    "importlib_metadata<5",
-    "jax<=0.5",
-    "matplotlib<3.10",
-    "numpy<2.0",
-    "scipy<=1.12.0",
-    # The following makes it easier to get the right version on Colab. Once
-    # TFQ works with the latest version of TF, this may become unnecessary.
-    "protobuf==4.25.8",
+
+    # The reset of these constraints are on transitive dependencies to avoid
+    # installation conflicts, which can happen if pip finds a newer version of a
+    # package & that newer version requires, e.g., NumPy 2.x or Python 3.11+.
+    # Ideally these can be removed once TFQ is compatible with recent TFs.
+    "jax<0.5",
+    "contourpy<1.3.3",
 ]
 
 # TF requirement is placed as an extras to avoid overwriting existing nightly TF
@@ -73,8 +68,6 @@ EXTRA_PACKAGES = {}
 EXTRA_PACKAGES["and-tensorflow"] = ["tensorflow>=2.17,<2.18"]
 # "extras" was used before 0.7.4. Prefer "and-tensorflow" in 0.7.4+.
 EXTRA_PACKAGES["extras"] = EXTRA_PACKAGES["and-tensorflow"]
-# Add an alias in case people type an underscore instead of a dash.
-EXTRA_PACKAGES["and_tensorflow"] = EXTRA_PACKAGES["and-tensorflow"]
 
 
 class BinaryDistribution(Distribution):
@@ -106,7 +99,7 @@ setup(
     author_email="tensorflow-quantum-team@google.com",
     url="https://github.com/tensorflow/quantum/",
     packages=find_packages(),
-    python_requires='>=3.9',
+    python_requires='>=3.10',
     install_requires=REQUIRED_PACKAGES,
     extras_require=EXTRA_PACKAGES,
     include_package_data=True,
