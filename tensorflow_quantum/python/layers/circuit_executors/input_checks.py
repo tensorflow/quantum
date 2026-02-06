@@ -97,7 +97,8 @@ def expand_circuits(inputs,
             inputs, deterministic_proto_serialize=deterministic_proto_serialize)
 
     if not tf.is_tensor(inputs):
-        raise TypeError("circuits cannot be parsed with given input: {}".format(inputs))
+        raise TypeError("circuits cannot be parsed with given input: {}".format(
+            inputs))
 
     if symbols_empty:
         # No symbol_values were provided. so we must tile up the
