@@ -31,7 +31,7 @@ from setuptools import find_packages, setup
 from setuptools.command.install import install
 from setuptools.dist import Distribution
 
-CUR_VERSION = "0.7.6"
+CUR_VERSION = "0.7.7"
 
 DOCLINES = __doc__.split("\n")
 
@@ -46,26 +46,26 @@ class InstallPlatlib(install):
 
 
 REQUIRED_PACKAGES = [
-    "cirq-core==1.3.0",
-    "cirq-google==1.3.0",
-    "numpy<2.0",
-    "scipy~=1.15.3",
+    "cirq-core==1.5.0",
+    "cirq-google==1.5.0",
+    "numpy>=2,<3",
+    "scipy>=1.15.3,<2",
     "sympy==1.14",
-    "tf-keras~=2.17.0",
+    "tf-keras>=2.18,<2.19",
 
-    # The reset of these constraints are on transitive dependencies to avoid
-    # installation conflicts, which can happen if pip finds a newer version of a
-    # package & that newer version requires, e.g., NumPy 2.x or Python 3.11+.
-    # Ideally these can be removed once TFQ is compatible with recent TFs.
-    "jax<0.5",
-    "contourpy<1.3.3",
+    # The following are transitive dependencies that need to be constrained to
+    # avoid incompatible versions or because some (e.g., contourpy 1.3.3)
+    # require Python 3.11+ and we want to maintain Python 3.9 compatibility.
+    # TODO: revisit after we reach compatibility with TensorFlow 2.19+.
+    "jax>=0.5,<0.6",
+    "contourpy<=1.3.2",
 ]
 
 # TF requirement is placed as an extras to avoid overwriting existing nightly TF
 # installations. Users can run "pip install tensorflow-quantum[and-tensorflow]"
 # to get everything in one go (or "pip install tensorflow tensorflow-quantum").
 EXTRA_PACKAGES = {}
-EXTRA_PACKAGES["and-tensorflow"] = ["tensorflow>=2.17,<2.18"]
+EXTRA_PACKAGES["and-tensorflow"] = ["tensorflow>=2.18,<2.19"]
 # "extras" was used before 0.7.4. Prefer "and-tensorflow" in 0.7.4+.
 EXTRA_PACKAGES["extras"] = EXTRA_PACKAGES["and-tensorflow"]
 
