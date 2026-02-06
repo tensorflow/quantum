@@ -68,12 +68,12 @@ cc_library(
 
 http_archive(
     name = "qsim",
-    sha256 = "b9c1eba09a885a938b5e73dfc2e02f5231cf3b01d899415caa24769346a731d5",
+    sha256 = "720eeb97298819e00bbb218b8b58fcebbbc1e1708233598fdffeef0b97339617",
     # patches = [
     #     "//third_party/tf:qsim.patch",
     # ],
-    strip_prefix = "qsim-0.13.3",
-    urls = ["https://github.com/quantumlib/qsim/archive/refs/tags/v0.13.3.zip"],
+    strip_prefix = "qsim-0.21.0",
+    urls = ["https://github.com/quantumlib/qsim/archive/refs/tags/v0.21.0.zip"],
 )
 
 
