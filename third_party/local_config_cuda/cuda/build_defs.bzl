@@ -9,3 +9,6 @@ def cuda_default_copts():
 
 def cuda_is_configured():
     return False
+
+def cuda_library(name, **kwargs):
+    native.cc_library(name = name, **kwargs)
