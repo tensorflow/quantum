@@ -4,7 +4,7 @@
 #
 #    ./scripts/generate_requirements.sh
 #
-absl-py==2.3.1
+absl-py==2.4.0
     # via
     #   keras
     #   tensorboard
@@ -18,22 +18,32 @@ astunparse==1.6.3
     # via tensorflow
 attrs==25.4.0
     # via
+    #   cirq-core
     #   jsonschema
     #   referencing
+    #   typedunits
 certifi==2026.1.4
     # via requests
+cffi==2.0.0
+    # via cryptography
 charset-normalizer==3.4.4
     # via requests
-cirq-core==1.3.0
+cirq-core==1.5.0
     # via
     #   -r requirements.in
     #   cirq-google
-cirq-google==1.3.0
+cirq-google==1.5.0
     # via -r requirements.in
-contourpy==1.3.0
-    # via matplotlib
+contourpy==1.3.2
+    # via
+    #   -r requirements.in
+    #   matplotlib
+cryptography==46.0.4
+    # via google-auth
 cycler==0.12.1
     # via matplotlib
+cython==3.2.4
+    # via typedunits
 dill==0.4.1
     # via pylint
 duet==0.2.9
@@ -46,7 +56,7 @@ gast==0.7.0
     # via tensorflow
 google-api-core[grpc]==2.29.0
     # via cirq-google
-google-auth==2.47.0
+google-auth==2.48.0
     # via google-api-core
 google-pasta==0.2.0
     # via tensorflow
@@ -60,9 +70,9 @@ grpcio==1.76.0
     #   grpcio-status
     #   tensorboard
     #   tensorflow
-grpcio-status==1.62.3
+grpcio-status==1.71.2
     # via google-api-core
-h5py==3.10.0
+h5py==3.15.1
     # via
     #   keras
     #   tensorflow
@@ -72,10 +82,6 @@ ipython-genutils==0.2.0
     # via nbformat
 isort==5.13.2
     # via pylint
-jax==0.4.34
-    # via -r requirements.in
-jaxlib==0.4.34
-    # via jax
 jinja2==3.1.6
     # via tensorflow-docs
 jsonschema==4.26.0
@@ -94,7 +100,7 @@ kiwisolver==1.4.7
     # via matplotlib
 libclang==18.1.1
     # via tensorflow
-markdown==3.9
+markdown==3.10.1
     # via tensorboard
 markdown-it-py==3.0.0
     # via rich
@@ -108,10 +114,8 @@ mccabe==0.7.0
     # via pylint
 mdurl==0.1.2
     # via markdown-it-py
-ml-dtypes==0.3.2
+ml-dtypes==0.5.4
     # via
-    #   jax
-    #   jaxlib
     #   keras
     #   tensorflow
 mpmath==1.3.0
@@ -129,14 +133,12 @@ nest-asyncio==1.6.0
     # via nbclient
 networkx==3.2.1
     # via cirq-core
-numpy==1.26.4
+numpy==2.0.2
     # via
     #   -r requirements.in
     #   cirq-core
     #   contourpy
     #   h5py
-    #   jax
-    #   jaxlib
     #   keras
     #   matplotlib
     #   ml-dtypes
@@ -144,10 +146,9 @@ numpy==1.26.4
     #   scipy
     #   tensorboard
     #   tensorflow
+    #   typedunits
 opt-einsum==3.4.0
-    # via
-    #   jax
-    #   tensorflow
+    # via tensorflow
 optree==0.18.0
     # via keras
 packaging==26.0
@@ -156,6 +157,7 @@ packaging==26.0
     #   matplotlib
     #   tensorboard
     #   tensorflow
+    #   wheel
 pandas==2.3.3
     # via cirq-core
 pillow==11.0.0
@@ -169,7 +171,7 @@ proto-plus==1.27.0
     # via
     #   cirq-google
     #   google-api-core
-protobuf==4.25.8
+protobuf==5.29.5
     # via
     #   cirq-google
     #   google-api-core
@@ -179,18 +181,23 @@ protobuf==4.25.8
     #   tensorboard
     #   tensorflow
     #   tensorflow-docs
+    #   typedunits
 pyasn1==0.6.2
     # via
     #   pyasn1-modules
     #   rsa
 pyasn1-modules==0.4.2
     # via google-auth
+pycparser==3.0
+    # via cffi
 pygments==2.19.2
     # via rich
 pylint==3.3.3
     # via -r requirements.in
 pyparsing==3.3.2
-    # via matplotlib
+    # via
+    #   matplotlib
+    #   typedunits
 python-dateutil==2.9.0.post0
     # via
     #   jupyter-client
@@ -208,7 +215,7 @@ requests==2.32.5
     # via
     #   google-api-core
     #   tensorflow
-rich==14.2.0
+rich==14.3.1
     # via keras
 rpds-py==0.30.0
     # via
@@ -220,9 +227,7 @@ scipy==1.15.3
     # via
     #   -r requirements.in
     #   cirq-core
-    #   jax
-    #   jaxlib
-setuptools==80.10.1
+setuptools==75.0.0
     # via
     #   tensorboard
     #   tensorflow
@@ -239,11 +244,11 @@ sympy==1.14.0
     # via
     #   -r requirements.in
     #   cirq-core
-tensorboard==2.17.1
+tensorboard==2.18.0
     # via tensorflow
 tensorboard-data-server==0.7.2
     # via tensorboard
-tensorflow==2.17.1
+tensorflow==2.18.1
     # via
     #   -r requirements.in
     #   tf-keras
@@ -253,7 +258,7 @@ tensorflow-io-gcs-filesystem==0.37.1
     # via tensorflow
 termcolor==3.1.0
     # via tensorflow
-tf-keras==2.17.0
+tf-keras==2.18.0
     # via -r requirements.in
 tomli==2.4.0
     # via
@@ -271,10 +276,13 @@ traitlets==5.14.3
     #   jupyter-core
     #   nbclient
     #   nbformat
+typedunits==0.0.1
+    # via cirq-google
 typing-extensions==4.15.0
     # via
     #   astroid
     #   cirq-core
+    #   cryptography
     #   grpcio
     #   optree
     #   referencing
@@ -285,8 +293,10 @@ urllib3==2.6.3
     # via requests
 werkzeug==3.1.5
     # via tensorboard
-wheel==0.44.0
-    # via astunparse
+wheel==0.46.2
+    # via
+    #   -r requirements.in
+    #   astunparse
 wrapt==1.17.3
     # via tensorflow
 yapf==0.43.0

@@ -8,6 +8,16 @@ local_repository(
     path = "third_party/pypi_setuptools",
 )
 
+local_repository(
+    name = "pypi_wheel",
+    path = "third_party/pypi_wheel",
+)
+
+local_repository(
+    name = "local_config_cuda",
+    path = "third_party/local_config_cuda",
+)
+
 # TensorFlow's .bzl files, loaded later in this file, also load rules_python
 # but we need a slightly newer version that is still compatible with TF's.
 http_archive(
@@ -47,11 +57,11 @@ install_deps()
 # Eigen commit used by TensorFlow / TFQ.
 # This commit corresponds to Eigen version 3.4.90
 # (verified via Eigen/src/Core/util/Macros.h).
-EIGEN_COMMIT = "c1d637433e3b3f9012b226c2c9125c494b470ae6"
+EIGEN_COMMIT = "33d0937c6bdf5ec999939fb17f2a553183d14a74"
 
 http_archive(
     name = "eigen",
-    sha256 = "0992b93a590c39e196a9efdb5b4919fbf3fb485e7e656c6a87b21ddadb7f6ad2",
+    sha256 = "1f4babf536ce8fc2129dbf92ff3be54cd18ffb2171e9eb40edd00f0a045a54fa",
     build_file_content = """
 cc_library(
   name = "eigen3",
@@ -79,9 +89,9 @@ http_archive(
 
 http_archive(
     name = "org_tensorflow",
-    sha256 = "75d63eab5c4b41a831e39e2e3795e1f9dcc247e8fcca11bf3f3e1a6ac35e55d0",
-    strip_prefix = "tensorflow-2.17.1",
-    urls = ["https://github.com/tensorflow/tensorflow/archive/refs/tags/v2.17.1.zip"],
+    sha256 = "f73e6d838b388c7b4d1ef88d1422a35bb5532644117a472fb0fee28a2215176c",
+    strip_prefix = "tensorflow-2.18.1",
+    urls = ["https://github.com/tensorflow/tensorflow/archive/refs/tags/v2.18.1.zip"],
 )
 
 
