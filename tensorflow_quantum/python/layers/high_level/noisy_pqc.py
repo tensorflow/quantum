@@ -212,7 +212,7 @@ class NoisyPQC(tf.keras.layers.Layer):
                              "using noisy simulation.")
         if not isinstance(repetitions, numbers.Integral):
             raise TypeError("repetitions must be a positive integer value."
-                            " Given: ".format(repetitions))
+                            " Given: {}".format(repetitions))
         if repetitions <= 0:
             raise ValueError("Repetitions must be greater than zero.")
 
