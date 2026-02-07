@@ -168,7 +168,7 @@ class NoisyControlledPQC(tf.keras.layers.Layer):
         # Ingest model_circuit.
         if not isinstance(model_circuit, cirq.Circuit):
             raise TypeError("model_circuit must be a cirq.Circuit object."
-                            " Given: ".format(model_circuit))
+                            " Given: {}".format(model_circuit))
 
         self._symbols_list = list(
             sorted(util.get_circuit_symbols(model_circuit)))
@@ -206,7 +206,7 @@ class NoisyControlledPQC(tf.keras.layers.Layer):
                              "using noisy simulation.")
         if not isinstance(repetitions, numbers.Integral):
             raise TypeError("repetitions must be a positive integer value."
-                            " Given: ".format(repetitions))
+                            " Given: {}".format(repetitions))
         if repetitions <= 0:
             raise ValueError("Repetitions must be greater than zero.")
 

@@ -64,8 +64,8 @@ def excited_cluster_states(qubits):
 
     """
     if not isinstance(qubits, (tuple, list, np.ndarray)):
-        raise TypeError('qubits must be a list or np.ndarray. Given: '.format(
-            type(qubits)))
+        raise TypeError('qubits must be a list or np.ndarray. '
+                        'Given: {}.'.format(type(qubits)))
 
     for qubit in qubits:
         if not isinstance(qubit, cirq.GridQubit):
