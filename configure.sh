@@ -233,13 +233,15 @@ if ! is_windows; then
   write_bazelrc "build --linkopt=-Wl,-rpath,${LIBDIR}"
 fi
 
+write_bazelrc ""
+
 # The following supressions are for warnings coming from external dependencies.
 # They're most likely inconsequential or false positives. Since we can't fix
-# them, we suppress the warnings to reduce noise during builds.
+# them, we suppress the warnings to reduce noise. Note: single quotes are needed
+# for the first two so that the $ anchors are preserved in the .bazelrc file.
 
-write_bazelrc ""
-write_bazelrc "build --per_file_copt=external/.*[.]c$@-Wno-deprecated-non-prototype"
-write_bazelrc "build --host_per_file_copt=external/.*[.]c$@-Wno-deprecated-non-prototype"
+write_bazelrc 'build --per_file_copt=external/.*[.]c$@-Wno-deprecated-non-prototype'
+write_bazelrc 'build --host_per_file_copt=external/.*[.]c$@-Wno-deprecated-non-prototype'
 write_bazelrc "build --per_file_copt=external/com_google_protobuf/.*@-Wno-unused-function"
 write_bazelrc "build --host_per_file_copt=external/com_google_protobuf/.*@-Wno-unused-function"
 write_bazelrc "build --per_file_copt=external/eigen/.*@-Wno-maybe-uninitialized"
