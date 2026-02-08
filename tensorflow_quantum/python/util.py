@@ -778,11 +778,9 @@ def exponential(operators, coefficients=None):
                         " must be a float or a string or sympy.Symbol.")
 
     if len(coefficients) != len(operators):
-        raise ValueError(
-            "the number of operators should be the same as that "
-            f"of coefficients. Got {len(operators)} operators and "
-            f"{len(coefficients)} coefficients"
-        )
+        raise ValueError("the number of operators should be the same as that "
+                         f"of coefficients. Got {len(operators)} operators and "
+                         f"{len(coefficients)} coefficients")
 
     coefficients = [
         sympy.Symbol(s) if isinstance(s, str) else s

@@ -188,8 +188,7 @@ class GateOpSerializer:
         if not isinstance(gate, self.gate_type):
             raise ValueError(
                 f'Gate of type {type(gate)} but serializer expected type '
-                f'{self.gate_type}'
-            )
+                f'{self.gate_type}')
 
         if not self.can_serialize_predicate(op):
             return None
@@ -217,8 +216,7 @@ class GateOpSerializer:
             if value is None and arg.required:
                 raise ValueError(
                     f'Gate {gate!r} does not have attribute or property '
-                    f'{op_getter}'
-                )
+                    f'{op_getter}')
         elif callable(op_getter):
             value = op_getter(op)
 
@@ -248,5 +246,4 @@ class GateOpSerializer:
         elif value is not None and not isinstance(value, arg.serialized_type):
             raise ValueError(
                 f'Argument {arg.serialized_name} had type '
-                f'{arg.serialized_type} but gate returned type {type(value)}'
-            )
+                f'{arg.serialized_type} but gate returned type {type(value)}')
