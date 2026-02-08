@@ -35,7 +35,7 @@ class TFQStateVectorSimulator(enum.Enum):
 def _check_quantum_concurrent(quantum_concurrent):
     if not isinstance(quantum_concurrent, bool):
         raise TypeError("quantum_concurrent must be type bool."
-                        " Given: {}".format(str(type(quantum_concurrent))))
+                        f" Given: {type(quantum_concurrent)}")
 
 
 def get_expectation_op(
@@ -146,9 +146,9 @@ def get_expectation_op(
                                   " Use "
                                   "tf.get_sampled_expectation_op() instead.")
 
-    raise TypeError("Backend {} is invalid. Expected a "
+    raise TypeError(f"Backend {backend} is invalid. Expected a "
                     "cirq.sim.simulator.SimulatesExpectationValues "
-                    "or None.".format(backend))
+                    "or None.")
 
 
 def get_sampling_op(
@@ -239,8 +239,8 @@ def get_sampling_op(
                 lambda: tfq_utility_ops.padded_to_ragged(op(
                     programs, symbol_names, symbol_values, num_samples)))
 
-    raise TypeError("Backend {} is invalid. Expected a Cirq.Sampler "
-                    "or None.".format(backend))
+    raise TypeError(
+        f"Backend {backend} is invalid. Expected a Cirq.Sampler or None.")
 
 
 def get_state_op(
@@ -329,8 +329,9 @@ def get_state_op(
                 lambda: tfq_utility_ops.padded_to_ragged(op(
                     programs, symbol_names, symbol_values)))
 
-    raise TypeError("Backend {} is invalid. Expected a Cirq.SimulatesFinalState"
-                    " or None.".format(backend))
+    raise TypeError(
+        f"Backend {backend} is invalid. Expected a Cirq.SimulatesFinalState"
+        " or None.")
 
 
 def get_sampled_expectation_op(
@@ -447,5 +448,4 @@ def get_sampled_expectation_op(
                            num_samples))
 
     raise TypeError(
-        "Backend {} is invalid. Expected a Cirq.Sampler or None.".format(
-            backend))
+        f"Backend {backend} is invalid. Expected a Cirq.Sampler or None.")
