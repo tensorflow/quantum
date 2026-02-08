@@ -183,8 +183,10 @@ class SerializableGateSet:
             raise ValueError('Missing gate set specification.')
         if proto.language.gate_set != self.gate_set_name:
             raise ValueError(
-                f'Gate set in proto was {proto.language.gate_set} but expected {self.gate_set_name}'
+                f'Gate set in proto was {proto.language.gate_set} '
+                f'but expected {self.gate_set_name}'
             )
+
         which = proto.WhichOneof('program')
         if which == 'circuit':
             circuit = self._deserialize_circuit(

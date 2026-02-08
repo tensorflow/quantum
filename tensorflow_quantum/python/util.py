@@ -470,9 +470,9 @@ def _symbols_in_op(op):
         return ret
 
     raise ValueError(
-        "Attempted to scan for symbols in circuit with unsupported"
-        " ops inside.", f"Expected op found in "
-        "tfq.util.get_supported_gates but found: {op}.",
+        "Attempted to scan for symbols in circuit with unsupported "
+        "ops inside. Expected op found in "
+        f"tfq.util.get_supported_gates but found: {op}. "
         "Please make sure circuits contain only ops found in "
         "tfq.util.get_supported_gates().")
 
@@ -780,7 +780,8 @@ def exponential(operators, coefficients=None):
     if len(coefficients) != len(operators):
         raise ValueError(
             "the number of operators should be the same as that "
-            f"of coefficients. Got {len(operators)} operators and {len(coefficients)} coefficients"
+            f"of coefficients. Got {len(operators)} operators and "
+            f"{len(coefficients)} coefficients"
         )
 
     coefficients = [

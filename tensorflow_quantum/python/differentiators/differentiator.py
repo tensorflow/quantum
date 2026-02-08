@@ -127,7 +127,8 @@ class Differentiator(metaclass=abc.ABCMeta):
                     raise ValueError(
                         'unexpected signature for analytic_op. '
                         f'Given arg: {key}.' + ''
-                        f'The signature should contain: {list(expected_signature)}'
+                        'The signature should contain: '
+                        f'{list(expected_signature)}'
                         + ''
                         f' Given: {list(signature)}' + ''
                         'Note: noisy ops should use sampled_op')
@@ -149,7 +150,8 @@ class Differentiator(metaclass=abc.ABCMeta):
                     raise ValueError(
                         'unexpected signature for sampled_op. '
                         f'Given arg: {key}.' + ''
-                        f'The signature should contain: {list(expected_signature)}'
+                        'The signature should contain: '
+                        f'{list(expected_signature)}'
                     )
 
         @tf.custom_gradient
