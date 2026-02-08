@@ -23,7 +23,6 @@ from benchmarks.scripts.models.random_clifford_circuit import (
     random_clifford_circuit)
 
 
-
 class RandomCliffordCircuitTest(parameterized.TestCase, tf.test.TestCase):
     """Test the Random Clifford Circuit model."""
 
