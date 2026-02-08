@@ -193,7 +193,7 @@ class Sample(tf.keras.layers.Layer):
 
         if not tf.is_tensor(repetitions):
             raise TypeError("repetitions cannot be parsed to int32 tensor"
-                            " tensor given input: {}".format(repetitions))
+                            f" tensor given input: {repetitions}")
 
         inputs, symbol_names, symbol_values = input_checks.expand_circuits(
             inputs, symbol_names, symbol_values)

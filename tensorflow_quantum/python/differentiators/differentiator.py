@@ -125,10 +125,10 @@ class Differentiator(metaclass=abc.ABCMeta):
             for key in expected_signature:
                 if not any(key in s for s in signature):
                     raise ValueError('unexpected signature for analytic_op. '
-                                     'Given arg: {}.'.format(str(key)) + ''
-                                     'The signature should contain: {}.'.format(
-                                         list(expected_signature)) + ''
-                                     ' Given: {}'.format(list(signature)) + ''
+                                     f'Given arg: {key}.' + ''
+                                     'The signature should contain: '
+                                     f'{list(expected_signature)}' + ''
+                                     f' Given: {list(signature)}' + ''
                                      'Note: noisy ops should use sampled_op')
 
             if 'num_samples' in signature:
@@ -146,9 +146,9 @@ class Differentiator(metaclass=abc.ABCMeta):
             for key in expected_signature:
                 if not any(key in s for s in signature):
                     raise ValueError('unexpected signature for sampled_op. '
-                                     'Given arg: {}.'.format(str(key)) + ''
-                                     'The signature should contain: {}.'.format(
-                                         list(expected_signature)))
+                                     f'Given arg: {key}.' + ''
+                                     'The signature should contain: '
+                                     f'{list(expected_signature)}')
 
         @tf.custom_gradient
         def op_wrapper_analytic(programs, symbol_names, symbol_values,
