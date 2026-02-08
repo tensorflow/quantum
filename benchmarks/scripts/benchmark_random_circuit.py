@@ -106,7 +106,7 @@ class RandomCircuitBenchmarks(tf.test.Benchmark):
             [[0]] * params.batch_size)
 
     def benchmark_random_circuit(self):
-        """Benchmark simulator performance on a supremacy circuit."""
+        """Benchmark simulator performance on a classically intractable circuit."""
 
         circuit = make_random_circuit(
             self.params.n_rows, self.params.n_cols, self.params.n_moments)
