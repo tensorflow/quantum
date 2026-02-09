@@ -23,8 +23,6 @@ import tensorflow as tf
 import numpy as np
 
 from tensorflow_quantum.core.ops import tfq_simulate_ops
-import benchmark_util
-import flags
 
 from tensorflow_quantum.python import util
 from tensorflow_quantum.python.differentiators import (
@@ -32,13 +30,16 @@ from tensorflow_quantum.python.differentiators import (
     parameter_shift,
 )
 
+from benchmarks.scripts import benchmark_util
+from benchmarks.scripts import flags
+
 SRC = os.path.dirname(os.path.realpath(__file__))
 os.environ['TEST_REPORT_FILE_PREFIX'] = os.path.join(SRC, 'reports/')
-TEST_PARAMS_1 = flags.TEST_FLAGS(n_symbols=4,
+TEST_PARAMS_1 = flags.test_flags(n_symbols=4,
                                  n_qubits=3,
                                  n_moments=5,
                                  op_density=0.9)
-TEST_PARAMS_2 = flags.TEST_FLAGS(n_symbols=3,
+TEST_PARAMS_2 = flags.test_flags(n_symbols=3,
                                  n_qubits=4,
                                  n_moments=5,
                                  op_density=0.6)
@@ -58,7 +59,7 @@ class GradientBenchmarksTest(tf.test.TestCase, parameterized.TestCase):
                     ],
                     'params': [TEST_PARAMS_1, TEST_PARAMS_2]
                 })))
-    def testBenchmarkGradient(self, diff, params):
+    def test_benchmark_gradient(self, diff, params):
         """Test that op constructs and runs correctly."""
 
         bench_name = f"GradientBenchmarks.{diff.__class__.__name__}_{params.n_qubits}_{params.n_moments}_{params.batch_size}_{params.n_symbols}"
@@ -91,7 +92,7 @@ class GradientBenchmarks(tf.test.Benchmark):
 
     def __init__(self, params=None):
         """Pull in command line flags or use provided flags."""
-        super(GradientBenchmarks, self).__init__()
+        super().__init__()
         self.params = params if params else flags.FLAGS
         self.setup()
 
@@ -108,7 +109,8 @@ class GradientBenchmarks(tf.test.Benchmark):
                                  replace=True)))
         symbol_names = list(symbol_names)
 
-        circuit_batch, resolver_batch = util.random_symbol_circuit_resolver_batch(
+        circuit_batch, resolver_batch = \
+            util.random_symbol_circuit_resolver_batch(
             qubits=qubits,
             symbols=symbol_names,
             batch_size=self.params.batch_size,
