@@ -62,7 +62,10 @@ class GradientBenchmarksTest(tf.test.TestCase, parameterized.TestCase):
     def test_benchmark_gradient(self, diff, params):
         """Test that op constructs and runs correctly."""
 
-        bench_name = f"GradientBenchmarks.{diff.__class__.__name__}_{params.n_qubits}_{params.n_moments}_{params.batch_size}_{params.n_symbols}"
+        bench_name = (
+            f"GradientBenchmarks.{diff.__class__.__name__}_"
+            f"{params.n_qubits}_{params.n_moments}_{params.batch_size}_"
+            f"{params.n_symbols}")
         proto_file_path = os.path.join(SRC, "reports/", bench_name)
         self.addCleanup(os.remove, proto_file_path)
 
@@ -151,7 +154,9 @@ class GradientBenchmarks(tf.test.Benchmark):
             deltas[i] = time.perf_counter() - start
 
         # Name benchmark logs by differentiator classname.
-        name = f"{differentiator.__class__.__name__}_{params.n_qubits}_{params.n_moments}_{params.batch_size}_{params.n_symbols}"
+        name = (
+            f"{differentiator.__class__.__name__}_{params.n_qubits}_"
+            f"{params.n_moments}_{params.batch_size}_{params.n_symbols}")
 
         full_path = os.path.join(os.environ['TEST_REPORT_FILE_PREFIX'],
                                  f"{self.__class__.__name__}.{name}")

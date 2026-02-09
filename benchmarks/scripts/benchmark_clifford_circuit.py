@@ -48,7 +48,8 @@ class CliffordBenchmarksTest(tf.test.TestCase, parameterized.TestCase):
         """Test that Op constructs and runs correctly."""
         proto_file_path = os.path.join(
             SRC, "reports/",
-            f"CliffordBenchmarks.benchmark_clifford_circuit_{params.n_qubits}_{params.n_moments}_{params.batch_size}"
+            f"CliffordBenchmarks.benchmark_clifford_circuit_"
+            f"{params.n_qubits}_{params.n_moments}_{params.batch_size}"
         )
         self.addCleanup(os.remove, proto_file_path)
 
@@ -58,7 +59,8 @@ class CliffordBenchmarksTest(tf.test.TestCase, parameterized.TestCase):
         res = benchmark_util.read_benchmark_entry(proto_file_path)
         self.assertEqual(
             res.name,
-            f"CliffordBenchmarks.benchmark_clifford_circuit_{params.n_qubits}_{params.n_moments}_{params.batch_size}"
+            f"CliffordBenchmarks.benchmark_clifford_circuit_"
+            f"{params.n_qubits}_{params.n_moments}_{params.batch_size}"
         )
         self.assertEqual(
             res.extras.get("n_qubits").double_value, params.n_qubits)
@@ -115,7 +117,9 @@ class CliffordBenchmarks(tf.test.Benchmark):
             'batch_size': self.params.batch_size,
             "min_time": min(deltas),
         }
-        name = f"benchmark_clifford_circuit_{self.params.n_qubits}_{self.params.n_moments}_{self.params.batch_size}"
+        name = (
+            f"benchmark_clifford_circuit_{self.params.n_qubits}_"
+            f"{self.params.n_moments}_{self.params.batch_size}")
 
         full_path = os.path.join(os.environ['TEST_REPORT_FILE_PREFIX'],
                                  f"{self.__class__.__name__}.{name}")
