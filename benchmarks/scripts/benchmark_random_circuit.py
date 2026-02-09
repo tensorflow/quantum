@@ -54,8 +54,7 @@ class RandomCircuitBenchmarksTest(tf.test.TestCase, parameterized.TestCase):
         proto_file_path = os.path.join(
             SRC, "reports/",
             f"RandomCircuitBenchmarks.benchmark_random_circuit_"
-            f"{params.n_rows}_{params.n_cols}_{params.n_moments}"
-        )
+            f"{params.n_rows}_{params.n_cols}_{params.n_moments}")
         self.addCleanup(os.remove, proto_file_path)
 
         bench = RandomCircuitBenchmarks(params=params)
@@ -63,10 +62,8 @@ class RandomCircuitBenchmarksTest(tf.test.TestCase, parameterized.TestCase):
 
         res = benchmark_util.read_benchmark_entry(proto_file_path)
         self.assertEqual(
-            res.name,
-            f"RandomCircuitBenchmarks.benchmark_random_circuit_"
-            f"{params.n_rows}_{params.n_cols}_{params.n_moments}"
-        )
+            res.name, f"RandomCircuitBenchmarks.benchmark_random_circuit_"
+            f"{params.n_rows}_{params.n_cols}_{params.n_moments}")
         self.assertEqual(res.extras.get("n_rows").double_value, params.n_rows)
         self.assertEqual(res.extras.get("n_cols").double_value, params.n_cols)
         self.assertEqual(
@@ -131,9 +128,8 @@ class RandomCircuitBenchmarks(tf.test.Benchmark):
             "min_time": min(deltas),
         }
 
-        name = (
-            f"benchmark_random_circuit_{self.params.n_rows}_"
-            f"{self.params.n_cols}_{self.params.n_moments}")
+        name = (f"benchmark_random_circuit_{self.params.n_rows}_"
+                f"{self.params.n_cols}_{self.params.n_moments}")
         full_path = os.path.join(os.environ['TEST_REPORT_FILE_PREFIX'],
                                  f"{self.__class__.__name__}.{name}")
         if os.path.exists(full_path):

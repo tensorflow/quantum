@@ -154,9 +154,8 @@ class GradientBenchmarks(tf.test.Benchmark):
             deltas[i] = time.perf_counter() - start
 
         # Name benchmark logs by differentiator classname.
-        name = (
-            f"{differentiator.__class__.__name__}_{params.n_qubits}_"
-            f"{params.n_moments}_{params.batch_size}_{params.n_symbols}")
+        name = (f"{differentiator.__class__.__name__}_{params.n_qubits}_"
+                f"{params.n_moments}_{params.batch_size}_{params.n_symbols}")
 
         full_path = os.path.join(os.environ['TEST_REPORT_FILE_PREFIX'],
                                  f"{self.__class__.__name__}.{name}")
