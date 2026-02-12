@@ -23,14 +23,14 @@ import numpy as np
 
 from tensorflow_quantum.core.ops import tfq_simulate_ops
 from tensorflow_quantum.core.serialize.serializer import serialize_circuit
-import flags
-import benchmark_util
+from benchmarks.scripts import flags
+from benchmarks.scripts import benchmark_util
 
 SEED = 63536323
 SRC = os.path.dirname(os.path.realpath(__file__))
 os.environ['TEST_REPORT_FILE_PREFIX'] = os.path.join(SRC, 'reports/')
-TEST_PARAMS_1 = flags.TEST_FLAGS(n_rows=3, n_cols=5, n_moments=5)
-TEST_PARAMS_2 = flags.TEST_FLAGS(n_rows=4, n_cols=4, n_moments=20)
+TEST_PARAMS_1 = flags.test_flags(n_rows=3, n_cols=5, n_moments=5)
+TEST_PARAMS_2 = flags.test_flags(n_rows=4, n_cols=4, n_moments=20)
 
 
 def make_random_circuit(n_rows, n_cols, depth):
@@ -49,12 +49,12 @@ class RandomCircuitBenchmarksTest(tf.test.TestCase, parameterized.TestCase):
         ("params_1", TEST_PARAMS_1),
         ("params_2", TEST_PARAMS_2),
     )
-    def testBenchmarkRandomCircuit(self, params):
+    def test_benchmark_random_circuit(self, params):
         """Test that Op constructs and runs correctly."""
         proto_file_path = os.path.join(
             SRC, "reports/",
-            "RandomCircuitBenchmarks.benchmark_random_circuit_{}_{}_{}".format(
-                params.n_rows, params.n_cols, params.n_moments))
+            f"RandomCircuitBenchmarks.benchmark_random_circuit_"
+            f"{params.n_rows}_{params.n_cols}_{params.n_moments}")
         self.addCleanup(os.remove, proto_file_path)
 
         bench = RandomCircuitBenchmarks(params=params)
@@ -62,9 +62,8 @@ class RandomCircuitBenchmarksTest(tf.test.TestCase, parameterized.TestCase):
 
         res = benchmark_util.read_benchmark_entry(proto_file_path)
         self.assertEqual(
-            res.name,
-            "RandomCircuitBenchmarks.benchmark_random_circuit_{}_{}_{}".format(
-                params.n_rows, params.n_cols, params.n_moments))
+            res.name, f"RandomCircuitBenchmarks.benchmark_random_circuit_"
+            f"{params.n_rows}_{params.n_cols}_{params.n_moments}")
         self.assertEqual(res.extras.get("n_rows").double_value, params.n_rows)
         self.assertEqual(res.extras.get("n_cols").double_value, params.n_cols)
         self.assertEqual(
@@ -77,7 +76,7 @@ class RandomCircuitBenchmarksTest(tf.test.TestCase, parameterized.TestCase):
         ("params_1", TEST_PARAMS_1),
         ("params_2", TEST_PARAMS_2),
     )
-    def testRandomCircuitParams(self, params):
+    def test_random_circuit_params(self, params):
         """Ensure that the random circuits are structured as advertised."""
         circuit = make_random_circuit(params.n_rows, params.n_cols,
                                       params.n_moments)
@@ -95,7 +94,7 @@ class RandomCircuitBenchmarks(tf.test.Benchmark):
 
     def __init__(self, params=None):
         """Pull in command line flags or use provided flags."""
-        super(RandomCircuitBenchmarks, self).__init__()
+        super().__init__()
         # Allow input params for testing purposes.
         self.params = params if params else flags.FLAGS
 
@@ -106,7 +105,8 @@ class RandomCircuitBenchmarks(tf.test.Benchmark):
             [[0]] * params.batch_size)
 
     def benchmark_random_circuit(self):
-        """Benchmark simulator performance on a classically intractable circuit."""
+        """Benchmark simulator performance on
+        a classically intractable circuit."""
 
         circuit = make_random_circuit(self.params.n_rows, self.params.n_cols,
                                       self.params.n_moments)
@@ -128,10 +128,10 @@ class RandomCircuitBenchmarks(tf.test.Benchmark):
             "min_time": min(deltas),
         }
 
-        name = "benchmark_random_circuit_{}_{}_{}".format(
-            self.params.n_rows, self.params.n_cols, self.params.n_moments)
+        name = (f"benchmark_random_circuit_{self.params.n_rows}_"
+                f"{self.params.n_cols}_{self.params.n_moments}")
         full_path = os.path.join(os.environ['TEST_REPORT_FILE_PREFIX'],
-                                 "{}.{}".format(self.__class__.__name__, name))
+                                 f"{self.__class__.__name__}.{name}")
         if os.path.exists(full_path):
             os.remove(full_path)
 

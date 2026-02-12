@@ -23,15 +23,17 @@ import numpy as np
 
 from tensorflow_quantum.core.ops import tfq_simulate_ops
 from tensorflow_quantum.core.serialize.serializer import serialize_circuit
-from models.random_clifford_circuit import random_clifford_circuit
-import flags
-import benchmark_util
+from benchmarks.scripts.models.random_clifford_circuit import (
+    random_clifford_circuit)
+
+from benchmarks.scripts import flags
+from benchmarks.scripts import benchmark_util
 
 SEED = 48510234
 SRC = os.path.dirname(os.path.realpath(__file__))
 os.environ['TEST_REPORT_FILE_PREFIX'] = os.path.join(SRC, 'reports/')
-TEST_PARAMS_1 = flags.TEST_FLAGS(n_qubits=3, n_moments=5, op_density=0.99)
-TEST_PARAMS_2 = flags.TEST_FLAGS(n_qubits=4, n_moments=5, op_density=0.99)
+TEST_PARAMS_1 = flags.test_flags(n_qubits=3, n_moments=5, op_density=0.99)
+TEST_PARAMS_2 = flags.test_flags(n_qubits=4, n_moments=5, op_density=0.99)
 ALL_PARAMS = [TEST_PARAMS_1, TEST_PARAMS_2]
 
 
@@ -42,12 +44,11 @@ class CliffordBenchmarksTest(tf.test.TestCase, parameterized.TestCase):
         ("params_1", TEST_PARAMS_1),
         ("params_2", TEST_PARAMS_2),
     )
-    def testBenchmarkCliffordCircuitEager(self, params):
+    def test_benchmark_clifford_circuit_eager(self, params):
         """Test that Op constructs and runs correctly."""
         proto_file_path = os.path.join(
-            SRC, "reports/",
-            "CliffordBenchmarks.benchmark_clifford_circuit_{}_{}_{}".format(
-                params.n_qubits, params.n_moments, params.batch_size))
+            SRC, "reports/", f"CliffordBenchmarks.benchmark_clifford_circuit_"
+            f"{params.n_qubits}_{params.n_moments}_{params.batch_size}")
         self.addCleanup(os.remove, proto_file_path)
 
         bench = CliffordBenchmarks(params=params)
@@ -55,9 +56,8 @@ class CliffordBenchmarksTest(tf.test.TestCase, parameterized.TestCase):
 
         res = benchmark_util.read_benchmark_entry(proto_file_path)
         self.assertEqual(
-            res.name,
-            "CliffordBenchmarks.benchmark_clifford_circuit_{}_{}_{}".format(
-                params.n_qubits, params.n_moments, params.batch_size))
+            res.name, f"CliffordBenchmarks.benchmark_clifford_circuit_"
+            f"{params.n_qubits}_{params.n_moments}_{params.batch_size}")
         self.assertEqual(
             res.extras.get("n_qubits").double_value, params.n_qubits)
         self.assertEqual(
@@ -77,7 +77,7 @@ class CliffordBenchmarks(tf.test.Benchmark):
 
     def __init__(self, params=None):
         """Pull in command line flags or use provided flags."""
-        super(CliffordBenchmarks, self).__init__()
+        super().__init__()
         # Allow input params for testing purposes.
         self.params = params if params else flags.FLAGS
 
@@ -113,11 +113,11 @@ class CliffordBenchmarks(tf.test.Benchmark):
             'batch_size': self.params.batch_size,
             "min_time": min(deltas),
         }
-        name = "benchmark_clifford_circuit_{}_{}_{}".format(
-            self.params.n_qubits, self.params.n_moments, self.params.batch_size)
+        name = (f"benchmark_clifford_circuit_{self.params.n_qubits}_"
+                f"{self.params.n_moments}_{self.params.batch_size}")
 
         full_path = os.path.join(os.environ['TEST_REPORT_FILE_PREFIX'],
-                                 "{}.{}".format(self.__class__.__name__, name))
+                                 f"{self.__class__.__name__}.{name}")
         if os.path.exists(full_path):
             os.remove(full_path)
 
