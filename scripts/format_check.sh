@@ -47,12 +47,6 @@ if [ -z "${rev}" ]; then
         rev=origin/main
     elif [ "$(git cat-file -t main 2> /dev/null)" == "commit" ]; then
         rev=main
-    elif [ "$(git cat-file -t upstream/main 2> /dev/null)" == "commit" ]; then
-        rev=upstream/main
-    elif [ "$(git cat-file -t origin/main 2> /dev/null)" == "commit" ]; then
-        rev=origin/main
-    elif [ "$(git cat-file -t main 2> /dev/null)" == "commit" ]; then
-        rev=main
     else
         echo -e "\033[31mNo default revision found to compare against.\033[0m" >&2
         exit 1
