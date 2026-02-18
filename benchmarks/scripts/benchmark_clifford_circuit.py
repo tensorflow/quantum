@@ -23,15 +23,17 @@ import numpy as np
 
 from tensorflow_quantum.core.ops import tfq_simulate_ops
 from tensorflow_quantum.core.serialize.serializer import serialize_circuit
-from models.random_clifford_circuit import random_clifford_circuit
-import flags
-import benchmark_util
+from benchmarks.scripts.models.random_clifford_circuit import (
+    random_clifford_circuit)
+
+from benchmarks.scripts import flags
+from benchmarks.scripts import benchmark_util
 
 SEED = 48510234
 SRC = os.path.dirname(os.path.realpath(__file__))
 os.environ['TEST_REPORT_FILE_PREFIX'] = os.path.join(SRC, 'reports/')
-TEST_PARAMS_1 = flags.TEST_FLAGS(n_qubits=3, n_moments=5, op_density=0.99)
-TEST_PARAMS_2 = flags.TEST_FLAGS(n_qubits=4, n_moments=5, op_density=0.99)
+TEST_PARAMS_1 = flags.test_flags(n_qubits=3, n_moments=5, op_density=0.99)
+TEST_PARAMS_2 = flags.test_flags(n_qubits=4, n_moments=5, op_density=0.99)
 ALL_PARAMS = [TEST_PARAMS_1, TEST_PARAMS_2]
 
 
@@ -42,7 +44,7 @@ class CliffordBenchmarksTest(tf.test.TestCase, parameterized.TestCase):
         ("params_1", TEST_PARAMS_1),
         ("params_2", TEST_PARAMS_2),
     )
-    def testBenchmarkCliffordCircuitEager(self, params):
+    def test_benchmark_clifford_circuit_eager(self, params):
         """Test that Op constructs and runs correctly."""
         proto_file_path = os.path.join(
             SRC, "reports/",
@@ -77,7 +79,7 @@ class CliffordBenchmarks(tf.test.Benchmark):
 
     def __init__(self, params=None):
         """Pull in command line flags or use provided flags."""
-        super(CliffordBenchmarks, self).__init__()
+        super().__init__()
         # Allow input params for testing purposes.
         self.params = params if params else flags.FLAGS
 
