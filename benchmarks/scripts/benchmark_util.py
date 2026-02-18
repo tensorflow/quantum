@@ -14,10 +14,18 @@
 # ==============================================================================
 """Utility functions for benchmark tools."""
 import tensorflow as tf
-import test_log_pb2
+from tensorflow.core.util import test_log_pb2
 
 
 def read_benchmark_entry(f):
+    """Reads a benchmark entry from a file.
+
+    Args:
+        f: File path to read from.
+
+    Returns:
+        The first entry in the benchmark file.
+    """
     s = tf.io.gfile.GFile(f, "rb").read()
     entries = test_log_pb2.BenchmarkEntries.FromString(s)
     return entries.entry[0]
