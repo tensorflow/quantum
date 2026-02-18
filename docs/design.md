@@ -76,7 +76,7 @@ with AVX2 and SSE instructions). Ops with identical functional signatures were
 created that use a physical quantum computer. Switching between a simulated and
 physical quantum computer is as easy as changing a single line of code. These
 ops are located in the
-<a href="https://github.com/tensorflow/quantum/blob/master/tensorflow_quantum/core/ops/circuit_execution_ops.py" class="external"><code>circuit_execution_ops.py</code></a>.
+<a href="https://github.com/tensorflow/quantum/blob/main/tensorflow_quantum/core/ops/circuit_execution_ops.py" class="external"><code>circuit_execution_ops.py</code></a>.
 
 ### Layers
 
