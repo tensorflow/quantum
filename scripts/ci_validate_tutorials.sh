@@ -14,20 +14,30 @@
 # limitations under the License.
 # ==============================================================================
 
-# Run the tutorials using the installed pip package
-pip install jupyter nbclient==0.6.5 jupyter-client==6.1.12 ipython==7.22.0
-# Workaround for ipykernel - see https://github.com/ipython/ipykernel/issues/422
-pip install ipykernel==5.1.1
-# OpenAI Gym pip package needed for the quantum reinforcement learning tutorial
-pip install gym==0.24.1
+set -e
+
+# Use legacy tf.keras (Keras 2) with TF 2.16
+export TF_USE_LEGACY_KERAS=1
+
+# Tools for running notebooks non-interactively
+pip install \
+  "nbclient==0.6.5" \
+  "jupyter-client==7.4.9" \
+  "ipython>=8.10.0" \
+  "ipykernel>=6.29.0"
+
+# Gymnasium pip package needed for the quantum reinforcement learning tutorial
+pip install gymnasium[classic-control]==1.2.3
 # seaborn has also numpy dependency, it requires version >= 0.12.0.
 pip install seaborn==0.12.0
 # tf_docs pip package needed for noise tutorial.
 pip install -q git+https://github.com/tensorflow/docs
 # Leave the quantum directory, otherwise errors may occur
 cd ..
+
 examples_output=$(python3 quantum/scripts/test_tutorials.py)
 exit_code=$?
+
 if [ "$exit_code" == "0" ]; then
 	exit 0;
 else

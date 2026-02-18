@@ -28,6 +28,35 @@ from tensorflow_quantum.python import util
 class PQC(tf.keras.layers.Layer):
     """Parametrized Quantum Circuit (PQC) Layer.
 
+    Args:
+        model_circuit (cirq.Circuit):
+            Circuit with sympy.Symbols to be trained.
+        operators (Union[cirq.PauliSum, cirq.PauliString, list]):
+            Observable(s) to measure.
+        repetitions (Optional[int]):
+            Number of measurement repetitions. If None, analytic
+            expectation is used.
+        backend (Union[str, cirq.Sampler,
+            cirq.sim.simulator.SimulatesExpectationValues]):
+            Backend simulator.
+        differentiator (Optional[tfq.differentiators.Differentiator]):
+            Differentiation scheme.
+        initializer (tf.keras.initializers.Initializer):
+            Initializer for circuit parameters.
+        regularizer (Optional[tf.keras.regularizers.Regularizer]):
+            Regularizer for circuit parameters.
+        constraint (Optional[tf.keras.constraints.Constraint]):
+            Constraint for circuit parameters.
+        **kwargs: Additional keyword arguments for the parent class.
+
+    Input shape:
+        tf.Tensor of shape [batch_size], each entry a serialized circuit
+        (from tfq.convert_to_tensor).
+
+    Output shape:
+        tf.Tensor of shape [batch_size, n_operators], expectation values
+        for each operator.
+
     This layer is for training parameterized quantum models.
     Given a parameterized circuit, this layer initializes the parameters
     and manages them in a Keras native way.
@@ -146,7 +175,7 @@ class PQC(tf.keras.layers.Layer):
         """Instantiate this layer.
 
         Create a layer that will output expectation values of the given
-        operators when fed quantum data to it's input layer. This layer will
+        operators when fed quantum data to its input layer. This layer will
         accept one input tensor representing a quantum data source (these
         circuits must not contain any symbols) and append the model_circuit to
         them, execute them and then finally output the expectation values.
@@ -216,7 +245,7 @@ class PQC(tf.keras.layers.Layer):
             self._analytic = True
         if not self._analytic and not isinstance(repetitions, numbers.Integral):
             raise TypeError("repetitions must be a positive integer value."
-                            " Given: ".format(repetitions))
+                            " Given: {}".format(repetitions))
         if not self._analytic and repetitions <= 0:
             raise ValueError("Repetitions must be greater than zero.")
         if not self._analytic:
@@ -293,7 +322,16 @@ class PQC(tf.keras.layers.Layer):
         super().build(input_shape)
 
     def call(self, inputs):
-        """Keras call function."""
+        """Keras call function.
+
+        Args:
+            inputs (tf.Tensor): Tensor of shape [batch_size], each entry a
+            serialized circuit (from tfq.convert_to_tensor).
+
+        Returns:
+            tf.Tensor: Tensor of shape [batch_size, n_operators],
+            expectation values for each operator.
+        """
         circuit_batch_dim = tf.gather(tf.shape(inputs), 0)
         tiled_up_model = tf.tile(self._model_circuit, [circuit_batch_dim])
         model_appended = self._append_layer(inputs, append=tiled_up_model)
