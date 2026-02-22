@@ -1,19 +1,22 @@
-# Summary: TFQ continuous integration workflow for building & testing TFQ.
+# Copyright 2025 The TensorFlow Quantum Authors
 #
-# This workflow compiles TFQ and runs test cases to verify everything works.
-# It triggers on certain events such as pull requests and merge-queue merges,
-# tries to be as efficient as possible by caching the Python environment and
-# Bazel artifacts, and can be invoked manually via the "Run workflow" button at
-# https://github.com/tensorflow/quantum/actions/workflows/ci-build-checks.yaml
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# yamllint disable rule:line-length
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
-name: CI build checks
-run-name: Continuous integration build & test
+name: 'CI: build & test'
+run-name: Continuous integration build and test
 
 on:
   pull_request:
-    types: [opened, synchronize]
     branches:
       - master
 
@@ -21,511 +24,106 @@ on:
     types:
       - checks_requested
 
-  push:
-    branches:
-      - master
-
-  # Allow manual invocation, with options that can be useful for debugging.
-  workflow_dispatch:
-    inputs:
-      sha:
-        description: 'SHA of commit to run against:'
-        type: string
-        required: true
-
-      python_ver:
-        description: 'Python version:'
-        type: string
-        default: '3.10.15'
-
-      extra_bazel_options:
-        description: 'Extra Bazel options:'
-        type: string
-
-      remake_python_cache:
-        description: 'Delete & remake the Python cache'
-        type: boolean
-        default: false
-
-      debug:
-        description: 'Print additional workflow info'
-        type: boolean
-        default: false
-
-env:
-  # Default Python version to use. Important: give it a full x.y.z number.
-  python_ver: '3.10.15'
-
-  # Additional .bazelrc options to use.
-  bazelrc_additions: |
-    common -c opt
-    common --announce_rc
-    common --color=no
-    common --experimental_repo_remote_exec
-    common --remote_upload_local_results=false
-    common --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=1"
-    common --cxxopt="-std=c++17"
-    common --cxxopt="-msse2"
-    common --cxxopt="-msse3"
-    common --cxxopt="-msse4"
-    build --verbose_failures
-    build --auto_output_filter=none
-    build --show_progress_rate_limit=1
-    test --test_output=errors
-    test --test_summary=detailed
-
-  # Note: these regexes are Bash regex syntax, NOT path glob syntax.
-  # Also, do not put dashes in front of the values.
-  ignore_patterns: |-
-    .*\.md$
-    .*\.jpg$
-    .*\.png$
-    ^\.gitignore
-    ^\.pylintrc
-    ^\.yamllint.yaml
-    ^\.github/problem-matchers/.*
-    ^benchmarks/.*
-
 concurrency:
-  # Cancel any previously-started but still active runs on the same branch.
   cancel-in-progress: true
   group: ${{github.workflow}}-${{github.event.pull_request.number||github.ref}}
 
+permissions: read-all
+
 jobs:
-  # Summary of basic strategy:
-  #   1. Job "Decision" quickly determines if the rest of the workflow needs
-  #      to run. A run is needed if (a) this was triggered by a merge_queue
-  #      event, (b) the event changed files that we don't ignore, or (c) it
-  #      was invoked manually via workflow_dispatch.
+  wheel-build:
+    name: Wheel test
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+      - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v5
+        with:
+          python-version: '3.10'
+          architecture: 'x64'
+          cache: pip
+      - name: Install Bazel on CI
+        run: ./scripts/ci_install.sh
+      - name: Build Wheel Test
+        run: ./scripts/build_pip_package_test.sh
+      - name: Test Wheel
+        run: ./scripts/run_example.sh
+
+  bazel-tests:
+    name: Library tests
+    runs-on: linux-x86-n2-32
+    container:
+      image: us-docker.pkg.dev/ml-oss-artifacts-published/ml-public-container/ml-build:infrastructure-public-image-82c7ac59ba4b
+    timeout-minutes: 60
+
+    steps:
+      - name: Adjust the ml-build runner to our needs
+        run: |
+          # lsb-release (needed by setup-python) is missing in ml-build runners
+          sudo apt-get update && sudo apt-get install -y lsb-release
+          # This file, though it's empty, hangs the Bazel install step.
+          rm -f /etc/bazel.bazelrc
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+      - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v5
+        with:
+          python-version: '3.10'
+          architecture: 'x64'
+          cache: pip
+      - name: Install Bazel on CI
+        run: ./scripts/ci_install.sh
+      - name: Configure CI TF
+        run: echo "Y\n" | ./configure.sh
+      - name: Full Library Test
+        run: ./scripts/test_all.sh
+
+  # 2024-11-30 [mhucka] temporarily turning off leak-tests because it produces
+  # false positives on GH that we can't immediately address. TODO: if updating
+  # TFQ to use Clang and the latest TF does not resolve this, find a way to
+  # skip the handful of failing tests and renable the rest of the msan tests.
   #
-  #   2. If the workflow needs to proceed, job Setup installs Python
-  #      dependencies and caches them.
+  # leak-tests:
+  #   name: Memory Leak tests
+  #   runs-on: ubuntu-22.04
   #
-  #   3. Job Build then builds the Python wheel for TFQ. As a side-effect,
-  #      Bazel caches some build artifacts, potentially saving time in
-  #      the remaining jobs as well as in future runs of the workflow.
-  #
-  #   4. Jobs Wheel_tests, Bazel_tests, and Tutorial_tests can all run in
-  #      parallel after Build finishes. Bazel_tests also uses and updates the
-  #      Bazel cache artifacts, potentially saving time in future runs.
+  #   steps:
+  #     - uses: actions/checkout@v1
+  #     - uses: actions/setup-python@v1
+  #       with:
+  #         python-version: '3.10'
+  #         architecture: 'x64'
+  #     - name: Install Bazel on CI
+  #       run: ./scripts/ci_install.sh
+  #     - name: Configure CI TF
+  #       run: echo "Y\n" | ./configure.sh
+  #     - name: Leak Test qsim and src
+  #       run: ./scripts/msan_test.sh
 
-  Decision:
-    runs-on: ubuntu-24.04
-    outputs:
-      need_run: >-
-        ${{github.event_name == 'merge_queue' ||
-           steps.files.outputs.have_changes == 'true'}}
+  tutorials-test:
+    name: Tutorial tests
+    runs-on: linux-x86-n2-32
+    container:
+      image: us-docker.pkg.dev/ml-oss-artifacts-published/ml-public-container/ml-build:infrastructure-public-image-82c7ac59ba4b
+    timeout-minutes: 60
+
     steps:
-      - if: github.event_name != 'merge_queue'
-        name: Determine files changed by this ${{github.event_name}} event
-        id: files
-        env:
-          GH_TOKEN: ${{github.token}}
-        # Note that this approach doesn't need to check out a copy of the repo.
+      - name: Adjust the ml-build runner to our needs
         run: |
-          set -x +e
-          # shellcheck disable=SC2207
-          # Get an array of paths changed in this workflow trigger event.
-          if [[ "${{github.event_name}}" == "pull_request" ]]; then
-            url=${{github.event.pull_request.url}}
-            paths=($(gh pr view $url --json files --jq '.files | .[].path'))
-          else
-            # There's no event sha for manual runs, so we rely on user input.
-            # Make sure the sha is valid.
-            if [[ "${{github.event_name}}" == "workflow_dispatch" ]]; then
-              url="repos/${{github.repository}}/commits/${{inputs.sha}}"
-              full_sha="$(gh api $url -q '.sha')"
-              exit_code=$?
-              if [[ "$exit_code" == "0" ]]; then
-                sha=$full_sha
-              else
-                {
-                echo "### :x: Workflow error"
-                echo "The SHA provided to _Run Workflow_ does not exist:"
-                echo "<code>${{inputs.sha}}</code>"
-                } >> "$GITHUB_STEP_SUMMARY"
-                exit 1
-              fi
-            else
-              sha=${{github.sha}}
-            fi
-            url="repos/${{github.repository}}/commits/$sha"
-            # shellcheck disable=SC2086
-            paths=($(gh api $url --jq '.files[].filename'))
-          fi
-          # Test array of paths against the patterns of changes we can ignore.
-          # Default to no-changes if every path matches at least one pattern.
-          echo 'have_changes=false' >> "$GITHUB_OUTPUT"
-          ignorable=(${{env.ignore_patterns}})
-          for path in "${paths[@]}"; do
-            for pattern in "${ignorable[@]}"; do
-              # The path matched a pattern => can be ignored. Go to next path.
-              [[ $path =~ $pattern ]] && continue 2
-            done
-            # None of the patterns matched this path.
-            echo 'have_changes=true' >> "$GITHUB_OUTPUT"
-            break
-          done
-
-  Setup:
-    if: needs.Decision.outputs.need_run == 'true'
-    needs: Decision
-    runs-on: ubuntu-22.04
-    timeout-minutes: 15
-    outputs:
-      python_cache_key: ${{steps.parameters.outputs.python_cache_key}}
-      python_cache_paths: ${{steps.parameters.outputs.python_cache_paths}}
-      bazel_cache_key: ${{steps.parameters.outputs.bazel_cache_key}}
-      debug: ${{steps.parameters.outputs.debug}}
-    steps:
-      - name: Check out a copy of the TFQ git repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-
-        # Note: setup-python has a cache facility, but we don't use it here
-        # because we want to cache more Python things than setup-python does.
-      - name: Set up Python ${{inputs.python_ver || env.python_ver}}
-        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5
+          # lsb-release (needed by setup-python) is missing in ml-build runners
+          sudo apt-get update && sudo apt-get install -y lsb-release
+          # This file, though it's empty, hangs the Bazel install step.
+          rm -f /etc/bazel.bazelrc
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+      - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v5
         with:
-          python-version: ${{inputs.python_ver || env.python_ver}}
-
-      - name: Set cache keys and other parameters
-        id: parameters
-        run: |
-          #
-          # Including __init__.py here lets us detect changes to __version__.
-          hash=${{hashFiles('WORKSPACE', '**/BUILD', '**/*.bzl', '**/.patch',
-                  'requirements.txt', 'tensorflow_quantum/__init__.py')}}
-          key="${{github.workflow_ref}}-$hash"
-          # shellcheck disable=SC2129
-          echo "python_cache_key=$key" >> "$GITHUB_OUTPUT"
-          # shellcheck disable=SC2005
-          # The paths used for actions/cache need to be on separate lines.
-          {
-          echo 'python_cache_paths<<EOF'
-          echo "$(pip cache dir)"
-          echo "${{env.pythonLocation}}"
-          echo 'EOF'
-          } >> "$GITHUB_OUTPUT"
-          # Make the Bazel disk cache specific to the version of this workflow.
-          echo "bazel_cache_key=${{github.workflow_ref}}" >> "$GITHUB_OUTPUT"
-          # If the user re-runs the workflow with debugging turned on via the
-          # GitHub GUI (instead of using workflow_dispatch), include the debug
-          # info they'd get if they did use workflow_dispatch.
-          if [[ "${{inputs.debug}}" == "true" ||
-                "${{runner.debug}}" == "1" ]]; then
-            echo "debug=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "debug=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Test if the cache already exists
-        uses: actions/cache@0c907a75c2c80ebcb7f088228285e798b750cf8f # v4
-        id: check_cache
-        with:
-          lookup-only: true
-          key: ${{steps.parameters.outputs.python_cache_key}}
-          path: ${{steps.parameters.outputs.python_cache_paths}}
-
-      - if: >-
-          steps.check_cache.outputs.cache-hit == 'true' &&
-          inputs.remake_python_cache == 'true'
-        name: Clear the Python cache
-        continue-on-error: true
-        env:
-          GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
-        run: |
-          key="${{steps.parameters.outputs.python_cache_key}}"
-          gh extension install actions/gh-actions-cache
-          gh actions-cache delete "$key" --confirm
-
-      - if: >-
-          steps.check_cache.outputs.cache-hit != 'true' ||
-          inputs.remake_python_cache == 'true'
-        name: Set up the Python cache
-        uses: actions/cache@0c907a75c2c80ebcb7f088228285e798b750cf8f # v4
-        id: restore_cache
-        with:
-          key: ${{steps.parameters.outputs.python_cache_key}}
-          path: ${{steps.parameters.outputs.python_cache_paths}}
-
-      - if: >-
-          steps.check_cache.outputs.cache-hit != 'true' ||
-          inputs.remake_python_cache == 'true'
-        name: Install TFQ Python dependencies and cache them
-        run: |
-          pip install --upgrade pip setuptools wheel
-          pip install -r requirements.txt
-          # The next ones are for validating tutorials
-          pip install jupyter
-          pip install nbclient==0.6.5 jupyter-client==6.1.12 ipython==7.22.0
-          pip install ipykernel==5.1.1
-          pip install gym==0.24.1
-          pip install seaborn==0.12.0
-          pip install -q git+https://github.com/tensorflow/docs
-
-  Build_wheel:
-    if: needs.Decision.outputs.need_run == 'true'
-    name: Build Python wheel
-    needs: [Decision, Setup]
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Check out a copy of the TFQ git repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-
-      - name: Set up Python
-        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5
-        with:
-          python-version: ${{inputs.python_ver || env.python_ver}}
-
-      - name: Restore our Python cache
-        uses: actions/cache@0c907a75c2c80ebcb7f088228285e798b750cf8f # v4
-        with:
-          key: ${{needs.Setup.outputs.python_cache_key}}
-          path: ${{needs.Setup.outputs.python_cache_paths}}
-          fail-on-cache-miss: true
-
-      - name: Set up Bazel
-        uses: bazel-contrib/setup-bazel@c50333a3696ad2e6df1e7a2f9b417c5336db774f # 0.12.0
-        # Note that we don't need to set the Bazel version to use, because it
-        # knows to use what's in the .bazel-version file.
-        with:
-          bazelrc: ${{env.bazelrc_additions}}
-          # The next 3 caches can be shared between all workflow runs.
-          bazelisk-cache: true
-          external-cache: true
-          repository-cache: true
-          disk-cache: ${{needs.Setup.outputs.bazel_cache_key}}
-
-      - name: Build Python wheel for TFQ
-        run: |
-          set -x -o pipefail
-          printf "Y\n" | ./configure.sh
-          bazel build ${{inputs.extra_bazel_options}} \
-            release:build_pip_package 2>&1 | tee bazel-build.log
-          mkdir -p ./wheel
-          ./bazel-bin/release/build_pip_package \
-            "$(pwd)/wheel" 2>&1 | tee python-bdist.log
-          pip install -U ./wheel/*.whl
-
-      - name: Save the wheel for the tutorial tests
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4
-        with:
-          name: wheel-${{github.run_id}}
-          path: ./wheel
-          compression-level: 0
-          overwrite: true
-
-      - if: failure() || needs.Setup.outputs.debug == 'true'
-        name: Make Bazel artifacts downloadable for analysis
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4
-        with:
-          name: bazel-build-artifacts-${{github.run_id}}
-          retention-days: 14
-          compression-level: 9
-          include-hidden-files: true
-          path: |
-            bazel-build.log
-            python-bdist.log
-            /home/runner/.bazel/execroot/__main__/bazel-out/
-            !/home/runner/.bazel/execroot/__main__/bazel-out/**/*.so
-            !/home/runner/.bazel/execroot/__main__/bazel-out/**/*.o
-            !/home/runner/.bazel/execroot/__main__/bazel-out/**/_objs
-            !/home/runner/.bazel/execroot/__main__/bazel-out/**/_solib_k8
-
-  Wheel_tests:
-    if: needs.Decision.outputs.need_run == 'true'
-    name: Test the Python wheel
-    needs: [Decision, Setup, Build_wheel]
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Check out a copy of the TFQ git repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-
-      - name: Set up Python
-        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5
-        with:
-          python-version: ${{inputs.python_ver || env.python_ver}}
-
-      - name: Restore our Python cache
-        uses: actions/cache@0c907a75c2c80ebcb7f088228285e798b750cf8f # v4
-        with:
-          key: ${{needs.Setup.outputs.python_cache_key}}
-          path: ${{needs.Setup.outputs.python_cache_paths}}
-          fail-on-cache-miss: true
-
-      - name: Get the Python wheel we built
-        uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4
-        with:
-          name: wheel-${{github.run_id}}
-          path: ./wheel
-
-      - name: Install the Python wheel
-        run: |
-          pip install ./wheel/*.whl
-
-      - name: Test the wheel
-        run: |
-          set -x +e
-          ./scripts/run_example.sh
-
-  Bazel_tests:
-    if: needs.Decision.outputs.need_run == 'true'
-    name: Test the rest of TFQ
-    needs: [Decision, Setup, Build_wheel]
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Check out a copy of the TFQ git repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-
-      - name: Set up Python
-        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5
-        with:
-          python-version: ${{inputs.python_ver || env.python_ver}}
-
-      - name: Restore our Python cache
-        uses: actions/cache@0c907a75c2c80ebcb7f088228285e798b750cf8f # v4
-        with:
-          key: ${{needs.Setup.outputs.python_cache_key}}
-          path: ${{needs.Setup.outputs.python_cache_paths}}
-          fail-on-cache-miss: true
-
-      - name: Set up Bazel
-        uses: bazel-contrib/setup-bazel@c50333a3696ad2e6df1e7a2f9b417c5336db774f # 0.12.0
-        with:
-          bazelrc: ${{env.bazelrc_additions}}
-          bazelisk-cache: true
-          external-cache: true
-          repository-cache: true
-          disk-cache: ${{needs.Setup.outputs.bazel_cache_key}}
-
-      - name: Run all Bazel tests
-        id: test
-        run: |
-          set -x +e -o pipefail
-          printf "Y\n" | ./configure.sh
-          bazel test ${{inputs.extra_bazel_options}} \
-            //tensorflow_quantum/... 2>&1 | tee bazel-tests.log
-
-      - if: failure() || needs.Setup.outputs.debug == 'true'
-        name: Make Bazel artifacts downloadable for analysis
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4
-        with:
-          name: bazel-tests-${{github.run_id}}
-          retention-days: 7
-          compression-level: 9
-          include-hidden-files: true
-          path: |
-            bazel-tests.log
-            /home/runner/.bazel/execroot/__main__/bazel-out/
-            !/home/runner/.bazel/execroot/__main__/bazel-out/**/*.so
-            !/home/runner/.bazel/execroot/__main__/bazel-out/**/*.o
-            !/home/runner/.bazel/execroot/__main__/bazel-out/**/_objs
-            !/home/runner/.bazel/execroot/__main__/bazel-out/**/_solib_k8
-
-  Tutorial_tests:
-    if: needs.Decision.outputs.need_run == 'true'
-    name: Test the tutorials
-    runs-on: ubuntu-22.04
-    needs: [Decision, Setup, Build_wheel]
-    steps:
-      - name: Check out a copy of the TFQ git repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-
-      - name: Set up Python
-        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5
-        with:
-          python-version: ${{inputs.python_ver || env.python_ver}}
-
-      - name: Restore our Python cache
-        uses: actions/cache@0c907a75c2c80ebcb7f088228285e798b750cf8f # v4
-        with:
-          key: ${{needs.Setup.outputs.python_cache_key}}
-          path: ${{needs.Setup.outputs.python_cache_paths}}
-          fail-on-cache-miss: true
-
-      - name: Get the Python wheel we built
-        uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4
-        with:
-          name: wheel-${{github.run_id}}
-          path: ./wheel
-
-      - name: Install the Python wheel
-        run: |
-          pip install ./wheel/*.whl
-
-      - name: Test the tutorials
-        run: |
-          cd ..
-          examples_output=$(python3 quantum/scripts/test_tutorials.py)
-          exit_code=$?
-          if [ "$exit_code" != "0" ]; then
-            echo 'Tutorials failed to run to completion:'
-            echo "{$examples_output}"
-            exit 64;
-          fi
-
-  # This debug part is purposefully both a separate job and conditioned to run
-  # after setup and build_wheel, in order that it can get the restored cache
-  # contents and show what those look like. That's most useful when debugging.
-  Debug:
-    if: failure() || needs.setup.outputs.debug == 'true'
-    name: Print debugging info
-    needs: [Decision, Setup, Build_wheel, Bazel_tests]
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Check out a copy of the TFQ git repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-
-      - name: Set up Python
-        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5
-        with:
-          python-version: ${{inputs.python_ver || env.python_ver}}
-
-      - name: Restore our Python cache
-        uses: actions/cache@0c907a75c2c80ebcb7f088228285e798b750cf8f # v4
-        with:
-          key: ${{needs.Setup.outputs.python_cache_key}}
-          path: ${{needs.Setup.outputs.python_cache_paths}}
-          fail-on-cache-miss: true
-
-      - name: Set up Bazel
-        uses: bazel-contrib/setup-bazel@c50333a3696ad2e6df1e7a2f9b417c5336db774f # 0.12.0
-        with:
-          bazelrc: ${{env.bazelrc_additions}}
-          bazelisk-cache: true
-          external-cache: true
-          repository-cache: true
-          disk-cache: ${{needs.Setup.outputs.bazel_cache_key}}
-
-      - name: Print debugging info
-        run: |
-          echo ''
-          echo "::group::Contents of $(pwd)"
-          ls -la
-          echo '::endgroup::'
-
-          echo '::group::Pip info'
-          pip --version
-          pip list
-          echo '::endgroup::'
-
-          echo '::group::Python installation'
-          pyversion="$(python --version | awk '{print $2}')"
-          ls -l /opt/hostedtoolcache/{.,Python,Python/"$pyversion"/x64/bin}
-          echo '::endgroup::'
-
-          echo '::group::Bazel info'
-          bazel --version
-          ls -la /home/runner/.cache
-          if [[ -e /home/runner/.bazel ]]; then
-            ls -la /home/runner/.bazel
-          fi
-          echo '::endgroup::'
-
-          echo '::group::Contents of /home/runner/.bazelrc'
-          cat /home/runner/.bazelrc
-          echo '::endgroup::'
-
-          echo '::group::Environment variables'
-          env
-          echo '::endgroup::'
+          python-version: '3.10'
+          architecture: 'x64'
+          cache: pip
+      - name: Install notebook dependencies
+        run: pip install --upgrade pip seaborn==0.10.0
+      - name: Install Bazel on CI
+        run: ./scripts/ci_install.sh
+      - name: Build Wheel
+        run: ./scripts/build_pip_package_test.sh
+      - name: Test Notebooks
+        run: ./scripts/ci_validate_tutorials.sh

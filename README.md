@@ -64,13 +64,20 @@ simulation of many millions of moderately-sized circuits.
 Please see the [installation
 instructions](https://www.tensorflow.org/quantum/install) in the documentation.
 
+_Compatibility_: At this time, TensorFlow Quantum is built and
+tested on Linux with the following systems and software:
+
+* Python 3.10–3.12
+* TensorFlow 2.18.1
+* TF-Keras 2.18.0
+* NumPy 2.0
+* Cirq 1.5.0
+
 ## Quick start
 
 [Guides and tutorials for TensorFlow
 Quantum](https://tensorflow.org/quantum/overview) are available online at the
 TensorFlow.org web site.
-
-## Documentation
 
 [Documentation for TensorFlow Quantum](https://tensorflow.org/quantum),
 including tutorials and API documentation, can be found online at the

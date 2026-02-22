@@ -1,3 +1,17 @@
+# Copyright 2025 The TensorFlow Quantum Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 # Summary: TFQ nightly full build & test.
 #
 # This workflow compiles TFQ and runs all test cases, to verify everything
@@ -12,7 +26,7 @@
 #
 # This workflow also can be invoked manually via the "Run workflow" button at
 # https://github.com/tensorflow/quantum/actions/workflows/ci-build-checks.yaml
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 # yamllint disable rule:line-length
 
 name: CI nightly full test
@@ -55,6 +69,12 @@ concurrency:
   cancel-in-progress: true
   group: ${{github.workflow}}-${{github.event.pull_request.number||github.ref}}
 
+permissions: read-all
+
+defaults:
+  run:
+    shell: bash -x {0}
+
 jobs:
   Decision:
     runs-on: ubuntu-24.04
@@ -69,7 +89,6 @@ jobs:
       - name: Get number of commits in the last 24 hrs
         id: commits
         run: |
-          set -x
           count=$(git log --oneline --since '24 hours ago' | wc -l)
           echo "count=$count" >> "$GITHUB_OUTPUT"
 
@@ -77,7 +96,9 @@ jobs:
     if: needs.Decision.outputs.run == 'true'
     name: Build and test
     needs: Decision
-    runs-on: ubuntu-22.04
+    container:
+      image: us-docker.pkg.dev/ml-oss-artifacts-published/ml-public-container/ml-build:infrastructure-public-image-82c7ac59ba4b
+    runs-on: linux-x86-n2-32
     steps:
       - name: Check out a copy of the TFQ git repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -94,28 +115,26 @@ jobs:
 
       - name: Build wheel
         run: |
-          set -x
           pip install --upgrade pip setuptools wheel
           # The next script does a pip install, configure, & bazel build.
           ./scripts/build_pip_package_test.sh
 
       - name: Test wheel
         run: |
-          set -x
           ./scripts/run_example.sh
 
       - name: Test rest of TFQ
         run: |
-          set -x -o pipefail
+          set -o pipefail
           ./scripts/test_all.sh 2>&1 | tee test_all.log
 
       - name: Test tutorials
         run: |
-          set -x -o pipefail
+          set -o pipefail
           pip install jupyter
           pip install nbclient==0.6.5 jupyter-client==6.1.12 ipython==7.22.0
           pip install ipykernel==5.1.1
-          pip install gym==0.24.1
+          pip install gymnasium[classic-control]==1.2.3
           pip install seaborn==0.12.0
           pip install -q git+https://github.com/tensorflow/docs
           cd ..

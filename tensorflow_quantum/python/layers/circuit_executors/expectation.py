@@ -30,6 +30,30 @@ from tensorflow_quantum.python.layers.circuit_executors import input_checks
 class Expectation(tf.keras.layers.Layer):
     """A Layer that calculates an expectation value.
 
+    Args:
+        backend (Union[str, cirq.sim.simulator.SimulatesExpectationValues],
+        optional):
+            Backend simulator to use. Default is 'noiseless'.
+        differentiator (Optional[tfq.differentiators.Differentiator]):
+            Differentiation scheme for gradients.
+        **kwargs: Additional keyword arguments for the parent class.
+
+    Input shape:
+        - circuits: tf.Tensor or list of shape [batch_size], each entry a
+          serialized circuit (from tfq.convert_to_tensor).
+        - symbol_names: list or tf.Tensor of shape [n_symbols], names of
+          circuit parameters (optional).
+        - symbol_values: tf.Tensor of shape [batch_size, n_symbols], values for
+          circuit parameters (optional).
+        - operators: list or tf.Tensor of shape [n_ops], observables to measure
+          (optional).
+        - repetitions: int or tf.Tensor, number of measurement repetitions
+          (optional, only for noisy backend).
+
+    Output shape:
+        tf.Tensor of shape [batch_size, n_ops], expectation values for each
+        circuit and operator.
+
     Given an input circuit and set of parameter values, prepare a quantum state
     and output expectation values taken on that state with respect to some
     observables to the tensorflow graph.
@@ -199,10 +223,9 @@ class Expectation(tf.keras.layers.Layer):
     something like `tfq.layers.Expectation()(cirq.Circuit(...), ...)` please
     be sure to instead use `tfq.layers.Expectation()(circuit_input, ...)`
     where `circuit_input` is a `tf.keras.Input` that is filled with
-    `tfq.conver_to_tensor([cirq.Circuit(..)] * batch_size)` at runtime. This
+    `tfq.convert_to_tensor([cirq.Circuit(..)] * batch_size)` at runtime. This
     is because compiled Keras models require non keyword layer `call` inputs to
     be traceable back to a `tf.keras.Input`.
-
     """
 
     def __init__(self, backend='noiseless', differentiator=None, **kwargs):
@@ -225,6 +248,7 @@ class Expectation(tf.keras.layers.Layer):
                 which uses `tfq.differentiators.ParameterShift()`. If
                 `backend` is also 'noiseless' then default is
                 `tfq.differentiators.Adjoint`.
+            **kwargs: Additional keyword arguments for the parent class.
 
         """
         super().__init__(**kwargs)
@@ -273,15 +297,23 @@ class Expectation(tf.keras.layers.Layer):
              initializer=tf.keras.initializers.RandomUniform(0, 2 * np.pi)):
         """Keras call function.
 
-        Input options:
-            `inputs`, `symbol_names`, `symbol_values`:
-                see `input_checks.expand_circuits`
-            `operators`: see `input_checks.expand_operators`
+        Args:
+            inputs (tf.Tensor or list): Circuits to execute, shape [batch_size].
+            symbol_names (list or tf.Tensor, optional): Names of circuit
+                parameters, shape [n_symbols].
+            symbol_values (tf.Tensor, optional): Values for circuit parameters,
+                shape [batch_size, n_symbols].
+            operators (list or tf.Tensor, optional): Observables to measure,
+                shape [n_ops].
+            repetitions (int or tf.Tensor, optional): Number of measurement
+                repetitions (for noisy backend).
+            initializer (tf.keras.initializers.Initializer, optional):
+                Initializer for circuit parameters.
 
-        Output shape:
-            `tf.Tensor` with shape [batch_size, n_ops] that holds the
-                expectation value for each circuit with each op applied to it
-                (after resolving the corresponding parameters in).
+        Returns:
+            tf.Tensor: Tensor of shape [batch_size, n_ops] that holds the
+            expectation value for each circuit with each op applied to it
+            (after resolving the corresponding parameters in).
         """
         values_empty = False
         if symbol_values is None:
@@ -329,7 +361,7 @@ class Expectation(tf.keras.layers.Layer):
 
             if not tf.is_tensor(repetitions):
                 raise TypeError("repetitions cannot be parsed to int32 tensor"
-                                " given input: ".format(repetitions))
+                                " given input: {}".format(repetitions))
 
         if values_empty:
             # No symbol_values were provided. So we assume the user wants us
