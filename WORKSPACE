@@ -13,11 +13,6 @@ local_repository(
     path = "third_party/pypi_wheel",
 )
 
-local_repository(
-    name = "local_config_cuda",
-    path = "third_party/local_config_cuda",
-)
-
 # TensorFlow's .bzl files, loaded later in this file, also load rules_python
 # but we need a slightly newer version that is still compatible with TF's.
 http_archive(
@@ -110,6 +105,43 @@ tf_workspace1()
 load("@org_tensorflow//tensorflow:workspace0.bzl", "tf_workspace0")
 
 tf_workspace0()
+
+load(
+    "@local_tsl//third_party/gpus/cuda/hermetic:cuda_json_init_repository.bzl",
+    "cuda_json_init_repository",
+)
+
+# Even though we do not currently support CUDA in TFQ, the TensorFlow build
+# configuration files needs these CUDA-related Bazel files.
+
+cuda_json_init_repository()
+
+load(
+    "@cuda_redist_json//:distributions.bzl",
+    "CUDA_REDISTRIBUTIONS",
+    "CUDNN_REDISTRIBUTIONS",
+)
+
+load(
+    "@local_tsl//third_party/gpus/cuda/hermetic:cuda_redist_init_repositories.bzl",
+    "cuda_redist_init_repositories",
+    "cudnn_redist_init_repository",
+)
+
+cuda_redist_init_repositories(
+    cuda_redistributions = CUDA_REDISTRIBUTIONS,
+)
+
+cudnn_redist_init_repository(
+    cudnn_redistributions = CUDNN_REDISTRIBUTIONS,
+)
+
+load(
+    "@local_tsl//third_party/gpus/cuda/hermetic:cuda_configure.bzl",
+    "cuda_configure",
+)
+
+cuda_configure(name = "local_config_cuda")
 
 load("//third_party/tf:tf_configure.bzl", "tf_configure")
 
