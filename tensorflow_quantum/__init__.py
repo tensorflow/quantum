@@ -64,4 +64,4 @@ del python
 del core
 # pylint: enable=undefined-variable
 
-__version__ = '0.7.6'
+__version__ = '0.7.7'
