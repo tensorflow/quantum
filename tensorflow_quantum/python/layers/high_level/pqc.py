@@ -245,7 +245,7 @@ class PQC(tf.keras.layers.Layer):
             self._analytic = True
         if not self._analytic and not isinstance(repetitions, numbers.Integral):
             raise TypeError("repetitions must be a positive integer value."
-                            " Given: ".format(repetitions))
+                            " Given: {}".format(repetitions))
         if not self._analytic and repetitions <= 0:
             raise ValueError("Repetitions must be greater than zero.")
         if not self._analytic:

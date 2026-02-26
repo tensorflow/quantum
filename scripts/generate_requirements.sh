@@ -15,29 +15,39 @@
 # ==============================================================================
 
 # Summary: produce requirements.txt using pip-compile & munging the result.
-# Usage: ./generate_requirements.sh
+# Usage: ./scripts/generate_requirements.sh
 
 set -eu
 
-# Find the top of the local TFQ git tree. Do it early in case this fails.
-thisdir=$(CDPATH="" cd -- "$(dirname -- "$0")" && pwd -P)
-repo_dir=$(git -C "${thisdir}" rev-parse --show-toplevel 2>/dev/null || \
-  echo "${thisdir}/..")
+# Go to the top of the local TFQ git tree. Do it early in case this fails.
+thisdir=$(CDPATH="" cd -- "$(dirname -- "${0}")" && pwd -P)
+repo_dir=$(git -C "${thisdir}" rev-parse --show-toplevel 2>/dev/null)
+cd "${repo_dir}"
 
-echo "Running pip-compile in ${repo_dir} …"
-pip-compile -q --no-strip-extras --allow-unsafe
-
-declare -a inplace_edit=(-i)
-if [[ "$(uname -s)" == "Darwin" ]]; then
-  # macOS uses BSD sed, which requires a suffix for -i.
-  inplace_edit+=('')
+if ! pip show -qq pip-tools; then
+  echo "Error: 'pip-compile' not found. Please install 'pip-tools'." >&2
+  exit 1
 fi
 
-echo "Adjusting output of pip-compile …"
-sed "${inplace_edit[@]}" \
-  -e '/^--index-url/d' \
-  -e '/^--extra-index-url/d' \
-  -e 's/^pyyaml==.*/pyyaml/' \
-  requirements.txt
+# Special case: don't pin PyYAML in requirements.txt, because its inclusion can
+# lead to pip trying to uninstall an existing version installed by distutils.
+declare -a constraints=()
+constraints+=(--unsafe-package pyyaml)
+
+# Check for a constraints file and use it if it exists.
+pins_file="$(realpath --relative-to=. "${repo_dir}/requirements-pins.txt")"
+if [[ -e "${pins_file}" ]]; then
+  constraints+=(--constraints "${pins_file}")
+fi
+
+# Have pip-compile mention this script in the requirements.txt header it writes.
+export CUSTOM_COMPILE_COMMAND="${0}"
+
+echo "Running pip-compile in ${repo_dir} …"
+pip-compile -q \
+  --rebuild \
+  --no-strip-extras \
+  --no-emit-index-url \
+  "${constraints[@]}"
 
 echo "Done."

@@ -1,0 +1,12 @@
+package(default_visibility = ["//visibility:public"])
+
+# This package only exists so Bazel can resolve:
+#   @local_config_cuda//cuda:build_defs.bzl
+
+cc_library(
+    name = "cuda_headers",
+)
+
+cc_library(
+    name = "cudart",
+)

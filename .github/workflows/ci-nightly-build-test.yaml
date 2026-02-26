@@ -71,6 +71,10 @@ concurrency:
 
 permissions: read-all
 
+defaults:
+  run:
+    shell: bash -x {0}
+
 jobs:
   Decision:
     runs-on: ubuntu-24.04
@@ -85,7 +89,6 @@ jobs:
       - name: Get number of commits in the last 24 hrs
         id: commits
         run: |
-          set -x
           count=$(git log --oneline --since '24 hours ago' | wc -l)
           echo "count=$count" >> "$GITHUB_OUTPUT"
 
@@ -112,28 +115,26 @@ jobs:
 
       - name: Build wheel
         run: |
-          set -x
           pip install --upgrade pip setuptools wheel
           # The next script does a pip install, configure, & bazel build.
           ./scripts/build_pip_package_test.sh
 
       - name: Test wheel
         run: |
-          set -x
           ./scripts/run_example.sh
 
       - name: Test rest of TFQ
         run: |
-          set -x -o pipefail
+          set -o pipefail
           ./scripts/test_all.sh 2>&1 | tee test_all.log
 
       - name: Test tutorials
         run: |
-          set -x -o pipefail
+          set -o pipefail
           pip install jupyter
           pip install nbclient==0.6.5 jupyter-client==6.1.12 ipython==7.22.0
           pip install ipykernel==5.1.1
-          pip install gym==0.24.1
+          pip install gymnasium[classic-control]==1.2.3
           pip install seaborn==0.12.0
           pip install -q git+https://github.com/tensorflow/docs
           cd ..
