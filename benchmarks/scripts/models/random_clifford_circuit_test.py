@@ -12,13 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+"""Tests for the random Clifford circuit generator."""
 
 from absl.testing import parameterized
 import cirq
 import numpy as np
 import tensorflow as tf
 
-from random_clifford_circuit import random_clifford_circuit
+from benchmarks.scripts.models.random_clifford_circuit import (
+    random_clifford_circuit)
 
 
 class RandomCliffordCircuitTest(parameterized.TestCase, tf.test.TestCase):
