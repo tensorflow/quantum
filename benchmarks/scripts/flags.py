@@ -84,7 +84,7 @@ absl_flags.DEFINE_integer('n_burn',
                           lower_bound=0)
 
 
-def TEST_FLAGS(**kwargs):
+def test_flags(**kwargs):
     """Create a set of test flags by kwarg assignment.
 
     This constructs a named tuple that mimics the interface of absl.flags.
