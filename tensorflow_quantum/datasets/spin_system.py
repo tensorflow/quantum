@@ -234,13 +234,12 @@ def tfi_chain(qubits, boundary_condition="closed", data_dir=None):
     nspins = len(qubits)
     depth = nspins // 2
     if nspins not in supported_n:
-        raise ValueError("Supported number of spins are {}, received {}".format(
-            supported_n, nspins))
+        raise ValueError(
+            f"Supported number of spins are {supported_n}, received {nspins}")
 
     if boundary_condition not in supported_bc:
-        raise ValueError(
-            "Supported boundary conditions are {}, received {}".format(
-                supported_bc, boundary_condition))
+        raise ValueError(f"Supported boundary conditions are {supported_bc}, "
+                         f"received {boundary_condition}")
 
     data_path = _download_spin_data('TFI_chain', boundary_condition, nspins,
                                     data_dir)
@@ -461,13 +460,12 @@ def xxz_chain(qubits, boundary_condition="closed", data_dir=None):
     nspins = len(qubits)
     depth = nspins // 2
     if nspins not in supported_n:
-        raise ValueError("Supported number of spins are {}, received {}".format(
-            supported_n, nspins))
+        raise ValueError(
+            f"Supported number of spins are {supported_n}, received {nspins}")
 
     if boundary_condition not in supported_bc:
-        raise ValueError(
-            "Supported boundary conditions are {}, received {}".format(
-                supported_bc, boundary_condition))
+        raise ValueError(f"Supported boundary conditions are {supported_bc}, "
+                         f"received {boundary_condition}")
 
     data_path = _download_spin_data('XXZ_chain', boundary_condition, nspins,
                                     data_dir)
@@ -704,13 +702,12 @@ def tfi_rectangular(qubits, boundary_condition="torus", data_dir=None):
     depth = int(np.ceil(nspins / 2))
 
     if nspins not in supported_n:
-        raise ValueError("Supported number of spins are {}, received {}".format(
-            supported_n, nspins))
+        raise ValueError(
+            f"Supported number of spins are {supported_n}, received {nspins}")
 
     if boundary_condition not in supported_bc:
-        raise ValueError(
-            "Supported boundary conditions are {}, received {}".format(
-                supported_bc, boundary_condition))
+        raise ValueError(f"Supported boundary conditions are {supported_bc}, "
+                         f"received {boundary_condition}")
 
     data_path = _download_spin_data('TFI_rect', boundary_condition, nspins,
                                     data_dir)

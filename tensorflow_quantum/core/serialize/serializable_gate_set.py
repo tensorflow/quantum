@@ -165,8 +165,7 @@ class SerializableGateSet:
                         op, msg, arg_function_language=arg_function_language)
                     if proto_msg is not None:
                         return proto_msg
-        raise ValueError('Cannot serialize op {!r} of type {}'.format(
-            op, gate_type))
+        raise ValueError(f'Cannot serialize op {op!r} of type {gate_type}')
 
     def deserialize(self, proto, device=None):
         """Deserialize a Circuit from a cirq_google.api.v2.Program.
@@ -183,8 +182,9 @@ class SerializableGateSet:
         if not proto.HasField('language') or not proto.language.gate_set:
             raise ValueError('Missing gate set specification.')
         if proto.language.gate_set != self.gate_set_name:
-            raise ValueError('Gate set in proto was {} but expected {}'.format(
-                proto.language.gate_set, self.gate_set_name))
+            raise ValueError(f'Gate set in proto was {proto.language.gate_set} '
+                             f'but expected {self.gate_set_name}')
+
         which = proto.WhichOneof('program')
         if which == 'circuit':
             circuit = self._deserialize_circuit(
@@ -214,9 +214,8 @@ class SerializableGateSet:
 
         gate_id = operation_proto.gate.id
         if gate_id not in self.deserializers.keys():
-            raise ValueError('Unsupported serialized gate with id "{}".'
-                             '\n\noperation_proto:\n{}'.format(
-                                 gate_id, operation_proto))
+            raise ValueError(f'Unsupported serialized gate with id "{gate_id}".'
+                             f'\n\noperation_proto:\n{operation_proto}')
 
         return self.deserializers[gate_id].from_proto(
             operation_proto, arg_function_language=arg_function_language)

@@ -109,8 +109,8 @@ class AddCircuit(tf.keras.layers.Layer):
             inputs = util.convert_to_tensor(inputs)
 
         if not tf.is_tensor(inputs):
-            raise TypeError("Circuits cannot be parsed with "
-                            "given input: {}".format(inputs))
+            raise TypeError(
+                f"Circuits cannot be parsed with given input: {inputs}")
 
         batch_dim = tf.gather(tf.shape(inputs), 0)
 
@@ -122,7 +122,7 @@ class AddCircuit(tf.keras.layers.Layer):
                 append = util.convert_to_tensor(append)
             if not tf.is_tensor(append):
                 raise TypeError("Append circuits cannot be parsed with "
-                                "given input: {}".format(append))
+                                f"given input: {append}")
 
             return tfq_utility_ops.append_circuit(inputs, append)
 
@@ -133,7 +133,7 @@ class AddCircuit(tf.keras.layers.Layer):
             prepend = util.convert_to_tensor(prepend)
         if not tf.is_tensor(prepend):
             raise TypeError(
-                "Prepend circuits cannot be parsed with given input: {}".format(
-                    prepend))
+                f"Prepend circuits cannot be parsed with given input: {prepend}"
+            )
 
         return tfq_utility_ops.append_circuit(prepend, inputs)

@@ -322,8 +322,9 @@ def _get_cirq_sampled_expectation(sampler=cirq.Simulator()):
                             'int64.')
         if not (num_samples.shape == pauli_sums.shape):
             raise TypeError('num_samples tensor must have the same shape '
-                            'as pauli_sums tensor. got: {} expected: {}'.format(
-                                num_samples.shape, pauli_sums.shape))
+                            f'as pauli_sums tensor. got: {num_samples.shape}'
+                            f' expected: {pauli_sums.shape}')
+
         if tf.less_equal(num_samples, 0).numpy().any():
             raise TypeError('num_samples contains sample value <= 0.')
 

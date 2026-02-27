@@ -33,9 +33,9 @@ SUPPORTED_FUNCTIONS_FOR_LANGUAGE = {
 def qubit_to_proto(qubit):
     """Return proto representation of a GridQubit."""
     if isinstance(qubit, cirq.GridQubit):
-        return '{}_{}'.format(qubit.row, qubit.col)
+        return f'{qubit.row}_{qubit.col}'
     if isinstance(qubit, cirq.LineQubit):
-        return '{}'.format(qubit.x)
+        return f'{qubit.x}'
     raise ValueError('Unsupported qubit type:' + str(type(qubit)))
 
 
@@ -187,8 +187,8 @@ class GateOpSerializer:
         gate = op.gate
         if not isinstance(gate, self.gate_type):
             raise ValueError(
-                'Gate of type {} but serializer expected type {}'.format(
-                    type(gate), self.gate_type))
+                f'Gate of type {type(gate)} but serializer expected type '
+                f'{self.gate_type}')
 
         if not self.can_serialize_predicate(op):
             return None
@@ -215,8 +215,8 @@ class GateOpSerializer:
             value = getattr(gate, op_getter, None)
             if value is None and arg.required:
                 raise ValueError(
-                    'Gate {!r} does not have attribute or property {}'.format(
-                        gate, op_getter))
+                    f'Gate {gate!r} does not have attribute or property '
+                    f'{op_getter}')
         elif callable(op_getter):
             value = op_getter(op)
 
@@ -237,14 +237,13 @@ class GateOpSerializer:
         if arg.serialized_type == float:
             if not isinstance(value, (float, int)):
                 raise ValueError(
-                    'Expected type convertible to float but was {}'.format(
-                        type(value)))
+                    f'Expected type convertible to float but was {type(value)}')
         elif arg.serialized_type == List[bool]:
             if (not isinstance(value, (list, tuple, np.ndarray)) or
                     not all(isinstance(x, (bool, np.bool_)) for x in value)):
-                raise ValueError('Expected type List[bool] but was {}'.format(
-                    type(value)))
+                raise ValueError(
+                    f'Expected type List[bool] but was {type(value)}')
         elif value is not None and not isinstance(value, arg.serialized_type):
             raise ValueError(
-                'Argument {} had type {} but gate returned type {}'.format(
-                    arg.serialized_name, arg.serialized_type, type(value)))
+                f'Argument {arg.serialized_name} had type '
+                f'{arg.serialized_type} but gate returned type {type(value)}')

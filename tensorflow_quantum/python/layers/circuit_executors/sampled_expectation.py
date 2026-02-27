@@ -319,7 +319,7 @@ class SampledExpectation(tf.keras.layers.Layer):
 
         if not tf.is_tensor(repetitions):
             raise TypeError("repetitions cannot be parsed to int32 tensor"
-                            " given input: {}".format(repetitions))
+                            f" given input: {repetitions}")
 
         if values_empty:
             # No symbol_values were provided. So we assume the user wants us

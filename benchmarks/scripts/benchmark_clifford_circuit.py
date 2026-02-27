@@ -47,9 +47,8 @@ class CliffordBenchmarksTest(tf.test.TestCase, parameterized.TestCase):
     def test_benchmark_clifford_circuit_eager(self, params):
         """Test that Op constructs and runs correctly."""
         proto_file_path = os.path.join(
-            SRC, "reports/",
-            "CliffordBenchmarks.benchmark_clifford_circuit_{}_{}_{}".format(
-                params.n_qubits, params.n_moments, params.batch_size))
+            SRC, "reports/", f"CliffordBenchmarks.benchmark_clifford_circuit_"
+            f"{params.n_qubits}_{params.n_moments}_{params.batch_size}")
         self.addCleanup(os.remove, proto_file_path)
 
         bench = CliffordBenchmarks(params=params)
@@ -57,9 +56,8 @@ class CliffordBenchmarksTest(tf.test.TestCase, parameterized.TestCase):
 
         res = benchmark_util.read_benchmark_entry(proto_file_path)
         self.assertEqual(
-            res.name,
-            "CliffordBenchmarks.benchmark_clifford_circuit_{}_{}_{}".format(
-                params.n_qubits, params.n_moments, params.batch_size))
+            res.name, f"CliffordBenchmarks.benchmark_clifford_circuit_"
+            f"{params.n_qubits}_{params.n_moments}_{params.batch_size}")
         self.assertEqual(
             res.extras.get("n_qubits").double_value, params.n_qubits)
         self.assertEqual(
@@ -115,11 +113,11 @@ class CliffordBenchmarks(tf.test.Benchmark):
             'batch_size': self.params.batch_size,
             "min_time": min(deltas),
         }
-        name = "benchmark_clifford_circuit_{}_{}_{}".format(
-            self.params.n_qubits, self.params.n_moments, self.params.batch_size)
+        name = (f"benchmark_clifford_circuit_{self.params.n_qubits}_"
+                f"{self.params.n_moments}_{self.params.batch_size}")
 
         full_path = os.path.join(os.environ['TEST_REPORT_FILE_PREFIX'],
-                                 "{}.{}".format(self.__class__.__name__, name))
+                                 f"{self.__class__.__name__}.{name}")
         if os.path.exists(full_path):
             os.remove(full_path)
 

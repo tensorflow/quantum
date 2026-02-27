@@ -210,7 +210,7 @@ class PQC(tf.keras.layers.Layer):
         # Ingest model_circuit.
         if not isinstance(model_circuit, cirq.Circuit):
             raise TypeError("model_circuit must be a cirq.Circuit object."
-                            " Given: {}".format(model_circuit))
+                            f" Given: {model_circuit}")
 
         self._symbols_list = list(
             sorted(util.get_circuit_symbols(model_circuit)))
@@ -229,7 +229,7 @@ class PQC(tf.keras.layers.Layer):
             raise TypeError("operators must be a cirq.PauliSum or "
                             "cirq.PauliString, or a list, tuple, "
                             "or np.array containing them. "
-                            "Got {}.".format(type(operators)))
+                            f"Got {type(operators)}.")
         if not all([
                 isinstance(op, (cirq.PauliString, cirq.PauliSum))
                 for op in operators
@@ -245,7 +245,7 @@ class PQC(tf.keras.layers.Layer):
             self._analytic = True
         if not self._analytic and not isinstance(repetitions, numbers.Integral):
             raise TypeError("repetitions must be a positive integer value."
-                            " Given: {}".format(repetitions))
+                            f" Given: {repetitions}")
         if not self._analytic and repetitions <= 0:
             raise ValueError("Repetitions must be greater than zero.")
         if not self._analytic:
