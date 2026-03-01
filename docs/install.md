@@ -5,7 +5,7 @@ There are a few ways to set up your environment to use TensorFlow Quantum (TFQ):
 * The easiest way to learn and use TFQ requires no installation—run the
   [TensorFlow Quantum tutorials](./tutorials/hello_many_worlds.ipynb) directly
   in your browser using
-  [Google Colab](https://colab.research.google.com/github/tensorflow/quantum/blob/master/docs/tutorials/hello_many_worlds.ipynb).
+  [Google Colab](https://colab.research.google.com/github/tensorflow/quantum/blob/main/docs/tutorials/hello_many_worlds.ipynb).
 * To use TensorFlow Quantum on a local machine, install the TFQ package using
   Python's pip package manager.
 * Or build TensorFlow Quantum from source.

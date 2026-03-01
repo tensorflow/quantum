@@ -18,11 +18,76 @@ run-name: Continuous integration build and test
 on:
   pull_request:
     branches:
-      - master
+      - main
 
   merge_group:
     types:
       - checks_requested
+
+  push:
+    branches:
+      - main
+
+  # Allow manual invocation, with options that can be useful for debugging.
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: 'SHA of commit to run against:'
+        type: string
+        required: true
+
+      python_ver:
+        description: 'Python version:'
+        type: string
+        default: '3.10.15'
+
+      extra_bazel_options:
+        description: 'Extra Bazel options:'
+        type: string
+
+      remake_python_cache:
+        description: 'Delete & remake the Python cache'
+        type: boolean
+        default: false
+
+      debug:
+        description: 'Print additional workflow info'
+        type: boolean
+        default: false
+
+env:
+  # Default Python version to use. Important: give it a full x.y.z number.
+  python_ver: '3.10.15'
+
+  # Additional .bazelrc options to use.
+  bazelrc_additions: |
+    common -c opt
+    common --announce_rc
+    common --color=no
+    common --experimental_repo_remote_exec
+    common --remote_upload_local_results=false
+    common --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=1"
+    common --cxxopt="-std=c++17"
+    common --cxxopt="-msse2"
+    common --cxxopt="-msse3"
+    common --cxxopt="-msse4"
+    build --verbose_failures
+    build --auto_output_filter=none
+    build --show_progress_rate_limit=1
+    test --test_output=errors
+    test --test_summary=detailed
+
+  # Note: these regexes are Bash regex syntax, NOT path glob syntax.
+  # Also, do not put dashes in front of the values.
+  ignore_patterns: |-
+    .*\.md$
+    .*\.jpg$
+    .*\.png$
+    ^\.gitignore
+    ^\.pylintrc
+    ^\.yamllint.yaml
+    ^\.github/problem-matchers/.*
+    ^benchmarks/.*
 
 concurrency:
   cancel-in-progress: true

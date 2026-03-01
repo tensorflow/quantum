@@ -7,7 +7,7 @@ src="docs/images/logo/tf_quantum1.svg">
 High-performance Python framework for hybrid quantum-classical machine learning
 
 [![Licensed under the Apache 2.0
-license](https://img.shields.io/badge/License-Apache%202.0-3c60b1.svg?logo=opensourceinitiative&logoColor=white&style=flat-square)](https://github.com/tensorflow/quantum/blob/master/LICENSE)
+license](https://img.shields.io/badge/License-Apache%202.0-3c60b1.svg?logo=opensourceinitiative&logoColor=white&style=flat-square)](https://github.com/tensorflow/quantum/blob/main/LICENSE)
 [![Compatible with Python versions 3.10 and
 higher](https://img.shields.io/badge/Python-3.10+-fcbc2c.svg?style=flat-square&logo=python&logoColor=white)](https://www.python.org/downloads/)
 [![TensorFlow Quantum project on
@@ -84,7 +84,7 @@ including tutorials and API documentation, can be found online at the
 TensorFlow.org web site.
 
 All of the examples can be found in GitHub in the form of [Python notebook
-tutorials](https://github.com/tensorflow/quantum/tree/master/docs/tutorials)
+tutorials](https://github.com/tensorflow/quantum/tree/main/docs/tutorials)
 
 ## Getting help
 
