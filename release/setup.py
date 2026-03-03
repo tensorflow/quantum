@@ -31,7 +31,7 @@ from setuptools import find_packages, setup
 from setuptools.command.install import install
 from setuptools.dist import Distribution
 
-CUR_VERSION = "0.7.7"
+CUR_VERSION = "0.7.6"
 
 DOCLINES = __doc__.split("\n")
 
@@ -55,7 +55,7 @@ REQUIRED_PACKAGES = [
 
     # The following are transitive dependencies that need to be constrained to
     # avoid incompatible versions or because some (e.g., contourpy 1.3.3)
-    # require Python 3.11+ and we want to maintain Python 3.9 compatibility.
+    # require Python 3.11+ and we want to maintain Python 3.10 compatibility.
     # TODO: revisit after we reach compatibility with TensorFlow 2.19+.
     "jax>=0.5,<0.6",
     "contourpy<=1.3.2",
@@ -94,7 +94,7 @@ setup(
     version=BUILD_VERSION,
     description="Library for hybrid quantum-classical machine learning.",
     long_description="\n".join(DOCLINES[2:]),
-    long_description_content_type="text/plain",
+    long_description_content_type="text/markdown",
     author="The TensorFlow Quantum Authors",
     author_email="tensorflow-quantum-team@google.com",
     url="https://github.com/tensorflow/quantum/",

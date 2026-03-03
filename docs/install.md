@@ -10,14 +10,14 @@ There are a few ways to set up your environment to use TensorFlow Quantum (TFQ):
   Python's pip package manager.
 * Or build TensorFlow Quantum from source.
 
-TensorFlow Quantum is supported on Python version 3.9 through 3.12 and depends directly on [Cirq](https://github.com/quantumlib/Cirq).
+TensorFlow Quantum is supported on Python version 3.10 through 3.12 and depends directly on [Cirq](https://github.com/quantumlib/Cirq).
 
 ## Pip package
 
 ### Requirements
 
 * pip 19.0 or later (requires `manylinux2014` support)
-* [TensorFlow == 2.16.2](https://www.tensorflow.org/install/pip)
+* [TensorFlow == 2.18.1](https://www.tensorflow.org/install/pip)
 
 See the [TensorFlow install guide](https://www.tensorflow.org/install/pip) to
 set up your Python development environment and an (optional) virtual environment.
@@ -26,7 +26,7 @@ Upgrade `pip` and install TensorFlow
 <!-- common_typos_disable -->
 <pre class="devsite-click-to-copy">
   <code class="devsite-terminal">pip install --upgrade pip</code>
-  <code class="devsite-terminal">pip install tensorflow==2.16.2</code>
+  <code class="devsite-terminal">pip install tensorflow==2.18.1</code>
 </pre>
 <!-- common_typos_enable -->
 
@@ -86,7 +86,7 @@ As noted in the TensorFlow
 guide, the <a href="https://bazel.build/" class="external">Bazel</a>
 build system will be required.
 
-Our latest source builds use TensorFlow 2.16.2. To ensure compatibility we use
+Our latest source builds use TensorFlow 2.18.1. To ensure compatibility we use
 the same version of `bazel`, 6.5.0. To remove any existing version of Bazel:
 <!-- common_typos_disable -->
 <pre class="devsite-click-to-copy">
@@ -123,17 +123,17 @@ Finally, confirm installation of the correct `bazel` version:
 
 ### 4. Build TensorFlow from source
 
-TensorFlow Quantum is compatible with TensorFlow version&nbsp;2.16.2. To build
+TensorFlow Quantum is compatible with TensorFlow version&nbsp;2.18.1. To build
 TensorFlow from sources, download the <a
 href="https://github.com/tensorflow/tensorflow" class="external">TensorFlow
-source code</a> by cloning the git repository, then switch to the `r2.16`
+source code</a> by cloning the git repository, then switch to the `r2.18`
 branch:
 
 <!-- common_typos_disable -->
 <pre class="devsite-click-to-copy">
   <code class="devsite-terminal">git clone https://github.com/tensorflow/tensorflow.git</code>
   <code class="devsite-terminal">cd tensorflow</code>
-  <code class="devsite-terminal">git checkout r2.16</code>
+  <code class="devsite-terminal">git checkout r2.18</code>
 </pre>
 
 Be sure the virtual environment you created in step 2 is activated, then follow

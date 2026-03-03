@@ -103,18 +103,18 @@ elif [[ -n "${CONDA_PREFIX:-}" && -x "${CONDA_PREFIX}/bin/python" ]]; then
   # 3) Conda environment python, if available
   PY="${CONDA_PREFIX}/bin/python"
 else
-  # 4) Fallback: system python3, but require >= 3.9
+  # 4) Fallback: system python3, but require >= 3.10
   if ! command -v python3 >/dev/null 2>&1; then
-    die "python3 not found. Pass --python=/path/to/python3.9+ or set PYTHON_BIN_PATH."
+    die "python3 not found. Pass --python=/path/to/python3.10+ or set PYTHON_BIN_PATH."
   fi
 
   if ! python3 - <<'PY'
 import sys
-raise SystemExit(0 if sys.version_info[:2] >= (3, 9) else 1)
+raise SystemExit(0 if sys.version_info[:2] >= (3, 10) else 1)
 PY
   then
-    die "Python 3.9+ required for TensorFlow Quantum, but found " \
-      "$(python3 -V 2>&1). Pass --python=/path/to/python3.9+ or set PYTHON_BIN_PATH."
+    die "Python 3.10+ required for TensorFlow Quantum, but found " \
+      "$(python3 -V 2>&1). Pass --python=/path/to/python3.10+ or set PYTHON_BIN_PATH."
   fi
 
   PY="$(command -v python3)"
@@ -233,13 +233,15 @@ if ! is_windows; then
   write_bazelrc "build --linkopt=-Wl,-rpath,${LIBDIR}"
 fi
 
+write_bazelrc ""
+
 # The following supressions are for warnings coming from external dependencies.
 # They're most likely inconsequential or false positives. Since we can't fix
-# them, we suppress the warnings to reduce noise during builds.
+# them, we suppress the warnings to reduce noise. Note: single quotes are needed
+# for the first two so that the $ anchors are preserved in the .bazelrc file.
 
-write_bazelrc ""
-write_bazelrc "build --per_file_copt=external/.*@-Wno-deprecated-non-prototype"
-write_bazelrc "build --host_per_file_copt=external/.*@-Wno-deprecated-non-prototype"
+write_bazelrc 'build --per_file_copt=external/.*[.]c$@-Wno-deprecated-non-prototype'
+write_bazelrc 'build --host_per_file_copt=external/.*[.]c$@-Wno-deprecated-non-prototype'
 write_bazelrc "build --per_file_copt=external/com_google_protobuf/.*@-Wno-unused-function"
 write_bazelrc "build --host_per_file_copt=external/com_google_protobuf/.*@-Wno-unused-function"
 write_bazelrc "build --per_file_copt=external/eigen/.*@-Wno-maybe-uninitialized"
