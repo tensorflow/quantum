@@ -52,8 +52,7 @@ class RandomCircuitBenchmarksTest(tf.test.TestCase, parameterized.TestCase):
     def test_benchmark_random_circuit(self, params):
         """Test that Op constructs and runs correctly."""
         proto_file_path = os.path.join(
-            SRC, "reports/",
-            "RandomCircuitBenchmarks.benchmark_random_circuit_"
+            SRC, "reports/", "RandomCircuitBenchmarks.benchmark_random_circuit_"
             f"{params.n_rows}_{params.n_cols}_{params.n_moments}")
         self.addCleanup(os.remove, proto_file_path)
 
