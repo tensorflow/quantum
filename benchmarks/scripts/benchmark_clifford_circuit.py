@@ -47,7 +47,7 @@ class CliffordBenchmarksTest(tf.test.TestCase, parameterized.TestCase):
     def test_benchmark_clifford_circuit_eager(self, params):
         """Test that Op constructs and runs correctly."""
         proto_file_path = os.path.join(
-            SRC, "reports/", f"CliffordBenchmarks.benchmark_clifford_circuit_"
+            SRC, "reports/", "CliffordBenchmarks.benchmark_clifford_circuit_"
             f"{params.n_qubits}_{params.n_moments}_{params.batch_size}")
         self.addCleanup(os.remove, proto_file_path)
 
@@ -56,7 +56,7 @@ class CliffordBenchmarksTest(tf.test.TestCase, parameterized.TestCase):
 
         res = benchmark_util.read_benchmark_entry(proto_file_path)
         self.assertEqual(
-            res.name, f"CliffordBenchmarks.benchmark_clifford_circuit_"
+            res.name, "CliffordBenchmarks.benchmark_clifford_circuit_"
             f"{params.n_qubits}_{params.n_moments}_{params.batch_size}")
         self.assertEqual(
             res.extras.get("n_qubits").double_value, params.n_qubits)

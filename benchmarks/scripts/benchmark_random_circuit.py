@@ -53,7 +53,7 @@ class RandomCircuitBenchmarksTest(tf.test.TestCase, parameterized.TestCase):
         """Test that Op constructs and runs correctly."""
         proto_file_path = os.path.join(
             SRC, "reports/",
-            f"RandomCircuitBenchmarks.benchmark_random_circuit_"
+            "RandomCircuitBenchmarks.benchmark_random_circuit_"
             f"{params.n_rows}_{params.n_cols}_{params.n_moments}")
         self.addCleanup(os.remove, proto_file_path)
 
@@ -62,7 +62,7 @@ class RandomCircuitBenchmarksTest(tf.test.TestCase, parameterized.TestCase):
 
         res = benchmark_util.read_benchmark_entry(proto_file_path)
         self.assertEqual(
-            res.name, f"RandomCircuitBenchmarks.benchmark_random_circuit_"
+            res.name, "RandomCircuitBenchmarks.benchmark_random_circuit_"
             f"{params.n_rows}_{params.n_cols}_{params.n_moments}")
         self.assertEqual(res.extras.get("n_rows").double_value, params.n_rows)
         self.assertEqual(res.extras.get("n_cols").double_value, params.n_cols)

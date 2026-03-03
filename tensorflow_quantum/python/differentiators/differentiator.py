@@ -125,10 +125,10 @@ class Differentiator(metaclass=abc.ABCMeta):
             for key in expected_signature:
                 if not any(key in s for s in signature):
                     raise ValueError('unexpected signature for analytic_op. '
-                                     f'Given arg: {key}.' + ''
+                                     f'Given arg: {key}. '
                                      'The signature should contain: '
-                                     f'{list(expected_signature)}' + ''
-                                     f' Given: {list(signature)}' + ''
+                                     f'{list(expected_signature)} '
+                                     f' Given: {list(signature)} '
                                      'Note: noisy ops should use sampled_op')
 
             if 'num_samples' in signature:
@@ -146,7 +146,7 @@ class Differentiator(metaclass=abc.ABCMeta):
             for key in expected_signature:
                 if not any(key in s for s in signature):
                     raise ValueError('unexpected signature for sampled_op. '
-                                     f'Given arg: {key}.' + ''
+                                     f'Given arg: {key}. '
                                      'The signature should contain: '
                                      f'{list(expected_signature)}')
 
