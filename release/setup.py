@@ -24,14 +24,30 @@ University of Waterloo and the Quantum AI team at Google along with help
 from many other contributors within Google.
 """
 
+import re
 import sys
 from datetime import date
+from pathlib import Path
 
 from setuptools import find_packages, setup
 from setuptools.command.install import install
 from setuptools.dist import Distribution
 
-CUR_VERSION = "0.7.7"
+
+def read_version():
+    """Return the package version from tensorflow_quantum/__init__.py."""
+    init_path = (Path(__file__).parent.parent / "tensorflow_quantum" /
+                 "__init__.py")
+    init_text = init_path.read_text(encoding="utf-8")
+
+    match = re.search(r'__version__\s*=\s*[\'"]([^\'"]+)[\'"]', init_text)
+    if not match:
+        raise RuntimeError(
+            "Cannot find __version__ in tensorflow_quantum/__init__.py")
+    return match.group(1)
+
+
+CUR_VERSION = read_version()
 
 DOCLINES = __doc__.split("\n")
 
