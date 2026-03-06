@@ -2,7 +2,7 @@
 
 [TensorFlow Quantum](https://tensorflow.org/quantum) (TFQ) is implemented as a
 Python library that integrates static C++ objects. Those C++ objects for TFQ are
-linked with the TensorFlow [TensorFlow](https://tensorflow.org) library. The
+linked with the [TensorFlow](https://tensorflow.org) library. The
 process of building and linking C++ objects is complex, so TFQ is distributed in
 binary Python [wheel](https://peps.python.org/pep-0427/) format for certain
 combinations of operating systems and hardware architectures. This page
