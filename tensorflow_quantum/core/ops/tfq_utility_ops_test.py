@@ -246,7 +246,7 @@ class ResolveParametersOpTest(tf.test.TestCase, parameterized.TestCase):
         circuit = cirq.Circuit()
         symbols = []
         for n, q in enumerate(qubits):
-            new_bit = sympy.Symbol("bit_{}".format(n))
+            new_bit = sympy.Symbol(f"bit_{n}")
             circuit += cirq.X(q)**new_bit
             symbols.append(new_bit)
         symbol_names = [str(s) for s in symbols]
