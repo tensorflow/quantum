@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# yamllint disable rule:line-length
+
 name: 'CI: build & test'
 run-name: Continuous integration build and test
 
@@ -37,8 +39,8 @@ jobs:
     timeout-minutes: 60
 
     steps:
-      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
-      - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v5
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: '3.10'
           architecture: 'x64'
@@ -64,8 +66,8 @@ jobs:
           sudo apt-get update && sudo apt-get install -y lsb-release
           # This file, though it's empty, hangs the Bazel install step.
           rm -f /etc/bazel.bazelrc
-      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
-      - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v5
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: '3.10'
           architecture: 'x64'
@@ -113,8 +115,8 @@ jobs:
           sudo apt-get update && sudo apt-get install -y lsb-release
           # This file, though it's empty, hangs the Bazel install step.
           rm -f /etc/bazel.bazelrc
-      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
-      - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v5
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: '3.10'
           architecture: 'x64'

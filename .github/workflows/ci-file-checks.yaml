@@ -25,6 +25,8 @@
 # invoked manually using the "Run workflow" button on the page at
 # https://github.com/tensorflow/quantum/actions/workflows/ci-file-checks.yaml
 
+# yamllint disable rule:line-length
+
 name: 'CI: lint & check formating'
 run-name: Continuous integration lint and format checks
 
@@ -124,7 +126,7 @@ jobs:
           echo base=${{github.ref_name}} >> "$GITHUB_ENV"
 
       - name: Check out a copy of the TFQ git repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Determine files changed by this ${{github.event_name}} event
         uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3
@@ -157,12 +159,12 @@ jobs:
       cache_paths: ${{steps.parameters.outputs.cache_paths}}
     steps:
       - name: Check out a copy of the TFQ git repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
         # Note: setup-python has a cache facility, but we don't use it here
         # because we want to cache more Python things than setup-python does.
       - name: Set up Python ${{inputs.python_ver || env.python_ver}}
-        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: ${{inputs.python_ver || env.python_ver}}
 
@@ -182,7 +184,7 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Test if the cache already exists
-        uses: actions/cache@0c907a75c2c80ebcb7f088228285e798b750cf8f # v4
+        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         id: check_cache
         with:
           lookup-only: true
@@ -205,7 +207,7 @@ jobs:
           steps.check_cache.outputs.cache-hit != 'true' ||
           inputs.remake_python_cache == 'true'
         name: Set up the Python cache
-        uses: actions/cache@0c907a75c2c80ebcb7f088228285e798b750cf8f # v4
+        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         id: restore_cache
         with:
           key: ${{steps.parameters.outputs.cache_key}}
@@ -242,7 +244,7 @@ jobs:
       changed_files: ${{needs.Changes.outputs.cc_files}}
     steps:
       - name: Check out a copy of the TFQ git repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Set up clang-format output problem matcher
         run: echo '::add-matcher::.github/problem-matchers/clang-format.json'
@@ -279,15 +281,15 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Check out a copy of the TFQ git repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Set up Python
-        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: ${{inputs.python_ver || env.python_ver}}
 
       - name: Restore the Python cache
-        uses: actions/cache@0c907a75c2c80ebcb7f088228285e798b750cf8f # v4
+        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           key: ${{needs.Setup.outputs.cache_key}}
           path: ${{needs.Setup.outputs.cache_paths}}
@@ -319,15 +321,15 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Check out a copy of the TFQ git repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Set up Python
-        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: ${{inputs.python_ver || env.python_ver}}
 
       - name: Restore the Python cache
-        uses: actions/cache@0c907a75c2c80ebcb7f088228285e798b750cf8f # v4
+        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           key: ${{needs.Setup.outputs.cache_key}}
           path: ${{needs.Setup.outputs.cache_paths}}
@@ -365,7 +367,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Check out a copy of the TFQ git repository
-        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Set up yamllint output problem matcher
         run: echo '::add-matcher::.github/problem-matchers/yamllint.json'
