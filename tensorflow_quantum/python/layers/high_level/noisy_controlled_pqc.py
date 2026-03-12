@@ -168,7 +168,7 @@ class NoisyControlledPQC(tf.keras.layers.Layer):
         # Ingest model_circuit.
         if not isinstance(model_circuit, cirq.Circuit):
             raise TypeError("model_circuit must be a cirq.Circuit object."
-                            " Given: {}".format(model_circuit))
+                            f" Given: {model_circuit}")
 
         self._symbols_list = list(
             sorted(util.get_circuit_symbols(model_circuit)))
@@ -189,7 +189,7 @@ class NoisyControlledPQC(tf.keras.layers.Layer):
             raise TypeError("operators must be a cirq.PauliSum or "
                             "cirq.PauliString, or a list, tuple, "
                             "or np.array containing them. "
-                            "Got {}.".format(type(operators)))
+                            f"Got {type(operators)}.")
         if not all([
                 isinstance(op, (cirq.PauliString, cirq.PauliSum))
                 for op in operators
@@ -206,7 +206,7 @@ class NoisyControlledPQC(tf.keras.layers.Layer):
                              "using noisy simulation.")
         if not isinstance(repetitions, numbers.Integral):
             raise TypeError("repetitions must be a positive integer value."
-                            " Given: {}".format(repetitions))
+                            f" Given: {repetitions}")
         if repetitions <= 0:
             raise ValueError("Repetitions must be greater than zero.")
 
@@ -226,7 +226,7 @@ class NoisyControlledPQC(tf.keras.layers.Layer):
                              "noisy estimates.")
         if not isinstance(sample_based, bool):
             raise TypeError("sample_based must be either True or False."
-                            " received: {}".format(type(sample_based)))
+                            f" received: {type(sample_based)}")
 
         if not sample_based:
             self._executor = differentiator.generate_differentiable_op(
