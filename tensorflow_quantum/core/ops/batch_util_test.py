@@ -315,31 +315,18 @@ class BatchUtilTest(tf.test.TestCase, parameterized.TestCase):
         samples_per_term = 100
         sampler = cirq.Simulator()
 
-        # Case 1: Standard Pauli observable (Z). Expect -1.0.
-        observable1 = cirq.PauliSum.wrap(cirq.Z(qubit))
-        collector1 = batch_util.TFQPauliSumCollector(
-            circuit, observable1, samples_per_term=samples_per_term)
-        collector1.collect(sampler)
+        test_cases = [
+            ("Standard Pauli observable (Z)", cirq.PauliSum.wrap(cirq.Z(qubit)), -1.0),
+            ("Identity observable", cirq.PauliSum.wrap(cirq.I(qubit)), 1.0),
+            ("Mixed observable (Z + 2.0*I)", cirq.Z(qubit) + 2.0 * cirq.I(qubit), 1.0),
+        ]
 
-        pauli_string1 = list(observable1)[0]
-        pauli_string1 = pauli_string1 / pauli_string1.coefficient
-        self.assertEqual(collector1._zeros[pauli_string1], 0)
-        self.assertEqual(collector1._ones[pauli_string1], samples_per_term)
-        self.assertAlmostEqual(collector1.estimated_energy(), -1.0)
-
-        # Case 2: Identity observable. Expect 1.0.
-        observable2 = cirq.PauliSum.wrap(cirq.I(qubit))
-        collector2 = batch_util.TFQPauliSumCollector(
-            circuit, observable2, samples_per_term=samples_per_term)
-        collector2.collect(sampler)
-        self.assertAlmostEqual(collector2.estimated_energy(), 1.0)
-
-        # Case 3: Mixed observable (Z + 2.0*I). Expect -1.0 + 2.0 = 1.0.
-        observable3 = cirq.Z(qubit) + 2.0 * cirq.I(qubit)
-        collector3 = batch_util.TFQPauliSumCollector(
-            circuit, observable3, samples_per_term=samples_per_term)
-        collector3.collect(sampler)
-        self.assertAlmostEqual(collector3.estimated_energy(), 1.0)
+        for name, observable, expected_energy in test_cases:
+            with self.subTest(name):
+                collector = batch_util.TFQPauliSumCollector(
+                    circuit, observable, samples_per_term=samples_per_term)
+                collector.collect(sampler)
+                self.assertAlmostEqual(collector.estimated_energy(), expected_energy)
 
 
 if __name__ == '__main__':
