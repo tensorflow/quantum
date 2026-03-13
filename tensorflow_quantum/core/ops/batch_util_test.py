@@ -308,6 +308,30 @@ class BatchUtilTest(tf.test.TestCase, parameterized.TestCase):
         self.assertDTypeEqual(results, np.int8)
         self.assertEqual(np.zeros(shape=(0, 0, 0)).shape, results.shape)
 
+    @parameterized.parameters([{
+        'sim': cirq.DensityMatrixSimulator()
+    }, {
+        'sim': cirq.Simulator()
+    }])
+    def test_batch_sample_errors(self, sim):
+        """Test that batch_sample raises errors on invalid n_samples."""
+        circuit = cirq.Circuit(cirq.X(cirq.GridQubit(0, 0)))
+        resolvers = [cirq.ParamResolver({})]
+
+        # Test non-int n_samples
+        with self.assertRaisesRegex(TypeError, 'n_samples must be an int'):
+            batch_util.batch_sample([circuit], resolvers, '100', sim)
+
+        with self.assertRaisesRegex(TypeError, 'n_samples must be an int'):
+            batch_util.batch_sample([circuit], resolvers, [100], sim)
+
+        # Test n_samples <= 0
+        with self.assertRaisesRegex(ValueError, 'n_samples must be > 0'):
+            batch_util.batch_sample([circuit], resolvers, 0, sim)
+
+        with self.assertRaisesRegex(ValueError, 'n_samples must be > 0'):
+            batch_util.batch_sample([circuit], resolvers, -1, sim)
+
 
 if __name__ == '__main__':
     tf.test.main()
