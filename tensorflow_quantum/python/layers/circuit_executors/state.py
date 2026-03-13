@@ -41,7 +41,7 @@ class State(tf.keras.layers.Layer):
     a tensor of states corresponding to these preparation angles.
 
     >>> state_layer = tfq.layers.State()
-    >>> alphas = tf.reshape(tf.range(0, 1.1, delta=0.5), (3, 1)) # FIXME: #805
+    >>> alphas = tf.reshape(tf.range(0, 1.1, delta=0.5), (3, 1))
     >>> state_layer(parametrized_bell_circuit,
     ...     symbol_names=[alpha], symbol_values=alphas)
     <tf.RaggedTensor [[0.707106, 0j, 0.707106, 0j],
