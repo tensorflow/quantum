@@ -47,7 +47,7 @@ class _LazyLoader(types.ModuleType):
             try:
                 path = resource_loader.get_path_to_datafile(self._name)
                 self._module = load_library.load_op_library(path)
-            except:
+            except Exception:  # pylint: disable=broad-except
                 path = os.path.join(get_python_lib(),
                                     "tensorflow_quantum/core/ops", self._name)
                 self._module = load_library.load_op_library(path)
