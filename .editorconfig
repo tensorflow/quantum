@@ -34,6 +34,9 @@ indent_size = 4
 [{*.cc,*.h}]
 indent_size = 2
 
+[Dockerfile]
+indent_size = 4
+
 [*.json]
 indent_size = 2
 
