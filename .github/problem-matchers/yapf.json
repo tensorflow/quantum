@@ -1,0 +1,22 @@
+{
+  "problemMatcher": [
+    {
+      "owner": "yapf-diff",
+      "pattern": [
+        {
+          "regexp": "^---\\s*([^\\s]*)\\s*\\(original\\)$",
+          "file": 1
+        },
+        {
+          "regexp": "^\\+\\+\\+\\s*([^\\s]*)\\s*\\((.*)\\)$",
+          "message": 2
+        },
+        {
+          "regexp": "^@@\\s*-(\\d+),(\\d+)\\s*\\+(\\d+),(\\d+)\\s*@@$",
+          "line": 1
+        }
+      ]
+    },
+  }
+  ]
+}
