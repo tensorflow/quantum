@@ -31,11 +31,11 @@ max_line_length = 80
 [{BUILD,*.BUILD,*.bzl,*.bazel,.bazelrc,WORKSPACE}]
 indent_size = 4
 
-[{*.cc,*.h}]
-indent_size = 2
-
 [Dockerfile]
 indent_size = 4
+
+[{*.cc,*.h}]
+indent_size = 2
 
 [*.json]
 indent_size = 2
