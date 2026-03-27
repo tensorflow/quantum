@@ -312,6 +312,8 @@ wheel==0.46.2
 wrapt==1.17.3
     # via tensorflow
 yapf==0.43.0
+tensorflow==2.15.0
+pre-commit==3.7.1
     # via -r requirements.in
 
 # The following packages are considered to be unsafe in a requirements file:

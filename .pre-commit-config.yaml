@@ -1,0 +1,88 @@
+# Summary: pre-commit hook configuration for TensorFlow Quantum.
+# See https://pre-commit.com for documentation.
+#
+# Install hooks with:
+#   pip install pre-commit
+#   pre-commit install
+#
+# Run all hooks manually with:
+#   pre-commit run --all-files
+
+default_language_version:
+  python: python3
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: '\.ipynb$'
+      - id: end-of-file-fixer
+        exclude: '\.ipynb$'
+      - id: check-yaml
+        args: [--unsafe]
+      - id: check-json
+        exclude: '\.ipynb$'
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ['--maxkb=500']
+      - id: check-case-conflict
+      - id: mixed-line-ending
+        args: ['--fix=lf']
+        exclude: '\.ipynb$'
+      - id: no-commit-to-branch
+        args: ['--branch=master']
+
+  - repo: https://github.com/PyCQA/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        args: [--profile=google, --line-length=80]
+        files: '^(tensorflow_quantum|benchmarks)/.*\.py$'
+
+  - repo: https://github.com/pre-commit/mirrors-yapf
+    rev: v0.32.0
+    hooks:
+      - id: yapf
+        args: ['--style=google', '--in-place']
+        files: '^(tensorflow_quantum|benchmarks)/.*\.py$'
+        additional_dependencies: ['yapf==0.43.0']
+
+  - repo: https://github.com/PyCQA/pylint
+    rev: v3.3.3
+    hooks:
+      - id: pylint
+        args: ['--rcfile=.pylintrc']
+        files: '^tensorflow_quantum/.*\.py$'
+        additional_dependencies:
+          - 'cirq-core==1.3.0'
+          - 'numpy==1.24.2'
+          - 'sympy==1.12'
+
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.35.1
+    hooks:
+      - id: yamllint
+        args: ['--config-file=.yamllint.yaml', '--strict']
+        files: '\.(yaml|yml)$'
+        exclude: '^\.pre-commit-config\.yaml$'
+
+  - repo: https://github.com/pre-commit/mirrors-clang-format
+    rev: v18.1.8
+    hooks:
+      - id: clang-format
+        args: ['-style=google']
+        files: '\.(cc|h)$'
+        types_or: [c, c++]
+
+  - repo: local
+    hooks:
+      - id: format-ipynb
+        name: format-ipynb
+        language: python
+        entry: python scripts/format_ipynb.py
+        files: '\.ipynb$'
+        pass_filenames: false
+        additional_dependencies:
+          - 'nbformat==5.1.3'
+          - 'yapf==0.43.0'
