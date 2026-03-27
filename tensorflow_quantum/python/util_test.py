@@ -33,8 +33,8 @@ from tensorflow_quantum.python import util
 
 def _single_to_tensor(item):
     if not isinstance(item, (cirq.PauliSum, cirq.PauliString, cirq.Circuit)):
-        raise TypeError("Item must be a Circuit or PauliSum. Got {}.".format(
-            type(item)))
+        raise TypeError(f"Item must be a Circuit, PauliString, or PauliSum."
+                        " Got {type(item)}.")
     if isinstance(item, (cirq.PauliSum, cirq.PauliString)):
         return serializer.serialize_paulisum(item).SerializeToString(
             deterministic=True)
@@ -351,114 +351,39 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
         """Check valid TFQ channels for approximate equality."""
         atol = 1e-2
 
-        # DepolarizingChannel
-        self.assertTrue(
-            util.gate_approx_eq(cirq.DepolarizingChannel(0.1),
-                                cirq.DepolarizingChannel(0.1),
-                                atol=atol))
-        self.assertTrue(
-            util.gate_approx_eq(cirq.DepolarizingChannel(0.1),
-                                cirq.DepolarizingChannel(0.105),
-                                atol=atol))
-        self.assertFalse(
-            util.gate_approx_eq(cirq.DepolarizingChannel(0.1),
-                                cirq.DepolarizingChannel(0.2),
-                                atol=atol))
+        test_cases = [
+            (cirq.DepolarizingChannel, (0.1,), (0.105,), (0.2,)),
+            (cirq.AsymmetricDepolarizingChannel, (0.1, 0.2, 0.3),
+             (0.105, 0.195, 0.305), (0.2, 0.2, 0.3)),
+            (cirq.GeneralizedAmplitudeDampingChannel, (0.1, 0.2),
+             (0.105, 0.205), (0.2, 0.2)),
+            (cirq.AmplitudeDampingChannel, (0.1,), (0.105,), (0.2,)),
+            (cirq.PhaseDampingChannel, (0.1,), (0.105,), (0.2,)),
+            (cirq.PhaseFlipChannel, (0.1,), (0.105,), (0.2,)),
+            (cirq.BitFlipChannel, (0.1,), (0.105,), (0.2,)),
+        ]
 
-        # AsymmetricDepolarizingChannel
-        self.assertTrue(
-            util.gate_approx_eq(
-                cirq.AsymmetricDepolarizingChannel(0.1, 0.2, 0.3),
-                cirq.AsymmetricDepolarizingChannel(0.1, 0.2, 0.3),
-                atol=atol))
-        self.assertTrue(
-            util.gate_approx_eq(
-                cirq.AsymmetricDepolarizingChannel(0.1, 0.2, 0.3),
-                cirq.AsymmetricDepolarizingChannel(0.105, 0.195, 0.305),
-                atol=atol))
-        self.assertFalse(
-            util.gate_approx_eq(
-                cirq.AsymmetricDepolarizingChannel(0.1, 0.2, 0.3),
-                cirq.AsymmetricDepolarizingChannel(0.2, 0.2, 0.3),
-                atol=atol))
+        for channel, exact_params, approx_params, unequal_params in test_cases:
+            with self.subTest(channel=channel.__name__):
+                gate1 = channel(*exact_params)
+                gate2_exact = channel(*exact_params)
+                gate2_approx = channel(*approx_params)
+                gate2_not_equal = channel(*unequal_params)
 
-        # GeneralizedAmplitudeDampingChannel
-        self.assertTrue(
-            util.gate_approx_eq(
-                cirq.GeneralizedAmplitudeDampingChannel(0.1, 0.2),
-                cirq.GeneralizedAmplitudeDampingChannel(0.1, 0.2),
-                atol=atol))
-        self.assertTrue(
-            util.gate_approx_eq(
-                cirq.GeneralizedAmplitudeDampingChannel(0.1, 0.2),
-                cirq.GeneralizedAmplitudeDampingChannel(0.105, 0.205),
-                atol=atol))
-        self.assertFalse(
-            util.gate_approx_eq(
-                cirq.GeneralizedAmplitudeDampingChannel(0.1, 0.2),
-                cirq.GeneralizedAmplitudeDampingChannel(0.2, 0.2),
-                atol=atol))
-
-        # AmplitudeDampingChannel
-        self.assertTrue(
-            util.gate_approx_eq(cirq.AmplitudeDampingChannel(0.1),
-                                cirq.AmplitudeDampingChannel(0.1),
-                                atol=atol))
-        self.assertTrue(
-            util.gate_approx_eq(cirq.AmplitudeDampingChannel(0.1),
-                                cirq.AmplitudeDampingChannel(0.105),
-                                atol=atol))
-        self.assertFalse(
-            util.gate_approx_eq(cirq.AmplitudeDampingChannel(0.1),
-                                cirq.AmplitudeDampingChannel(0.2),
-                                atol=atol))
+                # Exact equality
+                self.assertTrue(
+                    util.gate_approx_eq(gate1, gate2_exact, atol=atol))
+                # Approximate equality
+                self.assertTrue(
+                    util.gate_approx_eq(gate1, gate2_approx, atol=atol))
+                # Not equal
+                self.assertFalse(
+                    util.gate_approx_eq(gate1, gate2_not_equal, atol=atol))
 
         # ResetChannel
         self.assertTrue(
             util.gate_approx_eq(cirq.ResetChannel(),
                                 cirq.ResetChannel(),
-                                atol=atol))
-
-        # PhaseDampingChannel
-        self.assertTrue(
-            util.gate_approx_eq(cirq.PhaseDampingChannel(0.1),
-                                cirq.PhaseDampingChannel(0.1),
-                                atol=atol))
-        self.assertTrue(
-            util.gate_approx_eq(cirq.PhaseDampingChannel(0.1),
-                                cirq.PhaseDampingChannel(0.105),
-                                atol=atol))
-        self.assertFalse(
-            util.gate_approx_eq(cirq.PhaseDampingChannel(0.1),
-                                cirq.PhaseDampingChannel(0.2),
-                                atol=atol))
-
-        # PhaseFlipChannel
-        self.assertTrue(
-            util.gate_approx_eq(cirq.PhaseFlipChannel(0.1),
-                                cirq.PhaseFlipChannel(0.1),
-                                atol=atol))
-        self.assertTrue(
-            util.gate_approx_eq(cirq.PhaseFlipChannel(0.1),
-                                cirq.PhaseFlipChannel(0.105),
-                                atol=atol))
-        self.assertFalse(
-            util.gate_approx_eq(cirq.PhaseFlipChannel(0.1),
-                                cirq.PhaseFlipChannel(0.2),
-                                atol=atol))
-
-        # BitFlipChannel
-        self.assertTrue(
-            util.gate_approx_eq(cirq.BitFlipChannel(0.1),
-                                cirq.BitFlipChannel(0.1),
-                                atol=atol))
-        self.assertTrue(
-            util.gate_approx_eq(cirq.BitFlipChannel(0.1),
-                                cirq.BitFlipChannel(0.105),
-                                atol=atol))
-        self.assertFalse(
-            util.gate_approx_eq(cirq.BitFlipChannel(0.1),
-                                cirq.BitFlipChannel(0.2),
                                 atol=atol))
 
         # Mismatched types
