@@ -36,15 +36,27 @@ from setuptools.dist import Distribution
 
 def read_version():
     """Return the package version from tensorflow_quantum/__init__.py."""
-    init_path = (Path(__file__).parent.parent / "tensorflow_quantum" /
-                 "__init__.py")
-    init_text = init_path.read_text(encoding="utf-8")
 
-    match = re.search(r'__version__\s*=\s*[\'"]([^\'"]+)[\'"]', init_text)
-    if not match:
-        raise RuntimeError(
-            "Cannot find __version__ in tensorflow_quantum/__init__.py")
-    return match.group(1)
+    # Need to account for 2 situations: when setup.py is copied to a build
+    # directory, and when setup.py is in a 'release/' subdirectory.
+    here = Path(__file__).resolve().parent
+    possible_paths = [
+        here / "tensorflow_quantum" / "__init__.py",
+        here.parent / "tensorflow_quantum" / "__init__.py",
+    ]
+
+    for init_path in possible_paths:
+        if init_path.is_file():
+            content = init_path.read_text(encoding="utf-8")
+            # Look for __version__ = 'X.Y.Z' at the start of a line.
+            version_match = re.search(r'^__version__\s*=\s*[\'"]([^\'"]+)[\'"]',
+                                      content, re.MULTILINE)
+            if version_match:
+                return version_match.group(1)
+
+    raise RuntimeError(
+        "Could not find a valid __version__ definition. Checked:\n" +
+        "\n".join(f"  - {p}" for p in possible_paths))
 
 
 CUR_VERSION = read_version()
