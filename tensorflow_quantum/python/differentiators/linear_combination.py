@@ -76,12 +76,12 @@ class LinearCombination(differentiator.Differentiator):
         """
         if not isinstance(weights, (np.ndarray, list, tuple)):
             raise TypeError("weights must be a numpy array, list or tuple."
-                            "Got {}".format(type(weights)))
+                            f"Got {type(weights)}")
         if not all([isinstance(weight, numbers.Real) for weight in weights]):
             raise TypeError("Each weight in weights must be a real number.")
         if not isinstance(perturbations, (np.ndarray, list, tuple)):
             raise TypeError("perturbations must be a numpy array,"
-                            " list or tuple. Got {}".format(type(weights)))
+                            f" list or tuple. Got {type(weights)}")
         if not all([
                 isinstance(perturbation, numbers.Real)
                 for perturbation in perturbations

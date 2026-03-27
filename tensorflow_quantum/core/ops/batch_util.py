@@ -118,15 +118,15 @@ def _fixed_circuit_plus_pauli_string_measurements(circuit, pauli_string):
 def _validate_inputs(circuits, param_resolvers, simulator, sim_type):
     """Type check and sanity check inputs."""
     if not isinstance(circuits, (list, tuple, np.ndarray)):
-        raise TypeError('circuits must be a list or array.'
-                        ' Given: {}'.format(type(circuits)))
+        raise TypeError(
+            f'circuits must be a list or array. Given: {type(circuits)}')
 
     if any(not isinstance(x, cirq.Circuit) for x in circuits):
         raise TypeError('circuits must contain cirq.Circuit objects')
 
     if not isinstance(param_resolvers, (list, tuple, np.ndarray)):
         raise TypeError('param_resolvers must be a list or array.'
-                        ' Given: {}'.format(type(param_resolvers)))
+                        f' Given: {type(param_resolvers)}')
 
     if any(not isinstance(x, cirq.ParamResolver) for x in param_resolvers):
         raise TypeError('param_resolvers must contain cirq.ParamResolvers.')
@@ -139,7 +139,7 @@ def _validate_inputs(circuits, param_resolvers, simulator, sim_type):
         if not isinstance(simulator, cirq.SimulatesFinalState):
             raise TypeError('For analytic operations only'
                             ' cirq.SimulatesFinalState'
-                            ' is required. Given: {}'.format(type(simulator)))
+                            f' is required. Given: {type(simulator)}')
 
     elif sim_type == 'expectation':
         if not isinstance(simulator,
@@ -149,12 +149,12 @@ def _validate_inputs(circuits, param_resolvers, simulator, sim_type):
             raise TypeError('For expectation operations a '
                             'cirq.sim.simulator.SimulatesExpectationValues '
                             'or cirq.DensityMatrixSimulator'
-                            'is required.  Given: {}'.format(type(simulator)))
+                            f' is required.  Given: {type(simulator)}')
 
     elif sim_type == 'sample':
         if not isinstance(simulator, cirq.Sampler):
             raise TypeError('For sample based operations a cirq.Sampler is '
-                            'required. Given: {}'.format(type(simulator)))
+                            f'required. Given: {type(simulator)}')
     else:
         raise ValueError('Invalid simulator type specified.')
 
@@ -251,8 +251,7 @@ def batch_calculate_expectation(circuits, param_resolvers, ops, simulator):
         return np.zeros((0, 0), dtype=np.float32)
 
     if not isinstance(ops, (list, tuple, np.ndarray)):
-        raise TypeError('ops must be a list or array.'
-                        ' Given: {}'.format(type(ops)))
+        raise TypeError(f'ops must be a list or array. Given: {type(ops)}')
 
     if len(ops) != len(circuits):
         raise ValueError('Shape of ops and circuits do not match.')
@@ -263,7 +262,7 @@ def batch_calculate_expectation(circuits, param_resolvers, ops, simulator):
         for x in sub_list:
             if not isinstance(x, cirq.PauliSum):
                 raise TypeError('ops must contain only cirq.PauliSum objects.'
-                                ' Given: {}'.format(type(x)))
+                                f' Given: {type(x)}')
 
     all_exp_vals = np.ones(shape=(len(circuits), len(ops[0])),
                            dtype=np.float32) * -2
@@ -325,8 +324,7 @@ def batch_calculate_sampled_expectation(circuits, param_resolvers, ops,
         return np.zeros((0, 0), dtype=np.float32)
 
     if not isinstance(ops, (list, tuple, np.ndarray)):
-        raise TypeError('ops must be a list or array.'
-                        ' Given: {}'.format(type(ops)))
+        raise TypeError(f'ops must be a list or array. Given: {type(ops)}')
 
     if len(ops) != len(circuits):
         raise ValueError('Shape of ops and circuits do not match.')
@@ -349,7 +347,7 @@ def batch_calculate_sampled_expectation(circuits, param_resolvers, ops,
         for x in sub_list:
             if not isinstance(x, cirq.PauliSum):
                 raise TypeError('ops must contain only cirq.PauliSum objects.'
-                                ' Given: {}'.format(type(x)))
+                                f' Given: {type(x)}')
 
     all_exp_vals = np.full((len(circuits), len(ops[0])), -2, dtype=np.float32)
 
@@ -404,8 +402,7 @@ def batch_sample(circuits, param_resolvers, n_samples, simulator):
         return np.zeros((0, 0, 0), dtype=np.int8)
 
     if not isinstance(n_samples, int):
-        raise TypeError('n_samples must be an int.'
-                        'Given: {}'.format(type(n_samples)))
+        raise TypeError(f'n_samples must be an int.Given: {type(n_samples)}')
 
     if n_samples <= 0:
         raise ValueError('n_samples must be > 0.')
