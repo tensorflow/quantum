@@ -328,6 +328,19 @@ class TFIRectangularTest:
                                     rtol=1e-3)
 
 
+class UniqueNameTest(tf.test.TestCase):
+    """Testing unique_name."""
+
+    def test_unique_name(self):
+        """Test that unique_name generates the correct sequence."""
+        gen = spin_system.unique_name()
+        self.assertEqual(next(gen), "theta_0")
+        self.assertEqual(next(gen), "theta_1")
+        self.assertEqual(next(gen), "theta_2")
+        for i in range(3, 100):
+            self.assertEqual(next(gen), "theta_" + str(i))
+
+
 if __name__ == '__main__':
 
     tf.test.main()
