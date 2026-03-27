@@ -86,4 +86,9 @@ RUN export PIP_BREAK_SYSTEM_PACKAGES=1 PIP_ROOT_USER_ACTION=ignore && \
 # Clean up before finishing.
 RUN apt-get clean
 
+# Create a non-root user and switch to it.
+RUN groupadd -r tfq-group && useradd -r -m -s /bin/bash -g tfq-group -u 1000 tfq-user
+USER tfq-user
+WORKDIR /home/tfq-user
+
 CMD ["/bin/bash"]
