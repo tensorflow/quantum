@@ -33,8 +33,8 @@ from tensorflow_quantum.python import util
 
 def _single_to_tensor(item):
     if not isinstance(item, (cirq.PauliSum, cirq.PauliString, cirq.Circuit)):
-        raise TypeError(f"Item must be a Circuit, PauliString, or PauliSum."
-                        " Got {type(item)}.")
+        raise TypeError("Item must be a Circuit, PauliString, or PauliSum."
+                        f" Got {type(item)}.")
     if isinstance(item, (cirq.PauliSum, cirq.PauliString)):
         return serializer.serialize_paulisum(item).SerializeToString(
             deterministic=True)
