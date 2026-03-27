@@ -7,3 +7,7 @@
 # Don't ignore the Bazel config files created by configure.sh.
 !.bazelrc
 !.tf_configure.bazelrc
+
+# The next one (for Emacs versioned backups) _should_ be covered by *~ in our
+# .gitignore, but Gemini currently doesn't seem to interpret *~ that way.
+*.~*~
