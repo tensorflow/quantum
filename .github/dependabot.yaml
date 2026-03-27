@@ -21,7 +21,7 @@ updates:
       - "third_party/**"
     schedule:
       interval: "monthly"
-      versioning-strategy: "increase-if-necessary"
+    versioning-strategy: "increase-if-necessary"
     labels:
       - "area/dependencies"
       - "area/python"
