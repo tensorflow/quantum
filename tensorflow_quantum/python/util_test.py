@@ -438,6 +438,8 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
         self.assertEqual(len(resolvers), batch_size)
         for circuit in circuits:
             self.assertIsInstance(circuit, cirq.Circuit)
+            self.assertGreater(len(circuit), 0, "Generated circuit should not be empty.")
+            self.assertEqual(len(util.get_circuit_symbols(circuit)), 0, "Circuit should not have symbols.")
         for resolver in resolvers:
             self.assertIsInstance(resolver, cirq.ParamResolver)
             self.assertEqual(len(resolver.param_dict), 0)
