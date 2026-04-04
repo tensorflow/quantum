@@ -455,6 +455,9 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
         self.assertEqual(len(resolvers), batch_size)
         for circuit in circuits:
             self.assertIsInstance(circuit, cirq.Circuit)
+            extracted_symbols = util.get_circuit_symbols(circuit)
+            expected_symbols = sorted([str(s) for s in symbols])
+            self.assertListEqual(expected_symbols, sorted(extracted_symbols))
         for resolver in resolvers:
             self.assertIsInstance(resolver, cirq.ParamResolver)
             self.assertEqual(len(resolver.param_dict), len(symbols))
