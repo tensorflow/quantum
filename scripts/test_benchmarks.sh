@@ -15,15 +15,11 @@
 # ==============================================================================
 echo "Testing all Benchmarks.";
 bazel test -c opt --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=1" --cxxopt="-msse2" --cxxopt="-msse3" --cxxopt="-msse4" --test_output=errors $(bazel query //benchmarks/scripts:all)
-# test_outputs=$(bazel test -c opt --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=1" --cxxopt="-msse2" --cxxopt="-msse3" --cxxopt="-msse4" --test_output=errors $(bazel query //benchmarks/scripts:all))
-bench_outputs=$()
-# bench_outputs=$(bazel run -c opt --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=1" --cxxopt="-msse2" --cxxopt="-msse3" --cxxopt="-msse4" --test_output=errors //benchmarks/scripts:benchmark_clifford_circuit)
 exit_code=$?
 if [ "$exit_code" == "0" ]; then
 	echo "Testing Complete!";
 	exit 0;
 else
 	echo "Testing failed, please correct errors before proceeding."
-	echo "{$test_outputs}"
 	exit 64;
 fi
