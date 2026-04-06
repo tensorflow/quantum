@@ -34,12 +34,43 @@ TEST_PARAMS_2 = flags.test_flags(n_rows=4, n_cols=4, n_moments=20)
 
 
 def make_random_circuit(n_rows, n_cols, depth):
-    """Generate a random unparameterized circuit of fixed depth."""
-    return cirq.experiments.generate_boixo_2018_supremacy_circuits_v2_grid(
-        n_rows=n_rows,
-        n_cols=n_cols,
-        cz_depth=depth - 2,  # Account for beginning/ending Hadamard layers
-        seed=SEED)
+    """Generate a random unparameterized circuit of fixed depth.
+
+    Uses a simple supremacy-style pattern on a 2D grid that is robust across
+    Cirq versions.
+    """
+    qubits = list(cirq.GridQubit.rect(n_rows, n_cols))
+    grid = {(q.row, q.col): q for q in qubits}
+    rng = np.random.RandomState(SEED)
+    single_qubit_gates = (cirq.X**0.5, cirq.Y**0.5)
+    moments = []
+
+    for moment_index in range(depth):
+        if moment_index % 2 == 0:
+            # Random single-qubit layer across the full grid.
+            moments.append(
+                cirq.Moment(rng.choice(single_qubit_gates)(q) for q in qubits))
+            continue
+
+        # Alternate horizontal and vertical nearest-neighbor CZ interactions.
+        parity = (moment_index // 2) % 2
+        use_horizontal = ((moment_index // 2) % 2) == 0
+        two_qubit_ops = []
+        if use_horizontal:
+            for r in range(n_rows):
+                for c in range(n_cols - 1):
+                    if (r + c) % 2 == parity:
+                        two_qubit_ops.append(
+                            cirq.CZ(grid[(r, c)], grid[(r, c + 1)]))
+        else:
+            for r in range(n_rows - 1):
+                for c in range(n_cols):
+                    if (r + c) % 2 == parity:
+                        two_qubit_ops.append(
+                            cirq.CZ(grid[(r, c)], grid[(r + 1, c)]))
+        moments.append(cirq.Moment(two_qubit_ops))
+
+    return cirq.Circuit(moments)
 
 
 class RandomCircuitBenchmarksTest(tf.test.TestCase, parameterized.TestCase):
