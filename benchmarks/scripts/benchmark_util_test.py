@@ -18,8 +18,8 @@ import tempfile
 
 import tensorflow as tf
 
-import test_log_pb2
-import benchmark_util
+from tensorflow.core.util import test_log_pb2
+from benchmarks.scripts import benchmark_util
 
 
 def _make_dummy_benchmark_report():

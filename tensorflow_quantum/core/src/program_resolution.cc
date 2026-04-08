@@ -361,7 +361,7 @@ Status CheckMPSSupported(const Program& program) {
           control_ids = absl::StrSplit(control_qubits, ',');
         }
       }
-      const int total_num_qubits = qubits.size() + control_ids.size();
+      const size_t total_num_qubits = qubits.size() + control_ids.size();
       if (total_num_qubits > 2) {
         return Status(
             static_cast<tensorflow::errors::Code>(
@@ -372,7 +372,7 @@ Status CheckMPSSupported(const Program& program) {
       }
 
       if (total_num_qubits == 2) {
-        int j = 0;
+        size_t j = 0;
         std::vector<int> qids(2, -1234);
         for (; j < qubits.size(); j++) {
           (void)absl::SimpleAtoi(qubits[j].id(), &qids[j]);

@@ -1,0 +1,30 @@
+{
+  "problemMatcher": [
+    {
+      "owner": "clang-format-error",
+      "severity": "error",
+      "pattern": [
+        {
+          "regexp": "^(.*?)\\((\\d+),(\\d*)\\):\\s+(?:fatal\\s+)?error:\\s+(.*)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "message": 4
+        }
+      ]
+    },
+    {
+      "owner": "clang-format-warning",
+      "severity": "warning",
+      "pattern": [
+        {
+          "regexp": "^(.*?)\\((\\d+),(\\d*)\\):\\s+(?:fatal\\s+)?warning:\\s+(.*)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "message": 4
+        }
+      ]
+    }
+  ]
+}

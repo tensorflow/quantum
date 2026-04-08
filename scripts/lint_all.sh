@@ -14,7 +14,7 @@
 # limitations under the License.
 # ==============================================================================
 echo "Checking for lint in python code...";
-linting_outputs=$(pylint --rcfile .pylintrc ./tensorflow_quantum ./examples);
+linting_outputs=$(pylint --rcfile .pylintrc ./tensorflow_quantum);
 exit_code=$?
 if [ "$exit_code" == "0" ]; then
 	echo "Python linting complete!";

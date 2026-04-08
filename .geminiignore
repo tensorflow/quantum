@@ -1,0 +1,9 @@
+# Summary: tell Gemini CLI it should (or should not) ignore certain files and
+# folders. Gemini CLI reads .gitignore too, but .geminiignore takes precedence
+# -- useful for un-ignoring files that shouldn't be committed to git yet should
+# be visible to Gemini CLI. (Note also a different file, .aiexclude, is read by
+# Gemini Code Assist.) See https://geminicli.com/docs/cli/gemini-ignore/.
+
+# Don't ignore the Bazel config files created by configure.sh.
+!.bazelrc
+!.tf_configure.bazelrc

@@ -61,9 +61,9 @@ class TfqInnerProductGradOp : public tensorflow::OpKernel {
             "other_programs must be rank 2. Got ", context->input(3).dims())));
 
     // Create the output Tensor.
-    const int output_dim_batch_size = context->input(0).dim_size(0);
-    const int output_dim_internal_size = context->input(3).dim_size(1);
-    const int output_dim_symbol_size = context->input(1).dim_size(0);
+    const size_t output_dim_batch_size = context->input(0).dim_size(0);
+    const size_t output_dim_internal_size = context->input(3).dim_size(1);
+    const size_t output_dim_symbol_size = context->input(1).dim_size(0);
     OP_REQUIRES(context, output_dim_symbol_size > 0,
                 tensorflow::errors::InvalidArgument(absl::StrCat(
                     "The number of symbols must be a positive integer, got ",
@@ -403,13 +403,13 @@ class TfqInnerProductGradOp : public tensorflow::OpKernel {
           // if applicable compute control qubit mask and control value bits.
           uint64_t mask = 0;
           uint64_t cbits = 0;
-          for (int k = 0; k < cur_gate.controlled_by.size(); k++) {
+          for (size_t k = 0; k < cur_gate.controlled_by.size(); k++) {
             uint64_t control_loc = cur_gate.controlled_by[k];
             mask |= uint64_t{1} << control_loc;
             cbits |= ((cur_gate.cmask >> k) & 1) << control_loc;
           }
 
-          for (int k = 0;
+          for (size_t k = 0;
                k < gradient_gates[cur_batch_index][l - 1].grad_gates.size();
                k++) {
             // Copy sv_adj onto scratch2 in anticipation of non-unitary

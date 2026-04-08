@@ -1,0 +1,13 @@
+package(default_visibility = ["//visibility:public"])
+
+# Keep your existing alias (optional)
+alias(
+    name = "wheel",
+    actual = "@pypi__wheel//:lib",
+)
+
+# Add the missing target name that TF/rules_python expects
+alias(
+    name = "pkg",
+    actual = "@pypi__wheel//:lib",
+)
