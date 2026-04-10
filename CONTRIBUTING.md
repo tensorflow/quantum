@@ -40,7 +40,7 @@ more information.
 ## Code base conventions
 
 TensorFlow Quantum (TFQ) is a Python framework for quantum machine learning
-(QML) implemented as an add-on to [TensorFlow]. User documentation for TFQ is
+(QML) implemented as an add-on to [TensorFlow]. Documentation for TFQ is
 available on the [TensorFlow Quantum documentation site]. The TFQ project
 generally follows TensorFlow development practices, and the [TensorFlow
 contribution guide] is essential reading if you want to get involved with TFQ.
@@ -56,10 +56,15 @@ Here is a summary of the main subdirectories in the TFQ source tree:
 *   `benchmarks/`: Code for performance benchmarking
 *   `docs/`: Documentation source files
 *   `release/`: Scripts and configurations for building TFQ releases
-*   `scripts/`: Utility for running tests and doing other tasks
+*   `scripts/`: Utilities for running tests and doing other tasks
 *   `tensorflow_quantum/`: The core source code for TensorFlow Quantum
 *   `third_party/`: External dependencies and third-party integrations
-*   *`github/`: GitHub-specific configurations and workflows
+*   `.github/`: GitHub-specific configurations and workflows
+
+Some of the important files found at the top level include the following:
+
+*   `configure.sh`: TFQ build configuration script
+*   `requirements.txt`: Python dependencies
 
 ### Coding style
 
@@ -85,7 +90,7 @@ with the copyright and license. We use the [Apache 2.0 license](./LICENSE).
 [Pylint]: https://www.pylint.org/
 [YAPF]: https://github.com/google/yapf
 [yamllint]: https://github.com/adrienverge/yamllint
-[TensorFlow style]: ttps://www.tensorflow.org/community/contribute/code_style
+[TensorFlow style]: https://www.tensorflow.org/community/contribute/code_style
 
 ### Git conventions
 
@@ -103,7 +108,7 @@ Each commit should:
     unrelated parts of the overall code.
 
 *   Have an easily understood, concise title written in the imperative: "Fix bug
-    ABC," and not "Fixed bug ABC" or "Fixes bug ABC".
+    ABC" and not "Fixed bug ABC" or "Fixes bug ABC".
 
 *   Include a description, unless the change is exceptionally small or obvious.
 
@@ -135,7 +140,7 @@ Follow the instructions in [docs/install.md](docs/install.md) for setting up a
 development environment. After doing that, you should end up with:
 
 *   The correct version of Bazel (6.5.0)
-*   A Python virtual environment
+*   A Python virtual environment with a Python version between 3.10 and 3.12
 *   The TFQ Python requirements installed in that Python virtual environment
 *   The TFQ build configured by running `./configure.sh`
 
@@ -165,14 +170,16 @@ scripts/format_all.sh
 ### Builds
 
 For relatively "quick" builds of TFQ during development, you can use the
-following command:
+following command, which builds everything needed for a release and thus acts as
+good indicator that changes in one part of the code do not break other parts:
 
 ```shell
-bazel build -c opt --cxxopt="-O3" release:build_pip_package
+bazel build release:build_pip_package
 ```
 
-("Quick" here is relative: depending on the capabilities of your computer, a
-build takes anywhere from a few minutes to tens of minutes.)
+(The first time you run the command above, it will take a long time, but
+subsequent invocations will be much faster because Bazel is smart about what it
+rebuilds.)
 
 ### Running tests
 
@@ -183,10 +190,24 @@ tests must continue to pass (or be updated) when changes are introduced.
 
 We use TensorFlow's testing suite for our testing. Tests must follow the
 [TensorFlow test guidelines](https://www.tensorflow.org/api_docs/python/tf/test)
-in order to work correctly. To run the TFQ test suite, run this command:
+in order to work correctly. To run the full TFQ test suite, run this command:
 
 ```shell
 scripts/test_all.sh
+```
+
+During development, it is often useful to run tests on just one file, which you
+can do using a command of this form:
+
+```shell
+bazel test //tensorflow_quantum/SUBDIRECTORY:FILE
+```
+
+where _SUBDIRECTORY_ is a subdirectory under `tensorflow_quantum/` and `FILE` is
+a unit test file. Here is a full example:
+
+```shell
+bazel test //tensorflow_quantum/python/differentiators:adjoint_test
 ```
 
 ### Contributing code
