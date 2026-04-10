@@ -157,8 +157,8 @@ constructs. Use the following commands regularly to lint and reformat your code
 according to project conventions:
 
 ```shell
-scripts/lint_all.sh
 scripts/format_check.sh
+scripts/lint_all.sh
 ```
 
 If the format check reports problems, you can correct them automatically using
@@ -221,8 +221,8 @@ Before opening a pull request (PR) and requesting a code review, you should make
 sure that the following tests are passing locally:
 
 ```shell
-scripts/lint_all.sh
 scripts/format_check.sh
+scripts/lint_all.sh
 scripts/test_all.sh
 ```
 
