@@ -80,7 +80,7 @@ level of the source tree:
 *   `.yamllint.yaml`: configuration for linting YAML files using [yamllint]
 
 All new source code files longer than 2 lines must begin with a header comment
-with the copyright and license.
+with the copyright and license. We use the [Apache 2.0 license](./LICENSE).
 
 [Pylint]: https://www.pylint.org/
 [YAPF]: https://github.com/google/yapf
@@ -103,7 +103,7 @@ Each commit should:
     unrelated parts of the overall code.
 
 *   Have an easily understood, concise title written in the imperative: "Fix bug
-    ABC," and not "Fixed bug ABC" or "Fixes bug ABC."
+    ABC," and not "Fixed bug ABC" or "Fixes bug ABC".
 
 *   Include a description, unless the change is exceptionally small or obvious.
 
@@ -168,7 +168,7 @@ For relatively "quick" builds of TFQ during development, you can use the
 following command:
 
 ```shell
-bazel build -c opt --cxxopt="-O3" --cxxopt="-march=native" release:build_pip_package
+bazel build -c opt --cxxopt="-O3" release:build_pip_package
 ```
 
 ("Quick" here is relative: depending on the capabilities of your computer, a
