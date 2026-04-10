@@ -54,7 +54,7 @@ cleanup="true"
 usage="Usage: ${0} [OPTIONS]
 Build a Python wheel for a distribution of TensorFlow Quantum.
 Options:
-  -o \"options\"  Additional options to pass to Bazel build
+  -b "options"  Additional options to pass to Bazel build
   -p X.Y        Use Python version X.Y (default: ${py_version})
   -e            Don't run bazel clean at the end (default: do)
   -h            Show this help message and exit"
