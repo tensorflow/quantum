@@ -1,8 +1,8 @@
 # Tools for building releases of TensorFlow Quantum
 
-This directory contains configurations and scripts that the TensorFlow Quantum
+This directory contains scripts that the TensorFlow Quantum (TFQ)
 maintainers use to create Python packages for software releases. The process of
-making a TFQ release is complex and has not been fully automated. The scripts
+making a  TFQ release is complex and has not been fully automated. The scripts
 in this directory help automate some steps and are a way of capturing the
 process more precisely, but there are still manual steps involved.
 
@@ -46,11 +46,33 @@ libraries.
 
 ### Preliminary steps
 
-1.  Make sure you have `pyenv`, `pip`, and `jq` installed on your system.
+1.  Make sure you have `docker`, `pyenv`, `pip`, and `jq` installed on your
+    system.
 
 2.  Git clone the TensorFlow Quantum repo to a directory on your computer.
 
-3.  `cd` into your local clone directory in a Bash shell.
+3.  `cd` into this directory in a Bash shell.
+
+### Rebuild `requirements.txt
+
+1.  Create a Python virtual environment using the lowest version of Python
+    supported by TFQ. (Currently this is Python 3.10.)
+
+2.  Run the following commands:
+
+    ```shell
+    pip install pip-tools
+    ./scripts/generate_requirements.sh
+    ```
+
+    This will update the dependency versions in the file `requirements.txt` to
+    the latest versions based on `requirements.in`. If this process fails, you
+    may have to iterate on adjusting the contraints in `requirements.in`
+    followed by running `generate_requirements.sh` again until it succeeds.
+
+3.  If any changes were made to `requirements.in`, check `release/setup.py` and
+    make corresponding changes, if the changes to `requirements.in` involved
+    packages needed to run TFQ.
 
 ### Build the release
 
