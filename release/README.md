@@ -70,9 +70,32 @@ libraries.
     may have to iterate on adjusting the contraints in `requirements.in`
     followed by running `generate_requirements.sh` again until it succeeds.
 
-3.  If any changes were made to `requirements.in`, check `release/setup.py` and
-    make corresponding changes, if the changes to `requirements.in` involved
-    packages needed to run TFQ.
+3.  If any changes were made to `requirements.in`, check the requirements listed
+    inside `release/setup.py` and make corresponding changes if the changes to
+    `requirements.in` involved packages needed to run TFQ.
+
+### Install `requirements.txt`
+
+Install the Python dependencies in your Python virtual environment:
+
+```shell
+pip install -r requirements.txt
+```
+
+### Final checks
+
+Make sure that everything has been formatted and linted, and that tests run all
+the way through:
+
+```shell
+scripts/format_all.sh
+scripts/lint_all.sh
+scripts/test_all.sh
+```
+
+If the formatters made any changes, or the linter or tests revealed any
+problems, open PRs to fix them in GitHub, get the PRs reviewed, and merge them
+before proceeding further.
 
 ### Build the release
 
@@ -82,7 +105,7 @@ libraries.
 2.  If the previous step completes successfully, proceed to the next section
     below and test the wheel.
 
-3.  Repeat steps 1&ndash;2 above for other Python versions.
+3.  Repeat steps 1 and 2 for other Python versions.
 
 ### Testing the release
 
@@ -131,7 +154,7 @@ The following is the current process.
         explorer and copy the path to the file in Colab.
 
     1.  Find the notebook cell that contains the `!pip install` command for
-        TensorFlow Quantum. **Replace that command** with the following, pasting
+        TensorFlow Quantum. `Replace that command** with the following, pasting
         in the path that you copied in the previous step:
 
         ```python
