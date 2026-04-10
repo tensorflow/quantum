@@ -72,7 +72,7 @@ for changed_file in ${changed_files}; do
     )
     if [[ "${changed_line_ranges}" != "--lines=0-0 " ]]; then
         # Do the formatting.
-        results=$(yapf --style=google --diff "${changed_file}" ${changed_line_ranges})
+        results=$(yapf --diff "${changed_file}" ${changed_line_ranges})
 
         # Print colorized error messages.
         if [ ! -z "${results}" ]; then

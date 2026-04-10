@@ -28,8 +28,7 @@ for fname in NOTEBOOKS:
         lines = cell.get('source')
         # This will safely skip over cells containing !% magic
         try:
-            fmt_lines = yapf.yapf_api.FormatCode(''.join(lines),
-                                                 style_config="google")[0]
+            fmt_lines = yapf.yapf_api.FormatCode(''.join(lines))[0]
         except (SyntaxError, yapf.yapflib.errors.YapfError):
             continue
         # google style always adds an EOF newline; undo this.

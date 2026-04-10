@@ -336,7 +336,7 @@ jobs:
       - name: Run Yapf on the Python changed files
         run: |
           set +e
-          yapf --parallel --diff --style=google \
+          yapf --parallel --diff \
             ${{needs.Changes.outputs.python_files}} > diff.out 2>&1
           exit_code=$?
           if [[ -s ./diff.out ]]; then
