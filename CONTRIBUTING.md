@@ -1,4 +1,4 @@
-# How to contribute
+# Contributing to TensorFlow Quantum
 
 Thank you for your interest in contributing to this project! We look forward to
 working with you. Here are some guidelines to get you started.
