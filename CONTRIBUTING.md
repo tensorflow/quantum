@@ -1,62 +1,231 @@
-# Contributing
+# How to contribute
 
-## Contributor License Agreements
+Thank you for your interest in contributing to this project! We look forward to
+working with you. Here are some guidelines to get you started.
 
-We'd love to accept your patches! Before we can take them, we have to jump a
-couple of legal hurdles.
+## Before you begin
 
-Please fill out either the individual or corporate Contributor License Agreement
-(CLA).
+### Summary
 
-*   If you are an individual writing original source code and you're sure you
-    own the intellectual property, then you'll need to sign an
-    [individual CLA](http://code.google.com/legal/individual-cla-v1.0.html).
-*   If you work for a company that wants to allow you to contribute your work,
-    then you'll need to sign a
-    [corporate CLA](http://code.google.com/legal/corporate-cla-v1.0.html).
+*   Read and sign the [Contributor License Agreement (CLA)](
+    https://cla.developers.google.com/).
+*   Read the [code of conduct](CODE_OF_CONDUCT.md).
+*   Follow the [contribution process](#development-process).
 
-Follow either of the two links above to access the appropriate CLA and
-instructions for how to sign and return it. Once we receive it, we'll be able to
-accept your pull requests.
+### Sign our Contributor License Agreement
 
-NOTE: Only original source code from you and other people that have signed the
-CLA can be accepted into the main repository.
+Contributions to this project must be accompanied by a [Contributor License
+Agreement](https://cla.developers.google.com/about) (CLA). You (or your
+employer) retain the copyright to your contribution; this simply gives us
+permission to use and redistribute your contributions as part of the project.
+If you or your current employer have already signed the Google CLA (even if it
+was for a different project), you probably don't need to do it again. Visit
+<https://cla.developers.google.com/> to see your current agreements or to sign
+a new one.
 
-## Code Reviews
+Only original work from you and other people who have signed the CLA can be
+incorporated into the project. By signing the Contributor License Agreement, you
+agree that your contributions are an original work of authorship.
 
-All submissions, including submissions by project members, require review. We
-use GitHub pull requests for this purpose. Consult
-[GitHub Help](https://help.github.com/articles/about-pull-requests/) for more
-information on using pull requests and the
-[TensorFlow Community Guidelines](https://www.tensorflow.org/community/contribute)
-for more information on contributor best practices.
+### Review our community guidelines
 
-Before making any changes, we recommend opening an issue (if it doesn't already
-exist) and discussing your proposed changes. This will let us give you advice
-on the proposed changes. If the changes are minor, then feel free to make
-them without discussion.
+In the interest of fostering an open and welcoming environment, contributors and
+maintainers pledge to make participation in our project and our community a
+harassment-free experience for everyone. Our community aspires to treat everyone
+equally, and to value all contributions. Please review our [code of conduct](
+CODE_OF_CONDUCT.md) for more information.
 
-## Code Standards
+## Code base conventions
 
-We have some standards in place to ensure that incoming code is the highest
-quality it can be. Before a code review can happen you should make sure that
-the following tests are passing locally:
+TensorFlow Quantum (TFQ) is a Python framework for quantum machine learning
+(QML) implemented as an add-on to [TensorFlow](https://tensorflow.org). User
+documentation for TFQ is available on the [TensorFlow Quantum documentation
+site](https://tensorflow.org/quantum). The TFQ project generally follows
+TensorFlow development practices, and the [TensorFlow contributors' guide](
+https://www.tensorflow.org/community/contribute) is essential reading if you
+want to get involved with TFQ.
 
-1. `./scripts/test_all.sh` passes. We use TensorFlow's testing suite for our
-testing and be sure that any code you add follows the structure they have
-[outlined](https://www.tensorflow.org/api_docs/python/tf/test).
+### Getting oriented
 
-2. `./scripts/lint_all.sh` passes. We use [pylint](https://www.pylint.org/)
-to ensure that code has proper formatting and is lint free.
+Here is a summary of the main subdirectories in the TFQ source tree:
 
-3. `./scripts/format_check.sh` passes. We use
-[yapf](https://github.com/google/yapf) along with
-[clang format](https://clang.llvm.org/docs/ClangFormat.html) to ensure we have
-consistent formatting everywhere.
+*   **benchmarks/**: Code for performance benchmarking
+*   **docs/**: Documentation source files
+*   **release/**: Scripts and configurations for building and releasing TFQ
+    packages
+*   **scripts/**: Utility scripts for running tests and doing various
+    development tasks
+*   **tensorflow_quantum/**: The core source code for TensorFlow Quantum
+*   **third_party/**: External dependencies and third-party integrations
+*   **.github/**: GitHub-specific configurations, such as continuous
+    integration workflows
 
-### Adding Modules
+### Coding style
 
-If you are adding new modules, be sure to properly expose them to the user
-using `__init__.py` files and update the `/scripts/import_test.py` file
-to ensure that you are exposing them properly.
+This project follows the [style guidelines for TensorFlow](
+https://www.tensorflow.org/community/contribute/code_style), which in turn
+follows these Google style guides:
 
+*   [C++ Style Guide](https://google.github.io/styleguide/cppguide.html)
+*   [Python Style Guide](https://google.github.io/styleguide/pyguide.html)
+*   [Markdown Style Guide](https://google.github.io/styleguide/docguide/style.html)
+*   [Shell Style Guide](https://google.github.io/styleguide/shellguide.html)
+
+Software tool configurations can be found in the following files at the top
+level of the source tree:
+
+*   `.editorconfig`: basic code editor configuration
+*   `.pylintrc`: configuration for linting Python files using
+    [pylint](https://www.pylint.org/)
+*   `.style.yapf`: configuration for formatting Python files using [YAPF](
+    https://github.com/google/yapf)
+*   `.yamllint.yaml`: configuration for linting YAML files using [yamllint](
+    https://github.com/adrienverge/yamllint)
+
+All new source code files longer than 2 lines must begin with a header comment
+with the copyright and license.
+
+### Git conventions
+
+Git commits should be granular. Small, focused commits have many benefits:
+changes are easier to understand and evaluate (leading to faster and more
+thorough PR reviews), they allow more effective use of tools like `git bisect`
+for debugging, and they make managing changes easier with tools like `git
+cherry-pick` and `git rebase`.
+
+Each commit should:
+
+*   Represent a single, self-contained change, such as a specific bug fix or the
+    addition of a specific feature.
+
+*   Not combine unrelated changes. Reverting a commit should not affect unrelated
+    parts of the overall code.
+
+*   Have an easily understood, concise title written in the imperative: "Fix bug
+    ABC," and not "Fixed bug ABC" or "Fixes bug ABC." This convention fits well
+    with messages generated by commands like `git merge` and `git revert`.
+
+*   Include a description, unless the change is exceptionally small or obvious.
+
+## Development process
+
+TensorFlow Quantum development takes place on GitHub using a GitHub-centric
+workflow.
+
+### Check past issues
+
+Before you begin work, check the [GitHub Issue Tracker](
+https://github.com/tensorflow/quantum/issues?q=sort%3Aupdated-desc+is%3Aissue)
+(including closed issues) if your idea or bug has been discussed before.
+
+Before beginning on any substantial changes, we recommend opening a new issue
+on GitHub (if one doesn't already exist for the topic) and discussing your
+proposed changes. This will let us give you advice on the proposed changes.
+
+### Repository forks
+
+The preferred approach to working on TFQ is to [fork](
+https://docs.github.com/articles/fork-a-repo) the repository to your GitHub
+account, clone that fork to your local computing environment, and create a new
+[git branch](https://docs.github.com/articles/about-branches) in the fork to do
+your work.
+
+### Environment setup
+
+Follow the instructions in [docs/install.md](docs/install.md) for setting up a
+development environment. After doing that, you should end up with:
+
+*   The correct version of Bazel (6.5.0)
+*   A Python virtual environment
+*   The TFQ Python requirements installed in that Python virtual environment
+*   The TFQ build configured by running `./configure.sh`
+
+### Adding modules
+
+If you are adding new modules, be sure to properly expose them to the user using
+`__init__.py` files and update the `scripts/import_test.py` file to ensure that
+you are exposing them properly.
+
+### Linting and formatting
+
+Code should meet common style standards for Python and be free of error-prone
+constructs. Use the following commands regularly to lint and reformat your code
+according to project conventions:
+
+```shell
+scripts/lint_all.sh
+scripts/format_check.sh
+```
+
+If the format check reports formatting issues, you can correct them
+automatically using
+
+```shell
+scripts/format_all.sh
+```
+
+### Builds
+
+For relatively "quick" builds of TFQ during development, you can use the
+following command:
+
+```shell
+bazel build -c opt --cxxopt="-O3" --cxxopt="-march=native" release:build_pip_package
+```
+
+("Quick" here is relative: depending on the capabilities of your computer, a
+build takes anywhere from a few minutes to tens of minutes.)
+
+### Running tests
+
+When new functions, classes, and files are introduced, they should also have
+corresponding tests. Bug fixes also generally require new unit tests, because
+the presence of bugs usually indicates insufficient test coverage. Existing
+tests must continue to pass (or be updated) when changes are introduced.
+
+We use TensorFlow's testing suite for our testing. Make sure that any code that
+you add follows the [structure outlined in the TensorFlow documentation](
+https://www.tensorflow.org/api_docs/python/tf/test). To run the TFQ test suite,
+use the following command:
+
+```shell
+scripts/test_all.sh
+```
+
+### Contributing code
+
+All submissions require review. We use GitHub's tools for [pull requests](
+https://docs.github.com/articles/about-pull-requests) for this purpose.
+
+#### Final checks
+
+Before opening a pull request and requesting a code review, you should make sure
+that the following tests are passing locally:
+
+```shell
+scripts/lint_all.sh
+scripts/format_check.sh
+scripts/test_all.sh
+```
+
+#### Draft pull requests
+
+When getting ready to submit your work, first create a [_draft_ pull request](
+https://help.github.com/articles/creating-a-pull-request-from-a-fork) from your
+branch on GitHub to the main project repository. This will trigger continuous
+integration (CI) checks and other automation on GitHub. The results will appear
+on the PR page on GitHub. Monitor the CI checks on your PR; if any tests fail,
+iterate on the develop-test-commit-push process until the problems are
+resolved.
+
+#### Code review
+
+Once all the CI checks pass and you are ready to submit the PR for
+consideration, [mark the PR as ready for review](
+https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/changing-the-stage-of-a-pull-request).
+
+A reviewer from the TFQ team will comment on your code and may ask for changes.
+You can perform the necessary changes locally, commit them to your branch as
+usual, and then push changes to your fork on GitHub following the same process
+as above. When you do that, GitHub will update the code in the pull request
+automatically.
