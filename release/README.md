@@ -2,7 +2,7 @@
 
 This directory contains scripts that the TensorFlow Quantum (TFQ)
 maintainers use to create Python packages for software releases. The process of
-making a  TFQ release is complex and has not been fully automated. The scripts
+making a TFQ release is complex and has not been fully automated. The scripts
 in this directory help automate some steps and are a way of capturing the
 process more precisely, but there are still manual steps involved.
 
