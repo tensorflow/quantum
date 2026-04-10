@@ -53,7 +53,7 @@ libraries.
 
 3.  `cd` into this directory in a Bash shell.
 
-### Rebuild `requirements.txt
+### Rebuild `requirements.txt`
 
 1.  Create a Python virtual environment using the lowest version of Python
     supported by TFQ. (Currently this is Python 3.10.)
