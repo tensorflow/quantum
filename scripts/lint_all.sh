@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-echo "Checking for lint in Python code...";
+echo "Checking for lint in Python code..."
 linting_outputs=$(pylint --rcfile .pylintrc \
 	./benchmarks ./scripts ./tensorflow_quantum)
 exit_code=$?
