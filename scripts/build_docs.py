@@ -43,9 +43,8 @@ flags.DEFINE_string("site_path", "quantum/api_docs/python",
 FLAGS = flags.FLAGS
 
 
-
-
 def main(unused_argv):
+    """Run documentation builder."""
 
     doc_generator = generate_lib.DocGenerator(
         root_title="TensorFlow Quantum",
