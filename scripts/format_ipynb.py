@@ -18,14 +18,13 @@ import glob
 import nbformat
 import yapf
 
-# Must be run from the top level of the `TFQuantum` repo.
-NOTEBOOKS = glob.glob("docs/tutorials/*.ipynb")
-
 
 def format_notebooks():
-    """Format tutorial notebooks."""
+    """Format tutorial notebooks.
 
-    for fname in NOTEBOOKS:
+    This must be run from the top level of the repository."""
+
+    for fname in glob.glob("docs/tutorials/*.ipynb"):
         nb = nbformat.read(fname, as_version=nbformat.NO_CONVERT)
         all_cells = nb.get('cells')
         for i, cell in enumerate(all_cells):
