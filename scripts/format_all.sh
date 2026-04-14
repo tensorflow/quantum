@@ -14,9 +14,7 @@
 # limitations under the License.
 # ==============================================================================
 echo "Doing python language formatting..."
-python3 -m yapf --in-place --recursive ./benchmarks
-python3 -m yapf --in-place --recursive ./tensorflow_quantum
-python3 -m yapf --in-place --recursive ./scripts
+python3 -m yapf --in-place --recursive ./benchmarks ./tensorflow_quantum ./scripts
 echo -e "Done! \nDoing notebook formatting..."
 python3 ./scripts/format_ipynb.py
 echo -e "Done! \nDoing C++ formatting..."
