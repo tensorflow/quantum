@@ -15,7 +15,7 @@
 # ==============================================================================
 echo "Checking for lint in Python code...";
 linting_outputs=$(pylint --rcfile .pylintrc \
-  ./benchmarks ./scripts ./tensorflow_quantum)
+	./benchmarks ./scripts ./tensorflow_quantum)
 exit_code=$?
 if [ "$exit_code" == "0" ]; then
 	echo "Python linting complete!";
