@@ -24,14 +24,42 @@ University of Waterloo and the Quantum AI team at Google along with help
 from many other contributors within Google.
 """
 
+import re
 import sys
 from datetime import date
+from pathlib import Path
 
 from setuptools import find_packages, setup
 from setuptools.command.install import install
 from setuptools.dist import Distribution
 
-CUR_VERSION = "0.7.7"
+
+def read_version():
+    """Return the package version from tensorflow_quantum/__init__.py."""
+
+    # Need to account for 2 situations: when setup.py is copied to a build
+    # directory, and when setup.py is in a 'release/' subdirectory.
+    here = Path(__file__).resolve().parent
+    possible_paths = [
+        here / "tensorflow_quantum" / "__init__.py",
+        here.parent / "tensorflow_quantum" / "__init__.py",
+    ]
+
+    for init_path in possible_paths:
+        if init_path.is_file():
+            content = init_path.read_text(encoding="utf-8")
+            # Look for __version__ = 'X.Y.Z' at the start of a line.
+            version_match = re.search(r'^__version__\s*=\s*[\'"]([^\'"]+)[\'"]',
+                                      content, re.MULTILINE)
+            if version_match:
+                return version_match.group(1)
+
+    raise RuntimeError(
+        "Could not find a valid __version__ definition. Checked:\n" +
+        "\n".join(f"  - {p}" for p in possible_paths))
+
+
+CUR_VERSION = read_version()
 
 DOCLINES = __doc__.split("\n")
 
