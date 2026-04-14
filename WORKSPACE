@@ -28,7 +28,7 @@ py_repositories()
 
 load("//third_party:python_configure.bzl", "python_configure")
 
-python_configure(name = "local_config_python")
+python_configure()
 
 load("@local_config_python//:defs.bzl", "interpreter")
 

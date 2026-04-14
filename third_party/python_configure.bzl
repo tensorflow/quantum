@@ -36,10 +36,16 @@ def _python_configure_impl(repository_ctx):
         substitutions,
     )
 
-python_configure = repository_rule(
+_python_configure = repository_rule(
     implementation = _python_configure_impl,
     environ = [
         "python-path",
         "PYTHON_BIN_PATH",
     ],
 )
+
+def python_configure():
+    """Configures the Python toolchain for TFQ, TF, and XLA."""
+    _python_configure(name = "local_config_python")
+    _python_configure(name = "local_execution_config_python")
+    _python_configure(name = "python")
