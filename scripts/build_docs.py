@@ -43,8 +43,6 @@ flags.DEFINE_string("site_path", "quantum/api_docs/python",
 FLAGS = flags.FLAGS
 
 
-
-
 def main(unused_argv):
 
     doc_generator = generate_lib.DocGenerator(
