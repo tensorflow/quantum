@@ -18,8 +18,8 @@ working with you. Here are some guidelines to get you started.
 ### Sign our Contributor License Agreement
 
 Contributions to this project must be accompanied by a [Contributor License
-Agreement] (CLA). You (or your employer) retain the copyright to your
-contribution; this simply gives us permission to use and redistribute your
+Agreement] (CLA). You or your employer retain the copyright to your
+contribution; the CLA simply gives us permission to use and redistribute your
 contributions as part of the project. If you or your current employer have
 already signed the Google CLA (even if it was for a different project), you
 probably don't need to do it again. Visit <https://cla.developers.google.com/>
@@ -63,6 +63,7 @@ Here is a summary of the main subdirectories in the TFQ source tree:
 
 Some of the important files found at the top level include the following:
 
+*   `README.md`: General introduction to the project
 *   `configure.sh`: TFQ build configuration script
 *   `requirements.txt`: Python dependencies
 
@@ -80,24 +81,26 @@ Software tool configurations can be found in the following files at the top
 level of the source tree:
 
 *   `.editorconfig`: basic code editor configuration
-*   `.pylintrc`: configuration for linting Python files using [Pylint]
-*   `.style.yapf`: configuration for formatting Python files using [YAPF]
-*   `.yamllint.yaml`: configuration for linting YAML files using [yamllint]
+*   `.markdownlintrc`: linting Markdown files using [markdownlint-cli]
+*   `.pylintrc`: linting Python files using [Pylint]
+*   `.style.yapf`: formatting Python files using [YAPF]
+*   `.yamllint.yaml`: linting YAML files using [yamllint]
 
-All new source code files longer than 2 lines must begin with a header comment
+All source code files longer than a few lines must begin with a header comment
 with the copyright and license. We use the [Apache 2.0 license](./LICENSE).
 
-[Pylint]: https://www.pylint.org/
+[markdownlint-cli]: https://github.com/igorshubovych/markdownlint-cli
+[Pylint]: https://www.pylint.org
 [YAPF]: https://github.com/google/yapf
 [yamllint]: https://github.com/adrienverge/yamllint
 [TensorFlow style]: https://www.tensorflow.org/community/contribute/code_style
 
 ### Git conventions
 
-Git commits should be small and focused. Granular commits make changes easier to
-understand and evaluate (leading to faster and more thorough PR reviews), allow
-more effective use of tools like `git bisect` for debugging, and allow easier
-management of changes with tools like `git cherry-pick` and `git rebase`.
+Git commits should be small and focused. Granular commits make changes easier
+and faster to understand and evaluate, allow more effective use of tools like
+`git bisect` for debugging, and allow easier management of changes with tools
+like `git cherry-pick` and `git rebase`.
 
 Each commit should:
 
@@ -118,12 +121,12 @@ TFQ development takes place on GitHub using a GitHub-centric workflow.
 
 ### Past issues
 
-First search the [issue tracker](https://github.com/tensorflow/quantum/issues)
+First, search the [issue tracker](https://github.com/tensorflow/quantum/issues)
 to check if your idea or bug has been discussed before.
 
 Before beginning on any substantial changes, we recommend opening a new issue on
-GitHub (if one doesn't already exist for the topic) and discussing your proposed
-changes. This will let us give you advice on the proposed changes.
+GitHub (if one doesn't already exist for the topic) to describe your proposed
+changes. This will allow the maintainers to provide feedback.
 
 ### Repository forks and branches
 
@@ -134,7 +137,7 @@ your fork regularly synchronized with the upstream TFQ repository. Create a
 separate [git branch](https://docs.github.com/articles/about-branches) for your
 work on individual issues or topics.
 
-### Set up your environment
+### Environment setup
 
 Follow the instructions in [docs/install.md](docs/install.md) for setting up a
 development environment. After doing that, you should end up with:
@@ -167,11 +170,11 @@ If the format check reports problems, you can correct them automatically using
 scripts/format_all.sh
 ```
 
-### Builds
+### Building TFQ
 
 For relatively "quick" builds of TFQ during development, you can use the
 following command, which builds everything needed for a release and thus acts as
-good indicator that changes in one part of the code do not break other parts:
+a good indicator that changes in one part of the code do not break other parts:
 
 ```shell
 bazel build release:build_pip_package
@@ -230,10 +233,19 @@ scripts/test_all.sh
 
 When getting ready to submit your work, first create a _draft_ pull request from
 your branch on GitHub to the main project repository. (Consult GitHub's
-[docs](https://help.github.com/articles/creating-a-pull-request-from-a-fork) for
-help on creating pull requests.) The pull request will trigger continuous
+[docs](https://docs.github.com/articles/creating-a-pull-request-from-a-fork) for
+help on creating draft pull requests.) The pull request will trigger continuous
 integration (CI) checks and other automation on GitHub. Monitor the checks; if
 any tests fail, continue development and testing to resolve the problems.
+
+#### Continuous integration (CI)
+
+Every time a PR is opened or updated on GitHub, automated workflows run checks
+on the files in the PR. These workflows run the format, lint, and test scripts
+mentioned above; they also do additional verification, such as checking that all
+authors on the PR have signed the [Contributor License Agreement]. The outcomes
+of the checks (success, or failures and error messages) will be shown on the
+pull request page on GitHub.
 
 #### Code review
 
@@ -245,3 +257,14 @@ your fork on GitHub following the same process as above. When you do that,
 GitHub will update the code in the pull request automatically.
 
 [mark the PR as ready for review]: https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/changing-the-stage-of-a-pull-request
+
+#### Closure
+
+Most of the time, after changes are discussed and implemented during the code
+review, the project maintainers will eventually merge the PR into the TensorFlow
+Quantum code base. At that point, the work on the PR will be completed.
+
+On rare occasions, the maintainers may decline to merge the PR and recommend a
+different course of action. This will usually be indicated early on &ndash;
+nobody wants to waste time and effort iterating on something that will be
+rejected!
