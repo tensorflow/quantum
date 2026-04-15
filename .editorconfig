@@ -15,11 +15,10 @@
 
 root = true
 
-# We follow the TensorFlow coding style
-# https://www.tensorflow.org/community/contribute/code_style
+# We follow TF's style: https://tensorflow.org/community/contribute/code_style
 
-# IMPORTANT: some of the other config files (.clang-format, etc.) also have
-# the same settings and need to be updated if changes are made to this file.
+# IMPORTANT: some of the other config files (e.g., .pylintrc) also have settings
+# for the same properties & need to be updated if changes are made to this file.
 [*]
 charset = utf-8
 indent_style = space
