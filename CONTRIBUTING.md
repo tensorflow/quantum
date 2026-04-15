@@ -263,8 +263,3 @@ GitHub will update the code in the pull request automatically.
 Most of the time, after changes are discussed and implemented during the code
 review, the project maintainers will eventually merge the PR into the TensorFlow
 Quantum code base. At that point, the work on the PR will be completed.
-
-On rare occasions, the maintainers may decline to merge the PR and recommend a
-different course of action. This will usually be indicated early on &ndash;
-nobody wants to waste time and effort iterating on something that will be
-rejected!
