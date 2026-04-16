@@ -68,8 +68,8 @@ _Compatibility_: At this time, TensorFlow Quantum is built and
 tested on Linux with the following systems and software:
 
 * Python 3.10–3.12
-* TensorFlow 2.18.1
-* TF-Keras 2.18.0
+* TensorFlow 2.19.1
+* TF-Keras 2.19.0
 * NumPy 2.0
 * Cirq 1.5.0
 

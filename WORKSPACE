@@ -84,9 +84,25 @@ http_archive(
 
 http_archive(
     name = "org_tensorflow",
-    sha256 = "f73e6d838b388c7b4d1ef88d1422a35bb5532644117a472fb0fee28a2215176c",
-    strip_prefix = "tensorflow-2.18.1",
-    urls = ["https://github.com/tensorflow/tensorflow/archive/refs/tags/v2.18.1.zip"],
+    sha256 = "d146daad660c38c5ee0591e7d7ce0fb6c2f92ca247149d5768fa341e6617d563",
+    strip_prefix = "tensorflow-2.19.1",
+    urls = ["https://github.com/tensorflow/tensorflow/archive/refs/tags/v2.19.1.zip"],
+)
+
+load("@org_tensorflow//third_party/py:python_repo.bzl", "python_repository")
+
+# TensorFlow 2.19 expects @python_version_repo to exist even when TFQ manages
+# its own pip_parse setup. Reuse the single lockfile across the supported
+# interpreter versions.
+python_repository(
+    name = "python_version_repo",
+    default_python_version = "system",
+    requirements_versions = ["3.10", "3.11", "3.12"],
+    requirements_locks = [
+        "//:requirements_lock_3_10.txt",
+        "//:requirements_lock_3_11.txt",
+        "//:requirements_lock_3_12.txt",
+    ],
 )
 
 
