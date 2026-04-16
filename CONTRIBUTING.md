@@ -234,9 +234,18 @@ scripts/test_all.sh
 When getting ready to submit your work, first create a _draft_ pull request from
 your branch on GitHub to the main project repository. (Consult GitHub's
 [docs](https://docs.github.com/articles/creating-a-pull-request-from-a-fork) for
-help on creating draft pull requests.) The pull request will trigger continuous
-integration (CI) checks and other automation on GitHub. Monitor the checks; if
-any tests fail, continue development and testing to resolve the problems.
+help on creating draft pull requests.)
+
+When writing the PR title and description, please include the following:
+
+*   A concise but descriptive title
+*   A summary of what the PR is about
+*   How you tested and validated the changes
+*   Any important notes, such as assumptions, edge cases, etc.
+
+The pull request will trigger continuous integration (CI) checks and other
+automation on GitHub. Monitor the checks; if any tests fail, continue
+development and testing to resolve the problems.
 
 #### Continuous integration (CI)
 
@@ -260,6 +269,6 @@ GitHub will update the code in the pull request automatically.
 
 #### Closure
 
-Most of the time, after changes are discussed and implemented during the code
-review, the project maintainers will eventually merge the PR into the TensorFlow
-Quantum code base. At that point, the work on the PR will be completed.
+After code review is finished, requested changes (if any) are made, and the PR
+is accepted, the project maintainers will merge the PR into the code base. At
+that point, the work on the PR will be completed.
