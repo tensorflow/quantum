@@ -269,8 +269,7 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
                                          qsim::MultiQubitGateFuser, Simulator>;
 
     const int output_dim_batch_size = output_tensor->dimension(0);
-    std::vector<tensorflow::mutex> batch_locks(output_dim_batch_size,
-                                               tensorflow::mutex());
+    std::vector<tensorflow::mutex> batch_locks(output_dim_batch_size);
 
     const int num_threads = context->device()
                                 ->tensorflow_cpu_worker_threads()
