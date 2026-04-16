@@ -81,7 +81,6 @@ Software tool configurations can be found in the following files at the top
 level of the source tree:
 
 *   `.editorconfig`: basic code editor configuration
-*   `.markdownlintrc`: linting Markdown files using [markdownlint-cli]
 *   `.pylintrc`: linting Python files using [Pylint]
 *   `.style.yapf`: formatting Python files using [YAPF]
 *   `.yamllint.yaml`: linting YAML files using [yamllint]
@@ -89,7 +88,6 @@ level of the source tree:
 All source code files longer than a few lines must begin with a header comment
 with the copyright and license. We use the [Apache 2.0 license](./LICENSE).
 
-[markdownlint-cli]: https://github.com/igorshubovych/markdownlint-cli
 [Pylint]: https://www.pylint.org
 [YAPF]: https://github.com/google/yapf
 [yamllint]: https://github.com/adrienverge/yamllint
