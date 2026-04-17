@@ -57,6 +57,7 @@ EIGEN_COMMIT = "33d0937c6bdf5ec999939fb17f2a553183d14a74"
 
 http_archive(
     name = "eigen",
+    sha256 = "1f4babf536ce8fc2129dbf92ff3be54cd18ffb2171e9eb40edd00f0a045a54fa",
     build_file_content = """
 cc_library(
   name = "eigen3",
@@ -64,12 +65,11 @@ cc_library(
   visibility = ["//visibility:public"],
 )
     """,
-    sha256 = "1f4babf536ce8fc2129dbf92ff3be54cd18ffb2171e9eb40edd00f0a045a54fa",
-    strip_prefix = "eigen-{commit}".format(commit = EIGEN_COMMIT),
-    urls = [
-        "https://storage.googleapis.com/mirror.tensorflow.org/gitlab.com/libeigen/eigen/-/archive/{commit}/eigen-{commit}.tar.gz".format(commit = EIGEN_COMMIT),
-        "https://gitlab.com/libeigen/eigen/-/archive/{commit}/eigen-{commit}.tar.gz".format(commit = EIGEN_COMMIT),
-    ],
+        strip_prefix = "eigen-{commit}".format(commit = EIGEN_COMMIT),
+        urls = [
+            "https://storage.googleapis.com/mirror.tensorflow.org/gitlab.com/libeigen/eigen/-/archive/{commit}/eigen-{commit}.tar.gz".format(commit = EIGEN_COMMIT),
+            "https://gitlab.com/libeigen/eigen/-/archive/{commit}/eigen-{commit}.tar.gz".format(commit = EIGEN_COMMIT),
+        ],
 )
 
 http_archive(
@@ -82,12 +82,14 @@ http_archive(
     urls = ["https://github.com/quantumlib/qsim/archive/refs/tags/v0.21.0.zip"],
 )
 
+
 http_archive(
     name = "org_tensorflow",
     sha256 = "f73e6d838b388c7b4d1ef88d1422a35bb5532644117a472fb0fee28a2215176c",
     strip_prefix = "tensorflow-2.18.1",
     urls = ["https://github.com/tensorflow/tensorflow/archive/refs/tags/v2.18.1.zip"],
 )
+
 
 load("@org_tensorflow//tensorflow:workspace3.bzl", "tf_workspace3")
 
@@ -120,6 +122,7 @@ load(
     "CUDA_REDISTRIBUTIONS",
     "CUDNN_REDISTRIBUTIONS",
 )
+
 load(
     "@local_tsl//third_party/gpus/cuda/hermetic:cuda_redist_init_repositories.bzl",
     "cuda_redist_init_repositories",
