@@ -23,7 +23,7 @@ def _python_configure_impl(repository_ctx):
     if not python_bin:
         fail("Python interpreter not found. Please provide it via --repo_env=python-path=/path/to/python or set PYTHON_BIN_PATH.")
 
-    substitutions = {"%{PYTHON_BIN_PATH}%": str(python_bin)}
+    substitutions = {"%{PYTHON_BIN_PATH}%": str(python_bin).replace("\\", "\\\\")}
 
     repository_ctx.template(
         "BUILD",
