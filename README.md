@@ -16,7 +16,6 @@ PyPI](https://img.shields.io/pypi/v/TensorFlow_Quantum.svg?logo=python&logoColor
 [Features](#features) &ndash;
 [Installation](#installation) &ndash;
 [Quick Start](#quick-start) &ndash;
-[Documentation](#documentation) &ndash;
 [Getting help](#getting-help) &ndash;
 [Citing TFQ](#citing-tensorflow-quantum) &ndash;
 [Contact](#contact)
