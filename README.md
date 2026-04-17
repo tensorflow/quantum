@@ -45,14 +45,11 @@ from [TensorFlow](https://tensorflow.org). Here are some of TFQ's features:
 *   Harnesses TensorFlow’s computational machinery to provide exceptional
     performance and scalability
 
-TensorFlow Quantum enables quantum algorithms researchers and machine learning
-applications researchers to explore computing workflows that leverage Google’s
-quantum computing offerings – all from within the powerful
-[TensorFlow](https://tensorflow.org) ecosystem. It empowers researchers to
-pursue questions whose answers can only be obtained through fast simulation of
-many millions of moderately-sized circuits. Thanks to its power and scalability,
-TensorFlow Quantum has already been instrumental in enabling ground-breaking
-research in QML.
+TensorFlow Quantum empowers quantum algorithms and machine learning researchers
+to pursue questions whose answers can only be obtained through fast simulation
+of many millions of moderately-sized circuits. It has already been instrumental
+in enabling ground-breaking research in QML by providing a seamless workflow for
+leveraging Google’s quantum computing offerings.
 
 ## Installation
 
