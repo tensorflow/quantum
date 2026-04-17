@@ -17,7 +17,7 @@ TensorFlow Quantum is supported on Python version 3.10 through 3.12 and depends 
 ### Requirements
 
 * pip 19.0 or later (requires `manylinux2014` support)
-* [TensorFlow == 2.18.1](https://www.tensorflow.org/install/pip)
+* [TensorFlow == 2.19.1](https://www.tensorflow.org/install/pip)
 
 See the [TensorFlow install guide](https://www.tensorflow.org/install/pip) to
 set up your Python development environment and an (optional) virtual environment.
@@ -26,7 +26,8 @@ Upgrade `pip` and install TensorFlow
 <!-- common_typos_disable -->
 <pre class="devsite-click-to-copy">
   <code class="devsite-terminal">pip install --upgrade pip</code>
-  <code class="devsite-terminal">pip install tensorflow==2.18.1</code>
+  <code class="devsite-terminal">pip install tensorflow==2.19.1 tf-keras==2.19.0</code>
+  <code class="devsite-terminal">export TF_USE_LEGACY_KERAS=1</code>
 </pre>
 <!-- common_typos_enable -->
 
@@ -86,7 +87,7 @@ As noted in the TensorFlow
 guide, the <a href="https://bazel.build/" class="external">Bazel</a>
 build system will be required.
 
-Our latest source builds use TensorFlow 2.18.1. To ensure compatibility we use
+Our latest source builds use TensorFlow 2.19.1. To ensure compatibility we use
 the same version of `bazel`, 6.5.0. To remove any existing version of Bazel:
 <!-- common_typos_disable -->
 <pre class="devsite-click-to-copy">
@@ -123,17 +124,17 @@ Finally, confirm installation of the correct `bazel` version:
 
 ### 4. Build TensorFlow from source
 
-TensorFlow Quantum is compatible with TensorFlow version&nbsp;2.18.1. To build
+TensorFlow Quantum is compatible with TensorFlow version&nbsp;2.19.1. To build
 TensorFlow from sources, download the <a
 href="https://github.com/tensorflow/tensorflow" class="external">TensorFlow
-source code</a> by cloning the git repository, then switch to the `r2.18`
+source code</a> by cloning the git repository, then switch to the `r2.19`
 branch:
 
 <!-- common_typos_disable -->
 <pre class="devsite-click-to-copy">
   <code class="devsite-terminal">git clone https://github.com/tensorflow/tensorflow.git</code>
   <code class="devsite-terminal">cd tensorflow</code>
-  <code class="devsite-terminal">git checkout r2.18</code>
+  <code class="devsite-terminal">git checkout r2.19</code>
 </pre>
 
 Be sure the virtual environment you created in step 2 is activated, then follow
@@ -191,6 +192,10 @@ Now build TensorFlow Quantum:
   <code class="devsite-terminal">bazel build -c opt --cxxopt="-O3" --cxxopt="-march=native" release:build_pip_package</code>
 </pre>
 <!-- common_typos_enable -->
+
+Before importing `tensorflow` or `tensorflow_quantum`, make sure the
+`TF_USE_LEGACY_KERAS=1` environment variable is set so TensorFlow uses the
+`tf-keras` package instead of Keras 3.
 
 After the build is complete, run the next two commands to create a Python
 package for TensorFlow Quantum and write it to a temporary directory (we use
