@@ -22,7 +22,6 @@ run-name: Run Scorecard scanner for security best practices
 
 on:
   schedule:
-    # Run weekly on Saturdays.
     - cron:  '30 9 * * 6'
 
   pull_request:
@@ -30,15 +29,12 @@ on:
     branches:
       - main
 
-  # Allow manual invocation.
   workflow_dispatch:
 
 concurrency:
-  # Cancel any previously-started but still active runs on the same branch.
   cancel-in-progress: true
   group: ${{github.workflow}}-${{github.event.pull_request.number||github.ref}}
 
-# Declare default workflow permissions as read only.
 permissions: read-all
 
 jobs:
