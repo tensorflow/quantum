@@ -206,8 +206,8 @@ can do using a command of this form:
 bazel test //tensorflow_quantum/SUBDIRECTORY:TARGET
 ```
 
-where _SUBDIRECTORY_ is a subdirectory under `tensorflow_quantum/` and `FILE` is
-a unit test file. Here is a full example:
+where _SUBDIRECTORY_ is a subdirectory under `tensorflow_quantum/` and `TARGET`
+is a test. Here is a full example:
 
 ```shell
 bazel test //tensorflow_quantum/python/differentiators:adjoint_test
