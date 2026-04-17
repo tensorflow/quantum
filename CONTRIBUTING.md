@@ -268,5 +268,5 @@ GitHub will update the code in the pull request automatically.
 #### Closure
 
 After code review is finished, requested changes (if any) are made, and the PR
-is accepted, the project maintainers will merge the PR into the code base. At
+is approved, the project maintainers will merge the PR into the code base. At
 that point, the work on the PR will be completed.
