@@ -80,6 +80,7 @@ style guides:
 Software tool configurations can be found in the following files at the top
 level of the source tree:
 
+*   `.clang-format`: formatting C++ files using [clang-format]
 *   `.editorconfig`: basic code editor configuration
 *   `.pylintrc`: linting Python files using [Pylint]
 *   `.style.yapf`: formatting Python files using [YAPF]
@@ -88,10 +89,11 @@ level of the source tree:
 All source code files longer than a few lines must begin with a header comment
 with the copyright and license. We use the [Apache 2.0 license](./LICENSE).
 
+[clang-format]: https://releases.llvm.org/18.1.6/tools/clang/docs/ClangFormat.html
 [Pylint]: https://www.pylint.org
-[YAPF]: https://github.com/google/yapf
-[yamllint]: https://github.com/adrienverge/yamllint
 [TensorFlow style]: https://www.tensorflow.org/community/contribute/code_style
+[yamllint]: https://github.com/adrienverge/yamllint
+[YAPF]: https://github.com/google/yapf
 
 ### Git conventions
 
