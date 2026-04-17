@@ -15,13 +15,12 @@
 """Repository rule for Python detection and toolchain registration."""
 
 def _python_configure_impl(repository_ctx):
-    python_bin = repository_ctx.os.environ.get("python-path") or \
-                 repository_ctx.os.environ.get("PYTHON_BIN_PATH") or \
+    python_bin = repository_ctx.os.environ.get("PYTHON_BIN_PATH") or \
                  repository_ctx.which("python3") or \
                  repository_ctx.which("python")
 
     if not python_bin:
-        fail("Python interpreter not found. Please provide it via --repo_env=python-path=/path/to/python or set PYTHON_BIN_PATH.")
+        fail("Python interpreter not found. Please provide it via --repo_env=PYTHON_BIN_PATH=/path/to/python or set the PYTHON_BIN_PATH environment variable.")
 
     substitutions = {"%{PYTHON_BIN_PATH}%": str(python_bin).replace("\\", "\\\\")}
 
@@ -39,13 +38,24 @@ def _python_configure_impl(repository_ctx):
 _python_configure = repository_rule(
     implementation = _python_configure_impl,
     environ = [
-        "python-path",
         "PYTHON_BIN_PATH",
+        "PATH",
     ],
 )
 
 def python_configure():
-    """Configures the Python toolchain for TFQ, TF, and XLA."""
+    """Configures the Python toolchain for TFQ, TF, and XLA.
+
+    Three identical repositories are created to satisfy the naming expectations
+    of various external dependencies:
+    - 'local_config_python': Used by TensorFlow Quantum and its internal rules.
+    - 'local_execution_config_python': Required by TensorFlow (org_tensorflow)
+      and TSL for certain toolchain configurations.
+    - 'python': Provided as a generic handle.
+
+    Although redundant, this ensures compatibility across the diverse dependency
+    tree without requiring extensive repo_mapping.
+    """
     _python_configure(name = "local_config_python")
     _python_configure(name = "local_execution_config_python")
     _python_configure(name = "python")

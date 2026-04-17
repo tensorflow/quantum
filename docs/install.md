@@ -193,7 +193,7 @@ The `configure.sh` script detects your Python interpreter and sets up a Bazel to
 <!-- common_typos_enable -->
 
 > [!TIP]
-> You can also bypass manual configuration by passing the Python path directly to Bazel using `--repo_env=python-path=/path/to/python`.
+> You can also bypass manual configuration by passing the Python path directly to Bazel using `--repo_env=PYTHON_BIN_PATH=/path/to/python`.
 
 Now build TensorFlow Quantum:
 
