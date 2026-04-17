@@ -12,7 +12,7 @@ working with you. Here are some guidelines to get you started.
 *   Follow the [development process].
 
 [Contributor License Agreement]: https://cla.developers.google.com/
-[code of conduct]: ./CODE_OF_CONDUCT.md
+[code of conduct]: CODE_OF_CONDUCT.md
 [development process]: #development-process
 
 ### Sign our Contributor License Agreement
