@@ -203,7 +203,7 @@ During development, it is often useful to run tests on just one file, which you
 can do using a command of this form:
 
 ```shell
-bazel test //tensorflow_quantum/SUBDIRECTORY:FILE
+bazel test //tensorflow_quantum/SUBDIRECTORY:TARGET
 ```
 
 where _SUBDIRECTORY_ is a subdirectory under `tensorflow_quantum/` and `FILE` is
