@@ -6,5 +6,11 @@ This directory contains Problem Matchers used by the GitHub Actions workflows in
 
 The following problem matcher JSON files found in this directory were copied from the [Home Assistant](https://github.com/home-assistant/core) project on GitHub. The Home Assistant project is licensed under the Apache 2.0 open-source license. The version of the files at the time they were copied was 2025.1.2.
 
-- [`pylint.json`](https://github.com/home-assistant/core/blob/dev/.github/workflows/matchers/pylint.json)
-- [`yamllint.json`](https://github.com/home-assistant/core/blob/dev/.github/workflows/matchers/yamllint.json)
+*   [`pylint.json`](https://github.com/home-assistant/core/blob/dev/.github/workflows/matchers/pylint.json)
+*   [`yamllint.json`](https://github.com/home-assistant/core/blob/dev/.github/workflows/matchers/yamllint.json)
+
+The following problem matcher for yapf came from the [Google
+SCAAML](https://github.com/google/scaaml) repository as it appeared on 2025-12-08. The last commit
+was by user jmichelp on 2022-07-03. The file is licensed under the Apache 2.0 license.
+
+*   [`yapf.json`](https://github.com/google/scaaml/blob/6d9c3a42c527212ef77f2877419dd8f6e77eb442/.github/python_matcher.json)

@@ -333,6 +333,9 @@ jobs:
           path: ${{needs.Setup.outputs.cache_paths}}
           fail-on-cache-miss: true
 
+      - name: Set up yapf output problem matcher
+        run: echo '::add-matcher::.github/problem-matchers/yapf.json'
+
       - name: Run Yapf on the Python changed files
         run: |
           set +e
