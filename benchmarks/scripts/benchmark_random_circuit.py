@@ -14,12 +14,14 @@
 # ==============================================================================
 """Benchmark simulators against classically intractable 'supremacy' circuits."""
 import os
+import random
 import time
+from typing import Iterable, Sequence, TypeVar, cast
 
+import numpy as np
 from absl.testing import parameterized
 import cirq
 import tensorflow as tf
-import numpy as np
 
 from tensorflow_quantum.core.ops import tfq_simulate_ops
 from tensorflow_quantum.core.serialize.serializer import serialize_circuit
@@ -32,14 +34,96 @@ os.environ['TEST_REPORT_FILE_PREFIX'] = os.path.join(SRC, 'reports/')
 TEST_PARAMS_1 = flags.test_flags(n_rows=3, n_cols=5, n_moments=5)
 TEST_PARAMS_2 = flags.test_flags(n_rows=4, n_cols=4, n_moments=20)
 
+T = TypeVar('T')
+
+
+def _choice(rand_gen: float, sequence: Sequence[T]) -> T:
+    """Choose a pseudo-random element from a non-empty sequence."""
+    return sequence[int(rand_gen * len(sequence))]
+
+
+def _make_cz_layer(qubits: Iterable[cirq.GridQubit], layer_index: int):
+    """Yield a CZ interaction pattern for the given layer index."""
+    offset = layer_index % 8
+    for q in qubits:
+        for q2 in [
+                cirq.GridQubit(q.row + 1, q.col),
+                cirq.GridQubit(q.row, q.col + 1)
+        ]:
+            if q2 in qubits and ((q.row + q.col + offset) % 2 == 0):
+                yield cirq.CZ(q, q2)
+
+
+def _add_cz_layer(layer_index: int, circuit: cirq.Circuit) -> int:
+    """Add the next non-empty CZ layer and return the updated layer index."""
+    cz_layer = None
+    while not cz_layer:
+        qubits = cast(Iterable[cirq.GridQubit], circuit.all_qubits())
+        cz_layer = list(_make_cz_layer(qubits, layer_index))
+        layer_index += 1
+
+    circuit.append(cz_layer, strategy=cirq.InsertStrategy.NEW_THEN_INLINE)
+    return layer_index
+
+
+def generate_boixo_2018_beyond_classical_v2_grid(n_rows: int, n_cols: int,
+                                                 cz_depth: int,
+                                                 seed: int) -> cirq.Circuit:
+    """Local copy of ReCirq's v2 beyond-classical grid circuit generator.
+
+    Source reference:
+      https://github.com/quantumlib/ReCirq/blob/main/recirq/beyond_classical/google_v2_beyond_classical.py
+
+    Note:
+      We intentionally keep this local copy to avoid introducing broader
+      dependency migration. A future cleanup can switch to direct
+      ReCirq dependency once repository constraints are aligned.
+    """
+    qubits = [
+        cirq.GridQubit(i, j) for i in range(n_rows) for j in range(n_cols)
+    ]
+    non_diagonal_gates = [cirq.X**(1 / 2), cirq.Y**(1 / 2)]
+    rand_gen = random.Random(seed).random
+
+    circuit = cirq.Circuit()
+    circuit.append(cirq.H(qubit) for qubit in qubits)
+
+    layer_index = 0
+    if cz_depth:
+        layer_index = _add_cz_layer(layer_index, circuit)
+        for qubit in qubits:
+            if not circuit.operation_at(qubit, 1):
+                circuit.append(cirq.T(qubit),
+                               strategy=cirq.InsertStrategy.EARLIEST)
+
+    for moment_index in range(2, cz_depth + 1):
+        layer_index = _add_cz_layer(layer_index, circuit)
+        for qubit in qubits:
+            if not circuit.operation_at(qubit, moment_index):
+                last_op = circuit.operation_at(qubit, moment_index - 1)
+                if last_op:
+                    gate = cast(cirq.GateOperation, last_op).gate
+                    if gate == cirq.CZ:
+                        circuit.append(_choice(rand_gen(),
+                                               non_diagonal_gates).on(qubit),
+                                       strategy=cirq.InsertStrategy.EARLIEST)
+                    elif gate != cirq.T:
+                        circuit.append(cirq.T(qubit),
+                                       strategy=cirq.InsertStrategy.EARLIEST)
+
+    circuit.append([cirq.H(qubit) for qubit in qubits],
+                   strategy=cirq.InsertStrategy.NEW_THEN_INLINE)
+    return circuit
+
 
 def make_random_circuit(n_rows, n_cols, depth):
     """Generate a random unparameterized circuit of fixed depth."""
-    return cirq.experiments.generate_boixo_2018_supremacy_circuits_v2_grid(
+    circuit = generate_boixo_2018_beyond_classical_v2_grid(
         n_rows=n_rows,
         n_cols=n_cols,
-        cz_depth=depth - 2,  # Account for beginning/ending Hadamard layers
+        cz_depth=max(0, depth - 2),  # Account for initial/final Hadamards.
         seed=SEED)
+    return cirq.Circuit(circuit[:depth])
 
 
 class RandomCircuitBenchmarksTest(tf.test.TestCase, parameterized.TestCase):
