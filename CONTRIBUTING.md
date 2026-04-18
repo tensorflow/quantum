@@ -54,6 +54,50 @@ to ensure that code has proper formatting and is lint free.
 [clang format](https://clang.llvm.org/docs/ClangFormat.html) to ensure we have
 consistent formatting everywhere.
 
+### Pre-commit Hooks
+
+This repository ships a [pre-commit](https://pre-commit.com/) configuration
+(`.pre-commit-config.yaml`) that automates all of the checks above so they run
+automatically before every `git commit`. We strongly recommend installing the
+hooks when you set up your local development environment:
+
+```bash
+# Install the pre-commit tool (already listed in requirements.txt).
+pip install pre-commit
+
+# Register the hooks with your local Git clone – only needed once.
+pre-commit install
+```
+
+After installation the hooks run automatically on each `git commit`. You can
+also run them manually at any time:
+
+```bash
+# Run all hooks against every file in the repository.
+pre-commit run --all-files
+
+# Run a single hook (e.g. yapf formatting) against all files.
+pre-commit run yapf --all-files
+```
+
+The hooks cover the following checks:
+
+| Hook | What it does |
+|------|-------------|
+| `trailing-whitespace` | Removes trailing whitespace from source files |
+| `end-of-file-fixer` | Ensures files end with a single newline |
+| `check-yaml` / `check-json` | Validates YAML and JSON syntax |
+| `check-merge-conflict` | Rejects unresolved merge-conflict markers |
+| `check-added-large-files` | Rejects files larger than 500 KB |
+| `mixed-line-ending` | Normalises all line endings to LF |
+| `no-commit-to-branch` | Prevents direct commits to `master` |
+| `isort` | Sorts Python imports (Google profile) |
+| `yapf` | Formats Python source with Google style |
+| `pylint` | Lints Python source using `.pylintrc` |
+| `yamllint` | Lints YAML files using `.yamllint.yaml` |
+| `clang-format` | Formats C++ / C source with Google style |
+| `format-ipynb` | Formats Jupyter notebook code cells with yapf |
+
 ### Adding Modules
 
 If you are adding new modules, be sure to properly expose them to the user
