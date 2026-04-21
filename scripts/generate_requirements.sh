@@ -14,7 +14,7 @@
 # limitations under the License.
 # ==============================================================================
 
-# Summary: produce requirements.txt using pip-compile & munging the result.
+# Summary: produce requirements.txt using pip-compile under Python 3.10.
 # Usage: ./scripts/generate_requirements.sh
 
 set -eu
@@ -24,17 +24,22 @@ thisdir=$(CDPATH="" cd -- "$(dirname -- "${0}")" && pwd -P)
 repo_dir=$(git -C "${thisdir}" rev-parse --show-toplevel 2>/dev/null)
 cd "${repo_dir}"
 
-if ! pip show -qq pip-tools; then
+if ! python - <<'PY'
+import sys
+raise SystemExit(0 if sys.version_info[:2] == (3, 10) else 1)
+PY
+then
+  echo "Error: run this script with Python 3.10 so requirements.txt is locked for the primary target interpreter." >&2
+  exit 1
+fi
+
+if ! python -m pip show -qq pip-tools; then
   echo "Error: 'pip-compile' not found. Please install 'pip-tools'." >&2
   exit 1
 fi
 
-# Special case: don't pin PyYAML in requirements.txt, because its inclusion can
-# lead to pip trying to uninstall an existing version installed by distutils.
-declare -a constraints=()
-constraints+=(--unsafe-package pyyaml)
-
 # Check for a constraints file and use it if it exists.
+declare -a constraints=()
 pins_file="$(realpath --relative-to=. "${repo_dir}/requirements-pins.txt")"
 if [[ -e "${pins_file}" ]]; then
   constraints+=(--constraints "${pins_file}")
@@ -44,10 +49,15 @@ fi
 export CUSTOM_COMPILE_COMMAND="${0}"
 
 echo "Running pip-compile in ${repo_dir} …"
-pip-compile -q \
+python -m piptools compile -q \
+  --allow-unsafe \
+  --upgrade \
   --rebuild \
+  --generate-hashes \
   --no-strip-extras \
   --no-emit-index-url \
+  -o requirements.txt \
+  requirements.in \
   "${constraints[@]}"
 
 echo "Done."
