@@ -134,7 +134,8 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
             self.assertIsInstance(resolver, cirq.ParamResolver)
             self.assertEqual(set(resolver.param_dict.keys()), set(symbols))
             self.assertTrue(
-                all(isinstance(value, float)
+                all(
+                    isinstance(value, float)
                     for value in resolver.param_dict.values()))
 
     @parameterized.parameters(_items_to_tensorize())
