@@ -112,7 +112,8 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
     )
     def test_random_symbol_circuit_resolver_batch_shapes_and_types(
             self, include_channels):
-        """Confirm random_symbol_circuit_resolver_batch returns the expected types."""
+        """Confirm random_symbol_circuit_resolver_batch returns
+        the expected types."""
         qubits = cirq.GridQubit.rect(1, 3)
         symbols = ['alpha', 'beta', 'gamma']
         batch_size = 4
