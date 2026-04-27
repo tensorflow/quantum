@@ -2,7 +2,7 @@
 <div align="center">
 
 <img width="450px" alt="TensorFlow Quantum logo"
-src="https://raw.githubusercontent.com/tensorflow/quantum/master/docs/images/logo/tf_quantum1.svg">
+src="docs/images/logo/tf_quantum1.svg">
 
 High-performance Python framework for hybrid quantum-classical machine learning
 
@@ -138,6 +138,6 @@ Copyright 2020 Google LLC.
 <div align="center">
   <a href="https://quantumai.google">
     <img width="15%" alt="Google Quantum AI"
-         src="https://raw.githubusercontent.com/tensorflow/quantum/master/docs/images/quantum-ai-vertical.svg">
+         src="docs/images/quantum-ai-vertical.svg">
   </a>
 </div>

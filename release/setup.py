@@ -73,10 +73,15 @@ def read_readme():
     """Return the project README contents for PyPI."""
 
     possible_paths = possible_paths_from_setup_dir("README.md")
+    image_src_pattern = re.compile(r'(?P<prefix>src=")(?![a-z]+://|#|/)(?P<path>[^"]+)')
+    image_base_url = "https://raw.githubusercontent.com/tensorflow/quantum/master/"
 
     for readme_path in possible_paths:
         if readme_path.is_file():
-            return readme_path.read_text(encoding="utf-8")
+            content = readme_path.read_text(encoding="utf-8")
+            return image_src_pattern.sub(
+                lambda match: f'{match.group("prefix")}{image_base_url}'
+                f'{match.group("path")}', content)
 
     raise RuntimeError("Could not find README.md. Checked:\n" +
                        "\n".join(f"  - {p}" for p in possible_paths))
