@@ -96,6 +96,7 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
         self.assertLen(resolvers, batch_size)
         for circuit in circuits:
             self.assertIsInstance(circuit, cirq.Circuit)
+            self.assertFalse(cirq.is_parameterized(circuit))
         for resolver in resolvers:
             self.assertIsInstance(resolver, cirq.ParamResolver)
             self.assertEmpty(resolver.param_dict)
@@ -113,6 +114,7 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
         self.assertLen(resolvers, batch_size)
         for circuit in circuits:
             self.assertIsInstance(circuit, cirq.Circuit)
+            self.assertSetEqual(set(util.get_circuit_symbols(circuit)), set(symbols))
         for resolver in resolvers:
             self.assertIsInstance(resolver, cirq.ParamResolver)
             self.assertEqual(set(resolver.param_dict.keys()), set(symbols))
