@@ -34,16 +34,23 @@ from setuptools.command.install import install
 from setuptools.dist import Distribution
 
 
-def read_version():
-    """Return the package version from tensorflow_quantum/__init__.py."""
+def possible_paths_from_setup_dir(*relative_parts):
+    """Return candidate paths for files accessed from setup.py."""
 
     # Need to account for 2 situations: when setup.py is copied to a build
     # directory, and when setup.py is in a 'release/' subdirectory.
     here = Path(__file__).resolve().parent
-    possible_paths = [
-        here / "tensorflow_quantum" / "__init__.py",
-        here.parent / "tensorflow_quantum" / "__init__.py",
+    return [
+        here.joinpath(*relative_parts),
+        here.parent.joinpath(*relative_parts),
     ]
+
+
+def read_version():
+    """Return the package version from tensorflow_quantum/__init__.py."""
+
+    possible_paths = possible_paths_from_setup_dir("tensorflow_quantum",
+                                                   "__init__.py")
 
     for init_path in possible_paths:
         if init_path.is_file():
@@ -61,7 +68,25 @@ def read_version():
 
 CUR_VERSION = read_version()
 
-DOCLINES = __doc__.split("\n")
+
+def read_readme():
+    """Return the project README contents for PyPI."""
+
+    possible_paths = possible_paths_from_setup_dir("README.md")
+    image_src_pattern = re.compile(
+        r'(?P<prefix>src=")(?![a-z]+://|#|/)(?P<path>[^"]+)')
+    image_base_url = ("https://raw.githubusercontent.com/tensorflow/quantum/"
+                      "master/")
+
+    for readme_path in possible_paths:
+        if readme_path.is_file():
+            content = readme_path.read_text(encoding="utf-8")
+            return image_src_pattern.sub(
+                lambda match: f'{match.group("prefix")}{image_base_url}'
+                f'{match.group("path")}', content)
+
+    raise RuntimeError("Could not find README.md. Checked:\n" +
+                       "\n".join(f"  - {p}" for p in possible_paths))
 
 
 class InstallPlatlib(install):
@@ -121,7 +146,7 @@ setup(
     name=PROJECT_NAME,
     version=BUILD_VERSION,
     description="Library for hybrid quantum-classical machine learning.",
-    long_description="\n".join(DOCLINES[2:]),
+    long_description=read_readme(),
     long_description_content_type="text/markdown",
     author="The TensorFlow Quantum Authors",
     author_email="tensorflow-quantum-team@google.com",
