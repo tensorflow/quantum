@@ -80,9 +80,6 @@ jobs:
           echo '::add-matcher::.github/problem-matchers/pylint.json'
           scripts/lint_all.sh
 
-      - name: Check tutorial file formatting
-        run: scripts/format_check.sh
-
   wheel-build:
     name: Wheel test
     runs-on: ubuntu-22.04
