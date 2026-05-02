@@ -5,16 +5,17 @@
       "severity": "error",
       "pattern": [
         {
-          "regexp": "^---\\s*([^\\s]*)\\s*\\(original\\)$",
+          "regexp": "^--- (\\S+)\\s+\\(original\\)$",
           "file": 1
         },
         {
-          "regexp": "^\\+\\+\\+\\s*([^\\s]*)\\s*\\((.*)\\)$",
+          "regexp": "^\\+\\+\\+ (\\S+)\\s+\\((.*)\\)$",
           "message": 2
         },
         {
           "regexp": "^@@\\s*-(\\d+)(?:,\\d+)?\\s*\\+(\\d+)(?:,\\d+)?\\s*@@$",
           "line": 1,
+          "message": 0,
           "loop": true
         }
       ]
