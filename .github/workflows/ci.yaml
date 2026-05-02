@@ -97,9 +97,6 @@ jobs:
     container:
       image: us-docker.pkg.dev/ml-oss-artifacts-published/ml-public-container/ml-build:infrastructure-public-image-82c7ac59ba4b
     timeout-minutes: 60
-    env:
-      # Pip complains about running as root, but it's okay in the container.
-      PIP_ROOT_USER_ACTION: ignore
     steps:
       - name: Adjust the ml-build runner to our needs
         run: |
@@ -148,8 +145,6 @@ jobs:
     container:
       image: us-docker.pkg.dev/ml-oss-artifacts-published/ml-public-container/ml-build:infrastructure-public-image-82c7ac59ba4b
     timeout-minutes: 60
-    env:
-      PIP_ROOT_USER_ACTION: ignore
     steps:
       - name: Adjust the ml-build runner to our needs
         run: |
