@@ -168,8 +168,8 @@ jobs:
         with:
           python-version: ${{env.python-version}}
           cache: pip
-      - name: Install notebook dependencies
-        run: pip install --upgrade pip seaborn==0.10.0
+      - name: Upgrade pip
+        run: pip install --upgrade pip
       - name: Install Bazel on CI
         run: ./scripts/ci_install.sh
       - name: Build Wheel
