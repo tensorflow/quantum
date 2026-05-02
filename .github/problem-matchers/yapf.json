@@ -2,6 +2,7 @@
   "problemMatcher": [
     {
       "owner": "yapf-diff",
+      "severity": "error",
       "pattern": [
         {
           "regexp": "^---\\s*([^\\s]*)\\s*\\(original\\)$",
@@ -13,7 +14,8 @@
         },
         {
           "regexp": "^@@\\s*-(\\d+)(?:,\\d+)?\\s*\\+(\\d+)(?:,\\d+)?\\s*@@$",
-          "line": 1
+          "line": 1,
+          "loop": true
         }
       ]
     }
