@@ -14,11 +14,11 @@
 
 name: CI
 run-name: >-
-  Run CI checks on
-  ${{github.event_name == 'pull_request'
-    && format('PR #{0}', github.event.pull_request.number)
-    || format('push to {0}', github.ref_name) }}
-  by @${{github.actor}}
+  Run CI checks on ${{
+    github.event_name == 'pull_request'
+      && format('PR #{0}', github.event.pull_request.number)
+    || github.event_name
+  }} by @${{github.actor}}
 
 on:
   pull_request:
