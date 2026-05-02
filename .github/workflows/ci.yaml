@@ -32,6 +32,8 @@ on:
 env:
   # Python version to use for actions/setup-python.
   python-version: '3.11'
+  # Pip complains about running as root, but it's okay to do that here.
+  PIP_ROOT_USER_ACTION: ignore
 
 concurrency:
   cancel-in-progress: true
