@@ -29,8 +29,6 @@ on:
     types:
       - checks_requested
 
-  workflow_dispatch:
-
 env:
   # Python version to use for actions/setup-python.
   python-version: '3.11'
