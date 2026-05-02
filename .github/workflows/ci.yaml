@@ -78,7 +78,7 @@ jobs:
       - name: Check code lint
         run: |
           echo '::add-matcher::.github/problem-matchers/pylint.json'
-          scripts/lint_check.sh
+          scripts/lint_all.sh
 
       - name: Check tutorial file formatting
         run: scripts/format_check.sh
