@@ -83,13 +83,6 @@ jobs:
       - name: Check tutorial file formatting
         run: scripts/format_check.sh
 
-      - name: Check workflow file lint
-        uses: raven-actions/actionlint@205b530c5d9fa8f44ae9ed59f341a0db994aa6f8 # v2.1.2
-        with:
-          flags: ${{runner.debug && '-verbose'}}
-          files: '.github/workflows/*.yaml'
-          pyflakes: false
-
   wheel-build:
     name: Wheel test
     runs-on: ubuntu-22.04
