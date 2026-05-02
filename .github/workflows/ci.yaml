@@ -59,9 +59,7 @@ jobs:
         with:
           python-version: ${{env.python-version}}
           cache: pip
-          cache-dependency-path: |
-            requirements.in
-            requirements.txt
+          cache-dependency-path: requirements.txt
 
       - name: Install Python dependencies
         run: |
@@ -90,9 +88,7 @@ jobs:
         with:
           python-version: ${{env.python-version}}
           cache: pip
-          cache-dependency-path: |
-            requirements.in
-            requirements.txt
+          cache-dependency-path: requirements.txt
       - name: Install Bazel on CI
         run: ./scripts/ci_install.sh
       - name: Build Wheel Test
@@ -119,9 +115,7 @@ jobs:
         with:
           python-version: ${{env.python-version}}
           cache: pip
-          cache-dependency-path: |
-            requirements.in
-            requirements.txt
+          cache-dependency-path: requirements.txt
       - name: Install Bazel on CI
         run: ./scripts/ci_install.sh
       - name: Configure CI TF
@@ -170,9 +164,7 @@ jobs:
         with:
           python-version: ${{env.python-version}}
           cache: pip
-          cache-dependency-path: |
-            requirements.in
-            requirements.txt
+          cache-dependency-path: requirements.txt
       - name: Upgrade pip
         run: pip install --upgrade pip
       - name: Install Bazel on CI
