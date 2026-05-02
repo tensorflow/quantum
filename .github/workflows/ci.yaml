@@ -93,7 +93,6 @@ jobs:
       - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v5
         with:
           python-version: ${{env.python-version}}
-          architecture: 'x64'
           cache: pip
       - name: Install Bazel on CI
         run: ./scripts/ci_install.sh
@@ -120,7 +119,6 @@ jobs:
       - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v5
         with:
           python-version: ${{env.python-version}}
-          architecture: 'x64'
           cache: pip
       - name: Install Bazel on CI
         run: ./scripts/ci_install.sh
@@ -169,7 +167,6 @@ jobs:
       - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v5
         with:
           python-version: ${{env.python-version}}
-          architecture: 'x64'
           cache: pip
       - name: Install notebook dependencies
         run: pip install --upgrade pip seaborn==0.10.0
