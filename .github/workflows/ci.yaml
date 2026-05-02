@@ -32,8 +32,6 @@ on:
 env:
   # Python version to use for actions/setup-python.
   python-version: '3.11'
-  # Pip complains about running as root, but it's okay to do that here.
-  PIP_ROOT_USER_ACTION: ignore
 
 concurrency:
   cancel-in-progress: true
@@ -79,7 +77,6 @@ jobs:
     name: Wheel test
     runs-on: ubuntu-22.04
     timeout-minutes: 60
-
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
@@ -100,7 +97,9 @@ jobs:
     container:
       image: us-docker.pkg.dev/ml-oss-artifacts-published/ml-public-container/ml-build:infrastructure-public-image-82c7ac59ba4b
     timeout-minutes: 60
-
+    env:
+      # Pip complains about running as root, but it's okay in the container.
+      PIP_ROOT_USER_ACTION: ignore
     steps:
       - name: Adjust the ml-build runner to our needs
         run: |
@@ -149,7 +148,8 @@ jobs:
     container:
       image: us-docker.pkg.dev/ml-oss-artifacts-published/ml-public-container/ml-build:infrastructure-public-image-82c7ac59ba4b
     timeout-minutes: 60
-
+    env:
+      PIP_ROOT_USER_ACTION: ignore
     steps:
       - name: Adjust the ml-build runner to our needs
         run: |
