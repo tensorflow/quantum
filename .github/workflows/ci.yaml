@@ -34,8 +34,6 @@ on:
 env:
   # Python version to use for actions/setup-python.
   python-version: '3.11'
-  # Skip pip's progress bar.
-  PIP_PROGRESS_BAR: 'off'
 
 concurrency:
   cancel-in-progress: true
