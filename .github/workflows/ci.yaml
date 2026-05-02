@@ -62,12 +62,11 @@ jobs:
           cache-dependency-path: |
             requirements.in
             requirements.txt
-            scripts/ci_validate_tutorials.sh
 
       - name: Install Python dependencies
         run: |
           pip install --upgrade pip
-          pip install pylint==3.3.3 nbformat==5.1.3 yapf==0.43.0
+          pip install -r requirements.txt
 
       - name: Check code formatting
         run: |
@@ -94,7 +93,6 @@ jobs:
           cache-dependency-path: |
             requirements.in
             requirements.txt
-            scripts/ci_validate_tutorials.sh
       - name: Install Bazel on CI
         run: ./scripts/ci_install.sh
       - name: Build Wheel Test
@@ -124,7 +122,6 @@ jobs:
           cache-dependency-path: |
             requirements.in
             requirements.txt
-            scripts/ci_validate_tutorials.sh
       - name: Install Bazel on CI
         run: ./scripts/ci_install.sh
       - name: Configure CI TF
@@ -176,7 +173,6 @@ jobs:
           cache-dependency-path: |
             requirements.in
             requirements.txt
-            scripts/ci_validate_tutorials.sh
       - name: Upgrade pip
         run: pip install --upgrade pip
       - name: Install Bazel on CI
