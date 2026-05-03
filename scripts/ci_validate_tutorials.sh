@@ -16,7 +16,7 @@
 
 set -e
 
-# Use legacy tf.keras (Keras 2) with TF 2.16
+# Use legacy tf.keras (Keras 2) with TensorFlow 2.17+.
 export TF_USE_LEGACY_KERAS=1
 
 # Tools for running notebooks non-interactively

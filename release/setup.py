@@ -79,12 +79,12 @@ REQUIRED_PACKAGES = [
     "numpy>=2,<3",
     "scipy>=1.15.3,<2",
     "sympy==1.14",
-    "tf-keras>=2.18,<2.19",
+    "tf-keras>=2.19,<2.20",
 
     # The following are transitive dependencies that need to be constrained to
     # avoid incompatible versions or because some (e.g., contourpy 1.3.3)
     # require Python 3.11+ and we want to maintain Python 3.10 compatibility.
-    # TODO: revisit after we reach compatibility with TensorFlow 2.19+.
+    # TODO: revisit after we reach compatibility with TensorFlow 2.20+.
     "jax>=0.5,<0.6",
     "contourpy<=1.3.2",
 ]
@@ -93,7 +93,7 @@ REQUIRED_PACKAGES = [
 # installations. Users can run "pip install tensorflow-quantum[and-tensorflow]"
 # to get everything in one go (or "pip install tensorflow tensorflow-quantum").
 EXTRA_PACKAGES = {}
-EXTRA_PACKAGES["and-tensorflow"] = ["tensorflow>=2.18,<2.19"]
+EXTRA_PACKAGES["and-tensorflow"] = ["tensorflow>=2.19.1,<2.20"]
 # "extras" was used before 0.7.4. Prefer "and-tensorflow" in 0.7.4+.
 EXTRA_PACKAGES["extras"] = EXTRA_PACKAGES["and-tensorflow"]
 
