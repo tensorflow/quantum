@@ -19,10 +19,9 @@ licenses(["notice"])
 # Export for the PIP package.
 exports_files(["__init__.py"])
 
-py_binary(
+py_library(
     name = "random_clifford_circuit",
     srcs = ["random_clifford_circuit.py"],
-    python_version = "PY3",
 )
 
 py_test(
