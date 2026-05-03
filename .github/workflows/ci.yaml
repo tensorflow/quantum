@@ -63,26 +63,32 @@ jobs:
           pip install -r requirements.txt
 
       - name: Check code formatting
-        run: scripts/format_check.sh
+        run: ./scripts/format_check.sh
 
       - name: Check code lint
-        run: scripts/lint_all.sh
+        run: ./scripts/lint_all.sh
 
   wheel-build:
     name: Wheel test
     runs-on: ubuntu-22.04
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      - name: Check out a copy of the TFQ git repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: ${{env.python-version}}
           cache: pip
           cache-dependency-path: requirements.txt
+
       - name: Install Bazel on CI
         run: ./scripts/ci_install.sh
+
       - name: Build Wheel Test
         run: ./scripts/build_pip_package_test.sh
+
       - name: Test Wheel
         run: ./scripts/run_example.sh
 
@@ -99,16 +105,23 @@ jobs:
           sudo apt-get update && sudo apt-get install -y lsb-release
           # This file, though it's empty, hangs the Bazel install step.
           rm -f /etc/bazel.bazelrc
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+
+      - name: Check out a copy of the TFQ git repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: ${{env.python-version}}
           cache: pip
           cache-dependency-path: requirements.txt
+
       - name: Install Bazel on CI
         run: ./scripts/ci_install.sh
+
       - name: Configure CI TF
         run: echo "Y\n" | ./configure.sh
+
       - name: Full Library Test
         run: ./scripts/test_all.sh
 
@@ -147,17 +160,25 @@ jobs:
           sudo apt-get update && sudo apt-get install -y lsb-release
           # This file, though it's empty, hangs the Bazel install step.
           rm -f /etc/bazel.bazelrc
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+
+      - name: Check out a copy of the TFQ git repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: ${{env.python-version}}
           cache: pip
           cache-dependency-path: requirements.txt
+
       - name: Upgrade pip
         run: pip install --upgrade pip
+
       - name: Install Bazel on CI
         run: ./scripts/ci_install.sh
+
       - name: Build Wheel
         run: ./scripts/build_pip_package_test.sh
+
       - name: Test Notebooks
         run: ./scripts/ci_validate_tutorials.sh
