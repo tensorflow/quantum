@@ -12,7 +12,7 @@ absl-py==2.4.0
     #   tensorflow-docs
 astor==0.8.1
     # via tensorflow-docs
-astroid==3.3.11
+astroid==4.0.4
     # via pylint
 astunparse==1.6.3
     # via tensorflow
@@ -204,7 +204,7 @@ pycparser==3.0
     # via cffi
 pygments==2.19.2
     # via rich
-pylint==3.3.3
+pylint==4.0.5
     # via -r requirements.in
 pyparsing==3.3.2
     # via
@@ -217,6 +217,8 @@ python-dateutil==2.9.0.post0
     #   pandas
 pytz==2025.2
     # via pandas
+pyyaml==6.0.3
+    # via tensorflow-docs
 pyzmq==27.1.0
     # via jupyter-client
 referencing==0.37.0
@@ -241,10 +243,6 @@ scipy==1.15.3
     #   cirq-core
     #   jax
     #   jaxlib
-setuptools==75.0.0
-    # via
-    #   tensorboard
-    #   tensorflow
 six==1.17.0
     # via
     #   astunparse
@@ -317,4 +315,7 @@ yapf==0.43.0
     # via -r requirements.in
 
 # The following packages are considered to be unsafe in a requirements file:
-# pyyaml
+setuptools==75.0.0
+    # via
+    #   tensorboard
+    #   tensorflow
