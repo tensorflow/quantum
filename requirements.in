@@ -25,7 +25,7 @@ scipy<1.16
 sympy==1.14
 tensorflow>=2.18,<2.19
 tf-keras~=2.18.0
-wheel==0.46.2
+wheel==0.47.0
 
 # TODO: the next ones are not truly core requirements. A better place should be
 # found for them (long with others needed by scripts/*). They're here as a
