@@ -244,6 +244,8 @@ write_bazelrc 'build --per_file_copt=external/.*[.]c$@-Wno-deprecated-non-protot
 write_bazelrc 'build --host_per_file_copt=external/.*[.]c$@-Wno-deprecated-non-prototype'
 write_bazelrc "build --per_file_copt=external/com_google_protobuf/.*@-Wno-unused-function"
 write_bazelrc "build --host_per_file_copt=external/com_google_protobuf/.*@-Wno-unused-function"
+write_bazelrc "build --per_file_copt=external/com_google_protobuf/.*@-Wno-stringop-overflow"
+write_bazelrc "build --host_per_file_copt=external/com_google_protobuf/.*@-Wno-stringop-overflow"
 write_bazelrc "build --per_file_copt=external/eigen/.*@-Wno-maybe-uninitialized"
 write_bazelrc "build --host_per_file_copt=external/eigen/.*@-Wno-maybe-uninitialized"
 
