@@ -63,15 +63,10 @@ jobs:
           pip install -r requirements.txt
 
       - name: Check code formatting
-        run: |
-          echo '::add-matcher::.github/problem-matchers/clang-format.json'
-          echo '::add-matcher::.github/problem-matchers/yapf.json'
-          scripts/format_check.sh
+        run: scripts/format_check.sh
 
       - name: Check code lint
-        run: |
-          echo '::add-matcher::.github/problem-matchers/pylint.json'
-          scripts/lint_all.sh
+        run: scripts/lint_all.sh
 
   wheel-build:
     name: Wheel test
