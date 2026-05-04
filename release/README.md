@@ -42,6 +42,23 @@ The following subsections describe the steps necessary to build binary
 distributions in Python wheel format using scripts in TFQ's `scripts/`
 and `release/` subdirectories.
 
+### Before you start
+
+Make sure that your development branch is up-to-date with the upstream
+repository on GitHub, and all the code has been formatted, linted, and tested as
+described in [../CONTRIBUTING.md](../CONTRIBUTING.md). The following scripts
+should all succeed in your development environment:
+
+```shell
+scripts/format_all.sh
+scripts/lint_all.sh
+scripts/test_all.sh
+```
+
+If the formatters made any changes, or the linter or tests revealed any
+problems, open PRs to fix them in GitHub, get the PRs reviewed, and merge them
+into the upstream repository before proceeding further.
+
 ### Preliminary steps
 
 1.  Make sure you have `docker`, `pyenv`, `pip`, and `jq` installed on your
@@ -65,13 +82,12 @@ and `release/` subdirectories.
 
     This will update the dependency versions in the file `requirements.txt` to
     the latest versions based on `requirements.in`. If this process fails, you
-    may have to iterate on adjustments to the constraints in `requirements.in`
+    may have to iterate on adjusting the contraints in `requirements.in`
     followed by running `generate_requirements.sh` again until it succeeds.
 
-3.  If any changes to `requirements.in` are needed, check `release/setup.py`
-    and also make changes there if appropriate.
-
-If all went well, proceed to the next subsection.
+3.  If any changes were made to `requirements.in`, check the requirements listed
+    inside `release/setup.py` and make corresponding changes if the changes to
+    `requirements.in` involved packages needed to run TFQ.
 
 ### Build the Python wheels
 
