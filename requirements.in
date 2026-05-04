@@ -32,7 +32,7 @@ wheel==0.46.2
 # stop-gap measure until then.
 yapf==0.43.0
 pylint==3.3.3
-nbformat==5.1.3
+nbformat==5.10.4
 nbclient==0.6.5
 tensorflow-docs
 clang-format~=18.1.0
