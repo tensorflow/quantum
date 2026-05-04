@@ -26,10 +26,9 @@ PyPI](https://img.shields.io/pypi/v/TensorFlow_Quantum.svg?logo=python&logoColor
 
 [TensorFlow Quantum](https://www.tensorflow.org/quantum) (TFQ) is a Python
 framework for hybrid quantum-classical machine learning focused on modeling
-quantum data. It enables quantum algorithms researchers and machine learning
-applications researchers to explore computing workflows that leverage Google’s
-quantum computing offerings – all from within the powerful
-[TensorFlow](https://tensorflow.org) ecosystem.
+quantum data. It provides users with the tools they need to interleave quantum
+algorithms and logic designed in Cirq with the powerful and performant ML tools
+from [TensorFlow](https://tensorflow.org). Here are some of TFQ's features:
 
 *   Integrates with [Cirq](https://github.com/quantumlib/Cirq) for writing
     quantum circuit definitions
@@ -46,17 +45,11 @@ quantum computing offerings – all from within the powerful
 *   Harnesses TensorFlow’s computational machinery to provide exceptional
     performance and scalability
 
-## Motivation
-
-TensorFlow Quantum provides users with the tools they need to interleave quantum
-algorithms and logic designed in Cirq with the powerful and performant ML tools
-from TensorFlow. With this connection, we hope to unlock new and exciting paths
-for quantum computing research that would not have otherwise been possible.
-
-Thanks to its power and scalability, TensorFlow Quantum has already been
-instrumental in enabling ground-breaking research in QML. It empowers
-researchers to pursue questions whose answers can only be obtained through fast
-simulation of many millions of moderately-sized circuits.
+TensorFlow Quantum empowers quantum algorithms and machine learning researchers
+to pursue questions whose answers can only be obtained through fast simulation
+of many millions of moderately-sized circuits. It has already been instrumental
+in enabling ground-breaking research in QML by providing a seamless workflow for
+leveraging Google’s quantum computing offerings.
 
 ## Installation
 
