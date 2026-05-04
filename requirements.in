@@ -33,6 +33,6 @@ wheel==0.46.2
 yapf==0.43.0
 pylint==3.3.3
 nbformat==5.1.3
-nbclient==0.6.5
+nbclient==0.10.4
 tensorflow-docs
 clang-format~=18.1.0
