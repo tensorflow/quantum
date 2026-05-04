@@ -1,4 +1,4 @@
-# Copyright 2020 The TensorFlow Quantum Authors
+# Copyright 2026 The TensorFlow Quantum Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,11 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# ==============================================================================
 
-package(default_visibility = ["//visibility:public"])
-
-exports_files([
-    "python_configure.bzl",
-    "python/BUILD.tpl",
-    "python/defs.bzl.tpl",
-])
+# Build file intentionally left empty.
+# This file is used to define the Python interpreter path for the TFQ build.
