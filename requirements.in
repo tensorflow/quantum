@@ -31,7 +31,7 @@ wheel==0.46.2
 # found for them (long with others needed by scripts/*). They're here as a
 # stop-gap measure until then.
 yapf==0.43.0
-pylint==3.3.3
+pylint==4.0.5
 nbformat==5.1.3
 nbclient==0.6.5
 tensorflow-docs
