@@ -12,13 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: CI
-run-name: >-
-  Run CI checks on ${{
-    github.event_name == 'pull_request'
-      && format('PR #{0}', github.event.pull_request.number)
-    || github.event_name
-  }} by @${{github.actor}}
+# yamllint disable rule:line-length
+
+name: 'CI: build & test'
+run-name: Continuous integration build and test
 
 on:
   pull_request:
@@ -73,11 +70,8 @@ jobs:
     runs-on: ubuntu-22.04
     timeout-minutes: 60
     steps:
-      - name: Check out a copy of the TFQ git repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-
-      - name: Set up Python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: ${{env.python-version}}
           cache: pip
@@ -105,12 +99,8 @@ jobs:
           sudo apt-get update && sudo apt-get install -y lsb-release
           # This file, though it's empty, hangs the Bazel install step.
           rm -f /etc/bazel.bazelrc
-
-      - name: Check out a copy of the TFQ git repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-
-      - name: Set up Python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: ${{env.python-version}}
           cache: pip
@@ -160,12 +150,8 @@ jobs:
           sudo apt-get update && sudo apt-get install -y lsb-release
           # This file, though it's empty, hangs the Bazel install step.
           rm -f /etc/bazel.bazelrc
-
-      - name: Check out a copy of the TFQ git repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-
-      - name: Set up Python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: ${{env.python-version}}
           cache: pip
