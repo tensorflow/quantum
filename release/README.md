@@ -1,10 +1,13 @@
 # Making releases of TensorFlow Quantum
 
-This directory contains scripts that the TensorFlow Quantum (TFQ)
-maintainers use to create Python packages for software releases. The process of
-making a TFQ release is complex and has not been fully automated. The scripts
-in this directory help automate some steps and are a way of capturing the
-process more precisely, but there are still manual steps involved.
+[TensorFlow Quantum](https://tensorflow.org/quantum) (TFQ) is implemented as a
+Python library that integrates static C++ objects. Those C++ objects for TFQ are
+linked with the TensorFlow [TensorFlow](https://tensorflow.org) library. The
+process of building and linking C++ objects is complex, so TFQ is distributed in
+binary Python [wheel](https://peps.python.org/pep-0427/) format for certain
+combinations of operating systems and hardware architectures. This page
+documents the process used by the TensorFlow Quantum maintainers to build and
+release the packages for public TensorFlow Quantum distributions.
 
 At present, binary distributions in the form of Python wheel files are made
 available only for Linux systems.
@@ -39,6 +42,23 @@ The following subsections describe the steps necessary to build binary
 distributions in Python wheel format using scripts in TFQ's `scripts/`
 and `release/` subdirectories.
 
+### Before you start
+
+Make sure that your development branch is up-to-date with the upstream
+repository on GitHub, and all the code has been formatted, linted, and tested as
+described in [../CONTRIBUTING.md](../CONTRIBUTING.md). The following scripts
+should all succeed in your development environment:
+
+```shell
+scripts/format_all.sh
+scripts/lint_all.sh
+scripts/test_all.sh
+```
+
+If the formatters made any changes, or the linter or tests revealed any
+problems, open PRs to fix them in GitHub, get the PRs reviewed, and merge them
+into the upstream repository before proceeding further.
+
 ### Preliminary steps
 
 1.  Make sure you have `docker`, `pyenv`, `pip`, and `jq` installed on your
@@ -46,14 +66,14 @@ and `release/` subdirectories.
 
 2.  Git clone the TensorFlow Quantum repo to a directory on your computer.
 
-3.  `cd` into this directory in a Bash shell.
+3.  `cd` into that directory in a Bash shell.
 
-### Rebuild `requirements.txt`
+### Rebuild the `requirements.txt` file
 
 1.  Create a Python virtual environment using the lowest version of Python
     supported by TFQ. (Currently this is Python 3.10.)
 
-2.  Run the following commands:
+2.  Run these commands in your shell:
 
     ```shell
     pip install pip-tools
@@ -69,28 +89,113 @@ and `release/` subdirectories.
     inside `release/setup.py` and make corresponding changes if the changes to
     `requirements.in` involved packages needed to run TFQ.
 
-### Install `requirements.txt`
+### Build the Python wheels
 
-Install the Python dependencies in your Python virtual environment:
+For each Python version _X.Y.Z_ that will be supported in the TFQ release, do
+the following:
 
-```shell
-pip install -r requirements.txt
-```
+1.  Run `./release/build_release.sh X.Y.Z`.
 
-### Final checks
+2.  If the previous step fails, resolve the error.
 
-Make sure that everything has been formatted and linted, and that tests run all
-the way through:
+    *   Important: if solving the problem requires changes to the versions of
+        dependency packages, make sure to update both `requirements.in` and
+        `release/setup.py` (if applicable), and then **go back to the previous
+        subsection on rebuilding `requirements.txt`** and do it over.
 
-```shell
-scripts/format_all.sh
-scripts/lint_all.sh
-scripts/test_all.sh
-```
+3.  If `build_release.sh` succeeds without error, it should leave a new `.whl`
+    file in the subdirectory `wheelhouse/`. Verify that it is there.
 
-If the formatters made any changes, or the linter or tests revealed any
-problems, open PRs to fix them in GitHub, get the PRs reviewed, and merge them
-before proceeding further.
+If all went well, proceed to test the wheels.
+
+### Test the wheels
+
+The tests below are ordered from simplest/quickest to more complex/slower,
+so that basic problems (if they exist) can be discovered sooner.
+
+#### Simple test in a local Python virtual environment
+
+Iterate on the following steps for each Python version used for the builds
+above:
+
+1.  Create a fresh Python virtual environment for the version of Python
+    corresponding to the wheel to be tested.
+
+2.  Run `pip install wheelhouse/WHEELFILE`, where `WHEELFILE` is the file
+    name of the wheel for the version of Python being tested.
+
+3.  Run `./scripts/run_example.sh`. Ignore any warnings or errors related to
+    CUDA or warnings related to optimizations, such as AVX/FMA instruction
+    sets. (These originate from TensorFlow.) This test will not print any
+    output if it succeeds, but if it fails, debug whatever error is shown in
+    the Python traceback.
+
+#### Docker tests
+
+The scripts and instructions in `release/docker/README.md` describe how to
+build Docker images for different combinations of Ubuntu and Python versions.
+Build those images if you have not done so already. (They do not need to be
+rebuilt if you made them for previous releases.)
+
+1.  Start a Docker container that has the version of Python matching the
+    version of Python needed by the TFQ wheel being tested. This example
+    assumes Python 3.12:
+
+    ```shell
+    docker run -it --rm --network host -v .:/tfq ubuntu24-cp312
+    ```
+
+    The command above starts a Bash shell prompt inside a basic Ubuntu 24.04
+    environment with Python 3.12 preinstalled and your local TensorFlow Quantum
+    source directory accessible at `/tfq` from inside the container.
+
+2.  Run `pip install /tfq/wheelhouse/WHEELFILE`, where `WHEELFILE` is the file
+    name of the wheel being tested.
+
+3.  Run `/tfq/scripts/run_example.sh`. Ignore any warnings or errors related to
+    TensorFlow's use of CUDA or optimizations such as AVX/FMA instruction sets.
+    This test will not print any output if it succeeds, but if it fails, debug
+    whatever error is shown in the Python traceback.
+
+#### Colab tests
+
+This test can only be done for one of the wheels, namely the wheel built for
+the version of Python running in Colab. Before proceeding, determine the
+version of Python running in your Colab environment. (Currently for public
+Colab it is Python 3.12.)
+
+1.  Open a copy of a TFQ tutorial notebook in Colab. One way to do this is as
+    follows:
+
+    1.  Navigate to TFQ's `docs/tutorials` directory in your browser (i.e.,
+        https://github.com/tensorflow/quantum/tree/master/docs/tutorials).
+
+    2.  Click on a tutorial file, e.g., `hello_many_worlds.ipynb`.
+
+    3.  Look for a link titled _Run in Google Colab_ near the top of the
+        tutorial document, and click the link. This should open a browser tab
+        or window in Google Colab with the tutorial notebook file loaded and
+        ready to use.
+
+2.  Using Colab's file explorer, upload a TFQ wheel that matches the version of
+    Python running in Colab.
+
+3.  When the upload finishes, right-click on the file name in the Colab
+    file explorer and copy the path to the file.
+
+4.  Find the notebook cell that contains the `!pip install` command for
+    TensorFlow Quantum. **Replace that command** with the following,
+    pasting in the path that you copied in the previous step:
+
+    ```python
+    !pip install /paste/the/path/to/the/wheel/file/here
+    ```
+
+5.  Run the notebook.
+
+If the notebook executes all the way through without error, congratulations! If
+it fails, analyze the cause, adjust TFQ or the TFQ build accordingly, then run
+the tests again.
 
 Repeat steps 1-5 for the other TFQ tutorials.
 
