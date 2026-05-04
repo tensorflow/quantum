@@ -135,7 +135,7 @@ def minimize(expectation_value_function,
              tolerance=1e-5,
              max_iterations=200,
              alpha=0.602,
-             learning_rate=1.0,
+             learning_rate=0.31,
              perturb=1.0,
              gamma=0.101,
              blocking=False,
@@ -277,7 +277,7 @@ def minimize(expectation_value_function,
             """Main optimization loop."""
             new_learning_rate = learning_rate_init / (
                 (tf.cast(state.num_iterations + 1, tf.float32) +
-                 0.01 * tf.cast(max_iterations, tf.float32))**state.alpha)
+                 0.1 * tf.cast(max_iterations, tf.float32))**state.alpha)
             new_perturb = perturb_init / (tf.cast(state.num_iterations + 1,
                                                   tf.float32)**state.gamma)
 
