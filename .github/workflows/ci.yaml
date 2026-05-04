@@ -26,6 +26,10 @@ on:
     types:
       - checks_requested
 
+env:
+  # Python version to use for actions/setup-python.
+  python-version: '3.11'
+
 concurrency:
   cancel-in-progress: true
   group: ${{github.workflow}}-${{github.event.pull_request.number||github.ref}}
@@ -33,22 +37,52 @@ concurrency:
 permissions: read-all
 
 jobs:
+  format-and-lint-checks:
+    name: File format & lint checks
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - name: Check out a copy of the TFQ git repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: ${{env.python-version}}
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install Python dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Check code formatting
+        run: ./scripts/format_check.sh
+
+      - name: Check code lint
+        run: ./scripts/lint_all.sh
+
   wheel-build:
     name: Wheel test
     runs-on: ubuntu-22.04
     timeout-minutes: 60
-
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
-          python-version: '3.10'
-          architecture: 'x64'
+          python-version: ${{env.python-version}}
           cache: pip
+          cache-dependency-path: requirements.txt
+
       - name: Install Bazel on CI
         run: ./scripts/ci_install.sh
+
       - name: Build Wheel Test
         run: ./scripts/build_pip_package_test.sh
+
       - name: Test Wheel
         run: ./scripts/run_example.sh
 
@@ -58,7 +92,6 @@ jobs:
     container:
       image: us-docker.pkg.dev/ml-oss-artifacts-published/ml-public-container/ml-build:infrastructure-public-image-82c7ac59ba4b
     timeout-minutes: 60
-
     steps:
       - name: Adjust the ml-build runner to our needs
         run: |
@@ -69,13 +102,16 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
-          python-version: '3.10'
-          architecture: 'x64'
+          python-version: ${{env.python-version}}
           cache: pip
+          cache-dependency-path: requirements.txt
+
       - name: Install Bazel on CI
         run: ./scripts/ci_install.sh
+
       - name: Configure CI TF
         run: echo "Y\n" | ./configure.sh
+
       - name: Full Library Test
         run: ./scripts/test_all.sh
 
@@ -107,7 +143,6 @@ jobs:
     container:
       image: us-docker.pkg.dev/ml-oss-artifacts-published/ml-public-container/ml-build:infrastructure-public-image-82c7ac59ba4b
     timeout-minutes: 60
-
     steps:
       - name: Adjust the ml-build runner to our needs
         run: |
@@ -118,14 +153,18 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
-          python-version: '3.10'
-          architecture: 'x64'
+          python-version: ${{env.python-version}}
           cache: pip
-      - name: Install notebook dependencies
-        run: pip install --upgrade pip seaborn==0.10.0
+          cache-dependency-path: requirements.txt
+
+      - name: Upgrade pip
+        run: pip install --upgrade pip
+
       - name: Install Bazel on CI
         run: ./scripts/ci_install.sh
+
       - name: Build Wheel
         run: ./scripts/build_pip_package_test.sh
+
       - name: Test Notebooks
         run: ./scripts/ci_validate_tutorials.sh
