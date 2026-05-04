@@ -154,7 +154,7 @@ The following is the current process.
         explorer and copy the path to the file in Colab.
 
     1.  Find the notebook cell that contains the `!pip install` command for
-        TensorFlow Quantum. `Replace that command** with the following, pasting
+        TensorFlow Quantum. **Replace that command** with the following, pasting
         in the path that you copied in the previous step:
 
         ```python
