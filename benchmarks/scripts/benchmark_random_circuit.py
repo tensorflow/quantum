@@ -55,11 +55,11 @@ def _make_cz_layer(qubits: Iterable[cirq.GridQubit], layer_index: int):
                 yield cirq.CZ(q, q2)
 
 
-def _add_cz_layer(layer_index: int, circuit: cirq.Circuit) -> int:
+def _add_cz_layer(layer_index: int, qubits: Sequence[cirq.GridQubit],
+                  circuit: cirq.Circuit) -> int:
     """Add the next non-empty CZ layer and return the updated layer index."""
     cz_layer = None
     while not cz_layer:
-        qubits = cast(Iterable[cirq.GridQubit], circuit.all_qubits())
         cz_layer = list(_make_cz_layer(qubits, layer_index))
         layer_index += 1
 
@@ -91,14 +91,14 @@ def generate_boixo_2018_beyond_classical_v2_grid(n_rows: int, n_cols: int,
 
     layer_index = 0
     if cz_depth:
-        layer_index = _add_cz_layer(layer_index, circuit)
+        layer_index = _add_cz_layer(layer_index, qubits, circuit)
         for qubit in qubits:
             if not circuit.operation_at(qubit, 1):
                 circuit.append(cirq.T(qubit),
                                strategy=cirq.InsertStrategy.EARLIEST)
 
     for moment_index in range(2, cz_depth + 1):
-        layer_index = _add_cz_layer(layer_index, circuit)
+        layer_index = _add_cz_layer(layer_index, qubits, circuit)
         for qubit in qubits:
             if not circuit.operation_at(qubit, moment_index):
                 last_op = circuit.operation_at(qubit, moment_index - 1)
