@@ -16,7 +16,7 @@
 import os
 import random
 import time
-from typing import Iterable, Sequence, TypeVar, cast
+from typing import Callable, Iterable, Sequence, TypeVar, cast
 
 import numpy as np
 from absl.testing import parameterized
@@ -37,9 +37,10 @@ TEST_PARAMS_2 = flags.test_flags(n_rows=4, n_cols=4, n_moments=20)
 T = TypeVar('T')
 
 
-def _choice(rand_gen: float, sequence: Sequence[T]) -> T:
+def _choice(rand_gen: Callable[[], float], sequence: Sequence[T]) -> T:
     """Choose a pseudo-random element from a non-empty sequence."""
-    return sequence[int(rand_gen * len(sequence))]
+    # Keep ReCirq's float-based selection to preserve seeded circuit generation.
+    return sequence[int(rand_gen() * len(sequence))]
 
 
 def _make_cz_layer(qubits: Iterable[cirq.GridQubit], layer_index: int):
@@ -104,7 +105,7 @@ def generate_boixo_2018_beyond_classical_v2_grid(n_rows: int, n_cols: int,
                 if last_op:
                     gate = cast(cirq.GateOperation, last_op).gate
                     if gate == cirq.CZ:
-                        circuit.append(_choice(rand_gen(),
+                        circuit.append(_choice(rand_gen,
                                                non_diagonal_gates).on(qubit),
                                        strategy=cirq.InsertStrategy.EARLIEST)
                     elif gate != cirq.T:
