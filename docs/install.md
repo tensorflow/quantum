@@ -184,7 +184,10 @@ build:
 </pre>
 <!-- common_typos_enable -->
 
-The `configure.sh` script detects your Python interpreter and sets up a Bazel toolchain. If you need to manually specify a Python interpreter, you can do so by passing the `--python` flag or by setting the `PYTHON_BIN_PATH` environment variable:
+The `configure.sh` script detects your Python interpreter and sets up a Bazel
+toolchain. If you need to manually specify a Python interpreter, you can do so
+by passing the `--python` flag or by setting the `PYTHON_BIN_PATH` environment
+variable:
 
 <!-- common_typos_disable -->
 <pre class="devsite-click-to-copy">
@@ -193,7 +196,8 @@ The `configure.sh` script detects your Python interpreter and sets up a Bazel to
 <!-- common_typos_enable -->
 
 > [!TIP]
-> You can also bypass manual configuration by passing the Python path directly to Bazel using `--repo_env=PYTHON_BIN_PATH=/path/to/python`.
+> You can also bypass manual configuration by passing the Python path directly
+> to Bazel using `--repo_env=PYTHON_BIN_PATH=/path/to/python`.
 
 Now build TensorFlow Quantum:
 

@@ -20,7 +20,9 @@ def _python_configure_impl(repository_ctx):
                  repository_ctx.which("python")
 
     if not python_bin:
-        fail("Python interpreter not found. Please provide it via --repo_env=PYTHON_BIN_PATH=/path/to/python or set the PYTHON_BIN_PATH environment variable.")
+        fail("Python interpreter not found. Please provide it via " + 
+             "--repo_env=PYTHON_BIN_PATH=/path/to/python " + 
+             "or set the PYTHON_BIN_PATH environment variable.")
 
     substitutions = {"%{PYTHON_BIN_PATH}%": str(python_bin).replace("\\", "\\\\")}
 
