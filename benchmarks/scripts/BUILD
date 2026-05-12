@@ -19,11 +19,19 @@ licenses(["notice"])
 # Export for the PIP package.
 exports_files(["__init__.py"])
 
+py_library(
+    name = "benchmark_flags",
+    srcs = ["flags.py"],
+)
+
 py_test(
     name = "benchmark_clifford_circuit",
     srcs = ["benchmark_clifford_circuit.py"],
     python_version = "PY3",
     deps = [
+        ":benchmark_flags",
+        ":benchmark_util",
+        "//benchmarks/scripts/models:random_clifford_circuit",
         "//tensorflow_quantum/core/ops:tfq_simulate_ops_py",
         "//tensorflow_quantum/core/serialize:serializer",
         "@local_config_tf//:test_log_pb2",
@@ -35,6 +43,8 @@ py_test(
     srcs = ["benchmark_random_circuit.py"],
     python_version = "PY3",
     deps = [
+        ":benchmark_flags",
+        ":benchmark_util",
         "//tensorflow_quantum/core/ops:tfq_simulate_ops_py",
         "//tensorflow_quantum/core/serialize:serializer",
         "@local_config_tf//:test_log_pb2",
@@ -46,6 +56,8 @@ py_test(
     srcs = ["benchmark_op_gradients.py"],
     python_version = "PY3",
     deps = [
+        ":benchmark_flags",
+        ":benchmark_util",
         "//tensorflow_quantum/core/ops:batch_util",
         "//tensorflow_quantum/core/ops:cirq_ops",
         "//tensorflow_quantum/core/ops:tfq_simulate_ops_py",
