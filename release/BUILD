@@ -44,6 +44,7 @@ sh_binary(
         "//tensorflow_quantum/datasets:__init__.py",
 
         # Dependencies to run PIP package creation.
+        # Use the repository root README.md for PyPI long_description.
         "MANIFEST.in",
         "//:README.md",
         "setup.py",
