@@ -34,6 +34,8 @@ cirq-core==1.5.0
     #   cirq-google
 cirq-google==1.5.0
     # via -r requirements.in
+clang-format==18.1.8
+    # via -r requirements.in
 contourpy==1.3.2
     # via
     #   -r requirements.in

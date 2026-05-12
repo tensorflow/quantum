@@ -44,6 +44,7 @@ FLAGS = flags.FLAGS
 
 
 def main(unused_argv):
+    """Run the documentation builder."""
 
     doc_generator = generate_lib.DocGenerator(
         root_title="TensorFlow Quantum",
