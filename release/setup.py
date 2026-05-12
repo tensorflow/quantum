@@ -65,7 +65,15 @@ CUR_VERSION = read_version()
 def read_readme():
     """Return the project README contents for PyPI."""
 
-    readme_path = Path(__file__).resolve().parent.parent / "README.md"
+    setup_dir = Path(__file__).resolve().parent
+
+    # setup.py runs from release/ in the source tree, but it is copied to the
+    # package root in the wheel build tmpdir.
+    if (setup_dir / "tensorflow_quantum").is_dir():
+        readme_path = setup_dir / "README.md"
+    else:
+        readme_path = setup_dir.parent / "README.md"
+
     if not readme_path.is_file():
         raise RuntimeError(f"Could not find README.md at: {readme_path}")
     return readme_path.read_text(encoding="utf-8")
