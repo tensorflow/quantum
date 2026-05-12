@@ -62,6 +62,7 @@ main() {
   echo "=== Copying TFQ files"
 
   # Copy over files necessary to run setup.py
+  cp "${EXPORT_DIR}/README.md" "${TMPDIR}"
   cp "${EXPORT_DIR}/release/setup.py" "${TMPDIR}"
   cp "${EXPORT_DIR}/release/MANIFEST.in" "${TMPDIR}"
   mkdir "${TMPDIR}/tensorflow_quantum"
