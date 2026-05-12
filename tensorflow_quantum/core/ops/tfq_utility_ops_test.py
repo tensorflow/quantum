@@ -139,12 +139,40 @@ class AppendCircuitOpTest(tf.test.TestCase, parameterized.TestCase):
         'padded_array': [[[0, 0, 0, 0], [1, 1, 1, 1]]]
     }, {
         'padded_array': [[[1, 1, -2, -2], [0, 1, -2, -2], [0, 0, -2, -2]]]
+    }, {
+        'padded_array': [[[-2, -2], [-2, -2]]]
+    }, {
+        'padded_array': [[[1, 1], [1, 1]]]
+    }, {
+        'padded_array': np.empty((0, 2, 2), dtype=np.float32)
     }])
     def test_padded_to_ragged(self, padded_array):
         """Test for padded_to_ragged utility."""
         mask = np.where(np.array(padded_array) > -1, True, False)
         expected = tf.ragged.boolean_mask(padded_array, mask)
         actual = tfq_utility_ops.padded_to_ragged(
+            np.array(padded_array, dtype=float))
+        self.assertAllEqual(expected, actual)
+
+    @parameterized.parameters([{
+        'padded_array': [[[1, 0, -2], [0, 1, -2], [-2, -2, -2]],
+                         [[1, -2, -2], [-2, -2, -2], [-2, -2, -2]]]
+    }, {
+        'padded_array': [[[1, 0, 0], [0, 1, 0], [0, 0, 1]]]
+    }, {
+        'padded_array': [[[-2, -2, -2], [-2, -2, -2], [-2, -2, -2]]]
+    }, {
+        'padded_array': np.empty((0, 3, 3), dtype=np.float32)
+    }])
+    def test_padded_to_ragged2d(self, padded_array):
+        """Test for padded_to_ragged2d utility."""
+        tensor_arr = tf.constant(padded_array, dtype=tf.float32)
+        col_mask = tf.abs(tensor_arr[:, 0]) < 1.1
+        masked = tf.ragged.boolean_mask(tensor_arr, col_mask)
+        mask = tf.abs(masked) < 1.1
+        expected = tf.ragged.boolean_mask(masked, mask)
+
+        actual = tfq_utility_ops.padded_to_ragged2d(
             np.array(padded_array, dtype=float))
         self.assertAllEqual(expected, actual)
 
