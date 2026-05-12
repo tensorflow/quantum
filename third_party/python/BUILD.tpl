@@ -1,4 +1,4 @@
-# Copyright 2020 The TensorFlow Quantum Authors
+# Copyright 2026 The TensorFlow Quantum Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,10 +12,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Generated BUILD file for the Python toolchain repository."""
+
+load("@bazel_tools//tools/python:toolchain.bzl", "py_runtime_pair")
+
 package(default_visibility = ["//visibility:public"])
 
-exports_files([
-    "python_configure.bzl",
-    "python/BUILD.tpl",
-    "python/defs.bzl.tpl",
-])
+# Detected path: %{PYTHON_BIN_PATH}%
+py_runtime(
+    name = "py3_runtime",
+    interpreter_path = "%{PYTHON_BIN_PATH}%",
+    python_version = "PY3",
+)
+
+py_runtime_pair(
+    name = "py_runtime_pair",
+    py3_runtime = ":py3_runtime",
+)
+
+toolchain(
+    name = "py_toolchain",
+    toolchain = ":py_runtime_pair",
+    toolchain_type = "@bazel_tools//tools/python:toolchain_type",
+)

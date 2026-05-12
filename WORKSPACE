@@ -26,23 +26,24 @@ load("@rules_python//python:repositories.bzl", "py_repositories")
 
 py_repositories()
 
-local_repository(
-    name = "python",
-    path = "third_party/python_legacy",
-)
+load("//third_party:python_configure.bzl", "python_configure")
 
-load("@python//:defs.bzl", "interpreter")
+python_configure()
+
+load("@local_config_python//:defs.bzl", "interpreter")
+
+register_toolchains("@local_config_python//:py_toolchain")
 
 load("@rules_python//python:pip.bzl", "pip_parse")
 
 pip_parse(
     name = "pypi",
-    requirements_lock = "//:requirements.txt",
-    python_interpreter = interpreter,
     extra_pip_args = [
         "--index-url",
         "https://pypi.org/simple/",
     ],
+    python_interpreter = interpreter,
+    requirements_lock = "//:requirements.txt",
 )
 
 load("@pypi//:requirements.bzl", "install_deps")
