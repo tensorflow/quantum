@@ -14,7 +14,7 @@
 # limitations under the License.
 # ==============================================================================
 echo "Testing all Benchmarks.";
-bazel test -c opt --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=1" --cxxopt="-msse2" --cxxopt="-msse3" --cxxopt="-msse4" --test_output=errors $(bazel query //benchmarks/scripts:all)
+bazel test -c opt --cxxopt="-msse2" --cxxopt="-msse3" --cxxopt="-msse4" --test_output=errors $(bazel query //benchmarks/scripts:all)
 exit_code=$?
 if [ "$exit_code" == "0" ]; then
 	echo "Testing Complete!";
