@@ -1,12 +1,12 @@
 #!/bin/bash
 # Copyright 2020 The TensorFlow Quantum Authors. All Rights Reserved.
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -100,7 +100,7 @@ if [ $? -ne 0 ]; then
 fi
 
 echo "Checking C++ formatting...";
-formatting_outputs=$(find tensorflow_quantum/ -iname *.h -o -iname *.cc | xargs clang-format -style=google -output-replacements-xml);
+formatting_outputs=$(find tensorflow_quantum/ -iname *.h -o -iname *.cc | xargs clang-format -output-replacements-xml);
 CFORMATCHECK=0
 while read -r formatting_outputs; do
     if [ "$formatting_outputs" != "<?xml version='1.0'?>" ] && [ "$formatting_outputs" != "<replacements xml:space='preserve' incomplete_format='false'>" ] && [ "$formatting_outputs" != "</replacements>" ] && [ "$formatting_outputs" != "<replacement offset='4290' length='9'> </replacement>" ]; then

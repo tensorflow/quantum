@@ -1,5 +1,4 @@
-#!/bin/bash
-# Copyright 2020 The TensorFlow Quantum Authors. All Rights Reserved.
+# Copyright 2026 The TensorFlow Quantum Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,12 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-echo "Doing python language formatting..."
-python3 -m yapf --style=google --in-place --recursive --parallel \
-  ./benchmarks ./scripts ./tensorflow_quantum
-echo -e "Done! \nDoing notebook formatting..."
-python3 ./scripts/format_ipynb.py
-echo -e "Done! \nDoing C++ formatting..."
-find tensorflow_quantum/ -iname *.h -o -iname *.cc | xargs clang-format -i
-echo "Done!"
-exit 0;
+
+# Build file intentionally left empty.
+# This file is used to define the Python interpreter path for the TFQ build.
