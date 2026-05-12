@@ -34,23 +34,16 @@ from setuptools.command.install import install
 from setuptools.dist import Distribution
 
 
-def possible_paths_from_setup_dir(*relative_parts):
-    """Return candidate paths for files accessed from setup.py."""
+def read_version():
+    """Return the package version from tensorflow_quantum/__init__.py."""
 
     # Need to account for 2 situations: when setup.py is copied to a build
     # directory, and when setup.py is in a 'release/' subdirectory.
     here = Path(__file__).resolve().parent
-    return [
-        here.joinpath(*relative_parts),
-        here.parent.joinpath(*relative_parts),
+    possible_paths = [
+        here / "tensorflow_quantum" / "__init__.py",
+        here.parent / "tensorflow_quantum" / "__init__.py",
     ]
-
-
-def read_version():
-    """Return the package version from tensorflow_quantum/__init__.py."""
-
-    possible_paths = possible_paths_from_setup_dir("tensorflow_quantum",
-                                                   "__init__.py")
 
     for init_path in possible_paths:
         if init_path.is_file():
