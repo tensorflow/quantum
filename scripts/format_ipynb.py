@@ -36,6 +36,7 @@ for fname in NOTEBOOKS:
         # google style always adds an EOF newline; undo this.
         all_cells[i]['source'] = fmt_lines[:-1]
 
+
 def format_notebooks():
     """Format tutorial notebooks.
 
