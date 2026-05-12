@@ -45,7 +45,7 @@ sh_binary(
 
         # Dependencies to run PIP package creation.
         "MANIFEST.in",
-        "README.md",
+        "//:README.md",
         "setup.py",
 
         # Dependencies that the PIP package will import.
