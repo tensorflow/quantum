@@ -129,8 +129,8 @@ class ExpectationTest(tf.test.TestCase):
             expectation.Expectation()([symb_circuit], operators=test_psum)
 
         with self.assertRaisesRegex(Exception,
-                                    expected_regex="Unparseable proto"):
-            # Proto is unparseable.
+                                    expected_regex="Unparsable proto"):
+            # Proto is unparsable.
             expectation.Expectation()([reg_circuit],
                                       operators=tf.convert_to_tensor(
                                           [['bad_operator']]))

@@ -46,7 +46,7 @@ def get_supported_gates():
     Returns a dictionary mapping from supported gate types
     to the number of qubits each gate operates on.
 
-    Any of these gates used in conjuction with the
+    Any of these gates used in conjunction with the
     `controlled_by` function for multi-qubit control are also
     supported.
     """
@@ -682,7 +682,7 @@ def _many_clifford_to_many_z(pauli_sum):
 def _many_z_to_single_z(focal_qubit, pauli_sum):
     """Convert many Z's to single Z.
     Returns the gate set required for transforming an arbitrary tensor product
-    of pauli-z's into a product of all identites and a single pauli-Z.
+    of pauli-z's into a product of all identities and a single pauli-Z.
     Args:
         focal_qubit: central qubit among CNOT gates.
         pauli_sum: `cirq.PauliSum` object to be converted to CNOT's and Z.

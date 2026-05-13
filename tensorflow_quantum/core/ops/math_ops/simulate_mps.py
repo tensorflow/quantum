@@ -42,7 +42,7 @@ def mps_1d_expectation(programs,
             `programs`.
         symbol_values: `tf.Tensor` of real numbers with shape
             [batch_size, n_params] specifying parameter values to resolve
-            into the circuits specificed by programs, following the ordering
+            into the circuits specified by programs, following the ordering
             dictated by `symbol_names`.
         pauli_sums: `tf.Tensor` of strings with shape [batch_size, n_ops]
             containing the string representation of the operators that will
@@ -127,7 +127,7 @@ def mps_1d_sampled_expectation(programs,
             `programs`.
         symbol_values: `tf.Tensor` of real numbers with shape
             [batch_size, n_params] specifying parameter values to resolve
-            into the circuits specificed by programs, following the ordering
+            into the circuits specified by programs, following the ordering
             dictated by `symbol_names`.
         pauli_sums: `tf.Tensor` of strings with shape [batch_size, n_ops]
             containing the string representation of the operators that will

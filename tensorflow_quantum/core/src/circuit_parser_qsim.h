@@ -72,7 +72,7 @@ tensorflow::Status QsimCircuitFromProgram(
     const absl::flat_hash_map<std::string, std::pair<int, float>>& param_map,
     const int num_qubits, qsim::Circuit<qsim::Cirq::GateCirq<float>>* circuit,
     std::vector<qsim::GateFused<qsim::Cirq::GateCirq<float>>>* fused_circuit,
-    std::vector<GateMetaData>* metdata = nullptr);
+    std::vector<GateMetaData>* metadata = nullptr);
 
 // parse a serialized Cirq program into a qsim representation.
 // ingests a Cirq Circuit proto and produces a resolved Noisy qsim Circuit.

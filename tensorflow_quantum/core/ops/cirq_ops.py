@@ -437,7 +437,7 @@ def _get_cirq_samples(sampler=cirq.Simulator()):
         symbol labeled 'b' and 1 into the symbol labeled 'c'. Then it would
         draw 100 samples from the circuit.
 
-        Note: In the case of circuits with varying size, all nonexistant
+        Note: In the case of circuits with varying size, all nonexistent
         samples for a particular circuit are padded with -2.
 
         Args:

@@ -19,7 +19,7 @@
 # For testing, this workflow can be invoked manually from the GitHub page at
 # https://github.com/tensorflow/quantum/actions/workflows/ci-nightly-cirq-test.yaml
 # Clicking the "Run workflow" button there will present a form interface with
-# options for overridding some of the parameters for the run.
+# options for overriding some of the parameters for the run.
 
 # yamllint disable rule:line-length
 

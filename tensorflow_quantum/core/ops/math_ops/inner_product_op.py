@@ -46,7 +46,7 @@ def _inner_product_grad(programs, symbol_names, symbol_values, other_programs,
             `programs`.
         symbol_values: `tf.Tensor` of real numbers with shape
             [batch_size, n_params] specifying parameter values to resolve
-            into the circuits specificed by programs, following the ordering
+            into the circuits specified by programs, following the ordering
             dictated by `symbol_names`.
         other_programs: `tf.Tensor` of strings with shape [batch_size, n_others]
             containing the string representations of the circuits with which to
@@ -122,7 +122,7 @@ def inner_product(programs, symbol_names, symbol_values, other_programs):
             `programs`.
         symbol_values: `tf.Tensor` of real numbers with shape
             [batch_size, n_params] specifying parameter values to resolve
-            into the circuits specificed by programs, following the ordering
+            into the circuits specified by programs, following the ordering
             dictated by `symbol_names`.
         other_programs: `tf.Tensor` of strings with shape [batch_size, n_others]
             containing the string representations of the circuits with which to

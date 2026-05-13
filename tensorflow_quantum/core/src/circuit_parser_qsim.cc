@@ -102,7 +102,7 @@ inline Status ParseProtoControls(const Operation& op,
 
   if (control_toks.size() != control_v_toks.size()) {
     return Status(absl::StatusCode::kInvalidArgument,
-                  "Mistmatched number of control qubits and control values.");
+                  "Mismatched number of control qubits and control values.");
   }
   if (control_toks.empty()) {
     return ::tensorflow::Status();
@@ -121,7 +121,7 @@ inline Status ParseProtoControls(const Operation& op,
     valid = absl::SimpleAtoi(tok, &tmp);
     if (!valid) {
       return Status(absl::StatusCode::kInvalidArgument,
-                    "Unparseable control value: " + std::string(tok));
+                    "Unparsable control value: " + std::string(tok));
     }
     control_values->push_back(tmp);
   }
@@ -146,7 +146,7 @@ inline Status OptionalInsertControls(const Operation& op,
 }
 
 // series of fixed signature gate builders.
-// there is no need to error check for unparseable symbols
+// there is no need to error check for unparsable symbols
 // or proto args not being present. Those errors are caught
 // upstream.
 

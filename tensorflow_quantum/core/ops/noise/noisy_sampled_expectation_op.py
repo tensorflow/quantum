@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""Module for high performance noisy circuit sampled epxectation ops."""
+"""Module for high performance noisy circuit sampled expectation ops."""
 import os
 import tensorflow as tf
 from tensorflow_quantum.core.ops.load_module import load_module
@@ -74,7 +74,7 @@ def sampled_expectation(programs, symbol_names, symbol_values, pauli_sums,
             `programs`.
         symbol_values: `tf.Tensor` of real numbers with shape
             [batch_size, n_params] specifying parameter values to resolve
-            into the circuits specificed by programs, following the ordering
+            into the circuits specified by programs, following the ordering
             dictated by `symbol_names`.
         pauli_sums: `tf.Tensor` of strings with shape [batch_size, n_ops]
             containing the string representation of the operators that will

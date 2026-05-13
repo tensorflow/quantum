@@ -327,7 +327,7 @@ class OpSerializerTest(tf.test.TestCase, parameterized.TestCase):
 
     @parameterized.parameters([cirq.GridQubit(1, 2), cirq.LineQubit(4)])
     def test_to_proto_not_required_ok(self, q):
-        """Test non require arg absense succeeds."""
+        """Test non require arg absence succeeds."""
         serializer = op_serializer.GateOpSerializer(
             gate_type=GateWithProperty,
             serialized_gate_id='my_gate',
