@@ -57,7 +57,6 @@ python -m piptools compile -q \
   --no-strip-extras \
   --no-emit-index-url \
   -o requirements.txt \
-  requirements.in \
   "${constraints[@]}"
 
 echo "Done."
