@@ -217,8 +217,6 @@ write_bazelrc "build --host_per_file_copt=external/eigen/.*@-Wno-maybe-uninitial
 
 # The following warnings come from qsim.
 # TODO: fix the code in qsim & update TFQ to use the updated version.
-write_bazelrc "build --per_file_copt=tensorflow_quantum/core/ops/noise/tfq_.*@-Wno-unused-but-set-variable"
-write_bazelrc "build --host_per_file_copt=tensorflow_quantum/core/ops/noise/tfq_.*@-Wno-unused-but-set-variable"
 write_bazelrc "build --per_file_copt=tensorflow_quantum/core/ops/math_ops/tfq_.*@-Wno-deprecated-declarations"
 write_bazelrc "build --host_per_file_copt=tensorflow_quantum/core/ops/math_ops/tfq_.*@-Wno-deprecated-declarations"
 

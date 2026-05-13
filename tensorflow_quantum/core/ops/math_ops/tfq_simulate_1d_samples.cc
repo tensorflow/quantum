@@ -107,9 +107,9 @@ class TfqSimulateMPS1DSamplesOp : public tensorflow::OpKernel {
 
     // Find largest circuit for tensor size padding and allocate
     // the output tensor.
-    int max_num_qubits = 0;
-    int min_num_qubits = 1 << 30;
-    for (const int num : num_qubits) {
+    uint64_t max_num_qubits = 0;
+    uint64_t min_num_qubits = 1 << 30;
+    for (const uint64_t num : num_qubits) {
       max_num_qubits = std::max(max_num_qubits, num);
       min_num_qubits = std::min(min_num_qubits, num);
     }
@@ -118,7 +118,7 @@ class TfqSimulateMPS1DSamplesOp : public tensorflow::OpKernel {
                 tensorflow::errors::InvalidArgument(
                     "All input circuits require minimum 3 qubits."));
 
-    const int output_dim_size = maps.size();
+    const size_t output_dim_size = maps.size();
     tensorflow::TensorShape output_shape;
     output_shape.AddDim(output_dim_size);
     output_shape.AddDim(num_samples);
@@ -142,7 +142,7 @@ class TfqSimulateMPS1DSamplesOp : public tensorflow::OpKernel {
   int bond_dim_;
 
   void ComputeSmall(const std::vector<int>& num_qubits,
-                    const int max_num_qubits, const int num_samples,
+                    const uint64_t max_num_qubits, const int num_samples,
                     const std::vector<QsimCircuit>& unfused_circuits,
                     tensorflow::OpKernelContext* context,
                     tensorflow::TTypes<int8_t, 3>::Tensor* output_tensor) {
@@ -154,7 +154,7 @@ class TfqSimulateMPS1DSamplesOp : public tensorflow::OpKernel {
     random_gen.Init(tensorflow::random::New64(), tensorflow::random::New64());
 
     auto DoWork = [&](int start, int end) {
-      int largest_nq = 1;
+      uint64_t largest_nq = 1;
       // Note: ForArgs in MPSSimulator and MPSStateState are currently unused.
       // So, this 1 is a dummy for qsim::For.
       Simulator sim = Simulator(1);
@@ -167,7 +167,7 @@ class TfqSimulateMPS1DSamplesOp : public tensorflow::OpKernel {
       tensorflow::random::SimplePhilox rand_source(&local_gen);
 
       for (int i = start; i < end; i++) {
-        int nq = num_qubits[i];
+        uint64_t nq = num_qubits[i];
 
         if (nq > largest_nq) {
           // need to switch to larger statespace.
@@ -190,7 +190,7 @@ class TfqSimulateMPS1DSamplesOp : public tensorflow::OpKernel {
                   &results);
 
         for (int j = 0; j < num_samples; j++) {
-          int64_t q_ind = 0;
+          uint64_t q_ind = 0;
           while (q_ind < max_num_qubits - nq) {
             (*output_tensor)(i, j, static_cast<ptrdiff_t>(q_ind)) = -2;
             q_ind++;

@@ -98,12 +98,12 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
         programs.size(), num_cycles, construct_f);
     OP_REQUIRES_OK(context, parse_status);
 
-    int max_num_qubits = 0;
-    for (const int num : num_qubits) {
+    uint64_t max_num_qubits = 0;
+    for (const uint64_t num : num_qubits) {
       max_num_qubits = std::max(max_num_qubits, num);
     }
 
-    const int output_dim_size = maps.size();
+    const size_t output_dim_size = maps.size();
     tensorflow::TensorShape output_shape;
     output_shape.AddDim(output_dim_size);
     output_shape.AddDim(num_samples);
@@ -133,7 +133,7 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
 
  private:
   void ComputeLarge(const std::vector<int>& num_qubits,
-                    const int max_num_qubits, const int num_samples,
+                    const uint64_t max_num_qubits, const int num_samples,
                     const std::vector<NoisyQsimCircuit>& ncircuits,
                     tensorflow::OpKernelContext* context,
                     tensorflow::TTypes<int8_t, 3>::Tensor* output_tensor) {
@@ -146,7 +146,7 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
                                          qsim::MultiQubitGateFuser, Simulator>;
 
     // Begin simulation.
-    int largest_nq = 1;
+    uint64_t largest_nq = 1;
     Simulator sim = Simulator(tfq_for);
     StateSpace ss = StateSpace(tfq_for);
     auto sv = ss.Create(largest_nq);
@@ -161,7 +161,7 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
     // we no longer parallelize over circuits. Each time we encounter a
     // a larger circuit we will grow the Statevector as nescessary.
     for (size_t i = 0; i < ncircuits.size(); i++) {
-      int nq = num_qubits[i];
+      uint64_t nq = num_qubits[i];
 
       if (nq > largest_nq) {
         // need to switch to larger statespace.
@@ -182,7 +182,7 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
 
         QTSimulator::RunOnce(param, ncircuits[i], rand_source.Rand64(), ss, sim,
                              sv, gathered_samples);
-        int q_ind = 0;
+        uint64_t q_ind = 0;
         uint64_t mask = 1;
         bool val = 0;
         while (q_ind < nq) {
@@ -202,7 +202,7 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
   }
 
   void ComputeSmall(const std::vector<int>& num_qubits,
-                    const int max_num_qubits, const int num_samples,
+                    const uint64_t max_num_qubits, const int num_samples,
                     const std::vector<NoisyQsimCircuit>& ncircuits,
                     tensorflow::OpKernelContext* context,
                     tensorflow::TTypes<int8_t, 3>::Tensor* output_tensor) {
@@ -242,7 +242,7 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
     auto DoWork = [&](int start, int end) {
       // Begin simulation.
       const auto tfq_for = qsim::SequentialFor(1);
-      int largest_nq = 1;
+      uint64_t largest_nq = 1;
       Simulator sim = Simulator(tfq_for);
       StateSpace ss = StateSpace(tfq_for);
       auto sv = ss.Create(largest_nq);
@@ -254,7 +254,7 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
       tensorflow::random::SimplePhilox rand_source(&local_gen);
 
       for (size_t i = 0; i < ncircuits.size(); i++) {
-        int nq = num_qubits[i];
+        uint64_t nq = num_qubits[i];
         int j = start > 0 ? offset_prefix_sum[start - 1][i] : 0;
         int needed_samples = offset_prefix_sum[start][i] - j;
         if (needed_samples <= 0) {
@@ -279,7 +279,7 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
           QTSimulator::RunOnce(param, ncircuits[i], rand_source.Rand64(), ss,
                                sim, sv, gathered_samples);
 
-          int q_ind = 0;
+          uint64_t q_ind = 0;
           uint64_t mask = 1;
           bool val = 0;
           while (q_ind < nq) {

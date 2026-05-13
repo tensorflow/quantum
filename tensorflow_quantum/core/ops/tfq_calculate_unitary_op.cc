@@ -86,14 +86,14 @@ class TfqCalculateUnitaryOp : public tensorflow::OpKernel {
 
     // Find largest circuit for tensor size padding and allocate
     // the output tensor.
-    int max_num_qubits = 0;
-    for (const int num : num_qubits) {
+    uint64_t max_num_qubits = 0;
+    for (const uint64_t num : num_qubits) {
       max_num_qubits = std::max(max_num_qubits, num);
     }
 
     // TODO(pmassey): Investigate creating a matrix that isn't just the maximum
     // required size.
-    const int output_dim_size = maps.size();
+    const size_t output_dim_size = maps.size();
     tensorflow::TensorShape output_shape;
     output_shape.AddDim(output_dim_size);
     output_shape.AddDim(1 << max_num_qubits);
@@ -110,14 +110,14 @@ class TfqCalculateUnitaryOp : public tensorflow::OpKernel {
     using Unitary = UnitarySpace::Unitary;
 
     // Begin simulation.
-    int largest_nq = 1;
+    uint64_t largest_nq = 1;
     Unitary u = UnitarySpace(tfq_for).CreateUnitary(largest_nq);
 
     // Simulate programs one by one. Parallelizing over state vectors
     // we no longer parallelize over circuits. Each time we encounter a
     // a larger circuit we will grow the unitary as nescessary.
     for (size_t i = 0; i < fused_circuits.size(); i++) {
-      int nq = num_qubits[i];
+      uint64_t nq = num_qubits[i];
       UCalculator sim = UCalculator(tfq_for);
       UnitarySpace us = UnitarySpace(tfq_for);
       if (nq > largest_nq) {

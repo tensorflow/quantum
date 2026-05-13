@@ -166,8 +166,8 @@ class TfqInnerProductGradOp : public tensorflow::OpKernel {
                          "No symbols are allowed in these circuits.")));
     }
 
-    int max_num_qubits = 0;
-    for (const int num : num_qubits) {
+    uint64_t max_num_qubits = 0;
+    for (const uint64_t num : num_qubits) {
       max_num_qubits = std::max(max_num_qubits, num);
     }
 
@@ -224,7 +224,7 @@ class TfqInnerProductGradOp : public tensorflow::OpKernel {
     using StateSpace = Simulator::StateSpace;
 
     // Begin simulation.
-    int largest_nq = 1;
+    uint64_t largest_nq = 1;
     Simulator sim = Simulator(tfq_for);
     StateSpace ss = StateSpace(tfq_for);
     auto sv = ss.Create(largest_nq);
@@ -236,7 +236,7 @@ class TfqInnerProductGradOp : public tensorflow::OpKernel {
     // a larger circuit we will grow the Statevector as necessary.
     for (std::vector<std::vector<qsim::GateFused<QsimGate>>>::size_type i = 0;
          i < fused_circuits.size(); i++) {
-      int nq = num_qubits[i];
+      uint64_t nq = num_qubits[i];
       if (nq > largest_nq) {
         // need to switch to larger statespace.
         largest_nq = nq;
@@ -315,7 +315,7 @@ class TfqInnerProductGradOp : public tensorflow::OpKernel {
   }
 
   void ComputeSmall(
-      const std::vector<int>& num_qubits, const int max_num_qubits,
+      const std::vector<int>& num_qubits, const uint64_t max_num_qubits,
       const std::vector<SymbolMap>& maps,
       const std::vector<QsimCircuit>& qsim_circuits,
       const std::vector<QsimFusedCircuit>& fused_circuits,
@@ -335,7 +335,7 @@ class TfqInnerProductGradOp : public tensorflow::OpKernel {
     auto DoWork = [&](int start, int end) {
       int old_batch_index = -2;
       int cur_batch_index = -1;
-      int largest_nq = 1;
+      uint64_t largest_nq = 1;
       int cur_internal_index;
 
       Simulator sim = Simulator(tfq_for);
@@ -348,7 +348,7 @@ class TfqInnerProductGradOp : public tensorflow::OpKernel {
         cur_batch_index = i / output_dim_internal_size;
         cur_internal_index = i % output_dim_internal_size;
 
-        const int nq = num_qubits[cur_batch_index];
+        const uint64_t nq = num_qubits[cur_batch_index];
 
         if (cur_batch_index != old_batch_index) {
           // We've run into a new state vector we must compute.

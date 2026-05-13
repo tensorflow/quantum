@@ -64,7 +64,7 @@ class TfqCircuitAppendOp : public tensorflow::OpKernel {
       }
     };
 
-    const int output_dim_size = programs.size();
+    const size_t output_dim_size = programs.size();
     const int block_size = GetBlockSize(context, output_dim_size);
     context->device()
         ->tensorflow_cpu_worker_threads()

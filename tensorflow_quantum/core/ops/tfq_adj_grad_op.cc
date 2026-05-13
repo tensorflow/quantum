@@ -144,8 +144,8 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
             context->input(4).dim_size(1), " gradient entries and ",
             context->input(3).dim_size(1), " paulis per circuit.")));
 
-    int max_num_qubits = 0;
-    for (const int num : num_qubits) {
+    uint64_t max_num_qubits = 0;
+    for (const uint64_t num : num_qubits) {
       max_num_qubits = std::max(max_num_qubits, num);
     }
 
@@ -171,7 +171,7 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
 
  private:
   void ComputeSmall(
-      const std::vector<int>& num_qubits, const int max_num_qubits,
+      const std::vector<int>& num_qubits, const uint64_t max_num_qubits,
       const std::vector<QsimCircuit>& qsim_circuits,
       const std::vector<SymbolMap>& maps,
       const std::vector<std::vector<qsim::GateFused<QsimGate>>>& full_fuse,
@@ -189,7 +189,7 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
 
     auto DoWork = [&](int start, int end) {
       // Begin simulation.
-      int largest_nq = 1;
+      uint64_t largest_nq = 1;
       Simulator sim = Simulator(tfq_for);
       StateSpace ss = StateSpace(tfq_for);
       auto sv = ss.Create(largest_nq);
@@ -197,7 +197,7 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
       auto scratch2 = ss.Create(largest_nq);
 
       for (int i = start; i < end; i++) {
-        int nq = num_qubits[i];
+        uint64_t nq = num_qubits[i];
         if (nq > largest_nq) {
           // need to switch to larger statespace.
           largest_nq = nq;
@@ -301,7 +301,7 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
     using StateSpace = Simulator::StateSpace;
 
     // Begin simulation.
-    int largest_nq = 1;
+    uint64_t largest_nq = 1;
     Simulator sim = Simulator(tfq_for);
     StateSpace ss = StateSpace(tfq_for);
     auto sv = ss.Create(largest_nq);
@@ -309,7 +309,7 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
     auto scratch2 = ss.Create(largest_nq);
 
     for (size_t i = 0; i < partial_fused_circuits.size(); i++) {
-      int nq = num_qubits[i];
+      uint64_t nq = num_qubits[i];
 
       if (nq > largest_nq) {
         // need to switch to larger statespace.
