@@ -17,6 +17,7 @@ import glob
 import nbformat
 import yapf
 
+
 def format_notebooks():
     """Format tutorial notebooks from the repo root."""
     notebook_paths = glob.glob("docs/tutorials/*.ipynb")
@@ -29,8 +30,8 @@ def format_notebooks():
             lines = cell.get('source')
             # This will safely skip over cells containing !% magic
             try:
-                fmt_lines = yapf.yapf_api.FormatCode(
-                    ''.join(lines), style_config="google")[0]
+                fmt_lines = yapf.yapf_api.FormatCode(''.join(lines),
+                                                     style_config="google")[0]
             except (SyntaxError, yapf.yapflib.errors.YapfError):
                 continue
             # Google style always adds an EOF newline; undo this.
