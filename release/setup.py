@@ -61,7 +61,22 @@ def read_version():
 
 CUR_VERSION = read_version()
 
-DOCLINES = __doc__.split("\n")
+
+def read_readme():
+    """Return the project README contents for PyPI."""
+
+    setup_dir = Path(__file__).resolve().parent
+
+    # setup.py runs from release/ in the source tree, but it is copied to the
+    # package root in the wheel build tmpdir.
+    if (setup_dir / "tensorflow_quantum").is_dir():
+        readme_path = setup_dir / "README.md"
+    else:
+        readme_path = setup_dir.parent / "README.md"
+
+    if not readme_path.is_file():
+        raise RuntimeError(f"Could not find README.md at: {readme_path}")
+    return readme_path.read_text(encoding="utf-8")
 
 
 class InstallPlatlib(install):
@@ -121,7 +136,7 @@ setup(
     name=PROJECT_NAME,
     version=BUILD_VERSION,
     description="Library for hybrid quantum-classical machine learning.",
-    long_description="\n".join(DOCLINES[2:]),
+    long_description=read_readme(),
     long_description_content_type="text/markdown",
     author="The TensorFlow Quantum Authors",
     author_email="tensorflow-quantum-team@google.com",

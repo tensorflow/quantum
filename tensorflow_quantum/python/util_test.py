@@ -33,8 +33,8 @@ from tensorflow_quantum.python import util
 
 def _single_to_tensor(item):
     if not isinstance(item, (cirq.PauliSum, cirq.PauliString, cirq.Circuit)):
-        raise TypeError(
-            f"Item must be a Circuit or PauliSum. Got {type(item)}.")
+        raise TypeError("Item must be a Circuit, PauliString, or PauliSum."
+                        f" Got {type(item)}.")
     if isinstance(item, (cirq.PauliSum, cirq.PauliString)):
         return serializer.serialize_paulisum(item).SerializeToString(
             deterministic=True)
@@ -83,6 +83,61 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
             len(mapping_1.keys()),
             len(serializer.SERIALIZER.supported_gate_types()) -
             len(util.get_supported_gates()))
+
+    @parameterized.named_parameters(
+        ('without_channels', False),
+        ('with_channels', True),
+    )
+    def test_random_circuit_resolver_batch_shapes_and_types(
+            self, include_channels):
+        """Confirm random_circuit_resolver_batch returns the expected types."""
+        qubits = cirq.GridQubit.rect(1, 3)
+        batch_size = 4
+
+        circuits, resolvers = util.random_circuit_resolver_batch(
+            qubits, batch_size, n_moments=5, include_channels=include_channels)
+
+        self.assertLen(circuits, batch_size)
+        self.assertLen(resolvers, batch_size)
+        for circuit in circuits:
+            self.assertIsInstance(circuit, cirq.Circuit)
+            self.assertFalse(cirq.is_parameterized(circuit))
+        for resolver in resolvers:
+            self.assertIsInstance(resolver, cirq.ParamResolver)
+            self.assertEmpty(resolver.param_dict)
+
+    @parameterized.named_parameters(
+        ('without_channels', False),
+        ('with_channels', True),
+    )
+    def test_random_symbol_circuit_resolver_batch_shapes_and_types(
+            self, include_channels):
+        """Confirm random_symbol_circuit_resolver_batch returns
+        the expected types."""
+        qubits = cirq.GridQubit.rect(1, 3)
+        symbols = ['alpha', 'beta', 'gamma']
+        batch_size = 4
+
+        circuits, resolvers = util.random_symbol_circuit_resolver_batch(
+            qubits,
+            symbols,
+            batch_size,
+            n_moments=5,
+            include_channels=include_channels)
+
+        self.assertLen(circuits, batch_size)
+        self.assertLen(resolvers, batch_size)
+        for circuit in circuits:
+            self.assertIsInstance(circuit, cirq.Circuit)
+            self.assertSetEqual(set(util.get_circuit_symbols(circuit)),
+                                set(symbols))
+        for resolver in resolvers:
+            self.assertIsInstance(resolver, cirq.ParamResolver)
+            self.assertEqual(set(resolver.param_dict.keys()), set(symbols))
+            self.assertTrue(
+                all(
+                    isinstance(value, float)
+                    for value in resolver.param_dict.values()))
 
     @parameterized.parameters(_items_to_tensorize())
     def test_convert_to_tensor(self, item):
@@ -346,6 +401,59 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
         self.assertFalse(
             util.gate_approx_eq(
                 cirq.X, cirq.ops.ControlledGate(cirq.X, 2, [1, 0], [2, 2])))
+
+    def test_gate_approx_eq_channels(self):
+        """Check valid TFQ channels for approximate equality."""
+        atol = 1e-2
+
+        test_cases = [
+            (cirq.DepolarizingChannel, (0.1,), (0.105,), (0.2,)),
+            (cirq.AsymmetricDepolarizingChannel, (0.1, 0.2, 0.3),
+             (0.105, 0.195, 0.305), (0.2, 0.2, 0.3)),
+            (cirq.GeneralizedAmplitudeDampingChannel, (0.1, 0.2),
+             (0.105, 0.205), (0.2, 0.2)),
+            (cirq.AmplitudeDampingChannel, (0.1,), (0.105,), (0.2,)),
+            (cirq.PhaseDampingChannel, (0.1,), (0.105,), (0.2,)),
+            (cirq.PhaseFlipChannel, (0.1,), (0.105,), (0.2,)),
+            (cirq.BitFlipChannel, (0.1,), (0.105,), (0.2,)),
+        ]
+
+        for channel, exact_params, approx_params, unequal_params in test_cases:
+            with self.subTest(channel=channel.__name__):
+                gate1 = channel(*exact_params)
+                gate2_exact = channel(*exact_params)
+                gate2_approx = channel(*approx_params)
+                gate2_not_equal = channel(*unequal_params)
+
+                # Exact equality
+                self.assertTrue(
+                    util.gate_approx_eq(gate1, gate2_exact, atol=atol))
+                # Approximate equality
+                self.assertTrue(
+                    util.gate_approx_eq(gate1, gate2_approx, atol=atol))
+                # Not equal
+                self.assertFalse(
+                    util.gate_approx_eq(gate1, gate2_not_equal, atol=atol))
+
+        # ResetChannel
+        self.assertTrue(
+            util.gate_approx_eq(cirq.ResetChannel(),
+                                cirq.ResetChannel(),
+                                atol=atol))
+
+        # Mismatched types
+        self.assertFalse(
+            util.gate_approx_eq(cirq.DepolarizingChannel(0.1),
+                                cirq.BitFlipChannel(0.1),
+                                atol=atol))
+        self.assertFalse(
+            util.gate_approx_eq(cirq.DepolarizingChannel(0.1),
+                                cirq.X,
+                                atol=atol))
+        self.assertFalse(
+            util.gate_approx_eq(cirq.X,
+                                cirq.DepolarizingChannel(0.1),
+                                atol=atol))
 
     def test_gate_approx_eq_error(self):
         """Confirms that bad inputs cause an error to be raised."""
