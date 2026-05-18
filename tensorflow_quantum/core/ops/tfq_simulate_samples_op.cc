@@ -153,7 +153,7 @@ class TfqSimulateSamplesOp : public tensorflow::OpKernel {
 
     // Simulate programs one by one. Parallelizing over state vectors
     // we no longer parallelize over circuits. Each time we encounter a
-    // a larger circuit we will grow the Statevector as nescessary.
+    // a larger circuit we will grow the Statevector as necessary.
     for (size_t i = 0; i < fused_circuits.size(); i++) {
       uint64_t nq = num_qubits[i];
 
