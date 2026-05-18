@@ -93,7 +93,7 @@ class AppendCircuitOpTest(tf.test.TestCase, parameterized.TestCase):
     def test_append_circuit(self, max_n_bits, symbols, n_circuits):
         """Generate a bunch of circuits of different lengths acting on different
         numbers of qubits and append them using our op, checking that results
-        are consistent with the native cirq method.
+        are consistant with the native cirq method.
         """
         base_circuits = []
         circuits_to_append = []
