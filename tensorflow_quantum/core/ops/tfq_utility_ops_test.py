@@ -167,11 +167,10 @@ class AppendCircuitOpTest(tf.test.TestCase, parameterized.TestCase):
     def test_padded_to_ragged2d(self, padded_array):
         """Test for padded_to_ragged2d utility."""
         tensor_arr = tf.constant(padded_array, dtype=tf.float32)
-        col_mask = tf.abs(tensor_arr[:, 0]) < 1.1
-        masked = tf.ragged.boolean_mask(tensor_arr, col_mask)
-        mask = tf.abs(masked) < 1.1
-        expected = tf.ragged.boolean_mask(masked, mask)
-
+        row_mask = tf.abs(tensor_arr[:, :, 0]) < 1.1
+        masked_rows = tf.ragged.boolean_mask(tensor_arr, row_mask)
+        element_mask = tf.abs(masked_rows) < 1.1
+        expected = tf.ragged.boolean_mask(masked_rows, element_mask)
         actual = tfq_utility_ops.padded_to_ragged2d(
             np.array(padded_array, dtype=float))
         self.assertAllEqual(expected, actual)
