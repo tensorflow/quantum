@@ -201,7 +201,7 @@ class TfqSimulateSamplesOp : public tensorflow::OpKernel {
     tensorflow::GuardedPhiloxRandom random_gen;
     random_gen.Init(tensorflow::random::New64(), tensorflow::random::New64());
 
-    auto DoWork = [&](int start, int end) {
+    auto DoWork = [&](int64_t start, int64_t end) {
       uint64_t largest_nq = 1;
       Simulator sim = Simulator(tfq_for);
       StateSpace ss = StateSpace(tfq_for);
@@ -210,7 +210,7 @@ class TfqSimulateSamplesOp : public tensorflow::OpKernel {
       auto local_gen = random_gen.ReserveSamples32(fused_circuits.size() + 1);
       tensorflow::random::SimplePhilox rand_source(&local_gen);
 
-      for (int i = start; i < end; i++) {
+      for (int64_t i = start; i < end; i++) {
         uint64_t nq = num_qubits[i];
 
         if (nq > largest_nq) {

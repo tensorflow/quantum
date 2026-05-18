@@ -96,8 +96,8 @@ class TfqCalculateUnitaryOp : public tensorflow::OpKernel {
     const size_t output_dim_size = maps.size();
     tensorflow::TensorShape output_shape;
     output_shape.AddDim(output_dim_size);
-    output_shape.AddDim(1 << max_num_qubits);
-    output_shape.AddDim(1 << max_num_qubits);
+    output_shape.AddDim(uint64_t(1) << max_num_qubits);
+    output_shape.AddDim(uint64_t(1) << max_num_qubits);
 
     tensorflow::Tensor *output = nullptr;
     OP_REQUIRES_OK(context, context->allocate_output(0, output_shape, &output));
@@ -137,8 +137,8 @@ class TfqCalculateUnitaryOp : public tensorflow::OpKernel {
         uint64_t crossover = uint64_t(1) << nq;
 
         for (uint64_t l = start; l < end; l++) {
-          uint64_t j = l / (1 << max_num_qubits);
-          uint64_t k = l % (1 << max_num_qubits);
+          uint64_t j = l / (uint64_t(1) << max_num_qubits);
+          uint64_t k = l % (uint64_t(1) << max_num_qubits);
           if (k < crossover && j < crossover) {
             output_tensor(static_cast<ptrdiff_t>(i), static_cast<ptrdiff_t>(j),
                           static_cast<ptrdiff_t>(k)) = us.GetEntry(u, k, j);
@@ -149,7 +149,7 @@ class TfqCalculateUnitaryOp : public tensorflow::OpKernel {
           }
         }
       };
-      const uint64_t num_cycles_copy = 10 * (1 << max_num_qubits);
+      const uint64_t num_cycles_copy = 10 * (uint64_t(1) << max_num_qubits);
       context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
           (uint64_t(1) << max_num_qubits) * (uint64_t(1) << max_num_qubits),
           num_cycles_copy, copy_f);

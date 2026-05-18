@@ -153,7 +153,7 @@ class TfqSimulateMPS1DSamplesOp : public tensorflow::OpKernel {
     tensorflow::GuardedPhiloxRandom random_gen;
     random_gen.Init(tensorflow::random::New64(), tensorflow::random::New64());
 
-    auto DoWork = [&](int start, int end) {
+    auto DoWork = [&](int64_t start, int64_t end) {
       uint64_t largest_nq = 1;
       // Note: ForArgs in MPSSimulator and MPSStateState are currently unused.
       // So, this 1 is a dummy for qsim::For.
@@ -166,7 +166,7 @@ class TfqSimulateMPS1DSamplesOp : public tensorflow::OpKernel {
       auto local_gen = random_gen.ReserveSamples32(unfused_circuits.size() + 1);
       tensorflow::random::SimplePhilox rand_source(&local_gen);
 
-      for (int i = start; i < end; i++) {
+      for (int64_t i = start; i < end; i++) {
         uint64_t nq = num_qubits[i];
 
         if (nq > largest_nq) {

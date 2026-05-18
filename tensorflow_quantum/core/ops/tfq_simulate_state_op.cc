@@ -95,7 +95,7 @@ class TfqSimulateStateOp : public tensorflow::OpKernel {
     const size_t output_dim_size = maps.size();
     tensorflow::TensorShape output_shape;
     output_shape.AddDim(output_dim_size);
-    output_shape.AddDim(1 << max_num_qubits);
+    output_shape.AddDim(uint64_t(1) << max_num_qubits);
 
     tensorflow::Tensor* output = nullptr;
     OP_REQUIRES_OK(context, context->allocate_output(0, output_shape, &output));
@@ -180,12 +180,12 @@ class TfqSimulateStateOp : public tensorflow::OpKernel {
     using Simulator = qsim::Simulator<const qsim::SequentialFor&>;
     using StateSpace = Simulator::StateSpace;
 
-    auto DoWork = [&](int start, int end) {
+    auto DoWork = [&](int64_t start, int64_t end) {
       uint64_t largest_nq = 1;
       Simulator sim = Simulator(tfq_for);
       StateSpace ss = StateSpace(tfq_for);
       auto sv = ss.Create(largest_nq);
-      for (int i = start; i < end; i++) {
+      for (int64_t i = start; i < end; i++) {
         uint64_t nq = num_qubits[i];
 
         if (nq > largest_nq) {

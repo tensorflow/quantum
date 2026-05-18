@@ -160,7 +160,7 @@ class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
 
     Status compute_status = ::tensorflow::Status();
     auto c_lock = tensorflow::mutex();
-    auto DoWork = [&](int start, int end) {
+    auto DoWork = [&](int64_t start, int64_t end) {
       int old_batch_index = -2;
       int cur_batch_index = -1;
       uint64_t largest_nq = 1;
@@ -172,7 +172,7 @@ class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
       StateSpace ss = StateSpace(1);
       auto sv = ss.Create(largest_nq, bond_dim_);
       auto scratch = ss.Create(largest_nq, bond_dim_);
-      for (int i = start; i < end; i++) {
+      for (int64_t i = start; i < end; i++) {
         cur_batch_index = i / output_dim_op_size;
         cur_op_index = i % output_dim_op_size;
 
