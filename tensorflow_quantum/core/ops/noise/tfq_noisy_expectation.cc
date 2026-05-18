@@ -118,7 +118,7 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
                                                 NoisyQsimCircuit());
 
     Status parse_status = ::tensorflow::Status();
-    auto p_lock = tensorflow::mutex();
+    auto p_lock = absl::Mutex();
     auto construct_f = [&](int start, int end) {
       for (int i = start; i < end; i++) {
         Status local = NoisyQsimCircuitFromProgram(
@@ -269,7 +269,7 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
                                          qsim::MultiQubitGateFuser, Simulator>;
 
     const int output_dim_batch_size = output_tensor->dimension(0);
-    std::vector<tensorflow::mutex> batch_locks(output_dim_batch_size);
+    std::vector<absl::Mutex> batch_locks(output_dim_batch_size);
 
     const int num_threads = context->device()
                                 ->tensorflow_cpu_worker_threads()
@@ -293,7 +293,7 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
     random_gen.Init(tensorflow::random::New64(), tensorflow::random::New64());
 
     Status compute_status = ::tensorflow::Status();
-    auto c_lock = tensorflow::mutex();
+    auto c_lock = absl::Mutex();
     auto DoWork = [&](int start, int end) {
       // Begin simulation.
       const auto tfq_for = qsim::SequentialFor(1);
@@ -368,12 +368,12 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
           }
           if (break_loop) {
             // Lock writing to this batch index in output_tensor.
-            batch_locks[i].lock();
+            batch_locks[i].Lock();
             for (size_t j = 0; j < num_samples[i].size(); j++) {
               rolling_sums[j] /= num_samples[i][j];
               (*output_tensor)(i, j) += static_cast<float>(rolling_sums[j]);
             }
-            batch_locks[i].unlock();
+            batch_locks[i].Unlock();
             break;
           }
         }

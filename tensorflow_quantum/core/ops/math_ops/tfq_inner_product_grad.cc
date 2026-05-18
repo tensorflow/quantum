@@ -118,7 +118,7 @@ class TfqInnerProductGradOp : public tensorflow::OpKernel {
         programs.size(), std::vector<GradientOfGate>({}));
 
     Status parse_status = ::tensorflow::Status();
-    auto p_lock = tensorflow::mutex();
+    auto p_lock = absl::Mutex();
     auto construct_f = [&](int start, int end) {
       for (int i = start; i < end; i++) {
         Status local = QsimCircuitFromProgram(

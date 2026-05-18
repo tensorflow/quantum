@@ -106,7 +106,7 @@ class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
     std::vector<QsimFusedCircuit> fused_circuits(programs.size(),
                                                  QsimFusedCircuit({}));
     Status parse_status = ::tensorflow::Status();
-    auto p_lock = tensorflow::mutex();
+    auto p_lock = absl::Mutex();
     auto construct_f = [&](int start, int end) {
       for (int i = start; i < end; i++) {
         Status local =
@@ -159,7 +159,7 @@ class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
     const int output_dim_op_size = output_tensor->dimension(1);
 
     Status compute_status = ::tensorflow::Status();
-    auto c_lock = tensorflow::mutex();
+    auto c_lock = absl::Mutex();
     auto DoWork = [&](int start, int end) {
       int old_batch_index = -2;
       int cur_batch_index = -1;

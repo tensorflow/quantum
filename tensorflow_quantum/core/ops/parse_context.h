@@ -19,9 +19,9 @@ limitations under the License.
 // Syncs a threads work status with some global status.
 #define NESTED_FN_STATUS_SYNC(global_status, local_status, global_lock) \
   if (TF_PREDICT_FALSE(!local_status.ok())) {                           \
-    global_lock.lock();                                                 \
+    global_lock.Lock();                                                 \
     global_status = local_status;                                       \
-    global_lock.unlock();                                               \
+    global_lock.Unlock();                                               \
     return;                                                             \
   }
 
