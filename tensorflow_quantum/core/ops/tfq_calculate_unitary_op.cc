@@ -135,10 +135,11 @@ class TfqCalculateUnitaryOp : public tensorflow::OpKernel {
       auto copy_f = [i, nq, max_num_qubits, &output_tensor, &us, &u](
                         uint64_t start, uint64_t end) {
         uint64_t crossover = uint64_t(1) << nq;
+        uint64_t divisor = uint64_t(1) << max_num_qubits;
 
         for (uint64_t l = start; l < end; l++) {
-          uint64_t j = l / (uint64_t(1) << max_num_qubits);
-          uint64_t k = l % (uint64_t(1) << max_num_qubits);
+          uint64_t j = l / divisor;
+          uint64_t k = l % divisor;
           if (k < crossover && j < crossover) {
             output_tensor(static_cast<ptrdiff_t>(i), static_cast<ptrdiff_t>(j),
                           static_cast<ptrdiff_t>(k)) = us.GetEntry(u, k, j);

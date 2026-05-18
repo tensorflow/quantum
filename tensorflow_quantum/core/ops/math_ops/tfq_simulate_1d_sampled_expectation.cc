@@ -187,8 +187,8 @@ class TfqSimulateMPS1DSampledExpectationOp : public tensorflow::OpKernel {
     Status compute_status = ::tensorflow::Status();
     auto c_lock = tensorflow::mutex();
     auto DoWork = [&](int64_t start, int64_t end) {
-      int old_batch_index = -2;
-      int cur_batch_index = -1;
+      int64_t old_batch_index = -2;
+      int64_t cur_batch_index = -1;
       uint64_t largest_nq = 1;
       int cur_op_index;
 

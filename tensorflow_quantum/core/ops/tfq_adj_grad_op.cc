@@ -187,7 +187,7 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
     using Simulator = qsim::Simulator<const qsim::SequentialFor&>;
     using StateSpace = Simulator::StateSpace;
 
-    auto DoWork = [&](int start, int end) {
+    auto DoWork = [&](int64_t start, int64_t end) {
       // Begin simulation.
       uint64_t largest_nq = 1;
       Simulator sim = Simulator(tfq_for);
@@ -196,7 +196,7 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
       auto scratch = ss.Create(largest_nq);
       auto scratch2 = ss.Create(largest_nq);
 
-      for (int i = start; i < end; i++) {
+      for (int64_t i = start; i < end; i++) {
         uint64_t nq = num_qubits[i];
         if (nq > largest_nq) {
           // need to switch to larger statespace.

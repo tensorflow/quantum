@@ -333,8 +333,8 @@ class TfqInnerProductGradOp : public tensorflow::OpKernel {
     const int output_dim_internal_size = other_fused_circuits[0].size();
 
     auto DoWork = [&](int64_t start, int64_t end) {
-      int old_batch_index = -2;
-      int cur_batch_index = -1;
+      int64_t old_batch_index = -2;
+      int64_t cur_batch_index = -1;
       uint64_t largest_nq = 1;
       int cur_internal_index;
 
