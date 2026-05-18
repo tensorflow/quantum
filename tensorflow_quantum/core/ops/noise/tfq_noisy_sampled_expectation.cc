@@ -120,8 +120,8 @@ class TfqNoisySampledExpectationOp : public tensorflow::OpKernel {
 
     Status parse_status = ::tensorflow::Status();
     auto p_lock = tensorflow::mutex();
-    auto construct_f = [&](int start, int end) {
-      for (int i = start; i < end; i++) {
+    auto construct_f = [&](int64_t start, int64_t end) {
+      for (int64_t i = start; i < end; i++) {
         Status local = NoisyQsimCircuitFromProgram(
             programs[i], maps[i], num_qubits[i], false, &qsim_circuits[i]);
         NESTED_FN_STATUS_SYNC(parse_status, local, p_lock);
@@ -302,7 +302,7 @@ class TfqNoisySampledExpectationOp : public tensorflow::OpKernel {
 
     Status compute_status = ::tensorflow::Status();
     auto c_lock = tensorflow::mutex();
-    auto DoWork = [&](int start, int end) {
+    auto DoWork = [&](int64_t start, int64_t end) {
       // Begin simulation.
       const auto tfq_for = qsim::SequentialFor(1);
       uint64_t largest_nq = 1;

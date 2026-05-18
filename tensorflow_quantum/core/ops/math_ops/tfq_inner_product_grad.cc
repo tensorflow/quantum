@@ -119,8 +119,8 @@ class TfqInnerProductGradOp : public tensorflow::OpKernel {
 
     Status parse_status = ::tensorflow::Status();
     auto p_lock = tensorflow::mutex();
-    auto construct_f = [&](int start, int end) {
-      for (int i = start; i < end; i++) {
+    auto construct_f = [&](int64_t start, int64_t end) {
+      for (int64_t i = start; i < end; i++) {
         Status local = QsimCircuitFromProgram(
             programs[i], maps[i], num_qubits[i], &qsim_circuits[i],
             &fused_circuits[i], &gate_meta[i]);
@@ -145,10 +145,10 @@ class TfqInnerProductGradOp : public tensorflow::OpKernel {
         std::vector<QsimFusedCircuit>(output_dim_internal_size,
                                       QsimFusedCircuit({})));
 
-    auto construct_f2 = [&](int start, int end) {
-      for (int i = start; i < end; i++) {
-        int ii = i / output_dim_internal_size;
-        int jj = i % output_dim_internal_size;
+    auto construct_f2 = [&](int64_t start, int64_t end) {
+      for (int64_t i = start; i < end; i++) {
+        int64_t ii = i / output_dim_internal_size;
+        int64_t jj = i % output_dim_internal_size;
         Status status = QsimCircuitFromProgram(
             other_programs[ii][jj], {}, num_qubits[ii],
             &other_qsim_circuits[ii][jj], &other_fused_circuits[ii][jj]);
@@ -336,7 +336,7 @@ class TfqInnerProductGradOp : public tensorflow::OpKernel {
       int64_t old_batch_index = -2;
       int64_t cur_batch_index = -1;
       uint64_t largest_nq = 1;
-      int cur_internal_index;
+      int64_t cur_internal_index;
 
       Simulator sim = Simulator(tfq_for);
       StateSpace ss = StateSpace(tfq_for);

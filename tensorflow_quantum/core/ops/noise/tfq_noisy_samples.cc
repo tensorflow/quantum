@@ -85,8 +85,8 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
 
     Status parse_status = ::tensorflow::Status();
     auto p_lock = tensorflow::mutex();
-    auto construct_f = [&](int start, int end) {
-      for (int i = start; i < end; i++) {
+    auto construct_f = [&](int64_t start, int64_t end) {
+      for (int64_t i = start; i < end; i++) {
         auto r = NoisyQsimCircuitFromProgram(
             programs[i], maps[i], num_qubits[i], true, &qsim_circuits[i]);
         NESTED_FN_STATUS_SYNC(parse_status, r, p_lock);
@@ -239,7 +239,7 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
     tensorflow::GuardedPhiloxRandom random_gen;
     random_gen.Init(tensorflow::random::New64(), tensorflow::random::New64());
 
-    auto DoWork = [&](int start, int end) {
+    auto DoWork = [&](int64_t start, int64_t end) {
       // Begin simulation.
       const auto tfq_for = qsim::SequentialFor(1);
       uint64_t largest_nq = 1;

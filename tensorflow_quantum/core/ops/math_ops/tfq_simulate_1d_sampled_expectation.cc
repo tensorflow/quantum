@@ -120,8 +120,8 @@ class TfqSimulateMPS1DSampledExpectationOp : public tensorflow::OpKernel {
 
     Status parse_status = ::tensorflow::Status();
     auto p_lock = tensorflow::mutex();
-    auto construct_f = [&](int start, int end) {
-      for (int i = start; i < end; i++) {
+    auto construct_f = [&](int64_t start, int64_t end) {
+      for (int64_t i = start; i < end; i++) {
         Status local =
             QsimCircuitFromProgram(programs[i], maps[i], num_qubits[i],
                                    &qsim_circuits[i], &fused_circuits[i]);
@@ -190,7 +190,7 @@ class TfqSimulateMPS1DSampledExpectationOp : public tensorflow::OpKernel {
       int64_t old_batch_index = -2;
       int64_t cur_batch_index = -1;
       uint64_t largest_nq = 1;
-      int cur_op_index;
+      int64_t cur_op_index;
 
       // Note: ForArgs in MPSSimulator and MPSStateState are currently unused.
       // So, this 1 is a dummy for qsim::For.
