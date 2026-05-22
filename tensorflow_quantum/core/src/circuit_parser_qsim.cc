@@ -121,7 +121,7 @@ inline Status ParseProtoControls(const Operation& op,
     valid = absl::SimpleAtoi(tok, &tmp);
     if (!valid) {
       return Status(absl::StatusCode::kInvalidArgument,
-                    "Unparsable control value: " + std::string(tok));
+                    "Unparseable control value: " + std::string(tok));
     }
     control_values->push_back(tmp);
   }
@@ -146,7 +146,7 @@ inline Status OptionalInsertControls(const Operation& op,
 }
 
 // series of fixed signature gate builders.
-// there is no need to error check for unparsable symbols
+// there is no need to error check for unparseable symbols
 // or proto args not being present. Those errors are caught
 // upstream.
 

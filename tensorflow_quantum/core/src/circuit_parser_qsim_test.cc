@@ -1125,7 +1125,7 @@ TEST(QsimCircuitParserTest, InvalidControlValues) {
   ASSERT_EQ(QsimCircuitFromProgram(program_proto, empty_map, 3, &test_circuit,
                                    &fused_circuit, &metadata),
             tensorflow::Status(absl::StatusCode::kInvalidArgument,
-                               "Unparsable control value: junk"));
+                               "Unparseable control value: junk"));
 }
 
 TEST(QsimCircuitParserTest, MismatchControlNum) {

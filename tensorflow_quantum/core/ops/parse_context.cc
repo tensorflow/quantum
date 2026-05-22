@@ -52,7 +52,7 @@ Status ParseProto(const std::string& text, T* proto) {
 
   return Status(
       static_cast<tensorflow::errors::Code>(absl::StatusCode::kInvalidArgument),
-      "Unparsable proto: " + text);
+      "Unparseable proto: " + text);
 }
 
 }  // namespace
