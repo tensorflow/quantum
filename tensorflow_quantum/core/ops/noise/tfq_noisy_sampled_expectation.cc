@@ -28,6 +28,7 @@ limitations under the License.
 #include "../qsim/lib/qtrajectory.h"
 #include "../qsim/lib/seqfor.h"
 #include "../qsim/lib/simmux.h"
+#include "absl/synchronization/mutex.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/shape_inference.h"
 #include "tensorflow/core/framework/tensor_shape.h"
@@ -36,7 +37,6 @@ limitations under the License.
 #include "tensorflow/core/lib/core/threadpool.h"
 #include "tensorflow/core/lib/random/random.h"
 #include "tensorflow/core/lib/random/simple_philox.h"
-#include "tensorflow/core/platform/mutex.h"
 #include "tensorflow/core/util/guarded_philox_random.h"
 #include "tensorflow_quantum/core/ops/parse_context.h"
 #include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
@@ -273,7 +273,7 @@ class TfqNoisySampledExpectationOp : public tensorflow::OpKernel {
                                          qsim::MultiQubitGateFuser, Simulator>;
 
     const int output_dim_batch_size = output_tensor->dimension(0);
-    std::vector<absl::Mutex> batch_locks(output_dim_batch_size);
+    auto batch_locks = std::make_unique<absl::Mutex[]>(output_dim_batch_size);
 
     const int num_threads = context->device()
                                 ->tensorflow_cpu_worker_threads()

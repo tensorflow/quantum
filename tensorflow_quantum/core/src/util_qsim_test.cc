@@ -29,7 +29,6 @@ limitations under the License.
 #include "gtest/gtest.h"
 #include "tensorflow/core/lib/random/random.h"
 #include "tensorflow/core/lib/random/simple_philox.h"
-#include "tensorflow/core/platform/mutex.h"
 #include "tensorflow/core/util/guarded_philox_random.h"
 #include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
 

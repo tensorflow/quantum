@@ -15,13 +15,13 @@ limitations under the License.
 
 #include <string>
 
+#include "absl/synchronization/mutex.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/shape_inference.h"
 #include "tensorflow/core/framework/tensor_shape.h"
 #include "tensorflow/core/lib/core/error_codes.pb.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow/core/lib/core/threadpool.h"
-#include "tensorflow/core/platform/mutex.h"
 #include "tensorflow_quantum/core/ops/parse_context.h"
 #include "tensorflow_quantum/core/ops/tfq_simulate_utils.h"
 #include "tensorflow_quantum/core/proto/program.pb.h"
