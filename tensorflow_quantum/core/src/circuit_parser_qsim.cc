@@ -113,10 +113,9 @@ inline Status ParseProtoControls(const Operation& op,
   for (auto tok : control_toks) {
     // don't bother error checking since this is done earlier
     // in program_resolution.
-    valid = absl::SimpleAtoi(tok, &tmp);
-    if (!valid) {
+    if (!absl::SimpleAtoi(tok, &tmp) || tmp >= num_qubits) {
       return Status(absl::StatusCode::kInvalidArgument,
-                    "Unparseable control qubit.");
+                    "Invalid control qubit: " + std::string(tok));
     }
     control_qubits->push_back(num_qubits - tmp - 1);
   }
@@ -165,9 +164,9 @@ inline Status SingleConstantGate(
     return Status(absl::StatusCode::kInvalidArgument,
                   "Missing qubit(s) in gate.");
   }
-  if (!absl::SimpleAtoi(op.qubits(0).id(), &q0)) {
+  if (!absl::SimpleAtoi(op.qubits(0).id(), &q0) || q0 >= num_qubits) {
     return Status(absl::StatusCode::kInvalidArgument,
-                  "Unparseable qubit id: " + op.qubits(0).id());
+                  "Invalid qubit id: " + op.qubits(0).id());
   }
   auto gate = create_f(time, num_qubits - q0 - 1);
   Status s = OptionalInsertControls(op, num_qubits, &gate);
@@ -197,9 +196,13 @@ inline Status TwoConstantGate(
     return Status(absl::StatusCode::kInvalidArgument,
                   "Missing qubit(s) in gate.");
   }
-  if (!absl::SimpleAtoi(op.qubits(0).id(), &q0) || !absl::SimpleAtoi(op.qubits(1).id(), &q1)) {
+  if (!absl::SimpleAtoi(op.qubits(0).id(), &q0) || q0 >= num_qubits) {
     return Status(absl::StatusCode::kInvalidArgument,
-                  "Unparseable qubit id.");
+                  "Invalid qubit id: " + op.qubits(0).id());
+  }
+  if (!absl::SimpleAtoi(op.qubits(1).id(), &q1) || q1 >= num_qubits) {
+    return Status(absl::StatusCode::kInvalidArgument,
+                  "Invalid qubit id: " + op.qubits(1).id());
   }
   auto gate = create_f(time, num_qubits - q0 - 1, num_qubits - q1 - 1);
   Status s = OptionalInsertControls(op, num_qubits, &gate);
@@ -286,9 +289,13 @@ inline Status TwoEigenGate(
     return Status(absl::StatusCode::kInvalidArgument,
                   "Missing qubit(s) in gate.");
   }
-  if (!absl::SimpleAtoi(op.qubits(0).id(), &q0) || !absl::SimpleAtoi(op.qubits(1).id(), &q1)) {
+  if (!absl::SimpleAtoi(op.qubits(0).id(), &q0) || q0 >= num_qubits) {
     return Status(absl::StatusCode::kInvalidArgument,
-                  "Unparseable qubit id.");
+                  "Invalid qubit id: " + op.qubits(0).id());
+  }
+  if (!absl::SimpleAtoi(op.qubits(1).id(), &q1) || q1 >= num_qubits) {
+    return Status(absl::StatusCode::kInvalidArgument,
+                  "Invalid qubit id: " + op.qubits(1).id());
   }
 
   absl::optional<std::string> exponent_symbol;
@@ -431,9 +438,9 @@ inline Status PhasedXGate(const Operation& op, const SymbolMap& param_map,
     return Status(absl::StatusCode::kInvalidArgument,
                   "Missing qubit(s) in gate.");
   }
-  if (!absl::SimpleAtoi(op.qubits(0).id(), &q0)) {
+  if (!absl::SimpleAtoi(op.qubits(0).id(), &q0) || q0 < 0 || q0 >= (int)num_qubits) {
     return Status(absl::StatusCode::kInvalidArgument,
-                  "Unparseable qubit id: " + op.qubits(0).id());
+                  "Invalid qubit id: " + op.qubits(0).id());
   }
 
   absl::optional<std::string> exponent_symbol;
@@ -497,9 +504,13 @@ inline Status FsimGate(const Operation& op, const SymbolMap& param_map,
     return Status(absl::StatusCode::kInvalidArgument,
                   "Missing qubit(s) in gate.");
   }
-  if (!absl::SimpleAtoi(op.qubits(0).id(), &q0) || !absl::SimpleAtoi(op.qubits(1).id(), &q1)) {
+  if (!absl::SimpleAtoi(op.qubits(0).id(), &q0) || q0 < 0 || q0 >= (int)num_qubits) {
     return Status(absl::StatusCode::kInvalidArgument,
-                  "Unparseable qubit id.");
+                  "Invalid qubit id: " + op.qubits(0).id());
+  }
+  if (!absl::SimpleAtoi(op.qubits(1).id(), &q1) || q1 < 0 || q1 >= (int)num_qubits) {
+    return Status(absl::StatusCode::kInvalidArgument,
+                  "Invalid qubit id: " + op.qubits(1).id());
   }
 
   absl::optional<std::string> theta_symbol;
@@ -559,9 +570,13 @@ inline Status PhasedISwapGate(const Operation& op, const SymbolMap& param_map,
     return Status(absl::StatusCode::kInvalidArgument,
                   "Missing qubit(s) in gate.");
   }
-  if (!absl::SimpleAtoi(op.qubits(0).id(), &q0) || !absl::SimpleAtoi(op.qubits(1).id(), &q1)) {
+  if (!absl::SimpleAtoi(op.qubits(0).id(), &q0) || q0 < 0 || q0 >= (int)num_qubits) {
     return Status(absl::StatusCode::kInvalidArgument,
-                  "Unparseable qubit id.");
+                  "Invalid qubit id: " + op.qubits(0).id());
+  }
+  if (!absl::SimpleAtoi(op.qubits(1).id(), &q1) || q1 < 0 || q1 >= (int)num_qubits) {
+    return Status(absl::StatusCode::kInvalidArgument,
+                  "Invalid qubit id: " + op.qubits(1).id());
   }
 
   absl::optional<std::string> exponent_symbol;
@@ -655,9 +670,9 @@ inline Status AsymmetricDepolarizingChannel(const Operation& op,
     return Status(absl::StatusCode::kInvalidArgument,
                   "Missing qubit(s) in gate.");
   }
-  if (!absl::SimpleAtoi(op.qubits(0).id(), &q)) {
+  if (!absl::SimpleAtoi(op.qubits(0).id(), &q) || q < 0 || q >= (int)num_qubits) {
     return Status(absl::StatusCode::kInvalidArgument,
-                  "Unparseable qubit id: " + op.qubits(0).id());
+                  "Invalid qubit id: " + op.qubits(0).id());
   }
 
   u = ParseProtoArg(op, "p_x", {}, &p_x);
@@ -683,9 +698,9 @@ inline Status DepolarizingChannel(const Operation& op,
     return Status(absl::StatusCode::kInvalidArgument,
                   "Missing qubit(s) in gate.");
   }
-  if (!absl::SimpleAtoi(op.qubits(0).id(), &q)) {
+  if (!absl::SimpleAtoi(op.qubits(0).id(), &q) || q < 0 || q >= (int)num_qubits) {
     return Status(absl::StatusCode::kInvalidArgument,
-                  "Unparseable qubit id: " + op.qubits(0).id());
+                  "Invalid qubit id: " + op.qubits(0).id());
   }
 
   u = ParseProtoArg(op, "p", {}, &p);
@@ -707,9 +722,9 @@ inline Status GADChannel(const Operation& op, const unsigned int num_qubits,
     return Status(absl::StatusCode::kInvalidArgument,
                   "Missing qubit(s) in gate.");
   }
-  if (!absl::SimpleAtoi(op.qubits(0).id(), &q)) {
+  if (!absl::SimpleAtoi(op.qubits(0).id(), &q) || q < 0 || q >= (int)num_qubits) {
     return Status(absl::StatusCode::kInvalidArgument,
-                  "Unparseable qubit id: " + op.qubits(0).id());
+                  "Invalid qubit id: " + op.qubits(0).id());
   }
 
   u = ParseProtoArg(op, "p", {}, &p);
@@ -735,9 +750,9 @@ inline Status ResetChannel(const Operation& op, const unsigned int num_qubits,
     return Status(absl::StatusCode::kInvalidArgument,
                   "Missing qubit(s) in gate.");
   }
-  if (!absl::SimpleAtoi(op.qubits(0).id(), &q)) {
+  if (!absl::SimpleAtoi(op.qubits(0).id(), &q) || q < 0 || q >= (int)num_qubits) {
     return Status(absl::StatusCode::kInvalidArgument,
-                  "Unparseable qubit id: " + op.qubits(0).id());
+                  "Invalid qubit id: " + op.qubits(0).id());
   }
 
   auto chan = qsim::Cirq::ResetChannel<float>::Create(time, num_qubits - q - 1);
@@ -756,9 +771,9 @@ inline Status AmplitudeDampingChannel(const Operation& op,
     return Status(absl::StatusCode::kInvalidArgument,
                   "Missing qubit(s) in gate.");
   }
-  if (!absl::SimpleAtoi(op.qubits(0).id(), &q)) {
+  if (!absl::SimpleAtoi(op.qubits(0).id(), &q) || q < 0 || q >= (int)num_qubits) {
     return Status(absl::StatusCode::kInvalidArgument,
-                  "Unparseable qubit id: " + op.qubits(0).id());
+                  "Invalid qubit id: " + op.qubits(0).id());
   }
 
   u = ParseProtoArg(op, "gamma", {}, &gamma);
@@ -782,9 +797,9 @@ inline Status PhaseDampingChannel(const Operation& op,
     return Status(absl::StatusCode::kInvalidArgument,
                   "Missing qubit(s) in gate.");
   }
-  if (!absl::SimpleAtoi(op.qubits(0).id(), &q)) {
+  if (!absl::SimpleAtoi(op.qubits(0).id(), &q) || q < 0 || q >= (int)num_qubits) {
     return Status(absl::StatusCode::kInvalidArgument,
-                  "Unparseable qubit id: " + op.qubits(0).id());
+                  "Invalid qubit id: " + op.qubits(0).id());
   }
 
   u = ParseProtoArg(op, "gamma", {}, &gamma);
@@ -809,9 +824,9 @@ inline Status PhaseFlipChannel(const Operation& op,
     return Status(absl::StatusCode::kInvalidArgument,
                   "Missing qubit(s) in gate.");
   }
-  if (!absl::SimpleAtoi(op.qubits(0).id(), &q)) {
+  if (!absl::SimpleAtoi(op.qubits(0).id(), &q) || q < 0 || q >= (int)num_qubits) {
     return Status(absl::StatusCode::kInvalidArgument,
-                  "Unparseable qubit id: " + op.qubits(0).id());
+                  "Invalid qubit id: " + op.qubits(0).id());
   }
 
   u = ParseProtoArg(op, "p", {}, &p);
@@ -835,9 +850,9 @@ inline Status BitFlipChannel(const Operation& op, const unsigned int num_qubits,
     return Status(absl::StatusCode::kInvalidArgument,
                   "Missing qubit(s) in gate.");
   }
-  if (!absl::SimpleAtoi(op.qubits(0).id(), &q)) {
+  if (!absl::SimpleAtoi(op.qubits(0).id(), &q) || q < 0 || q >= (int)num_qubits) {
     return Status(absl::StatusCode::kInvalidArgument,
-                  "Unparseable qubit id: " + op.qubits(0).id());
+                  "Invalid qubit id: " + op.qubits(0).id());
   }
 
   u = ParseProtoArg(op, "p", {}, &p);
