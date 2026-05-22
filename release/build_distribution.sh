@@ -47,6 +47,7 @@ repo_dir=$(git -C "${thisdir}" rev-parse --show-toplevel 2> /dev/null) || \
   quit "This script must be run from inside the TFQ git tree."
 
 # Default values for variables that can be changed via command line flags.
+tf_version="2.19"
 py_version=$(python3 --version | cut -d' ' -f2 | cut -d. -f1,2)
 extra_bazel_options=""
 cleanup="true"
