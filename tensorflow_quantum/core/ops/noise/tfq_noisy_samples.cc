@@ -228,7 +228,7 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
         num_threads, std::vector<long>(output_dim_batch_size, 0));
 
     for (int i = 0; i < output_dim_batch_size; i++) {
-      int p_reps = (num_samples + num_threads - 1) / num_threads;
+      uint64_t p_reps = (static_cast<uint64_t>(num_samples) + num_threads - 1) / num_threads;
       offset_prefix_sum[0][i] = rep_offsets[0][i] + p_reps;
       for (int j = 1; j < num_threads; j++) {
         offset_prefix_sum[j][i] += offset_prefix_sum[j - 1][i];
