@@ -234,9 +234,9 @@ inline Status SingleEigenGate(
     return Status(absl::StatusCode::kInvalidArgument,
                   "Missing qubit(s) in gate.");
   }
-  if (!absl::SimpleAtoi(op.qubits(0).id(), &q0)) {
+  if (!absl::SimpleAtoi(op.qubits(0).id(), &q0) || q0 >= num_qubits) {
     return Status(absl::StatusCode::kInvalidArgument,
-                  "Unparseable qubit id: " + op.qubits(0).id());
+                  "Invalid qubit id: " + op.qubits(0).id());
   }
 
   absl::optional<std::string> exponent_symbol;
