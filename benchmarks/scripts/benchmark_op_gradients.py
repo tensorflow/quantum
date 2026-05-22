@@ -127,7 +127,7 @@ class GradientBenchmarks(tf.test.Benchmark):
              for resolver in resolver_batch],
             dtype=np.float32)
 
-        self.symbol_names = symbol_names
+        self.symbol_names_tensor = tf.convert_to_tensor(symbol_names)
         self.symbol_values_tensor = tf.convert_to_tensor(symbol_values_array)
         self.programs = util.convert_to_tensor(circuit_batch)
         self.psums = util.convert_to_tensor([psums])
@@ -140,15 +140,15 @@ class GradientBenchmarks(tf.test.Benchmark):
             analytic_op=tfq_simulate_ops.tfq_simulate_expectation)
 
         for _ in range(params.n_burn):
-            op(self.programs, self.symbol_names, self.symbol_values_tensor,
-               self.psums)
+            op(self.programs, self.symbol_names_tensor,
+               self.symbol_values_tensor, self.psums)
 
         deltas = [None] * params.n_runs
         for i in range(params.n_runs):
             start = time.perf_counter()
             with tf.GradientTape() as g:
                 g.watch(self.symbol_values_tensor)
-                expectations = op(self.programs, self.symbol_names,
+                expectations = op(self.programs, self.symbol_names_tensor,
                                   self.symbol_values_tensor, self.psums)
             g.gradient(expectations, self.symbol_values_tensor)
             deltas[i] = time.perf_counter() - start
