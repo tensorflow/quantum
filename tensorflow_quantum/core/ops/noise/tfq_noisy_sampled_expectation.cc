@@ -28,6 +28,7 @@ limitations under the License.
 #include "../qsim/lib/qtrajectory.h"
 #include "../qsim/lib/seqfor.h"
 #include "../qsim/lib/simmux.h"
+#include "absl/synchronization/mutex.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/shape_inference.h"
 #include "tensorflow/core/framework/tensor_shape.h"
@@ -36,7 +37,6 @@ limitations under the License.
 #include "tensorflow/core/lib/core/threadpool.h"
 #include "tensorflow/core/lib/random/random.h"
 #include "tensorflow/core/lib/random/simple_philox.h"
-#include "tensorflow/core/platform/mutex.h"
 #include "tensorflow/core/util/guarded_philox_random.h"
 #include "tensorflow_quantum/core/ops/parse_context.h"
 #include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
@@ -119,7 +119,7 @@ class TfqNoisySampledExpectationOp : public tensorflow::OpKernel {
                                                 NoisyQsimCircuit());
 
     Status parse_status = ::tensorflow::Status();
-    auto p_lock = tensorflow::mutex();
+    auto p_lock = absl::Mutex();
     auto construct_f = [&](int start, int end) {
       for (int i = start; i < end; i++) {
         Status local = NoisyQsimCircuitFromProgram(
@@ -273,8 +273,7 @@ class TfqNoisySampledExpectationOp : public tensorflow::OpKernel {
                                          qsim::MultiQubitGateFuser, Simulator>;
 
     const int output_dim_batch_size = output_tensor->dimension(0);
-    std::vector<tensorflow::mutex> batch_locks(output_dim_batch_size,
-                                               tensorflow::mutex());
+    auto batch_locks = std::make_unique<absl::Mutex[]>(output_dim_batch_size);
 
     const int num_threads = context->device()
                                 ->tensorflow_cpu_worker_threads()
@@ -301,7 +300,7 @@ class TfqNoisySampledExpectationOp : public tensorflow::OpKernel {
     random_gen.Init(tensorflow::random::New64(), tensorflow::random::New64());
 
     Status compute_status = ::tensorflow::Status();
-    auto c_lock = tensorflow::mutex();
+    auto c_lock = absl::Mutex();
     auto DoWork = [&](int start, int end) {
       // Begin simulation.
       const auto tfq_for = qsim::SequentialFor(1);
@@ -375,12 +374,12 @@ class TfqNoisySampledExpectationOp : public tensorflow::OpKernel {
           }
           if (break_loop) {
             // Lock writing to this batch index in output_tensor.
-            batch_locks[i].lock();
+            batch_locks[i].Lock();
             for (size_t j = 0; j < num_samples[i].size(); j++) {
               rolling_sums[j] /= num_samples[i][j];
               (*output_tensor)(i, j) += static_cast<float>(rolling_sums[j]);
             }
-            batch_locks[i].unlock();
+            batch_locks[i].Unlock();
             break;
           }
         }

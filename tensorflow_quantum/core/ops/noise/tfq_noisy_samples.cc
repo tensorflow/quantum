@@ -29,6 +29,7 @@ limitations under the License.
 #include "../qsim/lib/qtrajectory.h"
 #include "../qsim/lib/seqfor.h"
 #include "../qsim/lib/simmux.h"
+#include "absl/synchronization/mutex.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/shape_inference.h"
 #include "tensorflow/core/framework/tensor_shape.h"
@@ -94,7 +95,7 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
                                                 NoisyQsimCircuit());
 
     Status parse_status = ::tensorflow::Status();
-    auto p_lock = tensorflow::mutex();
+    auto p_lock = absl::Mutex();
     auto construct_f = [&](int start, int end) {
       for (int i = start; i < end; i++) {
         auto r = NoisyQsimCircuitFromProgram(
