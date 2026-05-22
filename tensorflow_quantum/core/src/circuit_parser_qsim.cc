@@ -200,9 +200,9 @@ inline Status TwoConstantGate(
     return Status(absl::StatusCode::kInvalidArgument,
                   "Invalid qubit id: " + op.qubits(0).id());
   }
-  if (!absl::SimpleAtoi(op.qubits(1).id(), &q1) || q1 >= num_qubits) {
+  if (!absl::SimpleAtoi(op.qubits(1).id(), &q1) || q1 >= num_qubits || q0 == q1) {
     return Status(absl::StatusCode::kInvalidArgument,
-                  "Invalid qubit id: " + op.qubits(1).id());
+                  "Invalid or duplicate qubit id: " + op.qubits(1).id());
   }
   auto gate = create_f(time, num_qubits - q0 - 1, num_qubits - q1 - 1);
   Status s = OptionalInsertControls(op, num_qubits, &gate);
@@ -293,9 +293,9 @@ inline Status TwoEigenGate(
     return Status(absl::StatusCode::kInvalidArgument,
                   "Invalid qubit id: " + op.qubits(0).id());
   }
-  if (!absl::SimpleAtoi(op.qubits(1).id(), &q1) || q1 >= num_qubits) {
+  if (!absl::SimpleAtoi(op.qubits(1).id(), &q1) || q1 >= num_qubits || q0 == q1) {
     return Status(absl::StatusCode::kInvalidArgument,
-                  "Invalid qubit id: " + op.qubits(1).id());
+                  "Invalid or duplicate qubit id: " + op.qubits(1).id());
   }
 
   absl::optional<std::string> exponent_symbol;
@@ -511,9 +511,9 @@ inline Status FsimGate(const Operation& op, const SymbolMap& param_map,
                   "Invalid qubit id: " + op.qubits(0).id());
   }
   if (!absl::SimpleAtoi(op.qubits(1).id(), &q1) || q1 < 0 ||
-      q1 >= (int)num_qubits) {
+      q1 >= (int)num_qubits || q0 == q1) {
     return Status(absl::StatusCode::kInvalidArgument,
-                  "Invalid qubit id: " + op.qubits(1).id());
+                  "Invalid or duplicate qubit id: " + op.qubits(1).id());
   }
 
   absl::optional<std::string> theta_symbol;
@@ -579,9 +579,9 @@ inline Status PhasedISwapGate(const Operation& op, const SymbolMap& param_map,
                   "Invalid qubit id: " + op.qubits(0).id());
   }
   if (!absl::SimpleAtoi(op.qubits(1).id(), &q1) || q1 < 0 ||
-      q1 >= (int)num_qubits) {
+      q1 >= (int)num_qubits || q0 == q1) {
     return Status(absl::StatusCode::kInvalidArgument,
-                  "Invalid qubit id: " + op.qubits(1).id());
+                  "Invalid or duplicate qubit id: " + op.qubits(1).id());
   }
 
   absl::optional<std::string> exponent_symbol;
