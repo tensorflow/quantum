@@ -271,7 +271,7 @@ Status GetPauliSums(OpKernelContext* context,
                  std::vector<PauliSum>(sum_specs.dimension(1), PauliSum()));
   const int op_dim = sum_specs.dimension(1);
   auto DoWork = [&](int64_t start, int64_t end) {
-    for (int ii = start; ii < end; ii++) {
+    for (int64_t ii = start; ii < end; ii++) {
       const int i = ii / op_dim;
       const int j = ii % op_dim;
       PauliSum p;
