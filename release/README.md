@@ -82,7 +82,7 @@ into the upstream repository before proceeding further.
 
     This will update the dependency versions in the file `requirements.txt` to
     the latest versions based on `requirements.in`. If this process fails, you
-    may have to iterate on adjusting the contraints in `requirements.in`
+    may have to iterate on adjusting the constraints in `requirements.in`
     followed by running `generate_requirements.sh` again until it succeeds.
 
 3.  If any changes were made to `requirements.in`, check the requirements listed

@@ -218,7 +218,7 @@ class ForwardDifference(LinearCombination):
         """Instantiate a ForwardDifference.
 
         Create a ForwardDifference differentiator, passing along an error order
-        and grid spacing to be used to contstruct differentiator coeffecients.
+        and grid spacing to be used to construct differentiator coeffecients.
 
         Args:
             error_order: A positive `int` specifying the error order of this
@@ -286,7 +286,7 @@ class CentralDifference(LinearCombination):
         """Instantiate a CentralDifference.
 
         Create a CentralDifference differentaitor, passing along an error order
-        and grid spacing to be used to contstruct differentiator coeffecients.
+        and grid spacing to be used to construct differentiator coeffecients.
 
         Args:
             error_order: A positive, even `int` specifying the error order

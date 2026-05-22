@@ -295,7 +295,7 @@ class CirqSimulateStateTest(tf.test.TestCase, parameterized.TestCase):
         for circuit in circuit_batch:
             result = sim.simulate(circuit)
 
-            # density matricies should be zero everywhere except for the
+            # density matrices should be zero everywhere except for the
             # top left corner
             if isinstance(result, cirq.DensityMatrixTrialResult):
                 dm = result.final_density_matrix

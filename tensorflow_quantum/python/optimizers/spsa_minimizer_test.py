@@ -155,7 +155,7 @@ class SPSAMinimizerTest(tf.test.TestCase, parameterized.TestCase):
         self.assertFalse(result.converged)
         self.assertEqual(result.num_iterations, it)
         self.assertEqual(result.objective_value,
-                         init * 4)  # function executd 3 (in step) +
+                         init * 4)  # function executed 3 (in step) +
         # 1 (initial evaluation) times
 
         init = 1 / 6 * 0.49
