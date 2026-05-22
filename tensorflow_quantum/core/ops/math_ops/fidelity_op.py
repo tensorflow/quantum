@@ -20,7 +20,7 @@ from tensorflow_quantum.core.ops.math_ops import inner_product_op
 @tf.function
 @tf.custom_gradient
 def fidelity(programs, symbol_names, symbol_values, other_programs):
-    """Calculate the fidelity between circuits.
+    r"""Calculate the fidelity between circuits.
 
     Compute (potentially many) fidelities between the given circuits and
     the symbol free comparison circuits.

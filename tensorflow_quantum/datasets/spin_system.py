@@ -92,7 +92,7 @@ def _download_spin_data(system_name, boundary_condition, nspins, data_dir):
 
 
 def tfi_chain(qubits, boundary_condition="closed", data_dir=None):
-    """1D Transverse field Ising-model quantum data set.
+    r"""1D Transverse field Ising-model quantum data set.
 
     $$
     H = - \sum_{i} \sigma_i^z \sigma_{i+1}^z - g\sigma_i^x
@@ -322,7 +322,7 @@ def tfi_chain(qubits, boundary_condition="closed", data_dir=None):
 
 
 def xxz_chain(qubits, boundary_condition="closed", data_dir=None):
-    """1D XXZ model quantum data set.
+    r"""1D XXZ model quantum data set.
 
     $$
     H = \sum_{i} \sigma_i^x \sigma_{i+1}^x + \sigma_i^y \sigma_{i+1}^y +
@@ -558,7 +558,7 @@ def xxz_chain(qubits, boundary_condition="closed", data_dir=None):
 
 
 def tfi_rectangular(qubits, boundary_condition="torus", data_dir=None):
-    """2D transverse field Ising-model quantum data set.
+    r"""2D transverse field Ising-model quantum data set.
 
     $$
     H = - \sum_{\langle i,j \rangle} \sigma_i^z \sigma_{j}^z - g\sigma_i^x
