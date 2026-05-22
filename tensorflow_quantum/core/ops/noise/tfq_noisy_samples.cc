@@ -60,7 +60,10 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
 
   void Compute(tensorflow::OpKernelContext* context) override {
     // TODO (mbbrough): add more dimension checks for other inputs here.
-    DCHECK_EQ(4, context->num_inputs());
+    const int num_inputs = context->num_inputs();
+    OP_REQUIRES(context, num_inputs == 4,
+                tensorflow::errors::InvalidArgument(absl::StrCat(
+                    "Expected 4 inputs, got ", num_inputs, " inputs.")));
 
     // Parse to Program Proto and num_qubits.
     std::vector<Program> programs;
