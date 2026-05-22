@@ -15,6 +15,7 @@ limitations under the License.
 
 #include <stdlib.h>
 
+#include <limits>
 #include <string>
 
 #include "../qsim/lib/channel.h"
@@ -78,6 +79,12 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
 
     int num_samples = 0;
     OP_REQUIRES_OK(context, GetIndividualSample(context, &num_samples));
+    OP_REQUIRES(
+        context,
+        num_samples >= 0 && num_samples < std::numeric_limits<int>::max(),
+        tensorflow::errors::InvalidArgument(
+            absl::StrCat("num_samples must be between 0 and ",
+                         std::numeric_limits<int>::max(), ".")));
 
     // Construct qsim circuits.
     std::vector<NoisyQsimCircuit> qsim_circuits(programs.size(),
@@ -228,8 +235,7 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
         num_threads, std::vector<long>(output_dim_batch_size, 0));
 
     for (int i = 0; i < output_dim_batch_size; i++) {
-      uint64_t p_reps =
-          (static_cast<uint64_t>(num_samples) + num_threads - 1) / num_threads;
+      int p_reps = (num_samples + num_threads - 1) / num_threads;
       offset_prefix_sum[0][i] = rep_offsets[0][i] + p_reps;
       for (int j = 1; j < num_threads; j++) {
         offset_prefix_sum[j][i] += offset_prefix_sum[j - 1][i];
