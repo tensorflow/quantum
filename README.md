@@ -9,7 +9,7 @@ High-performance Python framework for hybrid quantum-classical machine learning
 [![Licensed under the Apache 2.0
 license](https://img.shields.io/badge/License-Apache%202.0-3c60b1.svg?logo=opensourceinitiative&logoColor=white&style=flat-square)](https://github.com/tensorflow/quantum/blob/master/LICENSE)
 [![Compatible with Python versions 3.11 and
-higher](https://img.shields.io/badge/Python-3.11+-fcbc2c.svg?style=flat-square&logo=python&logoColor=white)](https://www.python.org/downloads/)
+3.12](https://img.shields.io/badge/Python-3.11--3.12-fcbc2c.svg?style=flat-square&logo=python&logoColor=white)](https://www.python.org/downloads/)
 [![TensorFlow Quantum project on
 PyPI](https://img.shields.io/pypi/v/TensorFlow_Quantum.svg?logo=python&logoColor=white&label=PyPI&style=flat-square&color=fcbc2c)](https://pypi.org/project/tensorflow-quantum)
 
@@ -59,11 +59,14 @@ instructions](https://www.tensorflow.org/quantum/install) in the documentation.
 _Compatibility_: At this time, TensorFlow Quantum is built and
 tested on Linux with the following systems and software:
 
-* Python 3.11–3.12
+* Python 3.11-3.12
 * TensorFlow 2.19.1
 * TF-Keras 2.19.0
 * NumPy 2.1
 * Cirq 1.6.1
+
+Python 3.13 is not supported yet because TensorFlow 2.19.1 does not publish
+Python 3.13 wheels.
 
 ## Quick start
 

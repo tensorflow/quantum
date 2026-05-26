@@ -143,7 +143,7 @@ Follow the instructions in [docs/install.md](docs/install.md) for setting up a
 development environment. After doing that, you should end up with:
 
 *   The correct version of Bazel (6.5.0)
-*   A Python virtual environment with a Python version between 3.10 and 3.12
+*   A Python virtual environment with Python 3.11 or 3.12
 *   The TFQ Python requirements installed in that Python virtual environment
 *   The TFQ build configured by running `./configure.sh`
 
