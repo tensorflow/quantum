@@ -89,8 +89,8 @@ class InstallPlatlib(install):
 
 
 REQUIRED_PACKAGES = [
-    "cirq-core==1.5.0",
-    "cirq-google==1.5.0",
+    "cirq-core==1.6.1",
+    "cirq-google==1.6.1",
     "numpy>=2,<3",
     "scipy>=1.15.3,<2",
     "sympy==1.14",
@@ -98,7 +98,7 @@ REQUIRED_PACKAGES = [
 
     # The following are transitive dependencies that need to be constrained to
     # avoid incompatible versions or because some (e.g., contourpy 1.3.3)
-    # require Python 3.11+ and we want to maintain Python 3.10 compatibility.
+    # require newer Python versions and we want to avoid resolver churn.
     # TODO: revisit after we reach compatibility with TensorFlow 2.20+.
     "jax>=0.5,<0.6",
     "contourpy<=1.3.2",
@@ -142,7 +142,7 @@ setup(
     author_email="tensorflow-quantum-team@google.com",
     url="https://github.com/tensorflow/quantum/",
     packages=find_packages(),
-    python_requires='>=3.10',
+    python_requires='>=3.11',
     install_requires=REQUIRED_PACKAGES,
     extras_require=EXTRA_PACKAGES,
     include_package_data=True,
@@ -154,7 +154,6 @@ setup(
         "Intended Audience :: Education",
         "Intended Audience :: Science/Research",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
         "Programming Language :: Python :: 3.13",

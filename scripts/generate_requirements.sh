@@ -14,7 +14,7 @@
 # limitations under the License.
 # ==============================================================================
 
-# Summary: produce requirements.txt using pip-compile under Python 3.10.
+# Summary: produce requirements.txt using pip-compile under Python 3.11.
 # Usage: ./scripts/generate_requirements.sh
 
 set -eu
@@ -26,10 +26,10 @@ cd "${repo_dir}"
 
 if ! python - <<'PY'
 import sys
-raise SystemExit(0 if sys.version_info[:2] == (3, 10) else 1)
+raise SystemExit(0 if sys.version_info[:2] == (3, 11) else 1)
 PY
 then
-  echo "Error: run this script with Python 3.10 so requirements.txt is locked for the primary target interpreter." >&2
+  echo "Error: run this script with Python 3.11 so requirements.txt is locked for the primary target interpreter." >&2
   exit 1
 fi
 

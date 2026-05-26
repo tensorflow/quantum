@@ -71,7 +71,7 @@ into the upstream repository before proceeding further.
 ### Rebuild the `requirements.txt` file
 
 1.  Create a Python virtual environment using the lowest version of Python
-    supported by TFQ. (Currently this is Python 3.10.)
+    supported by TFQ. (Currently this is Python 3.11.)
 
 2.  Run these commands in your shell:
 

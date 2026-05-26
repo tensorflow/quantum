@@ -98,9 +98,8 @@ load("@org_tensorflow//third_party/py:python_repo.bzl", "python_repository")
 python_repository(
     name = "python_version_repo",
     default_python_version = "system",
-    requirements_versions = ["3.10", "3.11", "3.12"],
+    requirements_versions = ["3.11", "3.12"],
     requirements_locks = [
-        "//:requirements_lock_3_10.txt",
         "//:requirements_lock_3_11.txt",
         "//:requirements_lock_3_12.txt",
     ],

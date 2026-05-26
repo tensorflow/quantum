@@ -10,7 +10,7 @@ There are a few ways to set up your environment to use TensorFlow Quantum (TFQ):
   Python's pip package manager.
 * Or build TensorFlow Quantum from source.
 
-TensorFlow Quantum is supported on Python version 3.10 through 3.12 and depends directly on [Cirq](https://github.com/quantumlib/Cirq).
+TensorFlow Quantum is supported on Python version 3.11 and higher and depends directly on [Cirq](https://github.com/quantumlib/Cirq).
 
 ## Pip package
 
@@ -57,13 +57,13 @@ The following steps are tested for Ubuntu-like systems.
 
 ### 1. Set up a Python 3 development environment
 
-We will use Python 3.10 as an example. First, we need the Python 3.10 development tools.
+We will use Python 3.11 as an example. First, we need the Python 3.11 development tools.
 <!-- common_typos_disable -->
 <pre class="devsite-click-to-copy">
   <code class="devsite-terminal">sudo apt update</code>
-  <code class="devsite-terminal">sudo apt-get install pkg-config zip g++ zlib1g-dev unzip python3.10</code>
-  <code class="devsite-terminal">sudo apt install python3.10 python3.10-dev python3.10-venv python3-pip</code>
-  <code class="devsite-terminal">python3.10 -m pip install --upgrade pip</code>
+  <code class="devsite-terminal">sudo apt-get install pkg-config zip g++ zlib1g-dev unzip python3.11</code>
+  <code class="devsite-terminal">sudo apt install python3.11 python3.11-dev python3.11-venv python3-pip</code>
+  <code class="devsite-terminal">python3.11 -m pip install --upgrade pip</code>
 </pre>
 <!-- common_typos_enable -->
 
@@ -72,7 +72,7 @@ We will use Python 3.10 as an example. First, we need the Python 3.10 developmen
 Go to your workspace directory and make a virtual environment for TFQ development.
 <!-- common_typos_disable -->
 <pre class="devsite-click-to-copy">
-  <code class="devsite-terminal">python3.10 -m venv quantum_env</code>
+  <code class="devsite-terminal">python3.11 -m venv quantum_env</code>
   <code class="devsite-terminal">source quantum_env/bin/activate</code>
 </pre>
 <!-- common_typos_enable -->

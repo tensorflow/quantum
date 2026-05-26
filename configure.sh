@@ -53,10 +53,13 @@ function inside_docker() {
 
 # --- parse args ------------------------------------------------------------
 USER_PY=""
+BUILD_BACKEND="cpu"
 for arg in "$@"; do
   case "$arg" in
     --python=*) USER_PY="${arg#--python=}" ;;
-    *) echo "Unknown arg: $arg" ;;
+    --cpu) BUILD_BACKEND="cpu" ;;
+    --gpu) BUILD_BACKEND="gpu" ;;
+    *) die "Unknown arg: $arg" ;;
   esac
 done
 
@@ -71,18 +74,18 @@ elif [[ -n "${CONDA_PREFIX:-}" && -x "${CONDA_PREFIX}/bin/python" ]]; then
   # 3) Conda environment python, if available
   PY="${CONDA_PREFIX}/bin/python"
 else
-  # 4) Fallback: system python3, but require >= 3.10
+  # 4) Fallback: system python3, but require >= 3.11
   if ! command -v python3 >/dev/null 2>&1; then
-    die "python3 not found. Pass --python=/path/to/python3.10+ or set PYTHON_BIN_PATH."
+    die "python3 not found. Pass --python=/path/to/python3.11+ or set PYTHON_BIN_PATH."
   fi
 
   if ! python3 - <<'PY'
 import sys
-raise SystemExit(0 if sys.version_info[:2] >= (3, 10) else 1)
+raise SystemExit(0 if sys.version_info[:2] >= (3, 11) else 1)
 PY
   then
-    die "Python 3.10+ required for TensorFlow Quantum, but found " \
-      "$(python3 -V 2>&1). Pass --python=/path/to/python3.10+ or set PYTHON_BIN_PATH."
+    die "Python 3.11+ required for TensorFlow Quantum, but found " \
+      "$(python3 -V 2>&1). Pass --python=/path/to/python3.11+ or set PYTHON_BIN_PATH."
   fi
 
   PY="$(command -v python3)"
@@ -101,16 +104,13 @@ inside_docker && echo "${info_string}." || echo "${info_string} inside Docker."
 echo
 
 # --- choose CPU/GPU like upstream script (default CPU) ---------------------
-TF_NEED_CUDA=""
-y_for_cpu='Build against TensorFlow CPU backend? (Type n to use GPU) [Y/n] '
-while [[ -z "${TF_NEED_CUDA}" ]]; do
-  read -p "${y_for_cpu}" INPUT || true
-  case "${INPUT:-Y}" in
-    [Yy]* ) echo "CPU build selected."; TF_NEED_CUDA=0;;
-    [Nn]* ) echo "GPU build selected."; TF_NEED_CUDA=1;;
-    * ) echo "Please answer y or n.";;
-  esac
-done
+TF_NEED_CUDA=0
+if [[ "${BUILD_BACKEND}" == "gpu" ]]; then
+  TF_NEED_CUDA=1
+  echo "GPU build selected via --gpu."
+else
+  echo "CPU build selected."
+fi
 
 # For TF >= 2.1 this value isn’t actually consulted by TFQ,
 # but we keep a compatible prompt/flag.
