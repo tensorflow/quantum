@@ -41,6 +41,20 @@ function is_windows() {
   [[ "${PLATFORM}" =~ msys_nt*|mingw*|cygwin*|uwin* ]]
 }
 
+function require_supported_python() {
+  local py_bin="$1"
+
+  if ! "${py_bin}" - <<'PY'
+import sys
+raise SystemExit(0 if (3, 11) <= sys.version_info[:2] < (3, 13) else 1)
+PY
+  then
+    die "Python 3.11 or 3.12 required for TensorFlow Quantum, but found " \
+      "$("${py_bin}" -V 2>&1). Pass --python=/path/to/python3.11-or-3.12 " \
+      "or set PYTHON_BIN_PATH."
+  fi
+}
+
 function inside_docker() {
   if [[ -f /.dockerenv ]]; then
     return 1
@@ -74,22 +88,15 @@ elif [[ -n "${CONDA_PREFIX:-}" && -x "${CONDA_PREFIX}/bin/python" ]]; then
   # 3) Conda environment python, if available
   PY="${CONDA_PREFIX}/bin/python"
 else
-  # 4) Fallback: system python3, but require >= 3.11
+  # 4) Fallback: system python3, but require Python 3.11 or 3.12.
   if ! command -v python3 >/dev/null 2>&1; then
-    die "python3 not found. Pass --python=/path/to/python3.11+ or set PYTHON_BIN_PATH."
-  fi
-
-  if ! python3 - <<'PY'
-import sys
-raise SystemExit(0 if sys.version_info[:2] >= (3, 11) else 1)
-PY
-  then
-    die "Python 3.11+ required for TensorFlow Quantum, but found " \
-      "$(python3 -V 2>&1). Pass --python=/path/to/python3.11+ or set PYTHON_BIN_PATH."
+    die "python3 not found. Pass --python=/path/to/python3.11-or-3.12 or set PYTHON_BIN_PATH."
   fi
 
   PY="$(command -v python3)"
 fi
+
+require_supported_python "${PY}"
 
 # Normalize to an absolute path. Use Python to print sys.executable because
 # tools like pyenv use shim scripts that readlink would resolve to the script
