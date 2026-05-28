@@ -68,10 +68,10 @@ into the upstream repository before proceeding further.
 
 3.  `cd` into that directory in a Bash shell.
 
-### Rebuild the `requirements.txt` file
+### Rebuild the requirements lock files
 
 1.  Create a Python virtual environment using the lowest version of Python
-    supported by TFQ. (Currently this is Python 3.11.)
+    supported by TFQ. (Currently this is Python 3.10.)
 
 2.  Run these commands in your shell:
 
@@ -80,10 +80,12 @@ into the upstream repository before proceeding further.
     ./scripts/generate_requirements.sh
     ```
 
-    This will update the dependency versions in the file `requirements.txt` to
-    the latest versions based on `requirements.in`. If this process fails, you
-    may have to iterate on adjusting the constraints in `requirements.in`
-    followed by running `generate_requirements.sh` again until it succeeds.
+    This will update the dependency versions in the version-specific lock file
+    for the Python interpreter you used to run the script. When run under
+    Python 3.11, it also refreshes `requirements.txt` as the primary dev lock.
+    If this process fails, you may have to iterate on adjusting the constraints
+    in `requirements.in` followed by running `generate_requirements.sh` again
+    until it succeeds.
 
 3.  If any changes were made to `requirements.in`, check the requirements listed
     inside `release/setup.py` and make corresponding changes if the changes to
@@ -101,7 +103,7 @@ the following:
     *   Important: if solving the problem requires changes to the versions of
         dependency packages, make sure to update both `requirements.in` and
         `release/setup.py` (if applicable), and then **go back to the previous
-        subsection on rebuilding `requirements.txt`** and do it over.
+        subsection on rebuilding the requirements lock files** and do it over.
 
 3.  If `build_release.sh` succeeds without error, it should leave a new `.whl`
     file in the subdirectory `wheelhouse/`. Verify that it is there.

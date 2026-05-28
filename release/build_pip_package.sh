@@ -17,24 +17,24 @@
 set -e
 
 # Pick the Python that TFQ/TensorFlow used during configure/build.
-# Order: explicit env -> python3 (3.11 or 3.12)
+# Order: explicit env -> python3 (3.10-3.12)
 PY="${PYTHON_BIN_PATH:-}"
 if [[ -z "${PY}" ]]; then
   if ! command -v python3 >/dev/null 2>&1; then
-    echo "ERROR: python3 not found. Set PYTHON_BIN_PATH to a Python 3.11 or 3.12 interpreter." >&2
+    echo "ERROR: python3 not found. Set PYTHON_BIN_PATH to a Python 3.10, 3.11, or 3.12 interpreter." >&2
     exit 2
   fi
 
   PY="$(command -v python3)"
 fi
 
-# Require Python 3.11 or 3.12 for TFQ.
+# Require Python 3.10-3.12 for TFQ.
 if ! "${PY}" - <<'PY'
 import sys
-sys.exit(0 if (3, 11) <= sys.version_info[:2] < (3, 13) else 1)
+sys.exit(0 if (3, 10) <= sys.version_info[:2] < (3, 13) else 1)
 PY
 then
-  echo "ERROR: Python 3.11 or 3.12 required for TensorFlow Quantum; found $("${PY}" -V 2>&1)." >&2
+  echo "ERROR: Python 3.10, 3.11, or 3.12 required for TensorFlow Quantum; found $("${PY}" -V 2>&1)." >&2
   exit 2
 fi
 

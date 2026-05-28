@@ -46,11 +46,11 @@ function require_supported_python() {
 
   if ! "${py_bin}" - <<'PY'
 import sys
-raise SystemExit(0 if (3, 11) <= sys.version_info[:2] < (3, 13) else 1)
+raise SystemExit(0 if (3, 10) <= sys.version_info[:2] < (3, 13) else 1)
 PY
   then
-    die "Python 3.11 or 3.12 required for TensorFlow Quantum, but found " \
-      "$("${py_bin}" -V 2>&1). Pass --python=/path/to/python3.11-or-3.12 " \
+    die "Python 3.10, 3.11, or 3.12 required for TensorFlow Quantum, but found " \
+      "$("${py_bin}" -V 2>&1). Pass --python=/path/to/python3.10-3.12 " \
       "or set PYTHON_BIN_PATH."
   fi
 }
@@ -88,9 +88,9 @@ elif [[ -n "${CONDA_PREFIX:-}" && -x "${CONDA_PREFIX}/bin/python" ]]; then
   # 3) Conda environment python, if available
   PY="${CONDA_PREFIX}/bin/python"
 else
-  # 4) Fallback: system python3, but require Python 3.11 or 3.12.
+  # 4) Fallback: system python3, but require Python 3.10-3.12.
   if ! command -v python3 >/dev/null 2>&1; then
-    die "python3 not found. Pass --python=/path/to/python3.11-or-3.12 or set PYTHON_BIN_PATH."
+    die "python3 not found. Pass --python=/path/to/python3.10-3.12 or set PYTHON_BIN_PATH."
   fi
 
   PY="$(command -v python3)"

@@ -94,7 +94,8 @@ exec 2> >(sed "s/^/[DOCKER] /" >&2)
 
 printf ":::::::: Configuring Python environment ::::::::\n\n"
 python3 -m pip install --upgrade pip --root-user-action ignore
-python3 -m pip install -r requirements.txt --root-user-action ignore
+requirements_file="\$(./scripts/select_requirements_lock.sh --python=\$(command -v python3))"
+python3 -m pip install -r "\${requirements_file}" --root-user-action ignore
 
 printf "\n\n:::::::: Configuring TFQ build ::::::::\n\n"
 printf "Y\n" | ./configure.sh

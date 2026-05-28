@@ -65,7 +65,9 @@ Some of the important files found at the top level include the following:
 
 *   `README.md`: General introduction to the project
 *   `configure.sh`: TFQ build configuration script
-*   `requirements.txt`: Python dependencies
+*   `requirements.txt`: Primary Python 3.11 dependency lock
+*   `requirements_lock_3_10.txt`, `requirements_lock_3_11.txt`,
+    `requirements_lock_3_12.txt`: Version-specific Python dependency locks
 
 ### Coding style
 
@@ -143,7 +145,7 @@ Follow the instructions in [docs/install.md](docs/install.md) for setting up a
 development environment. After doing that, you should end up with:
 
 *   The correct version of Bazel (6.5.0)
-*   A Python virtual environment with Python 3.11 or 3.12
+*   A Python virtual environment with Python 3.10, 3.11, or 3.12
 *   The TFQ Python requirements installed in that Python virtual environment
 *   The TFQ build configured by running `./configure.sh`
 

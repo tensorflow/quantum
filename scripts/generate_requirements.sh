@@ -14,24 +14,32 @@
 # limitations under the License.
 # ==============================================================================
 
-# Summary: produce requirements.txt using pip-compile under Python 3.11.
+# Summary: produce a version-specific requirements lock using pip-compile.
 # Usage: ./scripts/generate_requirements.sh
 
 set -eu
 
 # Go to the top of the local TFQ git tree. Do it early in case this fails.
 thisdir=$(CDPATH="" cd -- "$(dirname -- "${0}")" && pwd -P)
-repo_dir=$(git -C "${thisdir}" rev-parse --show-toplevel 2>/dev/null)
+repo_dir=$(git -C "${thisdir}" rev-parse --show-toplevel 2>/dev/null || true)
+if [[ -z "${repo_dir}" ]]; then
+  repo_dir=$(CDPATH="" cd -- "${thisdir}/.." && pwd -P)
+fi
 cd "${repo_dir}"
 
-if ! python - <<'PY'
+py_minor=$(python - <<'PY'
 import sys
-raise SystemExit(0 if sys.version_info[:2] == (3, 11) else 1)
+major, minor = sys.version_info[:2]
+if (major, minor) not in {(3, 10), (3, 11), (3, 12)}:
+    raise SystemExit(1)
+print(f"{major}.{minor}")
 PY
-then
-  echo "Error: run this script with Python 3.11 so requirements.txt is locked for the primary target interpreter." >&2
+) || {
+  echo "Error: run this script with Python 3.10, 3.11, or 3.12." >&2
   exit 1
-fi
+}
+
+lock_file="requirements_lock_${py_minor/./_}.txt"
 
 if ! python -m pip show -qq pip-tools; then
   echo "Error: 'pip-compile' not found. Please install 'pip-tools'." >&2
@@ -45,10 +53,10 @@ if [[ -e "${pins_file}" ]]; then
   constraints+=(--constraints "${pins_file}")
 fi
 
-# Have pip-compile mention this script in the requirements.txt header it writes.
+# Have pip-compile mention this script in the requirements header it writes.
 export CUSTOM_COMPILE_COMMAND="${0}"
 
-echo "Running pip-compile in ${repo_dir} …"
+echo "Running pip-compile in ${repo_dir} for Python ${py_minor} -> ${lock_file} ..."
 python -m piptools compile -q \
   --allow-unsafe \
   --upgrade \
@@ -56,7 +64,12 @@ python -m piptools compile -q \
   --generate-hashes \
   --no-strip-extras \
   --no-emit-index-url \
-  -o requirements.txt \
+  -o "${lock_file}" \
   "${constraints[@]}"
+
+if [[ "${py_minor}" == "3.11" ]]; then
+  cp "${lock_file}" requirements.txt
+  echo "Updated requirements.txt from ${lock_file} (primary dev lock)."
+fi
 
 echo "Done."

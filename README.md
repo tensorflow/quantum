@@ -59,14 +59,15 @@ instructions](https://www.tensorflow.org/quantum/install) in the documentation.
 _Compatibility_: At this time, TensorFlow Quantum is built and
 tested on Linux with the following systems and software:
 
-* Python 3.11-3.12
+* Python 3.10-3.12
 * TensorFlow 2.19.1
 * TF-Keras 2.19.0
 * NumPy 2.1
-* Cirq 1.6.1
+* Cirq 1.5.0-1.6.1
 
 Python 3.13 is not supported yet because TensorFlow 2.19.1 does not publish
-Python 3.13 wheels.
+Python 3.13 wheels. Python 3.10 uses Cirq 1.5.0, while Python 3.11-3.12 use
+Cirq 1.6.1.
 
 ## Quick start
 

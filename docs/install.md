@@ -10,8 +10,9 @@ There are a few ways to set up your environment to use TensorFlow Quantum (TFQ):
   Python's pip package manager.
 * Or build TensorFlow Quantum from source.
 
-TensorFlow Quantum is supported on Python versions 3.11 and 3.12 and depends
-directly on [Cirq](https://github.com/quantumlib/Cirq). Python 3.13 is not
+TensorFlow Quantum is supported on Python versions 3.10, 3.11, and 3.12 and
+depends directly on [Cirq](https://github.com/quantumlib/Cirq). Python 3.10
+uses Cirq 1.5.0, while Python 3.11-3.12 use Cirq 1.6.1. Python 3.13 is not
 supported yet because TensorFlow 2.19.1 does not publish Python 3.13 wheels.
 
 ## Pip package
@@ -163,7 +164,7 @@ We use the standard [fork and pull request workflow](https://guides.github.com/a
 <pre class="devsite-click-to-copy">
   <code class="devsite-terminal">git clone https://github.com/<var>username</var>/quantum.git</code>
   <code class="devsite-terminal">cd quantum</code>
-  <code class="devsite-terminal">pip install -r requirements.txt</code>
+  <code class="devsite-terminal">pip install -r "$(./scripts/select_requirements_lock.sh)"</code>
 </pre>
 <!-- common_typos_enable -->
 
@@ -174,7 +175,7 @@ the command below to install the TensorFlow Quantum dependencies:
 
 <!-- common_typos_disable -->
 <pre class="devsite-click-to-copy">
-  <code class="devsite-terminal">pip install -r requirements.txt</code>
+  <code class="devsite-terminal">pip install -r "$(./scripts/select_requirements_lock.sh)"</code>
 </pre>
 <!-- common_typos_enable -->
 
