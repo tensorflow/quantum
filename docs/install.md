@@ -164,7 +164,7 @@ We use the standard [fork and pull request workflow](https://guides.github.com/a
 <pre class="devsite-click-to-copy">
   <code class="devsite-terminal">git clone https://github.com/<var>username</var>/quantum.git</code>
   <code class="devsite-terminal">cd quantum</code>
-  <code class="devsite-terminal">pip install -r "$(./scripts/select_requirements_lock.sh)"</code>
+  <code class="devsite-terminal">pip install -r "$(bash ./scripts/select_requirements_lock.sh)"</code>
 </pre>
 <!-- common_typos_enable -->
 
@@ -175,7 +175,7 @@ the command below to install the TensorFlow Quantum dependencies:
 
 <!-- common_typos_disable -->
 <pre class="devsite-click-to-copy">
-  <code class="devsite-terminal">pip install -r "$(./scripts/select_requirements_lock.sh)"</code>
+  <code class="devsite-terminal">pip install -r "$(bash ./scripts/select_requirements_lock.sh)"</code>
 </pre>
 <!-- common_typos_enable -->
 

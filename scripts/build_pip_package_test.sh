@@ -14,7 +14,7 @@
 # limitations under the License.
 # ==============================================================================
 
-requirements_file="$(./scripts/select_requirements_lock.sh)"
+requirements_file="$(bash ./scripts/select_requirements_lock.sh)"
 pip install -r "${requirements_file}"
 
 # cd tensorflow_quantum
