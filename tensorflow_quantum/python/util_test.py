@@ -159,8 +159,15 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
             any(has_channel(c) for c in circuits),
             "Expected at least one channel operation across batch when "
             "include_channels=True")
-        # Verify circuits containing channels are serializable.
-        self.assertIsNotNone(util.convert_to_tensor(circuits))
+        # Verify circuits containing channels are correctly serializable
+        # round-trip.
+        serialized = util.convert_to_tensor(circuits,
+                                            deterministic_proto_serialize=True)
+        deserialized = util.from_tensor(serialized)
+        self.assertAllEqual(
+            serialized,
+            util.convert_to_tensor(deserialized,
+                                   deterministic_proto_serialize=True))
 
     def test_random_symbol_circuit_resolver_batch_channels_present(self):
         """Confirm channel ops appear in circuits when include_channels=True."""
@@ -181,8 +188,15 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
             any(has_channel(c) for c in circuits),
             "Expected at least one channel operation across batch when "
             "include_channels=True")
-        # Verify circuits containing channels are serializable.
-        self.assertIsNotNone(util.convert_to_tensor(circuits))
+        # Verify circuits containing channels are correctly serializable
+        # round-trip.
+        serialized = util.convert_to_tensor(circuits,
+                                            deterministic_proto_serialize=True)
+        deserialized = util.from_tensor(serialized)
+        self.assertAllEqual(
+            serialized,
+            util.convert_to_tensor(deserialized,
+                                   deterministic_proto_serialize=True))
 
     @parameterized.parameters(_items_to_tensorize())
     def test_convert_to_tensor(self, item):
