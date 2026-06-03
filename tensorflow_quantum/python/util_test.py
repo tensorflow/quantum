@@ -139,6 +139,51 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
                     isinstance(value, float)
                     for value in resolver.param_dict.values()))
 
+    def test_random_circuit_resolver_batch_channels_present(self):
+        """Confirm channel ops appear in circuits when include_channels=True."""
+        qubits = cirq.GridQubit.rect(1, 3)
+        channel_types = tuple(type(c) for c in util.get_supported_channels())
+
+        circuits, _ = util.random_circuit_resolver_batch(qubits,
+                                                         batch_size=5,
+                                                         n_moments=20,
+                                                         include_channels=True)
+
+        def has_channel(circuit):
+            return any(
+                isinstance(op.gate, channel_types)
+                for moment in circuit
+                for op in moment.operations)
+
+        self.assertTrue(
+            any(has_channel(c) for c in circuits),
+            "Expected at least one channel operation across batch when "
+            "include_channels=True")
+        # Verify circuits containing channels are serializable.
+        self.assertIsNotNone(util.convert_to_tensor(circuits))
+
+    def test_random_symbol_circuit_resolver_batch_channels_present(self):
+        """Confirm channel ops appear in circuits when include_channels=True."""
+        qubits = cirq.GridQubit.rect(1, 3)
+        symbols = ['alpha', 'beta']
+        channel_types = tuple(type(c) for c in util.get_supported_channels())
+
+        circuits, _ = util.random_symbol_circuit_resolver_batch(
+            qubits, symbols, batch_size=5, n_moments=20, include_channels=True)
+
+        def has_channel(circuit):
+            return any(
+                isinstance(op.gate, channel_types)
+                for moment in circuit
+                for op in moment.operations)
+
+        self.assertTrue(
+            any(has_channel(c) for c in circuits),
+            "Expected at least one channel operation across batch when "
+            "include_channels=True")
+        # Verify circuits containing channels are serializable.
+        self.assertIsNotNone(util.convert_to_tensor(circuits))
+
     @parameterized.parameters(_items_to_tensorize())
     def test_convert_to_tensor(self, item):
         """Test that the convert_to_tensor function works correctly by manually
