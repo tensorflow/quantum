@@ -115,7 +115,7 @@ class InnerProductTest(tf.test.TestCase, parameterized.TestCase):
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'not found in reference circuit'):
             # other_programs tensor has the right type but operates on
-            # qubits that the reference ciruit doesn't have.
+            # qubits that the reference circuit doesn't have.
             new_qubits = [cirq.GridQubit(5, 5), cirq.GridQubit(9, 9)]
             new_circuits, _ = util.random_circuit_resolver_batch(
                 new_qubits, batch_size)
@@ -127,7 +127,7 @@ class InnerProductTest(tf.test.TestCase, parameterized.TestCase):
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'not found in paired circuit'):
             # other_programs tensor has the right type but operates on
-            # qubits that the reference ciruit doesn't have.
+            # qubits that the reference circuit doesn't have.
             new_qubits = cirq.GridQubit.rect(1, n_qubits - 1)
             new_circuits, _ = util.random_circuit_resolver_batch(
                 new_qubits, batch_size)

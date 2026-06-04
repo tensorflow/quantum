@@ -304,7 +304,7 @@ class PSDecomposeTest(tf.test.TestCase):
         # The non-decomposed moments should be the same.
         self.assertEqual(decomposed_programs[0][0], circuit_batch[0][0])
         self.assertEqual(decomposed_programs[0][-1], circuit_batch[0][-1])
-        # Check paralellized decompose gates in Moment[1]~[3].
+        # Check parallelized decompose gates in Moment[1]~[3].
         # The target ops are replaced by the first decomposition gates. It means
         # the first Moment has exactly the same number of gate ops.
         self.assertEqual(len(decomposed_programs[0][1]),
@@ -343,7 +343,7 @@ class PSDecomposeTest(tf.test.TestCase):
         # The non-decomposed moments should be the same.
         self.assertEqual(decomposed_programs[0][0], circuit_batch[0][0])
         self.assertEqual(decomposed_programs[0][-1], circuit_batch[0][-1])
-        # Check paralellized decompose gates in Moment[1]~[3].
+        # Check parallelized decompose gates in Moment[1]~[3].
         # The target ops are replaced by the first decomposition gates. It means
         # the first Moment has exactly the same number of gate ops.
         self.assertEqual(len(decomposed_programs[0][1]),

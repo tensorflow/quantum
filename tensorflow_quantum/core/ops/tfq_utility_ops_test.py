@@ -93,7 +93,7 @@ class AppendCircuitOpTest(tf.test.TestCase, parameterized.TestCase):
     def test_append_circuit(self, max_n_bits, symbols, n_circuits):
         """Generate a bunch of circuits of different lengths acting on different
         numbers of qubits and append them using our op, checking that results
-        are consistant with the native cirq method.
+        are consistent with the native cirq method.
         """
         base_circuits = []
         circuits_to_append = []
@@ -139,12 +139,39 @@ class AppendCircuitOpTest(tf.test.TestCase, parameterized.TestCase):
         'padded_array': [[[0, 0, 0, 0], [1, 1, 1, 1]]]
     }, {
         'padded_array': [[[1, 1, -2, -2], [0, 1, -2, -2], [0, 0, -2, -2]]]
+    }, {
+        'padded_array': [[[-2, -2], [-2, -2]]]
+    }, {
+        'padded_array': [[[1, 1], [1, 1]]]
+    }, {
+        'padded_array': np.empty((0, 2, 2), dtype=np.float32)
     }])
     def test_padded_to_ragged(self, padded_array):
         """Test for padded_to_ragged utility."""
         mask = np.where(np.array(padded_array) > -1, True, False)
         expected = tf.ragged.boolean_mask(padded_array, mask)
         actual = tfq_utility_ops.padded_to_ragged(
+            np.array(padded_array, dtype=float))
+        self.assertAllEqual(expected, actual)
+
+    @parameterized.parameters([{
+        'padded_array': [[[1, 0, -2], [0, 1, -2], [-2, -2, -2]],
+                         [[1, -2, -2], [-2, -2, -2], [-2, -2, -2]]]
+    }, {
+        'padded_array': [[[1, 0, 0], [0, 1, 0], [0, 0, 1]]]
+    }, {
+        'padded_array': [[[-2, -2, -2], [-2, -2, -2], [-2, -2, -2]]]
+    }, {
+        'padded_array': np.empty((0, 3, 3), dtype=np.float32)
+    }])
+    def test_padded_to_ragged2d(self, padded_array):
+        """Test for padded_to_ragged2d utility."""
+        tensor_arr = tf.constant(padded_array, dtype=tf.float32)
+        row_mask = tf.abs(tensor_arr[:, :, 0]) < 1.1
+        masked_rows = tf.ragged.boolean_mask(tensor_arr, row_mask)
+        element_mask = tf.abs(masked_rows) < 1.1
+        expected = tf.ragged.boolean_mask(masked_rows, element_mask)
+        actual = tfq_utility_ops.padded_to_ragged2d(
             np.array(padded_array, dtype=float))
         self.assertAllEqual(expected, actual)
 

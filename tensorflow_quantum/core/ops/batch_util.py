@@ -73,7 +73,7 @@ class TFQPauliSumCollector(cirq.work.collector.Collector):
         self._ones[job_id] += parities[1]
 
     def collect(self, sampler):
-        """Synchronus collect."""
+        """Synchronous collect."""
         # See #562, this is a workaround to an event loop issue in the tutorials
         # see also:
         # https://stackoverflow.com/questions/55409641/asyncio-run-cannot-be-called-from-a-running-event-loop

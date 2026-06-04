@@ -1158,7 +1158,7 @@ TEST(QsimCircuitParserTest, MismatchControlNum) {
                                    &fused_circuit, &metadata),
             tensorflow::Status(
                 absl::StatusCode::kInvalidArgument,
-                "Mistmatched number of control qubits and control values."));
+                "Mismatched number of control qubits and control values."));
 }
 
 TEST(QsimCircuitParserTest, EmptyTest) {

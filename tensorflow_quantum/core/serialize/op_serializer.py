@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""op_serializer.py adapated from Cirq release 0.9.0"""
+"""op_serializer.py adapted from Cirq release 0.9.0"""
 
 from typing import List
 import cirq

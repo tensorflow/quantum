@@ -201,7 +201,7 @@ fi
 
 write_bazelrc ""
 
-# The following supressions are for warnings coming from external dependencies.
+# The following suppressions are for warnings coming from external dependencies.
 # They're most likely inconsequential or false positives. Since we can't fix
 # them, we suppress the warnings to reduce noise. Note: single quotes are needed
 # for the first two so that the $ anchors are preserved in the .bazelrc file.
