@@ -1,18 +1,63 @@
 # This file includes external dependencies that are required to compile the
 # TensorFlow op.
 
-
-
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
+local_repository(
+    name = "pypi_setuptools",
+    path = "third_party/pypi_setuptools",
+)
 
+local_repository(
+    name = "pypi_wheel",
+    path = "third_party/pypi_wheel",
+)
 
-EIGEN_COMMIT = "aa6964bf3a34fd607837dd8123bc42465185c4f8"
+# TensorFlow's .bzl files, loaded later in this file, also load rules_python
+# but we need a slightly newer version that is still compatible with TF's.
+http_archive(
+    name = "rules_python",
+    sha256 = "c68bdc4fbec25de5b5493b8819cfc877c4ea299c0dcb15c244c5a00208cde311",
+    strip_prefix = "rules_python-0.31.0",
+    url = "https://github.com/bazel-contrib/rules_python/releases/download/0.31.0/rules_python-0.31.0.tar.gz",
+)
 
+load("@rules_python//python:repositories.bzl", "py_repositories")
+
+py_repositories()
+
+load("//third_party:python_configure.bzl", "python_configure")
+
+python_configure()
+
+load("@local_config_python//:defs.bzl", "interpreter")
+
+register_toolchains("@local_config_python//:py_toolchain")
+
+load("@rules_python//python:pip.bzl", "pip_parse")
+
+pip_parse(
+    name = "pypi",
+    extra_pip_args = [
+        "--index-url",
+        "https://pypi.org/simple/",
+    ],
+    python_interpreter = interpreter,
+    requirements_lock = "//:requirements.txt",
+)
+
+load("@pypi//:requirements.bzl", "install_deps")
+
+install_deps()
+
+# Eigen commit used by TensorFlow / TFQ.
+# This commit corresponds to Eigen version 3.4.90
+# (verified via Eigen/src/Core/util/Macros.h).
+EIGEN_COMMIT = "33d0937c6bdf5ec999939fb17f2a553183d14a74"
 
 http_archive(
     name = "eigen",
-    sha256 = "35ba771e30c735a4215ed784d7e032086cf89fe6622dce4d793c45dd74373362",
+    sha256 = "1f4babf536ce8fc2129dbf92ff3be54cd18ffb2171e9eb40edd00f0a045a54fa",
     build_file_content = """
 cc_library(
   name = "eigen3",
@@ -29,23 +74,35 @@ cc_library(
 
 http_archive(
     name = "qsim",
-    sha256 = "b9c1eba09a885a938b5e73dfc2e02f5231cf3b01d899415caa24769346a731d5",
+    sha256 = "720eeb97298819e00bbb218b8b58fcebbbc1e1708233598fdffeef0b97339617",
     # patches = [
     #     "//third_party/tf:qsim.patch",
     # ],
-    strip_prefix = "qsim-0.13.3",
-    urls = ["https://github.com/quantumlib/qsim/archive/refs/tags/v0.13.3.zip"],
+    strip_prefix = "qsim-0.21.0",
+    urls = ["https://github.com/quantumlib/qsim/archive/refs/tags/v0.21.0.zip"],
 )
+
 
 http_archive(
     name = "org_tensorflow",
-    patches = [
-        "//third_party/tf:tf.patch",
-    ],
-    sha256 = "f771db8d96ca13c72f73c85c9cfb6f5358e2de3dd62a97a9ae4b672fe4c6d094",
-    strip_prefix = "tensorflow-2.15.0",
-    urls = [
-        "https://github.com/tensorflow/tensorflow/archive/refs/tags/v2.15.0.zip",
+    sha256 = "d146daad660c38c5ee0591e7d7ce0fb6c2f92ca247149d5768fa341e6617d563",
+    strip_prefix = "tensorflow-2.19.1",
+    urls = ["https://github.com/tensorflow/tensorflow/archive/refs/tags/v2.19.1.zip"],
+)
+
+load("@org_tensorflow//third_party/py:python_repo.bzl", "python_repository")
+
+# TensorFlow 2.19 expects @python_version_repo to exist even when TFQ manages
+# its own pip_parse setup. Reuse the single lockfile across the supported
+# interpreter versions.
+python_repository(
+    name = "python_version_repo",
+    default_python_version = "system",
+    requirements_versions = ["3.10", "3.11", "3.12"],
+    requirements_locks = [
+        "//:requirements_lock_3_10.txt",
+        "//:requirements_lock_3_11.txt",
+        "//:requirements_lock_3_12.txt",
     ],
 )
 
@@ -66,6 +123,43 @@ load("@org_tensorflow//tensorflow:workspace0.bzl", "tf_workspace0")
 
 tf_workspace0()
 
+load(
+    "@local_tsl//third_party/gpus/cuda/hermetic:cuda_json_init_repository.bzl",
+    "cuda_json_init_repository",
+)
+
+# Even though we do not currently support CUDA in TFQ, the TensorFlow build
+# configuration files needs these CUDA-related Bazel files.
+
+cuda_json_init_repository()
+
+load(
+    "@cuda_redist_json//:distributions.bzl",
+    "CUDA_REDISTRIBUTIONS",
+    "CUDNN_REDISTRIBUTIONS",
+)
+
+load(
+    "@local_tsl//third_party/gpus/cuda/hermetic:cuda_redist_init_repositories.bzl",
+    "cuda_redist_init_repositories",
+    "cudnn_redist_init_repository",
+)
+
+cuda_redist_init_repositories(
+    cuda_redistributions = CUDA_REDISTRIBUTIONS,
+)
+
+cudnn_redist_init_repository(
+    cudnn_redistributions = CUDNN_REDISTRIBUTIONS,
+)
+
+load(
+    "@local_tsl//third_party/gpus/cuda/hermetic:cuda_configure.bzl",
+    "cuda_configure",
+)
+
+cuda_configure(name = "local_config_cuda")
+
 load("//third_party/tf:tf_configure.bzl", "tf_configure")
 
 tf_configure(name = "local_config_tf")
@@ -73,8 +167,8 @@ tf_configure(name = "local_config_tf")
 http_archive(
     name = "six_archive",
     build_file = "@com_google_protobuf//:six.BUILD",
-    sha256 = "105f8d68616f8248e24bf0e9372ef04d3cc10104f1980f54d57b2ce73a5ad56a",
-    url = "https://pypi.python.org/packages/source/s/six/six-1.10.0.tar.gz#md5=34eed507548117b2ab523ab14b2f8b55",
+    sha256 = "ff70335d468e7eb6ec65b95b99d3a2836546063f63acc5171de367e834932a81",
+    url = "https://files.pythonhosted.org/packages/94/e7/b2c673351809dca68a0e064b6af791aa332cf192da575fd474ed7d6f16a2/six-1.17.0.tar.gz",
 )
 
 bind(

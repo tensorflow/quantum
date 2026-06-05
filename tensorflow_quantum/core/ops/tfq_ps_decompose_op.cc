@@ -57,8 +57,8 @@ class TfqPsDecomposeOp : public tensorflow::OpKernel {
 
     const int max_buffer_moments = 5;
 
-    auto DoWork = [&](int start, int end) {
-      for (int i = start; i < end; i++) {
+    auto DoWork = [&](int64_t start, int64_t end) {
+      for (int64_t i = start; i < end; i++) {
         Program cur_program = programs.at(i);
         Program new_program;
         std::string temp;

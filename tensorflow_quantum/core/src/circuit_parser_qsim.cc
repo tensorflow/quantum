@@ -102,7 +102,7 @@ inline Status ParseProtoControls(const Operation& op,
 
   if (control_toks.size() != control_v_toks.size()) {
     return Status(absl::StatusCode::kInvalidArgument,
-                  "Mistmatched number of control qubits and control values.");
+                  "Mismatched number of control qubits and control values.");
   }
   if (control_toks.empty()) {
     return ::tensorflow::Status();

@@ -28,6 +28,7 @@ limitations under the License.
 #include "../qsim/lib/qtrajectory.h"
 #include "../qsim/lib/seqfor.h"
 #include "../qsim/lib/simmux.h"
+#include "absl/synchronization/mutex.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/shape_inference.h"
 #include "tensorflow/core/framework/tensor_shape.h"
@@ -36,7 +37,6 @@ limitations under the License.
 #include "tensorflow/core/lib/core/threadpool.h"
 #include "tensorflow/core/lib/random/random.h"
 #include "tensorflow/core/lib/random/simple_philox.h"
-#include "tensorflow/core/platform/mutex.h"
 #include "tensorflow/core/util/guarded_philox_random.h"
 #include "tensorflow_quantum/core/ops/parse_context.h"
 #include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
@@ -119,9 +119,9 @@ class TfqNoisySampledExpectationOp : public tensorflow::OpKernel {
                                                 NoisyQsimCircuit());
 
     Status parse_status = ::tensorflow::Status();
-    auto p_lock = tensorflow::mutex();
-    auto construct_f = [&](int start, int end) {
-      for (int i = start; i < end; i++) {
+    auto p_lock = absl::Mutex();
+    auto construct_f = [&](int64_t start, int64_t end) {
+      for (int64_t i = start; i < end; i++) {
         Status local = NoisyQsimCircuitFromProgram(
             programs[i], maps[i], num_qubits[i], false, &qsim_circuits[i]);
         NESTED_FN_STATUS_SYNC(parse_status, local, p_lock);
@@ -133,8 +133,8 @@ class TfqNoisySampledExpectationOp : public tensorflow::OpKernel {
         programs.size(), num_cycles, construct_f);
     OP_REQUIRES_OK(context, parse_status);
 
-    int max_num_qubits = 0;
-    for (const int num : num_qubits) {
+    uint64_t max_num_qubits = 0;
+    for (const uint64_t num : num_qubits) {
       max_num_qubits = std::max(max_num_qubits, num);
     }
 
@@ -174,7 +174,7 @@ class TfqNoisySampledExpectationOp : public tensorflow::OpKernel {
                                          qsim::MultiQubitGateFuser, Simulator>;
 
     // Begin simulation.
-    int largest_nq = 1;
+    uint64_t largest_nq = 1;
     Simulator sim = Simulator(tfq_for);
     StateSpace ss = StateSpace(tfq_for);
     auto sv = ss.Create(largest_nq);
@@ -199,7 +199,7 @@ class TfqNoisySampledExpectationOp : public tensorflow::OpKernel {
     // we no longer parallelize over circuits. Each time we encounter a
     // a larger circuit we will grow the Statevector as necessary.
     for (size_t i = 0; i < ncircuits.size(); i++) {
-      int nq = num_qubits[i];
+      uint64_t nq = num_qubits[i];
 
       // (#679) Just ignore empty program
       if (ncircuits[i].channels.empty()) {
@@ -260,7 +260,7 @@ class TfqNoisySampledExpectationOp : public tensorflow::OpKernel {
   }
 
   void ComputeSmall(const std::vector<int>& num_qubits,
-                    const int max_num_qubits,
+                    const uint64_t max_num_qubits,
                     const std::vector<NoisyQsimCircuit>& ncircuits,
                     const std::vector<std::vector<PauliSum>>& pauli_sums,
                     const std::vector<std::vector<int>>& num_samples,
@@ -273,8 +273,7 @@ class TfqNoisySampledExpectationOp : public tensorflow::OpKernel {
                                          qsim::MultiQubitGateFuser, Simulator>;
 
     const int output_dim_batch_size = output_tensor->dimension(0);
-    std::vector<tensorflow::mutex> batch_locks(output_dim_batch_size,
-                                               tensorflow::mutex());
+    auto batch_locks = std::make_unique<absl::Mutex[]>(output_dim_batch_size);
 
     const int num_threads = context->device()
                                 ->tensorflow_cpu_worker_threads()
@@ -301,11 +300,11 @@ class TfqNoisySampledExpectationOp : public tensorflow::OpKernel {
     random_gen.Init(tensorflow::random::New64(), tensorflow::random::New64());
 
     Status compute_status = ::tensorflow::Status();
-    auto c_lock = tensorflow::mutex();
-    auto DoWork = [&](int start, int end) {
+    auto c_lock = absl::Mutex();
+    auto DoWork = [&](int64_t start, int64_t end) {
       // Begin simulation.
       const auto tfq_for = qsim::SequentialFor(1);
-      int largest_nq = 1;
+      uint64_t largest_nq = 1;
       Simulator sim = Simulator(tfq_for);
       StateSpace ss = StateSpace(tfq_for);
       auto sv = ss.Create(largest_nq);
@@ -317,7 +316,7 @@ class TfqNoisySampledExpectationOp : public tensorflow::OpKernel {
       tensorflow::random::SimplePhilox rand_source(&local_gen);
 
       for (size_t i = 0; i < ncircuits.size(); i++) {
-        int nq = num_qubits[i];
+        uint64_t nq = num_qubits[i];
         int rep_offset = rep_offsets[start][i];
 
         // (#679) Just ignore empty program
@@ -375,12 +374,12 @@ class TfqNoisySampledExpectationOp : public tensorflow::OpKernel {
           }
           if (break_loop) {
             // Lock writing to this batch index in output_tensor.
-            batch_locks[i].lock();
+            batch_locks[i].Lock();
             for (size_t j = 0; j < num_samples[i].size(); j++) {
               rolling_sums[j] /= num_samples[i][j];
               (*output_tensor)(i, j) += static_cast<float>(rolling_sums[j]);
             }
-            batch_locks[i].unlock();
+            batch_locks[i].Unlock();
             break;
           }
         }

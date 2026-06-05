@@ -25,6 +25,7 @@ limitations under the License.
 #include "../qsim/lib/mps_statespace.h"
 #include "../qsim/lib/seqfor.h"
 #include "../qsim/lib/simmux.h"
+#include "absl/synchronization/mutex.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/shape_inference.h"
 #include "tensorflow/core/framework/tensor_shape.h"
@@ -33,7 +34,6 @@ limitations under the License.
 #include "tensorflow/core/lib/core/threadpool.h"
 #include "tensorflow/core/lib/random/random.h"
 #include "tensorflow/core/lib/random/simple_philox.h"
-#include "tensorflow/core/platform/mutex.h"
 #include "tensorflow/core/util/guarded_philox_random.h"
 #include "tensorflow_quantum/core/ops/parse_context.h"
 #include "tensorflow_quantum/core/proto/program.pb.h"
@@ -86,9 +86,9 @@ class TfqSimulateMPS1DSamplesOp : public tensorflow::OpKernel {
         programs.size(), std::vector<qsim::GateFused<QsimGate>>({}));
 
     Status parse_status = ::tensorflow::Status();
-    auto p_lock = tensorflow::mutex();
-    auto construct_f = [&](int start, int end) {
-      for (int i = start; i < end; i++) {
+    auto p_lock = absl::Mutex();
+    auto construct_f = [&](int64_t start, int64_t end) {
+      for (int64_t i = start; i < end; i++) {
         Status local =
             QsimCircuitFromProgram(programs[i], maps[i], num_qubits[i],
                                    &qsim_circuits[i], &fused_circuits[i]);
@@ -107,9 +107,9 @@ class TfqSimulateMPS1DSamplesOp : public tensorflow::OpKernel {
 
     // Find largest circuit for tensor size padding and allocate
     // the output tensor.
-    int max_num_qubits = 0;
-    int min_num_qubits = 1 << 30;
-    for (const int num : num_qubits) {
+    uint64_t max_num_qubits = 0;
+    uint64_t min_num_qubits = 1 << 30;
+    for (const uint64_t num : num_qubits) {
       max_num_qubits = std::max(max_num_qubits, num);
       min_num_qubits = std::min(min_num_qubits, num);
     }
@@ -118,7 +118,7 @@ class TfqSimulateMPS1DSamplesOp : public tensorflow::OpKernel {
                 tensorflow::errors::InvalidArgument(
                     "All input circuits require minimum 3 qubits."));
 
-    const int output_dim_size = maps.size();
+    const size_t output_dim_size = maps.size();
     tensorflow::TensorShape output_shape;
     output_shape.AddDim(output_dim_size);
     output_shape.AddDim(num_samples);
@@ -142,7 +142,7 @@ class TfqSimulateMPS1DSamplesOp : public tensorflow::OpKernel {
   int bond_dim_;
 
   void ComputeSmall(const std::vector<int>& num_qubits,
-                    const int max_num_qubits, const int num_samples,
+                    const uint64_t max_num_qubits, const int num_samples,
                     const std::vector<QsimCircuit>& unfused_circuits,
                     tensorflow::OpKernelContext* context,
                     tensorflow::TTypes<int8_t, 3>::Tensor* output_tensor) {
@@ -153,8 +153,8 @@ class TfqSimulateMPS1DSamplesOp : public tensorflow::OpKernel {
     tensorflow::GuardedPhiloxRandom random_gen;
     random_gen.Init(tensorflow::random::New64(), tensorflow::random::New64());
 
-    auto DoWork = [&](int start, int end) {
-      int largest_nq = 1;
+    auto DoWork = [&](int64_t start, int64_t end) {
+      uint64_t largest_nq = 1;
       // Note: ForArgs in MPSSimulator and MPSStateState are currently unused.
       // So, this 1 is a dummy for qsim::For.
       Simulator sim = Simulator(1);
@@ -166,8 +166,8 @@ class TfqSimulateMPS1DSamplesOp : public tensorflow::OpKernel {
       auto local_gen = random_gen.ReserveSamples32(unfused_circuits.size() + 1);
       tensorflow::random::SimplePhilox rand_source(&local_gen);
 
-      for (int i = start; i < end; i++) {
-        int nq = num_qubits[i];
+      for (int64_t i = start; i < end; i++) {
+        uint64_t nq = num_qubits[i];
 
         if (nq > largest_nq) {
           // need to switch to larger statespace.
@@ -190,7 +190,7 @@ class TfqSimulateMPS1DSamplesOp : public tensorflow::OpKernel {
                   &results);
 
         for (int j = 0; j < num_samples; j++) {
-          int64_t q_ind = 0;
+          uint64_t q_ind = 0;
           while (q_ind < max_num_qubits - nq) {
             (*output_tensor)(i, j, static_cast<ptrdiff_t>(q_ind)) = -2;
             q_ind++;

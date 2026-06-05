@@ -598,8 +598,8 @@ def _identity_gate_serializer():
     def _identity_check(x):
         if x.gate.num_qubits() != 1:
             raise ValueError("Multi-Qubit identity gate not supported."
-                             "Given: {}. To work around this, use "
-                             "cirq.I.on_each instead.".format(str(x)))
+                             f"Given: {x}. To work around this, use "
+                             "cirq.I.on_each instead.")
         return True
 
     # Here `args` is used for two reasons. 1. GateOpSerializer doesn't work well

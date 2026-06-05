@@ -46,7 +46,7 @@ def get_supported_gates():
     Returns a dictionary mapping from supported gate types
     to the number of qubits each gate operates on.
 
-    Any of these gates used in conjuction with the
+    Any of these gates used in conjunction with the
     `controlled_by` function for multi-qubit control are also
     supported.
     """
@@ -324,9 +324,10 @@ def convert_to_tensor(items_to_convert, deterministic_proto_serialize=False):
                     serializer.serialize_circuit(item).SerializeToString(
                         deterministic=deterministic_proto_serialize))
             else:
-                raise TypeError("Incompatible item passed into "
-                                "convert_to_tensor. Tensor detected type: {}. "
-                                "got: {}".format(curr_type, type(item)))
+                raise TypeError(
+                    "Incompatible item passed into "
+                    f"convert_to_tensor. Tensor detected type: {curr_type}. "
+                    f"got: {type(item)}")
         return tensored_items
 
     # This will catch impossible dimensions
@@ -393,7 +394,7 @@ def from_tensor(tensor_to_convert):
         tensor_to_convert = tensor_to_convert.numpy()
     if not isinstance(tensor_to_convert, (np.ndarray, list, tuple)):
         raise TypeError("tensor_to_convert received bad "
-                        "type {}".format(type(tensor_to_convert)))
+                        f"type {type(tensor_to_convert)}")
     tensor_to_convert = np.array(tensor_to_convert)
     python_items = np.empty(tensor_to_convert.shape, dtype=object)
     curr_type = None
@@ -469,9 +470,9 @@ def _symbols_in_op(op):
         return ret
 
     raise ValueError(
-        "Attempted to scan for symbols in circuit with unsupported"
-        " ops inside.", "Expected op found in "
-        "tfq.util.get_supported_gates but found: {}.".format(str(op)),
+        "Attempted to scan for symbols in circuit with unsupported "
+        "ops inside. Expected op found in "
+        f"tfq.util.get_supported_gates but found: {op}. "
         "Please make sure circuits contain only ops found in "
         "tfq.util.get_supported_gates().")
 
@@ -681,7 +682,7 @@ def _many_clifford_to_many_z(pauli_sum):
 def _many_z_to_single_z(focal_qubit, pauli_sum):
     """Convert many Z's to single Z.
     Returns the gate set required for transforming an arbitrary tensor product
-    of pauli-z's into a product of all identites and a single pauli-Z.
+    of pauli-z's into a product of all identities and a single pauli-Z.
     Args:
         focal_qubit: central qubit among CNOT gates.
         pauli_sum: `cirq.PauliSum` object to be converted to CNOT's and Z.
@@ -711,8 +712,7 @@ def check_commutability(pauli_sum):
             if not cirq.commutes(term1, term2):
                 raise ValueError("Given an operator has non-commutable "
                                  "terms, whose exponentiation is not "
-                                 "supported yet: {} and {}".format(
-                                     term1, term2))
+                                 f"supported yet: {term1} and {term2}")
 
 
 def exp_identity(param, c, zeroth_qubit):
@@ -779,8 +779,8 @@ def exponential(operators, coefficients=None):
 
     if len(coefficients) != len(operators):
         raise ValueError("the number of operators should be the same as that "
-                         "of coefficients. Got {} operators and {} coefficients"
-                         "".format(len(operators), len(coefficients)))
+                         f"of coefficients. Got {len(operators)} operators and "
+                         f"{len(coefficients)} coefficients")
 
     coefficients = [
         sympy.Symbol(s) if isinstance(s, str) else s
@@ -805,8 +805,7 @@ def exponential(operators, coefficients=None):
         for op in pauli_sum:
             if abs(op.coefficient.imag) > 1e-9:
                 raise TypeError('exponential only supports real '
-                                'coefficients: got '
-                                '{}'.format(op.coefficient))
+                                f'coefficients: got {op.coefficient}')
             # Create a circuit with exponentiating `op` with param
             c = op.coefficient.real
             if len(op.gate.pauli_mask) == 0:

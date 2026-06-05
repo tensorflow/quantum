@@ -1,0 +1,13 @@
+package(default_visibility = ["//visibility:public"])
+
+# TF expects @pypi_setuptools//:pkg (and sometimes :_pkg).
+# rules_python 0.31.0 exposes setuptools as :lib.
+alias(
+    name = "pkg",
+    actual = "@pypi__setuptools//:lib",
+)
+
+alias(
+    name = "_pkg",
+    actual = "@pypi__setuptools//:lib",
+)

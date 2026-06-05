@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+"""Module for generating random Clifford circuits."""
 
 from typing import Iterable
 

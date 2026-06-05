@@ -13,27 +13,36 @@
 # limitations under the License.
 # ==============================================================================
 """Format notebook code cells using yapf google style."""
+
 import glob
 import nbformat
 import yapf
 
-# Must be run from the top level of the `TFQuantum` repo.
-NOTEBOOKS = glob.glob("docs/tutorials/*.ipynb")
-for fname in NOTEBOOKS:
-    nb = nbformat.read(fname, as_version=nbformat.NO_CONVERT)
-    all_cells = nb.get('cells')
-    for i, cell in enumerate(all_cells):
-        if cell.get('cell_type') != 'code':
-            continue
-        lines = cell.get('source')
-        # This will safely skip over cells containing !% magic
-        try:
-            fmt_lines = yapf.yapf_api.FormatCode(''.join(lines),
-                                                 style_config="google")[0]
-        except (SyntaxError, yapf.yapflib.errors.YapfError):
-            continue
-        # google style always adds an EOF newline; undo this.
-        all_cells[i]['source'] = fmt_lines[:-1]
 
-    nb['cells'] = all_cells
-    nbformat.write(nb, fname, version=nbformat.NO_CONVERT)
+def format_notebooks():
+    """Format tutorial notebooks.
+
+    This must be run from the top level of the repository."""
+
+    for fname in glob.glob("docs/tutorials/*.ipynb"):
+        nb = nbformat.read(fname, as_version=nbformat.NO_CONVERT)
+        all_cells = nb.get('cells')
+        for i, cell in enumerate(all_cells):
+            if cell.get('cell_type') != 'code':
+                continue
+            lines = cell.get('source')
+            # This will safely skip over cells containing !% magic
+            try:
+                fmt_lines = yapf.yapf_api.FormatCode(''.join(lines),
+                                                     style_config="google")[0]
+            except (SyntaxError, yapf.yapflib.errors.YapfError):
+                continue
+            # google style always adds an EOF newline; undo this.
+            all_cells[i]['source'] = fmt_lines[:-1]
+
+        nb['cells'] = all_cells
+        nbformat.write(nb, fname, version=nbformat.NO_CONVERT)
+
+
+if __name__ == "__main__":
+    format_notebooks()

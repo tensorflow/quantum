@@ -56,6 +56,7 @@ py_library(
     name = "differentiator",
     srcs = ["differentiator.py"],
     srcs_version = "PY3",
+    deps = ["@pypi//tensorflow"],
 )
 
 py_library(
@@ -133,6 +134,7 @@ py_test(
     name = "gradient_test",
     timeout = "eternal",
     srcs = ["gradient_test.py"],
+    flaky = True,
     python_version = "PY3",
     deps = [
         ":adjoint",

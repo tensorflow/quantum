@@ -2,7 +2,7 @@
 <div align="center">
 
 <img width="450px" alt="TensorFlow Quantum logo"
-src="docs/images/logo/tf_quantum1.svg">
+src="https://raw.githubusercontent.com/tensorflow/quantum/refs/heads/master/docs/images/logo/tf_quantum1.svg">
 
 High-performance Python framework for hybrid quantum-classical machine learning
 
@@ -16,7 +16,6 @@ PyPI](https://img.shields.io/pypi/v/TensorFlow_Quantum.svg?logo=python&logoColor
 [Features](#features) &ndash;
 [Installation](#installation) &ndash;
 [Quick Start](#quick-start) &ndash;
-[Documentation](#documentation) &ndash;
 [Getting help](#getting-help) &ndash;
 [Citing TFQ](#citing-tensorflow-quantum) &ndash;
 [Contact](#contact)
@@ -27,10 +26,9 @@ PyPI](https://img.shields.io/pypi/v/TensorFlow_Quantum.svg?logo=python&logoColor
 
 [TensorFlow Quantum](https://www.tensorflow.org/quantum) (TFQ) is a Python
 framework for hybrid quantum-classical machine learning focused on modeling
-quantum data. It enables quantum algorithms researchers and machine learning
-applications researchers to explore computing workflows that leverage Google’s
-quantum computing offerings – all from within the powerful
-[TensorFlow](https://tensorflow.org) ecosystem.
+quantum data. It provides users with the tools they need to interleave quantum
+algorithms and logic designed in Cirq with the powerful and performant ML tools
+from [TensorFlow](https://tensorflow.org). Here are some of TFQ's features:
 
 *   Integrates with [Cirq](https://github.com/quantumlib/Cirq) for writing
     quantum circuit definitions
@@ -47,30 +45,31 @@ quantum computing offerings – all from within the powerful
 *   Harnesses TensorFlow’s computational machinery to provide exceptional
     performance and scalability
 
-## Motivation
-
-TensorFlow Quantum provides users with the tools they need to interleave quantum
-algorithms and logic designed in Cirq with the powerful and performant ML tools
-from TensorFlow. With this connection, we hope to unlock new and exciting paths
-for quantum computing research that would not have otherwise been possible.
-
-Thanks to its power and scalability, TensorFlow Quantum has already been
-instrumental in enabling ground-breaking research in QML. It empowers
-researchers to pursue questions whose answers can only be obtained through fast
-simulation of many millions of moderately-sized circuits.
+TensorFlow Quantum empowers quantum algorithms and machine learning researchers
+to pursue questions whose answers can only be obtained through fast simulation
+of many millions of moderately-sized circuits. It has already been instrumental
+in enabling ground-breaking research in QML by providing a seamless workflow for
+leveraging Google’s quantum computing offerings.
 
 ## Installation
 
 Please see the [installation
 instructions](https://www.tensorflow.org/quantum/install) in the documentation.
 
+_Compatibility_: At this time, TensorFlow Quantum is built and
+tested on Linux with the following systems and software:
+
+* Python 3.10–3.12
+* TensorFlow 2.19.1
+* TF-Keras 2.19.0
+* NumPy 2.0
+* Cirq 1.5.0
+
 ## Quick start
 
 [Guides and tutorials for TensorFlow
 Quantum](https://tensorflow.org/quantum/overview) are available online at the
 TensorFlow.org web site.
-
-## Documentation
 
 [Documentation for TensorFlow Quantum](https://tensorflow.org/quantum),
 including tutorials and API documentation, can be found online at the
@@ -131,6 +130,7 @@ Copyright 2020 Google LLC.
 <div align="center">
   <a href="https://quantumai.google">
     <img width="15%" alt="Google Quantum AI"
-         src="docs/images/quantum-ai-vertical.svg">
+         src="https://raw.githubusercontent.com/tensorflow/quantum/refs/heads/master/docs/images/quantum-ai-vertical.svg">
+
   </a>
 </div>

@@ -225,7 +225,7 @@ def minimize(expectation_value_function,
                                             dtype='float32')
 
         def _spsa_once(state):
-            """Caclulate single SPSA gradient estimation
+            """Calculate single SPSA gradient estimation
 
             Args:
                 state: A SPSAOptimizerResults object stores the

@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-// Utilties around parsing Cirq Programs into forms that the TensorFlow op can
+// Utilities around parsing Cirq Programs into forms that the TensorFlow op can
 // better understand.
 
 #ifndef TFQ_CORE_SRC_PROGRAM_RESOLUTION
@@ -52,7 +52,7 @@ tensorflow::Status ResolveQubitIds(
 // operations in all moments, and if any Args have a symbol, replaces the one-of
 // with an ArgValue representing the value in the parameter map keyed by the
 // symbol. When `resolve_all` is true, returns an error if a symbol does not
-// have a correponding value in `param_map`.
+// have a corresponding value in `param_map`.
 // TODO(pmassey): Consider returning an error if a value in the parameter map
 // isn't used.
 tensorflow::Status ResolveSymbols(

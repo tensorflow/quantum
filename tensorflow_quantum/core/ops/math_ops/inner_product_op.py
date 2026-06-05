@@ -46,7 +46,7 @@ def _inner_product_grad(programs, symbol_names, symbol_values, other_programs,
             `programs`.
         symbol_values: `tf.Tensor` of real numbers with shape
             [batch_size, n_params] specifying parameter values to resolve
-            into the circuits specificed by programs, following the ordering
+            into the circuits specified by programs, following the ordering
             dictated by `symbol_names`.
         other_programs: `tf.Tensor` of strings with shape [batch_size, n_others]
             containing the string representations of the circuits with which to
@@ -75,8 +75,11 @@ def inner_product(programs, symbol_names, symbol_values, other_programs):
     Compute (potentially many) inner products between the given circuits and
     the symbol free comparison circuits.
 
-    Calculates out[i][j] = $ \langle \psi_{\text{programs[i]}} \\
-     (\text{symbol\_values[i]}) | \psi_{\text{other\_programs[j]}} \rangle $
+    Calculates out[i][j] as:
+    $$
+    \langle \psi_{\text{programs[i]}}(\text{symbol_values[i]}) \mid
+    \psi_{\text{other_programs[j]}} \rangle
+    $$
 
 
     >>> symbols = sympy.symbols('alpha beta')
@@ -119,7 +122,7 @@ def inner_product(programs, symbol_names, symbol_values, other_programs):
             `programs`.
         symbol_values: `tf.Tensor` of real numbers with shape
             [batch_size, n_params] specifying parameter values to resolve
-            into the circuits specificed by programs, following the ordering
+            into the circuits specified by programs, following the ordering
             dictated by `symbol_names`.
         other_programs: `tf.Tensor` of strings with shape [batch_size, n_others]
             containing the string representations of the circuits with which to
