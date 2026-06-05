@@ -112,8 +112,8 @@ class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
 
     Status parse_status = ::tensorflow::Status();
     auto p_lock = absl::Mutex();
-    auto construct_f = [&](int start, int end) {
-      for (int i = start; i < end; i++) {
+    auto construct_f = [&](int64_t start, int64_t end) {
+      for (int64_t i = start; i < end; i++) {
         Status local =
             QsimCircuitFromProgram(programs[i], maps[i], num_qubits[i],
                                    &qsim_circuits[i], &fused_circuits[i]);
@@ -126,8 +126,8 @@ class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
         programs.size(), num_cycles, construct_f);
     OP_REQUIRES_OK(context, parse_status);
 
-    int max_num_qubits = 0;
-    for (const int num : num_qubits) {
+    uint64_t max_num_qubits = 0;
+    for (const uint64_t num : num_qubits) {
       max_num_qubits = std::max(max_num_qubits, num);
     }
 
@@ -159,7 +159,7 @@ class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
     using StateSpace = Simulator::StateSpace;
 
     // Begin simulation.
-    int largest_nq = 1;
+    uint64_t largest_nq = 1;
     Simulator sim = Simulator(tfq_for);
     StateSpace ss = StateSpace(tfq_for);
     auto sv = ss.Create(largest_nq);
@@ -181,7 +181,7 @@ class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
     // we no longer parallelize over circuits. Each time we encounter a
     // a larger circuit we will grow the Statevector as necessary.
     for (size_t i = 0; i < fused_circuits.size(); i++) {
-      int nq = num_qubits[i];
+      uint64_t nq = num_qubits[i];
 
       if (nq > largest_nq) {
         // need to switch to larger statespace.
@@ -212,7 +212,7 @@ class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
   }
 
   void ComputeSmall(
-      const std::vector<int>& num_qubits, const int max_num_qubits,
+      const std::vector<int>& num_qubits, const uint64_t max_num_qubits,
       const std::vector<std::vector<qsim::GateFused<QsimGate>>>& fused_circuits,
       const std::vector<std::vector<PauliSum>>& pauli_sums,
       const std::vector<std::vector<int>>& num_samples,
@@ -238,11 +238,11 @@ class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
 
     Status compute_status = ::tensorflow::Status();
     auto c_lock = absl::Mutex();
-    auto DoWork = [&](int start, int end) {
-      int old_batch_index = -2;
-      int cur_batch_index = -1;
-      int largest_nq = 1;
-      int cur_op_index;
+    auto DoWork = [&](int64_t start, int64_t end) {
+      int64_t old_batch_index = -2;
+      int64_t cur_batch_index = -1;
+      uint64_t largest_nq = 1;
+      int64_t cur_op_index;
 
       Simulator sim = Simulator(tfq_for);
       StateSpace ss = StateSpace(tfq_for);
@@ -255,11 +255,11 @@ class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
       auto local_gen = random_gen.ReserveSamples32(n_random);
       tensorflow::random::SimplePhilox rand_source(&local_gen);
 
-      for (int i = start; i < end; i++) {
+      for (int64_t i = start; i < end; i++) {
         cur_batch_index = i / output_dim_op_size;
         cur_op_index = i % output_dim_op_size;
 
-        const int nq = num_qubits[cur_batch_index];
+        const uint64_t nq = num_qubits[cur_batch_index];
 
         // (#679) Just ignore empty program
         if (fused_circuits[cur_batch_index].size() == 0) {

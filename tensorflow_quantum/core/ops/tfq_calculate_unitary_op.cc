@@ -70,8 +70,8 @@ class TfqCalculateUnitaryOp : public tensorflow::OpKernel {
 
     Status parse_status = ::tensorflow::Status();
     auto p_lock = absl::Mutex();
-    auto construct_f = [&](int start, int end) {
-      for (int i = start; i < end; i++) {
+    auto construct_f = [&](int64_t start, int64_t end) {
+      for (int64_t i = start; i < end; i++) {
         Status local =
             QsimCircuitFromProgram(programs[i], maps[i], num_qubits[i],
                                    &qsim_circuits[i], &fused_circuits[i]);
@@ -86,18 +86,18 @@ class TfqCalculateUnitaryOp : public tensorflow::OpKernel {
 
     // Find largest circuit for tensor size padding and allocate
     // the output tensor.
-    int max_num_qubits = 0;
-    for (const int num : num_qubits) {
+    uint64_t max_num_qubits = 0;
+    for (const uint64_t num : num_qubits) {
       max_num_qubits = std::max(max_num_qubits, num);
     }
 
     // TODO(pmassey): Investigate creating a matrix that isn't just the maximum
     // required size.
-    const int output_dim_size = maps.size();
+    const size_t output_dim_size = maps.size();
     tensorflow::TensorShape output_shape;
     output_shape.AddDim(output_dim_size);
-    output_shape.AddDim(1 << max_num_qubits);
-    output_shape.AddDim(1 << max_num_qubits);
+    output_shape.AddDim(uint64_t(1) << max_num_qubits);
+    output_shape.AddDim(uint64_t(1) << max_num_qubits);
 
     tensorflow::Tensor *output = nullptr;
     OP_REQUIRES_OK(context, context->allocate_output(0, output_shape, &output));
@@ -110,14 +110,14 @@ class TfqCalculateUnitaryOp : public tensorflow::OpKernel {
     using Unitary = UnitarySpace::Unitary;
 
     // Begin simulation.
-    int largest_nq = 1;
+    uint64_t largest_nq = 1;
     Unitary u = UnitarySpace(tfq_for).CreateUnitary(largest_nq);
 
     // Simulate programs one by one. Parallelizing over state vectors
     // we no longer parallelize over circuits. Each time we encounter a
     // a larger circuit we will grow the unitary as necessary.
     for (size_t i = 0; i < fused_circuits.size(); i++) {
-      int nq = num_qubits[i];
+      uint64_t nq = num_qubits[i];
       UCalculator sim = UCalculator(tfq_for);
       UnitarySpace us = UnitarySpace(tfq_for);
       if (nq > largest_nq) {
@@ -135,10 +135,11 @@ class TfqCalculateUnitaryOp : public tensorflow::OpKernel {
       auto copy_f = [i, nq, max_num_qubits, &output_tensor, &us, &u](
                         uint64_t start, uint64_t end) {
         uint64_t crossover = uint64_t(1) << nq;
+        uint64_t divisor = uint64_t(1) << max_num_qubits;
 
         for (uint64_t l = start; l < end; l++) {
-          uint64_t j = l / (1 << max_num_qubits);
-          uint64_t k = l % (1 << max_num_qubits);
+          uint64_t j = l / divisor;
+          uint64_t k = l % divisor;
           if (k < crossover && j < crossover) {
             output_tensor(static_cast<ptrdiff_t>(i), static_cast<ptrdiff_t>(j),
                           static_cast<ptrdiff_t>(k)) = us.GetEntry(u, k, j);
@@ -149,7 +150,7 @@ class TfqCalculateUnitaryOp : public tensorflow::OpKernel {
           }
         }
       };
-      const uint64_t num_cycles_copy = 10 * (1 << max_num_qubits);
+      const uint64_t num_cycles_copy = 10 * (uint64_t(1) << max_num_qubits);
       context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
           (uint64_t(1) << max_num_qubits) * (uint64_t(1) << max_num_qubits),
           num_cycles_copy, copy_f);

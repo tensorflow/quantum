@@ -77,8 +77,8 @@ Status ParsePrograms(OpKernelContext* context, const std::string& input_name,
   const int num_programs = program_strings.dimension(0);
   programs->assign(num_programs, Program());
 
-  auto DoWork = [&](int start, int end) {
-    for (int i = start; i < end; i++) {
+  auto DoWork = [&](int64_t start, int64_t end) {
+    for (int64_t i = start; i < end; i++) {
       OP_REQUIRES_OK(context, ParseProto(program_strings(i), &programs->at(i)));
     }
   };
@@ -112,8 +112,8 @@ Status ParsePrograms2D(OpKernelContext* context, const std::string& input_name,
   const int num_entries = program_strings.dimension(1);
   programs->assign(num_programs, std::vector<Program>(num_entries, Program()));
 
-  auto DoWork = [&](int start, int end) {
-    for (int i = start; i < end; i++) {
+  auto DoWork = [&](int64_t start, int64_t end) {
+    for (int64_t i = start; i < end; i++) {
       OP_REQUIRES_OK(
           context,
           ParseProto(program_strings(i / num_entries, i % num_entries),
@@ -181,8 +181,8 @@ Status GetProgramsAndNumQubits(
 
   // Resolve qubit ID's in parallel.
   num_qubits->assign(programs->size(), -1);
-  auto DoWork = [&](int start, int end) {
-    for (int i = start; i < end; i++) {
+  auto DoWork = [&](int64_t start, int64_t end) {
+    for (int64_t i = start; i < end; i++) {
       Program& program = (*programs)[i];
       unsigned int this_num_qubits;
       if (p_sums) {
@@ -232,8 +232,8 @@ tensorflow::Status GetProgramsAndNumQubits(
 
   // Resolve qubit ID's in parallel.
   num_qubits->assign(programs->size(), -1);
-  auto DoWork = [&](int start, int end) {
-    for (int i = start; i < end; i++) {
+  auto DoWork = [&](int64_t start, int64_t end) {
+    for (int64_t i = start; i < end; i++) {
       Program& program = (*programs)[i];
       unsigned int this_num_qubits;
       OP_REQUIRES_OK(context, ResolveQubitIds(&program, &this_num_qubits,
@@ -270,8 +270,8 @@ Status GetPauliSums(OpKernelContext* context,
   p_sums->assign(sum_specs.dimension(0),
                  std::vector<PauliSum>(sum_specs.dimension(1), PauliSum()));
   const int op_dim = sum_specs.dimension(1);
-  auto DoWork = [&](int start, int end) {
-    for (int ii = start; ii < end; ii++) {
+  auto DoWork = [&](int64_t start, int64_t end) {
+    for (int64_t ii = start; ii < end; ii++) {
       const int i = ii / op_dim;
       const int j = ii % op_dim;
       PauliSum p;
@@ -328,8 +328,8 @@ Status GetSymbolMaps(OpKernelContext* context, std::vector<SymbolMap>* maps) {
   maps->assign(symbol_values.dimension(0), SymbolMap());
 
   const int symbol_dim = symbol_values.dimension(1);
-  auto DoWork = [&](int start, int end) {
-    for (int i = start; i < end; i++) {
+  auto DoWork = [&](int64_t start, int64_t end) {
+    for (int64_t i = start; i < end; i++) {
       for (int j = 0; j < symbol_dim; j++) {
         const std::string& name = symbol_names(j);
         const float value = symbol_values(i, j);

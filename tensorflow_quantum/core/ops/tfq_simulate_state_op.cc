@@ -71,8 +71,8 @@ class TfqSimulateStateOp : public tensorflow::OpKernel {
 
     Status parse_status = ::tensorflow::Status();
     auto p_lock = absl::Mutex();
-    auto construct_f = [&](int start, int end) {
-      for (int i = start; i < end; i++) {
+    auto construct_f = [&](int64_t start, int64_t end) {
+      for (int64_t i = start; i < end; i++) {
         Status local =
             QsimCircuitFromProgram(programs[i], maps[i], num_qubits[i],
                                    &qsim_circuits[i], &fused_circuits[i]);
@@ -87,15 +87,15 @@ class TfqSimulateStateOp : public tensorflow::OpKernel {
 
     // Find largest circuit for tensor size padding and allocate
     // the output tensor.
-    int max_num_qubits = 0;
-    for (const int num : num_qubits) {
+    uint64_t max_num_qubits = 0;
+    for (const uint64_t num : num_qubits) {
       max_num_qubits = std::max(max_num_qubits, num);
     }
 
-    const int output_dim_size = maps.size();
+    const size_t output_dim_size = maps.size();
     tensorflow::TensorShape output_shape;
     output_shape.AddDim(output_dim_size);
-    output_shape.AddDim(1 << max_num_qubits);
+    output_shape.AddDim(uint64_t(1) << max_num_qubits);
 
     tensorflow::Tensor* output = nullptr;
     OP_REQUIRES_OK(context, context->allocate_output(0, output_shape, &output));
@@ -118,7 +118,7 @@ class TfqSimulateStateOp : public tensorflow::OpKernel {
 
  private:
   void ComputeLarge(
-      const std::vector<int>& num_qubits, const int max_num_qubits,
+      const std::vector<int>& num_qubits, const uint64_t max_num_qubits,
       const std::vector<std::vector<qsim::GateFused<QsimGate>>>& fused_circuits,
       tensorflow::OpKernelContext* context,
       tensorflow::TTypes<std::complex<float>, 1>::Matrix* output_tensor) {
@@ -128,7 +128,7 @@ class TfqSimulateStateOp : public tensorflow::OpKernel {
     using StateSpace = Simulator::StateSpace;
 
     // Begin simulation.
-    int largest_nq = 1;
+    uint64_t largest_nq = 1;
     Simulator sim = Simulator(tfq_for);
     StateSpace ss = StateSpace(tfq_for);
     auto sv = ss.Create(largest_nq);
@@ -137,7 +137,7 @@ class TfqSimulateStateOp : public tensorflow::OpKernel {
     // we no longer parallelize over circuits. Each time we encounter a
     // a larger circuit we will grow the Statevector as necessary.
     for (size_t i = 0; i < fused_circuits.size(); i++) {
-      int nq = num_qubits[i];
+      uint64_t nq = num_qubits[i];
 
       if (nq > largest_nq) {
         // need to switch to larger statespace.
@@ -172,7 +172,7 @@ class TfqSimulateStateOp : public tensorflow::OpKernel {
   }
 
   void ComputeSmall(
-      const std::vector<int>& num_qubits, const int max_num_qubits,
+      const std::vector<int>& num_qubits, const uint64_t max_num_qubits,
       const std::vector<std::vector<qsim::GateFused<QsimGate>>>& fused_circuits,
       tensorflow::OpKernelContext* context,
       tensorflow::TTypes<std::complex<float>, 1>::Matrix* output_tensor) {
@@ -180,13 +180,13 @@ class TfqSimulateStateOp : public tensorflow::OpKernel {
     using Simulator = qsim::Simulator<const qsim::SequentialFor&>;
     using StateSpace = Simulator::StateSpace;
 
-    auto DoWork = [&](int start, int end) {
-      int largest_nq = 1;
+    auto DoWork = [&](int64_t start, int64_t end) {
+      uint64_t largest_nq = 1;
       Simulator sim = Simulator(tfq_for);
       StateSpace ss = StateSpace(tfq_for);
       auto sv = ss.Create(largest_nq);
-      for (int i = start; i < end; i++) {
-        int nq = num_qubits[i];
+      for (int64_t i = start; i < end; i++) {
+        uint64_t nq = num_qubits[i];
 
         if (nq > largest_nq) {
           // need to switch to larger statespace.

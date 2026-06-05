@@ -61,9 +61,9 @@ class TfqResolveParametersOp : public tensorflow::OpKernel {
 
     Status parse_status = ::tensorflow::Status();
     auto p_lock = absl::Mutex();
-    auto DoWork = [&](int start, int end) {
+    auto DoWork = [&](int64_t start, int64_t end) {
       std::string temp;
-      for (int i = start; i < end; i++) {
+      for (int64_t i = start; i < end; i++) {
         Program program = programs[i];
         Status local = ResolveSymbols(maps[i], &program, false);
         NESTED_FN_STATUS_SYNC(parse_status, local, p_lock);

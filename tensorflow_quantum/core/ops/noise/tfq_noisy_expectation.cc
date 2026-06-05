@@ -119,8 +119,8 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
 
     Status parse_status = ::tensorflow::Status();
     auto p_lock = absl::Mutex();
-    auto construct_f = [&](int start, int end) {
-      for (int i = start; i < end; i++) {
+    auto construct_f = [&](int64_t start, int64_t end) {
+      for (int64_t i = start; i < end; i++) {
         Status local = NoisyQsimCircuitFromProgram(
             programs[i], maps[i], num_qubits[i], false, &qsim_circuits[i]);
         NESTED_FN_STATUS_SYNC(parse_status, local, p_lock);
@@ -132,8 +132,8 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
         programs.size(), num_cycles, construct_f);
     OP_REQUIRES_OK(context, parse_status);
 
-    int max_num_qubits = 0;
-    for (const int num : num_qubits) {
+    uint64_t max_num_qubits = 0;
+    for (const uint64_t num : num_qubits) {
       max_num_qubits = std::max(max_num_qubits, num);
     }
 
@@ -173,7 +173,7 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
                                          qsim::MultiQubitGateFuser, Simulator>;
 
     // Begin simulation.
-    int largest_nq = 1;
+    uint64_t largest_nq = 1;
     Simulator sim = Simulator(tfq_for);
     StateSpace ss = StateSpace(tfq_for);
     auto sv = ss.Create(largest_nq);
@@ -195,7 +195,7 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
     // we no longer parallelize over circuits. Each time we encounter a
     // a larger circuit we will grow the Statevector as necessary.
     for (size_t i = 0; i < ncircuits.size(); i++) {
-      int nq = num_qubits[i];
+      uint64_t nq = num_qubits[i];
 
       // (#679) Just ignore empty program
       if (ncircuits[i].channels.size() == 0) {
@@ -256,7 +256,7 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
   }
 
   void ComputeSmall(const std::vector<int>& num_qubits,
-                    const int max_num_qubits,
+                    const uint64_t max_num_qubits,
                     const std::vector<NoisyQsimCircuit>& ncircuits,
                     const std::vector<std::vector<PauliSum>>& pauli_sums,
                     const std::vector<std::vector<int>>& num_samples,
@@ -294,10 +294,10 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
 
     Status compute_status = ::tensorflow::Status();
     auto c_lock = absl::Mutex();
-    auto DoWork = [&](int start, int end) {
+    auto DoWork = [&](int64_t start, int64_t end) {
       // Begin simulation.
       const auto tfq_for = qsim::SequentialFor(1);
-      int largest_nq = 1;
+      uint64_t largest_nq = 1;
       Simulator sim = Simulator(tfq_for);
       StateSpace ss = StateSpace(tfq_for);
       auto sv = ss.Create(largest_nq);
@@ -310,7 +310,7 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
       tensorflow::random::SimplePhilox rand_source(&local_gen);
 
       for (size_t i = 0; i < ncircuits.size(); i++) {
-        int nq = num_qubits[i];
+        uint64_t nq = num_qubits[i];
         int rep_offset = rep_offsets[start][i];
 
         // (#679) Just ignore empty program

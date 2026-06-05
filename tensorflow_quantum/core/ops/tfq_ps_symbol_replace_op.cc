@@ -82,10 +82,10 @@ class TfqPsSymbolReplaceOp : public tensorflow::OpKernel {
         programs.size(), std::vector<std::vector<std::string>>(
                              n_symbols, std::vector<std::string>()));
 
-    auto DoWork = [&](int start, int end) {
-      for (int i = start; i < end; i++) {
-        int sidx = i % n_symbols;
-        int pidx = i / n_symbols;
+    auto DoWork = [&](int64_t start, int64_t end) {
+      for (int64_t i = start; i < end; i++) {
+        int64_t sidx = i % n_symbols;
+        int64_t pidx = i / n_symbols;
         std::string symbol_to_replace = symbols(sidx);
         std::string temp_symbol_holder;
         Program cur_program = programs.at(pidx);
@@ -159,10 +159,10 @@ class TfqPsSymbolReplaceOp : public tensorflow::OpKernel {
     // end.
     //  spinning up and down parallelization for string copying might not be
     //  worth it.
-    auto DoWork2 = [&](int start, int end) {
-      for (int i = start; i < end; i++) {
-        int sidx = i % n_symbols;
-        int pidx = i / n_symbols;
+    auto DoWork2 = [&](int64_t start, int64_t end) {
+      for (int64_t i = start; i < end; i++) {
+        int64_t sidx = i % n_symbols;
+        int64_t pidx = i / n_symbols;
 
         for (size_t j = 0; j < output_programs.at(pidx).at(sidx).size(); j++) {
           output_tensor(pidx, sidx, j) =

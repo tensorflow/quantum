@@ -107,8 +107,8 @@ class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
                                                  QsimFusedCircuit({}));
     Status parse_status = ::tensorflow::Status();
     auto p_lock = absl::Mutex();
-    auto construct_f = [&](int start, int end) {
-      for (int i = start; i < end; i++) {
+    auto construct_f = [&](int64_t start, int64_t end) {
+      for (int64_t i = start; i < end; i++) {
         Status local =
             QsimCircuitFromProgram(programs[i], maps[i], num_qubits[i],
                                    &qsim_circuits[i], &fused_circuits[i]);
@@ -127,9 +127,9 @@ class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
 
     // Find largest circuit for tensor size padding and allocate
     // the output tensor.
-    int max_num_qubits = 0;
-    int min_num_qubits = 1 << 30;
-    for (const int num : num_qubits) {
+    uint64_t max_num_qubits = 0;
+    uint64_t min_num_qubits = 1 << 30;
+    for (const uint64_t num : num_qubits) {
       max_num_qubits = std::max(max_num_qubits, num);
       min_num_qubits = std::min(min_num_qubits, num);
     }
@@ -148,7 +148,7 @@ class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
   int bond_dim_;
 
   void ComputeSmall(const std::vector<int>& num_qubits,
-                    const int max_num_qubits,
+                    const uint64_t max_num_qubits,
                     const std::vector<QsimCircuit>& unfused_circuits,
                     const std::vector<std::vector<PauliSum>>& pauli_sums,
                     tensorflow::OpKernelContext* context,
@@ -160,11 +160,11 @@ class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
 
     Status compute_status = ::tensorflow::Status();
     auto c_lock = absl::Mutex();
-    auto DoWork = [&](int start, int end) {
-      int old_batch_index = -2;
-      int cur_batch_index = -1;
-      int largest_nq = 1;
-      int cur_op_index;
+    auto DoWork = [&](int64_t start, int64_t end) {
+      int64_t old_batch_index = -2;
+      int64_t cur_batch_index = -1;
+      uint64_t largest_nq = 1;
+      int64_t cur_op_index;
 
       // Note: ForArgs in MPSSimulator and MPSStateState are currently unused.
       // So, this 1 is a dummy for qsim::For.
@@ -172,11 +172,11 @@ class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
       StateSpace ss = StateSpace(1);
       auto sv = ss.Create(largest_nq, bond_dim_);
       auto scratch = ss.Create(largest_nq, bond_dim_);
-      for (int i = start; i < end; i++) {
+      for (int64_t i = start; i < end; i++) {
         cur_batch_index = i / output_dim_op_size;
         cur_op_index = i % output_dim_op_size;
 
-        const int nq = num_qubits[cur_batch_index];
+        const uint64_t nq = num_qubits[cur_batch_index];
 
         // (#679) Just ignore empty program
         auto unfused_gates = unfused_circuits[cur_batch_index].gates;
