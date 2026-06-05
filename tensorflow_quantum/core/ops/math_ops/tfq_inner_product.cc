@@ -94,8 +94,8 @@ class TfqInnerProductOp : public tensorflow::OpKernel {
 
     Status parse_status = ::tensorflow::Status();
     auto p_lock = absl::Mutex();
-    auto construct_f = [&](int start, int end) {
-      for (int i = start; i < end; i++) {
+    auto construct_f = [&](int64_t start, int64_t end) {
+      for (int64_t i = start; i < end; i++) {
         Status local =
             QsimCircuitFromProgram(programs[i], maps[i], num_qubits[i],
                                    &qsim_circuits[i], &fused_circuits[i]);
@@ -117,10 +117,10 @@ class TfqInnerProductOp : public tensorflow::OpKernel {
         std::vector<QsimFusedCircuit>(output_dim_internal_size,
                                       QsimFusedCircuit({})));
 
-    auto construct_f2 = [&](int start, int end) {
-      for (int i = start; i < end; i++) {
-        int ii = i / output_dim_internal_size;
-        int jj = i % output_dim_internal_size;
+    auto construct_f2 = [&](int64_t start, int64_t end) {
+      for (int64_t i = start; i < end; i++) {
+        int64_t ii = i / output_dim_internal_size;
+        int64_t jj = i % output_dim_internal_size;
         Status status = QsimCircuitFromProgram(
             other_programs[ii][jj], {}, num_qubits[ii],
             &other_qsim_circuits[ii][jj], &other_fused_circuits[ii][jj]);
@@ -138,8 +138,8 @@ class TfqInnerProductOp : public tensorflow::OpKernel {
                          "No symbols are allowed in these circuits.")));
     }
 
-    int max_num_qubits = 0;
-    for (const int num : num_qubits) {
+    uint64_t max_num_qubits = 0;
+    for (const uint64_t num : num_qubits) {
       max_num_qubits = std::max(max_num_qubits, num);
     }
 
@@ -170,7 +170,7 @@ class TfqInnerProductOp : public tensorflow::OpKernel {
     using StateSpace = Simulator::StateSpace;
 
     // Begin simulation.
-    int largest_nq = 1;
+    uint64_t largest_nq = 1;
     Simulator sim = Simulator(tfq_for);
     StateSpace ss = StateSpace(tfq_for);
     auto sv = ss.Create(largest_nq);
@@ -180,7 +180,7 @@ class TfqInnerProductOp : public tensorflow::OpKernel {
     // we no longer parallelize over circuits. Each time we encounter a
     // a larger circuit we will grow the Statevector as necessary.
     for (size_t i = 0; i < fused_circuits.size(); i++) {
-      int nq = num_qubits[i];
+      uint64_t nq = num_qubits[i];
       if (nq > largest_nq) {
         // need to switch to larger statespace.
         largest_nq = nq;
@@ -215,7 +215,7 @@ class TfqInnerProductOp : public tensorflow::OpKernel {
   }
 
   void ComputeSmall(
-      const std::vector<int>& num_qubits, const int max_num_qubits,
+      const std::vector<int>& num_qubits, const uint64_t max_num_qubits,
       const std::vector<QsimFusedCircuit>& fused_circuits,
       const std::vector<std::vector<QsimFusedCircuit>>& other_fused_circuits,
       tensorflow::OpKernelContext* context,
@@ -226,21 +226,21 @@ class TfqInnerProductOp : public tensorflow::OpKernel {
 
     const int output_dim_internal_size = output_tensor->dimension(1);
 
-    auto DoWork = [&](int start, int end) {
-      int old_batch_index = -2;
-      int cur_batch_index = -1;
-      int largest_nq = 1;
-      int cur_internal_index;
+    auto DoWork = [&](int64_t start, int64_t end) {
+      int64_t old_batch_index = -2;
+      int64_t cur_batch_index = -1;
+      uint64_t largest_nq = 1;
+      int64_t cur_internal_index;
 
       Simulator sim = Simulator(tfq_for);
       StateSpace ss = StateSpace(tfq_for);
       auto sv = ss.Create(largest_nq);
       auto scratch = ss.Create(largest_nq);
-      for (int i = start; i < end; i++) {
+      for (int64_t i = start; i < end; i++) {
         cur_batch_index = i / output_dim_internal_size;
         cur_internal_index = i % output_dim_internal_size;
 
-        const int nq = num_qubits[cur_batch_index];
+        const uint64_t nq = num_qubits[cur_batch_index];
 
         // (#679) Just ignore empty program
         if (fused_circuits[cur_batch_index].size() == 0) {
