@@ -119,7 +119,7 @@ class TfqNoisySampledExpectationOp : public tensorflow::OpKernel {
                                                 NoisyQsimCircuit());
 
     Status parse_status = ::tensorflow::Status();
-    auto p_lock = tensorflow::mutex();
+    auto p_lock = absl::Mutex();
     auto construct_f = [&](int64_t start, int64_t end) {
       for (int64_t i = start; i < end; i++) {
         Status local = NoisyQsimCircuitFromProgram(
@@ -300,7 +300,7 @@ class TfqNoisySampledExpectationOp : public tensorflow::OpKernel {
     random_gen.Init(tensorflow::random::New64(), tensorflow::random::New64());
 
     Status compute_status = ::tensorflow::Status();
-    auto c_lock = tensorflow::mutex();
+    auto c_lock = absl::Mutex();
     auto DoWork = [&](int64_t start, int64_t end) {
       // Begin simulation.
       const auto tfq_for = qsim::SequentialFor(1);

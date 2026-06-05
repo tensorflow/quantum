@@ -69,7 +69,7 @@ class TfqCalculateUnitaryOp : public tensorflow::OpKernel {
         programs.size(), std::vector<qsim::GateFused<QsimGate>>({}));
 
     Status parse_status = ::tensorflow::Status();
-    auto p_lock = tensorflow::mutex();
+    auto p_lock = absl::Mutex();
     auto construct_f = [&](int64_t start, int64_t end) {
       for (int64_t i = start; i < end; i++) {
         Status local =

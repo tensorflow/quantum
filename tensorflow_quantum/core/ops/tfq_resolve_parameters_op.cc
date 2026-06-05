@@ -60,7 +60,7 @@ class TfqResolveParametersOp : public tensorflow::OpKernel {
             " circuits and ", maps.size(), " values.")));
 
     Status parse_status = ::tensorflow::Status();
-    auto p_lock = tensorflow::mutex();
+    auto p_lock = absl::Mutex();
     auto DoWork = [&](int64_t start, int64_t end) {
       std::string temp;
       for (int64_t i = start; i < end; i++) {
