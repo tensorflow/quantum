@@ -258,7 +258,7 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
         else:
             self.assertFalse(_circuit_has_supported_channel(circuit))
 
-        serialized = util.convert_to_tensor(circuit,
+        serialized = util.convert_to_tensor([circuit],
                                             deterministic_proto_serialize=True)
         round_tripped = util.from_tensor(serialized)
         self.assertAllEqual(
