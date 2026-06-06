@@ -169,6 +169,7 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
             self, include_channels):
         """Confirm channel ops are generated and handled as expected."""
         random.seed(0)
+        np.random.seed(0)
         qubits = cirq.GridQubit.rect(1, 3)
         batch_size = 8
 
@@ -201,6 +202,7 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
             self, include_channels):
         """Confirm symbol circuits with channels keep symbols on gates only."""
         random.seed(0)
+        np.random.seed(0)
         qubits = cirq.GridQubit.rect(1, 3)
         symbols = ['alpha', 'beta', 'gamma']
         batch_size = 8
@@ -239,6 +241,7 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
     def test_random_symbol_circuit_channel_content(self, include_channels):
         """Confirm random_symbol_circuit handles channels correctly."""
         random.seed(0)
+        np.random.seed(0)
         qubits = cirq.GridQubit.rect(1, 3)
         symbols = ['alpha', 'beta', 'gamma']
 
