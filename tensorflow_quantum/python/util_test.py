@@ -53,20 +53,44 @@ def _supported_channel_types():
     return tuple(type(channel) for channel in util.get_supported_channels())
 
 
-def _is_supported_channel(gate):
+def _op_base_gate_and_controlled(op):
+    """Return the underlying gate and whether the op is controlled."""
+    is_controlled = False
+    sub_op = op
+    if isinstance(op, cirq.ControlledOperation):
+        sub_op = op.sub_operation
+        is_controlled = True
+
+    gate = sub_op.gate
+    if isinstance(gate, cirq.ControlledGate):
+        gate = gate.sub_gate
+        is_controlled = True
+
+    return gate, is_controlled
+
+
+def _op_has_supported_channel(op):
+    gate, _ = _op_base_gate_and_controlled(op)
     return isinstance(gate, _supported_channel_types())
 
 
 def _circuit_has_supported_channel(circuit):
     return any(
-        _is_supported_channel(op.gate) for moment in circuit for op in moment)
+        _op_has_supported_channel(op) for moment in circuit for op in moment)
 
 
-def _assert_channels_not_parameterized(testcase, circuit):
+def _assert_channel_ops_valid(testcase, circuit):
+    """Assert channels are neither parameterized nor controlled."""
     for moment in circuit:
         for op in moment:
-            if _is_supported_channel(op.gate):
-                testcase.assertFalse(cirq.is_parameterized(op))
+            gate, is_controlled = _op_base_gate_and_controlled(op)
+            if isinstance(gate, _supported_channel_types()):
+                testcase.assertFalse(
+                    is_controlled,
+                    msg=f'Found controlled channel operation: {op}')
+                testcase.assertFalse(
+                    cirq.is_parameterized(op),
+                    msg=f'Found parameterized channel operation: {op}')
 
 
 BITS = list(cirq.GridQubit.rect(1, 10) + cirq.LineQubit.range(2))
@@ -178,7 +202,7 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
 
         for circuit in circuits:
             if include_channels:
-                _assert_channels_not_parameterized(self, circuit)
+                _assert_channel_ops_valid(self, circuit)
             else:
                 self.assertFalse(_circuit_has_supported_channel(circuit))
 
@@ -218,7 +242,7 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
             self.assertSetEqual(set(util.get_circuit_symbols(circuit)),
                                 set(symbols))
             if include_channels:
-                _assert_channels_not_parameterized(self, circuit)
+                _assert_channel_ops_valid(self, circuit)
             else:
                 self.assertFalse(_circuit_has_supported_channel(circuit))
 
@@ -253,7 +277,7 @@ class UtilFunctionsTest(tf.test.TestCase, parameterized.TestCase):
         self.assertSetEqual(set(util.get_circuit_symbols(circuit)),
                             set(symbols))
         if include_channels:
-            _assert_channels_not_parameterized(self, circuit)
+            _assert_channel_ops_valid(self, circuit)
             self.assertTrue(_circuit_has_supported_channel(circuit))
         else:
             self.assertFalse(_circuit_has_supported_channel(circuit))
