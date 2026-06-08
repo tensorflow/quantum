@@ -79,8 +79,8 @@ class TfqPsWeightsFromSymbolOp : public tensorflow::OpKernel {
 
     std::vector<int> n_single_symbol(programs.size(), 0);
 
-    auto DoWork = [&](int start, int end) {
-      for (int i = start; i < end; i++) {
+    auto DoWork = [&](int64_t start, int64_t end) {
+      for (int64_t i = start; i < end; i++) {
         Program cur_program = programs.at(i);
         for (int j = 0; j < cur_program.circuit().moments().size(); j++) {
           Moment cur_moment = cur_program.circuit().moments().at(j);
@@ -143,8 +143,8 @@ class TfqPsWeightsFromSymbolOp : public tensorflow::OpKernel {
 
     auto output_tensor = output->tensor<float, 3>();
 
-    auto DoWork2 = [&](int start, int end) {
-      for (int i = start; i < end; i++) {
+    auto DoWork2 = [&](int64_t start, int64_t end) {
+      for (int64_t i = start; i < end; i++) {
         for (int j = 0; j < n_symbols; j++) {
           for (size_t k = 0; k < output_results.at(i).at(j).size(); k++) {
             output_tensor(i, j, k) = output_results.at(i).at(j).at(k);

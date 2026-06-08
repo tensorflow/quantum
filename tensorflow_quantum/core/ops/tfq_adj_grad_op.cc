@@ -111,8 +111,8 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
 
     Status parse_status = ::tensorflow::Status();
     auto p_lock = absl::Mutex();
-    auto construct_f = [&](int start, int end) {
-      for (int i = start; i < end; i++) {
+    auto construct_f = [&](int64_t start, int64_t end) {
+      for (int64_t i = start; i < end; i++) {
         Status local = QsimCircuitFromProgram(programs[i], maps[i],
                                               num_qubits[i], &qsim_circuits[i],
                                               &full_fuse[i], &gate_meta[i]);
@@ -144,8 +144,8 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
             context->input(4).dim_size(1), " gradient entries and ",
             context->input(3).dim_size(1), " paulis per circuit.")));
 
-    int max_num_qubits = 0;
-    for (const int num : num_qubits) {
+    uint64_t max_num_qubits = 0;
+    for (const uint64_t num : num_qubits) {
       max_num_qubits = std::max(max_num_qubits, num);
     }
 
@@ -171,7 +171,7 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
 
  private:
   void ComputeSmall(
-      const std::vector<int>& num_qubits, const int max_num_qubits,
+      const std::vector<int>& num_qubits, const uint64_t max_num_qubits,
       const std::vector<QsimCircuit>& qsim_circuits,
       const std::vector<SymbolMap>& maps,
       const std::vector<std::vector<qsim::GateFused<QsimGate>>>& full_fuse,
@@ -187,17 +187,17 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
     using Simulator = qsim::Simulator<const qsim::SequentialFor&>;
     using StateSpace = Simulator::StateSpace;
 
-    auto DoWork = [&](int start, int end) {
+    auto DoWork = [&](int64_t start, int64_t end) {
       // Begin simulation.
-      int largest_nq = 1;
+      uint64_t largest_nq = 1;
       Simulator sim = Simulator(tfq_for);
       StateSpace ss = StateSpace(tfq_for);
       auto sv = ss.Create(largest_nq);
       auto scratch = ss.Create(largest_nq);
       auto scratch2 = ss.Create(largest_nq);
 
-      for (int i = start; i < end; i++) {
-        int nq = num_qubits[i];
+      for (int64_t i = start; i < end; i++) {
+        uint64_t nq = num_qubits[i];
         if (nq > largest_nq) {
           // need to switch to larger statespace.
           largest_nq = nq;
@@ -301,7 +301,7 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
     using StateSpace = Simulator::StateSpace;
 
     // Begin simulation.
-    int largest_nq = 1;
+    uint64_t largest_nq = 1;
     Simulator sim = Simulator(tfq_for);
     StateSpace ss = StateSpace(tfq_for);
     auto sv = ss.Create(largest_nq);
@@ -309,7 +309,7 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
     auto scratch2 = ss.Create(largest_nq);
 
     for (size_t i = 0; i < partial_fused_circuits.size(); i++) {
-      int nq = num_qubits[i];
+      uint64_t nq = num_qubits[i];
 
       if (nq > largest_nq) {
         // need to switch to larger statespace.
