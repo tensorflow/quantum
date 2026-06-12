@@ -336,8 +336,9 @@ class BatchUtilTest(tf.test.TestCase, parameterized.TestCase):
         circuit = cirq.Circuit(cirq.X(qubit))
         observable = cirq.Z(qubit) + 2.0 * cirq.X(qubit)
 
-        collector = batch_util.TFQPauliSumCollector(
-            circuit, observable, samples_per_term=10)
+        collector = batch_util.TFQPauliSumCollector(circuit,
+                                                    observable,
+                                                    samples_per_term=10)
 
         job1 = collector.next_job()
         self.assertIsNotNone(job1)
@@ -356,12 +357,14 @@ class BatchUtilTest(tf.test.TestCase, parameterized.TestCase):
         circuit = cirq.Circuit(cirq.X(qubit))
         observable = cirq.Z(qubit)
 
-        collector = batch_util.TFQPauliSumCollector(
-            circuit, observable, samples_per_term=5)
+        collector = batch_util.TFQPauliSumCollector(circuit,
+                                                    observable,
+                                                    samples_per_term=5)
 
         job = collector.next_job()
 
         class FakeResult:
+
             def histogram(self, key, fold_func):
                 return {0: 2, 1: 3}
 
@@ -377,12 +380,14 @@ class BatchUtilTest(tf.test.TestCase, parameterized.TestCase):
         circuit = cirq.Circuit(cirq.X(qubit))
         observable = 3.0 * cirq.Z(qubit) + 2.0 * cirq.I(qubit)
 
-        collector = batch_util.TFQPauliSumCollector(
-            circuit, observable, samples_per_term=5)
+        collector = batch_util.TFQPauliSumCollector(circuit,
+                                                    observable,
+                                                    samples_per_term=5)
 
         job = collector.next_job()
 
         class FakeResult:
+
             def histogram(self, key, fold_func):
                 return {0: 2, 1: 3}
 
