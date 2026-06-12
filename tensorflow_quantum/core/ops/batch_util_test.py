@@ -330,6 +330,66 @@ class BatchUtilTest(tf.test.TestCase, parameterized.TestCase):
                 self.assertAlmostEqual(collector.estimated_energy(),
                                        expected_energy)
 
+    def test_pauli_sum_collector_next_job(self):
+        """Test the next_job method of TFQPauliSumCollector."""
+        qubit = cirq.GridQubit(0, 0)
+        circuit = cirq.Circuit(cirq.X(qubit))
+        observable = cirq.Z(qubit) + 2.0 * cirq.X(qubit)
+
+        collector = batch_util.TFQPauliSumCollector(
+            circuit, observable, samples_per_term=10)
+
+        job1 = collector.next_job()
+        self.assertIsNotNone(job1)
+        self.assertEqual(job1.repetitions, 10)
+
+        job2 = collector.next_job()
+        self.assertIsNotNone(job2)
+        self.assertEqual(job2.repetitions, 10)
+
+        job3 = collector.next_job()
+        self.assertIsNone(job3)
+
+    def test_pauli_sum_collector_on_job_result(self):
+        """Test the on_job_result method of TFQPauliSumCollector."""
+        qubit = cirq.GridQubit(0, 0)
+        circuit = cirq.Circuit(cirq.X(qubit))
+        observable = cirq.Z(qubit)
+
+        collector = batch_util.TFQPauliSumCollector(
+            circuit, observable, samples_per_term=5)
+
+        job = collector.next_job()
+
+        class FakeResult:
+            def histogram(self, key, fold_func):
+                return {0: 2, 1: 3}
+
+        collector.on_job_result(job, FakeResult())
+
+        job_id = job.tag
+        self.assertEqual(collector._zeros[job_id], 2)
+        self.assertEqual(collector._ones[job_id], 3)
+
+    def test_pauli_sum_collector_estimated_energy(self):
+        """Test the estimated_energy method of TFQPauliSumCollector."""
+        qubit = cirq.GridQubit(0, 0)
+        circuit = cirq.Circuit(cirq.X(qubit))
+        observable = 3.0 * cirq.Z(qubit) + 2.0 * cirq.I(qubit)
+
+        collector = batch_util.TFQPauliSumCollector(
+            circuit, observable, samples_per_term=5)
+
+        job = collector.next_job()
+
+        class FakeResult:
+            def histogram(self, key, fold_func):
+                return {0: 2, 1: 3}
+
+        collector.on_job_result(job, FakeResult())
+
+        self.assertAlmostEqual(collector.estimated_energy(), 1.4)
+
 
 if __name__ == '__main__':
     tf.test.main()
