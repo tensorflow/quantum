@@ -120,8 +120,8 @@ class TfqNoisySampledExpectationOp : public tensorflow::OpKernel {
 
     Status parse_status = ::tensorflow::Status();
     auto p_lock = absl::Mutex();
-    auto construct_f = [&](int64_t start, int64_t end) {
-      for (int64_t i = start; i < end; i++) {
+    auto construct_f = [&](int start, int end) {
+      for (int i = start; i < end; i++) {
         Status local = NoisyQsimCircuitFromProgram(
             programs[i], maps[i], num_qubits[i], false, &qsim_circuits[i]);
         NESTED_FN_STATUS_SYNC(parse_status, local, p_lock);
@@ -133,8 +133,8 @@ class TfqNoisySampledExpectationOp : public tensorflow::OpKernel {
         programs.size(), num_cycles, construct_f);
     OP_REQUIRES_OK(context, parse_status);
 
-    uint64_t max_num_qubits = 0;
-    for (const uint64_t num : num_qubits) {
+    int max_num_qubits = 0;
+    for (const int num : num_qubits) {
       max_num_qubits = std::max(max_num_qubits, num);
     }
 
@@ -174,7 +174,7 @@ class TfqNoisySampledExpectationOp : public tensorflow::OpKernel {
                                          qsim::MultiQubitGateFuser, Simulator>;
 
     // Begin simulation.
-    uint64_t largest_nq = 1;
+    int largest_nq = 1;
     Simulator sim = Simulator(tfq_for);
     StateSpace ss = StateSpace(tfq_for);
     auto sv = ss.Create(largest_nq);
@@ -191,15 +191,15 @@ class TfqNoisySampledExpectationOp : public tensorflow::OpKernel {
       }
     }
     random_gen.Init(tensorflow::random::New64(), tensorflow::random::New64());
-    auto local_gen = random_gen.ReserveSamples128(
-        ncircuits.size() * (1 + max_psum_length) * max_n_shots);
+    int64_t num_samples_needed = static_cast<int64_t>(ncircuits.size()) * (1 + max_psum_length) * max_n_shots;
+    auto local_gen = random_gen.ReserveSamples128(num_samples_needed);
     tensorflow::random::SimplePhilox rand_source(&local_gen);
 
     // Simulate programs one by one. Parallelizing over state vectors
     // we no longer parallelize over circuits. Each time we encounter a
     // a larger circuit we will grow the Statevector as necessary.
     for (size_t i = 0; i < ncircuits.size(); i++) {
-      uint64_t nq = num_qubits[i];
+      int nq = num_qubits[i];
 
       // (#679) Just ignore empty program
       if (ncircuits[i].channels.empty()) {
@@ -260,7 +260,7 @@ class TfqNoisySampledExpectationOp : public tensorflow::OpKernel {
   }
 
   void ComputeSmall(const std::vector<int>& num_qubits,
-                    const uint64_t max_num_qubits,
+                    const int max_num_qubits,
                     const std::vector<NoisyQsimCircuit>& ncircuits,
                     const std::vector<std::vector<PauliSum>>& pauli_sums,
                     const std::vector<std::vector<int>>& num_samples,
@@ -301,22 +301,22 @@ class TfqNoisySampledExpectationOp : public tensorflow::OpKernel {
 
     Status compute_status = ::tensorflow::Status();
     auto c_lock = absl::Mutex();
-    auto DoWork = [&](int64_t start, int64_t end) {
+    auto DoWork = [&](int start, int end) {
       // Begin simulation.
       const auto tfq_for = qsim::SequentialFor(1);
-      uint64_t largest_nq = 1;
+      int largest_nq = 1;
       Simulator sim = Simulator(tfq_for);
       StateSpace ss = StateSpace(tfq_for);
       auto sv = ss.Create(largest_nq);
       auto scratch = ss.Create(largest_nq);
 
-      int num_rand = ncircuits.size() * (1 + max_psum_length) * max_n_shots;
+      int64_t num_rand = static_cast<int64_t>(ncircuits.size()) * (1 + max_psum_length) * max_n_shots;
       num_rand = (num_rand + num_threads) / num_threads + 1;
       auto local_gen = random_gen.ReserveSamples128(num_rand);
       tensorflow::random::SimplePhilox rand_source(&local_gen);
 
       for (size_t i = 0; i < ncircuits.size(); i++) {
-        uint64_t nq = num_qubits[i];
+        int nq = num_qubits[i];
         int rep_offset = rep_offsets[start][i];
 
         // (#679) Just ignore empty program
@@ -349,8 +349,8 @@ class TfqNoisySampledExpectationOp : public tensorflow::OpKernel {
 
           // Compute expectations across all ops using this trajectory.
           for (size_t j = 0; j < pauli_sums[i].size(); j++) {
-            int p_reps = (num_samples[i][j] + num_threads - 1) / num_threads;
-            if (run_samples[j] >= p_reps + rep_offset) {
+            int64_t p_reps = (static_cast<int64_t>(num_samples[i][j]) + num_threads - 1) / num_threads;
+            if (static_cast<int64_t>(run_samples[j]) >= p_reps + rep_offset) {
               continue;
             }
             float exp_v = 0.0;
@@ -366,8 +366,8 @@ class TfqNoisySampledExpectationOp : public tensorflow::OpKernel {
           // Check if we have run enough trajectories for all ops.
           bool break_loop = true;
           for (size_t j = 0; j < num_samples[i].size(); j++) {
-            int p_reps = (num_samples[i][j] + num_threads - 1) / num_threads;
-            if (run_samples[j] < p_reps + rep_offset) {
+            int64_t p_reps = (static_cast<int64_t>(num_samples[i][j]) + num_threads - 1) / num_threads;
+            if (static_cast<int64_t>(run_samples[j]) < p_reps + rep_offset) {
               break_loop = false;
               break;
             }

@@ -133,6 +133,13 @@ class NoisySamplingTest(tf.test.TestCase, parameterized.TestCase):
                                      symbol_names, symbol_values_array,
                                      ['junk'])
 
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'must be between 0 and 10,000,000'):
+            # num_samples is too large (above capacity limit).
+            noisy_samples_op.samples(util.convert_to_tensor(circuit_batch),
+                                     symbol_names, symbol_values_array,
+                                     [20000000])
+
         with self.assertRaisesRegex(TypeError, 'missing'):
             # too few tensors.
             # pylint: disable=no-value-for-parameter

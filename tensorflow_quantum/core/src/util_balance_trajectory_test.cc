@@ -140,5 +140,21 @@ TEST(UtilQsimTest, BalanceTrajectory1D_2) {
   AssertWellBalanced(tmp, num_threads, offsets);
 }
 
+TEST(UtilQsimTest, BalanceTrajectoryOverflowPrevention) {
+  const int n_reps = 2147483640;
+  const int num_threads = 4;
+  std::vector<std::vector<int>> offsets = {
+      {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}};
+
+  BalanceTrajectory(n_reps, num_threads, &offsets);
+
+  // Since num_lo is 0 and num_hi is 4, all offsets should remain 0 and not overflow/become negative
+  for (int i = 0; i < num_threads; i++) {
+    for (size_t j = 0; j < offsets[i].size(); j++) {
+      EXPECT_EQ(offsets[i][j], 0);
+    }
+  }
+}
+
 }  // namespace
 }  // namespace tfq
