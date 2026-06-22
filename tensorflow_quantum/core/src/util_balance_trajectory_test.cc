@@ -148,7 +148,8 @@ TEST(UtilQsimTest, BalanceTrajectoryOverflowPrevention) {
 
   BalanceTrajectory(n_reps, num_threads, &offsets);
 
-  // Since num_lo is 0 and num_hi is 4, all offsets should remain 0 and not overflow/become negative
+  // Since num_lo is 0 and num_hi is 4, all offsets should remain 0 and not
+  // overflow/become negative
   for (int i = 0; i < num_threads; i++) {
     for (size_t j = 0; j < offsets[i].size(); j++) {
       EXPECT_EQ(offsets[i][j], 0);

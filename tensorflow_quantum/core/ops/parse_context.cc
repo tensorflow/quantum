@@ -372,7 +372,8 @@ tensorflow::Status GetNumSamples(
       if (num_samples < 1 || num_samples > 10000000) {
         return Status(static_cast<tensorflow::errors::Code>(
                           absl::StatusCode::kInvalidArgument),
-                      "Each element of num_samples must be greater than 0 and less than or equal to 10,000,000.");
+                      "Each element of num_samples must be greater than 0 and "
+                      "less than or equal to 10,000,000.");
       }
       sub_parsed_num_samples.push_back(num_samples);
     }

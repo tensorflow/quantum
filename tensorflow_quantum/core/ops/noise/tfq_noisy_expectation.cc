@@ -187,9 +187,9 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
       }
     }
     random_gen.Init(tensorflow::random::New64(), tensorflow::random::New64());
-    int64_t num_samples_needed = static_cast<int64_t>(ncircuits.size()) * max_n_shots + 1;
-    auto local_gen =
-        random_gen.ReserveSamples128(num_samples_needed);
+    int64_t num_samples_needed =
+        static_cast<int64_t>(ncircuits.size()) * max_n_shots + 1;
+    auto local_gen = random_gen.ReserveSamples128(num_samples_needed);
     tensorflow::random::SimplePhilox rand_source(&local_gen);
 
     // Simulate programs one by one. Parallelizing over state vectors
@@ -306,8 +306,8 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
 
       int64_t n_rand = static_cast<int64_t>(ncircuits.size()) * max_n_shots + 1;
       n_rand = (n_rand + num_threads) / num_threads;
-      auto local_gen =
-          random_gen.ReserveSamples128(static_cast<int64_t>(ncircuits.size()) * max_n_shots + 1);
+      auto local_gen = random_gen.ReserveSamples128(
+          static_cast<int64_t>(ncircuits.size()) * max_n_shots + 1);
       tensorflow::random::SimplePhilox rand_source(&local_gen);
 
       for (size_t i = 0; i < ncircuits.size(); i++) {
@@ -344,7 +344,9 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
 
           // Compute expectations across all ops using this trajectory.
           for (size_t j = 0; j < pauli_sums[i].size(); j++) {
-            int64_t p_reps = (static_cast<int64_t>(num_samples[i][j]) + num_threads - 1) / num_threads;
+            int64_t p_reps =
+                (static_cast<int64_t>(num_samples[i][j]) + num_threads - 1) /
+                num_threads;
             if (static_cast<int64_t>(run_samples[j]) >= p_reps + rep_offset) {
               continue;
             }
@@ -361,7 +363,9 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
           // Check if we have run enough trajectories for all ops.
           bool break_loop = true;
           for (size_t j = 0; j < num_samples[i].size(); j++) {
-            int64_t p_reps = (static_cast<int64_t>(num_samples[i][j]) + num_threads - 1) / num_threads;
+            int64_t p_reps =
+                (static_cast<int64_t>(num_samples[i][j]) + num_threads - 1) /
+                num_threads;
             if (static_cast<int64_t>(run_samples[j]) < p_reps + rep_offset) {
               break_loop = false;
               break;

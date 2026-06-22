@@ -83,12 +83,10 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
 
     int num_samples = 0;
     OP_REQUIRES_OK(context, GetIndividualSample(context, &num_samples));
-    OP_REQUIRES(
-        context,
-        num_samples >= 0 && num_samples <= 10000000,
-        tensorflow::errors::InvalidArgument(
-            "num_samples must be between 0 and 10,000,000. Got: ",
-            num_samples));
+    OP_REQUIRES(context, num_samples >= 0 && num_samples <= 10000000,
+                tensorflow::errors::InvalidArgument(
+                    "num_samples must be between 0 and 10,000,000. Got: ",
+                    num_samples));
 
     // Construct qsim circuits.
     std::vector<NoisyQsimCircuit> qsim_circuits(programs.size(),
@@ -164,9 +162,9 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
 
     tensorflow::GuardedPhiloxRandom random_gen;
     random_gen.Init(tensorflow::random::New64(), tensorflow::random::New64());
-    int64_t num_samples_needed = 2 * static_cast<int64_t>(num_samples) * ncircuits.size() + 2;
-    auto local_gen =
-        random_gen.ReserveSamples32(num_samples_needed);
+    int64_t num_samples_needed =
+        2 * static_cast<int64_t>(num_samples) * ncircuits.size() + 2;
+    auto local_gen = random_gen.ReserveSamples32(num_samples_needed);
     tensorflow::random::SimplePhilox rand_source(&local_gen);
 
     // Simulate programs one by one. Parallelizing over state vectors
@@ -240,7 +238,8 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
         num_threads, std::vector<long>(output_dim_batch_size, 0));
 
     for (int i = 0; i < output_dim_batch_size; i++) {
-      int64_t p_reps = (static_cast<int64_t>(num_samples) + num_threads - 1) / num_threads;
+      int64_t p_reps =
+          (static_cast<int64_t>(num_samples) + num_threads - 1) / num_threads;
       offset_prefix_sum[0][i] = rep_offsets[0][i] + p_reps;
       for (int j = 1; j < num_threads; j++) {
         offset_prefix_sum[j][i] += offset_prefix_sum[j - 1][i];
@@ -260,7 +259,9 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
       auto sv = ss.Create(largest_nq);
 
       int64_t needed_random =
-          4 * (static_cast<int64_t>(num_samples) * ncircuits.size() + num_threads) / num_threads;
+          4 *
+          (static_cast<int64_t>(num_samples) * ncircuits.size() + num_threads) /
+          num_threads;
       needed_random += 4;
       auto local_gen = random_gen.ReserveSamples32(needed_random);
       tensorflow::random::SimplePhilox rand_source(&local_gen);
