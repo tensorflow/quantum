@@ -574,7 +574,7 @@ inline Status FsimGate(const Operation& op, const SymbolMap& param_map,
   if (q0 == q1) {
     return Status(
         absl::StatusCode::kInvalidArgument,
-        "TwoConstantGate requires distinct qubits: " + std::to_string(q0));
+        "FsimGate requires distinct qubits: " + std::to_string(q0));
   }
 
   absl::optional<std::string> theta_symbol;
