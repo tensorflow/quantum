@@ -87,7 +87,8 @@ inline Status ParseProtoControls(const Operation& op,
                                  std::vector<unsigned int>* control_values) {
   const auto control_qubits_it = op.args().find("control_qubits");
   const auto control_values_it = op.args().find("control_values");
-  if (control_qubits_it == op.args().end() || control_values_it == op.args().end()) {
+  if (control_qubits_it == op.args().end() ||
+      control_values_it == op.args().end()) {
     return ::tensorflow::Status();
   }
 
