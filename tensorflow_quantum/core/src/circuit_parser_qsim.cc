@@ -94,7 +94,8 @@ inline Status ParseProtoControls(const Operation& op,
   if (control_qubits_it == op.args().end() ||
       control_values_it == op.args().end()) {
     return Status(absl::StatusCode::kInvalidArgument,
-                  "Both control_qubits and control_values must be specified if either is present.");
+                  "Both control_qubits and control_values must be specified if "
+                  "either is present.");
   }
 
   absl::string_view control_str =
@@ -228,6 +229,11 @@ inline Status TwoConstantGate(
     return Status(absl::StatusCode::kInvalidArgument,
                   "Qubit index out of range: " + std::to_string(q1));
   }
+  if (q0 == q1) {
+    return Status(
+        absl::StatusCode::kInvalidArgument,
+        "TwoConstantGate requires distinct qubits: " + std::to_string(q0));
+  }
   auto gate = create_f(time, num_qubits - q0 - 1, num_qubits - q1 - 1);
   Status s = OptionalInsertControls(op, num_qubits, &gate);
   if (!s.ok()) {
@@ -332,6 +338,11 @@ inline Status TwoEigenGate(
   if (q1 >= num_qubits) {
     return Status(absl::StatusCode::kInvalidArgument,
                   "Qubit index out of range: " + std::to_string(q1));
+  }
+  if (q0 == q1) {
+    return Status(
+        absl::StatusCode::kInvalidArgument,
+        "TwoConstantGate requires distinct qubits: " + std::to_string(q0));
   }
 
   absl::optional<std::string> exponent_symbol;
@@ -560,6 +571,11 @@ inline Status FsimGate(const Operation& op, const SymbolMap& param_map,
     return Status(absl::StatusCode::kInvalidArgument,
                   "Qubit index out of range: " + std::to_string(q1));
   }
+  if (q0 == q1) {
+    return Status(
+        absl::StatusCode::kInvalidArgument,
+        "TwoConstantGate requires distinct qubits: " + std::to_string(q0));
+  }
 
   absl::optional<std::string> theta_symbol;
   u = ParseProtoArg(op, "theta", param_map, &theta, &theta_symbol);
@@ -633,6 +649,11 @@ inline Status PhasedISwapGate(const Operation& op, const SymbolMap& param_map,
   if (q1 >= num_qubits) {
     return Status(absl::StatusCode::kInvalidArgument,
                   "Qubit index out of range: " + std::to_string(q1));
+  }
+  if (q0 == q1) {
+    return Status(
+        absl::StatusCode::kInvalidArgument,
+        "TwoConstantGate requires distinct qubits: " + std::to_string(q0));
   }
 
   absl::optional<std::string> exponent_symbol;
