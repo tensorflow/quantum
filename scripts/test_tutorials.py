@@ -17,6 +17,7 @@
 import os
 import glob
 import re
+import subprocess
 
 from absl.testing import parameterized
 import nbformat
@@ -29,8 +30,11 @@ os.environ.setdefault("TF_USE_LEGACY_KERAS", "1")
 # Pylint doesn't like code before imports, but we need the env var set first.
 import tensorflow as tf  # pylint: disable=wrong-import-position
 
-# Must be run from the directory containing `quantum` repo.
-NOTEBOOKS = glob.glob("quantum/docs/tutorials/*.ipynb")
+# Must be run from the directory containing the repository.
+this_dir = os.path.dirname(os.path.abspath(__file__))
+repo_name = os.path.basename(os.path.abspath(os.path.join(this_dir, "..")))
+
+NOTEBOOKS = glob.glob(os.path.join(repo_name, "docs", "tutorials", "*.ipynb"))
 
 
 class ExamplesTest(tf.test.TestCase, parameterized.TestCase):
