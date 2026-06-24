@@ -653,7 +653,7 @@ inline Status PhasedISwapGate(const Operation& op, const SymbolMap& param_map,
   if (q0 == q1) {
     return Status(
         absl::StatusCode::kInvalidArgument,
-        "TwoConstantGate requires distinct qubits: " + std::to_string(q0));
+        "PhasedISwapGate requires distinct qubits: " + std::to_string(q0));
   }
 
   absl::optional<std::string> exponent_symbol;
