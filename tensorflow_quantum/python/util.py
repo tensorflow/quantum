@@ -133,6 +133,10 @@ def random_symbol_circuit(qubits,
     Symbols are randomly included in the gates of the first `n_moments` moments
     of the resulting circuit.  Then, parameterized H gates are added as
     subsequent moments for any remaining unused symbols.
+
+    Args:
+        include_channels: If True, supported noise channels may be inserted into
+            the circuit. Channels are never parameterized or controlled.
     """
     supported_ops = get_supported_gates()
     if include_channels:
@@ -178,7 +182,12 @@ def random_circuit_resolver_batch(qubits,
                                   n_moments=15,
                                   p=0.9,
                                   include_channels=False):
-    """Generate a batch of random circuits and symbolless resolvers."""
+    """Generate a batch of random circuits and symbolless resolvers.
+
+    Args:
+        include_channels: If True, supported noise channels may be inserted into
+            each circuit. Channels are never parameterized or controlled.
+    """
     supported_ops = get_supported_gates()
     if include_channels:
         for chan, n in get_supported_channels().items():
@@ -222,7 +231,12 @@ def random_symbol_circuit_resolver_batch(qubits,
                                          p=0.9,
                                          include_scalars=True,
                                          include_channels=False):
-    """Generate a batch of random circuits and resolvers."""
+    """Generate a batch of random circuits and resolvers.
+
+    Args:
+        include_channels: If True, supported noise channels may be inserted into
+            each circuit. Channels are never parameterized or controlled.
+    """
     return_circuits = []
     return_resolvers = []
     for _ in range(batch_size):

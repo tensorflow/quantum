@@ -22,7 +22,7 @@ MATH_OP_MODULE = load_module(os.path.join("math_ops", "_tfq_math_ops.so"))
 
 def _inner_product_grad(programs, symbol_names, symbol_values, other_programs,
                         prev_grad):
-    """Calculate the adjoint gradients of the inner product between circuits.
+    r"""Calculate the adjoint gradients of the inner product between circuits.
 
     Compute the gradients of the (potentially many) inner products between
     the given circuits and the symbol free comparison circuits.
@@ -70,7 +70,7 @@ def _inner_product_grad(programs, symbol_names, symbol_values, other_programs,
 
 @tf.custom_gradient
 def inner_product(programs, symbol_names, symbol_values, other_programs):
-    """Calculate the inner product between circuits.
+    r"""Calculate the inner product between circuits.
 
     Compute (potentially many) inner products between the given circuits and
     the symbol free comparison circuits.
