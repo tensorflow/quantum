@@ -342,7 +342,7 @@ inline Status TwoEigenGate(
   if (q0 == q1) {
     return Status(
         absl::StatusCode::kInvalidArgument,
-        "TwoConstantGate requires distinct qubits: " + std::to_string(q0));
+        "TwoEigenGate requires distinct qubits: " + std::to_string(q0));
   }
 
   absl::optional<std::string> exponent_symbol;
