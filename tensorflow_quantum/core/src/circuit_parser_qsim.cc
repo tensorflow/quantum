@@ -85,10 +85,16 @@ inline Status ParseProtoControls(const Operation& op,
                                  const unsigned int num_qubits,
                                  std::vector<unsigned int>* control_qubits,
                                  std::vector<unsigned int>* control_values) {
+  const auto control_qubits_it = op.args().find("control_qubits");
+  const auto control_values_it = op.args().find("control_values");
+  if (control_qubits_it == op.args().end() || control_values_it == op.args().end()) {
+    return ::tensorflow::Status();
+  }
+
   absl::string_view control_str =
-      op.args().at("control_qubits").arg_value().string_value();
+      control_qubits_it->second.arg_value().string_value();
   absl::string_view control_v_str =
-      op.args().at("control_values").arg_value().string_value();
+      control_values_it->second.arg_value().string_value();
 
   if (control_str == "" && control_v_str == "") {
     // empty default value set in serializer.py
@@ -108,12 +114,18 @@ inline Status ParseProtoControls(const Operation& op,
     return ::tensorflow::Status();
   }
   bool valid;
-  unsigned int tmp;
+  unsigned int tmp = 0;
   control_qubits->reserve(control_toks.size());
   for (auto tok : control_toks) {
-    // don't bother error checking since this is done earlier
-    // in program_resolution.
     valid = absl::SimpleAtoi(tok, &tmp);
+    if (!valid) {
+      return Status(absl::StatusCode::kInvalidArgument,
+                    "Unparseable control qubit index: " + std::string(tok));
+    }
+    if (tmp >= num_qubits) {
+      return Status(absl::StatusCode::kInvalidArgument,
+                    "Control qubit index out of range: " + std::to_string(tmp));
+    }
     control_qubits->push_back(num_qubits - tmp - 1);
   }
   control_values->reserve(control_v_toks.size());
@@ -146,9 +158,6 @@ inline Status OptionalInsertControls(const Operation& op,
 }
 
 // series of fixed signature gate builders.
-// there is no need to error check for unparseable symbols
-// or proto args not being present. Those errors are caught
-// upstream.
 
 // single qubit gate Create(time, q0)
 inline Status SingleConstantGate(
@@ -156,8 +165,19 @@ inline Status SingleConstantGate(
     const std::function<QsimGate(unsigned int, unsigned int)>& create_f,
     const unsigned int num_qubits, const unsigned int time,
     QsimCircuit* circuit, std::vector<GateMetaData>* metadata) {
-  unsigned int q0;
-  (void)absl::SimpleAtoi(op.qubits(0).id(), &q0);
+  unsigned int q0 = 0;
+  if (op.qubits_size() < 1) {
+    return Status(absl::StatusCode::kInvalidArgument,
+                  "SingleConstantGate requires at least 1 qubit.");
+  }
+  if (!absl::SimpleAtoi(op.qubits(0).id(), &q0)) {
+    return Status(absl::StatusCode::kInvalidArgument,
+                  "Unparseable qubit index: " + op.qubits(0).id());
+  }
+  if (q0 >= num_qubits) {
+    return Status(absl::StatusCode::kInvalidArgument,
+                  "Qubit index out of range: " + std::to_string(q0));
+  }
   auto gate = create_f(time, num_qubits - q0 - 1);
   Status s = OptionalInsertControls(op, num_qubits, &gate);
   if (!s.ok()) {
@@ -181,9 +201,27 @@ inline Status TwoConstantGate(
         create_f,
     const unsigned int num_qubits, const unsigned int time,
     QsimCircuit* circuit, std::vector<GateMetaData>* metadata) {
-  unsigned int q0, q1;
-  (void)absl::SimpleAtoi(op.qubits(0).id(), &q0);
-  (void)absl::SimpleAtoi(op.qubits(1).id(), &q1);
+  unsigned int q0 = 0, q1 = 0;
+  if (op.qubits_size() < 2) {
+    return Status(absl::StatusCode::kInvalidArgument,
+                  "TwoConstantGate requires at least 2 qubits.");
+  }
+  if (!absl::SimpleAtoi(op.qubits(0).id(), &q0)) {
+    return Status(absl::StatusCode::kInvalidArgument,
+                  "Unparseable qubit index: " + op.qubits(0).id());
+  }
+  if (!absl::SimpleAtoi(op.qubits(1).id(), &q1)) {
+    return Status(absl::StatusCode::kInvalidArgument,
+                  "Unparseable qubit index: " + op.qubits(1).id());
+  }
+  if (q0 >= num_qubits) {
+    return Status(absl::StatusCode::kInvalidArgument,
+                  "Qubit index out of range: " + std::to_string(q0));
+  }
+  if (q1 >= num_qubits) {
+    return Status(absl::StatusCode::kInvalidArgument,
+                  "Qubit index out of range: " + std::to_string(q1));
+  }
   auto gate = create_f(time, num_qubits - q0 - 1, num_qubits - q1 - 1);
   Status s = OptionalInsertControls(op, num_qubits, &gate);
   if (!s.ok()) {
@@ -207,10 +245,21 @@ inline Status SingleEigenGate(
         create_f,
     const unsigned int num_qubits, const unsigned int time,
     QsimCircuit* circuit, std::vector<GateMetaData>* metadata) {
-  unsigned int q0;
+  unsigned int q0 = 0;
   float exp, exp_s, gs;
   Status u;
-  (void)absl::SimpleAtoi(op.qubits(0).id(), &q0);
+  if (op.qubits_size() < 1) {
+    return Status(absl::StatusCode::kInvalidArgument,
+                  "SingleEigenGate requires at least 1 qubit.");
+  }
+  if (!absl::SimpleAtoi(op.qubits(0).id(), &q0)) {
+    return Status(absl::StatusCode::kInvalidArgument,
+                  "Unparseable qubit index: " + op.qubits(0).id());
+  }
+  if (q0 >= num_qubits) {
+    return Status(absl::StatusCode::kInvalidArgument,
+                  "Qubit index out of range: " + std::to_string(q0));
+  }
 
   absl::optional<std::string> exponent_symbol;
   u = ParseProtoArg(op, "exponent", param_map, &exp, &exponent_symbol);
@@ -255,11 +304,29 @@ inline Status TwoEigenGate(
                                  float, float)>& create_f,
     const unsigned int num_qubits, const unsigned int time,
     QsimCircuit* circuit, std::vector<GateMetaData>* metadata) {
-  unsigned int q0, q1;
+  unsigned int q0 = 0, q1 = 0;
   float exp, exp_s, gs;
   Status u;
-  (void)absl::SimpleAtoi(op.qubits(0).id(), &q0);
-  (void)absl::SimpleAtoi(op.qubits(1).id(), &q1);
+  if (op.qubits_size() < 2) {
+    return Status(absl::StatusCode::kInvalidArgument,
+                  "TwoEigenGate requires at least 2 qubits.");
+  }
+  if (!absl::SimpleAtoi(op.qubits(0).id(), &q0)) {
+    return Status(absl::StatusCode::kInvalidArgument,
+                  "Unparseable qubit index: " + op.qubits(0).id());
+  }
+  if (!absl::SimpleAtoi(op.qubits(1).id(), &q1)) {
+    return Status(absl::StatusCode::kInvalidArgument,
+                  "Unparseable qubit index: " + op.qubits(1).id());
+  }
+  if (q0 >= num_qubits) {
+    return Status(absl::StatusCode::kInvalidArgument,
+                  "Qubit index out of range: " + std::to_string(q0));
+  }
+  if (q1 >= num_qubits) {
+    return Status(absl::StatusCode::kInvalidArgument,
+                  "Qubit index out of range: " + std::to_string(q1));
+  }
 
   absl::optional<std::string> exponent_symbol;
   u = ParseProtoArg(op, "exponent", param_map, &exp, &exponent_symbol);
@@ -394,10 +461,21 @@ inline Status PhasedXGate(const Operation& op, const SymbolMap& param_map,
                           const unsigned int num_qubits,
                           const unsigned int time, QsimCircuit* circuit,
                           std::vector<GateMetaData>* metadata) {
-  int q0;
+  unsigned int q0 = 0;
   float pexp, pexp_s, exp, exp_s, gs;
   Status u;
-  (void)absl::SimpleAtoi(op.qubits(0).id(), &q0);
+  if (op.qubits_size() < 1) {
+    return Status(absl::StatusCode::kInvalidArgument,
+                  "PhasedXGate requires at least 1 qubit.");
+  }
+  if (!absl::SimpleAtoi(op.qubits(0).id(), &q0)) {
+    return Status(absl::StatusCode::kInvalidArgument,
+                  "Unparseable qubit index: " + op.qubits(0).id());
+  }
+  if (q0 >= num_qubits) {
+    return Status(absl::StatusCode::kInvalidArgument,
+                  "Qubit index out of range: " + std::to_string(q0));
+  }
 
   absl::optional<std::string> exponent_symbol;
   u = ParseProtoArg(op, "exponent", param_map, &exp, &exponent_symbol);
@@ -453,11 +531,29 @@ inline Status FsimGate(const Operation& op, const SymbolMap& param_map,
                        const unsigned int num_qubits, const unsigned int time,
                        QsimCircuit* circuit,
                        std::vector<GateMetaData>* metadata) {
-  int q0, q1;
+  unsigned int q0 = 0, q1 = 0;
   float theta, theta_s, phi, phi_s;
   Status u;
-  (void)absl::SimpleAtoi(op.qubits(0).id(), &q0);
-  (void)absl::SimpleAtoi(op.qubits(1).id(), &q1);
+  if (op.qubits_size() < 2) {
+    return Status(absl::StatusCode::kInvalidArgument,
+                  "FsimGate requires at least 2 qubits.");
+  }
+  if (!absl::SimpleAtoi(op.qubits(0).id(), &q0)) {
+    return Status(absl::StatusCode::kInvalidArgument,
+                  "Unparseable qubit index: " + op.qubits(0).id());
+  }
+  if (!absl::SimpleAtoi(op.qubits(1).id(), &q1)) {
+    return Status(absl::StatusCode::kInvalidArgument,
+                  "Unparseable qubit index: " + op.qubits(1).id());
+  }
+  if (q0 >= num_qubits) {
+    return Status(absl::StatusCode::kInvalidArgument,
+                  "Qubit index out of range: " + std::to_string(q0));
+  }
+  if (q1 >= num_qubits) {
+    return Status(absl::StatusCode::kInvalidArgument,
+                  "Qubit index out of range: " + std::to_string(q1));
+  }
 
   absl::optional<std::string> theta_symbol;
   u = ParseProtoArg(op, "theta", param_map, &theta, &theta_symbol);
@@ -509,11 +605,29 @@ inline Status PhasedISwapGate(const Operation& op, const SymbolMap& param_map,
                               const unsigned int num_qubits,
                               const unsigned int time, QsimCircuit* circuit,
                               std::vector<GateMetaData>* metadata) {
-  int q0, q1;
+  unsigned int q0 = 0, q1 = 0;
   float pexp, pexp_s, exp, exp_s;
   Status u;
-  (void)absl::SimpleAtoi(op.qubits(0).id(), &q0);
-  (void)absl::SimpleAtoi(op.qubits(1).id(), &q1);
+  if (op.qubits_size() < 2) {
+    return Status(absl::StatusCode::kInvalidArgument,
+                  "PhasedISwapGate requires at least 2 qubits.");
+  }
+  if (!absl::SimpleAtoi(op.qubits(0).id(), &q0)) {
+    return Status(absl::StatusCode::kInvalidArgument,
+                  "Unparseable qubit index: " + op.qubits(0).id());
+  }
+  if (!absl::SimpleAtoi(op.qubits(1).id(), &q1)) {
+    return Status(absl::StatusCode::kInvalidArgument,
+                  "Unparseable qubit index: " + op.qubits(1).id());
+  }
+  if (q0 >= num_qubits) {
+    return Status(absl::StatusCode::kInvalidArgument,
+                  "Qubit index out of range: " + std::to_string(q0));
+  }
+  if (q1 >= num_qubits) {
+    return Status(absl::StatusCode::kInvalidArgument,
+                  "Qubit index out of range: " + std::to_string(q1));
+  }
 
   absl::optional<std::string> exponent_symbol;
   u = ParseProtoArg(op, "exponent", param_map, &exp, &exponent_symbol);
@@ -599,13 +713,30 @@ inline Status AsymmetricDepolarizingChannel(const Operation& op,
                                             const unsigned int num_qubits,
                                             const unsigned int time,
                                             NoisyQsimCircuit* ncircuit) {
-  int q;
+  unsigned int q = 0;
   float p_x, p_y, p_z;
   Status u;
-  (void)absl::SimpleAtoi(op.qubits(0).id(), &q);
+  if (op.qubits_size() < 1) {
+    return Status(absl::StatusCode::kInvalidArgument,
+                  "Channel requires at least 1 qubit.");
+  }
+  if (!absl::SimpleAtoi(op.qubits(0).id(), &q)) {
+    return Status(absl::StatusCode::kInvalidArgument,
+                  "Unparseable qubit index: " + op.qubits(0).id());
+  }
+  if (q >= num_qubits) {
+    return Status(absl::StatusCode::kInvalidArgument,
+                  "Qubit index out of range: " + std::to_string(q));
+  }
 
   u = ParseProtoArg(op, "p_x", {}, &p_x);
+  if (!u.ok()) {
+    return u;
+  }
   u = ParseProtoArg(op, "p_y", {}, &p_y);
+  if (!u.ok()) {
+    return u;
+  }
   u = ParseProtoArg(op, "p_z", {}, &p_z);
   if (!u.ok()) {
     return u;
@@ -620,10 +751,21 @@ inline Status DepolarizingChannel(const Operation& op,
                                   const unsigned int num_qubits,
                                   const unsigned int time,
                                   NoisyQsimCircuit* ncircuit) {
-  int q;
+  unsigned int q = 0;
   float p;
   Status u;
-  (void)absl::SimpleAtoi(op.qubits(0).id(), &q);
+  if (op.qubits_size() < 1) {
+    return Status(absl::StatusCode::kInvalidArgument,
+                  "Channel requires at least 1 qubit.");
+  }
+  if (!absl::SimpleAtoi(op.qubits(0).id(), &q)) {
+    return Status(absl::StatusCode::kInvalidArgument,
+                  "Unparseable qubit index: " + op.qubits(0).id());
+  }
+  if (q >= num_qubits) {
+    return Status(absl::StatusCode::kInvalidArgument,
+                  "Qubit index out of range: " + std::to_string(q));
+  }
 
   u = ParseProtoArg(op, "p", {}, &p);
   if (!u.ok()) {
@@ -637,10 +779,21 @@ inline Status DepolarizingChannel(const Operation& op,
 
 inline Status GADChannel(const Operation& op, const unsigned int num_qubits,
                          const unsigned int time, NoisyQsimCircuit* ncircuit) {
-  int q;
+  unsigned int q = 0;
   float p, gamma;
   Status u;
-  (void)absl::SimpleAtoi(op.qubits(0).id(), &q);
+  if (op.qubits_size() < 1) {
+    return Status(absl::StatusCode::kInvalidArgument,
+                  "Channel requires at least 1 qubit.");
+  }
+  if (!absl::SimpleAtoi(op.qubits(0).id(), &q)) {
+    return Status(absl::StatusCode::kInvalidArgument,
+                  "Unparseable qubit index: " + op.qubits(0).id());
+  }
+  if (q >= num_qubits) {
+    return Status(absl::StatusCode::kInvalidArgument,
+                  "Qubit index out of range: " + std::to_string(q));
+  }
 
   u = ParseProtoArg(op, "p", {}, &p);
   if (!u.ok()) {
@@ -660,8 +813,19 @@ inline Status GADChannel(const Operation& op, const unsigned int num_qubits,
 inline Status ResetChannel(const Operation& op, const unsigned int num_qubits,
                            const unsigned int time,
                            NoisyQsimCircuit* ncircuit) {
-  int q;
-  (void)absl::SimpleAtoi(op.qubits(0).id(), &q);
+  unsigned int q = 0;
+  if (op.qubits_size() < 1) {
+    return Status(absl::StatusCode::kInvalidArgument,
+                  "Channel requires at least 1 qubit.");
+  }
+  if (!absl::SimpleAtoi(op.qubits(0).id(), &q)) {
+    return Status(absl::StatusCode::kInvalidArgument,
+                  "Unparseable qubit index: " + op.qubits(0).id());
+  }
+  if (q >= num_qubits) {
+    return Status(absl::StatusCode::kInvalidArgument,
+                  "Qubit index out of range: " + std::to_string(q));
+  }
 
   auto chan = qsim::Cirq::ResetChannel<float>::Create(time, num_qubits - q - 1);
   ncircuit->channels.push_back(chan);
@@ -672,10 +836,21 @@ inline Status AmplitudeDampingChannel(const Operation& op,
                                       const unsigned int num_qubits,
                                       const unsigned int time,
                                       NoisyQsimCircuit* ncircuit) {
-  int q;
+  unsigned int q = 0;
   float gamma;
   Status u;
-  (void)absl::SimpleAtoi(op.qubits(0).id(), &q);
+  if (op.qubits_size() < 1) {
+    return Status(absl::StatusCode::kInvalidArgument,
+                  "Channel requires at least 1 qubit.");
+  }
+  if (!absl::SimpleAtoi(op.qubits(0).id(), &q)) {
+    return Status(absl::StatusCode::kInvalidArgument,
+                  "Unparseable qubit index: " + op.qubits(0).id());
+  }
+  if (q >= num_qubits) {
+    return Status(absl::StatusCode::kInvalidArgument,
+                  "Qubit index out of range: " + std::to_string(q));
+  }
 
   u = ParseProtoArg(op, "gamma", {}, &gamma);
   if (!u.ok()) {
@@ -691,10 +866,21 @@ inline Status PhaseDampingChannel(const Operation& op,
                                   const unsigned int num_qubits,
                                   const unsigned int time,
                                   NoisyQsimCircuit* ncircuit) {
-  int q;
+  unsigned int q = 0;
   float gamma;
   Status u;
-  (void)absl::SimpleAtoi(op.qubits(0).id(), &q);
+  if (op.qubits_size() < 1) {
+    return Status(absl::StatusCode::kInvalidArgument,
+                  "Channel requires at least 1 qubit.");
+  }
+  if (!absl::SimpleAtoi(op.qubits(0).id(), &q)) {
+    return Status(absl::StatusCode::kInvalidArgument,
+                  "Unparseable qubit index: " + op.qubits(0).id());
+  }
+  if (q >= num_qubits) {
+    return Status(absl::StatusCode::kInvalidArgument,
+                  "Qubit index out of range: " + std::to_string(q));
+  }
 
   u = ParseProtoArg(op, "gamma", {}, &gamma);
   if (!u.ok()) {
@@ -711,10 +897,21 @@ inline Status PhaseFlipChannel(const Operation& op,
                                const unsigned int num_qubits,
                                const unsigned int time,
                                NoisyQsimCircuit* ncircuit) {
-  int q;
+  unsigned int q = 0;
   float p;
   Status u;
-  (void)absl::SimpleAtoi(op.qubits(0).id(), &q);
+  if (op.qubits_size() < 1) {
+    return Status(absl::StatusCode::kInvalidArgument,
+                  "Channel requires at least 1 qubit.");
+  }
+  if (!absl::SimpleAtoi(op.qubits(0).id(), &q)) {
+    return Status(absl::StatusCode::kInvalidArgument,
+                  "Unparseable qubit index: " + op.qubits(0).id());
+  }
+  if (q >= num_qubits) {
+    return Status(absl::StatusCode::kInvalidArgument,
+                  "Qubit index out of range: " + std::to_string(q));
+  }
 
   u = ParseProtoArg(op, "p", {}, &p);
   if (!u.ok()) {
@@ -730,10 +927,21 @@ inline Status PhaseFlipChannel(const Operation& op,
 inline Status BitFlipChannel(const Operation& op, const unsigned int num_qubits,
                              const unsigned int time,
                              NoisyQsimCircuit* ncircuit) {
-  int q;
+  unsigned int q = 0;
   float p;
   Status u;
-  (void)absl::SimpleAtoi(op.qubits(0).id(), &q);
+  if (op.qubits_size() < 1) {
+    return Status(absl::StatusCode::kInvalidArgument,
+                  "Channel requires at least 1 qubit.");
+  }
+  if (!absl::SimpleAtoi(op.qubits(0).id(), &q)) {
+    return Status(absl::StatusCode::kInvalidArgument,
+                  "Unparseable qubit index: " + op.qubits(0).id());
+  }
+  if (q >= num_qubits) {
+    return Status(absl::StatusCode::kInvalidArgument,
+                  "Qubit index out of range: " + std::to_string(q));
+  }
 
   u = ParseProtoArg(op, "p", {}, &p);
   if (!u.ok()) {
