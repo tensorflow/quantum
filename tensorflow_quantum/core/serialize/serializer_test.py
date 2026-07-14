@@ -720,6 +720,16 @@ class SerializerTest(tf.test.TestCase, parameterized.TestCase):
         with self.assertRaises(ValueError):
             serializer.serialize_circuit(simple_circuit)
 
+    def test_serialize_multi_qubit_noise_channel(self):
+        """Ensure multi-qubit noise channels are rejected with clear error."""
+        q0 = cirq.GridQubit(0, 0)
+        q1 = cirq.GridQubit(0, 1)
+        multi_qubit_circuit = cirq.Circuit(
+            cirq.DepolarizingChannel(p=0.1, n_qubits=2)(q0, q1))
+        with self.assertRaisesRegex(ValueError,
+                                    "Multi-qubit noise channels"):
+            serializer.serialize_circuit(multi_qubit_circuit)
+
     @parameterized.parameters([{'inp': v} for v in ['wrong', 1.0, None, []]])
     def test_serialize_circuit_wrong_type(self, inp):
         """Attempt to serialize invalid objects types."""
