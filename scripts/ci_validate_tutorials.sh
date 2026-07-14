@@ -27,15 +27,21 @@ pip install \
   "ipykernel>=6.29.0"
 
 # Gymnasium pip package needed for the quantum reinforcement learning tutorial
-pip install gymnasium[classic-control]==1.2.3
+pip install "gymnasium[classic-control]==1.2.3"
 # seaborn has also numpy dependency, it requires version >= 0.12.0.
 pip install seaborn==0.12.0
 # tf_docs pip package needed for noise tutorial.
 pip install -q git+https://github.com/tensorflow/docs
-# Leave the quantum directory, otherwise errors may occur
-cd ..
 
-examples_output=$(python3 quantum/scripts/test_tutorials.py)
+# Leave the repository directory, otherwise errors may occur
+thisdir=$(CDPATH="" cd -- "$(dirname -- "${0}")" && pwd -P)
+repo_dir=$(git -C "${thisdir}" rev-parse --show-toplevel 2>/dev/null)
+parent_dir=$(dirname "${repo_dir}")
+repo_name=$(basename "${repo_dir}")
+
+cd "${parent_dir}"
+
+examples_output=$(python3 "${repo_name}/scripts/test_tutorials.py")
 exit_code=$?
 
 if [ "$exit_code" == "0" ]; then
