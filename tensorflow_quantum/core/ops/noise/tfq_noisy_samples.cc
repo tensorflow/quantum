@@ -15,6 +15,7 @@ limitations under the License.
 
 #include <stdlib.h>
 
+#include <limits>
 #include <string>
 
 #include "../qsim/lib/channel.h"
@@ -60,7 +61,10 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
 
   void Compute(tensorflow::OpKernelContext* context) override {
     // TODO (mbbrough): add more dimension checks for other inputs here.
-    DCHECK_EQ(4, context->num_inputs());
+    const int num_inputs = context->num_inputs();
+    OP_REQUIRES(context, num_inputs == 4,
+                tensorflow::errors::InvalidArgument(absl::StrCat(
+                    "Expected 4 inputs, got ", num_inputs, " inputs.")));
 
     // Parse to Program Proto and num_qubits.
     std::vector<Program> programs;
@@ -79,6 +83,10 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
 
     int num_samples = 0;
     OP_REQUIRES_OK(context, GetIndividualSample(context, &num_samples));
+    OP_REQUIRES(context, num_samples >= 0 && num_samples <= 10000000,
+                tensorflow::errors::InvalidArgument(
+                    "num_samples must be between 0 and 10,000,000. Got: ",
+                    num_samples));
 
     // Construct qsim circuits.
     std::vector<NoisyQsimCircuit> qsim_circuits(programs.size(),
@@ -86,8 +94,8 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
 
     Status parse_status = ::tensorflow::Status();
     auto p_lock = absl::Mutex();
-    auto construct_f = [&](int64_t start, int64_t end) {
-      for (int64_t i = start; i < end; i++) {
+    auto construct_f = [&](int start, int end) {
+      for (int i = start; i < end; i++) {
         auto r = NoisyQsimCircuitFromProgram(
             programs[i], maps[i], num_qubits[i], true, &qsim_circuits[i]);
         NESTED_FN_STATUS_SYNC(parse_status, r, p_lock);
@@ -99,12 +107,12 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
         programs.size(), num_cycles, construct_f);
     OP_REQUIRES_OK(context, parse_status);
 
-    uint64_t max_num_qubits = 0;
-    for (const uint64_t num : num_qubits) {
+    int max_num_qubits = 0;
+    for (const int num : num_qubits) {
       max_num_qubits = std::max(max_num_qubits, num);
     }
 
-    const size_t output_dim_size = maps.size();
+    const int output_dim_size = maps.size();
     tensorflow::TensorShape output_shape;
     output_shape.AddDim(output_dim_size);
     output_shape.AddDim(num_samples);
@@ -134,7 +142,7 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
 
  private:
   void ComputeLarge(const std::vector<int>& num_qubits,
-                    const uint64_t max_num_qubits, const int num_samples,
+                    const int max_num_qubits, const int num_samples,
                     const std::vector<NoisyQsimCircuit>& ncircuits,
                     tensorflow::OpKernelContext* context,
                     tensorflow::TTypes<int8_t, 3>::Tensor* output_tensor) {
@@ -147,22 +155,23 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
                                          qsim::MultiQubitGateFuser, Simulator>;
 
     // Begin simulation.
-    uint64_t largest_nq = 1;
+    int largest_nq = 1;
     Simulator sim = Simulator(tfq_for);
     StateSpace ss = StateSpace(tfq_for);
     auto sv = ss.Create(largest_nq);
 
     tensorflow::GuardedPhiloxRandom random_gen;
     random_gen.Init(tensorflow::random::New64(), tensorflow::random::New64());
-    auto local_gen =
-        random_gen.ReserveSamples32(2 * num_samples * ncircuits.size() + 2);
+    int64_t num_samples_needed =
+        2 * static_cast<int64_t>(num_samples) * ncircuits.size() + 2;
+    auto local_gen = random_gen.ReserveSamples32(num_samples_needed);
     tensorflow::random::SimplePhilox rand_source(&local_gen);
 
     // Simulate programs one by one. Parallelizing over state vectors
     // we no longer parallelize over circuits. Each time we encounter a
     // a larger circuit we will grow the Statevector as necessary.
     for (size_t i = 0; i < ncircuits.size(); i++) {
-      uint64_t nq = num_qubits[i];
+      int nq = num_qubits[i];
 
       if (nq > largest_nq) {
         // need to switch to larger statespace.
@@ -183,7 +192,7 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
 
         QTSimulator::RunOnce(param, ncircuits[i], rand_source.Rand64(), ss, sim,
                              sv, gathered_samples);
-        uint64_t q_ind = 0;
+        int q_ind = 0;
         uint64_t mask = 1;
         bool val = 0;
         while (q_ind < nq) {
@@ -203,7 +212,7 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
   }
 
   void ComputeSmall(const std::vector<int>& num_qubits,
-                    const uint64_t max_num_qubits, const int num_samples,
+                    const int max_num_qubits, const int num_samples,
                     const std::vector<NoisyQsimCircuit>& ncircuits,
                     tensorflow::OpKernelContext* context,
                     tensorflow::TTypes<int8_t, 3>::Tensor* output_tensor) {
@@ -229,7 +238,8 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
         num_threads, std::vector<long>(output_dim_batch_size, 0));
 
     for (int i = 0; i < output_dim_batch_size; i++) {
-      int p_reps = (num_samples + num_threads - 1) / num_threads;
+      int64_t p_reps =
+          (static_cast<int64_t>(num_samples) + num_threads - 1) / num_threads;
       offset_prefix_sum[0][i] = rep_offsets[0][i] + p_reps;
       for (int j = 1; j < num_threads; j++) {
         offset_prefix_sum[j][i] += offset_prefix_sum[j - 1][i];
@@ -240,22 +250,24 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
     tensorflow::GuardedPhiloxRandom random_gen;
     random_gen.Init(tensorflow::random::New64(), tensorflow::random::New64());
 
-    auto DoWork = [&](int64_t start, int64_t end) {
+    auto DoWork = [&](int start, int end) {
       // Begin simulation.
       const auto tfq_for = qsim::SequentialFor(1);
-      uint64_t largest_nq = 1;
+      int largest_nq = 1;
       Simulator sim = Simulator(tfq_for);
       StateSpace ss = StateSpace(tfq_for);
       auto sv = ss.Create(largest_nq);
 
-      int needed_random =
-          4 * (num_samples * ncircuits.size() + num_threads) / num_threads;
+      int64_t needed_random =
+          4 *
+          (static_cast<int64_t>(num_samples) * ncircuits.size() + num_threads) /
+          num_threads;
       needed_random += 4;
       auto local_gen = random_gen.ReserveSamples32(needed_random);
       tensorflow::random::SimplePhilox rand_source(&local_gen);
 
       for (size_t i = 0; i < ncircuits.size(); i++) {
-        uint64_t nq = num_qubits[i];
+        int nq = num_qubits[i];
         int j = start > 0 ? offset_prefix_sum[start - 1][i] : 0;
         int needed_samples = offset_prefix_sum[start][i] - j;
         if (needed_samples <= 0) {
@@ -280,7 +292,7 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
           QTSimulator::RunOnce(param, ncircuits[i], rand_source.Rand64(), ss,
                                sim, sv, gathered_samples);
 
-          uint64_t q_ind = 0;
+          int q_ind = 0;
           uint64_t mask = 1;
           bool val = 0;
           while (q_ind < nq) {

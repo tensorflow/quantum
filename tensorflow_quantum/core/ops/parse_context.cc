@@ -77,8 +77,8 @@ Status ParsePrograms(OpKernelContext* context, const std::string& input_name,
   const int num_programs = program_strings.dimension(0);
   programs->assign(num_programs, Program());
 
-  auto DoWork = [&](int64_t start, int64_t end) {
-    for (int64_t i = start; i < end; i++) {
+  auto DoWork = [&](int start, int end) {
+    for (int i = start; i < end; i++) {
       OP_REQUIRES_OK(context, ParseProto(program_strings(i), &programs->at(i)));
     }
   };
@@ -112,8 +112,8 @@ Status ParsePrograms2D(OpKernelContext* context, const std::string& input_name,
   const int num_entries = program_strings.dimension(1);
   programs->assign(num_programs, std::vector<Program>(num_entries, Program()));
 
-  auto DoWork = [&](int64_t start, int64_t end) {
-    for (int64_t i = start; i < end; i++) {
+  auto DoWork = [&](int start, int end) {
+    for (int i = start; i < end; i++) {
       OP_REQUIRES_OK(
           context,
           ParseProto(program_strings(i / num_entries, i % num_entries),
@@ -181,8 +181,8 @@ Status GetProgramsAndNumQubits(
 
   // Resolve qubit ID's in parallel.
   num_qubits->assign(programs->size(), -1);
-  auto DoWork = [&](int64_t start, int64_t end) {
-    for (int64_t i = start; i < end; i++) {
+  auto DoWork = [&](int start, int end) {
+    for (int i = start; i < end; i++) {
       Program& program = (*programs)[i];
       unsigned int this_num_qubits;
       if (p_sums) {
@@ -232,8 +232,8 @@ tensorflow::Status GetProgramsAndNumQubits(
 
   // Resolve qubit ID's in parallel.
   num_qubits->assign(programs->size(), -1);
-  auto DoWork = [&](int64_t start, int64_t end) {
-    for (int64_t i = start; i < end; i++) {
+  auto DoWork = [&](int start, int end) {
+    for (int i = start; i < end; i++) {
       Program& program = (*programs)[i];
       unsigned int this_num_qubits;
       OP_REQUIRES_OK(context, ResolveQubitIds(&program, &this_num_qubits,
@@ -270,8 +270,8 @@ Status GetPauliSums(OpKernelContext* context,
   p_sums->assign(sum_specs.dimension(0),
                  std::vector<PauliSum>(sum_specs.dimension(1), PauliSum()));
   const int op_dim = sum_specs.dimension(1);
-  auto DoWork = [&](int64_t start, int64_t end) {
-    for (int64_t ii = start; ii < end; ii++) {
+  auto DoWork = [&](int start, int end) {
+    for (int ii = start; ii < end; ii++) {
       const int i = ii / op_dim;
       const int j = ii % op_dim;
       PauliSum p;
@@ -328,8 +328,8 @@ Status GetSymbolMaps(OpKernelContext* context, std::vector<SymbolMap>* maps) {
   maps->assign(symbol_values.dimension(0), SymbolMap());
 
   const int symbol_dim = symbol_values.dimension(1);
-  auto DoWork = [&](int64_t start, int64_t end) {
-    for (int64_t i = start; i < end; i++) {
+  auto DoWork = [&](int start, int end) {
+    for (int i = start; i < end; i++) {
       for (int j = 0; j < symbol_dim; j++) {
         const std::string& name = symbol_names(j);
         const float value = symbol_values(i, j);
@@ -369,10 +369,11 @@ tensorflow::Status GetNumSamples(
     sub_parsed_num_samples.reserve(matrix_num_samples.dimension(1));
     for (unsigned int j = 0; j < matrix_num_samples.dimension(1); j++) {
       const int num_samples = matrix_num_samples(i, j);
-      if (num_samples < 1) {
+      if (num_samples < 1 || num_samples > 10000000) {
         return Status(static_cast<tensorflow::errors::Code>(
                           absl::StatusCode::kInvalidArgument),
-                      "Each element of num_samples must be greater than 0.");
+                      "Each element of num_samples must be greater than 0 and "
+                      "less than or equal to 10,000,000.");
       }
       sub_parsed_num_samples.push_back(num_samples);
     }
@@ -408,6 +409,11 @@ Status GetIndividualSample(tensorflow::OpKernelContext* context,
   }
 
   (*n_samples) = vector_num_samples(0);
+  if ((*n_samples) < 0 || (*n_samples) > 10000000) {
+    return Status(static_cast<tensorflow::errors::Code>(
+                      absl::StatusCode::kInvalidArgument),
+                  "num_samples must be between 0 and 10,000,000.");
+  }
   return ::tensorflow::Status();
 }
 

@@ -36,9 +36,10 @@ void BalanceTrajectory(const std::vector<std::vector<int>>& num_samples,
   }
   int prev_max_height = -1;
   for (size_t j = 0; j < num_samples.size(); j++) {
-    int run_ceiling = ((rep_limits[j] + num_threads - 1) / num_threads);
-    int num_lo = num_threads * run_ceiling - rep_limits[j];
-    int num_hi = num_threads - num_lo;
+    int64_t run_ceiling =
+        ((static_cast<int64_t>(rep_limits[j]) + num_threads - 1) / num_threads);
+    int64_t num_lo = num_threads * run_ceiling - rep_limits[j];
+    int64_t num_hi = num_threads - num_lo;
     int cur_max = prev_max_height;
     for (int i = 0; i < num_threads; i++) {
       if (height[i] == cur_max && num_lo) {
@@ -75,9 +76,10 @@ void BalanceTrajectory(const int& num_samples, const int& num_threads,
 
   int prev_max_height = -1;
   for (size_t j = 0; j < (*thread_offsets)[0].size(); j++) {
-    int run_ceiling = ((num_samples + num_threads - 1) / num_threads);
-    int num_lo = num_threads * run_ceiling - num_samples;
-    int num_hi = num_threads - num_lo;
+    int64_t run_ceiling =
+        ((static_cast<int64_t>(num_samples) + num_threads - 1) / num_threads);
+    int64_t num_lo = num_threads * run_ceiling - num_samples;
+    int64_t num_hi = num_threads - num_lo;
     int cur_max = prev_max_height;
     for (int i = 0; i < num_threads; i++) {
       if (height[i] == cur_max && num_lo) {
