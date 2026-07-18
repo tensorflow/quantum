@@ -1706,5 +1706,155 @@ TEST(QsimCircuitParserTest, ZBasisCircuitFromPauliTermEmpty) {
   ASSERT_EQ(test_circuit.gates.size(), 0);
 }
 
+TEST(QsimCircuitParserTest, InvalidCircuitInputs) {
+  Program program_proto;
+  Circuit* circuit_proto = program_proto.mutable_circuit();
+  circuit_proto->set_scheduling_strategy(circuit_proto->MOMENT_BY_MOMENT);
+  Moment* moments_proto = circuit_proto->add_moments();
+
+  // 1. Single qubit gate HP (HGate) with NO qubits
+  Operation* op = moments_proto->add_operations();
+  op->mutable_gate()->set_id("HP");
+  (*op->mutable_args())["exponent"] = MakeArg(1.0);
+  (*op->mutable_args())["exponent_scalar"] = MakeArg(1.0);
+  (*op->mutable_args())["global_shift"] = MakeArg(0.0);
+  (*op->mutable_args())["control_qubits"] = MakeControlArg("");
+  (*op->mutable_args())["control_values"] = MakeControlArg("");
+
+  QsimCircuit test_circuit;
+  std::vector<qsim::GateFused<QsimGate>> fused_circuit;
+  SymbolMap empty_map;
+
+  // SingleEigenGate requires at least 1 qubit
+  ASSERT_EQ(QsimCircuitFromProgram(program_proto, empty_map, 1, &test_circuit,
+                                   &fused_circuit),
+            tensorflow::Status(absl::StatusCode::kInvalidArgument,
+                               "SingleEigenGate requires at least 1 qubit."));
+
+  // 2. Clear operations, add a gate with unparseable qubit id
+  moments_proto->clear_operations();
+  op = moments_proto->add_operations();
+  op->mutable_gate()->set_id("HP");
+  (*op->mutable_args())["exponent"] = MakeArg(1.0);
+  (*op->mutable_args())["exponent_scalar"] = MakeArg(1.0);
+  (*op->mutable_args())["global_shift"] = MakeArg(0.0);
+  (*op->mutable_args())["control_qubits"] = MakeControlArg("");
+  (*op->mutable_args())["control_values"] = MakeControlArg("");
+  op->add_qubits()->set_id("invalid_index");
+
+  ASSERT_EQ(QsimCircuitFromProgram(program_proto, empty_map, 1, &test_circuit,
+                                   &fused_circuit),
+            tensorflow::Status(absl::StatusCode::kInvalidArgument,
+                               "Unparseable qubit index: invalid_index"));
+
+  // 3. Qubit index out of range (q0 >= num_qubits)
+  moments_proto->clear_operations();
+  op = moments_proto->add_operations();
+  op->mutable_gate()->set_id("HP");
+  (*op->mutable_args())["exponent"] = MakeArg(1.0);
+  (*op->mutable_args())["exponent_scalar"] = MakeArg(1.0);
+  (*op->mutable_args())["global_shift"] = MakeArg(0.0);
+  (*op->mutable_args())["control_qubits"] = MakeControlArg("");
+  (*op->mutable_args())["control_values"] = MakeControlArg("");
+  op->add_qubits()->set_id("5");  // num_qubits is 2, so 5 is out of range
+
+  ASSERT_EQ(QsimCircuitFromProgram(program_proto, empty_map, 2, &test_circuit,
+                                   &fused_circuit),
+            tensorflow::Status(absl::StatusCode::kInvalidArgument,
+                               "Qubit index out of range: 5"));
+
+  // 4. Two qubit gate with only 1 qubit
+  moments_proto->clear_operations();
+  op = moments_proto->add_operations();
+  op->mutable_gate()->set_id("CZP");
+  (*op->mutable_args())["exponent"] = MakeArg(1.0);
+  (*op->mutable_args())["exponent_scalar"] = MakeArg(1.0);
+  (*op->mutable_args())["global_shift"] = MakeArg(0.0);
+  (*op->mutable_args())["control_qubits"] = MakeControlArg("");
+  (*op->mutable_args())["control_values"] = MakeControlArg("");
+  op->add_qubits()->set_id("0");
+
+  ASSERT_EQ(QsimCircuitFromProgram(program_proto, empty_map, 2, &test_circuit,
+                                   &fused_circuit),
+            tensorflow::Status(absl::StatusCode::kInvalidArgument,
+                               "TwoEigenGate requires at least 2 qubits."));
+
+  // 5. Unparseable control qubit
+  moments_proto->clear_operations();
+  op = moments_proto->add_operations();
+  op->mutable_gate()->set_id("HP");
+  (*op->mutable_args())["exponent"] = MakeArg(1.0);
+  (*op->mutable_args())["exponent_scalar"] = MakeArg(1.0);
+  (*op->mutable_args())["global_shift"] = MakeArg(0.0);
+  (*op->mutable_args())["control_qubits"] = MakeControlArg("bad");
+  (*op->mutable_args())["control_values"] = MakeControlArg("0");
+  op->add_qubits()->set_id("0");
+
+  ASSERT_EQ(QsimCircuitFromProgram(program_proto, empty_map, 2, &test_circuit,
+                                   &fused_circuit),
+            tensorflow::Status(absl::StatusCode::kInvalidArgument,
+                               "Unparseable control qubit index: bad"));
+
+  // 6. Control qubit out of range
+  moments_proto->clear_operations();
+  op = moments_proto->add_operations();
+  op->mutable_gate()->set_id("HP");
+  (*op->mutable_args())["exponent"] = MakeArg(1.0);
+  (*op->mutable_args())["exponent_scalar"] = MakeArg(1.0);
+  (*op->mutable_args())["global_shift"] = MakeArg(0.0);
+  (*op->mutable_args())["control_qubits"] =
+      MakeControlArg("4");  // num_qubits is 2
+  (*op->mutable_args())["control_values"] = MakeControlArg("0");
+  op->add_qubits()->set_id("0");
+
+  ASSERT_EQ(QsimCircuitFromProgram(program_proto, empty_map, 2, &test_circuit,
+                                   &fused_circuit),
+            tensorflow::Status(absl::StatusCode::kInvalidArgument,
+                               "Control qubit index out of range: 4"));
+}
+
+TEST(QsimCircuitParserTest, InvalidChannelInputs) {
+  Program program_proto;
+  Circuit* circuit_proto = program_proto.mutable_circuit();
+  circuit_proto->set_scheduling_strategy(circuit_proto->MOMENT_BY_MOMENT);
+  Moment* moments_proto = circuit_proto->add_moments();
+
+  // 1. Bit flip channel with empty qubits list
+  Operation* op = moments_proto->add_operations();
+  op->mutable_gate()->set_id("BF");
+  (*op->mutable_args())["p"] = MakeArg(0.1);
+
+  NoisyQsimCircuit test_circuit;
+
+  ASSERT_EQ(
+      NoisyQsimCircuitFromProgram(program_proto, {}, 2, false, &test_circuit),
+      tensorflow::Status(absl::StatusCode::kInvalidArgument,
+                         "Channel requires at least 1 qubit."));
+
+  // 2. Bit flip channel with unparseable qubit index
+  moments_proto->clear_operations();
+  op = moments_proto->add_operations();
+  op->mutable_gate()->set_id("BF");
+  (*op->mutable_args())["p"] = MakeArg(0.1);
+  op->add_qubits()->set_id("xyz");
+
+  ASSERT_EQ(
+      NoisyQsimCircuitFromProgram(program_proto, {}, 2, false, &test_circuit),
+      tensorflow::Status(absl::StatusCode::kInvalidArgument,
+                         "Unparseable qubit index: xyz"));
+
+  // 3. Bit flip channel with qubit index out of bounds
+  moments_proto->clear_operations();
+  op = moments_proto->add_operations();
+  op->mutable_gate()->set_id("BF");
+  (*op->mutable_args())["p"] = MakeArg(0.1);
+  op->add_qubits()->set_id("3");  // num_qubits = 2
+
+  ASSERT_EQ(
+      NoisyQsimCircuitFromProgram(program_proto, {}, 2, false, &test_circuit),
+      tensorflow::Status(absl::StatusCode::kInvalidArgument,
+                         "Qubit index out of range: 3"));
+}
+
 }  // namespace
 }  // namespace tfq
