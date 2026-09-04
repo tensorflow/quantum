@@ -808,6 +808,7 @@ def serialize_circuit(circuit_inp):
     and `cirq.LineQubit` instances during serialization of circuits.
 
     Note: once serialized terminal measurements are removed.
+    Note: the input circuit is not modified.
 
     Args:
         circuit_inp: A `cirq.Circuit`.
@@ -874,8 +875,8 @@ def serialize_circuit(circuit_inp):
         ]
         new_ops = dict()
         for op in controlled_ops:
-            # Copy before tagging, `sub_operation` is a live reference into
-            # the caller's circuit and these attributes would leak onto it.
+            # Copy before tagging: `sub_operation` is a live reference into
+            # the caller's circuit, and these attributes would leak onto it.
             tfq_compatible = copy.copy(op.sub_operation)
             tfq_compatible._tfq_control_qubits = op.controls
             tfq_compatible._tfq_control_values = op.control_values

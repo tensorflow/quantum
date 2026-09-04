@@ -897,9 +897,11 @@ class SerializerTest(tf.test.TestCase, parameterized.TestCase):
         q0 = cirq.GridQubit(0, 0)
         q1 = cirq.GridQubit(0, 1)
         q2 = cirq.GridQubit(0, 2)
-        circuit = cirq.Circuit(
-            [cirq.H(q0),
-             cirq.ControlledOperation([q0], cirq.ISWAP(q1, q2)**0.5)])
+        circuit = cirq.Circuit([
+            cirq.H(q0),
+            cirq.ControlledOperation([q0],
+                                     cirq.ISWAP(q1, q2)**0.5)
+        ])
         circuit_before_call = copy.deepcopy(circuit)
 
         serializer.serialize_circuit(circuit)
