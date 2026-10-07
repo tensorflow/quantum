@@ -32,6 +32,9 @@ pip install gymnasium[classic-control]==1.2.3
 pip install seaborn==0.12.0
 # tf_docs pip package needed for noise tutorial.
 pip install -q git+https://github.com/tensorflow/docs
+# pydot and graphviz needed for tf.keras.utils.plot_model in tutorials
+pip install pydot
+sudo apt-get install -y graphviz
 # Leave the quantum directory, otherwise errors may occur
 cd ..
 
