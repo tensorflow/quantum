@@ -137,7 +137,7 @@ jobs:
           fi
 
       - name: Set up Bazel with caching
-        if: env.use_bazel_disk_cache == 'true'
+        if: env.use_disk_cache == 'true'
         uses: bazel-contrib/setup-bazel@c5acdfb288317d0b5c0bbd7a396a3dc868bb0f86 # 0.19.0
         env:
           USE_BAZEL_VERSION: ${{inputs.bazel_version || env.bazel_version}}
@@ -151,7 +151,7 @@ jobs:
             test --cache_test_results=${{env.use_test_cache}}
 
       - name: Set up Bazel without caching
-        if: env.use_bazel_disk_cache == 'false'
+        if: env.use_disk_cache == 'false'
         uses: bazel-contrib/setup-bazel@c5acdfb288317d0b5c0bbd7a396a3dc868bb0f86 # 0.19.0
         env:
           USE_BAZEL_VERSION: ${{inputs.bazel_version || env.bazel_version}}
