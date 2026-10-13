@@ -369,10 +369,13 @@ tensorflow::Status GetNumSamples(
     sub_parsed_num_samples.reserve(matrix_num_samples.dimension(1));
     for (unsigned int j = 0; j < matrix_num_samples.dimension(1); j++) {
       const int num_samples = matrix_num_samples(i, j);
-      if (num_samples < 1) {
-        return Status(static_cast<tensorflow::errors::Code>(
-                          absl::StatusCode::kInvalidArgument),
-                      "Each element of num_samples must be greater than 0.");
+      if (num_samples < 1 || num_samples > kMaxNumSamples) {
+        return Status(
+            static_cast<tensorflow::errors::Code>(
+                absl::StatusCode::kInvalidArgument),
+            absl::StrCat("Each element of num_samples must be greater than 0 "
+                         "and less than or equal to ",
+                         kMaxNumSamples, ". Got ", num_samples, "."));
       }
       sub_parsed_num_samples.push_back(num_samples);
     }
@@ -407,7 +410,16 @@ Status GetIndividualSample(tensorflow::OpKernelContext* context,
                                vector_num_samples.dimension(0), "."));
   }
 
-  (*n_samples) = vector_num_samples(0);
+  const int num_samples = vector_num_samples(0);
+  if (num_samples < 0 || num_samples > kMaxNumSamples) {
+    return Status(
+        static_cast<tensorflow::errors::Code>(
+            absl::StatusCode::kInvalidArgument),
+        absl::StrCat("num_samples must be between 0 and ", kMaxNumSamples,
+                     " inclusive. Got ", num_samples, "."));
+  }
+
+  (*n_samples) = num_samples;
   return ::tensorflow::Status();
 }
 
