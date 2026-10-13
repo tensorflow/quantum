@@ -89,7 +89,7 @@ level of the source tree:
 All source code files longer than a few lines must begin with a header comment
 with the copyright and license. We use the [Apache 2.0 license](./LICENSE).
 
-[clang-format]: https://releases.llvm.org/18.1.6/tools/clang/docs/ClangFormat.html
+[clang-format]: https://clang.llvm.org/docs/ClangFormat.html
 [Pylint]: https://www.pylint.org
 [TensorFlow style]: https://www.tensorflow.org/community/contribute/code_style
 [yamllint]: https://github.com/adrienverge/yamllint
