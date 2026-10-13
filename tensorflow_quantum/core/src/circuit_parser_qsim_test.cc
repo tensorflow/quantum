@@ -16,6 +16,8 @@ limitations under the License.
 #include "tensorflow_quantum/core/src/circuit_parser_qsim.h"
 
 #include <string>
+#include <utility>
+#include <vector>
 
 #include "../qsim/lib/channel.h"
 #include "../qsim/lib/channels_cirq.h"
@@ -24,6 +26,7 @@ limitations under the License.
 #include "../qsim/lib/gates_cirq.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/strings/numbers.h"
+#include "absl/strings/str_cat.h"
 #include "gtest/gtest.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow_quantum/core/proto/program.pb.h"
@@ -1704,6 +1707,307 @@ TEST(QsimCircuitParserTest, ZBasisCircuitFromPauliTermEmpty) {
   ASSERT_EQ(status, tensorflow::Status());
   ASSERT_EQ(test_circuit.num_qubits, 0);
   ASSERT_EQ(test_circuit.gates.size(), 0);
+}
+
+// The parser turns qubit ids into offsets into simulator memory, so an op with
+// missing, extra, unparseable, negative, out-of-range, or repeated qubit ids
+// must be rejected with an error instead of being handed to qsim. Every gate
+// and channel builder reads its qubits from the proto, so each one is
+// exercised.
+
+// Every gate id accepted by ParseAppendGate, with the number of qubits it acts
+// on.
+const std::pair<const char*, int> kGateArities[] = {
+    {"I", 1},  {"HP", 1},  {"XP", 1},   {"YP", 1},  {"ZP", 1},  {"PXP", 1},
+    {"I2", 2}, {"XXP", 2}, {"YYP", 2},  {"ZZP", 2}, {"CZP", 2}, {"CNP", 2},
+    {"SP", 2}, {"ISP", 2}, {"FSIM", 2}, {"PISP", 2}};
+
+// Every channel id accepted by ParseAppendChannel; all act on one qubit.
+const char* const kChannelIds[] = {"DP",  "ADP", "GAD", "AD",
+                                   "RST", "PD",  "PF",  "BF"};
+
+constexpr int kValidationNumQubits = 3;
+
+// Qubit id strings that must never be accepted when num_qubits is
+// kValidationNumQubits: malformed, negative, fractional, equal to the bound,
+// far past it, and one past UINT32_MAX (overflows unsigned int).
+const char* const kInvalidQubitIds[] = {"",  "junk", "-1",        "1.5",
+                                        "3", "100",  "4294967296"};
+
+// Adds an op for `gate_id` acting on `qubit_ids`, with every float argument any
+// gate or channel builder may read, so that the qubit list is the only thing
+// that varies between test cases.
+void AddOperationWithAllArgs(Moment* moment, const std::string& gate_id,
+                             const std::vector<std::string>& qubit_ids) {
+  Operation* op = moment->add_operations();
+  op->mutable_gate()->set_id(gate_id);
+  google::protobuf::Map<std::string, Arg>* args = op->mutable_args();
+  for (const char* name :
+       {"exponent", "exponent_scalar", "global_shift", "phase_exponent",
+        "phase_exponent_scalar", "theta", "theta_scalar", "phi", "phi_scalar",
+        "p", "p_x", "p_y", "p_z", "gamma"}) {
+    (*args)[name] = MakeArg(0.25);
+  }
+  (*args)["control_qubits"] = MakeControlArg("");
+  (*args)["control_values"] = MakeControlArg("");
+  for (const std::string& id : qubit_ids) {
+    op->add_qubits()->set_id(id);
+  }
+}
+
+std::vector<std::string> ValidQubitIds(int count) {
+  std::vector<std::string> ids;
+  for (int i = 0; i < count; i++) {
+    ids.push_back(absl::StrCat(i));
+  }
+  return ids;
+}
+
+tensorflow::Status ParseAsGateCircuit(const Program& program) {
+  QsimCircuit circuit;
+  std::vector<qsim::GateFused<QsimGate>> fused_circuit;
+  return QsimCircuitFromProgram(program, {}, kValidationNumQubits, &circuit,
+                                &fused_circuit);
+}
+
+tensorflow::Status ParseAsNoisyCircuit(const Program& program) {
+  NoisyQsimCircuit circuit;
+  return NoisyQsimCircuitFromProgram(program, {}, kValidationNumQubits, false,
+                                     &circuit);
+}
+
+tensorflow::Status WrongArityStatus(const std::string& gate_id, int expected,
+                                    int got) {
+  return tensorflow::Status(
+      absl::StatusCode::kInvalidArgument,
+      absl::StrCat("Operation ", gate_id, " expects ", expected,
+                   " qubit(s) but got ", got, "."));
+}
+
+tensorflow::Status InvalidQubitIdStatus(const std::string& gate_id,
+                                        const std::string& id) {
+  return tensorflow::Status(
+      absl::StatusCode::kInvalidArgument,
+      absl::StrCat("Invalid qubit id: '", id, "' in operation ", gate_id,
+                   ". Expected an integer in [0, ", kValidationNumQubits,
+                   ")."));
+}
+
+tensorflow::Status InvalidControlQubitIdStatus(const std::string& gate_id,
+                                               const std::string& id) {
+  return tensorflow::Status(
+      absl::StatusCode::kInvalidArgument,
+      absl::StrCat("Invalid control qubit id: '", id, "' in operation ",
+                   gate_id, ". Expected an integer in [0, ",
+                   kValidationNumQubits, ")."));
+}
+
+tensorflow::Status DuplicateQubitIdStatus(const std::string& gate_id,
+                                          const std::string& id) {
+  return tensorflow::Status(
+      absl::StatusCode::kInvalidArgument,
+      absl::StrCat("Duplicate qubit id: '", id, "'. Operation ", gate_id,
+                   " must act on distinct qubits."));
+}
+
+tensorflow::Status DuplicateControlQubitIdStatus(const std::string& id) {
+  return tensorflow::Status(
+      absl::StatusCode::kInvalidArgument,
+      absl::StrCat("Duplicate control qubit id: '", id,
+                   "'. Control qubits must be distinct from each other and "
+                   "from the target qubits."));
+}
+
+class GateQubitValidationTest
+    : public ::testing::TestWithParam<std::pair<const char*, int>> {
+ protected:
+  std::string gate_id() const { return GetParam().first; }
+  int arity() const { return GetParam().second; }
+};
+
+TEST_P(GateQubitValidationTest, AcceptsWellFormedOp) {
+  // Guards the tests below: a failure there must be caused by the qubits
+  // alone, not by the fixture's choice of arguments.
+  Program program;
+  AddOperationWithAllArgs(program.mutable_circuit()->add_moments(), gate_id(),
+                          ValidQubitIds(arity()));
+  EXPECT_EQ(ParseAsGateCircuit(program), tensorflow::Status());
+  EXPECT_EQ(ParseAsNoisyCircuit(program), tensorflow::Status());
+}
+
+TEST_P(GateQubitValidationTest, RejectsWrongNumberOfQubits) {
+  for (int count = 0; count <= arity() + 1; count++) {
+    if (count == arity()) {
+      continue;
+    }
+    Program program;
+    AddOperationWithAllArgs(program.mutable_circuit()->add_moments(), gate_id(),
+                            ValidQubitIds(count));
+    EXPECT_EQ(ParseAsGateCircuit(program),
+              WrongArityStatus(gate_id(), arity(), count))
+        << "qubit count " << count;
+    EXPECT_EQ(ParseAsNoisyCircuit(program),
+              WrongArityStatus(gate_id(), arity(), count))
+        << "qubit count " << count;
+  }
+}
+
+TEST_P(GateQubitValidationTest, RejectsInvalidQubitId) {
+  // Place the bad id at every position so that each qubit is checked.
+  for (int position = 0; position < arity(); position++) {
+    for (const char* bad_id : kInvalidQubitIds) {
+      std::vector<std::string> ids = ValidQubitIds(arity());
+      ids[position] = bad_id;
+      Program program;
+      AddOperationWithAllArgs(program.mutable_circuit()->add_moments(),
+                              gate_id(), ids);
+      EXPECT_EQ(ParseAsGateCircuit(program),
+                InvalidQubitIdStatus(gate_id(), bad_id))
+          << "position " << position;
+      EXPECT_EQ(ParseAsNoisyCircuit(program),
+                InvalidQubitIdStatus(gate_id(), bad_id))
+          << "position " << position;
+    }
+  }
+}
+
+TEST_P(GateQubitValidationTest, RejectsRepeatedQubitId) {
+  if (arity() < 2) {
+    GTEST_SKIP() << "A single-qubit gate cannot repeat a qubit.";
+  }
+  Program program;
+  AddOperationWithAllArgs(program.mutable_circuit()->add_moments(), gate_id(),
+                          {"1", "1"});
+  EXPECT_EQ(ParseAsGateCircuit(program),
+            DuplicateQubitIdStatus(gate_id(), "1"));
+  EXPECT_EQ(ParseAsNoisyCircuit(program),
+            DuplicateQubitIdStatus(gate_id(), "1"));
+}
+
+INSTANTIATE_TEST_SUITE_P(QubitValidationTests, GateQubitValidationTest,
+                         ::testing::ValuesIn(kGateArities));
+
+class ChannelQubitValidationTest
+    : public ::testing::TestWithParam<const char*> {};
+
+TEST_P(ChannelQubitValidationTest, AcceptsWellFormedOp) {
+  Program program;
+  AddOperationWithAllArgs(program.mutable_circuit()->add_moments(), GetParam(),
+                          ValidQubitIds(1));
+  EXPECT_EQ(ParseAsNoisyCircuit(program), tensorflow::Status());
+}
+
+TEST_P(ChannelQubitValidationTest, RejectsWrongNumberOfQubits) {
+  for (int count : {0, 2}) {
+    Program program;
+    AddOperationWithAllArgs(program.mutable_circuit()->add_moments(),
+                            GetParam(), ValidQubitIds(count));
+    EXPECT_EQ(ParseAsNoisyCircuit(program),
+              WrongArityStatus(GetParam(), 1, count))
+        << "qubit count " << count;
+  }
+}
+
+TEST_P(ChannelQubitValidationTest, RejectsInvalidQubitId) {
+  for (const char* bad_id : kInvalidQubitIds) {
+    Program program;
+    AddOperationWithAllArgs(program.mutable_circuit()->add_moments(),
+                            GetParam(), {bad_id});
+    EXPECT_EQ(ParseAsNoisyCircuit(program),
+              InvalidQubitIdStatus(GetParam(), bad_id));
+  }
+}
+
+INSTANTIATE_TEST_SUITE_P(QubitValidationTests, ChannelQubitValidationTest,
+                         ::testing::ValuesIn(kChannelIds));
+
+TEST(QsimCircuitParserTest, RejectsInvalidControlQubitId) {
+  for (const char* bad_id : kInvalidQubitIds) {
+    Program program;
+    Moment* moment = program.mutable_circuit()->add_moments();
+    AddOperationWithAllArgs(moment, "I", {"0"});
+    google::protobuf::Map<std::string, Arg>* args =
+        moment->mutable_operations(0)->mutable_args();
+    (*args)["control_qubits"] = MakeControlArg(absl::StrCat("1,", bad_id));
+    (*args)["control_values"] = MakeControlArg("1,1");
+    EXPECT_EQ(ParseAsGateCircuit(program),
+              InvalidControlQubitIdStatus("I", bad_id));
+    EXPECT_EQ(ParseAsNoisyCircuit(program),
+              InvalidControlQubitIdStatus("I", bad_id));
+  }
+}
+
+TEST(QsimCircuitParserTest, RejectsControlQubitEqualToTargetQubit) {
+  // Place the offending control at the second position so that the first,
+  // valid control is seen to be accepted.
+  Program program;
+  Moment* moment = program.mutable_circuit()->add_moments();
+  AddOperationWithAllArgs(moment, "CZP", {"0", "1"});
+  google::protobuf::Map<std::string, Arg>* args =
+      moment->mutable_operations(0)->mutable_args();
+  (*args)["control_qubits"] = MakeControlArg("2,1");
+  (*args)["control_values"] = MakeControlArg("1,1");
+  EXPECT_EQ(ParseAsGateCircuit(program), DuplicateControlQubitIdStatus("1"));
+  EXPECT_EQ(ParseAsNoisyCircuit(program), DuplicateControlQubitIdStatus("1"));
+}
+
+TEST(QsimCircuitParserTest, RejectsRepeatedControlQubit) {
+  Program program;
+  Moment* moment = program.mutable_circuit()->add_moments();
+  AddOperationWithAllArgs(moment, "I", {"0"});
+  google::protobuf::Map<std::string, Arg>* args =
+      moment->mutable_operations(0)->mutable_args();
+  (*args)["control_qubits"] = MakeControlArg("1,2,1");
+  (*args)["control_values"] = MakeControlArg("1,0,1");
+  EXPECT_EQ(ParseAsGateCircuit(program), DuplicateControlQubitIdStatus("1"));
+  EXPECT_EQ(ParseAsNoisyCircuit(program), DuplicateControlQubitIdStatus("1"));
+}
+
+TEST(QsimCircuitParserTest, AcceptsDistinctControlAndTargetQubits) {
+  // Guards the two tests above: the same shape with distinct qubits parses.
+  Program program;
+  Moment* moment = program.mutable_circuit()->add_moments();
+  AddOperationWithAllArgs(moment, "I", {"0"});
+  google::protobuf::Map<std::string, Arg>* args =
+      moment->mutable_operations(0)->mutable_args();
+  (*args)["control_qubits"] = MakeControlArg("2,1");
+  (*args)["control_values"] = MakeControlArg("1,0");
+  EXPECT_EQ(ParseAsGateCircuit(program), tensorflow::Status());
+  EXPECT_EQ(ParseAsNoisyCircuit(program), tensorflow::Status());
+}
+
+TEST(QsimCircuitParserTest, RejectsEmptyControlQubitsWithControlValues) {
+  // An empty string splits into one empty token, so the token counts match and
+  // the empty token itself must be rejected.
+  Program program;
+  Moment* moment = program.mutable_circuit()->add_moments();
+  AddOperationWithAllArgs(moment, "I", {"0"});
+  google::protobuf::Map<std::string, Arg>* args =
+      moment->mutable_operations(0)->mutable_args();
+  (*args)["control_qubits"] = MakeControlArg("");
+  (*args)["control_values"] = MakeControlArg("1");
+  EXPECT_EQ(ParseAsGateCircuit(program), InvalidControlQubitIdStatus("I", ""));
+  EXPECT_EQ(ParseAsNoisyCircuit(program), InvalidControlQubitIdStatus("I", ""));
+}
+
+TEST(QsimCircuitParserTest, RejectsOpWithoutQubitsNextToValidOp) {
+  // Shape of the reported proof of concept: a gate with no qubits survives
+  // qubit id resolution because it registers nothing, and reaches the parser
+  // as soon as another op in the program makes num_qubits positive.
+  Program program;
+  Moment* moment = program.mutable_circuit()->add_moments();
+  Operation* op = moment->add_operations();
+  op->mutable_gate()->set_id("HP");
+  google::protobuf::Map<std::string, Arg>* args = op->mutable_args();
+  (*args)["exponent"] = MakeArg(1.0);
+  (*args)["exponent_scalar"] = MakeArg(1.0);
+  (*args)["global_shift"] = MakeArg(0.0);
+  (*args)["control_qubits"] = MakeControlArg("");
+  (*args)["control_values"] = MakeControlArg("");
+  AddOperationWithAllArgs(moment, "XP", {"0"});
+
+  EXPECT_EQ(ParseAsGateCircuit(program), WrongArityStatus("HP", 1, 0));
+  EXPECT_EQ(ParseAsNoisyCircuit(program), WrongArityStatus("HP", 1, 0));
 }
 
 }  // namespace
