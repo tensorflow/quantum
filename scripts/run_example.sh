@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+set -e
+export TF_USE_LEGACY_KERAS=1
 cd ..
 cp quantum/scripts/import_test.py import_test.py
 python import_test.py

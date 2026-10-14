@@ -70,21 +70,42 @@ fi
 wheel_path="$(cd "$(dirname "${1}")" && pwd)/$(basename "${1}")"
 wheel_name="$(basename "${1}")"
 
-auditwheel_args=()
-if [[ "${action}" == "repair" ]]; then
-    auditwheel_args+=(
-        "--exclude" "libtensorflow_framework.so.2"
-        "--plat" "${platform}"
-        "-w" "/tfq/wheelhouse"
-    )
+if [[ "$(uname -s)" == "Darwin" ]]; then
+  if ! command -v delocate-wheel > /dev/null 2>&1; then
+    echo "Installing delocate..."
+    python3 -m pip install delocate
+  fi
+
+  if [[ "${action}" == "show" ]]; then
+    echo "Running 'delocate-listdeps' on ${wheel_path}"
+    delocate-listdeps --all --depending "${wheel_path}"
+  else
+    mkdir -p "${repo_dir}/wheelhouse"
+    echo "Running 'delocate-wheel' on ${wheel_path}"
+    delocate-wheel \
+      -w "${repo_dir}/wheelhouse" \
+      -e "libtensorflow_framework" \
+      -v \
+      "${wheel_path}"
+    echo "Done. New wheel file written to ${repo_dir}/wheelhouse"
+  fi
+else
+  auditwheel_args=()
+  if [[ "${action}" == "repair" ]]; then
+      auditwheel_args+=(
+          "--exclude" "libtensorflow_framework.so.2"
+          "--plat" "${platform}"
+          "-w" "/tfq/wheelhouse"
+      )
+  fi
+
+  echo "Running 'auditwheel ${action}' in Docker with image ${docker_image}"
+  docker run -it --rm --network host \
+    -w /tfq \
+    -v "${repo_dir}":/tfq \
+    -v "${wheel_path}":"/tmp/${wheel_name}" \
+    "${docker_image}" \
+    auditwheel "${action}" "${auditwheel_args[@]}" "/tmp/${wheel_name}"
+
+  echo "Done. New wheel file written to ${repo_dir}/wheelhouse"
 fi
-
-echo "Running 'auditwheel ${action}' in Docker with image ${docker_image}"
-docker run -it --rm --network host \
-  -w /tfq \
-  -v "${repo_dir}":/tfq \
-  -v "${wheel_path}":"/tmp/${wheel_name}" \
-  "${docker_image}" \
-  auditwheel "${action}" "${auditwheel_args[@]}" "/tmp/${wheel_name}"
-
-echo "Done. New wheel file written to ${repo_dir}/wheelhouse"

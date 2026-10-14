@@ -41,6 +41,13 @@ def _is_windows(repository_ctx):
         return True
     return False
 
+def _is_macos(repository_ctx):
+    """Returns true if the host operating system is macOS."""
+    os_name = repository_ctx.os.name.lower()
+    if os_name.find("mac os") != -1 or os_name.find("darwin") != -1:
+        return True
+    return False
+
 def _execute(
         repository_ctx,
         cmdline,
@@ -205,13 +212,20 @@ def _tf_pip_impl(repository_ctx):
     tf_shared_library_name = repository_ctx.os.environ[_TF_SHARED_LIBRARY_NAME]
     tf_shared_library_path = "%s/%s" % (tf_shared_library_dir, tf_shared_library_name)
 
+    if _is_windows(repository_ctx):
+        tf_shared_library_output = "_pywrap_tensorflow_internal.lib"
+    elif _is_macos(repository_ctx):
+        tf_shared_library_output = "libtensorflow_framework.dylib"
+    else:
+        tf_shared_library_output = "libtensorflow_framework.so"
+
     tf_shared_library_rule = _symlink_genrule_for_dir(
         repository_ctx,
         None,
         "",
         "libtensorflow_framework_so",
         [tf_shared_library_path],
-        ["_pywrap_tensorflow_internal.lib"  if _is_windows(repository_ctx) else "libtensorflow_framework.so"],
+        [tf_shared_library_output],
     )
 
     tf_test_log_proto_path = "%s/core/util/test_log_pb2.py" % tf_shared_library_dir
@@ -228,6 +242,7 @@ def _tf_pip_impl(repository_ctx):
     _tpl(repository_ctx, "BUILD", {
         "%{TF_HEADER_GENRULE}": tf_header_rule,
         "%{TF_SHARED_LIBRARY_GENRULE}": tf_shared_library_rule,
+        "%{TF_SHARED_LIBRARY_OUTPUT}": tf_shared_library_output,
         "%{TF_PROTO_GENRULE}": tf_proto_rule,
     })
 

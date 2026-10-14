@@ -16,7 +16,7 @@ TensorFlow Quantum is supported on Python version 3.10 through 3.12 and depends 
 
 ### Requirements
 
-* pip 19.0 or later (requires `manylinux2014` support)
+* pip 19.0 or later (requires `manylinux2014` support on Linux or macOS 12.0+ `arm64` on Apple Silicon)
 * [TensorFlow == 2.19.1](https://www.tensorflow.org/install/pip)
 
 See the [TensorFlow install guide](https://www.tensorflow.org/install/pip) to
@@ -53,7 +53,7 @@ Success: TensorFlow Quantum is now installed.
 
 ## Build from source
 
-The following steps are tested for Ubuntu-like systems.
+The following steps are tested for Ubuntu-like Linux systems and macOS (Apple Silicon / `arm64`).
 
 ### 1. Set up a Python 3 development environment
 
@@ -105,7 +105,9 @@ Download and install `bazel` version 6.5.0:
 </pre>
 <!-- common_typos_enable -->
 
-To prevent automatic updating of `bazel` to an incompatible version, run the following:
+On macOS (Apple Silicon), you can install `bazelisk` via Homebrew (`brew install bazelisk`), which automatically selects Bazel 6.5.0 from `.bazelversion`, or download the `bazel-6.5.0-darwin-arm64` binary directly from the Bazel releases page.
+
+To prevent automatic updating of `bazel` to an incompatible version on Ubuntu/Debian, run the following:
 
 <!-- common_typos_disable -->
 <pre class="devsite-click-to-copy">
