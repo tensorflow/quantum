@@ -91,8 +91,9 @@ class TFIChainTest(tf.test.TestCase):
             }
             for n in self.random_subset_tfi_chain:
                 phi = cirq.Simulator().simulate(circuits[n]).final_state_vector
-                e = pauli_sums[n].expectation_from_state_vector(
-                    phi, qubit_map, atol=1e-4)
+                e = pauli_sums[n].expectation_from_state_vector(phi,
+                                                                qubit_map,
+                                                                atol=1e-4)
                 self.assertAllClose(e, addinfo[n].gs_energy, rtol=1e-4)
 
     def test_returned_objects(self):
@@ -191,8 +192,9 @@ class XXZChainTest(tf.test.TestCase):
             }
             for n in self.random_subset_xxz_chain:
                 phi = cirq.Simulator().simulate(circuits[n]).final_state_vector
-                e = pauli_sums[n].expectation_from_state_vector(
-                    phi, qubit_map, atol=1e-4)
+                e = pauli_sums[n].expectation_from_state_vector(phi,
+                                                                qubit_map,
+                                                                atol=1e-4)
                 self.assertAllClose(e, addinfo[n].gs_energy, rtol=5e-3)
 
     def test_returned_objects(self):
@@ -295,8 +297,9 @@ class TFIRectangularTest:
             }
             for n in self.random_subset_tfi_rectangular:
                 phi = cirq.Simulator().simulate(circuits[n]).final_state_vector
-                e = pauli_sums[n].expectation_from_state_vector(
-                    phi, qubit_map, atol=1e-4)
+                e = pauli_sums[n].expectation_from_state_vector(phi,
+                                                                qubit_map,
+                                                                atol=1e-4)
                 self.assertAllClose(e, addinfo[n].gs_energy, rtol=5e-3)
 
     def test_returned_objects(self):
