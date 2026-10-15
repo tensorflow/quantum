@@ -62,6 +62,7 @@ main() {
   # environment, and overwriting it would cause `python -m build` to create its
   # temporary isolated environment inside the package staging directory.
   BUILD_TMPDIR="$(mktemp -d -t tmp.XXXXXXXXXX)"
+  trap 'rm -rf "${BUILD_TMPDIR}"' EXIT
   echo "$(date) : === Using tmpdir: ${BUILD_TMPDIR}"
   echo "=== Copying TFQ files"
 
