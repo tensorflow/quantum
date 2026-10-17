@@ -892,6 +892,31 @@ class SerializerTest(tf.test.TestCase, parameterized.TestCase):
         with self.assertRaisesRegex(ValueError, expected_regex="non-terminal"):
             serializer.serialize_circuit(invalid_circuit)
 
+    def test_serialize_does_not_tag_input_circuit(self):
+        """Serialization must not leave control tags on the input circuit."""
+        q0 = cirq.GridQubit(0, 0)
+        q1 = cirq.GridQubit(0, 1)
+        q2 = cirq.GridQubit(0, 2)
+        circuit = cirq.Circuit([
+            cirq.H(q0),
+            cirq.ControlledOperation([q0],
+                                     cirq.ISWAP(q1, q2)**0.5)
+        ])
+        circuit_before_call = copy.deepcopy(circuit)
+
+        serializer.serialize_circuit(circuit)
+
+        # Note that `==` cannot catch this. The demotion tags are plain Python
+        # attributes and take no part in circuit or operation equality, so they
+        # have to be checked for directly.
+        for moment in circuit:
+            for op in moment:
+                sub_op = getattr(op, 'sub_operation', op)
+                self.assertFalse(hasattr(sub_op, '_tfq_control_qubits'))
+                self.assertFalse(hasattr(sub_op, '_tfq_control_values'))
+
+        self.assertEqual(circuit, circuit_before_call)
+
     def test_serialize_deserialize_identity(self):
         """Confirm that identity gates can be serialized and deserialized."""
         q0 = cirq.GridQubit(0, 0)
