@@ -87,19 +87,16 @@ operations. Additionally, you can create a layer with a high degree of
 complexity supporting batch circuit, batch control parameter value, and perform
 batch readout operations. See `tfq.layers.Sample` for an example.
 
-### Saving Keras models
+#### Saving and loading models
 
-Saving a complete model with `tf.keras.Model.save()` can fail when a layer
-was created with arguments that Keras cannot serialize and the layer does not
-override `get_config()`. For example, a model containing
-`tfq.layers.ControlledPQC` fails to save in TFQ 0.7.2. Depending on the
-format, the error is a `NotEncodableError` or a `NotImplementedError` saying
-the layer must override `get_config()`. The message does not always make
-clear that the layer is the cause.
+Saving a complete Keras model with `model.save()` is not supported for models containing TFQ layers, including `tfq.layers.PQC` and `tfq.layers.ControlledPQC`. These layers accept quantum objects, such as `cirq.Circuit`, `cirq.PauliSum`, and `sympy.Symbol`, that are not
+JSON-serializable, and the layers do not implement `get_config()` to serialize their configurations.
 
-As an alternative, `tf.keras.Model.save_weights()` saves only the model
-weights, without the complete model configuration. Recreate the model
-architecture before loading the saved weights:
+Depending on the serialization path, calling `model.save()` may raise a `NotImplementedError` indicating that the layer must override
+`get_config()`, a `TypeError` for non-JSON-serializable `call()`
+arguments such as `sympy.Symbol` or `cirq.PauliSum`, or a `NotEncodableError` when tracing layer `call` defaults for `SavedModel` export. This limitation is not specific to a particular TFQ, TensorFlow, or Keras version.
+
+As an alternative, `model.save_weights()` saves the model's weights without saving the complete model configuration. Recreate the same model architecture before loading the saved weights:
 
 ```python
 model.save_weights("my_model.weights.h5")
@@ -107,12 +104,6 @@ model.save_weights("my_model.weights.h5")
 new_model = build_model()  # Recreate the same model architecture.
 new_model.load_weights("my_model.weights.h5")
 ```
-
-For details about the project's Keras setup, see the
-[installation guide](install.md). TensorFlow Quantum's installation
-instructions use the legacy `tf-keras` package via
-`TF_USE_LEGACY_KERAS=1`. Saving and loading behavior may depend on the
-TensorFlow and Keras versions in use.
 
 ### Differentiators
 
