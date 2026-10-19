@@ -214,6 +214,15 @@ class NoisyExpectationCalculationTest(tf.test.TestCase, parameterized.TestCase):
             # pylint: enable=too-many-function-args
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'less than or equal to .*Got 2147483647'):
+            # num_samples is above the supported maximum.
+            noisy_sampled_expectation_op.sampled_expectation(
+                util.convert_to_tensor(circuit_batch), symbol_names,
+                symbol_values_array,
+                util.convert_to_tensor([[x] for x in pauli_sums]),
+                [[2**31 - 1]] * batch_size)
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     expected_regex='do not match'):
             # wrong symbol_values size.
             noisy_sampled_expectation_op.sampled_expectation(

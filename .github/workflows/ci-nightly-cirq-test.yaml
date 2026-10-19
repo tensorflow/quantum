@@ -83,7 +83,8 @@ concurrency:
   cancel-in-progress: true
   group: ${{github.workflow}}-${{github.event.pull_request.number||github.ref}}
 
-permissions: read-all
+permissions:
+  contents: read
 
 jobs:
   test-compatibility:
@@ -92,6 +93,8 @@ jobs:
     steps:
       - name: Check out a copy of the TFQ git repository
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
 
       - name: Set up Python ${{inputs.py_version || env.py_version}}
         id: python
@@ -113,24 +116,28 @@ jobs:
           pip install --upgrade cirq~=1.0.dev
 
       - name: Configure Bazel options
+        env:
+          CACHE_HIT: ${{steps.python.outputs.cache-hit}}
+          USE_TEST_CACHE: ${{github.event.inputs.use_test_cache}}
+          USE_DISK_CACHE: ${{github.event.inputs.use_disk_cache}}
         run: |
           # If we didn't get a cache hit on the installed Python environment,
           # something's changed, and we want to make sure to re-run all tests.
-          if [[ "${{steps.python.outputs.cache-hit}}" == "true"
-                && "${{github.event.inputs.use_test_cache}}" != "false" ]]; then
+          if [[ "$CACHE_HIT" == "true"
+                && "$USE_TEST_CACHE" != "false" ]]; then
             echo "use_test_cache=auto" >> "$GITHUB_ENV"
           else
             echo "use_test_cache=no" >> "$GITHUB_ENV"
           fi
           # Use the disk cache unless told not to.
-          if [[ "${{github.event.inputs.use_disk_cache}}" != "false" ]]; then
+          if [[ "$USE_DISK_CACHE" != "false" ]]; then
             echo "use_disk_cache=true" >> "$GITHUB_ENV"
           else
             echo "use_disk_cache=false" >> "$GITHUB_ENV"
           fi
 
       - name: Set up Bazel with caching
-        if: env.use_bazel_disk_cache == 'true'
+        if: env.use_disk_cache == 'true'
         uses: bazel-contrib/setup-bazel@c5acdfb288317d0b5c0bbd7a396a3dc868bb0f86 # 0.19.0
         env:
           USE_BAZEL_VERSION: ${{inputs.bazel_version || env.bazel_version}}
@@ -144,7 +151,7 @@ jobs:
             test --cache_test_results=${{env.use_test_cache}}
 
       - name: Set up Bazel without caching
-        if: env.use_bazel_disk_cache == 'false'
+        if: env.use_disk_cache == 'false'
         uses: bazel-contrib/setup-bazel@c5acdfb288317d0b5c0bbd7a396a3dc868bb0f86 # 0.19.0
         env:
           USE_BAZEL_VERSION: ${{inputs.bazel_version || env.bazel_version}}

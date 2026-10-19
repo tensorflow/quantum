@@ -438,6 +438,19 @@ class SimulateMPS1DSamplesTest(tf.test.TestCase, parameterized.TestCase):
                                        [[num_samples]])
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'between 0 and .*Got 2147483647'):
+            # num_samples is above the supported maximum.
+            simulate_mps.mps_1d_sample(util.convert_to_tensor(circuit_batch),
+                                       symbol_names, symbol_values_array,
+                                       [2**31 - 1])
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'between 0 and .*Got -1'):
+            # num_samples is negative.
+            simulate_mps.mps_1d_sample(util.convert_to_tensor(circuit_batch),
+                                       symbol_names, symbol_values_array, [-1])
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'Could not find symbol in parameter map'):
             # symbol_names tensor has the right type, but invalid value.
             simulate_mps.mps_1d_sample(util.convert_to_tensor(circuit_batch),
@@ -723,6 +736,15 @@ class SimulateMPS1DSampledExpectationTest(tf.test.TestCase):
                 symbol_values_array,
                 util.convert_to_tensor([[x] for x in pauli_sums]),
                 num_samples[0])
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'less than or equal to .*Got 2147483647'):
+            # num_samples is above the supported maximum.
+            simulate_mps.mps_1d_sampled_expectation(
+                util.convert_to_tensor(circuit_batch), symbol_names,
+                symbol_values_array,
+                util.convert_to_tensor([[x] for x in pauli_sums]),
+                [[2**31 - 1]] * batch_size)
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'Unparseable proto'):
