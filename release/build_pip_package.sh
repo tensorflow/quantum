@@ -77,6 +77,9 @@ main() {
 
   pushd "${BUILD_TMPDIR}"
   echo "$(date) : === Building wheel"
+  if [[ "$(uname -s)" == "Darwin" ]]; then
+    export MACOSX_DEPLOYMENT_TARGET="${MACOSX_DEPLOYMENT_TARGET:-12.0}"
+  fi
   "${PY}" -m build -v --wheel ${EXTRA_FLAGS} > /dev/null
   cp dist/*.whl "${DEST}"
   popd

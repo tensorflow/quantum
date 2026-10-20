@@ -15,6 +15,20 @@
 # ==============================================================================
 set -e
 export TF_USE_LEGACY_KERAS=1
-cd ..
-cp quantum/scripts/import_test.py import_test.py
-python import_test.py
+
+if [[ "$(uname -s)" == "Darwin" ]] && compgen -G "wheelhouse/*.whl" > /dev/null; then
+  REPO_ROOT="$(pwd)"
+  PY="${PYTHON_BIN_PATH:-python3}"
+  VENV_DIR="$(mktemp -d -t tfq_venv.XXXXXXXXXX)"
+  trap 'rm -rf "${VENV_DIR}"' EXIT
+  "${PY}" -m venv "${VENV_DIR}"
+  "${VENV_DIR}/bin/pip" install --upgrade pip
+  "${VENV_DIR}/bin/pip" install tensorflow==2.19.1 "${REPO_ROOT}"/wheelhouse/*.whl
+  cd ..
+  cp quantum/scripts/import_test.py import_test.py
+  "${VENV_DIR}/bin/python" import_test.py
+else
+  cd ..
+  cp quantum/scripts/import_test.py import_test.py
+  python import_test.py
+fi

@@ -57,12 +57,25 @@ The following steps are tested for Ubuntu-like Linux systems and macOS (Apple Si
 
 ### 1. Set up a Python 3 development environment
 
-We will use Python 3.10 as an example. First, we need the Python 3.10 development tools.
+We will use Python 3.10 as an example. First, install the Python 3.10 development tools for your operating system.
+
+**On Ubuntu/Debian Linux:**
 <!-- common_typos_disable -->
 <pre class="devsite-click-to-copy">
   <code class="devsite-terminal">sudo apt update</code>
   <code class="devsite-terminal">sudo apt-get install pkg-config zip g++ zlib1g-dev unzip python3.10</code>
   <code class="devsite-terminal">sudo apt install python3.10 python3.10-dev python3.10-venv python3-pip</code>
+  <code class="devsite-terminal">python3.10 -m pip install --upgrade pip</code>
+</pre>
+<!-- common_typos_enable -->
+
+**On macOS (Apple Silicon):**
+
+Install the Xcode Command Line Tools and Python 3.10 (for example, using <a href="https://brew.sh/" class="external">Homebrew</a>):
+<!-- common_typos_disable -->
+<pre class="devsite-click-to-copy">
+  <code class="devsite-terminal">xcode-select --install</code>
+  <code class="devsite-terminal">brew install python@3.10</code>
   <code class="devsite-terminal">python3.10 -m pip install --upgrade pip</code>
 </pre>
 <!-- common_typos_enable -->
@@ -88,30 +101,26 @@ guide, the <a href="https://bazel.build/" class="external">Bazel</a>
 build system will be required.
 
 Our latest source builds use TensorFlow 2.19.1. To ensure compatibility we use
-the same version of `bazel`, 6.5.0. To remove any existing version of Bazel:
+the same version of `bazel`, 6.5.0.
+
+**On Ubuntu/Debian Linux:**
+
+Remove any existing version of Bazel, download and install `bazel` 6.5.0, and hold the package to prevent automatic updates to an incompatible version:
 <!-- common_typos_disable -->
 <pre class="devsite-click-to-copy">
   <code class="devsite-terminal">sudo apt-get remove bazel</code>
-</pre>
-<!-- common_typos_enable -->
-
-Download and install `bazel` version 6.5.0:
-
-<!-- common_typos_disable -->
-<pre class="devsite-click-to-copy">
-  <code class="devsite-terminal">wget https://github.com/bazelbuild/bazel/releases/download/6.5.0/bazel_6.5.0-linux-x86_64.deb
-</code>
+  <code class="devsite-terminal">wget https://github.com/bazelbuild/bazel/releases/download/6.5.0/bazel_6.5.0-linux-x86_64.deb</code>
   <code class="devsite-terminal">sudo dpkg -i bazel_6.5.0-linux-x86_64.deb</code>
+  <code class="devsite-terminal">sudo apt-mark hold bazel</code>
 </pre>
 <!-- common_typos_enable -->
 
-On macOS (Apple Silicon), you can install `bazelisk` via Homebrew (`brew install bazelisk`), which automatically selects Bazel 6.5.0 from `.bazelversion`, or download the `bazel-6.5.0-darwin-arm64` binary directly from the Bazel releases page.
+**On macOS (Apple Silicon):**
 
-To prevent automatic updating of `bazel` to an incompatible version on Ubuntu/Debian, run the following:
-
+Install `bazelisk` via Homebrew (which automatically selects Bazel 6.5.0 from `.bazelversion`), or download the `bazel-6.5.0-darwin-arm64` binary directly from the Bazel releases page:
 <!-- common_typos_disable -->
 <pre class="devsite-click-to-copy">
-  <code class="devsite-terminal">sudo apt-mark hold bazel</code>
+  <code class="devsite-terminal">brew install bazelisk</code>
 </pre>
 <!-- common_typos_enable -->
 
@@ -126,7 +135,7 @@ Finally, confirm installation of the correct `bazel` version:
 
 ### 4. Build TensorFlow from source
 
-TensorFlow Quantum is compatible with TensorFlow version&nbsp;2.19.1. To build
+TensorFlow Quantum is compatible with TensorFlow version 2.19.1. To build
 TensorFlow from sources, download the <a
 href="https://github.com/tensorflow/tensorflow" class="external">TensorFlow
 source code</a> by cloning the git repository, then switch to the `r2.19`

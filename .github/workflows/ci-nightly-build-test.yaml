@@ -108,6 +108,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up Python ${{inputs.py_version || env.py_version}}
+        id: python
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
           python-version: ${{inputs.py_version || env.py_version}}
@@ -118,16 +119,22 @@ jobs:
           bazelrc: ${{env.bazelrc_additions}}
 
       - name: Build wheel
+        env:
+          PYTHON_BIN_PATH: ${{steps.python.outputs.python-path}}
         run: |
           pip install --upgrade pip setuptools wheel
           # The next script does a pip install, configure, & bazel build.
           ./scripts/build_pip_package_test.sh
 
       - name: Test wheel
+        env:
+          PYTHON_BIN_PATH: ${{steps.python.outputs.python-path}}
         run: |
           ./scripts/run_example.sh
 
       - name: Test rest of TFQ
+        env:
+          PYTHON_BIN_PATH: ${{steps.python.outputs.python-path}}
         run: |
           set -o pipefail
           ./scripts/test_all.sh 2>&1 | tee test_all.log
@@ -165,12 +172,15 @@ jobs:
     if: needs.Decision.outputs.run == 'true'
     name: Build and test (macOS)
     needs: Decision
-    runs-on: macos-14
+    runs-on: macos-15
     steps:
       - name: Check out a copy of the TFQ git repository
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
 
       - name: Set up Python ${{inputs.py_version || env.py_version}}
+        id: python
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
           python-version: ${{inputs.py_version || env.py_version}}
@@ -181,15 +191,21 @@ jobs:
           bazelrc: ${{env.bazelrc_additions}}
 
       - name: Build wheel
+        env:
+          PYTHON_BIN_PATH: ${{steps.python.outputs.python-path}}
         run: |
           pip install --upgrade pip setuptools wheel
           ./scripts/build_pip_package_test.sh
 
       - name: Test wheel
+        env:
+          PYTHON_BIN_PATH: ${{steps.python.outputs.python-path}}
         run: |
           ./scripts/run_example.sh
 
       - name: Test rest of TFQ
+        env:
+          PYTHON_BIN_PATH: ${{steps.python.outputs.python-path}}
         run: |
           set -o pipefail
           ./scripts/test_all.sh 2>&1 | tee test_all.log

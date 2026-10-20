@@ -71,11 +71,13 @@ wheel_path="$(cd "$(dirname "${1}")" && pwd)/$(basename "${1}")"
 wheel_name="$(basename "${1}")"
 
 if [[ "$(uname -s)" == "Darwin" ]]; then
+  PY="${PYTHON_BIN_PATH:-python3}"
   if ! command -v delocate-wheel > /dev/null 2>&1; then
     echo "Installing delocate..."
-    python3 -m pip install delocate
+    "${PY}" -m pip install delocate
   fi
 
+  export MACOSX_DEPLOYMENT_TARGET="${MACOSX_DEPLOYMENT_TARGET:-12.0}"
   if [[ "${action}" == "show" ]]; then
     echo "Running 'delocate-listdeps' on ${wheel_path}"
     delocate-listdeps --all --depending "${wheel_path}"
