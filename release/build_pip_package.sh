@@ -79,6 +79,8 @@ main() {
   echo "$(date) : === Building wheel"
   if [[ "$(uname -s)" == "Darwin" ]]; then
     export MACOSX_DEPLOYMENT_TARGET="${MACOSX_DEPLOYMENT_TARGET:-12.0}"
+    export ARCHFLAGS="${ARCHFLAGS:--arch $(uname -m)}"
+    export _PYTHON_HOST_PLATFORM="${_PYTHON_HOST_PLATFORM:-macosx-${MACOSX_DEPLOYMENT_TARGET}-$(uname -m)}"
   fi
   "${PY}" -m build -v --wheel ${EXTRA_FLAGS} > /dev/null
   cp dist/*.whl "${DEST}"
