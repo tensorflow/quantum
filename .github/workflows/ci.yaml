@@ -68,8 +68,12 @@ jobs:
         run: ./scripts/lint_all.sh
 
   wheel-build:
-    name: Wheel test
-    runs-on: ubuntu-22.04
+    name: Wheel test (${{matrix.os}})
+    runs-on: ${{matrix.os}}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, macos-15]
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -116,7 +120,30 @@ jobs:
         run: ./scripts/ci_install.sh
 
       - name: Configure CI TF
-        run: echo "Y\n" | ./configure.sh
+        run: printf "Y\n" | ./configure.sh
+
+      - name: Full Library Test
+        run: ./scripts/test_all.sh
+
+  bazel-tests-macos:
+    name: Library tests (macOS)
+    runs-on: macos-15
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: ${{env.python-version}}
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install Bazel on CI
+        run: ./scripts/ci_install.sh
+
+      - name: Configure CI TF
+        run: printf "Y\n" | ./configure.sh
 
       - name: Full Library Test
         run: ./scripts/test_all.sh

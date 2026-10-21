@@ -330,7 +330,9 @@ class TfqInnerProductGradOp : public tensorflow::OpKernel {
     using Simulator = qsim::Simulator<const qsim::SequentialFor&>;
     using StateSpace = Simulator::StateSpace;
 
+    const int output_dim_batch_size = output_tensor->dimension(0);
     const int output_dim_internal_size = other_fused_circuits[0].size();
+    auto batch_locks = std::make_unique<absl::Mutex[]>(output_dim_batch_size);
 
     auto DoWork = [&](int64_t start, int64_t end) {
       int64_t old_batch_index = -2;
@@ -435,10 +437,12 @@ class TfqInnerProductGradOp : public tensorflow::OpKernel {
             // parameter-shift we need to apply a single `gradient_gate`
             // per a symbol.
             std::complex<double> result = ss.InnerProduct(scratch2, scratch);
+            batch_locks[cur_batch_index].Lock();
             (*output_tensor)(cur_batch_index, loc) +=
                 (downstream_grads[cur_batch_index][cur_internal_index] *
                  std::complex<float>(static_cast<float>(result.real()),
                                      static_cast<float>(result.imag())));
+            batch_locks[cur_batch_index].Unlock();
           }
           ApplyGateDagger(sim, cur_gate, scratch);
         }
