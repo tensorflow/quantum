@@ -120,12 +120,14 @@ class State(tf.keras.layers.Layer):
 
         Args:
             backend: Optional Backend to use to simulate this state. Defaults
-                to the native TensorFlow Quantum state vector simulator,
-                however users may also specify a preconfigured cirq execution
-                object to use instead, which must inherit
-                `cirq.SimulatesFinalState`. Note that C++ Density Matrix
-                simulation is not yet supported so to do Density Matrix
-                simulation please use `cirq.DensityMatrixSimulator`.
+                to `None` (the native TensorFlow Quantum C++ state-vector
+                simulator); users may also specify a preconfigured Cirq object
+                inheriting `cirq.SimulatesFinalState`. Passing
+                `cirq.Simulator()` returns state vectors of shape
+                `[batch_size, 2 ** n_qubits]`, while passing
+                `cirq.DensityMatrixSimulator()` returns density matrices of
+                shape `[batch_size, 2 ** n_qubits, 2 ** n_qubits]` (C++ density
+                matrix simulation is not supported).
         """
         super().__init__(**kwargs)
         self.state_op = circuit_execution_ops.get_state_op(backend)

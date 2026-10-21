@@ -122,3 +122,248 @@ Carefully curated problems in: quantum control, fermionic simulation,
 classification near phase transitions, quantum sensing, etc are all great
 candidates for addition to `tfq.datasets`. To propose a new dataset open
 a <a href="https://github.com/tensorflow/quantum/issues">GitHub issue</a>.
+
+## Configuring execution backends
+
+Every circuit-execution layer and low-level execution op in TensorFlow Quantum
+accepts an optional `backend` argument that controls how quantum circuits are
+evaluated. By default, TFQ uses its built-in, multi-threaded C++ simulators
+(powered by
+<a href="https://github.com/quantumlib/qsim" class="external">qsim</a>),
+which execute directly inside the TensorFlow runtime. You can also configure
+TFQ to use noisy C++ trajectory simulation, pure-Python Cirq simulators such as
+`cirq.Simulator` or `cirq.DensityMatrixSimulator`, or any custom
+`cirq.Sampler` (including noisy samplers and quantum hardware interfaces).
+
+### Backend compatibility across layers and ops
+
+Different TFQ layers and ops require different simulation capabilities
+depending on whether they compute exact expectation values, sample-based
+expectation values, raw bitstring samples, or full quantum states:
+
+| Layer or op | Default `backend` | Built-in C++ options | Custom Cirq `backend` interface | Default differentiator |
+| :--- | :--- | :--- | :--- | :--- |
+| `tfq.layers.PQC` (`repetitions=None`) | `'noiseless'` | `'noiseless'`, `None` | `cirq.sim.simulator.SimulatesExpectationValues` | `Adjoint` (C++) / `ParameterShift` (Cirq) |
+| `tfq.layers.PQC` (`repetitions=<int>`) | `'noiseless'` | `'noiseless'`, `None` | `cirq.Sampler` | `ParameterShift` |
+| `tfq.layers.ControlledPQC` (`repetitions=None`) | `'noiseless'` | `'noiseless'`, `None` | `cirq.sim.simulator.SimulatesExpectationValues` | `Adjoint` (C++) / `ParameterShift` (Cirq) |
+| `tfq.layers.ControlledPQC` (`repetitions=<int>`) | `'noiseless'` | `'noiseless'`, `None` | `cirq.Sampler` | `ParameterShift` |
+| `tfq.layers.NoisyPQC` | `'noisy'` (fixed) | `'noisy'` | Not applicable | `ParameterShift` |
+| `tfq.layers.NoisyControlledPQC` | `'noisy'` (fixed) | `'noisy'` | Not applicable | `ParameterShift` |
+| `tfq.layers.Expectation` | `'noiseless'` | `'noiseless'`, `'noisy'`, `None` | `cirq.sim.simulator.SimulatesExpectationValues` | `Adjoint` (`'noiseless'`) / `ParameterShift` (other) |
+| `tfq.layers.SampledExpectation` | `'noiseless'` | `'noiseless'`, `'noisy'`, `None` | `cirq.Sampler` | `ParameterShift` |
+| `tfq.layers.Sample` | `'noiseless'` | `'noiseless'`, `'noisy'`, `None` | `cirq.Sampler` | Not differentiable |
+| `tfq.layers.State` | `None` | `None` | `cirq.SimulatesFinalState` | Not differentiable |
+| `tfq.get_expectation_op` | `None` | `None` | `cirq.sim.simulator.SimulatesExpectationValues`, `cirq.DensityMatrixSimulator` | Attach via `Differentiator` |
+| `tfq.get_sampled_expectation_op` | `None` | `None` | `cirq.Sampler` | Attach via `Differentiator` |
+| `tfq.get_sampling_op` | `None` | `None` | `cirq.Sampler` | Not differentiable |
+| `tfq.get_state_op` | `None` | `None` | `cirq.SimulatesFinalState` | Not differentiable |
+
+### Built-in C++ backends
+
+TFQ provides two built-in C++ simulation backends that avoid Python callback
+overhead during TensorFlow graph execution:
+
+*   *Noiseless state-vector simulator (`'noiseless'` or `None`)*: The default
+    backend for all layers (`backend='noiseless'`) and low-level ops
+    (`backend=None`). It evaluates pure quantum states in C++ using vectorized
+    SIMD instructions and OpenMP multithreading.
+*   *Noisy Monte-Carlo trajectory simulator (`'noisy'`)*: Simulates circuits
+    containing noise channels (such as depolarizing, amplitude-damping, or
+    phase-damping channels listed in `tfq.util.get_supported_channels()`) by
+    averaging over quantum trajectories in C++.
+    *   In mid-level layers (`tfq.layers.Expectation`,
+        `tfq.layers.SampledExpectation`, and `tfq.layers.Sample`), pass
+        `backend='noisy'` at layer construction and provide an integer
+        `repetitions` argument when calling the layer.
+    *   In high-level layers, `tfq.layers.PQC` and `tfq.layers.ControlledPQC`
+        do not accept `backend='noisy'`; instead, use `tfq.layers.NoisyPQC` or
+        `tfq.layers.NoisyControlledPQC`, which configure the `'noisy'` C++
+        backend automatically and accept `repetitions` and `sample_based`
+        arguments.
+
+```python
+import cirq
+import sympy
+import tensorflow as tf
+import tensorflow_quantum as tfq
+
+q = cirq.GridQubit(0, 0)
+theta = sympy.Symbol('theta')
+noisy_circuit = cirq.Circuit(
+    cirq.rx(theta)(q),
+    cirq.depolarize(p=0.05)(q)
+)
+
+# Mid-level Expectation layer using the built-in C++ noisy trajectory backend.
+noisy_expectation = tfq.layers.Expectation(backend='noisy')
+exp_val = noisy_expectation(
+    noisy_circuit,
+    symbol_names=[theta],
+    symbol_values=[[0.5]],
+    operators=[cirq.Z(q)],
+    repetitions=1000
+)
+
+# High-level NoisyPQC layer (uses the C++ 'noisy' backend internally).
+noisy_pqc = tfq.layers.NoisyPQC(
+    noisy_circuit,
+    operators=cirq.Z(q),
+    repetitions=1000,
+    sample_based=False
+)
+pqc_val = noisy_pqc(tfq.convert_to_tensor([cirq.Circuit()]))
+```
+
+### Custom Cirq simulators and samplers
+
+To use a Cirq simulator or a custom sampler, pass an instantiated Cirq object
+to the `backend` parameter of a layer or `tfq.get_*_op` factory function:
+
+1.  *Analytic expectation (`SimulatesExpectationValues`)*: When computing exact
+    expectation values without shot noise (`tfq.layers.Expectation`,
+    `tfq.get_expectation_op`, or `PQC` / `ControlledPQC` with
+    `repetitions=None`), pass an instance of
+    `cirq.sim.simulator.SimulatesExpectationValues` such as `cirq.Simulator()`
+    or `cirq.DensityMatrixSimulator()`. Using `cirq.DensityMatrixSimulator`
+    computes exact expectation values of noisy circuits from the full density
+    matrix without trajectory sampling variance:
+
+    ```python
+    q = cirq.GridQubit(0, 0)
+    theta = sympy.Symbol('theta')
+    circuit = cirq.Circuit(cirq.rx(theta)(q), cirq.depolarize(0.02)(q))
+
+    dm_simulator = cirq.DensityMatrixSimulator()
+    pqc_exact_noisy = tfq.layers.PQC(
+        circuit,
+        operators=cirq.Z(q),
+        repetitions=None,
+        backend=dm_simulator
+    )
+    ```
+
+2.  *Sampled expectation and bitstring sampling (`cirq.Sampler`)*: When
+    estimating expectation values from finite measurement shots
+    (`tfq.layers.SampledExpectation`, `tfq.get_sampled_expectation_op`, or
+    `PQC` / `ControlledPQC` with `repetitions=<int>`) or drawing bitstring
+    samples (`tfq.layers.Sample`, `tfq.get_sampling_op`), pass any object that
+    inherits from `cirq.Sampler`. This includes `cirq.Simulator()`,
+    `cirq.DensityMatrixSimulator(noise=...)`, `cirq.ZerosSampler()`, hardware
+    samplers, or custom `cirq.Sampler` subclasses:
+
+    ```python
+    class CustomNoisySampler(cirq.Sampler):
+        def __init__(self, depolarizing_prob=0.01):
+            self._sim = cirq.DensityMatrixSimulator(
+                noise=cirq.ConstantQubitNoiseModel(
+                    cirq.depolarize(depolarizing_prob)
+                )
+            )
+
+        def run_sweep(self, program, params, repetitions=1):
+            return self._sim.run_sweep(program, params, repetitions)
+
+    q = cirq.GridQubit(0, 0)
+    theta = sympy.Symbol('theta')
+    circuit = cirq.Circuit(cirq.ry(theta)(q))
+    sampler = CustomNoisySampler(depolarizing_prob=0.02)
+
+    # Sample-based expectation with a custom cirq.Sampler.
+    sampled_pqc = tfq.layers.PQC(
+        circuit,
+        operators=[cirq.Z(q), cirq.X(q)],
+        repetitions=1000,
+        backend=sampler
+    )
+
+    # Bitstring sampling with a custom cirq.Sampler.
+    # TFQ automatically appends terminal measurements across all circuit qubits.
+    sample_layer = tfq.layers.Sample(backend=sampler)
+    bitstrings = sample_layer(
+        circuit,
+        symbol_names=[theta],
+        symbol_values=[[1.57]],
+        repetitions=10
+    )
+    ```
+
+3.  *Quantum state simulation (`cirq.SimulatesFinalState`)*: `tfq.layers.State`
+    and `tfq.get_state_op` accept any `cirq.SimulatesFinalState` instance.
+    While the default C++ backend (`backend=None`) and `cirq.Simulator()`
+    output state vectors of shape `[batch_size, 2 ** n_qubits]`, passing
+    `cirq.DensityMatrixSimulator()` outputs full density matrices of shape
+    `[batch_size, 2 ** n_qubits, 2 ** n_qubits]`:
+
+    ```python
+    q0, q1 = cirq.GridQubit.rect(1, 2)
+    bell = cirq.Circuit(cirq.H(q0), cirq.CNOT(q0, q1))
+
+    dm_state_layer = tfq.layers.State(backend=cirq.DensityMatrixSimulator())
+    density_matrices = dm_state_layer([bell])
+    ```
+
+### Circuit serialization and concurrency control
+
+When working with custom Cirq backends or hardware samplers, keep two execution
+details in mind:
+
+*   *Serialization constraints*: All circuits entering TFQ layers or ops pass
+    through `tfq.convert_to_tensor`, which serializes circuits into protocol
+    buffers. Consequently, input circuits must use `cirq.GridQubit` or
+    `cirq.LineQubit`, must contain only gates and channels listed in
+    `tfq.util.get_supported_gates()` and `tfq.util.get_supported_channels()`,
+    and must not contain pre-existing terminal measurements (TFQ appends the
+    required basis rotations and terminal measurements automatically when
+    calling a `cirq.Sampler`). If your target backend requires device-specific
+    gates, qubit routing, or compilation outside TFQ's supported gate set,
+    perform that compilation inside your custom `cirq.Sampler.run_sweep` or
+    `run_batch` method after TFQ deserializes the circuit.
+*   *Controlling graph-level concurrency*: By default, TensorFlow may execute
+    multiple quantum ops concurrently across independent graph branches. When
+    dispatching jobs to a physical quantum processor or a resource-constrained
+    backend that cannot handle concurrent requests, serialize quantum op
+    execution either globally with `tfq.set_quantum_concurrent_op_mode(False)`
+    or per op via `quantum_concurrent=False`:
+
+    ```python
+    # Disable concurrent execution globally across all TFQ ops.
+    tfq.set_quantum_concurrent_op_mode(False)
+
+    # Or disable concurrency for a single low-level op.
+    serial_op = tfq.get_sampled_expectation_op(
+        backend=sampler,
+        quantum_concurrent=False
+    )
+    ```
+
+### Performance and differentiation considerations
+
+Using a custom Python `backend` changes both execution performance and default
+gradient calculation compared to the built-in `'noiseless'` (`None`) backend:
+
+1.  *Built-in C++ `qsim` vs. Python callback overhead*: The default
+    `backend='noiseless'` (or `backend=None`) already runs TFQ's native,
+    multi-threaded C++ `qsim` simulator inside the TensorFlow C++ runtime.
+    Passing a Python simulator object to `backend`—even `cirq.Simulator()` or
+    `qsimcirq.QSimSimulator()`—wraps circuit execution in a `tf.py_function`
+    callback, which deserializes every `tf.string` tensor back into a Python
+    `cirq.Circuit` on every forward and backward pass. In addition, invoking an
+    externally multithreaded simulator such as `qsimcirq.QSimSimulator` inside
+    TensorFlow's worker thread pool can cause OpenMP thread contention and
+    significantly degrade performance. For noiseless state-vector simulation,
+    prefer the default `backend='noiseless'` (`backend=None`).
+2.  *Automatic switch from `Adjoint` to `ParameterShift` differentiation*: When
+    `backend='noiseless'` (or `None`) and `differentiator=None`, analytic
+    expectation layers (`tfq.layers.Expectation`, `tfq.layers.PQC` with
+    `repetitions=None`, and `tfq.layers.ControlledPQC` with `repetitions=None`)
+    default to `tfq.differentiators.Adjoint()`, which computes exact gradients
+    in C++ in a single pass. Because `Adjoint` is only supported by the
+    built-in C++ simulator, supplying any custom Cirq `backend` automatically
+    switches the default differentiator to
+    `tfq.differentiators.ParameterShift()`, which evaluates two shifted
+    circuits per parameter and scales linearly with the number of circuit
+    symbols. If you use a custom `SimulatesExpectationValues` simulator and
+    want finite-difference analytic gradients instead of parameter-shift, pass
+    an explicit differentiator such as
+    `differentiator=tfq.differentiators.CentralDifference()` or
+    `tfq.differentiators.ForwardDifference()`.

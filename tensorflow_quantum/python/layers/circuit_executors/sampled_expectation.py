@@ -220,13 +220,17 @@ class SampledExpectation(tf.keras.layers.Layer):
         sampling a quantum circuit.
 
         Args:
-            backend: Optional Backend to use to simulate states. Can be either
-                {'noiseless', 'noisy'} users may also
-                specify a preconfigured `cirq.Sampler` object to use instead.
-            differentiator: Optional Differentiator to use to calculate analytic
-                derivative values of given operators_to_measure and circuit,
-                which must inherit `tfq.differentiators.Differentiator`.
-                Defaults to `parameter_shift.ParameterShift()` (None argument).
+            backend: Optional Backend to use to sample expectation values.
+                Defaults to `'noiseless'` (the native C++ state-vector
+                sampler); string options are `{'noiseless', 'noisy'}`. Users
+                may also specify any preconfigured `cirq.Sampler` object (such
+                as `cirq.Simulator()`, `cirq.DensityMatrixSimulator()`, a
+                hardware sampler, or a custom `cirq.Sampler` subclass).
+            differentiator: Optional Differentiator to use to calculate
+                derivative values of given `operators` and circuit, which must
+                inherit `tfq.differentiators.Differentiator` and implement
+                `differentiate_sampled`. Defaults to
+                `tfq.differentiators.ParameterShift()` when `None`.
 
         """
         super().__init__(**kwargs)

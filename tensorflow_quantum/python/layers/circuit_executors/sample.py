@@ -146,10 +146,14 @@ class Sample(tf.keras.layers.Layer):
         simulated quantum state or a real quantum computer
 
         Args:
-            backend: Optional Backend to use to simulate this state. Defaults
-                to the noiseless simulator. Options are {'noisy', 'noiseless'},
-                however users may also specify a preconfigured cirq execution
-                object to use instead, which must inherit `cirq.Sampler`.
+            backend: Optional Backend to use to sample bitstrings. Defaults to
+                `'noiseless'` (the native C++ state-vector sampler); string
+                options are `{'noisy', 'noiseless'}`. Users may also specify
+                any preconfigured `cirq.Sampler` object (such as
+                `cirq.Simulator()`, `cirq.DensityMatrixSimulator()`, a hardware
+                sampler, or a custom `cirq.Sampler` subclass). When using a
+                custom `cirq.Sampler`, TFQ automatically appends terminal
+                measurements across all circuit qubits.
         """
         super().__init__(**kwargs)
         used_op = None

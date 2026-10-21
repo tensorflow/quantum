@@ -38,9 +38,16 @@ class PQC(tf.keras.layers.Layer):
             expectation is used.
         backend (Union[str, cirq.Sampler,
             cirq.sim.simulator.SimulatesExpectationValues]):
-            Backend simulator.
+            Backend simulator or sampler. Defaults to `'noiseless'` (the
+            native C++ qsim simulator). May also be a Cirq object inheriting
+            `cirq.sim.simulator.SimulatesExpectationValues` when
+            `repetitions=None` or `cirq.Sampler` when `repetitions` is an
+            integer. For the `'noisy'` C++ trajectory backend, use
+            `tfq.layers.NoisyPQC` instead.
         differentiator (Optional[tfq.differentiators.Differentiator]):
-            Differentiation scheme.
+            Differentiation scheme. Defaults to `tfq.differentiators.Adjoint()`
+            when `backend='noiseless'` and `repetitions=None`, and
+            `tfq.differentiators.ParameterShift()` otherwise.
         initializer (tf.keras.initializers.Initializer):
             Initializer for circuit parameters.
         regularizer (Optional[tf.keras.regularizers.Regularizer]):
@@ -189,14 +196,20 @@ class PQC(tf.keras.layers.Layer):
             when estimating expectation values.  If `None` analytic expectation
             calculation is used.
         backend: Optional Backend to use to simulate states. Defaults to
-            the noiseless TensorFlow simulator, however users may also
-            specify a preconfigured cirq simulation object to use instead.
-            If a cirq object is given it must inherit either
-            `cirq.sim.simulator.SimulatesExpectationValues` if analytic
-            expectations are desired or `cirq.Sampler` if sampled expectations
-            are desired.
-        differentiator: Optional `tfq.differentiator` object to specify how
-            gradients of `model_circuit` should be calculated.
+            `'noiseless'` (the native TensorFlow Quantum C++ simulator); users
+            may also specify a preconfigured Cirq object instead. If a Cirq
+            object is given, it must inherit
+            `cirq.sim.simulator.SimulatesExpectationValues` when
+            `repetitions=None` (analytic expectation) or `cirq.Sampler` when
+            `repetitions` is an integer (sampled expectation). Note that custom
+            Cirq backends execute via Python callbacks and cannot use the
+            `Adjoint` differentiator. To use the built-in `'noisy'` C++
+            backend, use `tfq.layers.NoisyPQC`.
+        differentiator: Optional `tfq.differentiators.Differentiator` object
+            to specify how gradients of `model_circuit` should be calculated.
+            Defaults to `tfq.differentiators.Adjoint()` when
+            `backend='noiseless'` and `repetitions=None`, or
+            `tfq.differentiators.ParameterShift()` otherwise.
         initializer: Optional `tf.keras.initializer` object to specify how the
             symbols in `model_circuit` should be initialized when creating
             the managed variables.

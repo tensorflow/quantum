@@ -33,9 +33,16 @@ class Expectation(tf.keras.layers.Layer):
     Args:
         backend (Union[str, cirq.sim.simulator.SimulatesExpectationValues],
         optional):
-            Backend simulator to use. Default is 'noiseless'.
+            Backend simulator to use. Can be `'noiseless'` (default, native C++
+            state-vector simulator), `'noisy'` (native C++ Monte-Carlo
+            trajectory simulator; requires `repetitions` in `call`), `None`
+            (equivalent to `'noiseless'`), or a preconfigured Cirq simulator
+            inheriting `cirq.sim.simulator.SimulatesExpectationValues` (such as
+            `cirq.Simulator()` or `cirq.DensityMatrixSimulator()`).
         differentiator (Optional[tfq.differentiators.Differentiator]):
-            Differentiation scheme for gradients.
+            Differentiation scheme for gradients. Defaults to
+            `tfq.differentiators.Adjoint()` when `backend='noiseless'` (or
+            `None`) and `tfq.differentiators.ParameterShift()` otherwise.
         **kwargs: Additional keyword arguments for the parent class.
 
     Input shape:
@@ -236,11 +243,14 @@ class Expectation(tf.keras.layers.Layer):
 
         Args:
             backend: Optional Backend to use to simulate states. Defaults to
-                the 'noiseless' simulator, options include {'noiseless',
-                'noisy'}. In the noisy case a `repetitions` call argument
-                must be provided. Users may also specify a preconfigured cirq
-                object to use instead, which must inherit
-                `cirq.sim.simulator.SimulatesExpectationValues`.
+                the `'noiseless'` C++ simulator; string options are
+                `{'noiseless', 'noisy'}`. In the `'noisy'` case, a
+                `repetitions` argument must be provided to `call`. Users may
+                also specify a preconfigured Cirq object inheriting
+                `cirq.sim.simulator.SimulatesExpectationValues` (such as
+                `cirq.Simulator()` or `cirq.DensityMatrixSimulator()`), which
+                executes via Python callbacks and defaults to `ParameterShift`
+                differentiation.
             differentiator: Optional Differentiator to use to calculate analytic
                 derivative values of given operators_to_measure and circuit,
                 which must inherit `tfq.differentiators.Differentiator` and
