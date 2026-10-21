@@ -42,6 +42,8 @@ upper_tabs:
         path: /quantum/tutorials/mnist
       - title: "Quantum data"
         path: /quantum/tutorials/quantum_data
+      - title: "Generative quantum advantage"
+        path: /quantum/tutorials/generative_quantum_advantage
       - title: "Calculate gradients"
         path: /quantum/tutorials/gradients
       - title: "Barren plateaus"
