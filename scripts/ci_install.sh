@@ -16,4 +16,5 @@
 wget https://github.com/bazelbuild/bazel/releases/download/6.5.0/bazel_6.5.0-linux-x86_64.deb
 sudo dpkg -i bazel_6.5.0-linux-x86_64.deb
 pip install --upgrade pip setuptools wheel
-pip install -r requirements.txt
+requirements_file="$(bash ./scripts/select_requirements_lock.sh)"
+pip install -r "${requirements_file}"
