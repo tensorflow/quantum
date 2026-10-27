@@ -23,7 +23,7 @@ export TF_USE_LEGACY_KERAS=1
 pip install \
   "nbclient==0.6.5" \
   "jupyter-client==7.4.9" \
-  "ipython>=8.10.0" \
+  "ipython>=8.10.0,<9.17.0" \
   "ipykernel>=6.29.0"
 
 # Gymnasium pip package needed for the quantum reinforcement learning tutorial

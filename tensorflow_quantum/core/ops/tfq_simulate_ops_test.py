@@ -401,6 +401,20 @@ class SimulateSamplesTest(tf.test.TestCase, parameterized.TestCase):
                 symbol_values_array, [[num_samples]])
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'between 0 and .*Got 2147483647'):
+            # num_samples is above the supported maximum.
+            tfq_simulate_ops.tfq_simulate_samples(
+                util.convert_to_tensor(circuit_batch), symbol_names,
+                symbol_values_array, [2**31 - 1])
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'between 0 and .*Got -1'):
+            # num_samples is negative.
+            tfq_simulate_ops.tfq_simulate_samples(
+                util.convert_to_tensor(circuit_batch), symbol_names,
+                symbol_values_array, [-1])
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'Unparseable proto'):
             # programs tensor has the right type, but invalid value.
             tfq_simulate_ops.tfq_simulate_samples(['junk'] * batch_size,
@@ -671,6 +685,24 @@ class SimulateSampledExpectationTest(tf.test.TestCase):
                 symbol_values_array,
                 util.convert_to_tensor([[x] for x in pauli_sums]),
                 [[-1]] * batch_size)
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'less than or equal to .*Got 2147483647'):
+            # num_samples is above the supported maximum.
+            tfq_simulate_ops.tfq_simulate_sampled_expectation(
+                util.convert_to_tensor(circuit_batch), symbol_names,
+                symbol_values_array,
+                util.convert_to_tensor([[x] for x in pauli_sums]),
+                [[2**31 - 1]] * batch_size)
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'less than or equal to .*Got 2147483647'):
+            # Only the last element of num_samples is out of range.
+            tfq_simulate_ops.tfq_simulate_sampled_expectation(
+                util.convert_to_tensor(circuit_batch), symbol_names,
+                symbol_values_array,
+                util.convert_to_tensor([[x] for x in pauli_sums]),
+                [[10]] * (batch_size - 1) + [[2**31 - 1]])
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     expected_regex='do not match'):

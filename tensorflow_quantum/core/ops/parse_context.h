@@ -96,13 +96,26 @@ tensorflow::Status GetPauliSums(
 tensorflow::Status GetSymbolMaps(tensorflow::OpKernelContext* context,
                                  std::vector<SymbolMap>* maps);
 
-// Parses the number of samples from the 'num_samples' input tensor.
+// Upper bound on the number of samples accepted for any single circuit or
+// pauli sum. The per-thread work split in BalanceTrajectory and in the noisy
+// ops' ComputeSmall uses int arithmetic such as
+// (num_samples + num_threads - 1) / num_threads, which overflows when
+// num_samples is near INT_MAX; the resulting negative chunk sizes make the
+// worker threads skip sampling and leave the output tensor uninitialized.
+// 1e7 is far above practical shot counts while leaving more than 200x
+// headroom to INT_MAX for any thread count.
+inline constexpr int kMaxNumSamples = 10000000;
+
+// Parses the number of samples from the 'num_samples' input tensor. Every
+// element must be in the range [1, kMaxNumSamples].
 tensorflow::Status GetNumSamples(
     tensorflow::OpKernelContext* context,
     std::vector<std::vector<int>>* parsed_num_samples);
 
 // Parses the 'num_samples' input tensor when it is expected to only
-//   contain one element.
+//   contain one element. The element must be in the range
+//   [0, kMaxNumSamples]; 0 is legal because the sampling ops return an empty
+//   result for it.
 tensorflow::Status GetIndividualSample(tensorflow::OpKernelContext* context,
                                        int* n_samples);
 

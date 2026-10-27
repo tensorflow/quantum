@@ -15,6 +15,8 @@ limitations under the License.
 
 #include "tensorflow_quantum/core/src/circuit_parser_qsim.h"
 
+#include <algorithm>
+#include <initializer_list>
 #include <string>
 #include <vector>
 
@@ -28,6 +30,7 @@ limitations under the License.
 #include "../qsim/lib/io.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/strings/numbers.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/optional.h"
@@ -81,6 +84,51 @@ inline Status ParseProtoArg(
   return ::tensorflow::Status();
 }
 
+// Parses the qubit ids of `op` into indices in [0, num_qubits). `op` must act
+// on exactly `qubits.size()` distinct qubits.
+//
+// Ids reaching the parser are normally decimal indices written by
+// ResolveQubitIds, but they end up as raw offsets into simulator memory, so
+// nothing is taken on trust here: a missing, extra, unparseable, negative,
+// out-of-range, or repeated id is reported as an error instead of becoming an
+// out-of-bounds access downstream.
+inline Status ParseQubitIds(const Operation& op, const unsigned int num_qubits,
+                            std::initializer_list<unsigned int*> qubits) {
+  if (op.qubits_size() != static_cast<int>(qubits.size())) {
+    return Status(
+        absl::StatusCode::kInvalidArgument,
+        absl::StrCat("Operation ", op.gate().id(), " expects ", qubits.size(),
+                     " qubit(s) but got ", op.qubits_size(), "."));
+  }
+  // Slots [0, i) of `parsed` hold validated indices by the time slot i is
+  // filled, so the distinctness check only ever compares validated values.
+  unsigned int* const* const parsed = qubits.begin();
+  for (int i = 0; i < op.qubits_size(); i++) {
+    unsigned int* qubit = parsed[i];
+    const std::string& id = op.qubits(i).id();
+    // SimpleAtoi into an unsigned target also rejects negative values. It
+    // tolerates surrounding whitespace and a leading '+', which is harmless
+    // because the parsed value is range-checked.
+    if (!absl::SimpleAtoi(id, qubit) || *qubit >= num_qubits) {
+      return Status(
+          absl::StatusCode::kInvalidArgument,
+          absl::StrCat("Invalid qubit id: '", id, "' in operation ",
+                       op.gate().id(), ". Expected an integer in [0, ",
+                       num_qubits, ")."));
+    }
+    // qsim's index arithmetic assumes that the qubits of a gate are distinct.
+    for (int j = 0; j < i; j++) {
+      if (*parsed[j] == *qubit) {
+        return Status(
+            absl::StatusCode::kInvalidArgument,
+            absl::StrCat("Duplicate qubit id: '", id, "'. Operation ",
+                         op.gate().id(), " must act on distinct qubits."));
+      }
+    }
+  }
+  return ::tensorflow::Status();
+}
+
 inline Status ParseProtoControls(const Operation& op,
                                  const unsigned int num_qubits,
                                  std::vector<unsigned int>* control_qubits,
@@ -111,9 +159,14 @@ inline Status ParseProtoControls(const Operation& op,
   unsigned int tmp;
   control_qubits->reserve(control_toks.size());
   for (auto tok : control_toks) {
-    // don't bother error checking since this is done earlier
-    // in program_resolution.
     valid = absl::SimpleAtoi(tok, &tmp);
+    if (!valid || tmp >= num_qubits) {
+      return Status(
+          absl::StatusCode::kInvalidArgument,
+          absl::StrCat("Invalid control qubit id: '", tok, "' in operation ",
+                       op.gate().id(), ". Expected an integer in [0, ",
+                       num_qubits, ")."));
+    }
     control_qubits->push_back(num_qubits - tmp - 1);
   }
   control_values->reserve(control_v_toks.size());
@@ -141,6 +194,26 @@ inline Status OptionalInsertControls(const Operation& op,
   if (control_qubits.empty()) {
     return ::tensorflow::Status();
   }
+  // qsim's index arithmetic assumes that the control qubits of a gate are
+  // distinct from each other and from its target qubits.
+  for (size_t i = 0; i < control_qubits.size(); i++) {
+    const unsigned int q = control_qubits[i];
+    const bool is_target = std::find(gate->qubits.begin(), gate->qubits.end(),
+                                     q) != gate->qubits.end();
+    const bool is_repeated =
+        std::find(control_qubits.begin(), control_qubits.begin() + i, q) !=
+        control_qubits.begin() + i;
+    if (is_target || is_repeated) {
+      // control_qubits holds qsim indices; report the id as written in the
+      // proto so that the message matches the user's circuit.
+      const unsigned int proto_id = num_qubits - q - 1;
+      return Status(
+          absl::StatusCode::kInvalidArgument,
+          absl::StrCat("Duplicate control qubit id: '", proto_id,
+                       "'. Control qubits must be distinct from each other "
+                       "and from the target qubits."));
+    }
+  }
   qsim::MakeControlledGate(control_qubits, control_values, *gate);
   return ::tensorflow::Status();
 }
@@ -157,7 +230,10 @@ inline Status SingleConstantGate(
     const unsigned int num_qubits, const unsigned int time,
     QsimCircuit* circuit, std::vector<GateMetaData>* metadata) {
   unsigned int q0;
-  (void)absl::SimpleAtoi(op.qubits(0).id(), &q0);
+  Status u = ParseQubitIds(op, num_qubits, {&q0});
+  if (!u.ok()) {
+    return u;
+  }
   auto gate = create_f(time, num_qubits - q0 - 1);
   Status s = OptionalInsertControls(op, num_qubits, &gate);
   if (!s.ok()) {
@@ -182,8 +258,10 @@ inline Status TwoConstantGate(
     const unsigned int num_qubits, const unsigned int time,
     QsimCircuit* circuit, std::vector<GateMetaData>* metadata) {
   unsigned int q0, q1;
-  (void)absl::SimpleAtoi(op.qubits(0).id(), &q0);
-  (void)absl::SimpleAtoi(op.qubits(1).id(), &q1);
+  Status u = ParseQubitIds(op, num_qubits, {&q0, &q1});
+  if (!u.ok()) {
+    return u;
+  }
   auto gate = create_f(time, num_qubits - q0 - 1, num_qubits - q1 - 1);
   Status s = OptionalInsertControls(op, num_qubits, &gate);
   if (!s.ok()) {
@@ -209,8 +287,10 @@ inline Status SingleEigenGate(
     QsimCircuit* circuit, std::vector<GateMetaData>* metadata) {
   unsigned int q0;
   float exp, exp_s, gs;
-  Status u;
-  (void)absl::SimpleAtoi(op.qubits(0).id(), &q0);
+  Status u = ParseQubitIds(op, num_qubits, {&q0});
+  if (!u.ok()) {
+    return u;
+  }
 
   absl::optional<std::string> exponent_symbol;
   u = ParseProtoArg(op, "exponent", param_map, &exp, &exponent_symbol);
@@ -257,9 +337,10 @@ inline Status TwoEigenGate(
     QsimCircuit* circuit, std::vector<GateMetaData>* metadata) {
   unsigned int q0, q1;
   float exp, exp_s, gs;
-  Status u;
-  (void)absl::SimpleAtoi(op.qubits(0).id(), &q0);
-  (void)absl::SimpleAtoi(op.qubits(1).id(), &q1);
+  Status u = ParseQubitIds(op, num_qubits, {&q0, &q1});
+  if (!u.ok()) {
+    return u;
+  }
 
   absl::optional<std::string> exponent_symbol;
   u = ParseProtoArg(op, "exponent", param_map, &exp, &exponent_symbol);
@@ -394,10 +475,12 @@ inline Status PhasedXGate(const Operation& op, const SymbolMap& param_map,
                           const unsigned int num_qubits,
                           const unsigned int time, QsimCircuit* circuit,
                           std::vector<GateMetaData>* metadata) {
-  int q0;
+  unsigned int q0;
   float pexp, pexp_s, exp, exp_s, gs;
-  Status u;
-  (void)absl::SimpleAtoi(op.qubits(0).id(), &q0);
+  Status u = ParseQubitIds(op, num_qubits, {&q0});
+  if (!u.ok()) {
+    return u;
+  }
 
   absl::optional<std::string> exponent_symbol;
   u = ParseProtoArg(op, "exponent", param_map, &exp, &exponent_symbol);
@@ -453,11 +536,12 @@ inline Status FsimGate(const Operation& op, const SymbolMap& param_map,
                        const unsigned int num_qubits, const unsigned int time,
                        QsimCircuit* circuit,
                        std::vector<GateMetaData>* metadata) {
-  int q0, q1;
+  unsigned int q0, q1;
   float theta, theta_s, phi, phi_s;
-  Status u;
-  (void)absl::SimpleAtoi(op.qubits(0).id(), &q0);
-  (void)absl::SimpleAtoi(op.qubits(1).id(), &q1);
+  Status u = ParseQubitIds(op, num_qubits, {&q0, &q1});
+  if (!u.ok()) {
+    return u;
+  }
 
   absl::optional<std::string> theta_symbol;
   u = ParseProtoArg(op, "theta", param_map, &theta, &theta_symbol);
@@ -509,11 +593,12 @@ inline Status PhasedISwapGate(const Operation& op, const SymbolMap& param_map,
                               const unsigned int num_qubits,
                               const unsigned int time, QsimCircuit* circuit,
                               std::vector<GateMetaData>* metadata) {
-  int q0, q1;
+  unsigned int q0, q1;
   float pexp, pexp_s, exp, exp_s;
-  Status u;
-  (void)absl::SimpleAtoi(op.qubits(0).id(), &q0);
-  (void)absl::SimpleAtoi(op.qubits(1).id(), &q1);
+  Status u = ParseQubitIds(op, num_qubits, {&q0, &q1});
+  if (!u.ok()) {
+    return u;
+  }
 
   absl::optional<std::string> exponent_symbol;
   u = ParseProtoArg(op, "exponent", param_map, &exp, &exponent_symbol);
@@ -599,10 +684,12 @@ inline Status AsymmetricDepolarizingChannel(const Operation& op,
                                             const unsigned int num_qubits,
                                             const unsigned int time,
                                             NoisyQsimCircuit* ncircuit) {
-  int q;
+  unsigned int q;
   float p_x, p_y, p_z;
-  Status u;
-  (void)absl::SimpleAtoi(op.qubits(0).id(), &q);
+  Status u = ParseQubitIds(op, num_qubits, {&q});
+  if (!u.ok()) {
+    return u;
+  }
 
   u = ParseProtoArg(op, "p_x", {}, &p_x);
   u = ParseProtoArg(op, "p_y", {}, &p_y);
@@ -620,10 +707,12 @@ inline Status DepolarizingChannel(const Operation& op,
                                   const unsigned int num_qubits,
                                   const unsigned int time,
                                   NoisyQsimCircuit* ncircuit) {
-  int q;
+  unsigned int q;
   float p;
-  Status u;
-  (void)absl::SimpleAtoi(op.qubits(0).id(), &q);
+  Status u = ParseQubitIds(op, num_qubits, {&q});
+  if (!u.ok()) {
+    return u;
+  }
 
   u = ParseProtoArg(op, "p", {}, &p);
   if (!u.ok()) {
@@ -637,10 +726,12 @@ inline Status DepolarizingChannel(const Operation& op,
 
 inline Status GADChannel(const Operation& op, const unsigned int num_qubits,
                          const unsigned int time, NoisyQsimCircuit* ncircuit) {
-  int q;
+  unsigned int q;
   float p, gamma;
-  Status u;
-  (void)absl::SimpleAtoi(op.qubits(0).id(), &q);
+  Status u = ParseQubitIds(op, num_qubits, {&q});
+  if (!u.ok()) {
+    return u;
+  }
 
   u = ParseProtoArg(op, "p", {}, &p);
   if (!u.ok()) {
@@ -660,8 +751,11 @@ inline Status GADChannel(const Operation& op, const unsigned int num_qubits,
 inline Status ResetChannel(const Operation& op, const unsigned int num_qubits,
                            const unsigned int time,
                            NoisyQsimCircuit* ncircuit) {
-  int q;
-  (void)absl::SimpleAtoi(op.qubits(0).id(), &q);
+  unsigned int q;
+  Status u = ParseQubitIds(op, num_qubits, {&q});
+  if (!u.ok()) {
+    return u;
+  }
 
   auto chan = qsim::Cirq::ResetChannel<float>::Create(time, num_qubits - q - 1);
   ncircuit->channels.push_back(chan);
@@ -672,10 +766,12 @@ inline Status AmplitudeDampingChannel(const Operation& op,
                                       const unsigned int num_qubits,
                                       const unsigned int time,
                                       NoisyQsimCircuit* ncircuit) {
-  int q;
+  unsigned int q;
   float gamma;
-  Status u;
-  (void)absl::SimpleAtoi(op.qubits(0).id(), &q);
+  Status u = ParseQubitIds(op, num_qubits, {&q});
+  if (!u.ok()) {
+    return u;
+  }
 
   u = ParseProtoArg(op, "gamma", {}, &gamma);
   if (!u.ok()) {
@@ -691,10 +787,12 @@ inline Status PhaseDampingChannel(const Operation& op,
                                   const unsigned int num_qubits,
                                   const unsigned int time,
                                   NoisyQsimCircuit* ncircuit) {
-  int q;
+  unsigned int q;
   float gamma;
-  Status u;
-  (void)absl::SimpleAtoi(op.qubits(0).id(), &q);
+  Status u = ParseQubitIds(op, num_qubits, {&q});
+  if (!u.ok()) {
+    return u;
+  }
 
   u = ParseProtoArg(op, "gamma", {}, &gamma);
   if (!u.ok()) {
@@ -711,10 +809,12 @@ inline Status PhaseFlipChannel(const Operation& op,
                                const unsigned int num_qubits,
                                const unsigned int time,
                                NoisyQsimCircuit* ncircuit) {
-  int q;
+  unsigned int q;
   float p;
-  Status u;
-  (void)absl::SimpleAtoi(op.qubits(0).id(), &q);
+  Status u = ParseQubitIds(op, num_qubits, {&q});
+  if (!u.ok()) {
+    return u;
+  }
 
   u = ParseProtoArg(op, "p", {}, &p);
   if (!u.ok()) {
@@ -730,10 +830,12 @@ inline Status PhaseFlipChannel(const Operation& op,
 inline Status BitFlipChannel(const Operation& op, const unsigned int num_qubits,
                              const unsigned int time,
                              NoisyQsimCircuit* ncircuit) {
-  int q;
+  unsigned int q;
   float p;
-  Status u;
-  (void)absl::SimpleAtoi(op.qubits(0).id(), &q);
+  Status u = ParseQubitIds(op, num_qubits, {&q});
+  if (!u.ok()) {
+    return u;
+  }
 
   u = ParseProtoArg(op, "p", {}, &p);
   if (!u.ok()) {

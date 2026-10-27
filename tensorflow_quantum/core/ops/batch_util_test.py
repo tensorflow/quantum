@@ -330,6 +330,133 @@ class BatchUtilTest(tf.test.TestCase, parameterized.TestCase):
                 self.assertAlmostEqual(collector.estimated_energy(),
                                        expected_energy)
 
+    def test_pauli_sum_collector_next_job(self):
+        """Test the next_job method of TFQPauliSumCollector."""
+        qubit0 = cirq.GridQubit(0, 0)
+        qubit1 = cirq.GridQubit(0, 1)
+        circuit = cirq.Circuit(cirq.X(qubit0))
+        observable = (3.0 * cirq.Z(qubit0) + 2.0 * cirq.X(qubit1) +
+                      5.0 * cirq.I(qubit0))
+
+        collector = batch_util.TFQPauliSumCollector(circuit,
+                                                    observable,
+                                                    samples_per_term=25,
+                                                    max_samples_per_job=10)
+
+        job1 = collector.next_job()
+        self.assertIsNotNone(job1)
+        self.assertEqual(job1.repetitions, 10)
+        self.assertEqual(job1.tag, cirq.PauliString(cirq.Z(qubit0)))
+        self.assertEqual(job1.tag.coefficient, 1.0)
+
+        job2 = collector.next_job()
+        self.assertIsNotNone(job2)
+        self.assertEqual(job2.repetitions, 10)
+        self.assertEqual(job2.tag, cirq.PauliString(cirq.Z(qubit0)))
+
+        job3 = collector.next_job()
+        self.assertIsNotNone(job3)
+        self.assertEqual(job3.repetitions, 5)
+        self.assertEqual(job3.tag, cirq.PauliString(cirq.Z(qubit0)))
+
+        job4 = collector.next_job()
+        self.assertIsNotNone(job4)
+        self.assertEqual(job4.repetitions, 10)
+        self.assertEqual(job4.tag, cirq.PauliString(cirq.X(qubit1)))
+        self.assertEqual(job4.tag.coefficient, 1.0)
+
+        job5 = collector.next_job()
+        self.assertIsNotNone(job5)
+        self.assertEqual(job5.repetitions, 10)
+        self.assertEqual(job5.tag, cirq.PauliString(cirq.X(qubit1)))
+
+        job6 = collector.next_job()
+        self.assertIsNotNone(job6)
+        self.assertEqual(job6.repetitions, 5)
+        self.assertEqual(job6.tag, cirq.PauliString(cirq.X(qubit1)))
+
+        job7 = collector.next_job()
+        self.assertIsNone(job7)
+
+        obs_ident = 4.0 * cirq.I(qubit0)
+        collector_ident = batch_util.TFQPauliSumCollector(circuit,
+                                                          obs_ident,
+                                                          samples_per_term=10)
+        self.assertIsNone(collector_ident.next_job())
+
+    def test_pauli_sum_collector_on_job_result(self):
+        """Test the on_job_result method of TFQPauliSumCollector."""
+        qubit0 = cirq.GridQubit(0, 0)
+        qubit1 = cirq.GridQubit(0, 1)
+        circuit = cirq.Circuit(cirq.X(qubit0), cirq.H(qubit1))
+        observable = cirq.Z(qubit0) * cirq.Z(qubit1)
+
+        collector = batch_util.TFQPauliSumCollector(circuit,
+                                                    observable,
+                                                    samples_per_term=10,
+                                                    max_samples_per_job=5)
+
+        job1 = collector.next_job()
+        res1 = cirq.ResultDict(
+            params=cirq.ParamResolver({}),
+            measurements={
+                'out':
+                    np.array([[0, 0], [1, 1], [0, 1], [1, 0], [1, 0]],
+                             dtype=np.int8)
+            })
+        collector.on_job_result(job1, res1)
+
+        job_id = job1.tag
+        self.assertEqual(collector._zeros[job_id], 2)
+        self.assertEqual(collector._ones[job_id], 3)
+
+        job2 = collector.next_job()
+        res2 = cirq.ResultDict(
+            params=cirq.ParamResolver({}),
+            measurements={
+                'out':
+                    np.array([[0, 0], [0, 0], [0, 0], [0, 1], [1, 1]],
+                             dtype=np.int8)
+            })
+        collector.on_job_result(job2, res2)
+
+        self.assertEqual(collector._zeros[job_id], 6)
+        self.assertEqual(collector._ones[job_id], 4)
+
+    def test_pauli_sum_collector_estimated_energy(self):
+        """Test the estimated_energy method of TFQPauliSumCollector."""
+        qubit0 = cirq.GridQubit(0, 0)
+        qubit1 = cirq.GridQubit(0, 1)
+        circuit = cirq.Circuit(cirq.X(qubit0))
+        observable = (3.0 * cirq.Z(qubit0) - 2.0 * cirq.X(qubit1) +
+                      1.5 * cirq.I(qubit0))
+
+        collector = batch_util.TFQPauliSumCollector(circuit,
+                                                    observable,
+                                                    samples_per_term=5)
+
+        self.assertAlmostEqual(collector.estimated_energy(), 1.5)
+
+        job1 = collector.next_job()
+        res1 = cirq.ResultDict(params=cirq.ParamResolver({}),
+                               measurements={
+                                   'out':
+                                       np.array([[0], [0], [1], [1], [1]],
+                                                dtype=np.int8)
+                               })
+        collector.on_job_result(job1, res1)
+        self.assertAlmostEqual(collector.estimated_energy(), 0.9)
+
+        job2 = collector.next_job()
+        res2 = cirq.ResultDict(params=cirq.ParamResolver({}),
+                               measurements={
+                                   'out':
+                                       np.array([[0], [0], [0], [0], [1]],
+                                                dtype=np.int8)
+                               })
+        collector.on_job_result(job2, res2)
+        self.assertAlmostEqual(collector.estimated_energy(), -0.3)
+
 
 if __name__ == '__main__':
     tf.test.main()

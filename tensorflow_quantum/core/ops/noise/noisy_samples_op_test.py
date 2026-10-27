@@ -98,6 +98,34 @@ class NoisySamplingTest(tf.test.TestCase, parameterized.TestCase):
                                      [[num_samples]])
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'between 0 and .*Got 2147483647'):
+            # num_samples is above the supported maximum.
+            noisy_samples_op.samples(util.convert_to_tensor(circuit_batch),
+                                     symbol_names, symbol_values_array,
+                                     [2**31 - 1])
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'between 0 and .*Got -1'):
+            # num_samples is negative.
+            noisy_samples_op.samples(util.convert_to_tensor(circuit_batch),
+                                     symbol_names, symbol_values_array, [-1])
+
+        # num_samples of 0 is still accepted and yields empty samples.
+        zero_samples = noisy_samples_op.samples(
+            util.convert_to_tensor(circuit_batch), symbol_names,
+            symbol_values_array, [0])
+        self.assertEqual(zero_samples.to_list(), [[]] * batch_size)
+
+        # The maximum itself (kMaxNumSamples) is accepted. An empty batch keeps
+        # the output empty, so this does not actually draw any samples.
+        empty_circuits = tf.raw_ops.Empty(shape=(0,), dtype=tf.string)
+        empty_symbols = tf.raw_ops.Empty(shape=(0,), dtype=tf.string)
+        empty_values = tf.raw_ops.Empty(shape=(0, 0), dtype=tf.float32)
+        max_samples = noisy_samples_op.samples(empty_circuits, empty_symbols,
+                                               empty_values, [10000000])
+        self.assertEqual(max_samples.shape[0], 0)
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'Unparseable proto'):
             # programs tensor has the right type, but invalid value.
             noisy_samples_op.samples(['junk'] * batch_size, symbol_names,

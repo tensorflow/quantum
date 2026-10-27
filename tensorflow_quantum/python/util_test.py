@@ -718,6 +718,36 @@ class ExponentialUtilFunctionsTest(tf.test.TestCase):
             benchmark_gates_indices.remove(qubits)
         self.assertEqual([], benchmark_gates_indices)
 
+    def test_check_commutability(self):
+        """Confirm that check_commutability works correctly."""
+        q0, q1 = cirq.GridQubit.rect(1, 2)
+
+        # Commutable terms
+        pauli_sum = cirq.X(q0) + cirq.X(q1)
+        util.check_commutability(pauli_sum)
+
+        pauli_sum = cirq.X(q0) * cirq.Z(q1) + cirq.Z(q0) * cirq.X(q1)
+        util.check_commutability(pauli_sum)
+
+        # Non-commutable terms
+        pauli_sum = cirq.X(q0) + cirq.Z(q0)
+        with self.assertRaisesRegex(ValueError,
+                                    expected_regex='non-commutable'):
+            util.check_commutability(pauli_sum)
+
+        pauli_sum = cirq.X(q0) + cirq.X(q1) + cirq.Z(q0)
+        with self.assertRaisesRegex(ValueError,
+                                    expected_regex='non-commutable'):
+            util.check_commutability(pauli_sum)
+
+        # Single term
+        pauli_sum = cirq.PauliSum.from_pauli_strings([cirq.X(q0)])
+        util.check_commutability(pauli_sum)
+
+        # Empty PauliSum
+        pauli_sum = cirq.PauliSum()
+        util.check_commutability(pauli_sum)
+
     def test_exponential_error(self):
         """Test exponential fails on bad inputs."""
         test_paulistring = cirq.X(cirq.GridQubit(0, 0))
