@@ -849,5 +849,132 @@ class PSWeightsFromSymbolTest(tf.test.TestCase):
         self.assertAllClose(tf.shape(res), [len(circuit_batch), 2, 0])
 
 
+def _make_program_proto(gate_id, num_qubits, is_symbolic=True):
+    """Creates serialized Program proto with specified gate and qubit arity."""
+    prog = util.program_pb2.Program()
+    prog.language.gate_set = 'tfq_gate_set'
+    prog.circuit.scheduling_strategy = (
+        util.program_pb2.Circuit.MOMENT_BY_MOMENT)
+    moment = prog.circuit.moments.add()
+    op = moment.operations.add()
+    op.gate.id = gate_id
+    for i in range(num_qubits):
+        op.qubits.add().id = f'0_{i}'
+
+    if gate_id in ('PXP', 'PISP'):
+        if is_symbolic:
+            op.args['exponent'].symbol = 'alpha'
+            op.args['phase_exponent'].symbol = 'beta'
+        else:
+            op.args['exponent'].arg_value.float_value = 0.5
+            op.args['phase_exponent'].arg_value.float_value = 0.25
+        op.args['exponent_scalar'].arg_value.float_value = 1.0
+        op.args['phase_exponent_scalar'].arg_value.float_value = 1.0
+    elif gate_id == 'ISP':
+        if is_symbolic:
+            op.args['exponent'].symbol = 'alpha'
+        else:
+            op.args['exponent'].arg_value.float_value = 0.5
+        op.args['exponent_scalar'].arg_value.float_value = 1.0
+    elif gate_id == 'FSIM':
+        if is_symbolic:
+            op.args['theta'].symbol = 'alpha'
+            op.args['phi'].symbol = 'beta'
+        else:
+            op.args['theta'].arg_value.float_value = 0.5
+            op.args['phi'].arg_value.float_value = 0.25
+        op.args['theta_scalar'].arg_value.float_value = 1.0
+        op.args['phi_scalar'].arg_value.float_value = 1.0
+
+    op.args['control_qubits'].arg_value.string_value = ''
+    op.args['control_values'].arg_value.string_value = ''
+    return prog.SerializeToString()
+
+
+class PsDecomposeQubitArityTest(tf.test.TestCase):
+    """Tests arity validation and qubit mapping in tfq_ps_decompose."""
+
+    def test_pxp_invalid_arity(self):
+        """Verifies PXP gate arity validation on 0 and 2 qubits."""
+        for num_qubits in (0, 2):
+            for is_symbolic in (True, False):
+                raw_program = _make_program_proto('PXP', num_qubits,
+                                                  is_symbolic)
+                inputs = tf.constant([raw_program], dtype=tf.string)
+                pattern = (f'Operation PXP expects 1 qubit\\(s\\) '
+                           f'but got {num_qubits}\\.')
+                with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                            pattern):
+                    tfq_ps_util_ops.tfq_ps_decompose(inputs)
+
+    def test_two_qubit_gates_invalid_arity(self):
+        """Verifies arity validation on PISP, ISP, and FSIM gates."""
+        for gate_id in ('PISP', 'ISP', 'FSIM'):
+            for num_qubits in (0, 1, 3):
+                for is_symbolic in (True, False):
+                    raw_program = _make_program_proto(gate_id, num_qubits,
+                                                      is_symbolic)
+                    inputs = tf.constant([raw_program], dtype=tf.string)
+                    pattern = (f'Operation {gate_id} expects 2 qubit\\(s\\) '
+                               f'but got {num_qubits}\\.')
+                    with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                                pattern):
+                        tfq_ps_util_ops.tfq_ps_decompose(inputs)
+
+    def test_batch_concurrent_parse_status_propagation(self):
+        """Verifies status propagation in concurrent multi-element batches."""
+        batch = []
+        for i in range(64):
+            if i % 8 == 3:
+                batch.append(_make_program_proto('PISP', 0, is_symbolic=True))
+            elif i % 8 == 7:
+                batch.append(_make_program_proto('PXP', 0, is_symbolic=True))
+            elif i % 2 == 0:
+                batch.append(_make_program_proto('PISP', 2, is_symbolic=True))
+            else:
+                batch.append(_make_program_proto('PXP', 1, is_symbolic=True))
+
+        inputs = tf.constant(batch, dtype=tf.string)
+        with self.assertRaisesRegex(
+                tf.errors.InvalidArgumentError,
+                r'Operation (PISP|PXP) expects (1|2) qubit\(s\) but got 0\.'):
+            tfq_ps_util_ops.tfq_ps_decompose(inputs)
+
+    def test_pisp_positive_decomposition_qubit_mapping(self):
+        """Verifies decomposed PISP circuits map control and target qubits."""
+        q0 = cirq.GridQubit(0, 0)
+        q1 = cirq.GridQubit(0, 1)
+        alpha = sympy.Symbol('alpha')
+        beta = sympy.Symbol('beta')
+        circuit = cirq.Circuit(
+            cirq.PhasedISwapPowGate(phase_exponent=beta,
+                                    exponent=alpha).on(q0, q1))
+        inputs = util.convert_to_tensor([circuit])
+        outputs = tfq_ps_util_ops.tfq_ps_decompose(inputs)
+        decomposed_programs = util.from_tensor(outputs)
+        self.assertLen(decomposed_programs, 1)
+        decomposed_circuit = decomposed_programs[0]
+
+        self.assertLen(decomposed_circuit.moments, 6)
+        self.assertEqual(decomposed_circuit.moments[0].operations[0].qubits,
+                         (q0,))
+        self.assertEqual(decomposed_circuit.moments[1].operations[0].qubits,
+                         (q1,))
+        self.assertEqual(decomposed_circuit.moments[2].operations[0].qubits,
+                         (q0, q1))
+        self.assertEqual(decomposed_circuit.moments[3].operations[0].qubits,
+                         (q0, q1))
+        self.assertEqual(decomposed_circuit.moments[4].operations[0].qubits,
+                         (q0,))
+        self.assertEqual(decomposed_circuit.moments[5].operations[0].qubits,
+                         (q1,))
+
+        resolver = {'alpha': 0.35, 'beta': 0.72}
+        self.assertAllClose(
+            cirq.unitary(cirq.resolve_parameters(circuit, resolver)),
+            cirq.unitary(cirq.resolve_parameters(decomposed_circuit, resolver)),
+            atol=1e-5)
+
+
 if __name__ == "__main__":
     tf.test.main()

@@ -16,6 +16,8 @@ limitations under the License.
 #include <cmath>
 #include <string>
 
+#include "absl/strings/str_cat.h"
+#include "absl/synchronization/mutex.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/shape_inference.h"
 #include "tensorflow/core/framework/tensor_shape.h"
@@ -57,6 +59,17 @@ class TfqPsDecomposeOp : public tensorflow::OpKernel {
 
     const int max_buffer_moments = 5;
 
+    tensorflow::Status parse_status;
+    absl::Mutex p_lock;
+    auto check_qubits_size = [](const Operation &op, int expected) {
+      if (TF_PREDICT_FALSE(op.qubits_size() != expected)) {
+        return tensorflow::errors::InvalidArgument(
+            absl::StrCat("Operation ", op.gate().id(), " expects ", expected,
+                         " qubit(s) but got ", op.qubits_size(), "."));
+      }
+      return Status();
+    };
+
     auto DoWork = [&](int64_t start, int64_t end) {
       for (int64_t i = start; i < end; i++) {
         Program cur_program = programs.at(i);
@@ -73,6 +86,8 @@ class TfqPsDecomposeOp : public tensorflow::OpKernel {
             Operation cur_op = cur_moment.operations().at(k);
             auto &cur_op_map = *cur_op.mutable_args();
             if (cur_op.gate().id() == "PISP") {
+              const Status local = check_qubits_size(cur_op, 2);
+              NESTED_FN_STATUS_SYNC(parse_status, local, p_lock);
               auto exponent = cur_op_map.at("exponent");
               auto phase_exponent = cur_op_map.at("phase_exponent");
               if (exponent.arg_case() == Arg::ArgCase::kSymbol ||
@@ -96,6 +111,8 @@ class TfqPsDecomposeOp : public tensorflow::OpKernel {
                 *temp_moment_list[4].add_operations() = new_op;
               }
             } else if (cur_op.gate().id() == "ISP") {
+              const Status local = check_qubits_size(cur_op, 2);
+              NESTED_FN_STATUS_SYNC(parse_status, local, p_lock);
               auto exponent = cur_op_map.at("exponent");
               if (exponent.arg_case() == Arg::ArgCase::kSymbol) {
                 // Decompose cirq.ISwapPowGate only if it is parameterized.
@@ -107,6 +124,8 @@ class TfqPsDecomposeOp : public tensorflow::OpKernel {
                 *temp_moment_list[0].add_operations() = new_op;
               }
             } else if (cur_op.gate().id() == "PXP") {
+              const Status local = check_qubits_size(cur_op, 1);
+              NESTED_FN_STATUS_SYNC(parse_status, local, p_lock);
               auto exponent = cur_op_map.at("exponent");
               auto phase_exponent = cur_op_map.at("phase_exponent");
               if (exponent.arg_case() == Arg::ArgCase::kSymbol ||
@@ -122,6 +141,8 @@ class TfqPsDecomposeOp : public tensorflow::OpKernel {
                 *temp_moment_list[1].add_operations() = new_op;
               }
             } else if (cur_op.gate().id() == "FSIM") {
+              const Status local = check_qubits_size(cur_op, 2);
+              NESTED_FN_STATUS_SYNC(parse_status, local, p_lock);
               auto theta = cur_op_map.at("theta");
               auto phi = cur_op_map.at("phi");
               if (theta.arg_case() == Arg::ArgCase::kSymbol ||
@@ -156,6 +177,7 @@ class TfqPsDecomposeOp : public tensorflow::OpKernel {
         ->tensorflow_cpu_worker_threads()
         ->workers->TransformRangeConcurrently(block_size, programs.size(),
                                               DoWork);
+    OP_REQUIRES_OK(context, parse_status);
   }
 
  private:
@@ -259,8 +281,7 @@ class TfqPsDecomposeOp : public tensorflow::OpKernel {
       default:
         break;
     }
-    *new_op.mutable_qubits() = {cur_op_qubits.begin() + use_target,
-                                cur_op_qubits.end() - !use_target};
+    new_op.add_qubits()->CopyFrom(cur_op_qubits.Get(use_target ? 1 : 0));
     // Copy over control metadata.
     new_op_map["control_qubits"].mutable_arg_value()->set_string_value(
         cur_op_map["control_qubits"].arg_value().string_value());
