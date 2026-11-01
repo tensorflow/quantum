@@ -350,6 +350,18 @@ cc_library(
     ],
 )
 
+cc_test(
+    name = "parse_context_test",
+    srcs = ["parse_context_test.cc"],
+    deps = [
+        ":parse_context",
+        "@com_google_absl//absl/synchronization",
+        "@com_google_googletest//:gtest_main",
+        "@local_config_tf//:libtensorflow_framework",
+        "@local_config_tf//:tf_header_lib",
+    ],
+)
+
 cc_binary(
     name = "_tfq_calculate_unitary_op.so",
     srcs = [
