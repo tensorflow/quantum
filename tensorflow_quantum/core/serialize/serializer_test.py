@@ -724,13 +724,13 @@ class SerializerTest(tf.test.TestCase, parameterized.TestCase):
     def test_serialize_circuit_wrong_type(self, inp):
         """Attempt to serialize invalid objects types."""
         with self.assertRaises(TypeError):
-            serializer.serialize_circuit(input)
+            serializer.serialize_circuit(inp)
 
     @parameterized.parameters([{'inp': v} for v in ['wrong', 1.0, None, []]])
     def test_deserialize_circuit_wrong_type(self, inp):
         """Attempt to deserialize invalid objects types."""
         with self.assertRaises(TypeError):
-            serializer.deserialize_circuit(input)
+            serializer.deserialize_circuit(inp)
 
     @parameterized.parameters([{'inp': v} for v in ['wrong', 1.0, None, []]])
     def test_serialize_paulisum_wrong_type(self, inp):
