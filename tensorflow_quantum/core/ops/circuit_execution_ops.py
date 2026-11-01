@@ -80,10 +80,12 @@ def get_expectation_op(
 
     Args:
         backend: Optional Python `object` that specifies what backend this op
-            should use when evaluating circuits. Can be
-            `cirq.DensityMatrixSimulator` or any
-            `cirq.sim.simulator.SimulatesExpectationValues`. If not provided the
-            default C++ analytical expectation calculation op is returned.
+            should use when evaluating circuits. Can be `None` (default, the
+            native C++ analytical expectation op),
+            `cirq.DensityMatrixSimulator`, or any
+            `cirq.sim.simulator.SimulatesExpectationValues`. Custom Cirq
+            backends execute via `tf.py_function` callbacks and cannot be paired
+            with `tfq.differentiators.Adjoint`.
         quantum_concurrent: Optional Python `bool`. True indicates that the
             returned op should not block graph level parallelism on itself when
             executing. False indicates that graph level parallelism on itself
@@ -182,8 +184,12 @@ def get_sampling_op(
 
     Args:
         backend: Optional Python `object` that specifies what backend this op
-            should use when evaluating circuits. Can be any `cirq.Sampler`. If
-            not provided the default C++ sampling op is returned.
+            should use when evaluating circuits. Can be `None` (default, the
+            native C++ sampling op) or any `cirq.Sampler` (such as
+            `cirq.Simulator()`, `cirq.DensityMatrixSimulator()`, or a custom
+            hardware/simulator sampler). For custom `cirq.Sampler` objects, TFQ
+            automatically appends terminal measurements across all circuit
+            qubits.
         quantum_concurrent: Optional Python `bool`. True indicates that the
             returned op should not block graph level parallelism on itself when
             executing. False indicates that graph level parallelism on itself
@@ -273,9 +279,10 @@ def get_state_op(
 
     Args:
         backend: Optional Python `object` that specifies what backend this op
-            should use when evaluating circuits. Can be any
-            `cirq.SimulatesFinalState`. If not provided, the default C++
-            state vector simulator will be used.
+            should use when evaluating circuits. Can be `None` (default, the
+            native C++ state-vector simulator) or any
+            `cirq.SimulatesFinalState` (such as `cirq.Simulator()` for state
+            vectors or `cirq.DensityMatrixSimulator()` for density matrices).
         quantum_concurrent: Optional Python `bool`. True indicates that the
             returned op should not block graph level parallelism on itself when
             executing. False indicates that graph level parallelism on itself
@@ -372,15 +379,17 @@ def get_sampled_expectation_op(
     example of how to make my_op from the above code block differentiable:
 
 
-    >>> diff = tfq.differentiators.ForwardDifference()
+    >>> diff = tfq.differentiators.ParameterShift()
     >>> my_differentiable_op = diff.generate_differentiable_op(
-    ...     analytic_op=my_op
+    ...     sampled_op=my_op
     ... )
 
     Args:
         backend: Optional Python `object` that specifies what backend this op
-            should use when evaluating circuits. Can be any `cirq.Sampler`. If
-            not provided the default C++ sampled expectation op is returned.
+            should use when evaluating circuits. Can be `None` (default, the
+            native C++ sampled expectation op) or any `cirq.Sampler` (such as
+            `cirq.Simulator()`, `cirq.DensityMatrixSimulator()`, or a custom
+            hardware/simulator sampler).
         quantum_concurrent: Optional Python `bool`. True indicates that the
             returned op should not block graph level parallelism on itself when
             executing. False indicates that graph level parallelism on itself
