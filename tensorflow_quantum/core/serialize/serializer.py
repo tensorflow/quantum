@@ -808,6 +808,7 @@ def serialize_circuit(circuit_inp):
     and `cirq.LineQubit` instances during serialization of circuits.
 
     Note: once serialized terminal measurements are removed.
+    Note: the input circuit is not modified.
 
     Args:
         circuit_inp: A `cirq.Circuit`.
@@ -815,10 +816,14 @@ def serialize_circuit(circuit_inp):
     Returns:
         A `tfq.proto.Program` proto.
     """
-    circuit = copy.deepcopy(circuit_inp)
-    if not isinstance(circuit, cirq.Circuit):
+    if not isinstance(circuit_inp, cirq.Circuit):
         raise TypeError("serialize requires cirq.Circuit objects."
-                        " Given: " + str(type(circuit)))
+                        " Given: " + str(type(circuit_inp)))
+
+    # A shallow copy is enough. The rewrites below replace whole moments
+    # rather than mutating them in place, and the one operation that does get
+    # mutated (control demotion, further down) is copied before tagging.
+    circuit = circuit_inp.copy()
 
     # This code is intentionally written to avoid using cirq functions
     # as this get analyzed by tensorflow-autograph.
@@ -870,7 +875,9 @@ def serialize_circuit(circuit_inp):
         ]
         new_ops = dict()
         for op in controlled_ops:
-            tfq_compatible = op.sub_operation
+            # Copy before tagging: `sub_operation` is a live reference into
+            # the caller's circuit, and these attributes would leak onto it.
+            tfq_compatible = copy.copy(op.sub_operation)
             tfq_compatible._tfq_control_qubits = op.controls
             tfq_compatible._tfq_control_values = op.control_values
             new_ops[op.qubits] = tfq_compatible
