@@ -57,7 +57,8 @@ Please see the [installation
 instructions](https://www.tensorflow.org/quantum/install) in the documentation.
 
 _Compatibility_: At this time, TensorFlow Quantum is built and
-tested on Linux with the following systems and software:
+tested on Linux (`x86_64`) and macOS (Apple Silicon / `arm64`) with the
+following systems and software:
 
 * Python 3.10–3.12
 * TensorFlow 2.19.1

@@ -14,7 +14,11 @@
 # limitations under the License.
 # ==============================================================================
 echo "Testing all Benchmarks.";
-bazel test -c opt --cxxopt="-msse2" --cxxopt="-msse3" --cxxopt="-msse4" --test_output=errors $(bazel query //benchmarks/scripts:all)
+arch_cxxopts=()
+if [[ "$(uname -m)" == "x86_64" ]]; then
+	arch_cxxopts+=(--cxxopt="-msse2" --cxxopt="-msse3" --cxxopt="-msse4")
+fi
+bazel test -c opt "${arch_cxxopts[@]}" --test_output=errors $(bazel query //benchmarks/scripts:all)
 exit_code=$?
 if [ "$exit_code" == "0" ]; then
 	echo "Testing Complete!";

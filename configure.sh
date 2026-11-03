@@ -107,7 +107,15 @@ while [[ -z "${TF_NEED_CUDA}" ]]; do
   read -p "${y_for_cpu}" INPUT || true
   case "${INPUT:-Y}" in
     [Yy]* ) echo "CPU build selected."; TF_NEED_CUDA=0;;
-    [Nn]* ) echo "GPU build selected."; TF_NEED_CUDA=1;;
+    [Nn]* )
+      if is_macos; then
+        echo "GPU (CUDA) build is not supported on macOS; selecting CPU build."
+        TF_NEED_CUDA=0
+      else
+        echo "GPU build selected."
+        TF_NEED_CUDA=1
+      fi
+      ;;
     * ) echo "Please answer y or n.";;
   esac
 done
@@ -141,10 +149,17 @@ lib_path = sc.get_lib()
 lib_dir = lib_path if os.path.isdir(lib_path) else os.path.dirname(lib_path)
 print(lib_dir)
 
-cands = (glob.glob(os.path.join(lib_dir, 'libtensorflow_framework.so*')) or
-         glob.glob(os.path.join(lib_dir, 'libtensorflow.so*')) or
-         glob.glob(os.path.join(lib_dir, '_pywrap_tensorflow_internal.*')))
-print(os.path.basename(cands[0]) if cands else 'libtensorflow_framework.so.2')
+if sys.platform == 'darwin':
+    cands = (glob.glob(os.path.join(lib_dir, 'libtensorflow_framework*.dylib')) or
+             glob.glob(os.path.join(lib_dir, 'libtensorflow*.dylib')) or
+             glob.glob(os.path.join(lib_dir, '_pywrap_tensorflow_internal.*')))
+    default_lib = 'libtensorflow_framework.2.dylib'
+else:
+    cands = (glob.glob(os.path.join(lib_dir, 'libtensorflow_framework.so*')) or
+             glob.glob(os.path.join(lib_dir, 'libtensorflow.so*')) or
+             glob.glob(os.path.join(lib_dir, '_pywrap_tensorflow_internal.*')))
+    default_lib = 'libtensorflow_framework.so.2'
+print(os.path.basename(sorted(cands)[0]) if cands else default_lib)
 PY
 )
 
@@ -189,10 +204,25 @@ write_bazelrc "common --experimental_repo_remote_exec"
 write_bazelrc "build --spawn_strategy=standalone"
 write_bazelrc "build --strategy=Genrule=standalone"
 write_bazelrc "build -c opt"
-write_bazelrc "build --cxxopt=-D_GLIBCXX_USE_CXX11_ABI=1"
+if ! is_macos; then
+  write_bazelrc "build --cxxopt=-D_GLIBCXX_USE_CXX11_ABI=1"
+fi
 write_bazelrc "build --cxxopt=-std=c++17"
+write_bazelrc "build --host_cxxopt=-std=c++17"
 write_bazelrc "build --action_env=TF_USE_LEGACY_KERAS=1"
 write_bazelrc "build --action_env=PYTHON_BIN_PATH=${PYTHON_BIN_PATH}"
+
+if is_macos; then
+  write_bazelrc "build --macos_minimum_os=12.0"
+  write_bazelrc "build --host_macos_minimum_os=12.0"
+  write_bazelrc "build --copt=-DGRPC_BAZEL_BUILD"
+  write_bazelrc "build --host_copt=-DGRPC_BAZEL_BUILD"
+  write_bazelrc "build --features=archive_param_file"
+  write_bazelrc "build --linkopt=-Wl,-undefined,dynamic_lookup"
+  write_bazelrc "build --host_linkopt=-Wl,-undefined,dynamic_lookup"
+  write_bazelrc "build --linkopt=-Wl,-rpath,@loader_path/../../../tensorflow"
+  write_bazelrc "build --linkopt=-Wl,-rpath,@loader_path/../../../../tensorflow"
+fi
 
 # rpath so the dynamic linker finds TF’s shared lib
 if ! is_windows; then
@@ -210,10 +240,12 @@ write_bazelrc 'build --per_file_copt=external/.*[.]c$@-Wno-deprecated-non-protot
 write_bazelrc 'build --host_per_file_copt=external/.*[.]c$@-Wno-deprecated-non-prototype'
 write_bazelrc "build --per_file_copt=external/com_google_protobuf/.*@-Wno-unused-function"
 write_bazelrc "build --host_per_file_copt=external/com_google_protobuf/.*@-Wno-unused-function"
-write_bazelrc "build --per_file_copt=external/com_google_protobuf/.*@-Wno-stringop-overflow"
-write_bazelrc "build --host_per_file_copt=external/com_google_protobuf/.*@-Wno-stringop-overflow"
-write_bazelrc "build --per_file_copt=external/eigen/.*@-Wno-maybe-uninitialized"
-write_bazelrc "build --host_per_file_copt=external/eigen/.*@-Wno-maybe-uninitialized"
+if ! is_macos; then
+  write_bazelrc "build --per_file_copt=external/com_google_protobuf/.*@-Wno-stringop-overflow"
+  write_bazelrc "build --host_per_file_copt=external/com_google_protobuf/.*@-Wno-stringop-overflow"
+  write_bazelrc "build --per_file_copt=external/eigen/.*@-Wno-maybe-uninitialized"
+  write_bazelrc "build --host_per_file_copt=external/eigen/.*@-Wno-maybe-uninitialized"
+fi
 
 # The following warnings come from qsim.
 # TODO: fix the code in qsim & update TFQ to use the updated version.

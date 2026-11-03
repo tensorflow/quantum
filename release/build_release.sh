@@ -71,15 +71,19 @@ if ! [[ "${py_version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
   quit "The Python version must be a full version number in the form x.y.z."
 fi
 
-setup_file="${repo_dir}/release/setup.py"
-if ! [[ -r "${setup_file}" ]]; then
-  quit "Cannot read ${setup_file}"
+init_file="${repo_dir}/tensorflow_quantum/__init__.py"
+if ! [[ -r "${init_file}" ]]; then
+  quit "Cannot read ${init_file}"
 fi
-tfq_cur_version=$(grep -m 1 CUR_VERSION "${setup_file}" | cut -f2 -d'"')
+tfq_cur_version=$(grep -E '^__version__' "${init_file}" | sed -E "s/.*['\"]([^'\"]+)['\"].*/\1/")
 tfq_version=${tfq_cur_version}${build_number}
 
 # Test these upfront to avoid failing mid-way through a long process.
-for program in docker pyenv jq; do
+required_programs=(pyenv jq)
+if [[ "$(uname -s)" != "Darwin" ]]; then
+  required_programs+=(docker)
+fi
+for program in "${required_programs[@]}"; do
   if ! command -v "${program}" > /dev/null 2>&1; then
     quit "Cannot run ${program} -- maybe it is not installed?"
   fi
@@ -112,6 +116,9 @@ pyenv activate tfq-build-venv
 
 pip install --upgrade pip
 pip install wheel-inspect check-wheel-contents
+if [[ "$(uname -s)" == "Darwin" ]]; then
+  pip install delocate
+fi
 
 # ~~~~~~~~ Build & clean the wheel ~~~~~~~~
 

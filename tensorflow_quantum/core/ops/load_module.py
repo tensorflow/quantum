@@ -15,8 +15,8 @@
 """Module to load python op libraries."""
 
 import os
+import sysconfig
 import types
-from distutils.sysconfig import get_python_lib
 
 from tensorflow.python.framework import errors
 from tensorflow.python.framework import load_library
@@ -49,7 +49,7 @@ class _LazyLoader(types.ModuleType):
                 path = resource_loader.get_path_to_datafile(self._name)
                 self._module = load_library.load_op_library(path)
             except (IOError, errors.NotFoundError):
-                path = os.path.join(get_python_lib(),
+                path = os.path.join(sysconfig.get_path("platlib"),
                                     "tensorflow_quantum/core/ops", self._name)
                 self._module = load_library.load_op_library(path)
         return self._module
