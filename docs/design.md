@@ -89,14 +89,24 @@ batch readout operations. See `tfq.layers.Sample` for an example.
 
 #### Saving and loading models
 
-Saving a complete Keras model with `model.save()` is not supported for models containing TFQ layers, including `tfq.layers.PQC` and `tfq.layers.ControlledPQC`. These layers accept quantum objects, such as `cirq.Circuit`, `cirq.PauliSum`, and `sympy.Symbol`, that are not
-JSON-serializable, and the layers do not implement `get_config()` to serialize their configurations.
+Saving a complete Keras model with `model.save()` is not supported for
+models containing TFQ layers, including `tfq.layers.PQC` and
+`tfq.layers.ControlledPQC`. These layers accept quantum objects, such as
+`cirq.Circuit`, `cirq.PauliSum`, and `sympy.Symbol`, that are not
+JSON-serializable, and the layers do not implement `get_config()` to
+serialize their configurations.
 
-Depending on the serialization path, calling `model.save()` may raise a `NotImplementedError` indicating that the layer must override
-`get_config()`, a `TypeError` for non-JSON-serializable `call()`
-arguments such as `sympy.Symbol` or `cirq.PauliSum`, or a `NotEncodableError` when tracing layer `call` defaults for `SavedModel` export. This limitation is not specific to a particular TFQ, TensorFlow, or Keras version.
+Depending on the serialization path, calling `model.save()` may raise a
+`NotImplementedError` indicating that the layer must override
+`get_config()`, a `TypeError` for non-JSON-serializable `call()` arguments
+such as `sympy.Symbol` or `cirq.PauliSum`, or a `NotEncodableError` when
+tracing layer `call` defaults for `SavedModel` export. This limitation is
+not specific to a particular TFQ, TensorFlow, or Keras version.
 
-As an alternative, `model.save_weights()` saves the model's weights without saving the complete model configuration. Recreate the same model architecture before loading the saved weights:
+As an alternative, `model.save_weights()` saves the model's weights without
+saving the complete model configuration. Recreate the same model
+architecture before loading the saved weights. The recreated model must
+be built (its variables must be created) before calling `load_weights()`:
 
 ```python
 model.save_weights("my_model.weights.h5")
