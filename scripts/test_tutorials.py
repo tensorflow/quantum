@@ -54,6 +54,13 @@ class ExamplesTest(tf.test.TestCase, parameterized.TestCase):
                 src = re.sub(r"n_episodes ?= ?.*", "n_episodes = 50", src)
                 # For noise.ipynb to reduce runtime in test.
                 src = re.sub(r"n_epochs ?= ?.*", "n_epochs = 2", src)
+                # For generative_quantum_advantage.ipynb to reduce runtime.
+                src = re.sub(r"NUM_TRAINING_STEPS ?= ?.*",
+                             "NUM_TRAINING_STEPS = 5", src)
+                src = re.sub(r"NUM_TRAINING_SAMPLES ?= ?.*",
+                             "NUM_TRAINING_SAMPLES = 32", src)
+                src = re.sub(r"NUM_SAMPLE_DRAWS ?= ?.*",
+                             "NUM_SAMPLE_DRAWS = 128", src)
                 cell["source"] = src
 
         _ = nbclient.execute(nb, timeout=900, kernel_name="python3")
