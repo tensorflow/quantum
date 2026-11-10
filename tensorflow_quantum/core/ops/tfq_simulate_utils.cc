@@ -16,7 +16,6 @@ limitations under the License.
 #include "tensorflow_quantum/core/ops/tfq_simulate_utils.h"
 
 #include <algorithm>
-#include <cstdint>
 
 #include "tensorflow/core/framework/device_base.h"
 #include "tensorflow/core/framework/op_kernel.h"
@@ -27,14 +26,12 @@ int GetBlockSize(tensorflow::OpKernelContext* context, const int output_size) {
   if (output_size <= 0 || context == nullptr || context->device() == nullptr) {
     return 1;
   }
-  const auto* worker_threads =
+  const tensorflow::DeviceBase::CpuWorkerThreads* worker_threads =
       context->device()->tensorflow_cpu_worker_threads();
   if (worker_threads == nullptr || worker_threads->num_threads <= 0) {
     return 1;
   }
-  return static_cast<int>(std::max<int64_t>(
-      1, static_cast<int64_t>(output_size) /
-             static_cast<int64_t>(worker_threads->num_threads)));
+  return std::max(1, output_size / worker_threads->num_threads);
 }
 
 }  // namespace tfq

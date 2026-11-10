@@ -59,6 +59,9 @@ TEST(TfqSimulateUtilsTest, NullDeviceReturnsOne) {
   EXPECT_EQ(GetBlockSize(&context, 100), 1);
   EXPECT_EQ(GetBlockSize(&context, 0), 1);
   EXPECT_EQ(GetBlockSize(&context, -5), 1);
+
+  // Restore a valid device before OpKernelContext destruction.
+  params.device = &device;
 }
 
 TEST(TfqSimulateUtilsTest, NonPositiveOutputSizeShortCircuitsBeforeThreads) {
