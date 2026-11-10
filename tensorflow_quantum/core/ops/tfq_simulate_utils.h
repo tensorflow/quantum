@@ -20,8 +20,9 @@ limitations under the License.
 
 namespace tfq {
 
-// Returns a block size that distributes the work evenly across the different
-// circuits.
+// Returns a positive block size (>= 1) that distributes `output_size` work
+// items across CPU worker threads, or 1 if `output_size <= 0` or `context` /
+// CPU worker threads are unavailable or non-positive.
 int GetBlockSize(tensorflow::OpKernelContext* context, const int output_size);
 
 }  // namespace tfq
