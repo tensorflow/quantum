@@ -23,10 +23,10 @@ limitations under the License.
 // Syncs a threads work status with some global status.
 #define NESTED_FN_STATUS_SYNC(global_status, local_status, global_lock) \
   do {                                                                  \
-    const ::tensorflow::Status _s = (local_status);                     \
-    if (TF_PREDICT_FALSE(!_s.ok())) {                                   \
-      ::absl::MutexLock _l(&(global_lock));                             \
-      (global_status) = _s;                                             \
+    const ::tensorflow::Status tfq_sync_status = (local_status);        \
+    if (TF_PREDICT_FALSE(!tfq_sync_status.ok())) {                      \
+      ::absl::MutexLock tfq_sync_lock(&(global_lock));                  \
+      (global_status) = tfq_sync_status;                                \
       return;                                                           \
     }                                                                   \
   } while (0)
