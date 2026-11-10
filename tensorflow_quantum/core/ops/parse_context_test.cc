@@ -59,5 +59,34 @@ TEST(ParseContextTest, NestedFnStatusSyncEvaluatesOnce) {
   EXPECT_FALSE(err_completed);
 }
 
+TEST(ParseContextTest, NestedFnStatusSyncAvoidsCallerNameCollisions) {
+  tensorflow::Status _s;
+  absl::Mutex _l;
+  bool completed_after_ok = false;
+  auto ok_fn = [&]() {
+    NESTED_FN_STATUS_SYNC(_s, tensorflow::Status(), _l);
+    completed_after_ok = true;
+  };
+  ok_fn();
+  EXPECT_TRUE(_s.ok());
+  EXPECT_TRUE(completed_after_ok);
+
+  bool completed_after_err = false;
+  auto err_fn = [&]() {
+    NESTED_FN_STATUS_SYNC(
+        _s, tensorflow::errors::InvalidArgument("collision error"), _l);
+    completed_after_err = true;
+  };
+  err_fn();
+  EXPECT_TRUE(tensorflow::errors::IsInvalidArgument(_s));
+  EXPECT_FALSE(completed_after_err);
+
+  tensorflow::Status status;
+  absl::Mutex lock;
+  auto read_from_s_fn = [&]() { NESTED_FN_STATUS_SYNC(status, _s, lock); };
+  read_from_s_fn();
+  EXPECT_TRUE(tensorflow::errors::IsInvalidArgument(status));
+}
+
 }  // namespace
 }  // namespace tfq
