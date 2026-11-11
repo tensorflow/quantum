@@ -915,6 +915,15 @@ class SerializerTest(tf.test.TestCase, parameterized.TestCase):
                 self.assertFalse(hasattr(sub_op, '_tfq_control_qubits'))
                 self.assertFalse(hasattr(sub_op, '_tfq_control_values'))
 
+        # Check the observable consequence too, independent of the private
+        # attribute names: a leaked tag would make a later standalone use of
+        # the same operation serialize as a controlled gate.
+        sub_op = circuit[1].operations[0].sub_operation
+        proto = serializer.serialize_circuit(cirq.Circuit(sub_op))
+        args = proto.circuit.moments[0].operations[0].args
+        self.assertEqual(args['control_qubits'].arg_value.string_value, '')
+        self.assertEqual(args['control_values'].arg_value.string_value, '')
+
         self.assertEqual(circuit, circuit_before_call)
 
     def test_serialize_deserialize_identity(self):
