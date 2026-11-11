@@ -873,6 +873,8 @@ def serialize_circuit(circuit_inp):
         controlled_ops = [
             op for op in moment if isinstance(op, cirq.ControlledOperation)
         ]
+        if not controlled_ops: 
+        	continue
         new_ops = dict()
         for op in controlled_ops:
             # Copy before tagging: `sub_operation` is a live reference into
