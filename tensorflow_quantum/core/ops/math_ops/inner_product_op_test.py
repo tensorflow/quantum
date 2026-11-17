@@ -62,6 +62,13 @@ class InnerProductTest(tf.test.TestCase, parameterized.TestCase):
                 symbol_values_array, util.convert_to_tensor(other_batch))
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'programs must be rank 1. Got rank 0'):
+            # Circuit tensor is a scalar.
+            inner_product_op.inner_product(
+                util.convert_to_tensor(circuit_batch)[0], symbol_names,
+                symbol_values_array, util.convert_to_tensor(other_batch))
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'symbol_names must be rank 1.'):
             # symbol_names tensor has too many dimensions.
             inner_product_op.inner_product(
