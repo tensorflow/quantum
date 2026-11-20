@@ -33,6 +33,14 @@ then
   exit 1
 fi
 
+# Ignore local/system pip config files and PIP_* overrides (e.g., mirrors that
+# omit PEP 503 data-requires-python attributes) so pip and pip-compile resolve
+# deterministically against public PyPI, matching WORKSPACE's pip_parse setup.
+while IFS= read -r var; do
+  unset "${var}"
+done < <(compgen -v PIP_ || true)
+export PIP_CONFIG_FILE=/dev/null
+
 if ! python -m pip show -qq pip-tools; then
   echo "Error: 'pip-compile' not found. Please install 'pip-tools'." >&2
   exit 1
@@ -46,16 +54,18 @@ if [[ -e "${pins_file}" ]]; then
 fi
 
 # Have pip-compile mention this script in the requirements.txt header it writes.
-export CUSTOM_COMPILE_COMMAND="${0}"
+export CUSTOM_COMPILE_COMMAND="./scripts/generate_requirements.sh"
 
 echo "Running pip-compile in ${repo_dir} …"
 python -m piptools compile -q \
+  --index-url https://pypi.org/simple/ \
   --allow-unsafe \
   --upgrade \
   --rebuild \
   --generate-hashes \
   --no-strip-extras \
   --no-emit-index-url \
+  --no-emit-trusted-host \
   -o requirements.txt \
   "${constraints[@]}"
 
