@@ -18,6 +18,7 @@ limitations under the License.
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/strings/numbers.h"
+#include "absl/synchronization/mutex.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/shape_inference.h"
 #include "tensorflow/core/framework/tensor_shape.h"
@@ -78,6 +79,8 @@ class TfqPsWeightsFromSymbolOp : public tensorflow::OpKernel {
                                                         ignore_list.end());
 
     std::vector<int> n_single_symbol(programs.size(), 0);
+    tensorflow::Status parse_status;
+    absl::Mutex p_lock;
 
     auto DoWork = [&](int64_t start, int64_t end) {
       for (int64_t i = start; i < end; i++) {
@@ -95,10 +98,12 @@ class TfqPsWeightsFromSymbolOp : public tensorflow::OpKernel {
               const absl::string_view symbol_name = exponent.symbol();
               if (!symbols_map.contains(symbol_name)) {
                 // Should never happen. raise error.
-                OP_REQUIRES(context, false,
-                            tensorflow::errors::InvalidArgument(
-                                "A circuit contains a sympy.Symbol not found "
-                                "in symbols!"));
+                NESTED_FN_STATUS_SYNC(
+                    parse_status,
+                    tensorflow::errors::InvalidArgument(
+                        "A circuit contains a sympy.Symbol not found "
+                        "in symbols!"),
+                    p_lock);
               }
               output_results.at(i)
                   .at(symbols_map.at(symbol_name))
@@ -124,6 +129,8 @@ class TfqPsWeightsFromSymbolOp : public tensorflow::OpKernel {
         ->tensorflow_cpu_worker_threads()
         ->workers->TransformRangeConcurrently(block_size, programs.size(),
                                               DoWork);
+
+    OP_REQUIRES_OK(context, parse_status);
 
     int largest_single_symbol = 0;
     for (size_t i = 0; i < n_single_symbol.size(); i++) {

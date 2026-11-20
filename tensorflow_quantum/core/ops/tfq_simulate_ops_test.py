@@ -30,6 +30,96 @@ from tensorflow_quantum.core.ops import tfq_simulate_ops
 from tensorflow_quantum.python import util
 
 
+class WorkerStatusSyncTest(tf.test.TestCase):
+    """Tests worker thread status synchronization on invalid input protos."""
+
+    def test_parse_programs_corrupted_batch(self):
+        """Tests batches with corrupted program protos fail."""
+        q = cirq.GridQubit(0, 0)
+        valid_circuit = cirq.Circuit(cirq.H(q))
+        valid_raw = util.convert_to_tensor([valid_circuit]).numpy()[0]
+        corrupted_raw = b'invalid_program_proto_bytes'
+
+        # 1. Fully corrupted batch of 256 elements.
+        all_corrupted = tf.constant([corrupted_raw] * 256)
+        empty_symbols = tf.constant([], dtype=tf.string)
+        empty_values = tf.zeros([256, 0], dtype=tf.float32)
+
+        for _ in range(20):
+            with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                        'Unparseable proto'):
+                tfq_simulate_ops.tfq_simulate_state(all_corrupted,
+                                                    empty_symbols, empty_values)
+
+        # 2. Mixed batch: 250 valid circuits and 6 corrupted entries.
+        mixed_batch = [valid_raw] * 256
+        for idx in [0, 37, 101, 149, 211, 255]:
+            mixed_batch[idx] = corrupted_raw
+        mixed_tensor = tf.constant(mixed_batch)
+
+        for _ in range(20):
+            with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                        'Unparseable proto'):
+                tfq_simulate_ops.tfq_simulate_state(mixed_tensor, empty_symbols,
+                                                    empty_values)
+
+    def test_get_pauli_sums_corrupted_batch(self):
+        """Tests batches with corrupted PauliSum protos fail."""
+        q = cirq.GridQubit(0, 0)
+        valid_circuit = cirq.Circuit(cirq.H(q))
+        valid_circuits = tf.constant(
+            [util.convert_to_tensor([valid_circuit]).numpy()[0]] * 256)
+        valid_pauli = util.convert_to_tensor([[cirq.Z(q)]]).numpy()[0][0]
+        corrupted_pauli = b'invalid_pauli_sum_bytes'
+        empty_symbols = tf.constant([], dtype=tf.string)
+        empty_values = tf.zeros([256, 0], dtype=tf.float32)
+
+        # 1. Fully corrupted 256-element PauliSum batch.
+        all_corrupted_ops = tf.constant([[corrupted_pauli]] * 256)
+        for _ in range(20):
+            with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                        'Unparseable proto'):
+                tfq_simulate_ops.tfq_simulate_expectation(
+                    valid_circuits, empty_symbols, empty_values,
+                    all_corrupted_ops)
+
+        # 2. Mixed batch: 250 valid PauliSums and 6 corrupted entries.
+        mixed_ops = [[valid_pauli]] * 256
+        for idx in [0, 42, 99, 153, 201, 255]:
+            mixed_ops[idx] = [corrupted_pauli]
+        mixed_ops_tensor = tf.constant(mixed_ops)
+
+        for _ in range(20):
+            with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                        'Unparseable proto'):
+                tfq_simulate_ops.tfq_simulate_expectation(
+                    valid_circuits, empty_symbols, empty_values,
+                    mixed_ops_tensor)
+
+    def test_simulate_expectation_corrupted_programs_batch(self):
+        """Tests batches with corrupted programs in expectation op fail."""
+        q = cirq.GridQubit(0, 0)
+        valid_circuit = cirq.Circuit(cirq.H(q))
+        valid_raw = util.convert_to_tensor([valid_circuit]).numpy()[0]
+        corrupted_raw = b'invalid_program_proto_bytes'
+        valid_pauli = util.convert_to_tensor([[cirq.Z(q)]]).numpy()[0][0]
+        pauli_ops = tf.constant([[valid_pauli]] * 256)
+        empty_symbols = tf.constant([], dtype=tf.string)
+        empty_values = tf.zeros([256, 0], dtype=tf.float32)
+
+        # Mixed batch: 250 valid circuits and 6 corrupted entries.
+        mixed_batch = [valid_raw] * 256
+        for idx in [0, 17, 88, 142, 199, 255]:
+            mixed_batch[idx] = corrupted_raw
+        mixed_tensor = tf.constant(mixed_batch)
+
+        for _ in range(20):
+            with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                        'Unparseable proto'):
+                tfq_simulate_ops.tfq_simulate_expectation(
+                    mixed_tensor, empty_symbols, empty_values, pauli_ops)
+
+
 class SimulateExpectationTest(tf.test.TestCase):
     """Tests tfq_simulate_expectation."""
 
