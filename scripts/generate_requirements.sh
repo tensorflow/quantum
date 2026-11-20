@@ -36,9 +36,9 @@ fi
 # Ignore local/system pip config files and PIP_* overrides (e.g., mirrors that
 # omit PEP 503 data-requires-python attributes) so pip and pip-compile resolve
 # deterministically against public PyPI, matching WORKSPACE's pip_parse setup.
-while IFS= read -r var; do
+for var in "${!PIP_@}"; do
   unset "${var}"
-done < <(compgen -v PIP_ || true)
+done
 export PIP_CONFIG_FILE=/dev/null
 
 if ! python -m pip show -qq pip-tools; then
