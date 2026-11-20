@@ -55,6 +55,16 @@ class TfqInnerProductGradOp : public tensorflow::OpKernel {
                 tensorflow::errors::InvalidArgument(absl::StrCat(
                     "Expected 5 inputs, got ", num_inputs, " inputs.")));
 
+    OP_REQUIRES(context, context->input(0).dims() == 1,
+                tensorflow::errors::InvalidArgument(
+                    absl::StrCat("programs must be rank 1. Got rank ",
+                                 context->input(0).dims(), ".")));
+
+    OP_REQUIRES(context, context->input(1).dims() == 1,
+                tensorflow::errors::InvalidArgument(
+                    absl::StrCat("symbol_names must be rank 1. Got rank ",
+                                 context->input(1).dims(), ".")));
+
     OP_REQUIRES(
         context, context->input(3).dims() == 2,
         tensorflow::errors::InvalidArgument(absl::StrCat(

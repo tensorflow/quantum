@@ -92,6 +92,14 @@ class SimulateMPS1DExpectationTest(tf.test.TestCase):
                 util.convert_to_tensor([[x] for x in pauli_sums]))
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'programs must be rank 1. Got rank 0'):
+            # Circuit tensor is a scalar.
+            simulate_mps.mps_1d_expectation(
+                util.convert_to_tensor(circuit_batch)[0], symbol_names,
+                symbol_values_array,
+                util.convert_to_tensor([[x] for x in pauli_sums]))
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'symbol_names must be rank 1.'):
             # symbol_names tensor has too many dimensions.
             simulate_mps.mps_1d_expectation(
@@ -903,6 +911,26 @@ class SimulateMPS1DSampledExpectationTest(tf.test.TestCase):
                 symbol_names, symbol_values_array,
                 util.convert_to_tensor([[small_pauli] for _ in pauli_sums]),
                 num_samples)
+
+    def test_simulate_mps1d_sampled_expectation_scalar_programs(self):
+        """Make sure sampled expectation op rejects a scalar programs input."""
+        batch_size = 5
+        symbol_names = ['alpha']
+        qubits = cirq.GridQubit.rect(1, 5)
+        circuit_batch = [
+            cirq.Circuit(cirq.X(qubits[0])**sympy.Symbol(symbol_names[0]))
+            for _ in range(batch_size)
+        ]
+        symbol_values_array = np.full((batch_size, 1), 0.123)
+        pauli_sums = util.random_pauli_sums(qubits, 3, batch_size)
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'programs must be rank 1. Got rank 0'):
+            simulate_mps.mps_1d_sampled_expectation(
+                util.convert_to_tensor(circuit_batch)[0], symbol_names,
+                symbol_values_array,
+                util.convert_to_tensor([[x] for x in pauli_sums]),
+                [[10]] * batch_size)
 
     def test_simulate_sampled_mps_1d_expectation_simple(self):
         """Makes sure that the op shows the same result with Cirq."""
