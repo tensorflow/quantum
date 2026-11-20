@@ -34,7 +34,16 @@ load("@local_config_python//:defs.bzl", "interpreter")
 
 register_toolchains("@local_config_python//:py_toolchain")
 
+load("//third_party:select_requirements_lock.bzl", "select_requirements_lock")
 load("@rules_python//python:pip.bzl", "pip_parse")
+
+select_requirements_lock(
+    name = "tfq_active_requirements_lock",
+    python_bin_path = interpreter,
+    requirements_lock_3_10 = "//:requirements_lock_3_10.txt",
+    requirements_lock_3_11 = "//:requirements_lock_3_11.txt",
+    requirements_lock_3_12 = "//:requirements_lock_3_12.txt",
+)
 
 pip_parse(
     name = "pypi",
@@ -43,7 +52,7 @@ pip_parse(
         "https://pypi.org/simple/",
     ],
     python_interpreter = interpreter,
-    requirements_lock = "//:requirements.txt",
+    requirements_lock = "@tfq_active_requirements_lock//:requirements.txt",
 )
 
 load("@pypi//:requirements.bzl", "install_deps")
@@ -93,8 +102,7 @@ http_archive(
 load("@org_tensorflow//third_party/py:python_repo.bzl", "python_repository")
 
 # TensorFlow 2.19 expects @python_version_repo to exist even when TFQ manages
-# its own pip_parse setup. Reuse the single lockfile across the supported
-# interpreter versions.
+# its own pip_parse setup. Provide lockfiles for each supported interpreter.
 python_repository(
     name = "python_version_repo",
     default_python_version = "system",
