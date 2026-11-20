@@ -13,7 +13,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-wget https://github.com/bazelbuild/bazel/releases/download/6.5.0/bazel_6.5.0-linux-x86_64.deb
-sudo dpkg -i bazel_6.5.0-linux-x86_64.deb
+set -e
+
+BAZEL_VERSION="6.5.0"
+
+if [[ "$(uname -s)" == "Darwin" ]]; then
+  if ! command -v bazel >/dev/null 2>&1 || [[ "$(bazel --version 2>/dev/null)" != *"${BAZEL_VERSION}"* ]]; then
+    ARCH="$(uname -m)"
+    if [[ "${ARCH}" == "arm64" ]]; then
+      BAZEL_ARCH="arm64"
+    else
+      BAZEL_ARCH="x86_64"
+    fi
+    curl -fsSL -o /tmp/bazel \
+      "https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/bazel-${BAZEL_VERSION}-darwin-${BAZEL_ARCH}"
+    chmod +x /tmp/bazel
+    sudo mkdir -p /usr/local/bin
+    sudo mv /tmp/bazel /usr/local/bin/bazel
+  fi
+else
+  wget "https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/bazel_${BAZEL_VERSION}-linux-x86_64.deb"
+  sudo dpkg -i "bazel_${BAZEL_VERSION}-linux-x86_64.deb"
+fi
+
 pip install --upgrade pip setuptools wheel
 pip install -r requirements.txt

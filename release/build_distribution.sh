@@ -71,21 +71,61 @@ while getopts "b:ehp:" opt; do
 done
 shift $((OPTIND -1))
 
-# See https://hub.docker.com/r/tensorflow/build/tags for available containers.
-docker_image="tensorflow/build:2.18-python${py_version}"
+if [[ "$(uname -s)" == "Darwin" ]]; then
+  cd "${repo_dir}"
 
-# The next values must match what is used by the TF release being targeted. Look
-# in the TF .bazelrc file for the Linux CPU builds, specifically rbe_linux_cpu.
-tf_compiler="/usr/lib/llvm-18/bin/clang"
-tf_sysroot="/dt9"
-tf_crosstool="@local_config_cuda//crosstool:toolchain"
+  if [[ -n "${PYTHON_BIN_PATH:-}" ]]; then
+    py_bin="${PYTHON_BIN_PATH}"
+  elif command -v "python${py_version}" > /dev/null 2>&1; then
+    py_bin="$(command -v "python${py_version}")"
+  else
+    py_bin="$(command -v python3)"
+  fi
 
-# Create a script to be run by the shell inside the Docker container.
-build_script=$(mktemp /tmp/tfq_build.XXXXXX)
-trap 'rm -f "${build_script}" || true' EXIT
+  printf ":::::::: Configuring Python environment (macOS) ::::::::\n\n"
+  "${py_bin}" -m pip install --upgrade pip
+  "${py_bin}" -m pip install -r requirements.txt
 
-# The printf'ed section dividers are to make it easier to search the output.
-cat <<EOF > "${build_script}"
+  printf "\n\n:::::::: Configuring TFQ build (macOS) ::::::::\n\n"
+  printf "Y\n" | PYTHON_BIN_PATH="${py_bin}" ./configure.sh
+
+  printf "\n\n:::::::: Build configuration on macOS ::::::::\n"
+  printf "  Platform:         $(uname -s) ($(uname -m))\n"
+  printf "  Python binary:    ${py_bin}\n"
+  printf "  Python version:   "
+  "${py_bin}" --version | cut -d' ' -f2
+
+  printf "\n:::::::: Starting Bazel build ::::::::\n\n"
+  # shellcheck disable=SC2086
+  bazel build \
+    --cxxopt=-O3 \
+    ${extra_bazel_options} \
+    //release:build_pip_package
+
+  printf "\n:::::::: Creating Python wheel ::::::::\n\n"
+  mkdir -p /tmp/tensorflow_quantum
+  PYTHON_BIN_PATH="${py_bin}" ./bazel-bin/release/build_pip_package /tmp/tensorflow_quantum/
+
+  if [[ "${cleanup}" == "true" ]]; then
+    printf "\n:::::::: Cleaning up ::::::::\n\n"
+    bazel clean --async
+  fi
+else
+  # See https://hub.docker.com/r/tensorflow/build/tags for available containers.
+  docker_image="tensorflow/build:2.18-python${py_version}"
+
+  # The next values must match what is used by the TF release being targeted. Look
+  # in the TF .bazelrc file for the Linux CPU builds, specifically rbe_linux_cpu.
+  tf_compiler="/usr/lib/llvm-18/bin/clang"
+  tf_sysroot="/dt9"
+  tf_crosstool="@local_config_cuda//crosstool:toolchain"
+
+  # Create a script to be run by the shell inside the Docker container.
+  build_script=$(mktemp /tmp/tfq_build.XXXXXX)
+  trap 'rm -f "${build_script}" || true' EXIT
+
+  # The printf'ed section dividers are to make it easier to search the output.
+  cat <<EOF > "${build_script}"
 #!/bin/bash
 set -o errexit
 cd /tfq
@@ -127,17 +167,18 @@ if [[ "${cleanup}" == "true" ]]; then
 fi
 EOF
 
-chmod +x "${build_script}"
+  chmod +x "${build_script}"
 
-echo "Spinning up a Docker container with ${docker_image} …"
-docker run -it --rm --network host \
-  -w /tfq \
-  -v "${repo_dir}":/tfq \
-  -v /tmp/tensorflow_quantum:/build_output \
-  -v "${build_script}:/tmp/build_script.sh" \
-  -e HOST_PERMS="$(id -u):$(id -g)" \
-  "${docker_image}" \
-  /tmp/build_script.sh
+  echo "Spinning up a Docker container with ${docker_image} …"
+  docker run -it --rm --network host \
+    -w /tfq \
+    -v "${repo_dir}":/tfq \
+    -v /tmp/tensorflow_quantum:/build_output \
+    -v "${build_script}:/tmp/build_script.sh" \
+    -e HOST_PERMS="$(id -u):$(id -g)" \
+    "${docker_image}" \
+    /tmp/build_script.sh
+fi
 
 echo "Done. Look for wheel in /tmp/tensorflow_quantum/."
 ls -l /tmp/tensorflow_quantum/
