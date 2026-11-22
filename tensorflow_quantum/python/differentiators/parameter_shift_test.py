@@ -202,6 +202,66 @@ class ParameterShiftTest(tf.test.TestCase, parameterized.TestCase):
                             atol=1e-5)
         self.assertAllEqual(expected_batch_mapper, test_batch_mapper)
 
+    def test_parameter_shift_pisp_shared_moment(self):
+        """Test analytic gradients when PISP precedes PXP and FSIM in Moment."""
+        qubits = cirq.LineQubit.range(5)
+        names = ['s0', 's1', 's2', 's3', 's4']
+        s0, s1, s2, s3, s4 = sympy.symbols(names)
+        prep = cirq.Moment(
+            cirq.rx(0.73)(qubits[0]),
+            cirq.ry(-0.91)(qubits[1]),
+            cirq.rx(0.64)(qubits[2]),
+            cirq.ry(1.13)(qubits[3]),
+            cirq.rx(-1.07)(qubits[4]),
+        )
+        pisp = cirq.PhasedISwapPowGate(phase_exponent=1.3 * s1,
+                                       exponent=0.7 * s0).on(
+                                           qubits[0], qubits[1])
+        pxp = cirq.PhasedXPowGate(phase_exponent=0.9 * s2,
+                                  exponent=0.5 * s0).on(qubits[2])
+        fsim = cirq.FSimGate(theta=0.8 * s3,
+                             phi=1.1 * s4).on(qubits[3], qubits[4])
+        joint_circuit = cirq.Circuit(prep, cirq.Moment(pisp, pxp, fsim))
+        split_circuit = cirq.Circuit(prep, cirq.Moment(pisp), cirq.Moment(pxp),
+                                     cirq.Moment(fsim))
+        psum = (
+            0.7 * cirq.X(qubits[0]) * cirq.Z(qubits[1]) * cirq.Y(qubits[2]) +
+            0.9 * cirq.Y(qubits[0]) * cirq.X(qubits[3]) +
+            0.8 * cirq.Z(qubits[1]) * cirq.X(qubits[2]) * cirq.Y(qubits[4]))
+        raw_vals = np.array([0.37, -0.41, 0.63, -0.52, 0.49], dtype=np.float64)
+
+        ps_op = parameter_shift.ParameterShift().generate_differentiable_op(
+            analytic_op=circuit_execution_ops.get_expectation_op())
+        programs = util.convert_to_tensor([joint_circuit, split_circuit])
+        symbol_names = tf.constant(names)
+        ops = util.convert_to_tensor([[psum], [psum]])
+        joint_vals = tf.constant([raw_vals], dtype=tf.float32)
+        split_vals = tf.constant([raw_vals], dtype=tf.float32)
+        with tf.GradientTape() as tape:
+            tape.watch([joint_vals, split_vals])
+            joint_exp = ps_op(programs[:1], symbol_names, joint_vals, ops[:1])
+            split_exp = ps_op(programs[1:], symbol_names, split_vals, ops[1:])
+        joint_grad, split_grad = tape.gradient([joint_exp, split_exp],
+                                               [joint_vals, split_vals])
+
+        qubit_map = {q: i for i, q in enumerate(qubits)}
+
+        def eval_exp(vec):
+            resolved = cirq.resolve_parameters(joint_circuit,
+                                               dict(zip(names, vec)))
+            state = cirq.Simulator(dtype=np.complex128).simulate(
+                resolved, qubit_order=qubits).final_state_vector
+            return psum.expectation_from_state_vector(state, qubit_map).real
+
+        eps = 1e-5
+        ref_grad = np.array([(eval_exp(raw_vals + eps * basis) -
+                              eval_exp(raw_vals - eps * basis)) / (2.0 * eps)
+                             for basis in np.eye(len(names))])
+        self.assertGreater(np.min(np.abs(ref_grad)), 1e-2)
+        self.assertAllClose(joint_exp, [[eval_exp(raw_vals)]], atol=1e-5)
+        self.assertAllClose(joint_grad, split_grad, atol=1e-5, rtol=1e-5)
+        self.assertAllClose(joint_grad, [ref_grad], atol=1e-4, rtol=1e-4)
+
 
 if __name__ == "__main__":
     tf.test.main()
