@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
+#include <algorithm>
 #include <cmath>
 #include <string>
 
@@ -79,7 +80,7 @@ class TfqPsDecomposeOp : public tensorflow::OpKernel {
                   phase_exponent.arg_case() == Arg::ArgCase::kSymbol) {
                 // Decompose cirq.PhasedISwapPowGate only if it is
                 // parameterized.
-                num_extra_moments = 5;
+                num_extra_moments = std::max(num_extra_moments, 5);
                 Operation new_op;
 
                 new_op = getOpForPISP(cur_op, 0, 0);
@@ -99,7 +100,7 @@ class TfqPsDecomposeOp : public tensorflow::OpKernel {
               auto exponent = cur_op_map.at("exponent");
               if (exponent.arg_case() == Arg::ArgCase::kSymbol) {
                 // Decompose cirq.ISwapPowGate only if it is parameterized.
-                if (num_extra_moments == 0) num_extra_moments = 1;
+                num_extra_moments = std::max(num_extra_moments, 1);
                 Operation new_op;
                 new_op = getOpForISP(cur_op, "XXP", exponent.symbol());
                 cur_moment.mutable_operations()->at(k) = new_op;
@@ -112,7 +113,7 @@ class TfqPsDecomposeOp : public tensorflow::OpKernel {
               if (exponent.arg_case() == Arg::ArgCase::kSymbol ||
                   phase_exponent.arg_case() == Arg::ArgCase::kSymbol) {
                 // Decompose cirq.PhasedXPowGate only if it is parameterized.
-                num_extra_moments = 2;
+                num_extra_moments = std::max(num_extra_moments, 2);
                 Operation new_op;
                 new_op = getOpForPXP(cur_op, "ZP", "phase_exponent", true);
                 cur_moment.mutable_operations()->at(k) = new_op;
@@ -127,7 +128,7 @@ class TfqPsDecomposeOp : public tensorflow::OpKernel {
               if (theta.arg_case() == Arg::ArgCase::kSymbol ||
                   phi.arg_case() == Arg::ArgCase::kSymbol) {
                 // Decompose cirq.FSimGate only if it is parameterized.
-                num_extra_moments = 2;
+                num_extra_moments = std::max(num_extra_moments, 2);
                 Operation new_op;
                 new_op = getOpForFSIM(cur_op, "XXP", "theta", true);
                 cur_moment.mutable_operations()->at(k) = new_op;
