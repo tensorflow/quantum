@@ -459,6 +459,19 @@ cc_library(
     ],
 )
 
+cc_test(
+    name = "tfq_simulate_utils_test",
+    size = "small",
+    srcs = ["tfq_simulate_utils_test.cc"],
+    linkstatic = 0,
+    deps = [
+        ":tfq_simulate_utils",
+        "@com_google_googletest//:gtest_main",
+        "@local_config_tf//:libtensorflow_framework",
+        "@local_config_tf//:tf_header_lib",
+    ],
+)
+
 py_library(
     name = "tfq_adj_grad_op_py",
     srcs = ["tfq_adj_grad_op.py"],
