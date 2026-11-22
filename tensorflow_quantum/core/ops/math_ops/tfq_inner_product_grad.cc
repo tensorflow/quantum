@@ -331,6 +331,8 @@ class TfqInnerProductGradOp : public tensorflow::OpKernel {
     using StateSpace = Simulator::StateSpace;
 
     const int output_dim_internal_size = other_fused_circuits[0].size();
+    const int num_params = output_tensor->dimension(1);
+    std::vector<absl::Mutex> locks(fused_circuits.size());
 
     auto DoWork = [&](int64_t start, int64_t end) {
       int64_t old_batch_index = -2;
@@ -378,6 +380,9 @@ class TfqInnerProductGradOp : public tensorflow::OpKernel {
         }
         // now sv is |psi>, scratch is |phi>
         // Start adjoint differentiation.
+        // Accumulate gradients into a thread-local vector for this item to
+        // avoid fine-grained lock contention during inner product calculation.
+        std::vector<std::complex<float>> local_grad(num_params, {0.0f, 0.0f});
         ss.Copy(sv, sv_adj);
         for (int l = partial_fused_circuits[cur_batch_index].size() - 1; l >= 0;
              l--) {
@@ -435,12 +440,18 @@ class TfqInnerProductGradOp : public tensorflow::OpKernel {
             // parameter-shift we need to apply a single `gradient_gate`
             // per a symbol.
             std::complex<double> result = ss.InnerProduct(scratch2, scratch);
-            (*output_tensor)(cur_batch_index, loc) +=
+            local_grad[loc] +=
                 (downstream_grads[cur_batch_index][cur_internal_index] *
                  std::complex<float>(static_cast<float>(result.real()),
                                      static_cast<float>(result.imag())));
           }
           ApplyGateDagger(sim, cur_gate, scratch);
+        }
+        {
+          absl::MutexLock lock_guard(&locks[cur_batch_index]);
+          for (int loc = 0; loc < num_params; loc++) {
+            (*output_tensor)(cur_batch_index, loc) += local_grad[loc];
+          }
         }
         old_batch_index = cur_batch_index;
       }
