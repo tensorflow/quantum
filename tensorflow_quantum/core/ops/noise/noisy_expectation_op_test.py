@@ -349,6 +349,72 @@ class NoisyExpectationCalculationTest(tf.test.TestCase, parameterized.TestCase):
 
         self.assertShapeEqual(np.zeros((0, 0)), out)
 
+    @parameterized.parameters([{'n_samples': 2}, {'n_samples': 16}])
+    def test_empty_circuits_mixed_batch(self, n_samples):
+        """Test empty circuits first, middle, and last with non-empty paulis."""
+        qubit = cirq.GridQubit(0, 0)
+        circuits = [
+            cirq.Circuit(),
+            cirq.Circuit(cirq.X(qubit)),
+            cirq.Circuit(),
+            cirq.Circuit(cirq.X(qubit),
+                         cirq.bit_flip(1.0).on(qubit)),
+            cirq.Circuit(),
+        ]
+        pauli_sums = [[cirq.Z(qubit), cirq.PauliSum() + 1.5]] * len(circuits)
+        num_samples = [[n_samples, n_samples]] * len(circuits)
+
+        out = noisy_expectation_op.expectation(
+            util.convert_to_tensor(circuits),
+            tf.convert_to_tensor([], dtype=tf.dtypes.string),
+            tf.convert_to_tensor([[]] * len(circuits), dtype=tf.float32),
+            util.convert_to_tensor(pauli_sums),
+            num_samples,
+        )
+        expected = np.array(
+            [
+                [-2.0, -2.0],
+                [-1.0, 1.5],
+                [-2.0, -2.0],
+                [1.0, 1.5],
+                [-2.0, -2.0],
+            ],
+            dtype=np.float32,
+        )
+        self.assertDTypeEqual(out, np.float32)
+        self.assertEqual(out.shape, expected.shape)
+        self.assertAllEqual(out, expected)
+
+    def test_all_empty_and_empty_moment_circuits(self):
+        """Test all-empty and empty-moment batches with non-empty paulis."""
+        qubit = cirq.GridQubit(0, 0)
+        empty_batch = [cirq.Circuit()] * 3
+        pauli_sums = [[cirq.Z(qubit), cirq.X(qubit)]] * 3
+        out = noisy_expectation_op.expectation(
+            util.convert_to_tensor(empty_batch),
+            tf.convert_to_tensor([], dtype=tf.dtypes.string),
+            tf.convert_to_tensor([[]] * 3, dtype=tf.float32),
+            util.convert_to_tensor(pauli_sums),
+            [[4, 4]] * 3,
+        )
+        expected = np.full((3, 2), -2.0, dtype=np.float32)
+        self.assertDTypeEqual(out, np.float32)
+        self.assertEqual(out.shape, expected.shape)
+        self.assertAllEqual(out, expected)
+
+        empty_moment = [cirq.Circuit(cirq.Moment())]
+        out_moment = noisy_expectation_op.expectation(
+            util.convert_to_tensor(empty_moment),
+            tf.convert_to_tensor([], dtype=tf.dtypes.string),
+            tf.convert_to_tensor([[]], dtype=tf.float32),
+            util.convert_to_tensor([[cirq.PauliSum() + 1.5]]),
+            [[4]],
+        )
+        expected_moment = np.array([[-2.0]], dtype=np.float32)
+        self.assertDTypeEqual(out_moment, np.float32)
+        self.assertEqual(out_moment.shape, expected_moment.shape)
+        self.assertAllEqual(out_moment, expected_moment)
+
 
 if __name__ == "__main__":
     tf.test.main()
