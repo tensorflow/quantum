@@ -18,6 +18,8 @@ limitations under the License.
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/strings/numbers.h"
+#include "absl/strings/string_view.h"
+#include "absl/synchronization/mutex.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/shape_inference.h"
 #include "tensorflow/core/framework/tensor_shape.h"
@@ -29,6 +31,7 @@ limitations under the License.
 
 namespace tfq {
 
+using ::tensorflow::Status;
 using ::tensorflow::Tensor;
 using ::tfq::proto::Arg;
 using ::tfq::proto::Moment;
@@ -79,33 +82,45 @@ class TfqPsWeightsFromSymbolOp : public tensorflow::OpKernel {
 
     std::vector<int> n_single_symbol(programs.size(), 0);
 
+    Status parse_status = ::tensorflow::Status();
+    auto p_lock = absl::Mutex();
     auto DoWork = [&](int64_t start, int64_t end) {
       for (int64_t i = start; i < end; i++) {
-        Program cur_program = programs.at(i);
+        const Program& cur_program = programs.at(i);
         for (int j = 0; j < cur_program.circuit().moments().size(); j++) {
-          Moment cur_moment = cur_program.circuit().moments().at(j);
+          const Moment& cur_moment = cur_program.circuit().moments().at(j);
           for (int k = 0; k < cur_moment.operations().size(); k++) {
-            Operation cur_op = cur_moment.operations().at(k);
+            const Operation& cur_op = cur_moment.operations().at(k);
             if (ignored_symbol_set.contains(cur_op.gate().id())) continue;
 
-            const auto &cur_op_map = *cur_op.mutable_args();
-            const auto exponent = cur_op_map.at("exponent");
+            const auto& cur_op_map = cur_op.args();
+            const auto exp_it = cur_op_map.find("exponent");
+            if (TF_PREDICT_FALSE(exp_it == cur_op_map.end())) {
+              Status local = tensorflow::errors::InvalidArgument(
+                  "Could not find arg: exponent in op.");
+              NESTED_FN_STATUS_SYNC(parse_status, local, p_lock);
+            }
+            const Arg& exponent = exp_it->second;
             if (exponent.arg_case() == Arg::ArgCase::kSymbol) {
               // this gate has parameterized exponent.
               const absl::string_view symbol_name = exponent.symbol();
-              if (!symbols_map.contains(symbol_name)) {
+              const auto sym_it = symbols_map.find(symbol_name);
+              if (TF_PREDICT_FALSE(sym_it == symbols_map.end())) {
                 // Should never happen. raise error.
-                OP_REQUIRES(context, false,
-                            tensorflow::errors::InvalidArgument(
-                                "A circuit contains a sympy.Symbol not found "
-                                "in symbols!"));
+                Status local = tensorflow::errors::InvalidArgument(
+                    "A circuit contains a sympy.Symbol not found "
+                    "in symbols!");
+                NESTED_FN_STATUS_SYNC(parse_status, local, p_lock);
+              }
+              const auto scalar_it = cur_op_map.find("exponent_scalar");
+              if (TF_PREDICT_FALSE(scalar_it == cur_op_map.end())) {
+                Status local = tensorflow::errors::InvalidArgument(
+                    "Could not find arg: exponent_scalar in op.");
+                NESTED_FN_STATUS_SYNC(parse_status, local, p_lock);
               }
               output_results.at(i)
-                  .at(symbols_map.at(symbol_name))
-                  .push_back(cur_op.args()
-                                 .at("exponent_scalar")
-                                 .arg_value()
-                                 .float_value());
+                  .at(sym_it->second)
+                  .push_back(scalar_it->second.arg_value().float_value());
             }
           }
         }
@@ -124,6 +139,7 @@ class TfqPsWeightsFromSymbolOp : public tensorflow::OpKernel {
         ->tensorflow_cpu_worker_threads()
         ->workers->TransformRangeConcurrently(block_size, programs.size(),
                                               DoWork);
+    OP_REQUIRES_OK(context, parse_status);
 
     int largest_single_symbol = 0;
     for (size_t i = 0; i < n_single_symbol.size(); i++) {

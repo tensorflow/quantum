@@ -27,6 +27,8 @@ import sympy
 import cirq
 
 from tensorflow_quantum.core.ops import tfq_ps_util_ops
+from tensorflow_quantum.core.proto import program_pb2
+from tensorflow_quantum.core.serialize import serializer
 from tensorflow_quantum.python import util
 
 
@@ -360,6 +362,37 @@ class PSDecomposeTest(tf.test.TestCase):
 
         # Circuit 3. one PXP between two ISwapPowGates.
         self.assertEqual(len(decomposed_programs[2]), max_decomposed_length)
+
+    def test_missing_required_args(self):
+        """Ensure missing required operation args raise InvalidArgumentError."""
+        program = program_pb2.Program()
+        op = program.circuit.moments.add().operations.add()
+        op.gate.id = 'PISP'
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'Could not find arg: exponent in op'):
+            tfq_ps_util_ops.tfq_ps_decompose(
+                tf.constant([program.SerializeToString()]))
+
+        t = sympy.Symbol('t')
+        r = sympy.Symbol('r')
+        q0, q1 = cirq.GridQubit.rect(1, 2)
+        cases = [
+            (cirq.PhasedISwapPowGate(exponent=t, phase_exponent=r).on(q0, q1),
+             ('exponent', 'phase_exponent')),
+            (cirq.ISwapPowGate(exponent=t).on(q0, q1), ('exponent',)),
+            (cirq.PhasedXPowGate(exponent=t, phase_exponent=r).on(q0),
+             ('exponent', 'phase_exponent')),
+            (cirq.FSimGate(theta=t, phi=r).on(q0, q1), ('theta', 'phi')),
+        ]
+        for gate_op, required_keys in cases:
+            circuit = cirq.Circuit(gate_op)
+            for key in required_keys:
+                proto = serializer.serialize_circuit(circuit)
+                del proto.circuit.moments[0].operations[0].args[key]
+                with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                            f'Could not find arg: {key} in op'):
+                    tfq_ps_util_ops.tfq_ps_decompose(
+                        tf.constant([proto.SerializeToString()]))
 
 
 class PSSymbolReplaceTest(tf.test.TestCase):
@@ -725,6 +758,19 @@ class PSWeightsFromSymbolTest(tf.test.TestCase):
         with self.assertRaisesRegex(Exception,
                                     expected_regex='rank 1. Got rank 2.'):
             tfq_ps_util_ops.tfq_ps_weights_from_symbols(inputs, symbols)
+
+    def test_missing_required_args(self):
+        """Ensure missing required operation args raise InvalidArgumentError."""
+        bit = cirq.GridQubit(0, 0)
+        circuit = cirq.Circuit(cirq.X(bit)**(sympy.Symbol('delta') * 2))
+        symbols = tf.convert_to_tensor(['delta'])
+        for key in ('exponent', 'exponent_scalar'):
+            proto = serializer.serialize_circuit(circuit)
+            del proto.circuit.moments[0].operations[0].args[key]
+            with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                        f'Could not find arg: {key} in op'):
+                tfq_ps_util_ops.tfq_ps_weights_from_symbols(
+                    tf.constant([proto.SerializeToString()]), symbols)
 
     def test_many_values(self):
         """Ensure that padding with few symbols and many values works."""

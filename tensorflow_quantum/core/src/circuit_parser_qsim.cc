@@ -133,12 +133,18 @@ inline Status ParseProtoControls(const Operation& op,
                                  const unsigned int num_qubits,
                                  std::vector<unsigned int>* control_qubits,
                                  std::vector<unsigned int>* control_values) {
-  absl::string_view control_str =
-      op.args().at("control_qubits").arg_value().string_value();
-  absl::string_view control_v_str =
-      op.args().at("control_values").arg_value().string_value();
+  absl::string_view control_str;
+  const auto cq_it = op.args().find("control_qubits");
+  if (cq_it != op.args().end()) {
+    control_str = cq_it->second.arg_value().string_value();
+  }
+  absl::string_view control_v_str;
+  const auto cv_it = op.args().find("control_values");
+  if (cv_it != op.args().end()) {
+    control_v_str = cv_it->second.arg_value().string_value();
+  }
 
-  if (control_str == "" && control_v_str == "") {
+  if (control_str.empty() && control_v_str.empty()) {
     // empty default value set in serializer.py
     return ::tensorflow::Status();
   }
