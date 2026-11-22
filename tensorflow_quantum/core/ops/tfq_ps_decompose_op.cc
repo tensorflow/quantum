@@ -62,8 +62,8 @@ class TfqPsDecomposeOp : public tensorflow::OpKernel {
 
     Status parse_status = ::tensorflow::Status();
     auto p_lock = absl::Mutex();
-    auto find_arg = [&](const Operation& op, absl::string_view key,
-                        const Arg** out) {
+    auto find_arg = [&](const Operation &op, absl::string_view key,
+                        const Arg **out) {
       const auto it = op.args().find(key);
       if (TF_PREDICT_FALSE(it == op.args().end())) {
         p_lock.Lock();
@@ -91,8 +91,8 @@ class TfqPsDecomposeOp : public tensorflow::OpKernel {
           for (int k = 0; k < cur_moment.operations().size(); k++) {
             Operation cur_op = cur_moment.operations().at(k);
             if (cur_op.gate().id() == "PISP") {
-              const Arg* exponent = nullptr;
-              const Arg* phase_exponent = nullptr;
+              const Arg *exponent = nullptr;
+              const Arg *phase_exponent = nullptr;
               if (!find_arg(cur_op, "exponent", &exponent) ||
                   !find_arg(cur_op, "phase_exponent", &phase_exponent)) {
                 return;
@@ -118,7 +118,7 @@ class TfqPsDecomposeOp : public tensorflow::OpKernel {
                 *temp_moment_list[4].add_operations() = new_op;
               }
             } else if (cur_op.gate().id() == "ISP") {
-              const Arg* exponent = nullptr;
+              const Arg *exponent = nullptr;
               if (!find_arg(cur_op, "exponent", &exponent)) {
                 return;
               }
@@ -132,8 +132,8 @@ class TfqPsDecomposeOp : public tensorflow::OpKernel {
                 *temp_moment_list[0].add_operations() = new_op;
               }
             } else if (cur_op.gate().id() == "PXP") {
-              const Arg* exponent = nullptr;
-              const Arg* phase_exponent = nullptr;
+              const Arg *exponent = nullptr;
+              const Arg *phase_exponent = nullptr;
               if (!find_arg(cur_op, "exponent", &exponent) ||
                   !find_arg(cur_op, "phase_exponent", &phase_exponent)) {
                 return;
@@ -151,8 +151,8 @@ class TfqPsDecomposeOp : public tensorflow::OpKernel {
                 *temp_moment_list[1].add_operations() = new_op;
               }
             } else if (cur_op.gate().id() == "FSIM") {
-              const Arg* theta = nullptr;
-              const Arg* phi = nullptr;
+              const Arg *theta = nullptr;
+              const Arg *phi = nullptr;
               if (!find_arg(cur_op, "theta", &theta) ||
                   !find_arg(cur_op, "phi", &phi)) {
                 return;
