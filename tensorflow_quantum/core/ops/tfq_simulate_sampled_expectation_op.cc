@@ -21,17 +21,20 @@ limitations under the License.
 #include "../qsim/lib/gates_cirq.h"
 #include "../qsim/lib/seqfor.h"
 #include "../qsim/lib/simmux.h"
+#include "absl/status/status.h"
 #include "absl/synchronization/mutex.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/shape_inference.h"
 #include "tensorflow/core/framework/tensor_shape.h"
 #include "tensorflow/core/lib/core/error_codes.pb.h"
+#include "tensorflow/core/lib/core/errors.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow/core/lib/core/threadpool.h"
 #include "tensorflow/core/lib/random/random.h"
 #include "tensorflow/core/lib/random/simple_philox.h"
 #include "tensorflow/core/util/guarded_philox_random.h"
 #include "tensorflow_quantum/core/ops/parse_context.h"
+#include "tensorflow_quantum/core/ops/tfq_simulate_utils.h"
 #include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
 #include "tensorflow_quantum/core/proto/program.pb.h"
 #include "tensorflow_quantum/core/src/util_qsim.h"
@@ -105,6 +108,10 @@ class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
             context->input(4).dim_size(1), " lists of sample sizes and ",
             context->input(3).dim_size(1), " lists of pauli sums.")));
 
+    uint64_t max_num_qubits = 0;
+    OP_REQUIRES_OK(context, GetMaxNumQubits(num_qubits, kMaxStateVectorQubits,
+                                            &max_num_qubits));
+
     // Construct qsim circuits.
     std::vector<QsimCircuit> qsim_circuits(programs.size(), QsimCircuit());
     std::vector<std::vector<qsim::GateFused<QsimGate>>> fused_circuits(
@@ -125,11 +132,6 @@ class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
     context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
         programs.size(), num_cycles, construct_f);
     OP_REQUIRES_OK(context, parse_status);
-
-    uint64_t max_num_qubits = 0;
-    for (const uint64_t num : num_qubits) {
-      max_num_qubits = std::max(max_num_qubits, num);
-    }
 
     // Cross reference with standard google cloud compute instances
     // Memory ~= 2 * num_threads * (2 * 64 * 2 ** num_qubits in circuits)
@@ -164,6 +166,7 @@ class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
     StateSpace ss = StateSpace(tfq_for);
     auto sv = ss.Create(largest_nq);
     auto scratch = ss.Create(largest_nq);
+    OP_REQUIRES_OK(context, CheckAllocated(largest_nq, sv, scratch));
 
     tensorflow::GuardedPhiloxRandom random_gen;
     random_gen.Init(tensorflow::random::New64(), tensorflow::random::New64());
@@ -183,12 +186,10 @@ class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
     for (size_t i = 0; i < fused_circuits.size(); i++) {
       uint64_t nq = num_qubits[i];
 
-      if (nq > largest_nq) {
-        // need to switch to larger statespace.
-        largest_nq = nq;
-        sv = ss.Create(largest_nq);
-        scratch = ss.Create(largest_nq);
-      }
+      OP_REQUIRES_OK(context, GrowBuffers(
+                                  nq, &largest_nq,
+                                  [&](uint64_t n) { return ss.Create(n); }, &sv,
+                                  &scratch));
       // TODO: add heuristic here so that we do not always recompute
       //  the state if there is a possibility that circuit[i] and
       //  circuit[i + 1] produce the same state.
@@ -236,9 +237,7 @@ class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
                                 ->tensorflow_cpu_worker_threads()
                                 ->workers->NumThreads();
 
-    Status compute_status = ::tensorflow::Status();
-    auto c_lock = absl::Mutex();
-    auto DoWork = [&](int64_t start, int64_t end) {
+    auto DoWork = [&](int64_t start, int64_t end) -> absl::Status {
       int64_t old_batch_index = -2;
       int64_t cur_batch_index = -1;
       uint64_t largest_nq = 1;
@@ -248,6 +247,7 @@ class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
       StateSpace ss = StateSpace(tfq_for);
       auto sv = ss.Create(largest_nq);
       auto scratch = ss.Create(largest_nq);
+      TF_RETURN_IF_ERROR(CheckAllocated(largest_nq, sv, scratch));
 
       int n_random = largest_sum * output_dim_op_size * fused_circuits.size();
       n_random /= num_threads;
@@ -270,11 +270,9 @@ class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
         if (cur_batch_index != old_batch_index) {
           // We've run into a new state vector we must compute.
           // Only compute a new state vector when we have to.
-          if (nq > largest_nq) {
-            largest_nq = nq;
-            sv = ss.Create(largest_nq);
-            scratch = ss.Create(largest_nq);
-          }
+          TF_RETURN_IF_ERROR(GrowBuffers(
+              nq, &largest_nq, [&](uint64_t n) { return ss.Create(n); }, &sv,
+              &scratch));
           // no need to update scratch_state since ComputeExpectation
           // will take care of things for us.
           ss.SetStateZero(sv);
@@ -284,24 +282,21 @@ class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
         }
 
         float exp_v = 0.0;
-        NESTED_FN_STATUS_SYNC(
-            compute_status,
-            ComputeSampledExpectationQsim(
-                pauli_sums[cur_batch_index][cur_op_index], sim, ss, sv, scratch,
-                num_samples[cur_batch_index][cur_op_index], rand_source,
-                &exp_v),
-            c_lock);
+        TF_RETURN_IF_ERROR(ComputeSampledExpectationQsim(
+            pauli_sums[cur_batch_index][cur_op_index], sim, ss, sv, scratch,
+            num_samples[cur_batch_index][cur_op_index], rand_source, &exp_v));
 
         (*output_tensor)(cur_batch_index, cur_op_index) = exp_v;
         old_batch_index = cur_batch_index;
       }
+      return absl::OkStatus();
     };
 
-    const int64_t num_cycles =
-        200 * (int64_t(1) << static_cast<int64_t>(max_num_qubits));
-    context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
-        fused_circuits.size() * output_dim_op_size, num_cycles, DoWork);
-    OP_REQUIRES_OK(context, compute_status);
+    const int64_t num_cycles = GetNumCycles(max_num_qubits);
+    OP_REQUIRES_OK(context,
+                   ParallelForRangeStatus(
+                       context, fused_circuits.size() * output_dim_op_size,
+                       num_cycles, DoWork));
   }
 };
 

@@ -19,6 +19,7 @@ limitations under the License.
 #include <bitset>
 #include <cstdint>
 #include <functional>
+#include <limits>
 #include <numeric>
 #include <random>
 #include <vector>
@@ -28,7 +29,10 @@ limitations under the License.
 #include "../qsim/lib/gate_appl.h"
 #include "../qsim/lib/gates_cirq.h"
 #include "../qsim/lib/matrix.h"
+#include "absl/status/status.h"
+#include "absl/strings/numbers.h"
 #include "tensorflow/core/framework/op_kernel.h"
+#include "tensorflow/core/lib/core/errors.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow/core/lib/random/simple_philox.h"
 #include "tensorflow/core/platform/threadpool.h"
@@ -36,6 +40,27 @@ limitations under the License.
 #include "tensorflow_quantum/core/src/circuit_parser_qsim.h"
 
 namespace tfq {
+
+namespace internal {
+
+// Parses `pair.qubit_id()` into a little-endian parity bit index in
+// `[0, state_num_qubits)`.
+inline absl::Status ParsePauliParityBitIndex(
+    const tfq::proto::PauliQubitPair& pair, const unsigned int state_num_qubits,
+    unsigned int* parity_bit_index) {
+  unsigned int location = 0;
+  if (!absl::SimpleAtoi(pair.qubit_id(), &location) ||
+      location >= state_num_qubits) {
+    return tensorflow::errors::InvalidArgument(
+        "Invalid qubit id '", pair.qubit_id(),
+        "' in PauliTerm for circuit with ", state_num_qubits, " qubits.");
+  }
+  // Parity functions use little-endian indexing.
+  *parity_bit_index = state_num_qubits - location - 1;
+  return absl::OkStatus();
+}
+
+}  // namespace internal
 
 typedef qsim::Cirq::GateCirq<float> QsimGate;
 typedef qsim::Circuit<QsimGate> QsimCircuit;
@@ -206,6 +231,13 @@ tensorflow::Status ComputeSampledExpectationQsim(
   if (num_samples == 0) {
     return ::tensorflow::Status();
   }
+  const unsigned int state_num_qubits = state.num_qubits();
+  if (state_num_qubits > std::numeric_limits<uint64_t>::digits) {
+    return tensorflow::errors::InvalidArgument(
+        "Sampled expectation supports at most ",
+        std::numeric_limits<uint64_t>::digits, " qubits. Got ",
+        state_num_qubits, ".");
+  }
   // apply the gates of the pauliterms to a copy of the state vector
   // and add up expectation value term by term.
   tensorflow::Status status = ::tensorflow::Status();
@@ -217,43 +249,32 @@ tensorflow::Status ComputeSampledExpectationQsim(
       continue;
     }
 
-    // Transform state into the measurement basis and sample it
+    // Transform state into the measurement basis and sample it.
     QsimCircuit main_circuit;
     std::vector<qsim::GateFused<QsimGate>> fused_circuit;
 
-    status = QsimZBasisCircuitFromPauliTerm(term, state.num_qubits(),
+    status = QsimZBasisCircuitFromPauliTerm(term, state_num_qubits,
                                             &main_circuit, &fused_circuit);
     if (!status.ok()) {
       return status;
     }
+    // Validate qubit ids and build bitmask before copying/sampling the state.
+    uint64_t mask = 0;
+    for (const tfq::proto::PauliQubitPair& pair : term.paulis()) {
+      unsigned int parity_bit = 0;
+      TF_RETURN_IF_ERROR(internal::ParsePauliParityBitIndex(
+          pair, state_num_qubits, &parity_bit));
+      mask |= uint64_t{1} << parity_bit;
+    }
+
     // copy from src to scratch.
     ss.Copy(state, scratch);
     for (const qsim::GateFused<QsimGate>& fused_gate : fused_circuit) {
       qsim::ApplyFusedGate(sim, fused_gate, scratch);
     }
 
-    if (!status.ok()) {
-      return status;
-    }
     std::vector<uint64_t> state_samples =
         ss.Sample(scratch, num_samples, random_source.Rand32());
-
-    // Find qubits on which to measure parity
-    std::vector<unsigned int> parity_bits;
-    for (const tfq::proto::PauliQubitPair& pair : term.paulis()) {
-      unsigned int location;
-      // GridQubit id should be parsed down to integer at this upstream
-      //  so it is safe to just use atoi.
-      (void)absl::SimpleAtoi(pair.qubit_id(), &location);
-      // Parity functions use little-endian indexing
-      parity_bits.push_back(state.num_qubits() - location - 1);
-    }
-
-    // Compute the BitMask.
-    uint64_t mask = 0;
-    for (const unsigned int parity_bit : parity_bits) {
-      mask |= uint64_t(1) << uint64_t(parity_bit);
-    }
 
     // Compute the running parity.
     int parity_total(0);
@@ -290,6 +311,14 @@ tensorflow::Status ComputeMPSSampledExpectationQsim(
   if (num_samples == 0) {
     return ::tensorflow::Status();
   }
+  const unsigned int state_num_qubits = state.num_qubits();
+  if (state_num_qubits >
+      static_cast<unsigned int>(std::numeric_limits<int>::max())) {
+    return tensorflow::errors::InvalidArgument(
+        "MPS sampled expectation supports at most ",
+        std::numeric_limits<int>::max(), " qubits. Got ", state_num_qubits,
+        ".");
+  }
   // apply the gates of the pauliterms to a copy of the state vector
   // and add up expectation value term by term.
   tensorflow::Status status = ::tensorflow::Status();
@@ -305,37 +334,32 @@ tensorflow::Status ComputeMPSSampledExpectationQsim(
     QsimCircuit main_circuit;
     std::vector<qsim::GateFused<QsimGate>> fused_circuit;
 
-    status = QsimZBasisCircuitFromPauliTerm(term, state.num_qubits(),
-                                            &main_circuit, &fused_circuit);
+    status =
+        QsimZBasisCircuitFromPauliTerm(term, static_cast<int>(state_num_qubits),
+                                       &main_circuit, &fused_circuit);
     if (!status.ok()) {
       return status;
     }
+    // Validate qubit ids and build bitmask before copying/sampling the state.
+    std::vector<bool> mask(state_num_qubits, false);
+    for (const tfq::proto::PauliQubitPair& pair : term.paulis()) {
+      unsigned int parity_bit = 0;
+      TF_RETURN_IF_ERROR(internal::ParsePauliParityBitIndex(
+          pair, state_num_qubits, &parity_bit));
+      mask[parity_bit] = true;
+    }
+
     // copy from src to scratch.
     ss.Copy(state, scratch);
     for (const auto& unfused_gate : main_circuit.gates) {
       qsim::ApplyGate(sim, unfused_gate, scratch);
     }
 
-    if (!status.ok()) {
-      return status;
-    }
     std::vector<std::vector<bool>> state_samples(num_samples,
                                                  std::vector<bool>({}));
 
     ss.Sample(scratch, scratch2, scratch3, num_samples, random_source.Rand32(),
               &state_samples);
-
-    // Find qubits on which to measure parity and compute the BitMask.
-    const unsigned int max_num_qubits = state.num_qubits();
-    std::vector<bool> mask(max_num_qubits, false);
-    for (const tfq::proto::PauliQubitPair& pair : term.paulis()) {
-      unsigned int location;
-      // GridQubit id should be parsed down to integer at this upstream
-      //  so it is safe to just use atoi.
-      (void)absl::SimpleAtoi(pair.qubit_id(), &location);
-      // Parity functions use little-endian indexing
-      mask[max_num_qubits - location - 1] = 1;
-    }
 
     // Compute the running parity.
     int parity_total(0);

@@ -21,14 +21,17 @@ limitations under the License.
 #include "../qsim/lib/gates_cirq.h"
 #include "../qsim/lib/seqfor.h"
 #include "../qsim/lib/simmux.h"
+#include "absl/status/status.h"
 #include "absl/synchronization/mutex.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/shape_inference.h"
 #include "tensorflow/core/framework/tensor_shape.h"
 #include "tensorflow/core/lib/core/error_codes.pb.h"
+#include "tensorflow/core/lib/core/errors.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow/core/lib/core/threadpool.h"
 #include "tensorflow_quantum/core/ops/parse_context.h"
+#include "tensorflow_quantum/core/ops/tfq_simulate_utils.h"
 #include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
 #include "tensorflow_quantum/core/proto/program.pb.h"
 #include "tensorflow_quantum/core/src/adj_util.h"
@@ -92,6 +95,10 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
                     programs.size(), " circuits and ", maps.size(),
                     " symbol values.")));
 
+    uint64_t max_num_qubits = 0;
+    OP_REQUIRES_OK(context, GetMaxNumQubits(num_qubits, kMaxStateVectorQubits,
+                                            &max_num_qubits));
+
     // Construct qsim circuits.
     std::vector<QsimCircuit> qsim_circuits(programs.size(), QsimCircuit());
     std::vector<std::vector<qsim::GateFused<QsimGate>>> full_fuse(
@@ -144,11 +151,6 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
             context->input(4).dim_size(1), " gradient entries and ",
             context->input(3).dim_size(1), " paulis per circuit.")));
 
-    uint64_t max_num_qubits = 0;
-    for (const uint64_t num : num_qubits) {
-      max_num_qubits = std::max(max_num_qubits, num);
-    }
-
     output_tensor.setZero();
 
     // Cross reference with standard google cloud compute instances
@@ -187,7 +189,7 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
     using Simulator = qsim::Simulator<const qsim::SequentialFor&>;
     using StateSpace = Simulator::StateSpace;
 
-    auto DoWork = [&](int64_t start, int64_t end) {
+    auto DoWork = [&](int64_t start, int64_t end) -> absl::Status {
       // Begin simulation.
       uint64_t largest_nq = 1;
       Simulator sim = Simulator(tfq_for);
@@ -195,16 +197,13 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
       auto sv = ss.Create(largest_nq);
       auto scratch = ss.Create(largest_nq);
       auto scratch2 = ss.Create(largest_nq);
+      TF_RETURN_IF_ERROR(CheckAllocated(largest_nq, sv, scratch, scratch2));
 
       for (int64_t i = start; i < end; i++) {
         uint64_t nq = num_qubits[i];
-        if (nq > largest_nq) {
-          // need to switch to larger statespace.
-          largest_nq = nq;
-          sv = ss.Create(largest_nq);
-          scratch = ss.Create(largest_nq);
-          scratch2 = ss.Create(largest_nq);
-        }
+        TF_RETURN_IF_ERROR(GrowBuffers(
+            nq, &largest_nq, [&](uint64_t n) { return ss.Create(n); }, &sv,
+            &scratch, &scratch2));
 
         // (#679) Just ignore empty program
         if (qsim_circuits[i].gates.size() == 0) {
@@ -275,12 +274,13 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
           ApplyGateDagger(sim, cur_gate, scratch);
         }
       }
+      return absl::OkStatus();
     };
 
-    const int64_t num_cycles =
-        200 * (int64_t(1) << static_cast<int64_t>(max_num_qubits));
-    context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
-        qsim_circuits.size(), num_cycles, DoWork);
+    const int64_t num_cycles = GetNumCycles(max_num_qubits);
+    OP_REQUIRES_OK(context,
+                   ParallelForRangeStatus(context, qsim_circuits.size(),
+                                          num_cycles, DoWork));
   }
 
   void ComputeLarge(
@@ -307,17 +307,15 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
     auto sv = ss.Create(largest_nq);
     auto scratch = ss.Create(largest_nq);
     auto scratch2 = ss.Create(largest_nq);
+    OP_REQUIRES_OK(context, CheckAllocated(largest_nq, sv, scratch, scratch2));
 
     for (size_t i = 0; i < partial_fused_circuits.size(); i++) {
       uint64_t nq = num_qubits[i];
 
-      if (nq > largest_nq) {
-        // need to switch to larger statespace.
-        largest_nq = nq;
-        sv = ss.Create(largest_nq);
-        scratch = ss.Create(largest_nq);
-        scratch2 = ss.Create(largest_nq);
-      }
+      OP_REQUIRES_OK(context, GrowBuffers(
+                                  nq, &largest_nq,
+                                  [&](uint64_t n) { return ss.Create(n); }, &sv,
+                                  &scratch, &scratch2));
 
       // (#679) Just ignore empty program
       if (qsim_circuits[i].gates.size() == 0) {

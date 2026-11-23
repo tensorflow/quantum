@@ -24,11 +24,16 @@ limitations under the License.
 #include "../qsim/lib/fuser.h"
 #include "../qsim/lib/gates_cirq.h"
 #include "absl/container/flat_hash_map.h"
+#include "absl/strings/string_view.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
 #include "tensorflow_quantum/core/proto/program.pb.h"
 
 namespace tfq {
+
+// Prefix used when circuit parsing fails to find a symbol in the parameter map.
+inline constexpr absl::string_view kMissingSymbolErrorPrefix =
+    "Could not find symbol in parameter map: ";
 
 enum GateParamNames { kExponent = 0, kPhaseExponent, kTheta, kPhi };
 

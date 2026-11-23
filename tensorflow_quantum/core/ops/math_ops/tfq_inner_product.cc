@@ -21,15 +21,20 @@ limitations under the License.
 #include "../qsim/lib/gates_cirq.h"
 #include "../qsim/lib/seqfor.h"
 #include "../qsim/lib/simmux.h"
+#include "absl/status/status.h"
+#include "absl/strings/match.h"
 #include "absl/synchronization/mutex.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/shape_inference.h"
 #include "tensorflow/core/framework/tensor_shape.h"
 #include "tensorflow/core/lib/core/error_codes.pb.h"
+#include "tensorflow/core/lib/core/errors.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow/core/lib/core/threadpool.h"
 #include "tensorflow_quantum/core/ops/parse_context.h"
+#include "tensorflow_quantum/core/ops/tfq_simulate_utils.h"
 #include "tensorflow_quantum/core/proto/program.pb.h"
+#include "tensorflow_quantum/core/src/circuit_parser_qsim.h"
 #include "tensorflow_quantum/core/src/util_qsim.h"
 
 namespace tfq {
@@ -87,6 +92,10 @@ class TfqInnerProductOp : public tensorflow::OpKernel {
                     programs.size(), " circuits and ", maps.size(),
                     " symbol values.")));
 
+    uint64_t max_num_qubits = 0;
+    OP_REQUIRES_OK(context, GetMaxNumQubits(num_qubits, kMaxStateVectorQubits,
+                                            &max_num_qubits));
+
     // Construct qsim circuits for programs.
     std::vector<QsimCircuit> qsim_circuits(programs.size(), QsimCircuit());
     std::vector<QsimFusedCircuit> fused_circuits(programs.size(),
@@ -132,15 +141,13 @@ class TfqInnerProductOp : public tensorflow::OpKernel {
         output_dim_batch_size * output_dim_internal_size, num_cycles,
         construct_f2);
     if (!parse_status.ok()) {
-      OP_REQUIRES_OK(context,
-                     tensorflow::errors::InvalidArgument(absl::StrCat(
-                         "Found symbols in other_programs.",
-                         "No symbols are allowed in these circuits.")));
-    }
-
-    uint64_t max_num_qubits = 0;
-    for (const uint64_t num : num_qubits) {
-      max_num_qubits = std::max(max_num_qubits, num);
+      if (absl::StartsWith(parse_status.message(), kMissingSymbolErrorPrefix)) {
+        OP_REQUIRES_OK(context,
+                       tensorflow::errors::InvalidArgument(
+                           "Found symbols in other_programs."
+                           "No symbols are allowed in these circuits."));
+      }
+      OP_REQUIRES_OK(context, parse_status);
     }
 
     // Cross reference with standard google cloud compute instances
@@ -175,18 +182,17 @@ class TfqInnerProductOp : public tensorflow::OpKernel {
     StateSpace ss = StateSpace(tfq_for);
     auto sv = ss.Create(largest_nq);
     auto scratch = ss.Create(largest_nq);
+    OP_REQUIRES_OK(context, CheckAllocated(largest_nq, sv, scratch));
 
     // Simulate programs one by one. Parallelizing over state vectors
     // we no longer parallelize over circuits. Each time we encounter a
     // a larger circuit we will grow the Statevector as necessary.
     for (size_t i = 0; i < fused_circuits.size(); i++) {
       uint64_t nq = num_qubits[i];
-      if (nq > largest_nq) {
-        // need to switch to larger statespace.
-        largest_nq = nq;
-        sv = ss.Create(largest_nq);
-        scratch = ss.Create(largest_nq);
-      }
+      OP_REQUIRES_OK(context, GrowBuffers(
+                                  nq, &largest_nq,
+                                  [&](uint64_t n) { return ss.Create(n); }, &sv,
+                                  &scratch));
       // TODO: add heuristic here so that we do not always recompute
       //  the state if there is a possibility that circuit[i] and
       //  circuit[i + 1] produce the same state.
@@ -226,7 +232,7 @@ class TfqInnerProductOp : public tensorflow::OpKernel {
 
     const int output_dim_internal_size = output_tensor->dimension(1);
 
-    auto DoWork = [&](int64_t start, int64_t end) {
+    auto DoWork = [&](int64_t start, int64_t end) -> absl::Status {
       int64_t old_batch_index = -2;
       int64_t cur_batch_index = -1;
       uint64_t largest_nq = 1;
@@ -236,6 +242,7 @@ class TfqInnerProductOp : public tensorflow::OpKernel {
       StateSpace ss = StateSpace(tfq_for);
       auto sv = ss.Create(largest_nq);
       auto scratch = ss.Create(largest_nq);
+      TF_RETURN_IF_ERROR(CheckAllocated(largest_nq, sv, scratch));
       for (int64_t i = start; i < end; i++) {
         cur_batch_index = i / output_dim_internal_size;
         cur_internal_index = i % output_dim_internal_size;
@@ -252,11 +259,9 @@ class TfqInnerProductOp : public tensorflow::OpKernel {
         if (cur_batch_index != old_batch_index) {
           // We've run into a new state vector we must compute.
           // Only compute a new state vector when we have to.
-          if (nq > largest_nq) {
-            largest_nq = nq;
-            sv = ss.Create(largest_nq);
-            scratch = ss.Create(largest_nq);
-          }
+          TF_RETURN_IF_ERROR(GrowBuffers(
+              nq, &largest_nq, [&](uint64_t n) { return ss.Create(n); }, &sv,
+              &scratch));
           // no need to update scratch_state since ComputeExpectation
           // will take care of things for us.
           ss.SetStateZero(sv);
@@ -282,12 +287,14 @@ class TfqInnerProductOp : public tensorflow::OpKernel {
 
         old_batch_index = cur_batch_index;
       }
+      return absl::OkStatus();
     };
 
-    const int64_t num_cycles =
-        200 * (int64_t(1) << static_cast<int64_t>(max_num_qubits));
-    context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
-        fused_circuits.size() * output_dim_internal_size, num_cycles, DoWork);
+    const int64_t num_cycles = GetNumCycles(max_num_qubits);
+    OP_REQUIRES_OK(
+        context, ParallelForRangeStatus(
+                     context, fused_circuits.size() * output_dim_internal_size,
+                     num_cycles, DoWork));
   }
 };
 

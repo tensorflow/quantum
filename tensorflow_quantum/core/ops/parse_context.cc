@@ -17,11 +17,14 @@ limitations under the License.
 
 #include <google/protobuf/text_format.h>
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
+#include "absl/status/status.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/lib/core/error_codes.pb.h"
+#include "tensorflow/core/lib/core/errors.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow/core/lib/core/threadpool.h"
 #include "tensorflow_quantum/core/ops/tfq_simulate_utils.h"
@@ -74,21 +77,15 @@ Status ParsePrograms(OpKernelContext* context, const std::string& input_name,
   }
 
   const auto program_strings = input->vec<tensorflow::tstring>();
-  const int num_programs = program_strings.dimension(0);
+  const int64_t num_programs = program_strings.dimension(0);
   programs->assign(num_programs, Program());
-
-  auto DoWork = [&](int64_t start, int64_t end) {
-    for (int64_t i = start; i < end; i++) {
-      OP_REQUIRES_OK(context, ParseProto(program_strings(i), &programs->at(i)));
-    }
-  };
 
   // TODO(mbbrough): Determine if this is a good cycle estimate.
   const int cycle_estimate = 1000;
-  context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
-      num_programs, cycle_estimate, DoWork);
-
-  return ::tensorflow::Status();
+  return ParallelForStatus(
+      context, num_programs, cycle_estimate, [&](int64_t i) -> absl::Status {
+        return ParseProto(program_strings(i), &programs->at(i));
+      });
 }
 
 Status ParsePrograms2D(OpKernelContext* context, const std::string& input_name,
@@ -108,25 +105,18 @@ Status ParsePrograms2D(OpKernelContext* context, const std::string& input_name,
   }
 
   const auto program_strings = input->matrix<tensorflow::tstring>();
-  const int num_programs = program_strings.dimension(0);
-  const int num_entries = program_strings.dimension(1);
+  const int64_t num_programs = program_strings.dimension(0);
+  const int64_t num_entries = program_strings.dimension(1);
   programs->assign(num_programs, std::vector<Program>(num_entries, Program()));
-
-  auto DoWork = [&](int64_t start, int64_t end) {
-    for (int64_t i = start; i < end; i++) {
-      OP_REQUIRES_OK(
-          context,
-          ParseProto(program_strings(i / num_entries, i % num_entries),
-                     &programs->at(i / num_entries).at(i % num_entries)));
-    }
-  };
 
   // TODO(mbbrough): Determine if this is a good cycle estimate.
   const int cycle_estimate = 1000;
-  context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
-      num_programs * num_entries, cycle_estimate, DoWork);
-
-  return ::tensorflow::Status();
+  return ParallelForStatus(
+      context, num_programs * num_entries, cycle_estimate,
+      [&](int64_t i) -> absl::Status {
+        return ParseProto(program_strings(i / num_entries, i % num_entries),
+                          &programs->at(i / num_entries).at(i % num_entries));
+      });
 }
 
 Status GetProgramsAndProgramsToAppend(
@@ -181,28 +171,21 @@ Status GetProgramsAndNumQubits(
 
   // Resolve qubit ID's in parallel.
   num_qubits->assign(programs->size(), -1);
-  auto DoWork = [&](int64_t start, int64_t end) {
-    for (int64_t i = start; i < end; i++) {
-      Program& program = (*programs)[i];
-      unsigned int this_num_qubits;
-      if (p_sums) {
-        OP_REQUIRES_OK(context,
-                       ResolveQubitIds(&program, &this_num_qubits,
-                                       &(p_sums->at(i)), swap_endianness));
-      } else {
-        OP_REQUIRES_OK(context, ResolveQubitIds(&program, &this_num_qubits,
-                                                nullptr, swap_endianness));
-      }
-      (*num_qubits)[i] = this_num_qubits;
-    }
-  };
-
   // TODO(mbbrough): Determine if this is a good cycle estimate.
   const int cycle_estimate = 1000;
-  context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
-      num_qubits->size(), cycle_estimate, DoWork);
-
-  return ::tensorflow::Status();
+  return ParallelForStatus(
+      context, num_qubits->size(), cycle_estimate,
+      [&](int64_t i) -> absl::Status {
+        Program& program = (*programs)[i];
+        unsigned int this_num_qubits = 0;
+        TF_RETURN_IF_ERROR(p_sums ? ResolveQubitIds(&program, &this_num_qubits,
+                                                    &(p_sums->at(i)),
+                                                    swap_endianness)
+                                  : ResolveQubitIds(&program, &this_num_qubits,
+                                                    nullptr, swap_endianness));
+        (*num_qubits)[i] = static_cast<int>(this_num_qubits);
+        return absl::OkStatus();
+      });
 }
 
 tensorflow::Status GetProgramsAndNumQubits(
@@ -232,22 +215,18 @@ tensorflow::Status GetProgramsAndNumQubits(
 
   // Resolve qubit ID's in parallel.
   num_qubits->assign(programs->size(), -1);
-  auto DoWork = [&](int64_t start, int64_t end) {
-    for (int64_t i = start; i < end; i++) {
-      Program& program = (*programs)[i];
-      unsigned int this_num_qubits;
-      OP_REQUIRES_OK(context, ResolveQubitIds(&program, &this_num_qubits,
-                                              &(*other_programs)[i]));
-      (*num_qubits)[i] = this_num_qubits;
-    }
-  };
-
   // TODO(mbbrough): Determine if this is a good cycle estimate.
   const int cycle_estimate = 1000;
-  context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
-      num_qubits->size(), cycle_estimate, DoWork);
-
-  return ::tensorflow::Status();
+  return ParallelForStatus(
+      context, num_qubits->size(), cycle_estimate,
+      [&](int64_t i) -> absl::Status {
+        Program& program = (*programs)[i];
+        unsigned int this_num_qubits = 0;
+        TF_RETURN_IF_ERROR(
+            ResolveQubitIds(&program, &this_num_qubits, &(*other_programs)[i]));
+        (*num_qubits)[i] = static_cast<int>(this_num_qubits);
+        return absl::OkStatus();
+      });
 }
 
 Status GetPauliSums(OpKernelContext* context,
@@ -269,23 +248,20 @@ Status GetPauliSums(OpKernelContext* context,
   const auto sum_specs = input->matrix<tensorflow::tstring>();
   p_sums->assign(sum_specs.dimension(0),
                  std::vector<PauliSum>(sum_specs.dimension(1), PauliSum()));
-  const int op_dim = sum_specs.dimension(1);
-  auto DoWork = [&](int64_t start, int64_t end) {
-    for (int64_t ii = start; ii < end; ii++) {
-      const int i = ii / op_dim;
-      const int j = ii % op_dim;
-      PauliSum p;
-      OP_REQUIRES_OK(context, ParseProto(sum_specs(i, j), &p));
-      (*p_sums)[i][j] = p;
-    }
-  };
-
+  const int64_t op_dim = sum_specs.dimension(1);
   // TODO(mbbrough): Determine if this is a good cycle estimate.
   const int cycle_estimate = 1000;
-  context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
-      sum_specs.dimension(0) * sum_specs.dimension(1), cycle_estimate, DoWork);
-
-  return ::tensorflow::Status();
+  return ParallelForStatus(
+      context,
+      static_cast<int64_t>(sum_specs.dimension(0)) * sum_specs.dimension(1),
+      cycle_estimate, [&](int64_t ii) -> absl::Status {
+        const int64_t i = ii / op_dim;
+        const int64_t j = ii % op_dim;
+        PauliSum p;
+        TF_RETURN_IF_ERROR(ParseProto(sum_specs(i, j), &p));
+        (*p_sums)[i][j] = p;
+        return absl::OkStatus();
+      });
 }
 
 Status GetSymbolMaps(OpKernelContext* context, std::vector<SymbolMap>* maps) {

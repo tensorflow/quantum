@@ -83,6 +83,7 @@ cc_binary(
         "//tensorflow_quantum/core/src:circuit_parser_qsim",
         "//tensorflow_quantum/core/src:util_qsim",
         "@com_google_absl//absl/functional:any_invocable",
+        "@com_google_absl//absl/strings",
         "@qsim//lib:mps_simulator",
         "@qsim//lib:mps_statespace",
         "@qsim//lib:qsim_lib",

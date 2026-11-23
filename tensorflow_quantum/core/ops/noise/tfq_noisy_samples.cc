@@ -28,17 +28,20 @@ limitations under the License.
 #include "../qsim/lib/qtrajectory.h"
 #include "../qsim/lib/seqfor.h"
 #include "../qsim/lib/simmux.h"
+#include "absl/status/status.h"
 #include "absl/synchronization/mutex.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/shape_inference.h"
 #include "tensorflow/core/framework/tensor_shape.h"
 #include "tensorflow/core/lib/core/error_codes.pb.h"
+#include "tensorflow/core/lib/core/errors.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow/core/lib/core/threadpool.h"
 #include "tensorflow/core/lib/random/random.h"
 #include "tensorflow/core/lib/random/simple_philox.h"
 #include "tensorflow/core/util/guarded_philox_random.h"
 #include "tensorflow_quantum/core/ops/parse_context.h"
+#include "tensorflow_quantum/core/ops/tfq_simulate_utils.h"
 #include "tensorflow_quantum/core/proto/program.pb.h"
 #include "tensorflow_quantum/core/src/circuit_parser_qsim.h"
 #include "tensorflow_quantum/core/src/util_balance_trajectory.h"
@@ -80,6 +83,10 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
     int num_samples = 0;
     OP_REQUIRES_OK(context, GetIndividualSample(context, &num_samples));
 
+    uint64_t max_num_qubits = 0;
+    OP_REQUIRES_OK(context, GetMaxNumQubits(num_qubits, kMaxStateVectorQubits,
+                                            &max_num_qubits));
+
     // Construct qsim circuits.
     std::vector<NoisyQsimCircuit> qsim_circuits(programs.size(),
                                                 NoisyQsimCircuit());
@@ -99,16 +106,13 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
         programs.size(), num_cycles, construct_f);
     OP_REQUIRES_OK(context, parse_status);
 
-    uint64_t max_num_qubits = 0;
-    for (const uint64_t num : num_qubits) {
-      max_num_qubits = std::max(max_num_qubits, num);
-    }
-
     const size_t output_dim_size = maps.size();
     tensorflow::TensorShape output_shape;
-    output_shape.AddDim(output_dim_size);
-    output_shape.AddDim(num_samples);
-    output_shape.AddDim(max_num_qubits);
+    OP_REQUIRES_OK(context,
+                   tensorflow::TensorShape::BuildTensorShape(
+                       {static_cast<int64_t>(output_dim_size), num_samples,
+                        static_cast<int64_t>(max_num_qubits)},
+                       &output_shape));
 
     tensorflow::Tensor* output = nullptr;
     OP_REQUIRES_OK(context, context->allocate_output(0, output_shape, &output));
@@ -151,6 +155,7 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
     Simulator sim = Simulator(tfq_for);
     StateSpace ss = StateSpace(tfq_for);
     auto sv = ss.Create(largest_nq);
+    OP_REQUIRES_OK(context, CheckAllocated(largest_nq, sv));
 
     tensorflow::GuardedPhiloxRandom random_gen;
     random_gen.Init(tensorflow::random::New64(), tensorflow::random::New64());
@@ -164,11 +169,10 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
     for (size_t i = 0; i < ncircuits.size(); i++) {
       uint64_t nq = num_qubits[i];
 
-      if (nq > largest_nq) {
-        // need to switch to larger statespace.
-        largest_nq = nq;
-        sv = ss.Create(largest_nq);
-      }
+      OP_REQUIRES_OK(
+          context,
+          GrowBuffers(
+              nq, &largest_nq, [&](uint64_t n) { return ss.Create(n); }, &sv));
 
       QTSimulator::Parameter param;
       param.collect_kop_stat = false;
@@ -240,13 +244,14 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
     tensorflow::GuardedPhiloxRandom random_gen;
     random_gen.Init(tensorflow::random::New64(), tensorflow::random::New64());
 
-    auto DoWork = [&](int64_t start, int64_t end) {
+    auto DoWork = [&](int64_t start, int64_t end) -> absl::Status {
       // Begin simulation.
       const auto tfq_for = qsim::SequentialFor(1);
       uint64_t largest_nq = 1;
       Simulator sim = Simulator(tfq_for);
       StateSpace ss = StateSpace(tfq_for);
       auto sv = ss.Create(largest_nq);
+      TF_RETURN_IF_ERROR(CheckAllocated(largest_nq, sv));
 
       int needed_random =
           4 * (num_samples * ncircuits.size() + num_threads) / num_threads;
@@ -262,10 +267,8 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
           continue;
         }
 
-        if (nq > largest_nq) {
-          largest_nq = nq;
-          sv = ss.Create(largest_nq);
-        }
+        TF_RETURN_IF_ERROR(GrowBuffers(
+            nq, &largest_nq, [&](uint64_t n) { return ss.Create(n); }, &sv));
         QTSimulator::Parameter param;
         param.collect_kop_stat = false;
         param.collect_mea_stat = true;
@@ -305,14 +308,15 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
           }
         }
       }
+      return absl::OkStatus();
     };
 
     // block_size = 1.
     tensorflow::thread::ThreadPool::SchedulingParams scheduling_params(
         tensorflow::thread::ThreadPool::SchedulingStrategy::kFixedBlockSize,
         absl::nullopt, 1);
-    context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
-        num_threads, scheduling_params, DoWork);
+    OP_REQUIRES_OK(context, ParallelForRangeStatus(context, num_threads,
+                                                   scheduling_params, DoWork));
   }
 };
 

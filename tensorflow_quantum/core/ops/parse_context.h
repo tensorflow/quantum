@@ -16,9 +16,24 @@ limitations under the License.
 #ifndef TFQ_CORE_OPS_PARSE_CONTEXT
 #define TFQ_CORE_OPS_PARSE_CONTEXT
 
-#include "absl/synchronization/mutex.h"
+#include <cstdint>
+#include <string>
+#include <utility>
+#include <vector>
 
-// Syncs a threads work status with some global status.
+#include "absl/container/flat_hash_map.h"
+#include "absl/status/status.h"
+#include "absl/synchronization/mutex.h"
+#include "tensorflow/core/framework/device_base.h"
+#include "tensorflow/core/framework/op_kernel.h"
+#include "tensorflow/core/lib/core/status.h"
+#include "tensorflow/core/lib/core/threadpool.h"
+#include "tensorflow/core/platform/macros.h"
+#include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
+#include "tensorflow_quantum/core/proto/program.pb.h"
+
+// Legacy helper for existing construct_f and tfq_resolve_parameters_op sites
+// (new code should use ParallelForRangeStatus or ParallelForStatus).
 #define NESTED_FN_STATUS_SYNC(global_status, local_status, global_lock) \
   if (TF_PREDICT_FALSE(!local_status.ok())) {                           \
     global_lock.Lock();                                                 \
@@ -27,16 +42,80 @@ limitations under the License.
     return;                                                             \
   }
 
-#include <string>
-#include <vector>
-
-#include "absl/container/flat_hash_map.h"
-#include "tensorflow/core/framework/op_kernel.h"
-#include "tensorflow/core/lib/core/status.h"
-#include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
-#include "tensorflow_quantum/core/proto/program.pb.h"
-
 namespace tfq {
+
+namespace internal {
+
+template <typename Sched, typename Fn>
+inline absl::Status RunParallelForRangeStatus(
+    tensorflow::OpKernelContext* context, const int64_t total,
+    const Sched& sched, const Fn& fn) {
+  if (total <= 0) {
+    return absl::OkStatus();
+  }
+  absl::Status status = absl::OkStatus();
+  absl::Mutex mu;
+  context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
+      total, sched, [&](int64_t start, int64_t end) {
+        absl::Status local = fn(start, end);
+        if (TF_PREDICT_FALSE(!local.ok())) {
+          absl::MutexLock lock(&mu);
+          if (status.ok()) {
+            status = std::move(local);
+          }
+        }
+      });
+  return status;
+}
+
+}  // namespace internal
+
+// Runs `fn(start, end)` across CPU worker threads using `cost_per_unit` and
+// returns OkStatus or the first non-OK status recorded across worker threads
+// (not necessarily lowest-index; sibling shards run to completion). Requires a
+// valid `context` with initialized CPU worker threads.
+template <typename Fn>
+inline absl::Status ParallelForRangeStatus(tensorflow::OpKernelContext* context,
+                                           const int64_t total,
+                                           const int64_t cost_per_unit,
+                                           const Fn& fn) {
+  return internal::RunParallelForRangeStatus(context, total, cost_per_unit, fn);
+}
+
+// Runs `fn(start, end)` across CPU worker threads using `scheduling_params`
+// and returns OkStatus or the first non-OK status recorded across worker
+// threads (not necessarily lowest-index; sibling shards run to completion).
+// Requires a valid `context` with initialized CPU worker threads.
+template <typename Fn>
+inline absl::Status ParallelForRangeStatus(
+    tensorflow::OpKernelContext* context, const int64_t total,
+    const tensorflow::thread::ThreadPool::SchedulingParams& scheduling_params,
+    const Fn& fn) {
+  return internal::RunParallelForRangeStatus(context, total, scheduling_params,
+                                             fn);
+}
+
+// Runs `fn(i)` for `i` in `[0, total)` across CPU worker threads and returns
+// OkStatus or the first non-OK status recorded across worker threads (exiting
+// each shard on its first error; sibling shards run to completion). Requires a
+// valid `context` with initialized CPU worker threads.
+template <typename Fn>
+inline absl::Status ParallelForStatus(tensorflow::OpKernelContext* context,
+                                      const int64_t total,
+                                      const int64_t cost_per_unit,
+                                      const Fn& fn) {
+  return ParallelForRangeStatus(
+      context, total, cost_per_unit,
+      [&](int64_t start, int64_t end) -> absl::Status {
+        for (int64_t i = start; i < end; i++) {
+          absl::Status local = fn(i);
+          if (TF_PREDICT_FALSE(!local.ok())) {
+            return local;
+          }
+        }
+        return absl::OkStatus();
+      });
+}
 
 // Simplest Program proto parsing
 tensorflow::Status ParsePrograms(tensorflow::OpKernelContext* context,

@@ -27,6 +27,7 @@ limitations under the License.
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow/core/lib/core/threadpool.h"
 #include "tensorflow_quantum/core/ops/parse_context.h"
+#include "tensorflow_quantum/core/ops/tfq_simulate_utils.h"
 #include "tensorflow_quantum/core/proto/program.pb.h"
 #include "tensorflow_quantum/core/src/circuit_parser_qsim.h"
 #include "tensorflow_quantum/core/src/util_qsim.h"
@@ -63,6 +64,10 @@ class TfqCalculateUnitaryOp : public tensorflow::OpKernel {
             "Number of circuits and values do not match. Got ", programs.size(),
             " circuits and ", maps.size(), " values.")));
 
+    uint64_t max_num_qubits = 0;
+    OP_REQUIRES_OK(context, GetMaxNumQubits(num_qubits, kMaxUnitaryQubits,
+                                            &max_num_qubits));
+
     // Construct qsim circuits.
     std::vector<QsimCircuit> qsim_circuits(programs.size(), QsimCircuit());
     std::vector<std::vector<qsim::GateFused<QsimGate>>> fused_circuits(
@@ -84,20 +89,15 @@ class TfqCalculateUnitaryOp : public tensorflow::OpKernel {
         programs.size(), num_cycles, construct_f);
     OP_REQUIRES_OK(context, parse_status);
 
-    // Find largest circuit for tensor size padding and allocate
-    // the output tensor.
-    uint64_t max_num_qubits = 0;
-    for (const uint64_t num : num_qubits) {
-      max_num_qubits = std::max(max_num_qubits, num);
-    }
-
     // TODO(pmassey): Investigate creating a matrix that isn't just the maximum
     // required size.
     const size_t output_dim_size = maps.size();
+    const int64_t unitary_dim = int64_t{1} << max_num_qubits;
     tensorflow::TensorShape output_shape;
-    output_shape.AddDim(output_dim_size);
-    output_shape.AddDim(uint64_t(1) << max_num_qubits);
-    output_shape.AddDim(uint64_t(1) << max_num_qubits);
+    OP_REQUIRES_OK(context, tensorflow::TensorShape::BuildTensorShape(
+                                {static_cast<int64_t>(output_dim_size),
+                                 unitary_dim, unitary_dim},
+                                &output_shape));
 
     tensorflow::Tensor *output = nullptr;
     OP_REQUIRES_OK(context, context->allocate_output(0, output_shape, &output));
@@ -112,6 +112,7 @@ class TfqCalculateUnitaryOp : public tensorflow::OpKernel {
     // Begin simulation.
     uint64_t largest_nq = 1;
     Unitary u = UnitarySpace(tfq_for).CreateUnitary(largest_nq);
+    OP_REQUIRES_OK(context, CheckAllocated(largest_nq, u));
 
     // Simulate programs one by one. Parallelizing over state vectors
     // we no longer parallelize over circuits. Each time we encounter a
@@ -120,11 +121,10 @@ class TfqCalculateUnitaryOp : public tensorflow::OpKernel {
       uint64_t nq = num_qubits[i];
       UCalculator sim = UCalculator(tfq_for);
       UnitarySpace us = UnitarySpace(tfq_for);
-      if (nq > largest_nq) {
-        // need to switch to larger unitaryspace.
-        largest_nq = nq;
-        u = us.CreateUnitary(nq);
-      }
+      OP_REQUIRES_OK(context,
+                     GrowBuffers(
+                         nq, &largest_nq,
+                         [&](uint64_t n) { return us.CreateUnitary(n); }, &u));
       us.SetIdentity(u);
       for (size_t j = 0; j < fused_circuits[i].size(); j++) {
         qsim::ApplyFusedGate(sim, fused_circuits[i][j], u);
@@ -132,10 +132,10 @@ class TfqCalculateUnitaryOp : public tensorflow::OpKernel {
 
       // Parallel copy unitary information from qsim into tensorflow
       // tensors.
-      auto copy_f = [i, nq, max_num_qubits, &output_tensor, &us, &u](
+      auto copy_f = [i, nq, unitary_dim, &output_tensor, &us, &u](
                         uint64_t start, uint64_t end) {
         uint64_t crossover = uint64_t(1) << nq;
-        uint64_t divisor = uint64_t(1) << max_num_qubits;
+        uint64_t divisor = static_cast<uint64_t>(unitary_dim);
 
         for (uint64_t l = start; l < end; l++) {
           uint64_t j = l / divisor;
@@ -150,10 +150,9 @@ class TfqCalculateUnitaryOp : public tensorflow::OpKernel {
           }
         }
       };
-      const uint64_t num_cycles_copy = 10 * (uint64_t(1) << max_num_qubits);
+      const int64_t num_cycles_copy = int64_t{10} * unitary_dim;
       context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
-          (uint64_t(1) << max_num_qubits) * (uint64_t(1) << max_num_qubits),
-          num_cycles_copy, copy_f);
+          unitary_dim * unitary_dim, num_cycles_copy, copy_f);
     }
   }
 };

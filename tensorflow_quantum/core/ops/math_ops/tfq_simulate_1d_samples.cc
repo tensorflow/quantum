@@ -25,17 +25,20 @@ limitations under the License.
 #include "../qsim/lib/mps_statespace.h"
 #include "../qsim/lib/seqfor.h"
 #include "../qsim/lib/simmux.h"
+#include "absl/status/status.h"
 #include "absl/synchronization/mutex.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/shape_inference.h"
 #include "tensorflow/core/framework/tensor_shape.h"
 #include "tensorflow/core/lib/core/error_codes.pb.h"
+#include "tensorflow/core/lib/core/errors.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow/core/lib/core/threadpool.h"
 #include "tensorflow/core/lib/random/random.h"
 #include "tensorflow/core/lib/random/simple_philox.h"
 #include "tensorflow/core/util/guarded_philox_random.h"
 #include "tensorflow_quantum/core/ops/parse_context.h"
+#include "tensorflow_quantum/core/ops/tfq_simulate_utils.h"
 #include "tensorflow_quantum/core/proto/program.pb.h"
 #include "tensorflow_quantum/core/src/circuit_parser_qsim.h"
 #include "tensorflow_quantum/core/src/program_resolution.h"
@@ -108,21 +111,16 @@ class TfqSimulateMPS1DSamplesOp : public tensorflow::OpKernel {
     // Find largest circuit for tensor size padding and allocate
     // the output tensor.
     uint64_t max_num_qubits = 0;
-    uint64_t min_num_qubits = 1 << 30;
-    for (const uint64_t num : num_qubits) {
-      max_num_qubits = std::max(max_num_qubits, num);
-      min_num_qubits = std::min(min_num_qubits, num);
-    }
-
-    OP_REQUIRES(context, min_num_qubits > 3,
-                tensorflow::errors::InvalidArgument(
-                    "All input circuits require minimum 3 qubits."));
+    OP_REQUIRES_OK(context, ValidateMPS1DQubitsAndBondDim(num_qubits, bond_dim_,
+                                                          &max_num_qubits));
 
     const size_t output_dim_size = maps.size();
     tensorflow::TensorShape output_shape;
-    output_shape.AddDim(output_dim_size);
-    output_shape.AddDim(num_samples);
-    output_shape.AddDim(max_num_qubits);
+    OP_REQUIRES_OK(context,
+                   tensorflow::TensorShape::BuildTensorShape(
+                       {static_cast<int64_t>(output_dim_size), num_samples,
+                        static_cast<int64_t>(max_num_qubits)},
+                       &output_shape));
 
     tensorflow::Tensor* output = nullptr;
     OP_REQUIRES_OK(context, context->allocate_output(0, output_shape, &output));
@@ -153,7 +151,7 @@ class TfqSimulateMPS1DSamplesOp : public tensorflow::OpKernel {
     tensorflow::GuardedPhiloxRandom random_gen;
     random_gen.Init(tensorflow::random::New64(), tensorflow::random::New64());
 
-    auto DoWork = [&](int64_t start, int64_t end) {
+    auto DoWork = [&](int64_t start, int64_t end) -> absl::Status {
       uint64_t largest_nq = 1;
       // Note: ForArgs in MPSSimulator and MPSStateState are currently unused.
       // So, this 1 is a dummy for qsim::For.
@@ -162,6 +160,7 @@ class TfqSimulateMPS1DSamplesOp : public tensorflow::OpKernel {
       auto sv = ss.Create(largest_nq, bond_dim_);
       auto scratch = ss.Create(largest_nq, bond_dim_);
       auto scratch2 = ss.Create(largest_nq, bond_dim_);
+      TF_RETURN_IF_ERROR(CheckAllocated(largest_nq, sv, scratch, scratch2));
 
       auto local_gen = random_gen.ReserveSamples32(unfused_circuits.size() + 1);
       tensorflow::random::SimplePhilox rand_source(&local_gen);
@@ -169,13 +168,10 @@ class TfqSimulateMPS1DSamplesOp : public tensorflow::OpKernel {
       for (int64_t i = start; i < end; i++) {
         uint64_t nq = num_qubits[i];
 
-        if (nq > largest_nq) {
-          // need to switch to larger statespace.
-          largest_nq = nq;
-          sv = ss.Create(largest_nq, bond_dim_);
-          scratch = ss.Create(largest_nq, bond_dim_);
-          scratch2 = ss.Create(largest_nq, bond_dim_);
-        }
+        TF_RETURN_IF_ERROR(GrowBuffers(
+            nq, &largest_nq,
+            [&](uint64_t n) { return ss.Create(n, bond_dim_); }, &sv, &scratch,
+            &scratch2));
         ss.SetStateZero(sv);
         auto unfused_gates = unfused_circuits[i].gates;
         for (auto gate : unfused_gates) {
@@ -202,12 +198,13 @@ class TfqSimulateMPS1DSamplesOp : public tensorflow::OpKernel {
           }
         }
       }
+      return absl::OkStatus();
     };
 
-    const int64_t num_cycles =
-        200 * (int64_t(1) << static_cast<int64_t>(max_num_qubits));
-    context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
-        unfused_circuits.size(), num_cycles, DoWork);
+    const int64_t num_cycles = GetNumCycles(max_num_qubits);
+    OP_REQUIRES_OK(context,
+                   ParallelForRangeStatus(context, unfused_circuits.size(),
+                                          num_cycles, DoWork));
   }
 };
 

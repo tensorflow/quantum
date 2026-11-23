@@ -16,7 +16,9 @@ limitations under the License.
 #include "tensorflow_quantum/core/src/circuit_parser_qsim.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <initializer_list>
+#include <limits>
 #include <string>
 #include <vector>
 
@@ -74,7 +76,7 @@ inline Status ParseProtoArg(
     if (iter == param_map.end()) {
       return Status(
           absl::StatusCode::kInvalidArgument,
-          "Could not find symbol in parameter map: " + proto_arg.symbol());
+          absl::StrCat(kMissingSymbolErrorPrefix, proto_arg.symbol()));
     }
     *result = iter->second.second;
     if (symbol_used != nullptr) {
@@ -193,6 +195,18 @@ inline Status OptionalInsertControls(const Operation& op,
   }
   if (control_qubits.empty()) {
     return ::tensorflow::Status();
+  }
+  // qsim::MakeControlledGate shifts an `unsigned` value left by index `i` into
+  // a uint64_t cmask (`(control_values[i] & 1) << i`), so more than
+  // min(bits(unsigned), bits(uint64_t)) controls invokes undefined behavior.
+  constexpr size_t kMaxControlQubits =
+      std::min<size_t>(std::numeric_limits<unsigned>::digits,
+                       std::numeric_limits<uint64_t>::digits);
+  if (control_qubits.size() > kMaxControlQubits) {
+    return Status(
+        absl::StatusCode::kInvalidArgument,
+        absl::StrCat("Too many control qubits: got ", control_qubits.size(),
+                     ", maximum supported is ", kMaxControlQubits, "."));
   }
   // qsim's index arithmetic assumes that the control qubits of a gate are
   // distinct from each other and from its target qubits.

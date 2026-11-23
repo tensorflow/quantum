@@ -16,11 +16,25 @@ limitations under the License.
 #include "tensorflow_quantum/core/ops/tfq_simulate_utils.h"
 
 #include <algorithm>
+#include <cstdint>
+#include <limits>
+#include <vector>
 
+#include "absl/status/status.h"
 #include "tensorflow/core/framework/device_base.h"
 #include "tensorflow/core/framework/op_kernel.h"
+#include "tensorflow/core/lib/core/errors.h"
 
 namespace tfq {
+
+namespace internal {
+
+absl::Status BufferAllocationError(const uint64_t num_qubits) {
+  return tensorflow::errors::ResourceExhausted(
+      "Failed to allocate simulation buffer for ", num_qubits, " qubits.");
+}
+
+}  // namespace internal
 
 int GetBlockSize(tensorflow::OpKernelContext* context, const int output_size) {
   if (output_size <= 0 || context == nullptr || context->device() == nullptr) {
@@ -32,6 +46,88 @@ int GetBlockSize(tensorflow::OpKernelContext* context, const int output_size) {
     return 1;
   }
   return std::max(1, output_size / worker_threads->num_threads);
+}
+
+absl::Status GetMaxNumQubits(const std::vector<int>& num_qubits,
+                             const uint64_t max_allowed,
+                             uint64_t* max_num_qubits) {
+  if (max_num_qubits == nullptr) {
+    return tensorflow::errors::InvalidArgument(
+        "max_num_qubits output pointer must not be null.");
+  }
+  if (num_qubits.empty()) {
+    *max_num_qubits = 0;
+    return absl::OkStatus();
+  }
+  const auto [min_it, max_it] =
+      std::minmax_element(num_qubits.begin(), num_qubits.end());
+  if (*min_it < 0) {
+    return tensorflow::errors::InvalidArgument(
+        "Circuit qubit count must be non-negative. Got ", *min_it, ".");
+  }
+  const uint64_t max_val = static_cast<uint64_t>(*max_it);
+  if (max_val > max_allowed) {
+    return tensorflow::errors::InvalidArgument(
+        "Circuit exceeds maximum supported qubit count of ", max_allowed,
+        ". Got ", max_val, ".");
+  }
+  *max_num_qubits = max_val;
+  return absl::OkStatus();
+}
+
+absl::Status ValidateMPS1DQubitsAndBondDim(const std::vector<int>& num_qubits,
+                                           const int bond_dim,
+                                           uint64_t* max_num_qubits) {
+  if (max_num_qubits == nullptr) {
+    return tensorflow::errors::InvalidArgument(
+        "max_num_qubits output pointer must not be null.");
+  }
+  uint64_t current_max = 0;
+  if (!num_qubits.empty()) {
+    const auto [min_it, max_it] =
+        std::minmax_element(num_qubits.begin(), num_qubits.end());
+    if (*min_it < 0) {
+      return tensorflow::errors::InvalidArgument(
+          "Circuit qubit count must be non-negative. Got ", *min_it, ".");
+    }
+    if (*min_it <= 3) {
+      // Preserve legacy error text even though MPS 1D requires >= 4 qubits.
+      return tensorflow::errors::InvalidArgument(
+          "All input circuits require minimum 3 qubits.");
+    }
+    current_max = static_cast<uint64_t>(*max_it);
+  }
+  if (bond_dim < 4) {
+    return tensorflow::errors::InvalidArgument(
+        "bond_dim must be at least 4. Got ", bond_dim, ".");
+  }
+  // qsim::mps::MPSStateSpace uses 32-bit unsigned arithmetic for end_sizes
+  // (8 * bond_dim), internal_sizes (4 * bond_dim^2 * (num_qubits + 1)), and
+  // RawSize() (bytes), and signed 32-bit int offsets in InnerProduct(). Keep
+  // total floats <= UINT_MAX / sizeof(float) (== INT_MAX / 2) so none of
+  // those calculations can wrap.
+  constexpr uint64_t kMaxFloats =
+      std::numeric_limits<unsigned int>::max() / sizeof(float);
+  constexpr uint64_t kMaxBondDim = kMaxFloats / 8;
+  static_assert(
+      kMaxBondDim > 0 &&
+          kMaxBondDim <= std::numeric_limits<uint64_t>::max() / 4 / kMaxBondDim,
+      "4 * bond_dim^2 could overflow uint64_t.");
+  const uint64_t bd = static_cast<uint64_t>(bond_dim);
+  // Enforce at least the minimum valid circuit size (4 qubits) on empty
+  // batches so bond_dim bounds stay uniform across empty and non-empty inputs.
+  const uint64_t nq = std::max<uint64_t>(current_max, 4);
+  // Because `bond_dim >= 4` and `bd <= kMaxBondDim` (checked before division),
+  // `4 * bd * bd` is non-zero and cannot overflow uint64_t, and `nq <= INT_MAX`
+  // guarantees `nq + 1` cannot wrap uint64_t.
+  if (bd > kMaxBondDim ||
+      nq + 1 > (kMaxFloats - uint64_t{8} * bd) / (uint64_t{4} * bd * bd)) {
+    return tensorflow::errors::InvalidArgument(
+        "MPS simulation state size overflows 32-bit index bounds for ", nq,
+        " qubits and bond_dim ", bond_dim, ".");
+  }
+  *max_num_qubits = current_max;
+  return absl::OkStatus();
 }
 
 }  // namespace tfq
