@@ -22,6 +22,7 @@ sys.path = NEW_PATH
 # pylint: enable=wrong-import-position
 
 import numpy as np
+from absl.testing import parameterized
 import tensorflow as tf
 import sympy
 import cirq
@@ -65,7 +66,7 @@ def _complex_test_circuit():
     return circuit_batch
 
 
-class PSDecomposeTest(tf.test.TestCase):
+class PSDecomposeTest(tf.test.TestCase, parameterized.TestCase):
     """Tests on tfq_ps_decompose"""
 
     def test_iswap_gate_test(self):
@@ -360,6 +361,149 @@ class PSDecomposeTest(tf.test.TestCase):
 
         # Circuit 3. one PXP between two ISwapPowGates.
         self.assertEqual(len(decomposed_programs[2]), max_decomposed_length)
+
+    def _assert_valid_ps_decomposition(self, circuit, resolver,
+                                       expected_moment_op_counts):
+        """Assert moment op counts, 2-eigenvalue gates, and unitary match."""
+        outputs = tfq_ps_util_ops.tfq_ps_decompose(
+            util.convert_to_tensor([circuit]))
+        decomposed = util.from_tensor(outputs)[0]
+        self.assertEqual([len(m) for m in decomposed],
+                         expected_moment_op_counts)
+        for moment in decomposed:
+            for gate_op in moment:
+                if cirq.is_parameterized(gate_op):
+                    sub_gate = getattr(gate_op.gate, 'sub_gate', gate_op.gate)
+                    self.assertTrue(hasattr(sub_gate, '_eigen_components'),
+                                    sub_gate)
+                    # pylint: disable=protected-access
+                    self.assertEqual(len(sub_gate._eigen_components()), 2,
+                                     sub_gate)
+                    # pylint: enable=protected-access
+        self.assertAllClose(
+            cirq.unitary(cirq.resolve_parameters(circuit, resolver)),
+            cirq.unitary(cirq.resolve_parameters(decomposed, resolver)),
+            atol=1e-5)
+        return decomposed
+
+    @parameterized.named_parameters(
+        ('standalone_pisp', ('pisp',), [1, 1, 1, 1, 1, 1]),
+        ('unparameterized_pisp', ('const_pisp',), [1]),
+        ('pisp_then_pxp', ('pisp', 'pxp'), [2, 2, 2, 1, 1, 1]),
+        ('pxp_then_pisp', ('pxp', 'pisp'), [2, 2, 2, 1, 1, 1]),
+        ('pisp_then_fsim', ('pisp', 'fsim'), [2, 2, 2, 1, 1, 1]),
+        ('fsim_then_pisp', ('fsim', 'pisp'), [2, 2, 2, 1, 1, 1]),
+        ('pisp_then_isp', ('pisp', 'isp'), [2, 2, 1, 1, 1, 1]),
+        ('isp_then_pisp', ('isp', 'pisp'), [2, 2, 1, 1, 1, 1]),
+        ('pisp_then_zp', ('pisp', 'zp'), [2, 1, 1, 1, 1, 1]),
+        ('zp_then_pisp', ('zp', 'pisp'), [2, 1, 1, 1, 1, 1]),
+        ('pisp_then_const_pxp', ('pisp', 'const_pxp'), [2, 1, 1, 1, 1, 1]),
+        ('const_pxp_then_pisp', ('const_pxp', 'pisp'), [2, 1, 1, 1, 1, 1]),
+        ('isp_then_fsim', ('isp_q01', 'fsim'), [2, 2, 1]),
+    )
+    def test_pisp_moment_orderings(self, op_keys, expected_counts):
+        """Test PhasedISwapPowGate standalone and intra-moment orderings."""
+        t = sympy.Symbol('t')
+        r = sympy.Symbol('r')
+        q0, q1, q2, q3 = cirq.LineQubit.range(4)
+        # Parameterized PhasedISwapPowGate cases use a symbolic exponent so
+        # coverage stays independent of issue #1140.
+        ops_by_key = {
+            'pisp':
+                cirq.PhasedISwapPowGate(phase_exponent=0.41 * r,
+                                        exponent=0.73 * t).on(q0, q1),
+            'const_pisp':
+                cirq.PhasedISwapPowGate(phase_exponent=0.25,
+                                        exponent=0.63).on(q0, q1),
+            'pxp':
+                cirq.PhasedXPowGate(phase_exponent=0.53 * r,
+                                    exponent=0.29 * t).on(q2),
+            'const_pxp':
+                cirq.PhasedXPowGate(phase_exponent=0.31, exponent=0.67).on(q2),
+            'fsim':
+                cirq.FSimGate(theta=0.47 * t, phi=0.31 * r).on(q2, q3),
+            'isp':
+                cirq.ISwapPowGate(exponent=0.59 * t).on(q2, q3),
+            'isp_q01':
+                cirq.ISwapPowGate(exponent=0.59 * t).on(q0, q1),
+            'zp': (cirq.Z**(0.67 * t)).on(q2),
+        }
+        circuit = cirq.Circuit(cirq.Moment([ops_by_key[k] for k in op_keys]))
+        self._assert_valid_ps_decomposition(circuit, {
+            't': 0.37,
+            'r': -0.61
+        }, expected_counts)
+
+    def test_pisp_four_gate_and_empty_moments(self):
+        """Test PISP with FSIM, PXP, ISP, and surrounding/empty moments."""
+        t = sympy.Symbol('t')
+        r = sympy.Symbol('r')
+        q = cirq.LineQubit.range(7)
+        circuit = cirq.Circuit([
+            cirq.Moment([cirq.H(bit) for bit in q]),
+            cirq.Moment([
+                cirq.PhasedISwapPowGate(phase_exponent=0.41 * r,
+                                        exponent=0.73 * t).on(q[0], q[1]),
+                cirq.FSimGate(theta=0.47 * t, phi=0.31 * r).on(q[2], q[3]),
+                cirq.PhasedXPowGate(phase_exponent=0.53 * r,
+                                    exponent=0.29 * t).on(q[4]),
+                cirq.ISwapPowGate(exponent=0.59 * t).on(q[5], q[6]),
+            ]),
+            cirq.Moment(),
+            cirq.Moment([
+                cirq.PhasedXPowGate(phase_exponent=0.37 * r,
+                                    exponent=0.43 * t).on(q[0]),
+            ]),
+        ])
+        decomposed = self._assert_valid_ps_decomposition(
+            circuit, {
+                't': 0.37,
+                'r': -0.61
+            }, [7, 4, 4, 3, 1, 1, 1, 0, 1, 1, 1])
+        self.assertEqual(decomposed[0], circuit[0])
+        self.assertEqual(len(decomposed[7]), 0)
+
+    def test_two_pisps_before_pxp_in_moment(self):
+        """Test two PISP gates followed by PXP in a single Moment."""
+        t = sympy.Symbol('t')
+        r = sympy.Symbol('r')
+        q = cirq.LineQubit.range(5)
+        circuit = cirq.Circuit(
+            cirq.Moment([
+                cirq.PhasedISwapPowGate(phase_exponent=0.41 * r,
+                                        exponent=0.73 * t).on(q[0], q[1]),
+                cirq.PhasedISwapPowGate(phase_exponent=0.25,
+                                        exponent=0.39 * r).on(q[2], q[3]),
+                cirq.PhasedXPowGate(phase_exponent=0.53 * r,
+                                    exponent=0.29 * t).on(q[4]),
+            ]))
+        self._assert_valid_ps_decomposition(circuit, {
+            't': 0.37,
+            'r': -0.61
+        }, [3, 3, 3, 2, 2, 2])
+
+    def test_controlled_pisp_before_pxp_in_moment(self):
+        """Test controlled PISP followed by controlled PXP in one Moment."""
+        t = sympy.Symbol('t')
+        r = sympy.Symbol('r')
+        q = cirq.LineQubit.range(5)
+        circuit = cirq.Circuit(
+            cirq.Moment([
+                cirq.PhasedISwapPowGate(phase_exponent=0.41 * r,
+                                        exponent=0.73 * t).on(
+                                            q[0], q[1]).controlled_by(q[2]),
+                cirq.PhasedXPowGate(phase_exponent=0.53 * r, exponent=0.29 *
+                                    t).on(q[3]).controlled_by(q[4]),
+            ]))
+        decomposed = self._assert_valid_ps_decomposition(
+            circuit, {
+                't': 0.37,
+                'r': -0.61
+            }, [2, 2, 2, 1, 1, 1])
+        for moment in decomposed[:3]:
+            self.assertEqual([op.controls for op in moment], [(q[2],), (q[4],)])
+        for moment in decomposed[3:]:
+            self.assertEqual([op.controls for op in moment], [(q[2],)])
 
 
 class PSSymbolReplaceTest(tf.test.TestCase):
