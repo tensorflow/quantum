@@ -17,22 +17,24 @@ limitations under the License.
 #define TFQ_CORE_OPS_PARSE_CONTEXT
 
 #include "absl/synchronization/mutex.h"
+#include "tensorflow/core/framework/op_kernel.h"
+#include "tensorflow/core/lib/core/status.h"
 
 // Syncs a threads work status with some global status.
 #define NESTED_FN_STATUS_SYNC(global_status, local_status, global_lock) \
-  if (TF_PREDICT_FALSE(!local_status.ok())) {                           \
-    global_lock.Lock();                                                 \
-    global_status = local_status;                                       \
-    global_lock.Unlock();                                               \
-    return;                                                             \
-  }
+  do {                                                                  \
+    const ::tensorflow::Status tfq_sync_status = (local_status);        \
+    if (TF_PREDICT_FALSE(!tfq_sync_status.ok())) {                      \
+      ::absl::MutexLock tfq_sync_lock(&(global_lock));                  \
+      (global_status) = tfq_sync_status;                                \
+      return;                                                           \
+    }                                                                   \
+  } while (0)
 
 #include <string>
 #include <vector>
 
 #include "absl/container/flat_hash_map.h"
-#include "tensorflow/core/framework/op_kernel.h"
-#include "tensorflow/core/lib/core/status.h"
 #include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
 #include "tensorflow_quantum/core/proto/program.pb.h"
 

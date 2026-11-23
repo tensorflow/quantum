@@ -65,6 +65,41 @@ def _complex_test_circuit():
     return circuit_batch
 
 
+class PsWeightsWorkerStatusSyncTest(tf.test.TestCase):
+    """Tests worker status sync in tfq_ps_weights_from_symbols."""
+
+    def test_missing_symbols_batch(self):
+        """Tests multi-threaded batches with missing symbols fail."""
+        bit = cirq.LineQubit(0)
+        sym_alpha = sympy.Symbol('alpha')
+        sym_missing = sympy.Symbol('missing')
+        valid_circuit = cirq.Circuit(cirq.X(bit)**(sym_alpha * 1.5))
+        missing_circuit = cirq.Circuit(cirq.X(bit)**(sym_missing * 2.0))
+
+        valid_raw = util.convert_to_tensor([valid_circuit]).numpy()[0]
+        missing_raw = util.convert_to_tensor([missing_circuit]).numpy()[0]
+        symbols = tf.constant(['alpha'])
+
+        # 1. Fully invalid batch: 256 circuits with missing symbol.
+        all_missing_tensor = tf.constant([missing_raw] * 256)
+        for _ in range(20):
+            with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                        'not found in symbols'):
+                tfq_ps_util_ops.tfq_ps_weights_from_symbols(
+                    all_missing_tensor, symbols)
+
+        # 2. Mixed batch: 250 valid circuits and 6 missing-symbol entries.
+        mixed_batch = [valid_raw] * 256
+        for idx in [0, 42, 100, 150, 200, 255]:
+            mixed_batch[idx] = missing_raw
+        mixed_tensor = tf.constant(mixed_batch)
+        for _ in range(20):
+            with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                        'not found in symbols'):
+                tfq_ps_util_ops.tfq_ps_weights_from_symbols(
+                    mixed_tensor, symbols)
+
+
 class PSDecomposeTest(tf.test.TestCase):
     """Tests on tfq_ps_decompose"""
 

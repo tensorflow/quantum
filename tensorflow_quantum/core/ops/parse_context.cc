@@ -20,6 +20,7 @@ limitations under the License.
 #include <string>
 #include <vector>
 
+#include "absl/synchronization/mutex.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/lib/core/error_codes.pb.h"
 #include "tensorflow/core/lib/core/status.h"
@@ -77,9 +78,14 @@ Status ParsePrograms(OpKernelContext* context, const std::string& input_name,
   const int num_programs = program_strings.dimension(0);
   programs->assign(num_programs, Program());
 
+  tensorflow::Status parse_status;
+  absl::Mutex p_lock;
+
   auto DoWork = [&](int64_t start, int64_t end) {
     for (int64_t i = start; i < end; i++) {
-      OP_REQUIRES_OK(context, ParseProto(program_strings(i), &programs->at(i)));
+      NESTED_FN_STATUS_SYNC(parse_status,
+                            ParseProto(program_strings(i), &programs->at(i)),
+                            p_lock);
     }
   };
 
@@ -88,7 +94,7 @@ Status ParsePrograms(OpKernelContext* context, const std::string& input_name,
   context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
       num_programs, cycle_estimate, DoWork);
 
-  return ::tensorflow::Status();
+  return parse_status;
 }
 
 Status ParsePrograms2D(OpKernelContext* context, const std::string& input_name,
@@ -112,12 +118,16 @@ Status ParsePrograms2D(OpKernelContext* context, const std::string& input_name,
   const int num_entries = program_strings.dimension(1);
   programs->assign(num_programs, std::vector<Program>(num_entries, Program()));
 
+  tensorflow::Status parse_status;
+  absl::Mutex p_lock;
+
   auto DoWork = [&](int64_t start, int64_t end) {
     for (int64_t i = start; i < end; i++) {
-      OP_REQUIRES_OK(
-          context,
+      NESTED_FN_STATUS_SYNC(
+          parse_status,
           ParseProto(program_strings(i / num_entries, i % num_entries),
-                     &programs->at(i / num_entries).at(i % num_entries)));
+                     &programs->at(i / num_entries).at(i % num_entries)),
+          p_lock);
     }
   };
 
@@ -126,7 +136,7 @@ Status ParsePrograms2D(OpKernelContext* context, const std::string& input_name,
   context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
       num_programs * num_entries, cycle_estimate, DoWork);
 
-  return ::tensorflow::Status();
+  return parse_status;
 }
 
 Status GetProgramsAndProgramsToAppend(
@@ -181,17 +191,23 @@ Status GetProgramsAndNumQubits(
 
   // Resolve qubit ID's in parallel.
   num_qubits->assign(programs->size(), -1);
+  tensorflow::Status parse_status;
+  absl::Mutex p_lock;
   auto DoWork = [&](int64_t start, int64_t end) {
     for (int64_t i = start; i < end; i++) {
       Program& program = (*programs)[i];
-      unsigned int this_num_qubits;
+      unsigned int this_num_qubits = 0;
       if (p_sums) {
-        OP_REQUIRES_OK(context,
-                       ResolveQubitIds(&program, &this_num_qubits,
-                                       &(p_sums->at(i)), swap_endianness));
+        NESTED_FN_STATUS_SYNC(
+            parse_status,
+            ResolveQubitIds(&program, &this_num_qubits, &(p_sums->at(i)),
+                            swap_endianness),
+            p_lock);
       } else {
-        OP_REQUIRES_OK(context, ResolveQubitIds(&program, &this_num_qubits,
-                                                nullptr, swap_endianness));
+        NESTED_FN_STATUS_SYNC(parse_status,
+                              ResolveQubitIds(&program, &this_num_qubits,
+                                              nullptr, swap_endianness),
+                              p_lock);
       }
       (*num_qubits)[i] = this_num_qubits;
     }
@@ -202,7 +218,7 @@ Status GetProgramsAndNumQubits(
   context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
       num_qubits->size(), cycle_estimate, DoWork);
 
-  return ::tensorflow::Status();
+  return parse_status;
 }
 
 tensorflow::Status GetProgramsAndNumQubits(
@@ -232,12 +248,16 @@ tensorflow::Status GetProgramsAndNumQubits(
 
   // Resolve qubit ID's in parallel.
   num_qubits->assign(programs->size(), -1);
+  tensorflow::Status parse_status;
+  absl::Mutex p_lock;
   auto DoWork = [&](int64_t start, int64_t end) {
     for (int64_t i = start; i < end; i++) {
       Program& program = (*programs)[i];
-      unsigned int this_num_qubits;
-      OP_REQUIRES_OK(context, ResolveQubitIds(&program, &this_num_qubits,
-                                              &(*other_programs)[i]));
+      unsigned int this_num_qubits = 0;
+      NESTED_FN_STATUS_SYNC(
+          parse_status,
+          ResolveQubitIds(&program, &this_num_qubits, &(*other_programs)[i]),
+          p_lock);
       (*num_qubits)[i] = this_num_qubits;
     }
   };
@@ -247,7 +267,7 @@ tensorflow::Status GetProgramsAndNumQubits(
   context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
       num_qubits->size(), cycle_estimate, DoWork);
 
-  return ::tensorflow::Status();
+  return parse_status;
 }
 
 Status GetPauliSums(OpKernelContext* context,
@@ -270,12 +290,15 @@ Status GetPauliSums(OpKernelContext* context,
   p_sums->assign(sum_specs.dimension(0),
                  std::vector<PauliSum>(sum_specs.dimension(1), PauliSum()));
   const int op_dim = sum_specs.dimension(1);
+  tensorflow::Status parse_status;
+  absl::Mutex p_lock;
   auto DoWork = [&](int64_t start, int64_t end) {
     for (int64_t ii = start; ii < end; ii++) {
       const int i = ii / op_dim;
       const int j = ii % op_dim;
       PauliSum p;
-      OP_REQUIRES_OK(context, ParseProto(sum_specs(i, j), &p));
+      NESTED_FN_STATUS_SYNC(parse_status, ParseProto(sum_specs(i, j), &p),
+                            p_lock);
       (*p_sums)[i][j] = p;
     }
   };
@@ -285,7 +308,7 @@ Status GetPauliSums(OpKernelContext* context,
   context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
       sum_specs.dimension(0) * sum_specs.dimension(1), cycle_estimate, DoWork);
 
-  return ::tensorflow::Status();
+  return parse_status;
 }
 
 Status GetSymbolMaps(OpKernelContext* context, std::vector<SymbolMap>* maps) {
