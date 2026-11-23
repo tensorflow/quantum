@@ -16,6 +16,10 @@ limitations under the License.
 #ifndef TFQ_CORE_OPS_TFQ_SIMULATE_UTILS_H_
 #define TFQ_CORE_OPS_TFQ_SIMULATE_UTILS_H_
 
+#include <algorithm>
+#include <cstdint>
+#include <limits>
+
 #include "tensorflow/core/framework/op_kernel.h"
 
 namespace tfq {
@@ -24,6 +28,19 @@ namespace tfq {
 // items across CPU worker threads, or 1 if `output_size <= 0` or `context` /
 // CPU worker threads are unavailable or non-positive.
 int GetBlockSize(tensorflow::OpKernelContext* context, const int output_size);
+
+// Estimates per-item CPU cycles for ParallelFor when simulating circuits of up
+// to `max_num_qubits` qubits, capping the shift so the result fits in signed
+// int64_t (values near that limit already saturate thread scheduling).
+inline constexpr int64_t EstimateSimulationCycles(uint64_t max_num_qubits) {
+  constexpr int64_t kCycleMultiplier = 200;
+  constexpr uint64_t kMaxCycleShift = 55;
+  static_assert(kCycleMultiplier <=
+                    (std::numeric_limits<int64_t>::max() >> kMaxCycleShift),
+                "Cycle estimate overflows int64_t.");
+  return kCycleMultiplier *
+         (int64_t{1} << std::min(max_num_qubits, kMaxCycleShift));
+}
 
 }  // namespace tfq
 

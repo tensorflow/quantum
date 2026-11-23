@@ -28,6 +28,8 @@ limitations under the License.
 #include "../qsim/lib/gate_appl.h"
 #include "../qsim/lib/gates_cirq.h"
 #include "../qsim/lib/matrix.h"
+#include "absl/strings/numbers.h"
+#include "absl/strings/str_cat.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow/core/lib/random/simple_philox.h"
@@ -206,6 +208,13 @@ tensorflow::Status ComputeSampledExpectationQsim(
   if (num_samples == 0) {
     return ::tensorflow::Status();
   }
+  const unsigned int num_qubits = state.num_qubits();
+  if (num_qubits > 64) {
+    return tensorflow::Status(
+        absl::StatusCode::kInvalidArgument,
+        absl::StrCat("Sampled expectation supports at most 64 qubits. Got ",
+                     num_qubits, "."));
+  }
   // apply the gates of the pauliterms to a copy of the state vector
   // and add up expectation value term by term.
   tensorflow::Status status = ::tensorflow::Status();
@@ -238,21 +247,18 @@ tensorflow::Status ComputeSampledExpectationQsim(
     std::vector<uint64_t> state_samples =
         ss.Sample(scratch, num_samples, random_source.Rand32());
 
-    // Find qubits on which to measure parity
-    std::vector<unsigned int> parity_bits;
+    // Compute the bitmask of qubits on which to measure parity (little-endian).
+    uint64_t mask = 0;
     for (const tfq::proto::PauliQubitPair& pair : term.paulis()) {
       unsigned int location;
-      // GridQubit id should be parsed down to integer at this upstream
-      //  so it is safe to just use atoi.
-      (void)absl::SimpleAtoi(pair.qubit_id(), &location);
-      // Parity functions use little-endian indexing
-      parity_bits.push_back(state.num_qubits() - location - 1);
-    }
-
-    // Compute the BitMask.
-    uint64_t mask = 0;
-    for (const unsigned int parity_bit : parity_bits) {
-      mask |= uint64_t(1) << uint64_t(parity_bit);
+      if (!absl::SimpleAtoi(pair.qubit_id(), &location) ||
+          location >= num_qubits) {
+        return tensorflow::Status(
+            absl::StatusCode::kInvalidArgument,
+            absl::StrCat("Invalid qubit id in Pauli term: '", pair.qubit_id(),
+                         "'. Expected an integer in [0, ", num_qubits, ")."));
+      }
+      mask |= uint64_t{1} << (num_qubits - location - 1);
     }
 
     // Compute the running parity.

@@ -59,24 +59,51 @@ tensorflow::Status GetProgramsAndProgramsToAppend(
 // of the parameter (for forward computation).
 typedef absl::flat_hash_map<std::string, std::pair<int, float>> SymbolMap;
 
-// Parses Cirq Program protos out of the 'circuit_specs' input Tensor. Also
-// resolves the QubitIds inside of the Program. Optionally will resolve the
-// QubitIds found in programs into PauliSums such that they are consistent
-// and correct with the original programs.
+// Upper bounds on circuit qubit counts accepted by simulation ops, derived from
+// a 256 TiB (2^48-byte) classical memory ceiling and a 1,000,000-qubit circuit
+// limit:
+// - Dense state-vector ops store 2^n complex<float> amplitudes (8 * 2^n bytes
+//   per state vector): at n = 43 a single vector takes 64 TiB, 2-buffer ops
+//   (batch-1 state output + workspace, expectation, inner product) take
+//   128 TiB, and 3-buffer large-n gradient ops take 192 TiB. At n = 44
+//   (128 TiB per vector), 3-buffer ops require 384 TiB and 2-buffer ops hit
+//   256 TiB with zero headroom.
+// - Dense unitary ops store 2^n x 2^n complex<float> entries (8 * 2^(2n) bytes
+//   per matrix): at n = 21 each matrix takes 32 TiB (64 TiB across workspace
+//   and batch-1 output), whereas n = 22 (128 TiB per matrix) hits 256 TiB with
+//   zero headroom.
+// - 1D MPS simulation scales linearly with n up to the 1,000,000-qubit circuit
+//   limit.
+// Enforcing these bounds during input parsing prevents undefined behavior in
+// `1 << n` shifts and TensorShape CHECK-failures on unsimulatable circuits.
+inline constexpr int kMaxStateVectorQubits = 43;
+inline constexpr int kMaxUnitaryQubits = 21;
+inline constexpr int kMaxMPSQubits = 1000000;
+static_assert(kMaxStateVectorQubits >= 0 && kMaxStateVectorQubits < 63,
+              "kMaxStateVectorQubits must keep (int64_t{1} << n) valid.");
+static_assert(kMaxUnitaryQubits >= 0 && 2 * kMaxUnitaryQubits < 63,
+              "kMaxUnitaryQubits must keep (int64_t{1} << (2 * n)) valid.");
+static_assert(kMaxMPSQubits >= 0, "kMaxMPSQubits must be non-negative.");
+
+// Parses Cirq Program protos out of the 'programs' input tensor, resolves
+// QubitIds inside each Program (and optionally PauliSums), and verifies that
+// `max_num_qubits >= 0` and every circuit's qubit count is in
+// [0, max_num_qubits].
 tensorflow::Status GetProgramsAndNumQubits(
     tensorflow::OpKernelContext* context,
     std::vector<tfq::proto::Program>* programs, std::vector<int>* num_qubits,
     std::vector<std::vector<tfq::proto::PauliSum>>* p_sums = nullptr,
-    bool swap_endianness = false);
+    bool swap_endianness = false, int max_num_qubits = kMaxStateVectorQubits);
 
-// Parses Cirq Program protos out of the 'circuit_specs' input Tensor. Also
-// resolves the QubitIds inside of the Program. This override also parses and
-// resolves other_programs. Ensuring all qubits found in programs[i] are also
-// found in all programs[i][j] for all j.
+// Parses Cirq Program protos out of the 'programs' and 'other_programs' input
+// tensors, resolves QubitIds ensuring exact qubit matching across paired
+// programs, and verifies that `max_num_qubits >= 0` and every circuit's qubit
+// count is in [0, max_num_qubits].
 tensorflow::Status GetProgramsAndNumQubits(
     tensorflow::OpKernelContext* context,
     std::vector<tfq::proto::Program>* programs, std::vector<int>* num_qubits,
-    std::vector<std::vector<tfq::proto::Program>>* other_programs);
+    std::vector<std::vector<tfq::proto::Program>>* other_programs,
+    int max_num_qubits = kMaxStateVectorQubits);
 
 // Parses PauliSum protos out of the 'pauli_sums' input tensor. Note this
 // function does NOT resolve QubitID's as any paulisum needs a reference

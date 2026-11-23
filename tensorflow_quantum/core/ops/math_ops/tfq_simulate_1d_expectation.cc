@@ -32,6 +32,7 @@ limitations under the License.
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow/core/lib/core/threadpool.h"
 #include "tensorflow_quantum/core/ops/parse_context.h"
+#include "tensorflow_quantum/core/ops/tfq_simulate_utils.h"
 #include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
 #include "tensorflow_quantum/core/proto/program.pb.h"
 #include "tensorflow_quantum/core/src/program_resolution.h"
@@ -88,9 +89,9 @@ class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
     // https://github.com/tensorflow/quantum/pull/610
     // once https://github.com/quantumlib/qsim/issues/492
     // is resolved.
-    OP_REQUIRES_OK(context,
-                   GetProgramsAndNumQubits(context, &programs, &num_qubits,
-                                           &pauli_sums, true));
+    OP_REQUIRES_OK(context, GetProgramsAndNumQubits(
+                                context, &programs, &num_qubits, &pauli_sums,
+                                /*swap_endianness=*/true, kMaxMPSQubits));
 
     std::vector<SymbolMap> maps;
     OP_REQUIRES_OK(context, GetSymbolMaps(context, &maps));
@@ -214,8 +215,7 @@ class TfqSimulateMPS1DExpectationOp : public tensorflow::OpKernel {
       }
     };
 
-    const int64_t num_cycles =
-        200 * (int64_t(1) << static_cast<int64_t>(max_num_qubits));
+    const int64_t num_cycles = EstimateSimulationCycles(max_num_qubits);
     context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
         unfused_circuits.size() * output_dim_op_size, num_cycles, DoWork);
     OP_REQUIRES_OK(context, compute_status);

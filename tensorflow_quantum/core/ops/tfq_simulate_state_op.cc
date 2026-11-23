@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
+#include <cstdint>
 #include <string>
 
 #include "../qsim/lib/circuit.h"
@@ -95,7 +96,8 @@ class TfqSimulateStateOp : public tensorflow::OpKernel {
     const size_t output_dim_size = maps.size();
     tensorflow::TensorShape output_shape;
     output_shape.AddDim(output_dim_size);
-    output_shape.AddDim(uint64_t(1) << max_num_qubits);
+    OP_REQUIRES_OK(context,
+                   output_shape.AddDimWithStatus(int64_t{1} << max_num_qubits));
 
     tensorflow::Tensor* output = nullptr;
     OP_REQUIRES_OK(context, context->allocate_output(0, output_shape, &output));
