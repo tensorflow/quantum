@@ -143,10 +143,7 @@ class TfqSimulateStateOp : public tensorflow::OpKernel {
     for (size_t i = 0; i < fused_circuits.size(); i++) {
       uint64_t nq = num_qubits[i];
 
-      OP_REQUIRES_OK(
-          context,
-          GrowBuffers(
-              nq, &largest_nq, [&](uint64_t n) { return ss.Create(n); }, &sv));
+      OP_REQUIRES_OK(context, GrowStateBuffers(nq, &largest_nq, ss, &sv));
       ss.SetStateZero(sv);
       for (size_t j = 0; j < fused_circuits[i].size(); j++) {
         qsim::ApplyFusedGate(sim, fused_circuits[i][j], sv);
@@ -192,8 +189,7 @@ class TfqSimulateStateOp : public tensorflow::OpKernel {
       for (int64_t i = start; i < end; i++) {
         uint64_t nq = num_qubits[i];
 
-        TF_RETURN_IF_ERROR(GrowBuffers(
-            nq, &largest_nq, [&](uint64_t n) { return ss.Create(n); }, &sv));
+        TF_RETURN_IF_ERROR(GrowStateBuffers(nq, &largest_nq, ss, &sv));
         ss.SetStateZero(sv);
         for (size_t j = 0; j < fused_circuits[i].size(); j++) {
           qsim::ApplyFusedGate(sim, fused_circuits[i][j], sv);

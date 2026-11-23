@@ -45,12 +45,8 @@ inline bool TryReallocateBuffer(const uint64_t nq, const Factory& create_buffer,
 static_assert(sizeof(size_t) >= sizeof(uint64_t),
               "64-bit size_t is required for qsim buffer-size bounds.");
 
-// Maximum qubit count for state-vector ops. qsim allocates
-// sizeof(float) * 2 * 2^n = 8 * 2^n bytes per state vector. At n = 60,
-// 8 * 2^60 = 2^63 exceeds signed int64_t max; at n = 61, byte size wraps
-// uint64_t/size_t to 0; at n >= 64, 1ULL << n is shift UB. At n = 59,
-// 8 * 2^59 = 2^62 fits int64_t and size_t, and all uint64_t qubit shifts
-// and bitmasks (bits 0..58) stay well-defined.
+// State-vector qubit limit: 8 * 2^59 = 2^62 bytes fits int64_t/size_t and
+// keeps uint64_t bitmask shifts well-defined (n = 60 overflows int64_t).
 inline constexpr uint64_t kMaxStateVectorQubits = 59;
 static_assert(kMaxStateVectorQubits < 64 &&
                   sizeof(float) * 2 <=
@@ -58,11 +54,8 @@ static_assert(kMaxStateVectorQubits < 64 &&
                                           kMaxStateVectorQubits),
               "kMaxStateVectorQubits would overflow state-vector byte size.");
 
-// Maximum qubit count for unitary calculation. qsim allocates
-// sizeof(float) * 2^n * 2 * 2^n = 8 * 2^(2n) bytes per unitary matrix. At
-// n = 30, 8 * 2^60 = 2^63 exceeds signed int64_t max; at n = 31, byte size
-// wraps size_t to 0; at n = 32, (1ULL << n) * (1ULL << n) wraps uint64_t to 0.
-// At n = 29, element count (2^58) and byte count (2^61) fit int64_t and size_t.
+// Unitary qubit limit: 8 * 2^(2*29) = 2^61 bytes fits int64_t/size_t
+// (n = 30 overflows int64_t; n = 32 wraps 2^n * 2^n).
 inline constexpr uint64_t kMaxUnitaryQubits = 29;
 static_assert(2 * kMaxUnitaryQubits < 64 &&
                   sizeof(float) * 2 <=
@@ -70,10 +63,8 @@ static_assert(2 * kMaxUnitaryQubits < 64 &&
                                           (2 * kMaxUnitaryQubits)),
               "kMaxUnitaryQubits would overflow unitary byte size.");
 
-// Shift clamp for ParallelFor cost_per_unit estimation. 200 * (1LL << 30)
-// (~2.15e11) fits both int64_t (overflow starts at n = 56) and double (exact
-// below 2^53 inside Eigen::TensorOpCost), preserving exact cycle estimates for
-// 0 <= max_num_qubits <= 30 while already saturating Eigen thread sharding.
+// Shift clamp for ParallelFor cost_per_unit: 200 * 2^30 fits int64_t and exact
+// double precision while already saturating Eigen thread sharding.
 inline constexpr uint64_t kMaxCycleEstimateQubits = 30;
 static_assert(kMaxCycleEstimateQubits < 63 &&
                   int64_t{200} <= (std::numeric_limits<int64_t>::max() >>
@@ -139,6 +130,15 @@ inline absl::Status GrowBuffers(const uint64_t nq, uint64_t* largest_nq,
   }
   *largest_nq = nq;
   return absl::OkStatus();
+}
+
+// Convenience wrapper around GrowBuffers for `ss.Create(nq)` state spaces.
+template <typename StateSpace, typename... Buffers>
+inline absl::Status GrowStateBuffers(const uint64_t nq, uint64_t* largest_nq,
+                                     const StateSpace& ss,
+                                     Buffers*... buffers) {
+  return GrowBuffers(
+      nq, largest_nq, [&ss](uint64_t n) { return ss.Create(n); }, buffers...);
 }
 
 }  // namespace tfq

@@ -101,11 +101,9 @@ absl::Status ValidateMPS1DQubitsAndBondDim(const std::vector<int>& num_qubits,
     return tensorflow::errors::InvalidArgument(
         "bond_dim must be at least 4. Got ", bond_dim, ".");
   }
-  // qsim::mps::MPSStateSpace uses 32-bit unsigned arithmetic for end_sizes
-  // (8 * bond_dim), internal_sizes (4 * bond_dim^2 * (num_qubits + 1)), and
-  // RawSize() (bytes), and signed 32-bit int offsets in InnerProduct(). Keep
-  // total floats <= UINT_MAX / sizeof(float) (== INT_MAX / 2) so none of
-  // those calculations can wrap.
+  // Keep total floats (8*bd + 4*bd^2*(nq+1)) <= UINT_MAX / sizeof(float) so
+  // qsim::mps::MPSStateSpace's 32-bit unsigned sizes and signed int offsets
+  // cannot wrap.
   constexpr uint64_t kMaxFloats =
       std::numeric_limits<unsigned int>::max() / sizeof(float);
   constexpr uint64_t kMaxBondDim = kMaxFloats / 8;
@@ -114,12 +112,8 @@ absl::Status ValidateMPS1DQubitsAndBondDim(const std::vector<int>& num_qubits,
           kMaxBondDim <= std::numeric_limits<uint64_t>::max() / 4 / kMaxBondDim,
       "4 * bond_dim^2 could overflow uint64_t.");
   const uint64_t bd = static_cast<uint64_t>(bond_dim);
-  // Enforce at least the minimum valid circuit size (4 qubits) on empty
-  // batches so bond_dim bounds stay uniform across empty and non-empty inputs.
+  // Apply the 4-qubit minimum uniformly so empty batches check bond_dim too.
   const uint64_t nq = std::max<uint64_t>(current_max, 4);
-  // Because `bond_dim >= 4` and `bd <= kMaxBondDim` (checked before division),
-  // `4 * bd * bd` is non-zero and cannot overflow uint64_t, and `nq <= INT_MAX`
-  // guarantees `nq + 1` cannot wrap uint64_t.
   if (bd > kMaxBondDim ||
       nq + 1 > (kMaxFloats - uint64_t{8} * bd) / (uint64_t{4} * bd * bd)) {
     return tensorflow::errors::InvalidArgument(

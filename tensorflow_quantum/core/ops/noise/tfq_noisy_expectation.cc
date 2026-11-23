@@ -208,10 +208,8 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
         continue;
       }
 
-      OP_REQUIRES_OK(context, GrowBuffers(
-                                  nq, &largest_nq,
-                                  [&](uint64_t n) { return ss.Create(n); }, &sv,
-                                  &scratch));
+      OP_REQUIRES_OK(context,
+                     GrowStateBuffers(nq, &largest_nq, ss, &sv, &scratch));
       QTSimulator::Parameter param;
       param.collect_kop_stat = false;
       param.collect_mea_stat = false;
@@ -322,9 +320,8 @@ class TfqNoisyExpectationOp : public tensorflow::OpKernel {
           continue;
         }
 
-        TF_RETURN_IF_ERROR(GrowBuffers(
-            nq, &largest_nq, [&](uint64_t n) { return ss.Create(n); }, &sv,
-            &scratch));
+        TF_RETURN_IF_ERROR(
+            GrowStateBuffers(nq, &largest_nq, ss, &sv, &scratch));
         QTSimulator::Parameter param;
         param.collect_kop_stat = false;
         param.collect_mea_stat = false;

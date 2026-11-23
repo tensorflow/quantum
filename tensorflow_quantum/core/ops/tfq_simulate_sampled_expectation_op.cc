@@ -186,10 +186,8 @@ class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
     for (size_t i = 0; i < fused_circuits.size(); i++) {
       uint64_t nq = num_qubits[i];
 
-      OP_REQUIRES_OK(context, GrowBuffers(
-                                  nq, &largest_nq,
-                                  [&](uint64_t n) { return ss.Create(n); }, &sv,
-                                  &scratch));
+      OP_REQUIRES_OK(context,
+                     GrowStateBuffers(nq, &largest_nq, ss, &sv, &scratch));
       // TODO: add heuristic here so that we do not always recompute
       //  the state if there is a possibility that circuit[i] and
       //  circuit[i + 1] produce the same state.
@@ -270,9 +268,8 @@ class TfqSimulateSampledExpectationOp : public tensorflow::OpKernel {
         if (cur_batch_index != old_batch_index) {
           // We've run into a new state vector we must compute.
           // Only compute a new state vector when we have to.
-          TF_RETURN_IF_ERROR(GrowBuffers(
-              nq, &largest_nq, [&](uint64_t n) { return ss.Create(n); }, &sv,
-              &scratch));
+          TF_RETURN_IF_ERROR(
+              GrowStateBuffers(nq, &largest_nq, ss, &sv, &scratch));
           // no need to update scratch_state since ComputeExpectation
           // will take care of things for us.
           ss.SetStateZero(sv);

@@ -245,10 +245,8 @@ class TfqInnerProductGradOp : public tensorflow::OpKernel {
     for (std::vector<std::vector<qsim::GateFused<QsimGate>>>::size_type i = 0;
          i < fused_circuits.size(); i++) {
       uint64_t nq = num_qubits[i];
-      OP_REQUIRES_OK(context, GrowBuffers(
-                                  nq, &largest_nq,
-                                  [&](uint64_t n) { return ss.Create(n); }, &sv,
-                                  &scratch, &scratch2));
+      OP_REQUIRES_OK(context, GrowStateBuffers(nq, &largest_nq, ss, &sv,
+                                               &scratch, &scratch2));
       ss.SetStateZero(sv);
       for (std::vector<qsim::GateFused<QsimGate>>::size_type j = 0;
            j < fused_circuits[i].size(); j++) {
@@ -360,9 +358,8 @@ class TfqInnerProductGradOp : public tensorflow::OpKernel {
         if (cur_batch_index != old_batch_index) {
           // We've run into a new state vector we must compute.
           // Only compute a new state vector when we have to.
-          TF_RETURN_IF_ERROR(GrowBuffers(
-              nq, &largest_nq, [&](uint64_t n) { return ss.Create(n); }, &sv,
-              &sv_adj, &scratch, &scratch2));
+          TF_RETURN_IF_ERROR(GrowStateBuffers(nq, &largest_nq, ss, &sv, &sv_adj,
+                                              &scratch, &scratch2));
           ss.SetStateZero(sv);
           for (std::vector<qsim::GateFused<QsimGate>>::size_type j = 0;
                j < fused_circuits[cur_batch_index].size(); j++) {

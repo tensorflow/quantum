@@ -169,10 +169,7 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
     for (size_t i = 0; i < ncircuits.size(); i++) {
       uint64_t nq = num_qubits[i];
 
-      OP_REQUIRES_OK(
-          context,
-          GrowBuffers(
-              nq, &largest_nq, [&](uint64_t n) { return ss.Create(n); }, &sv));
+      OP_REQUIRES_OK(context, GrowStateBuffers(nq, &largest_nq, ss, &sv));
 
       QTSimulator::Parameter param;
       param.collect_kop_stat = false;
@@ -267,8 +264,7 @@ class TfqNoisySamplesOp : public tensorflow::OpKernel {
           continue;
         }
 
-        TF_RETURN_IF_ERROR(GrowBuffers(
-            nq, &largest_nq, [&](uint64_t n) { return ss.Create(n); }, &sv));
+        TF_RETURN_IF_ERROR(GrowStateBuffers(nq, &largest_nq, ss, &sv));
         QTSimulator::Parameter param;
         param.collect_kop_stat = false;
         param.collect_mea_stat = true;

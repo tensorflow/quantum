@@ -201,9 +201,8 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
 
       for (int64_t i = start; i < end; i++) {
         uint64_t nq = num_qubits[i];
-        TF_RETURN_IF_ERROR(GrowBuffers(
-            nq, &largest_nq, [&](uint64_t n) { return ss.Create(n); }, &sv,
-            &scratch, &scratch2));
+        TF_RETURN_IF_ERROR(
+            GrowStateBuffers(nq, &largest_nq, ss, &sv, &scratch, &scratch2));
 
         // (#679) Just ignore empty program
         if (qsim_circuits[i].gates.size() == 0) {
@@ -312,10 +311,8 @@ class TfqAdjointGradientOp : public tensorflow::OpKernel {
     for (size_t i = 0; i < partial_fused_circuits.size(); i++) {
       uint64_t nq = num_qubits[i];
 
-      OP_REQUIRES_OK(context, GrowBuffers(
-                                  nq, &largest_nq,
-                                  [&](uint64_t n) { return ss.Create(n); }, &sv,
-                                  &scratch, &scratch2));
+      OP_REQUIRES_OK(context, GrowStateBuffers(nq, &largest_nq, ss, &sv,
+                                               &scratch, &scratch2));
 
       // (#679) Just ignore empty program
       if (qsim_circuits[i].gates.size() == 0) {
