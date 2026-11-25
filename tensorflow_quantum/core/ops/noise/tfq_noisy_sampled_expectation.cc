@@ -292,6 +292,16 @@ class TfqNoisySampledExpectationOp : public tensorflow::OpKernel {
 
     output_tensor->setZero();
 
+    // Pre-fill empty channel rows on main thread to avoid unsynchronized writes
+    // across thread shards.
+    for (size_t i = 0; i < ncircuits.size(); i++) {
+      if (ncircuits[i].channels.empty()) {
+        for (size_t j = 0; j < pauli_sums[i].size(); j++) {
+          (*output_tensor)(i, j) = -2.0;
+        }
+      }
+    }
+
     tensorflow::GuardedPhiloxRandom random_gen;
     int max_psum_length = 1;
     int max_n_shots = 1;
@@ -324,11 +334,9 @@ class TfqNoisySampledExpectationOp : public tensorflow::OpKernel {
         uint64_t nq = num_qubits[i];
         int rep_offset = rep_offsets[start][i];
 
-        // (#679) Just ignore empty program
+        // (#679) Just ignore empty program. Pre-filled with -2.0 on main
+        // thread.
         if (ncircuits[i].channels.empty()) {
-          for (size_t j = 0; j < pauli_sums[i].size(); j++) {
-            (*output_tensor)(i, j) = -2.0;
-          }
           continue;
         }
 

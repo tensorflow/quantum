@@ -155,15 +155,13 @@ class TfqSimulateStateOp : public tensorflow::OpKernel {
       // tensors.
       auto copy_f = [i, nq, &output_tensor, &ss, &sv](uint64_t start,
                                                       uint64_t end) {
-        uint64_t crossover = uint64_t(1) << nq;
-        uint64_t upper = std::min(end, crossover);
-
-        if (start < crossover) {
-          for (uint64_t j = 0; j < upper; j++) {
-            (*output_tensor)(i, j) = ss.GetAmpl(sv, j);
-          }
+        const uint64_t crossover = uint64_t{1} << nq;
+        const uint64_t copy_end = std::min(end, crossover);
+        for (uint64_t j = start; j < copy_end; j++) {
+          (*output_tensor)(i, j) = ss.GetAmpl(sv, j);
         }
-        for (uint64_t j = upper; j < end; j++) {
+        const uint64_t pad_start = std::max(start, crossover);
+        for (uint64_t j = pad_start; j < end; j++) {
           (*output_tensor)(i, j) = std::complex<float>(-2, 0);
         }
       };
