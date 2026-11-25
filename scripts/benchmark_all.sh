@@ -14,7 +14,11 @@
 # limitations under the License.
 # ==============================================================================
 echo "Testing benchmarks.";
-test_outputs=$(bazel test -c opt --cxxopt="-msse2" --cxxopt="-msse3" --cxxopt="-msse4" --test_output=errors $(bazel query //benchmarks/...))
+arch_cxxopts=()
+if [[ "$(uname -m)" == "x86_64" ]]; then
+	arch_cxxopts+=(--cxxopt="-msse2" --cxxopt="-msse3" --cxxopt="-msse4")
+fi
+test_outputs=$(bazel test -c opt "${arch_cxxopts[@]}" --test_output=errors $(bazel query //benchmarks/...))
 exit_code=$?
 
 if [ "$exit_code" == "0" ]; then
@@ -26,5 +30,4 @@ else
 fi
 
 echo "Running preconfigured benchmarks.";
-bazel_run=${bazel run -c opt --cxxopt="-msse2" --cxxopt="-msse3" --cxxopt="-msse4"}
-bazel_run benchmarks/scripts:benchmark_clifford_circuit -- --op_density 1 --n_moments 10 --n_qubits 4
+bazel run -c opt "${arch_cxxopts[@]}" benchmarks/scripts:benchmark_clifford_circuit -- --op_density 1 --n_moments 10 --n_qubits 4

@@ -45,8 +45,8 @@ echo "Using Python: ${PY}"
 EXPORT_DIR="bazel-bin/release/build_pip_package.runfiles/__main__"
 
 main() {
-  DEST="${1}"
-  EXTRA_FLAGS="${2}"
+  DEST="${1:-}"
+  EXTRA_FLAGS="${2:-}"
 
   if [[ -z "${DEST}" ]]; then
     echo "No destination directory provided."
@@ -54,26 +54,38 @@ main() {
   fi
 
   mkdir -p "${DEST}"
+  DEST="$(cd "${DEST}" && pwd)"
   echo "=== Destination directory for wheel file: ${DEST}"
 
   # Build the pip package in a temporary directory.
-  TMPDIR="$(mktemp -d -t tmp.XXXXXXXXXX)"
-  echo "$(date) : === Using tmpdir: ${TMPDIR}"
+  # Avoid naming this variable TMPDIR because macOS exports TMPDIR in the
+  # environment, and overwriting it would cause `python -m build` to create its
+  # temporary isolated environment inside the package staging directory.
+  BUILD_TMPDIR="$(mktemp -d -t tmp.XXXXXXXXXX)"
+  trap 'rm -rf "${BUILD_TMPDIR}"' EXIT
+  echo "$(date) : === Using tmpdir: ${BUILD_TMPDIR}"
   echo "=== Copying TFQ files"
 
-  # Copy over files necessary to run setup.py
-  cp "${EXPORT_DIR}/README.md" "${TMPDIR}"
-  cp "${EXPORT_DIR}/release/setup.py" "${TMPDIR}"
-  cp "${EXPORT_DIR}/release/MANIFEST.in" "${TMPDIR}"
-  mkdir "${TMPDIR}/tensorflow_quantum"
-  cp -r -v "${EXPORT_DIR}/tensorflow_quantum/"* "${TMPDIR}/tensorflow_quantum/"
+  # Copy over files necessary to run setup.py. Use -L so symlinks in Bazel's
+  # runfiles tree are dereferenced on both Linux (GNU cp) and macOS (BSD cp).
+  cp -L "${EXPORT_DIR}/README.md" "${BUILD_TMPDIR}"
+  cp -L "${EXPORT_DIR}/release/setup.py" "${BUILD_TMPDIR}"
+  cp -L "${EXPORT_DIR}/release/MANIFEST.in" "${BUILD_TMPDIR}"
+  mkdir "${BUILD_TMPDIR}/tensorflow_quantum"
+  cp -LR -v "${EXPORT_DIR}/tensorflow_quantum/"* "${BUILD_TMPDIR}/tensorflow_quantum/"
+  chmod -R u+w "${BUILD_TMPDIR}"
 
-  pushd "${TMPDIR}"
+  pushd "${BUILD_TMPDIR}"
   echo "$(date) : === Building wheel"
+  if [[ "$(uname -s)" == "Darwin" ]]; then
+    export MACOSX_DEPLOYMENT_TARGET="${MACOSX_DEPLOYMENT_TARGET:-12.0}"
+    export ARCHFLAGS="${ARCHFLAGS:--arch $(uname -m)}"
+    export _PYTHON_HOST_PLATFORM="${_PYTHON_HOST_PLATFORM:-macosx-${MACOSX_DEPLOYMENT_TARGET}-$(uname -m)}"
+  fi
   "${PY}" -m build -v --wheel ${EXTRA_FLAGS} > /dev/null
   cp dist/*.whl "${DEST}"
   popd
-  rm -rf "${TMPDIR}"
+  rm -rf "${BUILD_TMPDIR}"
   echo $(date) : "=== Output wheel file is in: ${DEST}"
 }
 

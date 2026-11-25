@@ -10,7 +10,7 @@ documents the process used by the TensorFlow Quantum maintainers to build and
 release the packages for public TensorFlow Quantum distributions.
 
 At present, binary distributions in the form of Python wheel files are made
-available only for Linux systems.
+available for Linux (`x86_64`) and macOS (Apple Silicon / `arm64`) systems.
 
 ## Version numbering policy
 
@@ -33,7 +33,8 @@ on, including:
 
 *   The version of Python and the local Python environment.
 *   The version of TensorFlow.
-*   The TensorFlow build container used.
+*   The TensorFlow build container used (on Linux) or Xcode/Clang toolchain
+    used (on macOS).
 *   The Crosstool configuration used.
 *   The dependency requirements implied by Cirq, TF-Keras, NumPy, Protobuf, and
     other Python packages that TFQ and TF depend on.
@@ -61,8 +62,8 @@ into the upstream repository before proceeding further.
 
 ### Preliminary steps
 
-1.  Make sure you have `docker`, `pyenv`, `pip`, and `jq` installed on your
-    system.
+1.  Make sure you have `pyenv`, `pip`, and `jq` installed on your system, plus
+    `docker` on Linux or Xcode Command Line Tools and Bazel 6.5.0 on macOS.
 
 2.  Git clone the TensorFlow Quantum repo to a directory on your computer.
 
@@ -94,7 +95,7 @@ into the upstream repository before proceeding further.
 For each Python version _X.Y.Z_ that will be supported in the TFQ release, do
 the following:
 
-1.  Run `./release/build_release.sh X.Y.Z`.
+1.  Run `./release/build_release.sh -p X.Y.Z`.
 
 2.  If the previous step fails, resolve the error.
 
