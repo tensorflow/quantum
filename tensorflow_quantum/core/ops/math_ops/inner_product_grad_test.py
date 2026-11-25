@@ -405,6 +405,116 @@ class InnerProductAdjGradTest(tf.test.TestCase, parameterized.TestCase):
                                                      other_program,
                                                      empty_pred_grad)
 
+    def test_duplicate_symbol_names(self):
+        """Tests that duplicate symbol names fail the symbol count check."""
+        batch_size = 2
+        qubits = cirq.GridQubit.rect(1, 2)
+        circuit_batch, _ = util.random_symbol_circuit_resolver_batch(
+            qubits, ['alpha'], batch_size)
+        other_batch = [
+            util.random_circuit_resolver_batch(qubits, 1)[0]
+            for _ in range(batch_size)
+        ]
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'symbols and symbol maps do not match'):
+            inner_product_op._inner_product_grad(
+                util.convert_to_tensor(circuit_batch), ['alpha', 'alpha'],
+                np.zeros((batch_size, 2)), util.convert_to_tensor(other_batch),
+                np.ones((batch_size, 1)))
+
+
+class InnerProductGradEmptyBatchTest(tf.test.TestCase, parameterized.TestCase):
+    """Tests tfq_inner_product_grad with empty batches or other_programs."""
+
+    @parameterized.parameters([
+        {
+            'n_others': 0
+        },
+        {
+            'n_others': 1
+        },
+        {
+            'n_others': 3
+        },
+    ])
+    def test_empty_batch(self, n_others):
+        """Tests that an empty batch returns an empty gradient."""
+        programs = tf.raw_ops.Empty(shape=(0,), dtype=tf.string)
+        symbol_names = tf.constant(['alpha', 'beta'])
+        symbol_values = tf.raw_ops.Empty(shape=(0, 2), dtype=tf.float32)
+        other_programs = tf.raw_ops.Empty(shape=(0, n_others), dtype=tf.string)
+        prev_grad = tf.raw_ops.Empty(shape=(0, n_others), dtype=tf.float32)
+
+        out = inner_product_op.MATH_OP_MODULE.tfq_inner_product_grad(
+            programs, symbol_names, symbol_values, other_programs, prev_grad)
+        self.assertEqual(out.shape, (0, 2))
+        self.assertEqual(out.dtype, tf.complex64)
+
+    def test_empty_batch_gradient_tape(self):
+        """Tests the gradient of inner_product on an empty batch."""
+        programs = tf.raw_ops.Empty(shape=(0,), dtype=tf.string)
+        symbol_names = tf.constant(['alpha', 'beta'])
+        symbol_values = tf.raw_ops.Empty(shape=(0, 2), dtype=tf.float32)
+        other_programs = tf.raw_ops.Empty(shape=(0, 3), dtype=tf.string)
+
+        with tf.GradientTape() as tape:
+            tape.watch(symbol_values)
+            ip = inner_product_op.inner_product(programs, symbol_names,
+                                                symbol_values, other_programs)
+        grad = tape.gradient(ip, symbol_values)
+        self.assertEqual(grad.shape, (0, 2))
+
+    def test_empty_batch_mismatched_prev_grad(self):
+        """Tests that a prev_grad width mismatch fails on an empty batch."""
+        programs = tf.raw_ops.Empty(shape=(0,), dtype=tf.string)
+        symbol_names = tf.constant(['alpha', 'beta'])
+        symbol_values = tf.raw_ops.Empty(shape=(0, 2), dtype=tf.float32)
+        other_programs = tf.raw_ops.Empty(shape=(0, 3), dtype=tf.string)
+        bad_prev_grad = tf.raw_ops.Empty(shape=(0, 4), dtype=tf.float32)
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'gradients and other_programs do not'):
+            inner_product_op.MATH_OP_MODULE.tfq_inner_product_grad(
+                programs, symbol_names, symbol_values, other_programs,
+                bad_prev_grad)
+
+    def test_empty_batch_mismatched_symbol_values(self):
+        """Tests that a symbol_values width mismatch fails on an empty batch."""
+        programs = tf.raw_ops.Empty(shape=(0,), dtype=tf.string)
+        symbol_names = tf.constant(['alpha', 'beta'])
+        bad_symbol_values = tf.raw_ops.Empty(shape=(0, 3), dtype=tf.float32)
+        other_programs = tf.raw_ops.Empty(shape=(0, 3), dtype=tf.string)
+        prev_grad = tf.raw_ops.Empty(shape=(0, 3), dtype=tf.float32)
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'symbol names and value sizes'):
+            inner_product_op.MATH_OP_MODULE.tfq_inner_product_grad(
+                programs, symbol_names, bad_symbol_values, other_programs,
+                prev_grad)
+
+    # Without the early return in Compute, a batch size of 1 would dispatch to
+    # ComputeLarge and larger sizes to ComputeSmall, so cover both shapes.
+    @parameterized.parameters([{'batch_size': 1}, {'batch_size': 3}])
+    def test_empty_other_programs(self, batch_size):
+        """Tests that zero other_programs per circuit give a zero gradient."""
+        symbol_names = ['alpha', 'beta']
+        qubits = cirq.GridQubit.rect(1, 2)
+        circuit_batch, resolver_batch = \
+          util.random_symbol_circuit_resolver_batch(
+              qubits, symbol_names, batch_size)
+        symbol_values = np.array([[resolver[symbol]
+                                   for symbol in symbol_names]
+                                  for resolver in resolver_batch])
+        other_programs = tf.raw_ops.Empty(shape=(batch_size, 0),
+                                          dtype=tf.string)
+        prev_grad = tf.raw_ops.Empty(shape=(batch_size, 0), dtype=tf.float32)
+
+        out = inner_product_op._inner_product_grad(
+            util.convert_to_tensor(circuit_batch), symbol_names, symbol_values,
+            other_programs, prev_grad)
+        self.assertAllClose(out, np.zeros((batch_size, 2), dtype=np.complex64))
+
 
 if __name__ == "__main__":
     tf.test.main()

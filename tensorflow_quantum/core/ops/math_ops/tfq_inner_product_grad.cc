@@ -102,7 +102,9 @@ class TfqInnerProductGradOp : public tensorflow::OpKernel {
                     "Number of circuits and symbol_values do not match. Got ",
                     programs.size(), " circuits and ", maps.size(),
                     " symbol values.")));
-    OP_REQUIRES(context, output_dim_symbol_size == maps[0].size(),
+    // An empty batch has no symbol maps to compare against.
+    OP_REQUIRES(context,
+                maps.empty() || output_dim_symbol_size == maps[0].size(),
                 tensorflow::errors::InvalidArgument(absl::StrCat(
                     "Number of symbols and symbol maps do not match. Got ",
                     output_dim_symbol_size, " symbols and ", maps[0].size(),
@@ -191,13 +193,22 @@ class TfqInnerProductGradOp : public tensorflow::OpKernel {
                     downstream_grads.size(), " gradients and ", programs.size(),
                     " circuits.")));
 
-    OP_REQUIRES(context, downstream_grads[0].size() == output_dim_internal_size,
+    // Use the tensor shape rather than downstream_grads[0] so that this check
+    // also works (and does not read out of bounds) when the batch is empty.
+    const size_t num_grad_entries = context->input(4).dim_size(1);
+    OP_REQUIRES(context, num_grad_entries == output_dim_internal_size,
                 tensorflow::errors::InvalidArgument(absl::StrCat(
                     "Number of gradients and other_programs do not match. Got ",
-                    downstream_grads[0].size(), " gradient entries and ",
+                    num_grad_entries, " gradient entries and ",
                     output_dim_internal_size, " other programs.")));
 
     output_tensor.setZero();
+
+    // With no circuits or no other_programs, the gradient is all zeros.
+    // Returning here also keeps ComputeSmall from indexing an empty vector.
+    if (programs.empty() || output_dim_internal_size == 0) {
+      return;
+    }
 
     // Cross reference with standard google cloud compute instances
     // Memory ~= 2 * num_threads * (2 * 64 * 2 ** num_qubits in circuits)
