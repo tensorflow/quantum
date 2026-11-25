@@ -55,6 +55,36 @@ Status ParseProto(const std::string& text, T* proto) {
       "Unparseable proto: " + text);
 }
 
+// Ensures prior parallel parsing succeeded (so unresolved -1 sentinels cannot
+// convert to large unsigned shift counts) and verifies every qubit count is in
+// [0, max_num_qubits].
+Status ValidateNumQubits(const OpKernelContext* context,
+                         const std::vector<int>& num_qubits,
+                         const int max_num_qubits) {
+  if (!context->status().ok()) {
+    return context->status();
+  }
+  if (max_num_qubits < 0) {
+    return Status(static_cast<tensorflow::errors::Code>(
+                      absl::StatusCode::kInvalidArgument),
+                  absl::StrCat("max_num_qubits must be non-negative. Got ",
+                               max_num_qubits, "."));
+  }
+  for (const int n : num_qubits) {
+    if (n < 0 || n > max_num_qubits) {
+      // Cast to unsigned when formatting so counts above INT_MAX that wrapped
+      // on conversion from ResolveQubitIds's unsigned int print accurately.
+      return Status(
+          static_cast<tensorflow::errors::Code>(
+              absl::StatusCode::kInvalidArgument),
+          absl::StrCat("Circuit contains ", static_cast<unsigned int>(n),
+                       " qubits, which exceeds the maximum of ", max_num_qubits,
+                       "."));
+    }
+  }
+  return ::tensorflow::Status();
+}
+
 }  // namespace
 
 Status ParsePrograms(OpKernelContext* context, const std::string& input_name,
@@ -155,7 +185,8 @@ Status GetProgramsAndNumQubits(
     OpKernelContext* context, std::vector<Program>* programs,
     std::vector<int>* num_qubits,
     std::vector<std::vector<PauliSum>>* p_sums /*=nullptr*/,
-    bool swap_endianness /*=false*/) {
+    bool swap_endianness /*=false*/,
+    int max_num_qubits /*=kMaxStateVectorQubits*/) {
   // 1. Parse input programs
   // 2. (Optional) Parse input PauliSums
   // 3. Convert GridQubit locations to integers.
@@ -202,13 +233,14 @@ Status GetProgramsAndNumQubits(
   context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
       num_qubits->size(), cycle_estimate, DoWork);
 
-  return ::tensorflow::Status();
+  return ValidateNumQubits(context, *num_qubits, max_num_qubits);
 }
 
 tensorflow::Status GetProgramsAndNumQubits(
     OpKernelContext* context, std::vector<Program>* programs,
     std::vector<int>* num_qubits,
-    std::vector<std::vector<Program>>* other_programs) {
+    std::vector<std::vector<Program>>* other_programs,
+    int max_num_qubits /*=kMaxStateVectorQubits*/) {
   // 1. Parse input programs
   // 2. Parse other_programs
   // 3. Convert GridQubit locations to integers and ensure exact matching.
@@ -247,7 +279,7 @@ tensorflow::Status GetProgramsAndNumQubits(
   context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
       num_qubits->size(), cycle_estimate, DoWork);
 
-  return ::tensorflow::Status();
+  return ValidateNumQubits(context, *num_qubits, max_num_qubits);
 }
 
 Status GetPauliSums(OpKernelContext* context,

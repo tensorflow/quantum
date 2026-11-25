@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
+#include <cstdint>
 #include <string>
 
 #include "../qsim/lib/circuit.h"
@@ -52,7 +53,9 @@ class TfqCalculateUnitaryOp : public tensorflow::OpKernel {
     std::vector<Program> programs;
     std::vector<int> num_qubits;
     OP_REQUIRES_OK(context,
-                   GetProgramsAndNumQubits(context, &programs, &num_qubits));
+                   GetProgramsAndNumQubits(
+                       context, &programs, &num_qubits, /*p_sums=*/nullptr,
+                       /*swap_endianness=*/false, kMaxUnitaryQubits));
 
     // Parse symbol maps for parameter resolution in the circuits.
     std::vector<SymbolMap> maps;
@@ -94,10 +97,11 @@ class TfqCalculateUnitaryOp : public tensorflow::OpKernel {
     // TODO(pmassey): Investigate creating a matrix that isn't just the maximum
     // required size.
     const size_t output_dim_size = maps.size();
+    const int64_t dim = int64_t{1} << max_num_qubits;
     tensorflow::TensorShape output_shape;
     output_shape.AddDim(output_dim_size);
-    output_shape.AddDim(uint64_t(1) << max_num_qubits);
-    output_shape.AddDim(uint64_t(1) << max_num_qubits);
+    OP_REQUIRES_OK(context, output_shape.AddDimWithStatus(dim));
+    OP_REQUIRES_OK(context, output_shape.AddDimWithStatus(dim));
 
     tensorflow::Tensor *output = nullptr;
     OP_REQUIRES_OK(context, context->allocate_output(0, output_shape, &output));

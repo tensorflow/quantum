@@ -17,6 +17,7 @@ limitations under the License.
 
 #include <algorithm>
 #include <initializer_list>
+#include <limits>
 #include <string>
 #include <vector>
 
@@ -199,6 +200,16 @@ inline Status OptionalInsertControls(const Operation& op,
   }
   if (control_qubits.empty()) {
     return ::tensorflow::Status();
+  }
+  // qsim::MakeControlledGate accumulates gate.cmask using `(val & 1) << i`
+  // on `unsigned int`, which invokes undefined behavior for i >= width.
+  constexpr size_t kMaxControlQubits =
+      std::min<size_t>(std::numeric_limits<unsigned int>::digits, 64);
+  if (control_qubits.size() > kMaxControlQubits) {
+    return Status(
+        absl::StatusCode::kInvalidArgument,
+        absl::StrCat("Controlled gate supports at most ", kMaxControlQubits,
+                     " control qubits, got ", control_qubits.size(), "."));
   }
   // qsim's index arithmetic assumes that the control qubits of a gate are
   // distinct from each other and from its target qubits.

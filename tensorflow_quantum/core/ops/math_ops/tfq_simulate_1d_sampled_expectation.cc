@@ -35,6 +35,7 @@ limitations under the License.
 #include "tensorflow/core/lib/random/simple_philox.h"
 #include "tensorflow/core/util/guarded_philox_random.h"
 #include "tensorflow_quantum/core/ops/parse_context.h"
+#include "tensorflow_quantum/core/ops/tfq_simulate_utils.h"
 #include "tensorflow_quantum/core/proto/pauli_sum.pb.h"
 #include "tensorflow_quantum/core/proto/program.pb.h"
 #include "tensorflow_quantum/core/src/program_resolution.h"
@@ -89,9 +90,9 @@ class TfqSimulateMPS1DSampledExpectationOp : public tensorflow::OpKernel {
     std::vector<Program> programs;
     std::vector<int> num_qubits;
     std::vector<std::vector<PauliSum>> pauli_sums;
-    OP_REQUIRES_OK(context,
-                   GetProgramsAndNumQubits(context, &programs, &num_qubits,
-                                           &pauli_sums, true));
+    OP_REQUIRES_OK(context, GetProgramsAndNumQubits(
+                                context, &programs, &num_qubits, &pauli_sums,
+                                /*swap_endianness=*/true, kMaxMPSQubits));
 
     std::vector<SymbolMap> maps;
     OP_REQUIRES_OK(context, GetSymbolMaps(context, &maps));
@@ -259,8 +260,7 @@ class TfqSimulateMPS1DSampledExpectationOp : public tensorflow::OpKernel {
       }
     };
 
-    const int64_t num_cycles =
-        200 * (int64_t(1) << static_cast<int64_t>(max_num_qubits));
+    const int64_t num_cycles = EstimateSimulationCycles(max_num_qubits);
     context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
         unfused_circuits.size() * output_dim_op_size, num_cycles, DoWork);
     OP_REQUIRES_OK(context, compute_status);

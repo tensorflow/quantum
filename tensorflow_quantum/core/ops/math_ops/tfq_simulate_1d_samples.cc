@@ -15,6 +15,7 @@ limitations under the License.
 
 #include <stdlib.h>
 
+#include <cstdint>
 #include <string>
 
 #include "../qsim/lib/circuit.h"
@@ -36,6 +37,7 @@ limitations under the License.
 #include "tensorflow/core/lib/random/simple_philox.h"
 #include "tensorflow/core/util/guarded_philox_random.h"
 #include "tensorflow_quantum/core/ops/parse_context.h"
+#include "tensorflow_quantum/core/ops/tfq_simulate_utils.h"
 #include "tensorflow_quantum/core/proto/program.pb.h"
 #include "tensorflow_quantum/core/src/circuit_parser_qsim.h"
 #include "tensorflow_quantum/core/src/program_resolution.h"
@@ -65,8 +67,9 @@ class TfqSimulateMPS1DSamplesOp : public tensorflow::OpKernel {
     std::vector<Program> programs;
     std::vector<int> num_qubits;
     OP_REQUIRES_OK(context,
-                   GetProgramsAndNumQubits(context, &programs, &num_qubits,
-                                           nullptr, true));
+                   GetProgramsAndNumQubits(
+                       context, &programs, &num_qubits, /*p_sums=*/nullptr,
+                       /*swap_endianness=*/true, kMaxMPSQubits));
 
     // Parse symbol maps for parameter resolution in the circuits.
     std::vector<SymbolMap> maps;
@@ -121,8 +124,8 @@ class TfqSimulateMPS1DSamplesOp : public tensorflow::OpKernel {
     const size_t output_dim_size = maps.size();
     tensorflow::TensorShape output_shape;
     output_shape.AddDim(output_dim_size);
-    output_shape.AddDim(num_samples);
-    output_shape.AddDim(max_num_qubits);
+    OP_REQUIRES_OK(context, output_shape.AddDimWithStatus(num_samples));
+    OP_REQUIRES_OK(context, output_shape.AddDimWithStatus(max_num_qubits));
 
     tensorflow::Tensor* output = nullptr;
     OP_REQUIRES_OK(context, context->allocate_output(0, output_shape, &output));
@@ -204,8 +207,7 @@ class TfqSimulateMPS1DSamplesOp : public tensorflow::OpKernel {
       }
     };
 
-    const int64_t num_cycles =
-        200 * (int64_t(1) << static_cast<int64_t>(max_num_qubits));
+    const int64_t num_cycles = EstimateSimulationCycles(max_num_qubits);
     context->device()->tensorflow_cpu_worker_threads()->workers->ParallelFor(
         unfused_circuits.size(), num_cycles, DoWork);
   }
