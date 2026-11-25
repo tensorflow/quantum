@@ -107,11 +107,13 @@ Status ResolveQubitIds(Program* program, unsigned int* num_qubits,
           return s;
         }
       }
-      s = RegisterQubits(
-          operation.args().at("control_qubits").arg_value().string_value(),
-          &id_set);
-      if (!s.ok()) {
-        return s;
+      const auto control_it = operation.args().find("control_qubits");
+      if (control_it != operation.args().end()) {
+        s = RegisterQubits(control_it->second.arg_value().string_value(),
+                           &id_set);
+        if (!s.ok()) {
+          return s;
+        }
       }
     }
   }
@@ -144,8 +146,12 @@ Status ResolveQubitIds(Program* program, unsigned int* num_qubits,
                      operation.mutable_qubits()->end());
       }
       // Resolve control qubit ids found in the control_qubits arg.
+      const auto control_it = operation.mutable_args()->find("control_qubits");
+      if (control_it == operation.mutable_args()->end()) {
+        continue;
+      }
       absl::string_view control_qubits =
-          operation.args().at("control_qubits").arg_value().string_value();
+          control_it->second.arg_value().string_value();
       // explicit empty value set in serializer.py.
       if (control_qubits.empty()) {
         continue;
@@ -157,10 +163,8 @@ Status ResolveQubitIds(Program* program, unsigned int* num_qubits,
       for (auto id : control_ids) {
         control_indexs.push_back(id_to_index.at(id));
       }
-      operation.mutable_args()
-          ->at("control_qubits")
-          .mutable_arg_value()
-          ->set_string_value(absl::StrJoin(control_indexs, ","));
+      control_it->second.mutable_arg_value()->set_string_value(
+          absl::StrJoin(control_indexs, ","));
     }
   }
 
@@ -204,11 +208,13 @@ Status ResolveQubitIds(Program* program, unsigned int* num_qubits,
           return s;
         }
       }
-      s = RegisterQubits(
-          operation.args().at("control_qubits").arg_value().string_value(),
-          &id_set);
-      if (!s.ok()) {
-        return s;
+      const auto control_it = operation.args().find("control_qubits");
+      if (control_it != operation.args().end()) {
+        s = RegisterQubits(control_it->second.arg_value().string_value(),
+                           &id_set);
+        if (!s.ok()) {
+          return s;
+        }
       }
     }
   }
@@ -233,8 +239,12 @@ Status ResolveQubitIds(Program* program, unsigned int* num_qubits,
         qubit.set_id(id_to_index.at(qubit.id()));
       }
       // Resolve control qubit ids found in the control_qubits arg.
+      const auto control_it = operation.mutable_args()->find("control_qubits");
+      if (control_it == operation.mutable_args()->end()) {
+        continue;
+      }
       absl::string_view control_qubits =
-          operation.args().at("control_qubits").arg_value().string_value();
+          control_it->second.arg_value().string_value();
       // explicit empty value set in serializer.py.
       if (control_qubits.empty()) {
         continue;
@@ -246,10 +256,8 @@ Status ResolveQubitIds(Program* program, unsigned int* num_qubits,
       for (auto id : control_ids) {
         control_indexs.push_back(id_to_index.at(id));
       }
-      operation.mutable_args()
-          ->at("control_qubits")
-          .mutable_arg_value()
-          ->set_string_value(absl::StrJoin(control_indexs, ","));
+      control_it->second.mutable_arg_value()->set_string_value(
+          absl::StrJoin(control_indexs, ","));
     }
   }
 
@@ -272,10 +280,13 @@ Status ResolveQubitIds(Program* program, unsigned int* num_qubits,
           qubit.set_id(result->second);
         }
         // Resolve control qubit ids.
-        absl::string_view control_qubits = operation.mutable_args()
-                                               ->at("control_qubits")
-                                               .arg_value()
-                                               .string_value();
+        const auto control_it =
+            operation.mutable_args()->find("control_qubits");
+        if (control_it == operation.mutable_args()->end()) {
+          continue;
+        }
+        absl::string_view control_qubits =
+            control_it->second.arg_value().string_value();
         if (control_qubits.empty()) {  // explicit empty value.
           continue;
         }
@@ -294,10 +305,8 @@ Status ResolveQubitIds(Program* program, unsigned int* num_qubits,
           }
           control_indexs.push_back(result->second);
         }
-        operation.mutable_args()
-            ->at("control_qubits")
-            .mutable_arg_value()
-            ->set_string_value(absl::StrJoin(control_indexs, ","));
+        control_it->second.mutable_arg_value()->set_string_value(
+            absl::StrJoin(control_indexs, ","));
       }
     }
     if (!visited_qubits.empty()) {
@@ -354,9 +363,10 @@ Status CheckMPSSupported(const Program& program) {
       std::vector<Qubit> qubits(qs.begin(), qs.end());
       std::vector<absl::string_view> control_ids({});
 
-      if (operation.args().find("control_qubits") != operation.args().end()) {
+      const auto control_it = operation.args().find("control_qubits");
+      if (control_it != operation.args().end()) {
         absl::string_view control_qubits =
-            operation.args().at("control_qubits").arg_value().string_value();
+            control_it->second.arg_value().string_value();
         if (!control_qubits.empty()) {
           control_ids = absl::StrSplit(control_qubits, ',');
         }

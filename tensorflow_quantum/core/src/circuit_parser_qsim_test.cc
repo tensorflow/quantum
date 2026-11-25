@@ -2010,5 +2010,59 @@ TEST(QsimCircuitParserTest, RejectsOpWithoutQubitsNextToValidOp) {
   EXPECT_EQ(ParseAsNoisyCircuit(program), WrongArityStatus("HP", 1, 0));
 }
 
+TEST(QsimCircuitParserTest, AcceptsOpWithoutControlArgs) {
+  for (int mode = 0; mode < 3; mode++) {
+    Program program;
+    Moment* moment = program.mutable_circuit()->add_moments();
+    AddOperationWithAllArgs(moment, "I", {"0"});
+    google::protobuf::Map<std::string, Arg>* args =
+        moment->mutable_operations(0)->mutable_args();
+    if (mode == 0 || mode == 2) {
+      args->erase("control_qubits");
+    }
+    if (mode == 1 || mode == 2) {
+      args->erase("control_values");
+    }
+    EXPECT_EQ(ParseAsGateCircuit(program), tensorflow::Status())
+        << "mode " << mode;
+    EXPECT_EQ(ParseAsNoisyCircuit(program), tensorflow::Status())
+        << "mode " << mode;
+  }
+}
+
+TEST(QsimCircuitParserTest, RejectsControlQubitsWithoutControlValuesArg) {
+  const tensorflow::Status expected(
+      absl::StatusCode::kInvalidArgument,
+      "Mismatched number of control qubits and control values.");
+  for (const char* control_qubits : {"1", "1,2"}) {
+    Program program;
+    Moment* moment = program.mutable_circuit()->add_moments();
+    AddOperationWithAllArgs(moment, "I", {"0"});
+    google::protobuf::Map<std::string, Arg>* args =
+        moment->mutable_operations(0)->mutable_args();
+    (*args)["control_qubits"] = MakeControlArg(control_qubits);
+    args->erase("control_values");
+    EXPECT_EQ(ParseAsGateCircuit(program), expected) << control_qubits;
+    EXPECT_EQ(ParseAsNoisyCircuit(program), expected) << control_qubits;
+  }
+}
+
+TEST(QsimCircuitParserTest, RejectsControlValuesWithoutControlQubitsArg) {
+  const tensorflow::Status expected(
+      absl::StatusCode::kInvalidArgument,
+      "Mismatched number of control qubits and control values.");
+  for (const char* control_values : {"1", "1,0"}) {
+    Program program;
+    Moment* moment = program.mutable_circuit()->add_moments();
+    AddOperationWithAllArgs(moment, "I", {"0"});
+    google::protobuf::Map<std::string, Arg>* args =
+        moment->mutable_operations(0)->mutable_args();
+    args->erase("control_qubits");
+    (*args)["control_values"] = MakeControlArg(control_values);
+    EXPECT_EQ(ParseAsGateCircuit(program), expected) << control_values;
+    EXPECT_EQ(ParseAsNoisyCircuit(program), expected) << control_values;
+  }
+}
+
 }  // namespace
 }  // namespace tfq

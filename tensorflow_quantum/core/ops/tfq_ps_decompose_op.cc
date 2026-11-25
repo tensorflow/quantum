@@ -16,6 +16,9 @@ limitations under the License.
 #include <cmath>
 #include <string>
 
+#include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
+#include "absl/synchronization/mutex.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/shape_inference.h"
 #include "tensorflow/core/framework/tensor_shape.h"
@@ -57,6 +60,22 @@ class TfqPsDecomposeOp : public tensorflow::OpKernel {
 
     const int max_buffer_moments = 5;
 
+    Status parse_status = ::tensorflow::Status();
+    auto p_lock = absl::Mutex();
+    auto find_arg = [&](const Operation &op, absl::string_view key,
+                        const Arg **out) {
+      const auto it = op.args().find(key);
+      if (TF_PREDICT_FALSE(it == op.args().end())) {
+        p_lock.Lock();
+        parse_status = tensorflow::errors::InvalidArgument(
+            absl::StrCat("Could not find arg: ", key, " in op."));
+        p_lock.Unlock();
+        return false;
+      }
+      *out = &it->second;
+      return true;
+    };
+
     auto DoWork = [&](int64_t start, int64_t end) {
       for (int64_t i = start; i < end; i++) {
         Program cur_program = programs.at(i);
@@ -71,12 +90,15 @@ class TfqPsDecomposeOp : public tensorflow::OpKernel {
           int num_extra_moments = 0;
           for (int k = 0; k < cur_moment.operations().size(); k++) {
             Operation cur_op = cur_moment.operations().at(k);
-            auto &cur_op_map = *cur_op.mutable_args();
             if (cur_op.gate().id() == "PISP") {
-              auto exponent = cur_op_map.at("exponent");
-              auto phase_exponent = cur_op_map.at("phase_exponent");
-              if (exponent.arg_case() == Arg::ArgCase::kSymbol ||
-                  phase_exponent.arg_case() == Arg::ArgCase::kSymbol) {
+              const Arg *exponent = nullptr;
+              const Arg *phase_exponent = nullptr;
+              if (!find_arg(cur_op, "exponent", &exponent) ||
+                  !find_arg(cur_op, "phase_exponent", &phase_exponent)) {
+                return;
+              }
+              if (exponent->arg_case() == Arg::ArgCase::kSymbol ||
+                  phase_exponent->arg_case() == Arg::ArgCase::kSymbol) {
                 // Decompose cirq.PhasedISwapPowGate only if it is
                 // parameterized.
                 num_extra_moments = 5;
@@ -86,9 +108,9 @@ class TfqPsDecomposeOp : public tensorflow::OpKernel {
                 cur_moment.mutable_operations()->at(k) = new_op;
                 new_op = getOpForPISP(cur_op, 1, 1);
                 *temp_moment_list[0].add_operations() = new_op;
-                new_op = getOpForISP(cur_op, "XXP", exponent.symbol());
+                new_op = getOpForISP(cur_op, "XXP", exponent->symbol());
                 *temp_moment_list[1].add_operations() = new_op;
-                new_op = getOpForISP(cur_op, "YYP", exponent.symbol());
+                new_op = getOpForISP(cur_op, "YYP", exponent->symbol());
                 *temp_moment_list[2].add_operations() = new_op;
                 new_op = getOpForPISP(cur_op, 1, 0);
                 *temp_moment_list[3].add_operations() = new_op;
@@ -96,21 +118,28 @@ class TfqPsDecomposeOp : public tensorflow::OpKernel {
                 *temp_moment_list[4].add_operations() = new_op;
               }
             } else if (cur_op.gate().id() == "ISP") {
-              auto exponent = cur_op_map.at("exponent");
-              if (exponent.arg_case() == Arg::ArgCase::kSymbol) {
+              const Arg *exponent = nullptr;
+              if (!find_arg(cur_op, "exponent", &exponent)) {
+                return;
+              }
+              if (exponent->arg_case() == Arg::ArgCase::kSymbol) {
                 // Decompose cirq.ISwapPowGate only if it is parameterized.
                 if (num_extra_moments == 0) num_extra_moments = 1;
                 Operation new_op;
-                new_op = getOpForISP(cur_op, "XXP", exponent.symbol());
+                new_op = getOpForISP(cur_op, "XXP", exponent->symbol());
                 cur_moment.mutable_operations()->at(k) = new_op;
-                new_op = getOpForISP(cur_op, "YYP", exponent.symbol());
+                new_op = getOpForISP(cur_op, "YYP", exponent->symbol());
                 *temp_moment_list[0].add_operations() = new_op;
               }
             } else if (cur_op.gate().id() == "PXP") {
-              auto exponent = cur_op_map.at("exponent");
-              auto phase_exponent = cur_op_map.at("phase_exponent");
-              if (exponent.arg_case() == Arg::ArgCase::kSymbol ||
-                  phase_exponent.arg_case() == Arg::ArgCase::kSymbol) {
+              const Arg *exponent = nullptr;
+              const Arg *phase_exponent = nullptr;
+              if (!find_arg(cur_op, "exponent", &exponent) ||
+                  !find_arg(cur_op, "phase_exponent", &phase_exponent)) {
+                return;
+              }
+              if (exponent->arg_case() == Arg::ArgCase::kSymbol ||
+                  phase_exponent->arg_case() == Arg::ArgCase::kSymbol) {
                 // Decompose cirq.PhasedXPowGate only if it is parameterized.
                 num_extra_moments = 2;
                 Operation new_op;
@@ -122,10 +151,14 @@ class TfqPsDecomposeOp : public tensorflow::OpKernel {
                 *temp_moment_list[1].add_operations() = new_op;
               }
             } else if (cur_op.gate().id() == "FSIM") {
-              auto theta = cur_op_map.at("theta");
-              auto phi = cur_op_map.at("phi");
-              if (theta.arg_case() == Arg::ArgCase::kSymbol ||
-                  phi.arg_case() == Arg::ArgCase::kSymbol) {
+              const Arg *theta = nullptr;
+              const Arg *phi = nullptr;
+              if (!find_arg(cur_op, "theta", &theta) ||
+                  !find_arg(cur_op, "phi", &phi)) {
+                return;
+              }
+              if (theta->arg_case() == Arg::ArgCase::kSymbol ||
+                  phi->arg_case() == Arg::ArgCase::kSymbol) {
                 // Decompose cirq.FSimGate only if it is parameterized.
                 num_extra_moments = 2;
                 Operation new_op;
@@ -156,6 +189,7 @@ class TfqPsDecomposeOp : public tensorflow::OpKernel {
         ->tensorflow_cpu_worker_threads()
         ->workers->TransformRangeConcurrently(block_size, programs.size(),
                                               DoWork);
+    OP_REQUIRES_OK(context, parse_status);
   }
 
  private:

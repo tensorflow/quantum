@@ -615,5 +615,73 @@ TEST(ProgramResolutionTest, CheckQubitsIn1DFailedByNot1DTopology) {
                    " operation with qubits not neighbors each other."));
 }
 
+TEST(ProgramResolutionTest, ResolveQubitIdsWithoutControlQubitsArg) {
+  Program program;
+  unsigned int qubit_count;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      three_qubit_op_program, &program));
+
+  PauliSum p_sum;
+  ASSERT_TRUE(
+      google::protobuf::TextFormat::ParseFromString(valid_psum, &p_sum));
+  std::vector<PauliSum> p_sums = {p_sum};
+
+  EXPECT_EQ(ResolveQubitIds(&program, &qubit_count, &p_sums), Status());
+  EXPECT_EQ(qubit_count, 3);
+  const auto& op = program.circuit().moments(0).operations(0);
+  EXPECT_EQ(op.qubits(0).id(), "0");
+  EXPECT_EQ(op.qubits(1).id(), "1");
+  EXPECT_EQ(op.qubits(2).id(), "2");
+  EXPECT_EQ(op.args().find("control_qubits"), op.args().end());
+  EXPECT_EQ(p_sums[0].terms(0).paulis(0).qubit_id(), "0");
+  EXPECT_EQ(p_sums[0].terms(1).paulis(0).qubit_id(), "2");
+  EXPECT_EQ(p_sums[0].terms(1).paulis(1).qubit_id(), "1");
+}
+
+TEST(ProgramResolutionTest,
+     ResolveQubitIdsMultiProgramWithoutControlQubitsArg) {
+  Program program, other_without_controls, other_with_controls;
+  unsigned int qubit_count;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      three_qubit_op_program, &program));
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      three_qubit_op_program, &other_without_controls));
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      valid_program, &other_with_controls));
+
+  other_without_controls.mutable_circuit()
+      ->mutable_moments(0)
+      ->mutable_operations(0)
+      ->mutable_qubits(0)
+      ->set_id("0_2");
+  other_without_controls.mutable_circuit()
+      ->mutable_moments(0)
+      ->mutable_operations(0)
+      ->mutable_qubits(2)
+      ->set_id("0_0");
+
+  std::vector<Program> other_programs = {other_without_controls,
+                                         other_with_controls};
+  EXPECT_EQ(ResolveQubitIds(&program, &qubit_count, &other_programs), Status());
+  EXPECT_EQ(qubit_count, 3);
+  const auto& ref_op = program.circuit().moments(0).operations(0);
+  EXPECT_EQ(ref_op.qubits(0).id(), "0");
+  EXPECT_EQ(ref_op.qubits(1).id(), "1");
+  EXPECT_EQ(ref_op.qubits(2).id(), "2");
+  EXPECT_EQ(ref_op.args().find("control_qubits"), ref_op.args().end());
+
+  const auto& other_op0 = other_programs[0].circuit().moments(0).operations(0);
+  EXPECT_EQ(other_op0.qubits(0).id(), "2");
+  EXPECT_EQ(other_op0.qubits(1).id(), "1");
+  EXPECT_EQ(other_op0.qubits(2).id(), "0");
+  EXPECT_EQ(other_op0.args().find("control_qubits"), other_op0.args().end());
+
+  const auto& other_op1 = other_programs[1].circuit().moments(0).operations(0);
+  EXPECT_EQ(other_op1.qubits(0).id(), "1");
+  EXPECT_EQ(other_op1.qubits(1).id(), "2");
+  EXPECT_EQ(other_op1.args().at("control_qubits").arg_value().string_value(),
+            "0");
+}
+
 }  // namespace
 }  // namespace tfq
