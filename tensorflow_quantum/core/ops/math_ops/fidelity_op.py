@@ -86,11 +86,28 @@ def fidelity(programs, symbol_names, symbol_values, other_programs):
                                         other_programs)
 
     def grad(dy):
+
+        def _true_grad():
+            # The gradient is sum_j dy[i][j] * 2 * Re(conj(ip[i][j]) * g[i][j]),
+            # where g is the derivative of ip. The weights conj(ip) must be
+            # applied inside the sum over j, but _inner_product_grad only
+            # accepts real weights, so the real and imaginary parts are
+            # backpropagated separately. The imaginary term is subtracted
+            # because _inner_product_grad returns the complex conjugate of the
+            # weighted sum of g.
+            f32_dy = tf.cast(dy, tf.float32)
+            real_grad = inner_product_op._inner_product_grad(
+                programs, symbol_names, symbol_values, other_programs,
+                f32_dy * tf.math.real(ip))
+            imag_grad = inner_product_op._inner_product_grad(
+                programs, symbol_names, symbol_values, other_programs,
+                f32_dy * tf.math.imag(ip))
+            return 2. * (tf.math.real(real_grad) - tf.math.imag(imag_grad))
+
         ret_zero = tf.equal(tf.size(symbol_names), 0)
         inner_prod_grad = tf.cond(
             ret_zero, lambda: tf.zeros_like(symbol_values, dtype=tf.float32),
-            lambda: tf.math.real(2. * ip * inner_product_op._inner_product_grad(
-                programs, symbol_names, symbol_values, other_programs, dy)))
+            _true_grad)
         return [None, None, inner_prod_grad, None]
 
     return tf.math.abs(ip)**2, grad
