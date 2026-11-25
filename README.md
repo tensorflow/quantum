@@ -8,8 +8,8 @@ High-performance Python framework for hybrid quantum-classical machine learning
 
 [![Licensed under the Apache 2.0
 license](https://img.shields.io/badge/License-Apache%202.0-3c60b1.svg?logo=opensourceinitiative&logoColor=white&style=flat-square)](https://github.com/tensorflow/quantum/blob/master/LICENSE)
-[![Compatible with Python versions 3.10 and
-higher](https://img.shields.io/badge/Python-3.10+-fcbc2c.svg?style=flat-square&logo=python&logoColor=white)](https://www.python.org/downloads/)
+[![Compatible with Python versions 3.11 and
+3.12](https://img.shields.io/badge/Python-3.11--3.12-fcbc2c.svg?style=flat-square&logo=python&logoColor=white)](https://www.python.org/downloads/)
 [![TensorFlow Quantum project on
 PyPI](https://img.shields.io/pypi/v/TensorFlow_Quantum.svg?logo=python&logoColor=white&label=PyPI&style=flat-square&color=fcbc2c)](https://pypi.org/project/tensorflow-quantum)
 
@@ -42,14 +42,14 @@ from [TensorFlow](https://tensorflow.org). Here are some of TFQ's features:
     adjoint methods
 *   Implements operations as C++ TensorFlow Ops, making them 1<sup>st</sup>-class
     citizens in the TF compute graph
-*   Harnesses TensorFlow’s computational machinery to provide exceptional
+*   Harnesses TensorFlow's computational machinery to provide exceptional
     performance and scalability
 
 TensorFlow Quantum empowers quantum algorithms and machine learning researchers
 to pursue questions whose answers can only be obtained through fast simulation
 of many millions of moderately-sized circuits. It has already been instrumental
 in enabling ground-breaking research in QML by providing a seamless workflow for
-leveraging Google’s quantum computing offerings.
+leveraging Google's quantum computing offerings.
 
 ## Installation
 
@@ -59,11 +59,15 @@ instructions](https://www.tensorflow.org/quantum/install) in the documentation.
 _Compatibility_: At this time, TensorFlow Quantum is built and
 tested on Linux with the following systems and software:
 
-* Python 3.10–3.12
+* Python 3.10-3.12
 * TensorFlow 2.19.1
 * TF-Keras 2.19.0
-* NumPy 2.0
-* Cirq 1.5.0
+* NumPy 2.1
+* Cirq 1.5.0-1.6.1
+
+Python 3.13 is not supported yet because TensorFlow 2.19.1 does not publish
+Python 3.13 wheels. Python 3.10 uses Cirq 1.5.0, while Python 3.11-3.12 use
+Cirq 1.6.1.
 
 ## Quick start
 
