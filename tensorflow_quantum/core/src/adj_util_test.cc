@@ -507,7 +507,8 @@ TEST(AdjUtilTest, PhasedISwapPhasedExponent) {
 
   /*
   (cirq.unitary(cirq.PhasedISwapPowGate(exponent=-3.2,phase_exponent=8.9+1e-4))
-  - cirq.unitary(cirq.PhasedISwapPowGate(exponent=3.2,phase_exponent=8.9-1e-4)))
+  -
+  cirq.unitary(cirq.PhasedISwapPowGate(exponent=-3.2,phase_exponent=8.9-1e-4)))
     / 2e-4
   array([[ 0.        +0.j        ,  0.        +0.j        ,
            0.        +0.j        ,  0.        +0.j        ],
