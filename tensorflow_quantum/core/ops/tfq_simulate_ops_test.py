@@ -353,6 +353,34 @@ class SimulateStateTest(tf.test.TestCase, parameterized.TestCase):
 
         self.assertAllClose(tfq_results, manual_padded_results, atol=1e-5)
 
+    def test_simulate_state_compute_large_single_circuit(self):
+        """Verify ComputeLarge parallel state copy on a 16-qubit circuit."""
+        n_qubits = 16
+        qubits = cirq.GridQubit.rect(1, n_qubits)
+        circuit = cirq.Circuit(
+            cirq.H.on_each(*qubits),
+            [cirq.rz(0.1 * (k + 1)).on(q) for k, q in enumerate(qubits)],
+        )
+
+        # Single-program batches take the ComputeLarge parallel copy path.
+        tfq_result = tfq_simulate_ops.tfq_simulate_state(
+            util.convert_to_tensor([circuit]), [], [[]])
+        expected = cirq.Simulator().simulate(circuit).final_state_vector
+
+        self.assertDTypeEqual(tfq_result, np.complex64)
+        self.assertEqual(tfq_result.shape, (1, 1 << n_qubits))
+        self.assertAllClose(tfq_result, [expected], atol=1e-5)
+
+    def test_simulate_state_compute_large_empty_circuit(self):
+        """Verify ComputeLarge crossover == 1 boundary on an empty circuit."""
+        tfq_result = tfq_simulate_ops.tfq_simulate_state(
+            util.convert_to_tensor([cirq.Circuit()]), [], [[]])
+        expected = np.array([[1.0 + 0.0j]], dtype=np.complex64)
+
+        self.assertDTypeEqual(tfq_result, np.complex64)
+        self.assertEqual(tfq_result.shape, expected.shape)
+        self.assertAllEqual(tfq_result, expected)
+
 
 class SimulateSamplesTest(tf.test.TestCase, parameterized.TestCase):
     """Tests tfq_simulate_samples."""
