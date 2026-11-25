@@ -65,11 +65,27 @@ class InnerProductAdjGradTest(tf.test.TestCase, parameterized.TestCase):
                 util.convert_to_tensor(other_batch), prev_grad)
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'programs must be rank 1. Got rank 0'):
+            # Circuit tensor is a scalar.
+            inner_product_op._inner_product_grad(
+                util.convert_to_tensor(circuit_batch)[0],
+                symbol_names, symbol_values_array,
+                util.convert_to_tensor(other_batch), prev_grad)
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'symbol_names must be rank 1.'):
             # symbol_names tensor has too many dimensions.
             inner_product_op._inner_product_grad(
                 util.convert_to_tensor(circuit_batch),
                 np.array([symbol_names]), symbol_values_array,
+                util.convert_to_tensor(other_batch), prev_grad)
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'symbol_names must be rank 1. Got rank 0'):
+            # symbol_names tensor is a scalar.
+            inner_product_op._inner_product_grad(
+                util.convert_to_tensor(circuit_batch),
+                tf.constant(symbol_names[0]), symbol_values_array,
                 util.convert_to_tensor(other_batch), prev_grad)
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,

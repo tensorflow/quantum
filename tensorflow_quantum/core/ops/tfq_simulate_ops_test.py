@@ -59,6 +59,14 @@ class SimulateExpectationTest(tf.test.TestCase):
                 util.convert_to_tensor([[x] for x in pauli_sums]))
 
         with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'programs must be rank 1. Got rank 0'):
+            # Circuit tensor is a scalar.
+            tfq_simulate_ops.tfq_simulate_expectation(
+                util.convert_to_tensor(circuit_batch)[0], symbol_names,
+                symbol_values_array,
+                util.convert_to_tensor([[x] for x in pauli_sums]))
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
                                     'symbol_names must be rank 1.'):
             # symbol_names tensor has too many dimensions.
             tfq_simulate_ops.tfq_simulate_expectation(
@@ -532,6 +540,14 @@ class SimulateSampledExpectationTest(tf.test.TestCase):
             # Circuit tensor has too many dimensions.
             tfq_simulate_ops.tfq_simulate_sampled_expectation(
                 util.convert_to_tensor([circuit_batch]), symbol_names,
+                symbol_values_array,
+                util.convert_to_tensor([[x] for x in pauli_sums]), num_samples)
+
+        with self.assertRaisesRegex(tf.errors.InvalidArgumentError,
+                                    'programs must be rank 1. Got rank 0'):
+            # Circuit tensor is a scalar.
+            tfq_simulate_ops.tfq_simulate_sampled_expectation(
+                util.convert_to_tensor(circuit_batch)[0], symbol_names,
                 symbol_values_array,
                 util.convert_to_tensor([[x] for x in pauli_sums]), num_samples)
 
